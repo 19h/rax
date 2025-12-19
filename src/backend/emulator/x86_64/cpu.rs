@@ -270,6 +270,12 @@ impl X86_64Vcpu {
             0x03 => insn::arith::add_r_rm(self, ctx),
             0x04 => insn::arith::add_al_imm8(self, ctx),
             0x05 => insn::arith::add_rax_imm(self, ctx),
+            0x18 => insn::arith::sbb_rm8_r8(self, ctx),
+            0x19 => insn::arith::sbb_rm_r(self, ctx),
+            0x1A => insn::arith::sbb_r8_rm8(self, ctx),
+            0x1B => insn::arith::sbb_r_rm(self, ctx),
+            0x1C => insn::arith::sbb_al_imm8(self, ctx),
+            0x1D => insn::arith::sbb_rax_imm(self, ctx),
             0x28 => insn::arith::sub_rm8_r8(self, ctx),
             0x29 => insn::arith::sub_rm_r(self, ctx),
             0x2A => insn::arith::sub_r8_rm8(self, ctx),
@@ -722,6 +728,93 @@ impl VCpu for X86_64Vcpu {
                     self.sregs.cr0, self.sregs.cr3, self.sregs.cr4);
             }
 
+            // Trace halt loop area to understand what's happening
+            static HALT_AREA_TRACE: AtomicU64 = AtomicU64::new(0);
+            if rip >= 0x5022200 && rip <= 0x5022280 {
+                let count = HALT_AREA_TRACE.fetch_add(1, Ordering::Relaxed);
+                if count < 40 {
+                    let mut code = [0u8; 8];
+                    let _ = self.mmu.read(rip, &mut code, &self.sregs);
+                    eprintln!("[EMU] PANIC AREA RIP={:#x} code={:02x?}", rip, code);
+                    eprintln!("[EMU]   RDI={:#x} RSI={:#x}", self.regs.rdi, self.regs.rsi);
+
+                    // Try to read string from RDI (error message)
+                    if self.regs.rdi >= 0x5000000 && self.regs.rdi < 0x6000000 {
+                        let mut str_buf = [0u8; 80];
+                        if self.mmu.read(self.regs.rdi, &mut str_buf, &self.sregs).is_ok() {
+                            if let Some(end) = str_buf.iter().position(|&b| b == 0) {
+                                if let Ok(s) = std::str::from_utf8(&str_buf[..end]) {
+                                    eprintln!("[EMU]   Error msg: \"{}\"", s);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Trace calls to kernel_ident_mapping_init
+            // The return address 0x5024623 tells us the call was from 0x502461e
+            // CALL rel32 at 0x502461e: e8 2d fc ff ff = call -0x3d3
+            // Target = 0x502461e + 5 - 0x3d3 = 0x5024250
+            // Let's also try other potential entry points
+            static IDENT_MAP_CALLS: AtomicU64 = AtomicU64::new(0);
+            // Check for function entry - look for the pattern after push rbx (common prologue)
+            // We know the caller is setup_identity_mappings at 0x5024590
+            // And it calls kernel_ident_mapping_init multiple times
+            if rip == 0x5024250 {
+                let count = IDENT_MAP_CALLS.fetch_add(1, Ordering::Relaxed);
+                if count < 10 {
+                    eprintln!("[EMU] kernel_ident_mapping_init call #{} at RIP={:#x}:", count + 1, rip);
+                    eprintln!("[EMU]   RDI(info)={:#x} RSI(pgd)={:#x}", self.regs.rdi, self.regs.rsi);
+                    eprintln!("[EMU]   RDX(pstart)={:#x} ({} MB) RCX(pend)={:#x} ({} MB)",
+                        self.regs.rdx, self.regs.rdx >> 20, self.regs.rcx, self.regs.rcx >> 20);
+                    // Read x86_mapping_info structure - check actual layout
+                    // struct x86_mapping_info {
+                    //     void *(*alloc_pgt_page)(void *);  // 0
+                    //     void *context;                     // 8
+                    //     unsigned long page_flag;           // 16
+                    //     unsigned long offset;              // 24
+                    //     bool direct_gbpages;               // 32
+                    // };
+                    let info_addr = self.regs.rdi;
+                    let mut info_buf = [0u8; 48];
+                    if self.mmu.read_phys(info_addr, &mut info_buf).is_ok() {
+                        eprintln!("[EMU]   info raw: {:02x?}", &info_buf[..40]);
+                        let alloc_fn = u64::from_le_bytes(info_buf[0..8].try_into().unwrap());
+                        let context = u64::from_le_bytes(info_buf[8..16].try_into().unwrap());
+                        let page_flag = u64::from_le_bytes(info_buf[16..24].try_into().unwrap());
+                        let offset = u64::from_le_bytes(info_buf[24..32].try_into().unwrap());
+                        let direct_gbpages = info_buf[32];
+                        eprintln!("[EMU]   alloc_fn={:#x} context={:#x}", alloc_fn, context);
+                        eprintln!("[EMU]   page_flag={:#x} offset={:#x}", page_flag, offset);
+                        eprintln!("[EMU]   direct_gbpages={}", direct_gbpages);
+                    }
+                }
+            }
+
+            // Trace when we're in the paging setup code to see what addresses are being used
+            static PGD_SETUP_TRACE: AtomicU64 = AtomicU64::new(0);
+            if rip >= 0x5024590 && rip < 0x5024700 {
+                let count = PGD_SETUP_TRACE.fetch_add(1, Ordering::Relaxed);
+                if count < 50 && count % 5 == 0 {
+                    eprintln!("[EMU] setup_ident @ {:#x}: RDI={:#x} RSI={:#x} RDX={:#x} RCX={:#x}",
+                        rip, self.regs.rdi, self.regs.rsi, self.regs.rdx, self.regs.rcx);
+                }
+            }
+
+            // Find the actual x86_mapping_info structure by looking for the CALL setup pattern
+            // Let's look for where mapping_info is set up before calls to kernel_ident_mapping_init
+            static MAPPING_INFO_SETUP: AtomicU64 = AtomicU64::new(0);
+            if rip >= 0x50244b0 && rip < 0x5024590 {
+                let count = MAPPING_INFO_SETUP.fetch_add(1, Ordering::Relaxed);
+                if count < 30 && count % 3 == 0 {
+                    eprintln!("[EMU] pre_setup @ {:#x}: RDI={:#x} RSI={:#x} RDX={:#x} RCX={:#x}",
+                        rip, self.regs.rdi, self.regs.rsi, self.regs.rdx, self.regs.rcx);
+                    eprintln!("[EMU]   R8={:#x} R9={:#x} RBX={:#x} RBP={:#x}",
+                        self.regs.r8, self.regs.r9, self.regs.rbx, self.regs.rbp);
+                }
+            }
+
             // Trace what happens immediately after alloc_pgt_page returns
             // The return addresses are 0x5023d1d and 0x5023c63
             static ALLOC_RET_TRACE: AtomicU64 = AtomicU64::new(0);
@@ -910,12 +1003,14 @@ impl VCpu for X86_64Vcpu {
             static TRACE_CALL: AtomicU64 = AtomicU64::new(0);
             static OUTPUT_INITIALIZED: AtomicU64 = AtomicU64::new(0);
             if rip == 0x5024362 {
-                // Force RSI (output address) to pref_address
-                // RSI is 0 because choose_random_location() failed
-                // Use 0x5076000 which matches our pref_address setting
-                let output_addr = 0x5076000_u64;  // Must match pref_address in boot_params
+                // Force RSI (output address) to a safe location
+                // The decompressor is at ~0x5000000 with compressed kernel in 0x50xxxxx
+                // We need output address that doesn't overlap with source data
+                // Use 0x10000000 (256MB) which is far from the compressed data
+                // and leaves room for 68MB decompressed kernel (up to 324MB, within 512MB)
+                let output_addr = 0x10000000_u64;  // 256MB - safe distance from compressed data
 
-                if self.regs.rsi == 0 || self.regs.rsi > 0x10000000 {
+                if self.regs.rsi == 0 || self.regs.rsi < 0x8000000 || self.regs.rsi > 0x18000000 {
                     let old_rsi = self.regs.rsi;
                     self.regs.rsi = output_addr;
                     eprintln!("[EMU] Forced RSI (destination) from {:#x} to {:#x}", old_rsi, self.regs.rsi);
