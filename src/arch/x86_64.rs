@@ -1,4 +1,5 @@
 use std::fs::File;
+use std::io::{Read, Seek};
 
 use linux_loader::cmdline::Cmdline;
 use linux_loader::configurator::linux::LinuxBootConfigurator;
@@ -74,13 +75,35 @@ impl X86_64Arch {
     fn load_kernel_image(mem: &GuestMemoryMmap, kernel: &VmConfig) -> Result<KernelLoaderResult> {
         info!(path = %kernel.kernel.display(), "loading kernel image");
         let mut kernel_file = File::open(&kernel.kernel)?;
-        BzImage::load(
+        let result = BzImage::load(
             mem,
             Some(GuestAddress(KERNEL_LOAD_ADDR)),
             &mut kernel_file,
             Some(GuestAddress(KERNEL_LOAD_ADDR)),
         )
-        .map_err(Error::from)
+        .map_err(Error::from)?;
+
+        // The compressed kernel data needs to be at 0x4000000 for the decompressor to find it
+        // Read payload_offset and payload_length directly from the kernel file
+        kernel_file.seek(std::io::SeekFrom::Start(0x248))?;
+        let mut payload_info = [0u8; 8];
+        kernel_file.read_exact(&mut payload_info)?;
+        let payload_offset = u32::from_le_bytes([payload_info[0], payload_info[1], payload_info[2], payload_info[3]]) as u64;
+        let payload_length = u32::from_le_bytes([payload_info[4], payload_info[5], payload_info[6], payload_info[7]]) as u64;
+
+        info!(
+            payload_offset = format!("{:#x}", payload_offset),
+            payload_length = format!("{:#x}", payload_length),
+            "kernel payload info"
+        );
+
+        // Note: we don't copy the compressed data here anymore.
+        // The kernel's startup code copies the entire protected mode kernel (including
+        // compressed data) to the relocation target. The _compressed symbol uses
+        // RIP-relative addressing which works correctly after relocation.
+        let _ = (payload_offset, payload_length); // silence unused warnings
+
+        Ok(result)
     }
 
     fn load_initrd(
