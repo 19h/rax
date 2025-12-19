@@ -1,0 +1,238 @@
+//! Bit manipulation instructions: BT, BTS, BTR, BTC, BSF, BSR.
+
+use crate::cpu::VcpuExit;
+use crate::error::{Error, Result};
+
+use super::super::cpu::{InsnContext, X86_64Vcpu};
+use super::super::flags;
+
+/// BT r/m, r (0x0F 0xA3)
+pub fn bt_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let bit_offset = vcpu.get_reg(reg, op_size);
+
+    let value = if is_memory {
+        vcpu.read_mem(addr, op_size)?
+    } else {
+        vcpu.get_reg(rm, op_size)
+    };
+
+    let bit_pos = bit_offset & ((op_size * 8 - 1) as u64);
+    let cf_bit = (value >> bit_pos) & 1;
+    if cf_bit != 0 {
+        vcpu.regs.rflags |= flags::bits::CF;
+    } else {
+        vcpu.regs.rflags &= !flags::bits::CF;
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// BTS r/m, r (0x0F 0xAB)
+pub fn bts_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let bit_offset = vcpu.get_reg(reg, op_size);
+    let bit_pos = bit_offset & ((op_size * 8 - 1) as u64);
+
+    if is_memory {
+        let v = vcpu.read_mem(addr, op_size)?;
+        let cf_bit = (v >> bit_pos) & 1;
+        if cf_bit != 0 {
+            vcpu.regs.rflags |= flags::bits::CF;
+        } else {
+            vcpu.regs.rflags &= !flags::bits::CF;
+        }
+        let new_val = v | (1 << bit_pos);
+        vcpu.write_mem(addr, new_val, op_size)?;
+    } else {
+        let v = vcpu.get_reg(rm, op_size);
+        let cf_bit = (v >> bit_pos) & 1;
+        if cf_bit != 0 {
+            vcpu.regs.rflags |= flags::bits::CF;
+        } else {
+            vcpu.regs.rflags &= !flags::bits::CF;
+        }
+        let new_val = v | (1 << bit_pos);
+        vcpu.set_reg(rm, new_val, op_size);
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// BTR r/m, r (0x0F 0xB3)
+pub fn btr_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let bit_offset = vcpu.get_reg(reg, op_size);
+    let bit_pos = bit_offset & ((op_size * 8 - 1) as u64);
+
+    if is_memory {
+        let v = vcpu.read_mem(addr, op_size)?;
+        let cf_bit = (v >> bit_pos) & 1;
+        if cf_bit != 0 {
+            vcpu.regs.rflags |= flags::bits::CF;
+        } else {
+            vcpu.regs.rflags &= !flags::bits::CF;
+        }
+        let new_val = v & !(1 << bit_pos);
+        vcpu.write_mem(addr, new_val, op_size)?;
+    } else {
+        let v = vcpu.get_reg(rm, op_size);
+        let cf_bit = (v >> bit_pos) & 1;
+        if cf_bit != 0 {
+            vcpu.regs.rflags |= flags::bits::CF;
+        } else {
+            vcpu.regs.rflags &= !flags::bits::CF;
+        }
+        let new_val = v & !(1 << bit_pos);
+        vcpu.set_reg(rm, new_val, op_size);
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// BTC r/m, r (0x0F 0xBB)
+pub fn btc_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let bit_offset = vcpu.get_reg(reg, op_size);
+    let bit_pos = bit_offset & ((op_size * 8 - 1) as u64);
+
+    if is_memory {
+        let v = vcpu.read_mem(addr, op_size)?;
+        let cf_bit = (v >> bit_pos) & 1;
+        if cf_bit != 0 {
+            vcpu.regs.rflags |= flags::bits::CF;
+        } else {
+            vcpu.regs.rflags &= !flags::bits::CF;
+        }
+        let new_val = v ^ (1 << bit_pos);
+        vcpu.write_mem(addr, new_val, op_size)?;
+    } else {
+        let v = vcpu.get_reg(rm, op_size);
+        let cf_bit = (v >> bit_pos) & 1;
+        if cf_bit != 0 {
+            vcpu.regs.rflags |= flags::bits::CF;
+        } else {
+            vcpu.regs.rflags &= !flags::bits::CF;
+        }
+        let new_val = v ^ (1 << bit_pos);
+        vcpu.set_reg(rm, new_val, op_size);
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// BSF r, r/m (0x0F 0xBC)
+pub fn bsf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+
+    let value = if is_memory {
+        vcpu.read_mem(addr, op_size)?
+    } else {
+        vcpu.get_reg(rm, op_size)
+    };
+
+    if value == 0 {
+        vcpu.regs.rflags |= flags::bits::ZF;
+        // Destination is undefined when source is 0
+    } else {
+        vcpu.regs.rflags &= !flags::bits::ZF;
+        let bit_index = value.trailing_zeros() as u64;
+        vcpu.set_reg(reg, bit_index, op_size);
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// BSR r, r/m (0x0F 0xBD)
+pub fn bsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+
+    let value = if is_memory {
+        vcpu.read_mem(addr, op_size)?
+    } else {
+        vcpu.get_reg(rm, op_size)
+    };
+
+    if value == 0 {
+        vcpu.regs.rflags |= flags::bits::ZF;
+        // Destination is undefined when source is 0
+    } else {
+        vcpu.regs.rflags &= !flags::bits::ZF;
+        let bit_size = (op_size * 8) as u32;
+        let bit_index = (bit_size - 1 - value.leading_zeros()) as u64;
+        vcpu.set_reg(reg, bit_index, op_size);
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// Group 8: BT/BTS/BTR/BTC with immediate (0x0F 0xBA)
+pub fn group8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let modrm_start = ctx.cursor;
+    let modrm = ctx.consume_u8()?;
+    let reg_op = (modrm >> 3) & 0x07;
+    let rm = (modrm & 0x07) | ctx.rex_b();
+
+    let (value, addr_opt) = if modrm >> 6 == 3 {
+        (vcpu.get_reg(rm, op_size), None)
+    } else {
+        let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+        ctx.cursor = modrm_start + 1 + extra;
+        (vcpu.read_mem(addr, op_size)?, Some(addr))
+    };
+
+    let bit_pos = (ctx.consume_u8()? & ((op_size * 8 - 1) as u8)) as u64;
+
+    let cf_bit = (value >> bit_pos) & 1;
+    if cf_bit != 0 {
+        vcpu.regs.rflags |= flags::bits::CF;
+    } else {
+        vcpu.regs.rflags &= !flags::bits::CF;
+    }
+
+    match reg_op {
+        4 => {} // BT - just test
+        5 => {
+            // BTS - test and set
+            let new_val = value | (1 << bit_pos);
+            if let Some(addr) = addr_opt {
+                vcpu.write_mem(addr, new_val, op_size)?;
+            } else {
+                vcpu.set_reg(rm, new_val, op_size);
+            }
+        }
+        6 => {
+            // BTR - test and reset
+            let new_val = value & !(1 << bit_pos);
+            if let Some(addr) = addr_opt {
+                vcpu.write_mem(addr, new_val, op_size)?;
+            } else {
+                vcpu.set_reg(rm, new_val, op_size);
+            }
+        }
+        7 => {
+            // BTC - test and complement
+            let new_val = value ^ (1 << bit_pos);
+            if let Some(addr) = addr_opt {
+                vcpu.write_mem(addr, new_val, op_size)?;
+            } else {
+                vcpu.set_reg(rm, new_val, op_size);
+            }
+        }
+        _ => {
+            return Err(Error::Emulator(format!(
+                "unimplemented 0F BA /{} at RIP={:#x}",
+                reg_op, vcpu.regs.rip
+            )));
+        }
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}

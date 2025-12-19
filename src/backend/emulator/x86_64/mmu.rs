@@ -8,6 +8,7 @@ use crate::cpu::SystemRegisters;
 use crate::error::{Error, Result};
 
 /// Page table entry flags.
+#[allow(dead_code)]
 mod flags {
     pub const PRESENT: u64 = 1 << 0;
     pub const WRITABLE: u64 = 1 << 1;
@@ -27,6 +28,7 @@ mod cr0 {
     pub const PG: u64 = 1 << 31; // Paging Enable
 }
 
+#[allow(dead_code)]
 mod cr4 {
     pub const PAE: u64 = 1 << 5; // Physical Address Extension
 }
