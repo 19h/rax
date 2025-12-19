@@ -66,8 +66,17 @@ pub fn popf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
 
 /// CPUID (0x0F 0xA2)
 pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static CPUID_COUNT: AtomicU64 = AtomicU64::new(0);
+
     let leaf = vcpu.regs.rax as u32;
     let _subleaf = vcpu.regs.rcx as u32;
+
+    let count = CPUID_COUNT.fetch_add(1, Ordering::Relaxed) + 1;
+    // Always log CPUID 0x80000001 (GBPAGES detection) and first 100 of others
+    if leaf == 0x80000001 || count <= 100 {
+        eprintln!("[CPUID] leaf={:#x} subleaf={:#x} at RIP={:#x} (call #{})", leaf, _subleaf, vcpu.regs.rip, count);
+    }
 
     let (eax, ebx, ecx, edx) = match leaf {
         0 => {
@@ -83,12 +92,24 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         }
         0x80000000 => {
             // Extended CPUID Information - max extended leaf
-            (0x80000001u32, 0, 0, 0)
+            (0x80000008u32, 0, 0, 0)
         }
         0x80000001 => {
-            // Extended features
-            let features_edx = 1u32 << 29; // LM (Long Mode)
+            // Extended features - CRITICAL for efficient identity mapping
+            let features_edx = (1u32 << 29)  // LM (Long Mode)
+                             | (1u32 << 26)  // PDPE1GB (1GB huge pages in PDPTE)
+                             | (1u32 << 20); // NX (No Execute)
+            eprintln!("[CPUID] 0x80000001: Returning GBPAGES={}, LM={}, NX={} (EDX={:#x})",
+                (features_edx >> 26) & 1, (features_edx >> 29) & 1, (features_edx >> 20) & 1, features_edx);
             (0, 0, 0, features_edx)
+        }
+        0x80000008 => {
+            // Address sizes: physical bits, linear bits, number of cores
+            // Use 29 bits (512MB) to minimize page table allocations
+            // This limits identity mapping to 512MB + kernel size
+            let phys_bits: u32 = 29; // 512MB physical address space
+            let linear_bits: u32 = 48;
+            (phys_bits | (linear_bits << 8), 0, 0, 0)
         }
         _ => (0, 0, 0, 0),
     };
@@ -223,7 +244,81 @@ pub fn mov_cr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     match cr {
         0 => vcpu.sregs.cr0 = value,
         2 => vcpu.sregs.cr2 = value,
-        3 => vcpu.sregs.cr3 = value,
+        3 => {
+            tracing::debug!(
+                old_cr3 = format!("{:#x}", vcpu.sregs.cr3),
+                new_cr3 = format!("{:#x}", value),
+                rip = format!("{:#x}", vcpu.regs.rip),
+                "MOV CR3"
+            );
+
+            // Debug: Dump page table entries when switching to new page tables
+            if value != vcpu.sregs.cr3 && value >= 0x5000000 {
+                eprintln!("[MOV CR3] Switching from {:#x} to {:#x}", vcpu.sregs.cr3, value);
+
+                // Dump PML4 entries
+                let pml4_base = value & !0xFFF;
+                eprintln!("[MOV CR3] PML4 at {:#x}:", pml4_base);
+                for i in 0..4 {
+                    let mut entry_buf = [0u8; 8];
+                    if vcpu.mmu.read_phys(pml4_base + i * 8, &mut entry_buf).is_ok() {
+                        let entry = u64::from_le_bytes(entry_buf);
+                        if entry != 0 {
+                            eprintln!("[MOV CR3]   PML4[{}] = {:#x}", i, entry);
+                        }
+                    }
+                }
+
+                // If PML4[0] is present, dump PDPT
+                let mut pml4_0 = [0u8; 8];
+                if vcpu.mmu.read_phys(pml4_base, &mut pml4_0).is_ok() {
+                    let pml4e = u64::from_le_bytes(pml4_0);
+                    if pml4e & 1 != 0 {
+                        let pdpt_base = pml4e & 0x000F_FFFF_FFFF_F000;
+                        eprintln!("[MOV CR3] PDPT at {:#x}:", pdpt_base);
+                        for i in 0..4 {
+                            let mut entry_buf = [0u8; 8];
+                            if vcpu.mmu.read_phys(pdpt_base + i * 8, &mut entry_buf).is_ok() {
+                                let entry = u64::from_le_bytes(entry_buf);
+                                if entry != 0 {
+                                    let is_1gb = (entry & (1 << 7)) != 0;
+                                    eprintln!("[MOV CR3]   PDPT[{}] = {:#x} ({})", i, entry,
+                                        if is_1gb { "1GB page" } else { "points to PDT" });
+                                }
+                            }
+                        }
+
+                        // If PDPT[0] points to PDT (not 1GB page), dump some PDT entries
+                        let mut pdpt_0 = [0u8; 8];
+                        if vcpu.mmu.read_phys(pdpt_base, &mut pdpt_0).is_ok() {
+                            let pdpte = u64::from_le_bytes(pdpt_0);
+                            if pdpte & 1 != 0 && (pdpte & (1 << 7)) == 0 {
+                                let pdt_base = pdpte & 0x000F_FFFF_FFFF_F000;
+                                eprintln!("[MOV CR3] PDT at {:#x}:", pdt_base);
+                                // Dump PDT entries that should cover 0x5000000-0x5100000
+                                // PDT index for 0x5000000 = (0x5000000 >> 21) & 0x1FF = 40
+                                for i in 38..45 {
+                                    let mut entry_buf = [0u8; 8];
+                                    if vcpu.mmu.read_phys(pdt_base + i * 8, &mut entry_buf).is_ok() {
+                                        let entry = u64::from_le_bytes(entry_buf);
+                                        if entry != 0 {
+                                            let is_2mb = (entry & (1 << 7)) != 0;
+                                            let phys = entry & 0x000F_FFFF_FFE0_0000;
+                                            eprintln!("[MOV CR3]   PDT[{}] = {:#x} (maps {:#x}, {})",
+                                                i, entry, phys, if is_2mb { "2MB page" } else { "PT" });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        eprintln!("[MOV CR3] WARNING: PML4[0] = {:#x} - not present!", pml4e);
+                    }
+                }
+            }
+
+            vcpu.sregs.cr3 = value;
+        }
         4 => vcpu.sregs.cr4 = value,
         _ => return Err(Error::Emulator(format!("MOV CR{}, r: unsupported", cr))),
     }

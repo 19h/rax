@@ -158,6 +158,87 @@ pub fn and_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     Ok(None)
 }
 
+/// OR AL, imm8 (0x0C)
+pub fn or_al_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let imm = ctx.consume_u8()? as u64;
+    let result = (vcpu.regs.rax & 0xFF) | imm;
+    vcpu.regs.rax = (vcpu.regs.rax & !0xFF) | result;
+    flags::update_flags_logic(&mut vcpu.regs.rflags, result, 1);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// OR rAX, imm (0x0D)
+pub fn or_rax_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let imm_size = if op_size == 8 { 4 } else { op_size };
+    let imm = ctx.consume_imm(imm_size)?;
+    let imm = if op_size == 8 {
+        imm as i32 as i64 as u64
+    } else {
+        imm
+    };
+    let result = vcpu.get_reg(0, op_size) | imm;
+    vcpu.set_reg(0, result, op_size);
+    flags::update_flags_logic(&mut vcpu.regs.rflags, result, op_size);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// AND AL, imm8 (0x24)
+pub fn and_al_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let imm = ctx.consume_u8()? as u64;
+    let result = (vcpu.regs.rax & 0xFF) & imm;
+    vcpu.regs.rax = (vcpu.regs.rax & !0xFF) | result;
+    flags::update_flags_logic(&mut vcpu.regs.rflags, result, 1);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// AND rAX, imm (0x25)
+pub fn and_rax_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let imm_size = if op_size == 8 { 4 } else { op_size };
+    let imm = ctx.consume_imm(imm_size)?;
+    let imm = if op_size == 8 {
+        imm as i32 as i64 as u64
+    } else {
+        imm
+    };
+    let result = vcpu.get_reg(0, op_size) & imm;
+    vcpu.set_reg(0, result, op_size);
+    flags::update_flags_logic(&mut vcpu.regs.rflags, result, op_size);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// XOR AL, imm8 (0x34)
+pub fn xor_al_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let imm = ctx.consume_u8()? as u64;
+    let result = (vcpu.regs.rax & 0xFF) ^ imm;
+    vcpu.regs.rax = (vcpu.regs.rax & !0xFF) | result;
+    flags::update_flags_logic(&mut vcpu.regs.rflags, result, 1);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// XOR rAX, imm (0x35)
+pub fn xor_rax_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let imm_size = if op_size == 8 { 4 } else { op_size };
+    let imm = ctx.consume_imm(imm_size)?;
+    let imm = if op_size == 8 {
+        imm as i32 as i64 as u64
+    } else {
+        imm
+    };
+    let result = vcpu.get_reg(0, op_size) ^ imm;
+    vcpu.set_reg(0, result, op_size);
+    flags::update_flags_logic(&mut vcpu.regs.rflags, result, op_size);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
 /// XOR r/m8, r8 (0x30)
 pub fn xor_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
