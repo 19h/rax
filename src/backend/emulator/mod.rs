@@ -2,9 +2,7 @@
 //!
 //! This module provides a software-based x86_64 CPU emulator for cross-platform support.
 
-mod flags;
-mod mmu;
-mod vcpu;
+pub mod x86_64;
 
 use std::any::Any;
 use std::sync::Arc;
@@ -50,7 +48,7 @@ impl EmulatorVm {
 
 impl Vm for EmulatorVm {
     fn create_vcpu(&self, id: u32, mem: Arc<GuestMemoryMmap>) -> Result<Box<dyn VCpu>> {
-        Ok(Box::new(vcpu::EmulatorVcpu::new(id, mem)))
+        Ok(Box::new(x86_64::X86_64Vcpu::new(id, mem)))
     }
 
     fn set_irq_line(&self, irq: u32, level: bool) -> Result<()> {
