@@ -27,10 +27,14 @@ const GDT_ADDR: u64 = 0x500;
 const TSS_ADDR: u64 = 0x1000;
 const BOOT_STACK_ADDR: u64 = 0x8ff0;
 
-// Page table addresses for identity mapping
+// Page table addresses for identity mapping and kernel space
 const PML4_ADDR: u64 = 0x9000;
-const PDPTE_ADDR: u64 = 0xa000;
-const PDE_ADDR: u64 = 0xb000;
+const PDPTE_ADDR: u64 = 0xa000;      // PDPTE for PML4[0] - identity map first 1GB
+const PDE_ADDR: u64 = 0xb000;        // PDE for PDPTE[0] - 512 x 2MB pages = 1GB
+// Additional page tables for kernel virtual address space
+const PDPTE_KERNEL_ADDR: u64 = 0xc000;  // PDPTE for PML4[511] - kernel text
+const PDE_KERNEL_ADDR: u64 = 0xd000;    // PDE for PDPTE_KERNEL[510/511]
+const PDPTE_DIRECT_ADDR: u64 = 0xe000;  // PDPTE for PML4[273] - direct map
 
 const BOOT_CS: u16 = 0x10;
 const BOOT_DS: u16 = 0x18;
@@ -232,28 +236,70 @@ impl X86_64Arch {
         }
     }
 
-    /// Set up identity-mapped page tables for the first 1GB.
+    /// Set up page tables for identity mapping and kernel virtual address space.
+    ///
+    /// Creates the following mappings:
+    /// - PML4[0]: Identity maps first 1GB (virtual 0x0 -> physical 0x0)
+    /// - PML4[273]: Direct physical memory map at 0xffff888000000000
+    /// - PML4[511]: Kernel text area at 0xffffffff80000000
     fn setup_page_tables(mem: &GuestMemoryMmap) -> Result<()> {
-        // PML4 entry pointing to PDPTE
-        let pml4_entry: u64 = PDPTE_ADDR | 0x3; // Present + Writable
-        mem.write_obj(pml4_entry, GuestAddress(PML4_ADDR))?;
+        // Clear all page table pages first
+        let zero_page = [0u8; 4096];
+        mem.write_slice(&zero_page, GuestAddress(PML4_ADDR))?;
+        mem.write_slice(&zero_page, GuestAddress(PDPTE_ADDR))?;
+        mem.write_slice(&zero_page, GuestAddress(PDE_ADDR))?;
+        mem.write_slice(&zero_page, GuestAddress(PDPTE_KERNEL_ADDR))?;
+        mem.write_slice(&zero_page, GuestAddress(PDE_KERNEL_ADDR))?;
+        mem.write_slice(&zero_page, GuestAddress(PDPTE_DIRECT_ADDR))?;
 
-        // PDPTE entry pointing to PDE
-        let pdpte_entry: u64 = PDE_ADDR | 0x3; // Present + Writable
-        mem.write_obj(pdpte_entry, GuestAddress(PDPTE_ADDR))?;
+        // === PML4 entries ===
+        // PML4[0] - Identity map (virtual 0x0 - 0x7FFFFFFFFF -> physical 0x0 - 0x7FFFFFFFFF)
+        let pml4_entry_0: u64 = PDPTE_ADDR | 0x3; // Present + Writable
+        mem.write_obj(pml4_entry_0, GuestAddress(PML4_ADDR + 0 * 8))?;
 
-        // 512 PDE entries, each mapping 2MB (using huge pages)
+        // PML4[273] - Direct physical memory map at 0xffff888000000000
+        // Linux uses this for the "direct map" of all physical memory
+        let pml4_entry_273: u64 = PDPTE_DIRECT_ADDR | 0x3;
+        mem.write_obj(pml4_entry_273, GuestAddress(PML4_ADDR + 273 * 8))?;
+
+        // PML4[511] - Kernel text area at 0xffffffff80000000
+        let pml4_entry_511: u64 = PDPTE_KERNEL_ADDR | 0x3;
+        mem.write_obj(pml4_entry_511, GuestAddress(PML4_ADDR + 511 * 8))?;
+
+        // === PDPTE for identity mapping (PML4[0]) ===
+        // Use 1GB huge pages directly in PDPTE to cover more memory
+        // Each entry covers 1GB, we create 8 entries for 8GB coverage
+        for i in 0u64..8 {
+            let pdpte_entry: u64 = (i << 30) | 0x83; // Present + Writable + Huge (1GB page)
+            mem.write_obj(pdpte_entry, GuestAddress(PDPTE_ADDR + i * 8))?;
+        }
+
+        // === PDPTE for direct map (PML4[273] at 0xffff888000000000) ===
+        // The direct map provides physical memory access at high virtual addresses.
+        // Map first 8GB properly (8 entries), rest wrap to physical 0
         for i in 0u64..512 {
-            let pde_entry: u64 = (i << 21) | 0x83; // Present + Writable + Huge (2MB page)
-            let addr = GuestAddress(PDE_ADDR + i * 8);
-            mem.write_obj(pde_entry, addr)?;
+            let phys_addr = if i < 8 { i << 30 } else { 0 }; // First 8 entries = 8GB, rest = 0
+            let pdpte_entry: u64 = phys_addr | 0x83; // Present + Writable + Huge (1GB page)
+            mem.write_obj(pdpte_entry, GuestAddress(PDPTE_DIRECT_ADDR + i * 8))?;
+        }
+
+        // === PDPTE for kernel text (PML4[511] at 0xffffffff80000000) ===
+        // The kernel text area starts at 0xffffffff80000000
+        // Map all kernel virtual addresses back to physical 0 (first 1GB)
+        // This is a simplistic mapping that allows the kernel to access its code/data
+        // using high virtual addresses while the memory actually lives at low physical addresses.
+        //
+        // Use 1GB huge pages mapping all entries to physical 0 (wrapping around our memory)
+        for i in 0u64..512 {
+            // Map all PDPT entries to physical 0 - this means any access in this 512GB
+            // virtual range will access physical memory starting at 0
+            let pdpte_entry: u64 = 0x83; // Present + Writable + Huge (1GB page at physical 0)
+            mem.write_obj(pdpte_entry, GuestAddress(PDPTE_KERNEL_ADDR + i * 8))?;
         }
 
         debug!(
             pml4 = format!("{:#x}", PML4_ADDR),
-            pdpte = format!("{:#x}", PDPTE_ADDR),
-            pde = format!("{:#x}", PDE_ADDR),
-            "setup page tables for 1GB identity mapping"
+            "setup page tables: identity map + kernel space + direct map"
         );
         Ok(())
     }
@@ -339,6 +385,34 @@ impl Arch for X86_64Arch {
         let tss_addr = reserved_start + PAGE_SIZE;
 
         let loader_result = Self::load_kernel_image(mem, config)?;
+
+        // Patch the kernel's hardcoded physical address bits
+        // The decompressor uses 39 bits (512GB) which is too large for typical VMs
+        // Patch to 36 bits (64GB) which gives more reasonable buffer calculations
+        let kernel_base = loader_result.kernel_load.raw_value();
+        // The phys_bits variable is at a fixed offset in the decompressor
+        // We need to find and patch it after the kernel is loaded
+        // The value 0x27 (39) is at offset ~0x39394 from decompressor base
+        // The decompressor is at the kernel load address
+        if kernel_base >= 0x100000 {
+            // Search for the pattern and patch if found
+            let patch_offset = 0x3b394_u64; // Approximate offset where phys_bits is stored
+            let patch_addr = GuestAddress(kernel_base + patch_offset);
+            let new_phys_bits: u32 = 36; // 64GB - gives plenty of headroom
+            if mem.write_obj(new_phys_bits, patch_addr).is_ok() {
+                debug!("patched phys_bits to {} at {:#x}", new_phys_bits, patch_addr.raw_value());
+            }
+
+            // Also patch the hardcoded immediate in MOV RAX, 0x8000000000
+            // This is at offset ~0x21d87 from decompressor base
+            let imm_offset = 0x21d87_u64;
+            let imm_addr = GuestAddress(kernel_base + imm_offset);
+            let new_limit: u64 = 0x1000000000; // 64GB
+            if mem.write_obj(new_limit, imm_addr).is_ok() {
+                debug!("patched immediate to {:#x} at {:#x}", new_limit, imm_addr.raw_value());
+            }
+        }
+
         let setup_header = loader_result
             .setup_header
             .ok_or_else(|| Error::KernelLoad("missing setup header".to_string()))?;
@@ -370,6 +444,21 @@ impl Arch for X86_64Arch {
         params.hdr.loadflags |= 0x1 | 0x40; // LOADED_HIGH + KEEP_SEGMENTS
         params.hdr.cmd_line_ptr = CMDLINE_ADDR as u32;
         params.hdr.cmdline_size = cmdline_size;
+
+        // Set pref_address very close to the decompressor's boot_params copy location
+        // The bp_offset = pref_address - bp determines how much buffer is used for boot_params
+        // Remaining buffer = BOOT_PGT_SIZE - bp_offset is used for page tables
+        // With BOOT_PGT_SIZE ≈ 76KB, we want bp_offset ≈ 10KB to leave 66KB for page tables
+        // Decompressor copies boot_params to ~0x5072c20, so:
+        // pref_address = 0x5072c20 + 0x2800 (10KB) = 0x5075420 → round to 0x5076000
+        params.hdr.pref_address = 0x5076000;  // ~80.5MB - just 12KB above bp
+        let pref_addr = params.hdr.pref_address;
+        let init_sz = params.hdr.init_size;
+        debug!(
+            pref_address = format!("{:#x}", pref_addr),
+            init_size = format!("{:#x}", init_sz),
+            "set pref_address close to decompressor bp"
+        );
 
         let kernel_end = loader_result.kernel_end as u64;
         if kernel_end >= reserved_start {

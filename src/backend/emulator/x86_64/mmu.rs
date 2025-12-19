@@ -96,6 +96,14 @@ impl Mmu {
         // Read PML4 entry
         let pml4e = self.read_pte(pml4_base + pml4_index * 8)?;
         if pml4e & flags::PRESENT == 0 {
+            tracing::debug!(
+                vaddr = format!("{:#x}", vaddr),
+                cr3 = format!("{:#x}", sregs.cr3),
+                pml4_base = format!("{:#x}", pml4_base),
+                pml4_index = pml4_index,
+                pml4e = format!("{:#x}", pml4e),
+                "page fault: PML4E not present"
+            );
             return Err(Error::Emulator(format!(
                 "page fault: PML4E not present at vaddr {:#x}",
                 vaddr
