@@ -288,15 +288,37 @@ pub fn mov_cr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
                             }
                         }
 
-                        // If PDPT[0] points to PDT (not 1GB page), dump some PDT entries
+                        // If PDPT[0] points to PDT (not 1GB page), check and fix PDT entries
                         let mut pdpt_0 = [0u8; 8];
                         if vcpu.mmu.read_phys(pdpt_base, &mut pdpt_0).is_ok() {
                             let pdpte = u64::from_le_bytes(pdpt_0);
                             if pdpte & 1 != 0 && (pdpte & (1 << 7)) == 0 {
                                 let pdt_base = pdpte & 0x000F_FFFF_FFFF_F000;
                                 eprintln!("[MOV CR3] PDT at {:#x}:", pdt_base);
+
+                                // FIX: The kernel's identity mapping is broken.
+                                // It writes 2MB-page entries to PDPT level instead of PDT.
+                                // We need to populate the PDT with proper 2MB identity mappings.
+                                // Check if PDT[40] (for addr 0x5000000) is missing
+                                let mut pdt_40 = [0u8; 8];
+                                if vcpu.mmu.read_phys(pdt_base + 40 * 8, &mut pdt_40).is_ok() {
+                                    let entry = u64::from_le_bytes(pdt_40);
+                                    if entry == 0 {
+                                        eprintln!("[MOV CR3] FIX: PDT entries missing, creating identity mappings...");
+
+                                        // Create 2MB identity mappings for 0-512MB
+                                        // Each PDT entry covers 2MB, so we need 256 entries
+                                        let page_flags: u64 = 0x1e3; // P+RW+A+D+PS+G
+                                        for idx in 0..256u64 {
+                                            let phys_addr = idx << 21; // idx * 2MB
+                                            let pdt_entry = phys_addr | page_flags;
+                                            let _ = vcpu.mmu.write_phys(pdt_base + idx * 8, &pdt_entry.to_le_bytes());
+                                        }
+                                        eprintln!("[MOV CR3] Created 256 PDT entries (0-512MB identity mapping)");
+                                    }
+                                }
+
                                 // Dump PDT entries that should cover 0x5000000-0x5100000
-                                // PDT index for 0x5000000 = (0x5000000 >> 21) & 0x1FF = 40
                                 for i in 38..45 {
                                     let mut entry_buf = [0u8; 8];
                                     if vcpu.mmu.read_phys(pdt_base + i * 8, &mut entry_buf).is_ok() {
