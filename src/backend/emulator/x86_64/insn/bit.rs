@@ -164,9 +164,14 @@ pub fn bsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
         // Destination is undefined when source is 0
     } else {
         vcpu.regs.rflags &= !flags::bits::ZF;
-        let bit_size = (op_size * 8) as u32;
-        let bit_index = (bit_size - 1 - value.leading_zeros()) as u64;
-        vcpu.set_reg(reg, bit_index, op_size);
+        // Count leading zeros for the specific operand size
+        let bit_index = match op_size {
+            2 => 15 - (value as u16).leading_zeros(),
+            4 => 31 - (value as u32).leading_zeros(),
+            8 => 63 - value.leading_zeros(),
+            _ => 63 - value.leading_zeros(),
+        };
+        vcpu.set_reg(reg, bit_index as u64, op_size);
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -233,6 +238,81 @@ pub fn group8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             )));
         }
     }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// TZCNT r, r/m (F3 0F BC) - Count trailing zeros
+pub fn tzcnt(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+
+    let value = if is_memory {
+        vcpu.read_mem(addr, op_size)?
+    } else {
+        vcpu.get_reg(rm, op_size)
+    };
+
+    let bit_count = (op_size * 8) as u64;
+    let result = if value == 0 {
+        bit_count
+    } else {
+        value.trailing_zeros() as u64
+    };
+
+    vcpu.set_reg(reg, result, op_size);
+
+    // TZCNT flags: CF=1 if source is 0, ZF=1 if result is 0
+    vcpu.regs.rflags &= !(flags::bits::CF | flags::bits::ZF);
+    if value == 0 {
+        vcpu.regs.rflags |= flags::bits::CF;
+    }
+    if result == 0 {
+        vcpu.regs.rflags |= flags::bits::ZF;
+    }
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// LZCNT r, r/m (F3 0F BD) - Count leading zeros
+pub fn lzcnt(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+
+    let value = if is_memory {
+        vcpu.read_mem(addr, op_size)?
+    } else {
+        vcpu.get_reg(rm, op_size)
+    };
+
+    let bit_count = (op_size * 8) as u32;
+
+    // For LZCNT, we count leading zeros within the operand size
+    let result = if value == 0 {
+        bit_count as u64
+    } else {
+        // We need to count leading zeros for the specific operand size
+        let leading_zeros = match op_size {
+            2 => (value as u16).leading_zeros(),
+            4 => (value as u32).leading_zeros(),
+            8 => value.leading_zeros(),
+            _ => value.leading_zeros(),
+        };
+        leading_zeros as u64
+    };
+
+    vcpu.set_reg(reg, result, op_size);
+
+    // LZCNT flags: CF=1 if source is 0, ZF=1 if result is 0
+    vcpu.regs.rflags &= !(flags::bits::CF | flags::bits::ZF);
+    if value == 0 {
+        vcpu.regs.rflags |= flags::bits::CF;
+    }
+    if result == 0 {
+        vcpu.regs.rflags |= flags::bits::ZF;
+    }
+
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

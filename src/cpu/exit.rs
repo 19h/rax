@@ -58,6 +58,12 @@ pub enum VcpuExit {
     /// Internal error.
     InternalError,
 
+    /// Debug breakpoint (INT3 or debug exception).
+    Debug,
+
+    /// Software interrupt or exception.
+    Exception(u8),
+
     /// Unknown or unhandled exit.
     Unknown(String),
 }
