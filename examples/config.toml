@@ -1,0 +1,7 @@
+arch = "x86_64"
+backend = "kvm"
+memory = "512M"
+vcpus = 1
+kernel = "/path/to/bzImage"
+initrd = "/path/to/initrd"
+cmdline = "console=ttyS0 earlycon=uart,io,0x3f8 root=/dev/ram0"

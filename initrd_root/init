@@ -1,0 +1,22 @@
+#!/bin/sh
+export TERM=dumb
+export HOME=/root
+export PATH=/bin:/sbin
+
+echo "========================================"
+echo "  rax minimal Linux - Boot successful!"
+echo "========================================"
+echo
+echo "Mounting filesystems..."
+mount -t proc none /proc 2>/dev/null && echo "  /proc mounted" || echo "  /proc failed"
+mount -t sysfs none /sys 2>/dev/null && echo "  /sys mounted" || echo "  /sys failed"
+mount -t devtmpfs none /dev 2>/dev/null && echo "  /dev mounted" || echo "  /dev failed"
+echo
+echo "System info:"
+echo "  Kernel: $(uname -r 2>/dev/null || echo unknown)"
+echo "  Uptime: $(cat /proc/uptime 2>/dev/null | cut -d' ' -f1 || echo N/A) seconds"
+echo
+echo "Starting shell (type 'help' for commands)..."
+
+# Start shell with proper controlling terminal
+exec setsid cttyhack /bin/sh
