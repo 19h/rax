@@ -54,7 +54,8 @@ impl X86_64Vcpu {
 
         let modrm = bytes[0];
         let mod_bits = modrm >> 6;
-        let rm = (modrm & 0x07) | ctx.rex_b();
+        let rm_field = modrm & 0x07; // Raw r/m field without REX.B
+        let rm = rm_field | ctx.rex_b(); // r/m with REX.B applied (for register selection)
         let mut extra = 0;
 
         // mod == 3 means register direct, shouldn't call this function
@@ -66,7 +67,7 @@ impl X86_64Vcpu {
 
         let mut addr: u64;
 
-        if rm == 4 {
+        if rm_field == 4 {
             // SIB byte follows
             if bytes.len() < 2 {
                 return Err(Error::Emulator("ModR/M: missing SIB byte".to_string()));
@@ -101,7 +102,7 @@ impl X86_64Vcpu {
                 extra += 4;
                 addr = (addr as i64).wrapping_add(disp) as u64;
             }
-        } else if rm == 5 && mod_bits == 0 {
+        } else if rm_field == 5 && mod_bits == 0 {
             // RIP-relative addressing (64-bit mode)
             if bytes.len() < 5 {
                 return Err(Error::Emulator(
