@@ -192,6 +192,19 @@ impl Mmu {
             }
         }
 
+        // Watchpoint: trace writes to the ZSTD data area at 0x407b000
+        if paddr >= 0x407b000 && paddr < 0x407b010 {
+            use std::sync::atomic::{AtomicU64, Ordering};
+            static WATCH_COUNT: AtomicU64 = AtomicU64::new(0);
+            let count = WATCH_COUNT.fetch_add(1, Ordering::Relaxed);
+            if count < 20 {
+                // Read current RIP from the global tracker
+                let rip = crate::backend::emulator::x86_64::cpu::CURRENT_RIP.load(Ordering::Relaxed);
+                eprintln!("[MMU] WRITE to ZSTD area {:#x} len={} at RIP={:#x} data={:02x?}",
+                    paddr, buf.len(), rip, &buf[..std::cmp::min(16, buf.len())]);
+            }
+        }
+
         self.memory
             .write_slice(buf, GuestAddress(paddr))
             .map_err(|e| Error::Emulator(format!("failed to write at {:#x}: {}", paddr, e)))
