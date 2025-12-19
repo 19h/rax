@@ -1,0 +1,135 @@
+use crate::error::{Error, Result};
+
+pub trait IoDevice: Send {
+    fn read(&mut self, port: u16) -> u8;
+    fn write(&mut self, port: u16, value: u8);
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct IoRange {
+    pub base: u16,
+    pub len: u16,
+}
+
+impl IoRange {
+    pub fn contains(&self, port: u16) -> bool {
+        port >= self.base && port < self.base.saturating_add(self.len)
+    }
+
+    pub fn overlaps(&self, other: &IoRange) -> bool {
+        let end = self.base.saturating_add(self.len);
+        let other_end = other.base.saturating_add(other.len);
+        self.base < other_end && other.base < end
+    }
+}
+
+pub struct IoBus {
+    devices: Vec<(IoRange, Box<dyn IoDevice>)>,
+}
+
+impl IoBus {
+    pub fn new() -> Self {
+        IoBus { devices: Vec::new() }
+    }
+
+    pub fn register(&mut self, range: IoRange, dev: Box<dyn IoDevice>) -> Result<()> {
+        for (existing_range, _) in &self.devices {
+            if existing_range.overlaps(&range) {
+                return Err(Error::DeviceOverlap {
+                    base: range.base,
+                    len: range.len,
+                });
+            }
+        }
+        self.devices.push((range, dev));
+        Ok(())
+    }
+
+    pub fn read(&mut self, port: u16, data: &mut [u8]) -> Result<()> {
+        for (index, byte) in data.iter_mut().enumerate() {
+            let current_port = port.saturating_add(index as u16);
+            if let Some(dev_index) = self
+                .devices
+                .iter()
+                .position(|(range, _)| range.contains(current_port))
+            {
+                let device = &mut self.devices[dev_index].1;
+                *byte = device.read(current_port);
+            } else {
+                // Return 0xff for unhandled ports (no device present)
+                *byte = 0xff;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn write(&mut self, port: u16, data: &[u8]) -> Result<()> {
+        for (index, byte) in data.iter().enumerate() {
+            let current_port = port.saturating_add(index as u16);
+            if let Some(dev_index) = self
+                .devices
+                .iter()
+                .position(|(range, _)| range.contains(current_port))
+            {
+                let device = &mut self.devices[dev_index].1;
+                device.write(current_port, *byte);
+            }
+            // Silently ignore writes to unhandled ports
+        }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct DummyDevice {
+        last: u8,
+    }
+
+    impl IoDevice for DummyDevice {
+        fn read(&mut self, _port: u16) -> u8 {
+            self.last
+        }
+
+        fn write(&mut self, _port: u16, value: u8) {
+            self.last = value;
+        }
+    }
+
+    #[test]
+    fn register_rejects_overlap() {
+        let mut bus = IoBus::new();
+        bus.register(
+            IoRange { base: 0x3f8, len: 8 },
+            Box::new(DummyDevice { last: 0 }),
+        )
+        .unwrap();
+        let err = bus
+            .register(
+                IoRange { base: 0x3fc, len: 8 },
+                Box::new(DummyDevice { last: 0 }),
+            )
+            .unwrap_err();
+        match err {
+            Error::DeviceOverlap { .. } => {}
+            _ => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn read_write_dispatches() {
+        let mut bus = IoBus::new();
+        bus.register(
+            IoRange { base: 0x60, len: 1 },
+            Box::new(DummyDevice { last: 0 }),
+        )
+        .unwrap();
+
+        bus.write(0x60, &[0x5a]).unwrap();
+        let mut data = [0u8; 1];
+        bus.read(0x60, &mut data).unwrap();
+        assert_eq!(data[0], 0x5a);
+    }
+}
