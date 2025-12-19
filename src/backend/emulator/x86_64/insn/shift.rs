@@ -381,7 +381,9 @@ pub fn group2_rm_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Op
         (vcpu.read_mem(addr, op_size)?, Some(addr))
     };
 
-    let count = ctx.consume_u8()? & 0x3F;
+    // Mask count: 6 bits for 64-bit ops, 5 bits for 16/32-bit ops
+    let count_mask = if op_size == 8 { 0x3F } else { 0x1F };
+    let count = ctx.consume_u8()? & count_mask;
     let result = execute_shift(vcpu, op, val, count, op_size)?;
 
     if let Some(addr) = addr_opt {
@@ -480,7 +482,9 @@ pub fn group2_rm_cl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
     let modrm = ctx.consume_u8()?;
     let op = (modrm >> 3) & 0x07;
     let rm = (modrm & 0x07) | ctx.rex_b();
-    let count = (vcpu.regs.rcx & 0x3F) as u8;
+    // Mask count: 6 bits for 64-bit ops, 5 bits for 16/32-bit ops
+    let count_mask = if op_size == 8 { 0x3F } else { 0x1F };
+    let count = (vcpu.regs.rcx & count_mask) as u8;
 
     let (val, addr_opt) = if modrm >> 6 == 3 {
         (vcpu.get_reg(rm, op_size), None)
@@ -505,7 +509,9 @@ pub fn group2_rm_cl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
 pub fn shld_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let count = ctx.consume_u8()?;
+    // Mask count: 6 bits for 64-bit ops, 5 bits for 16/32-bit ops
+    let count_mask = if op_size == 8 { 0x3F } else { 0x1F };
+    let count = ctx.consume_u8()? & count_mask;
 
     let dst = if is_memory {
         vcpu.read_mem(addr, op_size)?
@@ -529,7 +535,9 @@ pub fn shld_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
 pub fn shld_cl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let count = (vcpu.regs.rcx & 0x3F) as u8;
+    // Mask count: 6 bits for 64-bit ops, 5 bits for 16/32-bit ops
+    let count_mask = if op_size == 8 { 0x3F } else { 0x1F };
+    let count = (vcpu.regs.rcx & count_mask) as u8;
 
     let dst = if is_memory {
         vcpu.read_mem(addr, op_size)?
@@ -553,7 +561,9 @@ pub fn shld_cl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 pub fn shrd_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let count = ctx.consume_u8()?;
+    // Mask count: 6 bits for 64-bit ops, 5 bits for 16/32-bit ops
+    let count_mask = if op_size == 8 { 0x3F } else { 0x1F };
+    let count = ctx.consume_u8()? & count_mask;
 
     let dst = if is_memory {
         vcpu.read_mem(addr, op_size)?
@@ -577,7 +587,9 @@ pub fn shrd_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
 pub fn shrd_cl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let count = (vcpu.regs.rcx & 0x3F) as u8;
+    // Mask count: 6 bits for 64-bit ops, 5 bits for 16/32-bit ops
+    let count_mask = if op_size == 8 { 0x3F } else { 0x1F };
+    let count = (vcpu.regs.rcx & count_mask) as u8;
 
     let dst = if is_memory {
         vcpu.read_mem(addr, op_size)?

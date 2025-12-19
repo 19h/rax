@@ -166,3 +166,107 @@ pub fn set_cf_of(rflags: &mut u64, cf: bool, of: bool) {
     if cf { *rflags |= bits::CF; }
     if of { *rflags |= bits::OF; }
 }
+
+/// Update flags after ADC (add with carry) operation.
+/// This properly handles the carry input to compute CF correctly.
+pub fn update_flags_adc(rflags: &mut u64, a: u64, b: u64, cf_in: bool, result: u64, size: u8) {
+    let mask = match size {
+        1 => 0xFFu64,
+        2 => 0xFFFFu64,
+        4 => 0xFFFF_FFFFu64,
+        8 => u64::MAX,
+        _ => u64::MAX,
+    };
+
+    let a = a & mask;
+    let b = b & mask;
+    let result = result & mask;
+
+    // CF: carry out - occurs if a + b overflows OR if a + b + cf overflows
+    // Equivalent: (result < a) || (cf_in && result == a)
+    let cf = result < a || (cf_in && result == a);
+
+    // ZF: result is zero
+    let zf = compute_zf(result, size);
+
+    // SF: sign of result
+    let sf = compute_sf(result, size);
+
+    // PF: parity of low byte
+    let pf = compute_pf(result);
+
+    // OF: signed overflow - check if sign changed unexpectedly
+    // For a + b + cf, the signed result is wrong if both operands have the same sign
+    // and the result has a different sign
+    let sign_bit = match size {
+        1 => 0x80u64,
+        2 => 0x8000u64,
+        4 => 0x8000_0000u64,
+        8 => 0x8000_0000_0000_0000u64,
+        _ => 0x8000_0000_0000_0000u64,
+    };
+    // Same logic as ADD: overflow if a and b have same sign, but result has different sign
+    let of = ((a ^ result) & (b ^ result) & sign_bit) != 0;
+
+    // AF: auxiliary carry (from bit 3 to bit 4)
+    let af = ((a ^ b ^ result) & 0x10) != 0;
+
+    // Clear and set flags
+    *rflags &= !(bits::CF | bits::ZF | bits::SF | bits::PF | bits::OF | bits::AF);
+    if cf { *rflags |= bits::CF; }
+    if zf { *rflags |= bits::ZF; }
+    if sf { *rflags |= bits::SF; }
+    if pf { *rflags |= bits::PF; }
+    if of { *rflags |= bits::OF; }
+    if af { *rflags |= bits::AF; }
+}
+
+/// Update flags after SBB (subtract with borrow) operation.
+/// This properly handles the borrow input to compute CF correctly.
+pub fn update_flags_sbb(rflags: &mut u64, a: u64, b: u64, cf_in: bool, result: u64, size: u8) {
+    let mask = match size {
+        1 => 0xFFu64,
+        2 => 0xFFFFu64,
+        4 => 0xFFFF_FFFFu64,
+        8 => u64::MAX,
+        _ => u64::MAX,
+    };
+
+    let a = a & mask;
+    let b = b & mask;
+    let result = result & mask;
+
+    // CF (borrow): set if a < b OR if a == b and cf_in
+    let cf = a < b || (cf_in && a == b);
+
+    // ZF: result is zero
+    let zf = compute_zf(result, size);
+
+    // SF: sign of result
+    let sf = compute_sf(result, size);
+
+    // PF: parity of low byte
+    let pf = compute_pf(result);
+
+    // OF: signed overflow for subtraction
+    let sign_bit = match size {
+        1 => 0x80u64,
+        2 => 0x8000u64,
+        4 => 0x8000_0000u64,
+        8 => 0x8000_0000_0000_0000u64,
+        _ => 0x8000_0000_0000_0000u64,
+    };
+    let of = ((a ^ b) & (a ^ result) & sign_bit) != 0;
+
+    // AF: auxiliary carry
+    let af = ((a ^ b ^ result) & 0x10) != 0;
+
+    // Clear and set flags
+    *rflags &= !(bits::CF | bits::ZF | bits::SF | bits::PF | bits::OF | bits::AF);
+    if cf { *rflags |= bits::CF; }
+    if zf { *rflags |= bits::ZF; }
+    if sf { *rflags |= bits::SF; }
+    if pf { *rflags |= bits::PF; }
+    if of { *rflags |= bits::OF; }
+    if af { *rflags |= bits::AF; }
+}
