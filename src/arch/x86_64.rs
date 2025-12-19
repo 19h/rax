@@ -416,9 +416,20 @@ impl Arch for X86_64Arch {
 
         // For 64-bit boot, use startup_64 at offset 0x200 from the 32-bit entry
         let entry_point_64 = loader_result.kernel_load.raw_value() + 0x200;
+
+        // Debug: read bytes at 64-bit entry point
+        let mut entry64_bytes = [0u8; 16];
+        mem.read_slice(&mut entry64_bytes, GuestAddress(entry_point_64))
+            .map_err(|e| Error::KernelLoad(format!("failed to read entry64: {e}")))?;
+        let mut bytes_at_262 = [0u8; 16];
+        mem.read_slice(&mut bytes_at_262, GuestAddress(loader_result.kernel_load.raw_value() + 0x262))
+            .map_err(|e| Error::KernelLoad(format!("failed to read 0x262: {e}")))?;
+
         debug!(
             entry32 = format!("{:#x}", loader_result.kernel_load.raw_value()),
             entry64 = format!("{:#x}", entry_point_64),
+            entry64_bytes = format!("{:02x?}", entry64_bytes),
+            bytes_at_262 = format!("{:02x?}", bytes_at_262),
             "kernel entry points"
         );
 
