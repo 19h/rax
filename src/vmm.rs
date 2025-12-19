@@ -166,6 +166,13 @@ impl Vmm {
                     vcpu.complete_io_in(&data);
                 }
                 VcpuExit::IoOut { port, data } => {
+                    use std::sync::atomic::{AtomicU64, Ordering};
+                    static IO_COUNT: AtomicU64 = AtomicU64::new(0);
+                    let count = IO_COUNT.fetch_add(1, Ordering::Relaxed) + 1;
+                    if count <= 30 {
+                        eprintln!("[IO] OUT port={:#x} data={:02x?}", port, data);
+                    }
+
                     debug!(port = port, size = data.len(), "PIO write");
                     let is_serial = port >= SERIAL_BASE && port < SERIAL_BASE + 8;
                     if is_serial {
@@ -176,6 +183,11 @@ impl Vmm {
                         if port == SERIAL_BASE {
                             let _ = self.vm.set_irq_line(SERIAL_IRQ, true);
                             let _ = self.vm.set_irq_line(SERIAL_IRQ, false);
+                        }
+                    } else if port == 0xE9 {
+                        // Bochs debug port - output directly
+                        for byte in &data {
+                            eprint!("{}", *byte as char);
                         }
                     } else {
                         self.io_bus.write(port, &data)?;
