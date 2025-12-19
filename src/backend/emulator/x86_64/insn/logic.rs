@@ -496,6 +496,179 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 flags::update_flags_sub(&mut vcpu.regs.rflags, 0, val, result, op_size);
             }
         }
+        4 => {
+            // MUL r/m (unsigned multiply)
+            // DX:AX = AX * r/m (or 64-bit equivalent)
+            let val = if modrm >> 6 == 3 {
+                vcpu.get_reg(rm, op_size)
+            } else {
+                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+                ctx.cursor = modrm_start + 1 + extra;
+                vcpu.read_mem(addr, op_size)?
+            };
+
+            match op_size {
+                2 => {
+                    let result = (vcpu.regs.rax as u16 as u32) * (val as u16 as u32);
+                    vcpu.regs.rax = (vcpu.regs.rax & !0xFFFF) | (result & 0xFFFF) as u64;
+                    vcpu.regs.rdx = (vcpu.regs.rdx & !0xFFFF) | ((result >> 16) & 0xFFFF) as u64;
+                    let overflow = (result >> 16) != 0;
+                    flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+                }
+                4 => {
+                    let result = (vcpu.regs.rax as u32 as u64) * (val as u32 as u64);
+                    vcpu.regs.rax = (result & 0xFFFFFFFF) as u64;
+                    vcpu.regs.rdx = (vcpu.regs.rdx & !0xFFFFFFFF) | ((result >> 32) & 0xFFFFFFFF);
+                    let overflow = (result >> 32) != 0;
+                    flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+                }
+                8 => {
+                    let result = (vcpu.regs.rax as u128) * (val as u128);
+                    vcpu.regs.rax = result as u64;
+                    vcpu.regs.rdx = (result >> 64) as u64;
+                    let overflow = (result >> 64) != 0;
+                    flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+                }
+                _ => {}
+            }
+        }
+        5 => {
+            // IMUL r/m (signed multiply, one-operand form)
+            let val = if modrm >> 6 == 3 {
+                vcpu.get_reg(rm, op_size)
+            } else {
+                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+                ctx.cursor = modrm_start + 1 + extra;
+                vcpu.read_mem(addr, op_size)?
+            };
+
+            match op_size {
+                2 => {
+                    let result = (vcpu.regs.rax as i16 as i32) * (val as i16 as i32);
+                    vcpu.regs.rax = (vcpu.regs.rax & !0xFFFF) | (result as u16 as u64);
+                    vcpu.regs.rdx = (vcpu.regs.rdx & !0xFFFF) | ((result >> 16) as u16 as u64);
+                    let overflow = result as i16 as i32 != result;
+                    flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+                }
+                4 => {
+                    let result = (vcpu.regs.rax as i32 as i64) * (val as i32 as i64);
+                    vcpu.regs.rax = result as u32 as u64;
+                    vcpu.regs.rdx = (vcpu.regs.rdx & !0xFFFFFFFF) | ((result >> 32) as u32 as u64);
+                    let overflow = result as i32 as i64 != result;
+                    flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+                }
+                8 => {
+                    let result = (vcpu.regs.rax as i64 as i128) * (val as i64 as i128);
+                    vcpu.regs.rax = result as u64;
+                    vcpu.regs.rdx = (result >> 64) as u64;
+                    let overflow = result as i64 as i128 != result;
+                    flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+                }
+                _ => {}
+            }
+        }
+        6 => {
+            // DIV r/m (unsigned divide)
+            let divisor = if modrm >> 6 == 3 {
+                vcpu.get_reg(rm, op_size)
+            } else {
+                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+                ctx.cursor = modrm_start + 1 + extra;
+                vcpu.read_mem(addr, op_size)?
+            };
+
+            if divisor == 0 {
+                return Err(Error::Emulator("divide by zero".to_string()));
+            }
+
+            match op_size {
+                2 => {
+                    let dividend = ((vcpu.regs.rdx as u16 as u32) << 16) | (vcpu.regs.rax as u16 as u32);
+                    let divisor = divisor as u16 as u32;
+                    let quotient = dividend / divisor;
+                    let remainder = dividend % divisor;
+                    if quotient > 0xFFFF {
+                        return Err(Error::Emulator("divide overflow".to_string()));
+                    }
+                    vcpu.regs.rax = (vcpu.regs.rax & !0xFFFF) | (quotient as u64);
+                    vcpu.regs.rdx = (vcpu.regs.rdx & !0xFFFF) | (remainder as u64);
+                }
+                4 => {
+                    let dividend = ((vcpu.regs.rdx as u32 as u64) << 32) | (vcpu.regs.rax as u32 as u64);
+                    let divisor = divisor as u32 as u64;
+                    let quotient = dividend / divisor;
+                    let remainder = dividend % divisor;
+                    if quotient > 0xFFFFFFFF {
+                        return Err(Error::Emulator("divide overflow".to_string()));
+                    }
+                    vcpu.regs.rax = quotient as u32 as u64;
+                    vcpu.regs.rdx = (vcpu.regs.rdx & !0xFFFFFFFF) | (remainder as u32 as u64);
+                }
+                8 => {
+                    let dividend = ((vcpu.regs.rdx as u128) << 64) | (vcpu.regs.rax as u128);
+                    let divisor = divisor as u128;
+                    let quotient = dividend / divisor;
+                    let remainder = dividend % divisor;
+                    if quotient > u64::MAX as u128 {
+                        return Err(Error::Emulator("divide overflow".to_string()));
+                    }
+                    vcpu.regs.rax = quotient as u64;
+                    vcpu.regs.rdx = remainder as u64;
+                }
+                _ => {}
+            }
+        }
+        7 => {
+            // IDIV r/m (signed divide)
+            let divisor = if modrm >> 6 == 3 {
+                vcpu.get_reg(rm, op_size)
+            } else {
+                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+                ctx.cursor = modrm_start + 1 + extra;
+                vcpu.read_mem(addr, op_size)?
+            };
+
+            if divisor == 0 {
+                return Err(Error::Emulator("divide by zero".to_string()));
+            }
+
+            match op_size {
+                2 => {
+                    let dividend = (((vcpu.regs.rdx as u16 as u32) << 16) | (vcpu.regs.rax as u16 as u32)) as i32;
+                    let divisor = divisor as i16 as i32;
+                    let quotient = dividend / divisor;
+                    let remainder = dividend % divisor;
+                    if quotient < i16::MIN as i32 || quotient > i16::MAX as i32 {
+                        return Err(Error::Emulator("divide overflow".to_string()));
+                    }
+                    vcpu.regs.rax = (vcpu.regs.rax & !0xFFFF) | (quotient as u16 as u64);
+                    vcpu.regs.rdx = (vcpu.regs.rdx & !0xFFFF) | (remainder as u16 as u64);
+                }
+                4 => {
+                    let dividend = (((vcpu.regs.rdx as u32 as u64) << 32) | (vcpu.regs.rax as u32 as u64)) as i64;
+                    let divisor = divisor as i32 as i64;
+                    let quotient = dividend / divisor;
+                    let remainder = dividend % divisor;
+                    if quotient < i32::MIN as i64 || quotient > i32::MAX as i64 {
+                        return Err(Error::Emulator("divide overflow".to_string()));
+                    }
+                    vcpu.regs.rax = quotient as u32 as u64;
+                    vcpu.regs.rdx = (vcpu.regs.rdx & !0xFFFFFFFF) | (remainder as u32 as u64);
+                }
+                8 => {
+                    let dividend = (((vcpu.regs.rdx as u128) << 64) | (vcpu.regs.rax as u128)) as i128;
+                    let divisor = divisor as i64 as i128;
+                    let quotient = dividend / divisor;
+                    let remainder = dividend % divisor;
+                    if quotient < i64::MIN as i128 || quotient > i64::MAX as i128 {
+                        return Err(Error::Emulator("divide overflow".to_string()));
+                    }
+                    vcpu.regs.rax = quotient as u64;
+                    vcpu.regs.rdx = remainder as u64;
+                }
+                _ => {}
+            }
+        }
         _ => return Err(Error::Emulator(format!("unimplemented 0xF7 /op: {}", op))),
     }
     vcpu.regs.rip += ctx.cursor as u64;
