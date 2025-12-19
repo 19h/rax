@@ -159,3 +159,10 @@ pub fn update_flags_logic(rflags: &mut u64, result: u64, size: u8) {
     if sf { *rflags |= bits::SF; }
     if pf { *rflags |= bits::PF; }
 }
+
+/// Set CF and OF flags (used by MUL/IMUL).
+pub fn set_cf_of(rflags: &mut u64, cf: bool, of: bool) {
+    *rflags &= !(bits::CF | bits::OF);
+    if cf { *rflags |= bits::CF; }
+    if of { *rflags |= bits::OF; }
+}
