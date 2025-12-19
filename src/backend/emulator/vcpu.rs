@@ -338,7 +338,7 @@ impl EmulatorVcpu {
                         if modrm >> 6 == 3 {
                             self.set_reg(rm, value as u64, 1);
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             self.mmu.write_u8(addr, value, &self.sregs)?;
                         }
@@ -358,7 +358,7 @@ impl EmulatorVcpu {
                         let value = if modrm >> 6 == 3 {
                             self.get_reg(rm, 1) as u8
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             self.mmu.read_u8(addr, &self.sregs)?
                         };
@@ -379,7 +379,7 @@ impl EmulatorVcpu {
                         let value = if modrm >> 6 == 3 {
                             self.get_reg(rm, 2) as u16
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             self.mmu.read_u16(addr, &self.sregs)?
                         };
@@ -400,7 +400,7 @@ impl EmulatorVcpu {
                         let value = if modrm >> 6 == 3 {
                             self.get_reg(rm, 1) as u8
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             self.mmu.read_u8(addr, &self.sregs)?
                         };
@@ -423,7 +423,7 @@ impl EmulatorVcpu {
                         let value = if modrm >> 6 == 3 {
                             self.get_reg(rm, 2) as u16
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             self.mmu.read_u16(addr, &self.sregs)?
                         };
@@ -447,7 +447,7 @@ impl EmulatorVcpu {
                         let src = if modrm >> 6 == 3 {
                             self.get_reg(rm, op_size)
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             self.read_mem(addr, op_size)?
                         };
@@ -476,6 +476,16 @@ impl EmulatorVcpu {
                         self.regs.rip += cursor as u64;
                     }
 
+                    // ENDBR64/ENDBR32 (0x0F 0x1E) - CET instructions, treat as NOP
+                    0x1E => {
+                        if cursor >= bytes.len() {
+                            return Err(Error::Emulator("ENDBR: missing ModR/M".to_string()));
+                        }
+                        // Skip the ModR/M byte (FA=ENDBR64, FB=ENDBR32)
+                        cursor += 1;
+                        self.regs.rip += cursor as u64;
+                    }
+
                     // NOP (0x1F with ModR/M for multi-byte NOP)
                     0x1F => {
                         if cursor >= bytes.len() {
@@ -485,7 +495,7 @@ impl EmulatorVcpu {
                         cursor += 1;
                         // Skip any additional bytes for memory operand
                         if modrm >> 6 != 3 {
-                            let (_, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (_, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                         }
                         self.regs.rip += cursor as u64;
@@ -506,7 +516,7 @@ impl EmulatorVcpu {
                                 if modrm >> 6 == 3 {
                                     return Err(Error::Emulator("LGDT: requires memory operand".to_string()));
                                 }
-                                let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                                let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                                 cursor += extra;
                                 // Read 10 bytes: 2-byte limit + 8-byte base
                                 let limit = self.mmu.read_u16(addr, &self.sregs)?;
@@ -520,7 +530,7 @@ impl EmulatorVcpu {
                                 if modrm >> 6 == 3 {
                                     return Err(Error::Emulator("LIDT: requires memory operand".to_string()));
                                 }
-                                let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                                let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                                 cursor += extra;
                                 // Read 10 bytes: 2-byte limit + 8-byte base
                                 let limit = self.mmu.read_u16(addr, &self.sregs)?;
@@ -534,7 +544,7 @@ impl EmulatorVcpu {
                                 if modrm >> 6 == 3 {
                                     return Err(Error::Emulator("INVLPG: requires memory operand".to_string()));
                                 }
-                                let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                                let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                                 cursor += extra;
                                 // Invalidate TLB entry for address
                                 self.mmu.invlpg(addr);
@@ -547,6 +557,46 @@ impl EmulatorVcpu {
                                 )));
                             }
                         }
+                    }
+
+                    // MOV r64, CRn (0x0F 0x20)
+                    0x20 => {
+                        if cursor >= bytes.len() {
+                            return Err(Error::Emulator("MOV r, CR: missing ModR/M".to_string()));
+                        }
+                        let modrm = bytes[cursor];
+                        cursor += 1;
+                        let cr = (modrm >> 3) & 0x07;
+                        let rm = (modrm & 0x07) | (rex.map_or(0, |r| (r & 0x01) << 3));
+                        let value = match cr {
+                            0 => self.sregs.cr0,
+                            2 => self.sregs.cr2,
+                            3 => self.sregs.cr3,
+                            4 => self.sregs.cr4,
+                            _ => return Err(Error::Emulator(format!("MOV r, CR{}: unsupported", cr))),
+                        };
+                        self.set_reg(rm, value, 8);
+                        self.regs.rip += cursor as u64;
+                    }
+
+                    // MOV CRn, r64 (0x0F 0x22)
+                    0x22 => {
+                        if cursor >= bytes.len() {
+                            return Err(Error::Emulator("MOV CR, r: missing ModR/M".to_string()));
+                        }
+                        let modrm = bytes[cursor];
+                        cursor += 1;
+                        let cr = (modrm >> 3) & 0x07;
+                        let rm = (modrm & 0x07) | (rex.map_or(0, |r| (r & 0x01) << 3));
+                        let value = self.get_reg(rm, 8);
+                        match cr {
+                            0 => self.sregs.cr0 = value,
+                            2 => self.sregs.cr2 = value,
+                            3 => self.sregs.cr3 = value,
+                            4 => self.sregs.cr4 = value,
+                            _ => return Err(Error::Emulator(format!("MOV CR{}, r: unsupported", cr))),
+                        }
+                        self.regs.rip += cursor as u64;
                     }
 
                     // BT r/m, r (0x0F 0xA3)
@@ -563,7 +613,7 @@ impl EmulatorVcpu {
                         let value = if modrm >> 6 == 3 {
                             self.get_reg(rm, op_size)
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             self.read_mem(addr, op_size)?
                         };
@@ -597,7 +647,7 @@ impl EmulatorVcpu {
                             let new_val = v | (1 << bit_pos);
                             self.set_reg(rm, new_val, op_size);
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             let v = self.read_mem(addr, op_size)?;
                             let cf_bit = (v >> bit_pos) & 1;
@@ -627,7 +677,7 @@ impl EmulatorVcpu {
                             let new_val = v & !(1 << bit_pos);
                             self.set_reg(rm, new_val, op_size);
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             let v = self.read_mem(addr, op_size)?;
                             let cf_bit = (v >> bit_pos) & 1;
@@ -657,7 +707,7 @@ impl EmulatorVcpu {
                             let new_val = v ^ (1 << bit_pos);
                             self.set_reg(rm, new_val, op_size);
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             let v = self.read_mem(addr, op_size)?;
                             let cf_bit = (v >> bit_pos) & 1;
@@ -681,7 +731,7 @@ impl EmulatorVcpu {
                         let value = if modrm >> 6 == 3 {
                             self.get_reg(rm, op_size)
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             self.read_mem(addr, op_size)?
                         };
@@ -710,7 +760,7 @@ impl EmulatorVcpu {
                         let value = if modrm >> 6 == 3 {
                             self.get_reg(rm, op_size)
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             self.read_mem(addr, op_size)?
                         };
@@ -740,7 +790,7 @@ impl EmulatorVcpu {
                         let (value, addr_opt) = if modrm >> 6 == 3 {
                             (self.get_reg(rm, op_size), None)
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             (self.read_mem(addr, op_size)?, Some(addr))
                         };
@@ -896,10 +946,12 @@ impl EmulatorVcpu {
 
                 if in_long_mode {
                     // In 64-bit mode, 0x62 is EVEX prefix (AVX-512)
-                    // For now, return an error indicating we need AVX-512 support
+                    // Show full debug info
+                    let all_bytes: Vec<u8> = bytes.iter().take(16).cloned().collect();
+                    let context_bytes: Vec<u8> = bytes[cursor..].iter().take(8).cloned().collect();
                     return Err(Error::Emulator(format!(
-                        "EVEX (AVX-512) instruction at RIP={:#x} not yet supported",
-                        self.regs.rip
+                        "EVEX at RIP={:#x}, all fetched bytes: {:02x?}, bytes after 0x62: {:02x?}, cursor={}",
+                        self.regs.rip, all_bytes, context_bytes, cursor
                     )));
                 } else {
                     // In 32-bit mode, this is BOUND (bounds check)
@@ -910,7 +962,7 @@ impl EmulatorVcpu {
                     cursor += 1;
                     // Skip memory operand (BOUND always uses memory)
                     if modrm >> 6 != 3 {
-                        let (_, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                        let (_, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                         cursor += extra;
                     }
                     // BOUND doesn't do anything if bounds are OK (we assume they are)
@@ -957,7 +1009,7 @@ impl EmulatorVcpu {
                     self.get_reg(rm, 2) as u16
                 } else {
                     // Memory source
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.mmu.read_u16(addr, &self.sregs)?
                 };
@@ -980,7 +1032,7 @@ impl EmulatorVcpu {
                 if modrm >> 6 == 3 {
                     self.set_reg(rm, value as u64, 2);
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.mmu.write_u16(addr, value, &self.sregs)?;
                 }
@@ -995,7 +1047,7 @@ impl EmulatorVcpu {
                 let modrm = bytes[cursor];
                 let reg = ((modrm >> 3) & 0x07) | (rex.map_or(0, |r| (r & 0x04) << 1));
 
-                let (addr, extra) = self.decode_modrm_addr(&bytes[cursor..], rex)?;
+                let (addr, extra) = self.decode_modrm_addr(&bytes[cursor..], rex, cursor)?;
                 cursor += 1 + extra;
                 self.set_reg(reg, addr, op_size);
                 self.regs.rip += cursor as u64;
@@ -1015,7 +1067,7 @@ impl EmulatorVcpu {
                 if modrm >> 6 == 3 {
                     self.set_reg(rm, value, op_size);
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.write_mem(addr, value, op_size)?;
                 }
@@ -1035,7 +1087,7 @@ impl EmulatorVcpu {
                 let value = if modrm >> 6 == 3 {
                     self.get_reg(rm, op_size)
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.read_mem(addr, op_size)?
                 };
@@ -1057,7 +1109,7 @@ impl EmulatorVcpu {
                 if modrm >> 6 == 3 {
                     self.set_reg(rm, value as u64, 1);
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.mmu.write_u8(addr, value, &self.sregs)?;
                 }
@@ -1077,7 +1129,7 @@ impl EmulatorVcpu {
                 let value = if modrm >> 6 == 3 {
                     self.get_reg(rm, 1) as u8
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.mmu.read_u8(addr, &self.sregs)?
                 };
@@ -1102,7 +1154,7 @@ impl EmulatorVcpu {
                     self.set_reg(rm, result, 1);
                     flags::update_flags_add(&mut self.regs.rflags, dst, src, result, 1);
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     let dst = self.mmu.read_u8(addr, &self.sregs)? as u64;
                     let result = dst.wrapping_add(src) & 0xFF;
@@ -1129,7 +1181,7 @@ impl EmulatorVcpu {
                     self.set_reg(rm, result, op_size);
                     flags::update_flags_add(&mut self.regs.rflags, dst, src, result, op_size);
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     let dst = self.read_mem(addr, op_size)?;
                     let result = dst.wrapping_add(src);
@@ -1153,7 +1205,7 @@ impl EmulatorVcpu {
                 let src = if modrm >> 6 == 3 {
                     self.get_reg(rm, 1)
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.mmu.read_u8(addr, &self.sregs)? as u64
                 };
@@ -1177,7 +1229,7 @@ impl EmulatorVcpu {
                 let src = if modrm >> 6 == 3 {
                     self.get_reg(rm, op_size)
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.read_mem(addr, op_size)?
                 };
@@ -1204,7 +1256,7 @@ impl EmulatorVcpu {
                     self.set_reg(rm, result, op_size);
                     flags::update_flags_sub(&mut self.regs.rflags, dst, src, result, op_size);
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     let dst = self.read_mem(addr, op_size)?;
                     let result = dst.wrapping_sub(src);
@@ -1228,13 +1280,36 @@ impl EmulatorVcpu {
                 let src = if modrm >> 6 == 3 {
                     self.get_reg(rm, op_size)
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.read_mem(addr, op_size)?
                 };
                 let result = dst.wrapping_sub(src);
                 self.set_reg(reg, result, op_size);
                 flags::update_flags_sub(&mut self.regs.rflags, dst, src, result, op_size);
+                self.regs.rip += cursor as u64;
+            }
+
+            // CMP r/m8, r8 (0x38)
+            0x38 => {
+                if cursor >= bytes.len() {
+                    return Err(Error::Emulator("CMP r/m8, r8: missing ModR/M".to_string()));
+                }
+                let modrm = bytes[cursor];
+                cursor += 1;
+                let reg = ((modrm >> 3) & 0x07) | (rex.map_or(0, |r| (r & 0x04) << 1));
+                let rm = (modrm & 0x07) | (rex.map_or(0, |r| (r & 0x01) << 3));
+                let src = self.get_reg(reg, 1) as u8;
+
+                let dst = if modrm >> 6 == 3 {
+                    self.get_reg(rm, 1) as u8
+                } else {
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
+                    cursor += extra;
+                    self.mmu.read_u8(addr, &self.sregs)?
+                };
+                let result = (dst as u8).wrapping_sub(src) as u64;
+                flags::update_flags_sub(&mut self.regs.rflags, dst as u64, src as u64, result, 1);
                 self.regs.rip += cursor as u64;
             }
 
@@ -1252,7 +1327,7 @@ impl EmulatorVcpu {
                 let dst = if modrm >> 6 == 3 {
                     self.get_reg(rm, op_size)
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.read_mem(addr, op_size)?
                 };
@@ -1275,12 +1350,35 @@ impl EmulatorVcpu {
                 let src = if modrm >> 6 == 3 {
                     self.get_reg(rm, op_size)
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.read_mem(addr, op_size)?
                 };
                 let result = dst.wrapping_sub(src);
                 flags::update_flags_sub(&mut self.regs.rflags, dst, src, result, op_size);
+                self.regs.rip += cursor as u64;
+            }
+
+            // TEST r/m8, r8 (0x84)
+            0x84 => {
+                if cursor >= bytes.len() {
+                    return Err(Error::Emulator("TEST r/m8, r8: missing ModR/M".to_string()));
+                }
+                let modrm = bytes[cursor];
+                cursor += 1;
+                let reg = ((modrm >> 3) & 0x07) | (rex.map_or(0, |r| (r & 0x04) << 1));
+                let rm = (modrm & 0x07) | (rex.map_or(0, |r| (r & 0x01) << 3));
+                let src = self.get_reg(reg, 1) as u8;
+
+                let dst = if modrm >> 6 == 3 {
+                    self.get_reg(rm, 1) as u8
+                } else {
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
+                    cursor += extra;
+                    self.mmu.read_u8(addr, &self.sregs)?
+                };
+                let result = (dst & src) as u64;
+                flags::update_flags_logic(&mut self.regs.rflags, result, 1);
                 self.regs.rip += cursor as u64;
             }
 
@@ -1298,7 +1396,7 @@ impl EmulatorVcpu {
                 let dst = if modrm >> 6 == 3 {
                     self.get_reg(rm, op_size)
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.read_mem(addr, op_size)?
                 };
@@ -1324,7 +1422,7 @@ impl EmulatorVcpu {
                     self.set_reg(rm, result, op_size);
                     flags::update_flags_logic(&mut self.regs.rflags, result, op_size);
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     let dst = self.read_mem(addr, op_size)?;
                     let result = dst & src;
@@ -1348,7 +1446,7 @@ impl EmulatorVcpu {
                 let src = if modrm >> 6 == 3 {
                     self.get_reg(rm, op_size)
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.read_mem(addr, op_size)?
                 };
@@ -1375,7 +1473,7 @@ impl EmulatorVcpu {
                     self.set_reg(rm, result, op_size);
                     flags::update_flags_logic(&mut self.regs.rflags, result, op_size);
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     let dst = self.read_mem(addr, op_size)?;
                     let result = dst | src;
@@ -1399,7 +1497,7 @@ impl EmulatorVcpu {
                 let src = if modrm >> 6 == 3 {
                     self.get_reg(rm, op_size)
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.read_mem(addr, op_size)?
                 };
@@ -1426,7 +1524,7 @@ impl EmulatorVcpu {
                     self.set_reg(rm, result, op_size);
                     flags::update_flags_logic(&mut self.regs.rflags, result, op_size);
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     let dst = self.read_mem(addr, op_size)?;
                     let result = dst ^ src;
@@ -1450,7 +1548,7 @@ impl EmulatorVcpu {
                 let src = if modrm >> 6 == 3 {
                     self.get_reg(rm, op_size)
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.read_mem(addr, op_size)?
                 };
@@ -1460,12 +1558,95 @@ impl EmulatorVcpu {
                 self.regs.rip += cursor as u64;
             }
 
+            // Group 1: Immediate byte operations (0x80) - r/m8, imm8
+            0x80 => {
+                if cursor >= bytes.len() {
+                    return Err(Error::Emulator("0x80 group: missing ModR/M".to_string()));
+                }
+                let modrm = bytes[cursor];
+                let modrm_start = cursor;
+                cursor += 1;
+                let op = (modrm >> 3) & 0x07;
+                let rm = (modrm & 0x07) | (rex.map_or(0, |r| (r & 0x01) << 3));
+
+                let dst = if modrm >> 6 == 3 {
+                    self.get_reg(rm, 1)
+                } else {
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
+                    cursor += extra;
+                    self.mmu.read_u8(addr, &self.sregs)? as u64
+                };
+
+                if cursor >= bytes.len() {
+                    return Err(Error::Emulator("0x80 group: missing immediate".to_string()));
+                }
+                let imm = bytes[cursor] as u64;
+                cursor += 1;
+
+                let (result, update_dest) = match op {
+                    0 => { // ADD
+                        let r = (dst as u8).wrapping_add(imm as u8) as u64;
+                        flags::update_flags_add(&mut self.regs.rflags, dst, imm, r, 1);
+                        (r, true)
+                    }
+                    1 => { // OR
+                        let r = (dst | imm) & 0xFF;
+                        flags::update_flags_logic(&mut self.regs.rflags, r, 1);
+                        (r, true)
+                    }
+                    2 => { // ADC
+                        let cf = if self.regs.rflags & flags::bits::CF != 0 { 1u8 } else { 0 };
+                        let r = (dst as u8).wrapping_add(imm as u8).wrapping_add(cf) as u64;
+                        flags::update_flags_add(&mut self.regs.rflags, dst, imm.wrapping_add(cf as u64), r, 1);
+                        (r, true)
+                    }
+                    3 => { // SBB
+                        let cf = if self.regs.rflags & flags::bits::CF != 0 { 1u8 } else { 0 };
+                        let r = (dst as u8).wrapping_sub(imm as u8).wrapping_sub(cf) as u64;
+                        flags::update_flags_sub(&mut self.regs.rflags, dst, imm.wrapping_add(cf as u64), r, 1);
+                        (r, true)
+                    }
+                    4 => { // AND
+                        let r = (dst & imm) & 0xFF;
+                        flags::update_flags_logic(&mut self.regs.rflags, r, 1);
+                        (r, true)
+                    }
+                    5 => { // SUB
+                        let r = (dst as u8).wrapping_sub(imm as u8) as u64;
+                        flags::update_flags_sub(&mut self.regs.rflags, dst, imm, r, 1);
+                        (r, true)
+                    }
+                    6 => { // XOR
+                        let r = (dst ^ imm) & 0xFF;
+                        flags::update_flags_logic(&mut self.regs.rflags, r, 1);
+                        (r, true)
+                    }
+                    7 => { // CMP
+                        let r = (dst as u8).wrapping_sub(imm as u8) as u64;
+                        flags::update_flags_sub(&mut self.regs.rflags, dst, imm, r, 1);
+                        (r, false)
+                    }
+                    _ => return Err(Error::Emulator(format!("invalid 0x80 /op: {}", op))),
+                };
+
+                if update_dest {
+                    if modrm >> 6 == 3 {
+                        self.set_reg(rm, result, 1);
+                    } else {
+                        let (addr, _) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
+                        self.mmu.write_u8(addr, result as u8, &self.sregs)?;
+                    }
+                }
+                self.regs.rip += cursor as u64;
+            }
+
             // Group 1: Immediate operations (0x83) - r/m, imm8 sign-extended
             0x83 => {
                 if cursor >= bytes.len() {
                     return Err(Error::Emulator("0x83 group: missing ModR/M".to_string()));
                 }
                 let modrm = bytes[cursor];
+                let modrm_start = cursor;
                 cursor += 1;
                 let op = (modrm >> 3) & 0x07;
                 let rm = (modrm & 0x07) | (rex.map_or(0, |r| (r & 0x01) << 3));
@@ -1473,7 +1654,7 @@ impl EmulatorVcpu {
                 let dst = if modrm >> 6 == 3 {
                     self.get_reg(rm, op_size)
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.read_mem(addr, op_size)?
                 };
@@ -1535,7 +1716,7 @@ impl EmulatorVcpu {
                         self.set_reg(rm, result, op_size);
                     } else {
                         // Re-decode address (we already consumed the modrm)
-                        let (addr, _) = self.decode_modrm_addr(&bytes[1..], rex)?;
+                        let (addr, _) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
                         self.write_mem(addr, result, op_size)?;
                     }
                 }
@@ -1556,7 +1737,7 @@ impl EmulatorVcpu {
                 let dst = if modrm >> 6 == 3 {
                     self.get_reg(rm, op_size)
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.read_mem(addr, op_size)?
                 };
@@ -1605,7 +1786,7 @@ impl EmulatorVcpu {
                     if modrm >> 6 == 3 {
                         self.set_reg(rm, result, op_size);
                     } else {
-                        let (addr, _) = self.decode_modrm_addr(&bytes[modrm_start..], rex)?;
+                        let (addr, _) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
                         self.write_mem(addr, result, op_size)?;
                     }
                 }
@@ -1627,7 +1808,7 @@ impl EmulatorVcpu {
                         let dst = if modrm >> 6 == 3 {
                             self.get_reg(rm, 1)
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             self.mmu.read_u8(addr, &self.sregs)? as u64
                         };
@@ -1644,7 +1825,7 @@ impl EmulatorVcpu {
                             let val = self.get_reg(rm, 1);
                             self.set_reg(rm, !val, 1);
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             let val = self.mmu.read_u8(addr, &self.sregs)?;
                             self.mmu.write_u8(addr, !val, &self.sregs)?;
@@ -1657,7 +1838,7 @@ impl EmulatorVcpu {
                             self.set_reg(rm, result as u64, 1);
                             flags::update_flags_sub(&mut self.regs.rflags, 0, val as u64, result as u64, 1);
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             let val = self.mmu.read_u8(addr, &self.sregs)?;
                             let result = (val as i8).wrapping_neg() as u8;
@@ -1686,7 +1867,7 @@ impl EmulatorVcpu {
                         let dst = if modrm >> 6 == 3 {
                             self.get_reg(rm, op_size)
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             self.read_mem(addr, op_size)?
                         };
@@ -1702,7 +1883,7 @@ impl EmulatorVcpu {
                             let val = self.get_reg(rm, op_size);
                             self.set_reg(rm, !val, op_size);
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             let val = self.read_mem(addr, op_size)?;
                             self.write_mem(addr, !val, op_size)?;
@@ -1721,7 +1902,7 @@ impl EmulatorVcpu {
                             self.set_reg(rm, result, op_size);
                             flags::update_flags_sub(&mut self.regs.rflags, 0, val, result, op_size);
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[modrm_start..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
                             cursor += extra;
                             let val = self.read_mem(addr, op_size)?;
                             let result = match op_size {
@@ -1756,7 +1937,7 @@ impl EmulatorVcpu {
                     self.set_reg(reg, rm_val, op_size);
                     self.set_reg(rm, reg_val, op_size);
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     let mem_val = self.read_mem(addr, op_size)?;
                     self.set_reg(reg, mem_val, op_size);
@@ -1791,7 +1972,7 @@ impl EmulatorVcpu {
                 let value = if modrm >> 6 == 3 {
                     self.get_reg(rm, 4) as u32
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     self.mmu.read_u32(addr, &self.sregs)?
                 };
@@ -1821,7 +2002,7 @@ impl EmulatorVcpu {
                             self.set_reg(rm, result, op_size);
                             flags::update_flags_add(&mut self.regs.rflags, val, 1, result, op_size);
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             let val = self.read_mem(addr, op_size)?;
                             let result = val.wrapping_add(1);
@@ -1837,7 +2018,7 @@ impl EmulatorVcpu {
                             self.set_reg(rm, result, op_size);
                             flags::update_flags_sub(&mut self.regs.rflags, val, 1, result, op_size);
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             let val = self.read_mem(addr, op_size)?;
                             let result = val.wrapping_sub(1);
@@ -1850,7 +2031,7 @@ impl EmulatorVcpu {
                         let target = if modrm >> 6 == 3 {
                             self.get_reg(rm, 8)
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             self.read_mem(addr, 8)?
                         };
@@ -1864,7 +2045,7 @@ impl EmulatorVcpu {
                         let target = if modrm >> 6 == 3 {
                             self.get_reg(rm, 8)
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             self.read_mem(addr, 8)?
                         };
@@ -1876,7 +2057,7 @@ impl EmulatorVcpu {
                         let val = if modrm >> 6 == 3 {
                             self.get_reg(rm, 8)
                         } else {
-                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                            let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                             cursor += extra;
                             self.read_mem(addr, 8)?
                         };
@@ -1908,7 +2089,7 @@ impl EmulatorVcpu {
                     cursor += imm_size as usize;
                     self.set_reg(rm, imm, op_size);
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     let imm = self.read_immediate(&bytes[cursor..], imm_size)?;
                     let imm = if op_size == 8 { imm as i32 as i64 as u64 } else { imm };
@@ -1935,7 +2116,7 @@ impl EmulatorVcpu {
                     cursor += 1;
                     self.set_reg(rm, imm as u64, 1);
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex, cursor - 1)?;
                     cursor += extra;
                     if cursor >= bytes.len() {
                         return Err(Error::Emulator("MOV r/m8, imm8: missing immediate".to_string()));
@@ -1953,6 +2134,7 @@ impl EmulatorVcpu {
                     return Err(Error::Emulator("0xC0: missing ModR/M".to_string()));
                 }
                 let modrm = bytes[cursor];
+                let modrm_start = cursor;
                 cursor += 1;
                 let op = (modrm >> 3) & 0x07;
                 let rm = (modrm & 0x07) | (rex.map_or(0, |r| (r & 0x01) << 3));
@@ -1960,7 +2142,7 @@ impl EmulatorVcpu {
                 let val = if modrm >> 6 == 3 {
                     self.get_reg(rm, 1) as u8
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
                     cursor += extra;
                     self.mmu.read_u8(addr, &self.sregs)?
                 };
@@ -1976,7 +2158,7 @@ impl EmulatorVcpu {
                 if modrm >> 6 == 3 {
                     self.set_reg(rm, result as u64, 1);
                 } else {
-                    let (addr, _) = self.decode_modrm_addr(&bytes[1..], rex)?;
+                    let (addr, _) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
                     self.mmu.write_u8(addr, result, &self.sregs)?;
                 }
                 self.regs.rip += cursor as u64;
@@ -1988,6 +2170,7 @@ impl EmulatorVcpu {
                     return Err(Error::Emulator("0xC1: missing ModR/M".to_string()));
                 }
                 let modrm = bytes[cursor];
+                let modrm_start = cursor;
                 cursor += 1;
                 let op = (modrm >> 3) & 0x07;
                 let rm = (modrm & 0x07) | (rex.map_or(0, |r| (r & 0x01) << 3));
@@ -1995,7 +2178,7 @@ impl EmulatorVcpu {
                 let val = if modrm >> 6 == 3 {
                     self.get_reg(rm, op_size)
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
                     cursor += extra;
                     self.read_mem(addr, op_size)?
                 };
@@ -2011,7 +2194,7 @@ impl EmulatorVcpu {
                 if modrm >> 6 == 3 {
                     self.set_reg(rm, result, op_size);
                 } else {
-                    let (addr, _) = self.decode_modrm_addr(&bytes[1..], rex)?;
+                    let (addr, _) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
                     self.write_mem(addr, result, op_size)?;
                 }
                 self.regs.rip += cursor as u64;
@@ -2023,6 +2206,7 @@ impl EmulatorVcpu {
                     return Err(Error::Emulator("0xD0: missing ModR/M".to_string()));
                 }
                 let modrm = bytes[cursor];
+                let modrm_start = cursor;
                 cursor += 1;
                 let op = (modrm >> 3) & 0x07;
                 let rm = (modrm & 0x07) | (rex.map_or(0, |r| (r & 0x01) << 3));
@@ -2030,7 +2214,7 @@ impl EmulatorVcpu {
                 let val = if modrm >> 6 == 3 {
                     self.get_reg(rm, 1) as u8
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
                     cursor += extra;
                     self.mmu.read_u8(addr, &self.sregs)?
                 };
@@ -2040,7 +2224,7 @@ impl EmulatorVcpu {
                 if modrm >> 6 == 3 {
                     self.set_reg(rm, result as u64, 1);
                 } else {
-                    let (addr, _) = self.decode_modrm_addr(&bytes[1..], rex)?;
+                    let (addr, _) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
                     self.mmu.write_u8(addr, result, &self.sregs)?;
                 }
                 self.regs.rip += cursor as u64;
@@ -2052,6 +2236,7 @@ impl EmulatorVcpu {
                     return Err(Error::Emulator("0xD1: missing ModR/M".to_string()));
                 }
                 let modrm = bytes[cursor];
+                let modrm_start = cursor;
                 cursor += 1;
                 let op = (modrm >> 3) & 0x07;
                 let rm = (modrm & 0x07) | (rex.map_or(0, |r| (r & 0x01) << 3));
@@ -2059,7 +2244,7 @@ impl EmulatorVcpu {
                 let val = if modrm >> 6 == 3 {
                     self.get_reg(rm, op_size)
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
                     cursor += extra;
                     self.read_mem(addr, op_size)?
                 };
@@ -2069,7 +2254,7 @@ impl EmulatorVcpu {
                 if modrm >> 6 == 3 {
                     self.set_reg(rm, result, op_size);
                 } else {
-                    let (addr, _) = self.decode_modrm_addr(&bytes[1..], rex)?;
+                    let (addr, _) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
                     self.write_mem(addr, result, op_size)?;
                 }
                 self.regs.rip += cursor as u64;
@@ -2081,6 +2266,7 @@ impl EmulatorVcpu {
                     return Err(Error::Emulator("0xD2: missing ModR/M".to_string()));
                 }
                 let modrm = bytes[cursor];
+                let modrm_start = cursor;
                 cursor += 1;
                 let op = (modrm >> 3) & 0x07;
                 let rm = (modrm & 0x07) | (rex.map_or(0, |r| (r & 0x01) << 3));
@@ -2089,7 +2275,7 @@ impl EmulatorVcpu {
                 let val = if modrm >> 6 == 3 {
                     self.get_reg(rm, 1) as u8
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
                     cursor += extra;
                     self.mmu.read_u8(addr, &self.sregs)?
                 };
@@ -2099,7 +2285,7 @@ impl EmulatorVcpu {
                 if modrm >> 6 == 3 {
                     self.set_reg(rm, result as u64, 1);
                 } else {
-                    let (addr, _) = self.decode_modrm_addr(&bytes[1..], rex)?;
+                    let (addr, _) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
                     self.mmu.write_u8(addr, result, &self.sregs)?;
                 }
                 self.regs.rip += cursor as u64;
@@ -2111,6 +2297,7 @@ impl EmulatorVcpu {
                     return Err(Error::Emulator("0xD3: missing ModR/M".to_string()));
                 }
                 let modrm = bytes[cursor];
+                let modrm_start = cursor;
                 cursor += 1;
                 let op = (modrm >> 3) & 0x07;
                 let rm = (modrm & 0x07) | (rex.map_or(0, |r| (r & 0x01) << 3));
@@ -2119,7 +2306,7 @@ impl EmulatorVcpu {
                 let val = if modrm >> 6 == 3 {
                     self.get_reg(rm, op_size)
                 } else {
-                    let (addr, extra) = self.decode_modrm_addr(&bytes[cursor - 1..], rex)?;
+                    let (addr, extra) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
                     cursor += extra;
                     self.read_mem(addr, op_size)?
                 };
@@ -2129,7 +2316,7 @@ impl EmulatorVcpu {
                 if modrm >> 6 == 3 {
                     self.set_reg(rm, result, op_size);
                 } else {
-                    let (addr, _) = self.decode_modrm_addr(&bytes[1..], rex)?;
+                    let (addr, _) = self.decode_modrm_addr(&bytes[modrm_start..], rex, modrm_start)?;
                     self.write_mem(addr, result, op_size)?;
                 }
                 self.regs.rip += cursor as u64;
@@ -3052,7 +3239,7 @@ impl EmulatorVcpu {
 
     /// Decode ModR/M byte to get effective address.
     /// Returns (address, bytes_consumed_after_modrm).
-    fn decode_modrm_addr(&self, bytes: &[u8], rex: Option<u8>) -> Result<(u64, usize)> {
+    fn decode_modrm_addr(&self, bytes: &[u8], rex: Option<u8>, cursor_before: usize) -> Result<(u64, usize)> {
         if bytes.is_empty() {
             return Err(Error::Emulator("ModR/M: no bytes".to_string()));
         }
@@ -3109,9 +3296,9 @@ impl EmulatorVcpu {
             }
             let disp = i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]) as i64;
             extra += 4;
-            // Note: RIP should point to the next instruction, but we don't know the full length here
-            // The caller will need to add the instruction length to get the correct RIP
-            addr = (self.regs.rip as i64).wrapping_add(disp) as u64;
+            // RIP points to the next instruction: current RIP + cursor_before + modrm(1) + disp32(4)
+            let rip_after = self.regs.rip as i64 + cursor_before as i64 + 1 + 4;
+            addr = rip_after.wrapping_add(disp) as u64;
         } else {
             // Regular register indirect
             addr = self.get_reg(rm, 8);
