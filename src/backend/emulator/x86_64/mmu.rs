@@ -174,6 +174,24 @@ impl Mmu {
 
     /// Write bytes to guest memory (physical address).
     pub fn write_phys(&self, paddr: u64, buf: &[u8]) -> Result<()> {
+        // Trace writes to page table buffer region (0x5087000 - 0x50a7000)
+        if paddr >= 0x5087000 && paddr < 0x50a7000 && buf.len() == 8 {
+            use std::sync::atomic::{AtomicU64, Ordering};
+            static PT_WRITE_COUNT: AtomicU64 = AtomicU64::new(0);
+            let count = PT_WRITE_COUNT.fetch_add(1, Ordering::Relaxed);
+            if count < 50 {
+                let value = u64::from_le_bytes(buf.try_into().unwrap_or([0; 8]));
+                if value != 0 {
+                    // Calculate which table and index this is
+                    let table_offset = paddr - 0x5087000;
+                    let table_num = table_offset / 0x1000;
+                    let entry_idx = (table_offset % 0x1000) / 8;
+                    eprintln!("[MMU] Write PT region: {:#x} = {:#x} (table {}, entry {})",
+                        paddr, value, table_num, entry_idx);
+                }
+            }
+        }
+
         self.memory
             .write_slice(buf, GuestAddress(paddr))
             .map_err(|e| Error::Emulator(format!("failed to write at {:#x}: {}", paddr, e)))
