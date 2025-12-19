@@ -1,0 +1,23 @@
+[package]
+name = "rax"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+default = ["kvm"]
+kvm = ["kvm-bindings", "kvm-ioctls"]
+
+[dependencies]
+clap = { version = "4.5.53", features = ["derive"] }
+linux-loader = { version = "0.13.2", features = ["bzimage"] }
+serde = { version = "1.0.228", features = ["derive"] }
+thiserror = "2.0.17"
+toml = "0.9.10"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+vm-memory = { version = "0.17.1", features = ["backend-mmap"] }
+
+# KVM support (Linux only)
+[target.'cfg(target_os = "linux")'.dependencies]
+kvm-bindings = { version = "0.14.0", optional = true }
+kvm-ioctls = { version = "0.24.0", optional = true }
