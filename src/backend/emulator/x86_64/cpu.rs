@@ -214,10 +214,14 @@ impl X86_64Vcpu {
     /// Main instruction dispatch.
     fn execute(&mut self, opcode: u8, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         match opcode {
-            // NOP
+            // NOP / PAUSE (F3 90)
             0x90 => {
-                self.regs.rip += ctx.cursor as u64;
-                Ok(None)
+                if ctx.rep_prefix == Some(0xF3) {
+                    insn::system::pause(self, ctx)
+                } else {
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
             }
 
             // HLT - halt and exit to caller
@@ -275,6 +279,12 @@ impl X86_64Vcpu {
             0x03 => insn::arith::add_r_rm(self, ctx),
             0x04 => insn::arith::add_al_imm8(self, ctx),
             0x05 => insn::arith::add_rax_imm(self, ctx),
+            0x10 => insn::arith::adc_rm8_r8(self, ctx),
+            0x11 => insn::arith::adc_rm_r(self, ctx),
+            0x12 => insn::arith::adc_r8_rm8(self, ctx),
+            0x13 => insn::arith::adc_r_rm(self, ctx),
+            0x14 => insn::arith::adc_al_imm8(self, ctx),
+            0x15 => insn::arith::adc_rax_imm(self, ctx),
             0x18 => insn::arith::sbb_rm8_r8(self, ctx),
             0x19 => insn::arith::sbb_rm_r(self, ctx),
             0x1A => insn::arith::sbb_r8_rm8(self, ctx),
@@ -340,13 +350,28 @@ impl X86_64Vcpu {
             0xFB => insn::system::sti(self, ctx),
             0xF8 => insn::system::clc(self, ctx),
             0xF9 => insn::system::stc(self, ctx),
+            0xF5 => insn::system::cmc(self, ctx),
             0xFC => insn::system::cld(self, ctx),
             0xFD => insn::system::std(self, ctx),
             0x9C => insn::system::pushf(self, ctx),
             0x9D => insn::system::popf(self, ctx),
+            0x9E => insn::system::sahf(self, ctx),
+            0x9F => insn::system::lahf(self, ctx),
+
+            // Loop instructions
+            0xE0 => insn::control::loopnz(self, ctx),
+            0xE1 => insn::control::loopz(self, ctx),
+            0xE2 => insn::control::loop_rel8(self, ctx),
+
+            // Interrupts
+            0xCC => insn::control::int3(self, ctx),
+            0xCD => insn::control::int_imm8(self, ctx),
 
             // Misc
+            0xC8 => insn::control::enter(self, ctx),
             0xC9 => insn::data::leave(self, ctx),
+            0xD7 => insn::control::xlat(self, ctx),
+            0xFE => insn::control::group4(self, ctx),
             0xFF => insn::control::group5(self, ctx),
             0x62 => insn::data::bound_or_evex(self, ctx),
 
@@ -377,10 +402,12 @@ impl X86_64Vcpu {
             // System
             0xA2 => insn::system::cpuid(self, ctx),
             0x30 => insn::system::wrmsr(self, ctx),
+            0x31 => insn::system::rdtsc(self, ctx),
             0x32 => insn::system::rdmsr(self, ctx),
-            0x01 => insn::system::group7(self, ctx),
+            0x01 => self.execute_0f01(ctx),
             0x20 => insn::system::mov_r_cr(self, ctx),
             0x22 => insn::system::mov_cr_r(self, ctx),
+            0xAE => self.execute_0fae(ctx),
 
             // Control flow
             0x40..=0x4F => insn::control::cmovcc(self, ctx, opcode2 & 0x0F),
@@ -403,9 +430,36 @@ impl X86_64Vcpu {
             0xB3 => insn::bit::btr_rm_r(self, ctx),
             0xBB => insn::bit::btc_rm_r(self, ctx),
             0xBA => insn::bit::group8(self, ctx),
-            0xBC => insn::bit::bsf(self, ctx),
-            0xBD => insn::bit::bsr(self, ctx),
             0xB8 => insn::bit::popcnt(self, ctx),
+            // BSF/TZCNT and BSR/LZCNT share opcodes - F3 prefix differentiates
+            0xBC => {
+                if ctx.rep_prefix == Some(0xF3) {
+                    insn::bit::tzcnt(self, ctx)
+                } else {
+                    insn::bit::bsf(self, ctx)
+                }
+            }
+            0xBD => {
+                if ctx.rep_prefix == Some(0xF3) {
+                    insn::bit::lzcnt(self, ctx)
+                } else {
+                    insn::bit::bsr(self, ctx)
+                }
+            }
+
+            // CMPXCHG
+            0xB0 => insn::data::cmpxchg_rm8_r8(self, ctx),
+            0xB1 => insn::data::cmpxchg_rm_r(self, ctx),
+
+            // XADD
+            0xC0 => insn::data::xadd_rm8_r8(self, ctx),
+            0xC1 => insn::data::xadd_rm_r(self, ctx),
+
+            // SHLD/SHRD
+            0xA4 => insn::shift::shld_imm8(self, ctx),
+            0xA5 => insn::shift::shld_cl(self, ctx),
+            0xAC => insn::shift::shrd_imm8(self, ctx),
+            0xAD => insn::shift::shrd_cl(self, ctx),
 
             // NOP variants
             0x1E => insn::system::endbr(self, ctx),
@@ -415,6 +469,65 @@ impl X86_64Vcpu {
                 "unimplemented 0x0F opcode: {:#04x} at RIP={:#x}",
                 opcode2, self.regs.rip
             ))),
+        }
+    }
+
+    /// Execute 0x0F 0x01 opcodes (Group 7 + special instructions)
+    fn execute_0f01(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        // Peek at modrm to determine instruction
+        let modrm = ctx.peek_u8()?;
+
+        // Check for special instructions with mod=3
+        if modrm >> 6 == 3 {
+            match modrm {
+                0xF9 => {
+                    // RDTSCP (0x0F 0x01 0xF9)
+                    ctx.consume_u8()?; // consume modrm
+                    insn::system::rdtscp(self, ctx)
+                }
+                _ => insn::system::group7(self, ctx),
+            }
+        } else {
+            insn::system::group7(self, ctx)
+        }
+    }
+
+    /// Execute 0x0F 0xAE opcodes (Group 15 - fences, CLFLUSH, etc.)
+    fn execute_0fae(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let modrm = ctx.consume_u8()?;
+        let reg_op = (modrm >> 3) & 0x07;
+
+        // Memory fences (mod=3, specific reg values)
+        if modrm >> 6 == 3 {
+            match reg_op {
+                5 => insn::system::lfence(self, ctx), // LFENCE (E8-EF)
+                6 => insn::system::mfence(self, ctx), // MFENCE (F0-F7)
+                7 => insn::system::sfence(self, ctx), // SFENCE (F8-FF)
+                _ => {
+                    return Err(Error::Emulator(format!(
+                        "unimplemented 0F AE /{} (mod=3) at RIP={:#x}",
+                        reg_op, self.regs.rip
+                    )));
+                }
+            }
+        } else {
+            // Memory operand forms (CLFLUSH, LDMXCSR, STMXCSR, etc.)
+            match reg_op {
+                7 => {
+                    // CLFLUSH/CLFLUSHOPT - treat as NOP
+                    let modrm_start = ctx.cursor - 1;
+                    let (_, extra) = self.decode_modrm_addr(ctx, modrm_start)?;
+                    ctx.cursor = modrm_start + 1 + extra;
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                _ => {
+                    return Err(Error::Emulator(format!(
+                        "unimplemented 0F AE /{} at RIP={:#x}",
+                        reg_op, self.regs.rip
+                    )));
+                }
+            }
         }
     }
 
