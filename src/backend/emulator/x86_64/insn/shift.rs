@@ -14,6 +14,7 @@ fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Result<u
     let count = count & 0x1F;
     let cf_bit = flags::bits::CF;
     let of_bit = flags::bits::OF;
+    let old_cf = (vcpu.regs.rflags & cf_bit) != 0;
 
     let (result, cf, of) = match op {
         0 => {
@@ -37,6 +38,52 @@ fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Result<u
                 false
             };
             (result, cf, of)
+        }
+        2 => {
+            // RCL - Rotate through carry left
+            // 9-bit value: [CF:val], rotate left by count
+            let count = count % 9; // 9-bit rotation period
+            if count == 0 {
+                return Ok(val);
+            }
+            // Build 9-bit value: bit 8 = old CF, bits 0-7 = val
+            let mut wide = ((old_cf as u16) << 8) | (val as u16);
+            // Rotate left by count within 9 bits
+            for _ in 0..count {
+                let msb = (wide >> 8) & 1;
+                wide = ((wide << 1) & 0x1FF) | msb;
+            }
+            let result = (wide & 0xFF) as u8;
+            let new_cf = (wide >> 8) & 1 != 0;
+            let of = if count == 1 {
+                ((result >> 7) != 0) ^ new_cf
+            } else {
+                false
+            };
+            (result, new_cf, of)
+        }
+        3 => {
+            // RCR - Rotate through carry right
+            // 9-bit value: [CF:val], rotate right by count
+            let count = count % 9; // 9-bit rotation period
+            if count == 0 {
+                return Ok(val);
+            }
+            // Build 9-bit value: bit 8 = old CF, bits 0-7 = val
+            let mut wide = ((old_cf as u16) << 8) | (val as u16);
+            // Rotate right by count within 9 bits
+            for _ in 0..count {
+                let lsb = wide & 1;
+                wide = (wide >> 1) | (lsb << 8);
+            }
+            let result = (wide & 0xFF) as u8;
+            let new_cf = (wide >> 8) & 1 != 0;
+            let of = if count == 1 {
+                ((result >> 7) ^ ((result >> 6) & 1)) != 0
+            } else {
+                false
+            };
+            (result, new_cf, of)
         }
         4 => {
             // SHL/SAL
@@ -86,6 +133,10 @@ fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Result<u
         _ => return Err(Error::Emulator(format!("unimplemented shift8 op: {}", op))),
     };
 
+    // Update ZF, SF, PF first (this clears CF and OF)
+    flags::update_flags_logic(&mut vcpu.regs.rflags, result as u64, 1);
+
+    // Now set CF and OF based on the shift/rotate operation
     if cf {
         vcpu.regs.rflags |= cf_bit;
     } else {
@@ -96,7 +147,6 @@ fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Result<u
     } else {
         vcpu.regs.rflags &= !of_bit;
     }
-    flags::update_flags_logic(&mut vcpu.regs.rflags, result as u64, 1);
 
     Ok(result)
 }
@@ -114,6 +164,7 @@ fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u8) -
     };
     let cf_bit = flags::bits::CF;
     let of_bit = flags::bits::OF;
+    let old_cf = (vcpu.regs.rflags & cf_bit) != 0;
 
     let (result, cf, of) = match op {
         0 => {
@@ -147,6 +198,61 @@ fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u8) -
                 false
             };
             (result, cf, of)
+        }
+        2 => {
+            // RCL - Rotate through carry left
+            // (bits+1)-bit rotation through carry
+            let rotate_size = bits + 1;
+            let count = (count as u32) % rotate_size;
+            if count == 0 {
+                return Ok(val & mask);
+            }
+
+            // We need to perform a (bits+1)-bit rotation through carry
+            // For simplicity, use a loop-based approach
+            let mut result = val & mask;
+            let mut carry = old_cf;
+
+            for _ in 0..count {
+                let msb = (result >> (bits - 1)) & 1 != 0;
+                result = ((result << 1) | (carry as u64)) & mask;
+                carry = msb;
+            }
+
+            let new_cf = carry;
+            let of = if count == 1 {
+                ((result >> (bits - 1)) & 1 != 0) ^ new_cf
+            } else {
+                false
+            };
+            (result, new_cf, of)
+        }
+        3 => {
+            // RCR - Rotate through carry right
+            // (bits+1)-bit rotation through carry
+            let rotate_size = bits + 1;
+            let count = (count as u32) % rotate_size;
+            if count == 0 {
+                return Ok(val & mask);
+            }
+
+            let mut result = val & mask;
+            let mut carry = old_cf;
+
+            for _ in 0..count {
+                let lsb = result & 1 != 0;
+                result = (result >> 1) | ((carry as u64) << (bits - 1));
+                carry = lsb;
+            }
+
+            let new_cf = carry;
+            let of = if count == 1 {
+                // OF = MSB XOR (MSB-1)
+                ((result >> (bits - 1)) ^ (result >> (bits - 2))) & 1 != 0
+            } else {
+                false
+            };
+            (result & mask, new_cf, of)
         }
         4 => {
             // SHL/SAL
@@ -214,6 +320,10 @@ fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u8) -
         _ => return Err(Error::Emulator(format!("unimplemented shift op: {}", op))),
     };
 
+    // Update ZF, SF, PF first (this clears CF and OF)
+    flags::update_flags_logic(&mut vcpu.regs.rflags, result, size);
+
+    // Now set CF and OF based on the shift/rotate operation
     if cf {
         vcpu.regs.rflags |= cf_bit;
     } else {
@@ -224,7 +334,6 @@ fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u8) -
     } else {
         vcpu.regs.rflags &= !of_bit;
     }
-    flags::update_flags_logic(&mut vcpu.regs.rflags, result, size);
 
     Ok(result)
 }
@@ -390,4 +499,188 @@ pub fn group2_rm_cl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
+}
+
+/// SHLD r/m, r, imm8 (0x0F 0xA4) - Double precision shift left
+pub fn shld_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let count = ctx.consume_u8()?;
+
+    let dst = if is_memory {
+        vcpu.read_mem(addr, op_size)?
+    } else {
+        vcpu.get_reg(rm, op_size)
+    };
+    let src = vcpu.get_reg(reg, op_size);
+
+    let result = execute_shld(vcpu, dst, src, count, op_size);
+
+    if is_memory {
+        vcpu.write_mem(addr, result, op_size)?;
+    } else {
+        vcpu.set_reg(rm, result, op_size);
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// SHLD r/m, r, CL (0x0F 0xA5) - Double precision shift left
+pub fn shld_cl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let count = (vcpu.regs.rcx & 0x3F) as u8;
+
+    let dst = if is_memory {
+        vcpu.read_mem(addr, op_size)?
+    } else {
+        vcpu.get_reg(rm, op_size)
+    };
+    let src = vcpu.get_reg(reg, op_size);
+
+    let result = execute_shld(vcpu, dst, src, count, op_size);
+
+    if is_memory {
+        vcpu.write_mem(addr, result, op_size)?;
+    } else {
+        vcpu.set_reg(rm, result, op_size);
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// SHRD r/m, r, imm8 (0x0F 0xAC) - Double precision shift right
+pub fn shrd_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let count = ctx.consume_u8()?;
+
+    let dst = if is_memory {
+        vcpu.read_mem(addr, op_size)?
+    } else {
+        vcpu.get_reg(rm, op_size)
+    };
+    let src = vcpu.get_reg(reg, op_size);
+
+    let result = execute_shrd(vcpu, dst, src, count, op_size);
+
+    if is_memory {
+        vcpu.write_mem(addr, result, op_size)?;
+    } else {
+        vcpu.set_reg(rm, result, op_size);
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// SHRD r/m, r, CL (0x0F 0xAD) - Double precision shift right
+pub fn shrd_cl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let count = (vcpu.regs.rcx & 0x3F) as u8;
+
+    let dst = if is_memory {
+        vcpu.read_mem(addr, op_size)?
+    } else {
+        vcpu.get_reg(rm, op_size)
+    };
+    let src = vcpu.get_reg(reg, op_size);
+
+    let result = execute_shrd(vcpu, dst, src, count, op_size);
+
+    if is_memory {
+        vcpu.write_mem(addr, result, op_size)?;
+    } else {
+        vcpu.set_reg(rm, result, op_size);
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// Execute SHLD: shift dst left, filling in from src
+fn execute_shld(vcpu: &mut X86_64Vcpu, dst: u64, src: u64, count: u8, size: u8) -> u64 {
+    let bits = (size * 8) as u32;
+    let mask = if bits == 64 { !0u64 } else { (1u64 << bits) - 1 };
+    let count = (count as u32) % bits;
+
+    if count == 0 {
+        return dst & mask;
+    }
+
+    // SHLD: shift dst left by count, bring in high bits from src
+    // Result = (dst << count) | (src >> (bits - count))
+    let result = ((dst << count) | (src >> (bits - count))) & mask;
+
+    // Update flags
+    // CF = last bit shifted out of dst
+    let cf = if count <= bits {
+        (dst >> (bits - count)) & 1 != 0
+    } else {
+        false
+    };
+
+    // OF = sign bit changed (only defined for count == 1)
+    let of = if count == 1 {
+        ((result >> (bits - 1)) ^ (dst >> (bits - 1))) & 1 != 0
+    } else {
+        false
+    };
+
+    if cf {
+        vcpu.regs.rflags |= flags::bits::CF;
+    } else {
+        vcpu.regs.rflags &= !flags::bits::CF;
+    }
+    if of {
+        vcpu.regs.rflags |= flags::bits::OF;
+    } else {
+        vcpu.regs.rflags &= !flags::bits::OF;
+    }
+    flags::update_flags_logic(&mut vcpu.regs.rflags, result, size);
+
+    result
+}
+
+/// Execute SHRD: shift dst right, filling in from src
+fn execute_shrd(vcpu: &mut X86_64Vcpu, dst: u64, src: u64, count: u8, size: u8) -> u64 {
+    let bits = (size * 8) as u32;
+    let mask = if bits == 64 { !0u64 } else { (1u64 << bits) - 1 };
+    let count = (count as u32) % bits;
+
+    if count == 0 {
+        return dst & mask;
+    }
+
+    // SHRD: shift dst right by count, bring in low bits from src
+    // Result = (dst >> count) | (src << (bits - count))
+    let result = ((dst >> count) | ((src & mask) << (bits - count))) & mask;
+
+    // Update flags
+    // CF = last bit shifted out of dst
+    let cf = if count > 0 && count <= bits {
+        (dst >> (count - 1)) & 1 != 0
+    } else {
+        false
+    };
+
+    // OF = sign bit changed (only defined for count == 1)
+    let of = if count == 1 {
+        ((result >> (bits - 1)) ^ (dst >> (bits - 1))) & 1 != 0
+    } else {
+        false
+    };
+
+    if cf {
+        vcpu.regs.rflags |= flags::bits::CF;
+    } else {
+        vcpu.regs.rflags &= !flags::bits::CF;
+    }
+    if of {
+        vcpu.regs.rflags |= flags::bits::OF;
+    } else {
+        vcpu.regs.rflags &= !flags::bits::OF;
+    }
+    flags::update_flags_logic(&mut vcpu.regs.rflags, result, size);
+
+    result
 }

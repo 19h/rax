@@ -348,6 +348,93 @@ pub fn mov_cr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     Ok(None)
 }
 
+/// CMC - Complement Carry Flag (0xF5)
+pub fn cmc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    vcpu.regs.rflags ^= flags::bits::CF;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// LAHF - Load AH from Flags (0x9F)
+/// Loads SF, ZF, AF, PF, CF from RFLAGS into AH
+pub fn lahf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // AH = SF:ZF:0:AF:0:PF:1:CF (bits 7:6:5:4:3:2:1:0)
+    // These correspond to RFLAGS bits 7, 6, 4, 2, 0
+    let flags_byte = (vcpu.regs.rflags & 0xFF) as u8;
+    // Set AH (bits 8-15 of RAX)
+    vcpu.regs.rax = (vcpu.regs.rax & !0xFF00) | ((flags_byte as u64) << 8);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// SAHF - Store AH into Flags (0x9E)
+/// Stores AH into SF, ZF, AF, PF, CF of RFLAGS
+pub fn sahf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // AH contains SF:ZF:0:AF:0:PF:1:CF
+    let ah = ((vcpu.regs.rax >> 8) & 0xFF) as u64;
+    // Mask for SF, ZF, AF, PF, CF (bits 7, 6, 4, 2, 0)
+    let mask = 0xD5u64; // 1101_0101
+    vcpu.regs.rflags = (vcpu.regs.rflags & !mask) | (ah & mask);
+    // Bit 1 is always set
+    vcpu.regs.rflags |= 0x2;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// RDTSC - Read Time-Stamp Counter (0x0F 0x31)
+pub fn rdtsc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // Return a simulated timestamp (just increment monotonically)
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static TSC: AtomicU64 = AtomicU64::new(0);
+    let tsc = TSC.fetch_add(1000, Ordering::Relaxed);
+    vcpu.regs.rax = tsc & 0xFFFF_FFFF;
+    vcpu.regs.rdx = tsc >> 32;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// RDTSCP - Read Time-Stamp Counter and Processor ID (0x0F 0x01 0xF9)
+pub fn rdtscp(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // Similar to RDTSC but also sets ECX to processor ID
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static TSC: AtomicU64 = AtomicU64::new(0);
+    let tsc = TSC.fetch_add(1000, Ordering::Relaxed);
+    vcpu.regs.rax = tsc & 0xFFFF_FFFF;
+    vcpu.regs.rdx = tsc >> 32;
+    vcpu.regs.rcx = 0; // Processor ID = 0
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PAUSE - Spin-Loop Hint (F3 90)
+pub fn pause(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // Hint to the processor that this is a spin-wait loop
+    // In emulation, we just treat it as NOP
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// LFENCE - Load Fence (0x0F 0xAE /5)
+pub fn lfence(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // Memory fence - treat as NOP in emulation
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// MFENCE - Memory Fence (0x0F 0xAE /6)
+pub fn mfence(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // Memory fence - treat as NOP in emulation
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// SFENCE - Store Fence (0x0F 0xAE /7)
+pub fn sfence(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // Memory fence - treat as NOP in emulation
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
 /// ENDBR64/ENDBR32 (0x0F 0x1E) - CET instructions, treat as NOP
 pub fn endbr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     // Skip the ModR/M byte (FA=ENDBR64, FB=ENDBR32)
