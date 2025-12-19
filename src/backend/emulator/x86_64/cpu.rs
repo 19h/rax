@@ -220,12 +220,10 @@ impl X86_64Vcpu {
                 Ok(None)
             }
 
-            // HLT - just advance RIP and continue (no timer interrupts implemented)
+            // HLT - halt and exit to caller
             0xF4 => {
                 self.regs.rip += ctx.cursor as u64;
-                // Don't set halted - we don't have timer interrupts to wake up
-                // self.halted = true;
-                Ok(None)
+                Ok(Some(VcpuExit::Hlt))
             }
 
             // Two-byte opcode (0x0F prefix)
@@ -298,6 +296,10 @@ impl X86_64Vcpu {
             0x80 => insn::arith::group1_rm8_imm8(self, ctx),
             0x81 => insn::arith::group1_rm_imm32(self, ctx),
             0x83 => insn::arith::group1_rm_imm8(self, ctx),
+            0x69 => insn::arith::imul_r_rm_imm(self, ctx),
+            0x6B => insn::arith::imul_r_rm_imm8(self, ctx),
+            0x98 => insn::arith::cbw_cwde_cdqe(self, ctx),
+            0x99 => insn::arith::cwd_cdq_cqo(self, ctx),
 
             // Logic
             0x08 => insn::logic::or_rm8_r8(self, ctx),
@@ -403,6 +405,7 @@ impl X86_64Vcpu {
             0xBA => insn::bit::group8(self, ctx),
             0xBC => insn::bit::bsf(self, ctx),
             0xBD => insn::bit::bsr(self, ctx),
+            0xB8 => insn::bit::popcnt(self, ctx),
 
             // NOP variants
             0x1E => insn::system::endbr(self, ctx),
