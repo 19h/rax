@@ -97,7 +97,7 @@ fn test_ror_al_imm8() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x22, "AL: 0x11 ROR 3 = 0x22");
-    assert!(cf_set(regs.rflags), "CF: last bit rotated was 1");
+    assert!(!cf_set(regs.rflags), "CF: last bit rotated was 0");
 }
 
 #[test]
@@ -149,7 +149,7 @@ fn test_ror_ax_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0x2190, "AX: 0x4321 ROR 1 = 0x2190");
+    assert_eq!(regs.rax & 0xFFFF, 0xA190, "AX: 0x4321 ROR 1 = 0xA190");
     assert!(cf_set(regs.rflags), "CF: LSB was 1");
 }
 

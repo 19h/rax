@@ -153,7 +153,7 @@ fn test_test_rm64_imm32_basic() {
 
     // High bits set but testing low 32 bits only
     assert_eq!(regs.rbx, 0xFFFFFFFF00000000, "RBX unchanged");
-    assert!(zf_set(regs.rflags), "ZF set (low 32 bits are zero)");
+    assert!(!zf_set(regs.rflags), "ZF clear (sign-extended imm32 tests all bits)");
 }
 
 // ============================================================================
@@ -435,7 +435,7 @@ fn test_test_r11_r12() {
 #[test]
 fn test_test_byte_ptr_mem() {
     let code = [
-        0xf6, 0x05, 0x00, 0x10, 0x00, 0x00, 0x0F, // TEST BYTE PTR [rip+0x1000], 0x0F
+        0xf6, 0x05, 0xf9, 0x0f, 0x00, 0x00, 0x0F, // TEST BYTE PTR [rip+0x0FF9], 0x0F
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -451,7 +451,7 @@ fn test_test_byte_ptr_mem() {
 #[test]
 fn test_test_dword_ptr_mem() {
     let code = [
-        0xf7, 0x05, 0x00, 0x10, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, // TEST DWORD PTR [rip+0x1000], 0x000000FF
+        0xf7, 0x05, 0xf6, 0x0f, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, // TEST DWORD PTR [rip+0x0FF6], 0x000000FF
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

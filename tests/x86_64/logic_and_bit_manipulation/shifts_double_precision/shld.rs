@@ -48,7 +48,7 @@ fn test_shld_ax_bx_imm8() {
     // Bits from BX (1010_1011_1100_1101) fill from right
     // Result: 0010_0011_0100_1010
     assert_eq!(regs.rax & 0xFFFF, 0x234A, "AX: 0x1234 SHLD 4 from 0xABCD = 0x234A");
-    assert!(!cf_set(regs.rflags), "CF: bit shifted out was 0");
+    assert!(cf_set(regs.rflags), "CF: bit shifted out was 1");
 }
 
 #[test]
@@ -156,7 +156,7 @@ fn test_shld_eax_carry_flag() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000000, "EAX: shifted out");
-    assert!(cf_set(regs.rflags), "CF: bit 28 (4 bits from MSB) was 1");
+    assert!(!cf_set(regs.rflags), "CF: bit 28 (4 bits from MSB) was 0");
 }
 
 #[test]
@@ -251,7 +251,7 @@ fn test_shld_rax_count_masked_64bit() {
 
 #[test]
 fn test_shld_rax_full_width() {
-    // SHLD by 64 should completely replace with source
+    // Count is masked to 6 bits for 64-bit operands (64 becomes 0)
     let code = [
         0x48, 0x0f, 0xa5, 0xd8, // SHLD RAX, RBX, CL
         0xf4,
@@ -263,7 +263,7 @@ fn test_shld_rax_full_width() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFEDCBA9876543210, "RAX: completely replaced by RBX");
+    assert_eq!(regs.rax, 0x123456789ABCDEF0, "RAX: unchanged when count masks to 0");
 }
 
 // ============================================================================
@@ -451,12 +451,12 @@ fn test_shld_flag_behavior() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000001, "EAX: 0x80000000 SHLD 1 = 0x00000001");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000000, "EAX: 0x80000000 SHLD 1 = 0x00000000");
     assert!(cf_set(regs.rflags), "CF: bit shifted out was 1");
     // OF: sign changed from negative to positive
     assert!(of_set(regs.rflags), "OF: sign changed");
     assert!(!sf_set(regs.rflags), "SF: result is positive");
-    assert!(!zf_set(regs.rflags), "ZF: result is not zero");
+    assert!(zf_set(regs.rflags), "ZF: result is zero");
 }
 
 #[test]
@@ -489,6 +489,6 @@ fn test_shld_max_shift() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Shift left by 31, only LSB of result comes from original EAX
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFE, "EAX: SHLD by 31");
-    assert!(cf_set(regs.rflags), "CF: MSB was 1");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x7FFFFFFF, "EAX: SHLD by 31");
+    assert!(!cf_set(regs.rflags), "CF: bit shifted out was 0");
 }

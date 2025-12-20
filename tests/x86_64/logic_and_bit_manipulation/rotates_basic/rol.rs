@@ -49,7 +49,7 @@ fn test_rol_al_1() {
 
     assert_eq!(regs.rax & 0xFF, 0x84, "AL: 0x42 ROL 1 = 0x84");
     assert!(!cf_set(regs.rflags), "CF: receives MSB (was 0)");
-    assert!(!of_set(regs.rflags), "OF: CF XOR new MSB = 0 XOR 1 = 1");
+    assert!(of_set(regs.rflags), "OF: CF XOR new MSB = 0 XOR 1 = 1");
 }
 
 #[test]

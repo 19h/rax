@@ -48,7 +48,7 @@ fn test_shl_al_1() {
 
     assert_eq!(regs.rax & 0xFF, 0x84, "AL: 0x42 << 1 = 0x84");
     assert!(!cf_set(regs.rflags), "CF should be clear (MSB was 0)");
-    assert!(!of_set(regs.rflags), "OF: MSB XOR CF = 1 XOR 0 = 1");
+    assert!(of_set(regs.rflags), "OF: MSB XOR CF = 1 XOR 0 = 1");
     assert!(sf_set(regs.rflags), "SF should be set (bit 7 = 1)");
     assert!(!zf_set(regs.rflags), "ZF should be clear");
 }
@@ -179,7 +179,7 @@ fn test_shl_ax_1() {
 
     assert_eq!(regs.rax & 0xFFFF, 0x8642, "AX: 0x4321 << 1 = 0x8642");
     assert!(!cf_set(regs.rflags), "CF should be clear");
-    assert!(!of_set(regs.rflags), "OF: MSB XOR CF");
+    assert!(of_set(regs.rflags), "OF: MSB XOR CF");
     assert!(sf_set(regs.rflags), "SF should be set");
 }
 
@@ -428,7 +428,7 @@ fn test_shl_r8b_1() {
 
     assert_eq!(regs.r8 & 0xFF, 0xAA, "R8B: 0x55 << 1 = 0xAA");
     assert!(!cf_set(regs.rflags), "CF should be clear");
-    assert!(!of_set(regs.rflags), "OF: MSB XOR CF");
+    assert!(of_set(regs.rflags), "OF: MSB XOR CF");
 }
 
 #[test]
@@ -590,10 +590,9 @@ fn test_shl_multiply_by_power_of_2() {
 #[test]
 fn test_shl_align_to_page_boundary() {
     // Shift to align addresses to page boundaries (4KB = 0x1000)
-    // Clear low 12 bits by shifting left then right
+    // Clear low 12 bits by shifting right then left
     let code = [
-        0x48, 0xc1, 0xe0, 0x0C, // SHL RAX, 12
-        0x48, 0xc1, 0xe8, 0x0C, // SHR RAX, 12 (we'll test SHR later)
+        0x48, 0xc1, 0xe8, 0x0C, // SHR RAX, 12
         0x48, 0xc1, 0xe0, 0x0C, // SHL RAX, 12
         0xf4,
     ];
@@ -634,7 +633,7 @@ fn test_shl_overflow_flag_1bit_same_sign() {
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX: 0x40000000 << 1 = 0x80000000");
     assert!(!cf_set(regs.rflags), "CF: bit shifted out was 0");
-    assert!(!of_set(regs.rflags), "OF: top two bits were same (both 0)");
+    assert!(of_set(regs.rflags), "OF: MSB(result) XOR CF = 1 XOR 0 = 1");
 }
 
 #[test]
@@ -651,7 +650,7 @@ fn test_shl_overflow_flag_1bit_different_sign() {
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0x80000000, "EAX: 0xC0000000 << 1 = 0x80000000");
     assert!(cf_set(regs.rflags), "CF: bit shifted out was 1");
-    assert!(of_set(regs.rflags), "OF: MSB(result) XOR CF = 1 XOR 1 = 0... wait");
+    assert!(!of_set(regs.rflags), "OF: MSB(result) XOR CF = 1 XOR 1 = 0");
     // Actually: MSB of result is 1, CF is 1, so MSB XOR CF = 0
     // Let me recalculate: 0xC0000000 = 1100_0000...
     // Shift left by 1: MSB (bit 31) is 1, shifts into CF

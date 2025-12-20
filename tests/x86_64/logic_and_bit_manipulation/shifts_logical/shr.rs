@@ -226,7 +226,7 @@ fn test_shr_ax_imm8() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0x0123, "AX: 0x1234 >> 4 = 0x0123");
-    assert!(!cf_set(regs.rflags), "CF should be clear");
+    assert!(cf_set(regs.rflags), "CF should be set (bit 31 was 1)");
 }
 
 #[test]

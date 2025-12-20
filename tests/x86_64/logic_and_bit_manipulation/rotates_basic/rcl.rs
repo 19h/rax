@@ -108,7 +108,7 @@ fn test_rcl_al_cl() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // After 8 rotations of 9-bit value, CF should be in LSB
-    assert_eq!(regs.rax & 0xFF, 0x01, "AL: after full 9-bit rotation");
+    assert_eq!(regs.rax & 0xFF, 0x80, "AL: after full 9-bit rotation");
 }
 
 #[test]
@@ -219,7 +219,7 @@ fn test_rcl_ax_cl() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // After full 17-bit rotation, value should be back
-    assert_eq!(regs.rax & 0xFFFF, 0x0001, "AX: after 16 rotations of 17-bit value");
+    assert_eq!(regs.rax & 0xFFFF, 0x8000, "AX: after 16 rotations of 17-bit value");
 }
 
 #[test]
@@ -307,7 +307,7 @@ fn test_rcl_eax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x34567800, "EAX: 0x12345678 RCL 8 (CF=0)");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x34567809, "EAX: 0x12345678 RCL 8 (CF=0)");
 }
 
 #[test]
@@ -380,7 +380,7 @@ fn test_rcl_rax_cl() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // After 63 rotations, bit should be at bit 63
-    assert_eq!(regs.rax, 0x8000000000000000, "RAX: bit rotated to MSB position");
+    assert_eq!(regs.rax, 0xC000000000000000, "RAX: bit rotated to MSB position");
 }
 
 #[test]
@@ -396,7 +396,7 @@ fn test_rcl_rax_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x56789ABCDEF00000, "RAX: 0x123456789ABCDEF0 RCL 16 (CF=0)");
+    assert_eq!(regs.rax, 0x56789ABCDEF0091A, "RAX: 0x123456789ABCDEF0 RCL 16 (CF=0)");
 }
 
 #[test]
@@ -466,7 +466,7 @@ fn test_rcl_r12d_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r12 & 0xFFFFFFFF, 0x34567800, "R12D: 0x12345678 RCL 8 (CF=0)");
+    assert_eq!(regs.r12 & 0xFFFFFFFF, 0x34567809, "R12D: 0x12345678 RCL 8 (CF=0)");
 }
 
 #[test]
@@ -531,7 +531,7 @@ fn test_rcl_word_ptr_cl() {
     run_until_hlt(&mut vcpu).unwrap();
     let result = read_mem_u16(&mem);
 
-    assert_eq!(result, 0x2341, "Memory: 0x1234 RCL 4 (CF=1) = 0x2341");
+    assert_eq!(result, 0x2348, "Memory: 0x1234 RCL 4 (CF=1) = 0x2348");
 }
 
 #[test]
@@ -554,7 +554,7 @@ fn test_rcl_dword_ptr_imm8() {
     run_until_hlt(&mut vcpu).unwrap();
     let result = read_mem_u32(&mem);
 
-    assert_eq!(result, 0x34567800, "Memory: 0x12345678 RCL 8 (CF=0)");
+    assert_eq!(result, 0x34567809, "Memory: 0x12345678 RCL 8 (CF=0)");
 }
 
 #[test]
@@ -577,7 +577,7 @@ fn test_rcl_qword_ptr_cl() {
     run_until_hlt(&mut vcpu).unwrap();
     let result = read_mem_u64(&mem);
 
-    assert_eq!(result, 0x56789ABCDEF00000, "Memory: 0x123456789ABCDEF0 RCL 16 (CF=0)");
+    assert_eq!(result, 0x56789ABCDEF0091A, "Memory: 0x123456789ABCDEF0 RCL 16 (CF=0)");
 }
 
 // ============================================================================

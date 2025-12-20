@@ -606,7 +606,7 @@ fn test_sbb_parity_with_carry() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFF, 0x02);
-    assert!(pf_set(regs.rflags), "PF should be set (even parity)");
+    assert!(!pf_set(regs.rflags), "PF should be clear (odd parity)");
 }
 
 // ============================================================================
