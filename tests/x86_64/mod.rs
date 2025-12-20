@@ -1,9 +1,11 @@
 mod control_flow;
+mod crypto;
 mod data_transfer;
 mod fpu;
 mod io;
 mod memory;
 mod misc;
+mod segment;
 mod simd;
 mod string;
 mod sync;

@@ -11,3 +11,4 @@ mod monitor_mwait;
 mod ud;
 mod endbr32_endbr64;
 mod nop_variants;
+mod lahf_sahf_extended;

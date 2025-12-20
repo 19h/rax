@@ -98,6 +98,12 @@ mod logic_shifts_double_precision_shrd;
 mod logic_shifts_logical_shl;
 #[path = "x86_64/logic_and_bit_manipulation/shifts_logical/shr.rs"]
 mod logic_shifts_logical_shr;
+#[path = "x86_64/logic_and_bit_manipulation/shifts_variable/shlx.rs"]
+mod logic_shifts_variable_shlx;
+#[path = "x86_64/logic_and_bit_manipulation/shifts_variable/shrx.rs"]
+mod logic_shifts_variable_shrx;
+#[path = "x86_64/logic_and_bit_manipulation/shifts_variable/sarx.rs"]
+mod logic_shifts_variable_sarx;
 
 // BMI (Bit Manipulation Instructions)
 #[path = "x86_64/bmi/blsi.rs"]
@@ -110,6 +116,18 @@ mod bmi_blsr;
 mod bmi_andn;
 #[path = "x86_64/bmi/bextr.rs"]
 mod bmi_bextr;
+#[path = "x86_64/bmi/mulx.rs"]
+mod bmi_mulx;
+#[path = "x86_64/bmi/popcnt.rs"]
+mod bmi_popcnt;
+#[path = "x86_64/bmi/sarx_shlx_shrx.rs"]
+mod bmi_sarx_shlx_shrx;
+#[path = "x86_64/bmi/sarx_shlx_shrx_extended.rs"]
+mod bmi_sarx_shlx_shrx_extended;
+#[path = "x86_64/bmi/rorx.rs"]
+mod bmi_rorx;
+#[path = "x86_64/bmi/bzhi_extended.rs"]
+mod bmi_bzhi_extended;
 
 // Data Transfer
 #[path = "x86_64/data_transfer/bswap.rs"]
