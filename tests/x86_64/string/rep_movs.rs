@@ -978,3 +978,177 @@ fn test_rep_movsq_max_values() {
     assert_eq!(read_mem_at_u64(&mem, 0x4010), 0x8000000000000000);
     assert_eq!(read_mem_at_u64(&mem, 0x4018), 0x7FFFFFFFFFFFFFFF);
 }
+
+#[test]
+fn test_rep_movsb_size_1() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x01, 0x00, 0x00, 0x00, // MOV RCX, 1
+        0xfc, // CLD
+        0xf3, 0xa4, // REP MOVSB
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_at_u8(&mem, 0x3000, 0x42);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_at_u8(&mem, 0x4000), 0x42);
+    assert_eq!(regs.rcx, 0);
+}
+
+#[test]
+fn test_rep_movsw_size_2() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x02, 0x00, 0x00, 0x00, // MOV RCX, 2
+        0xfc, // CLD
+        0xf3, 0x66, 0xa5, // REP MOVSW
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_at_u16(&mem, 0x3000, 0xABCD);
+    write_mem_at_u16(&mem, 0x3002, 0x1234);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_at_u16(&mem, 0x4000), 0xABCD);
+    assert_eq!(read_mem_at_u16(&mem, 0x4002), 0x1234);
+    assert_eq!(regs.rdi, 0x4004);
+}
+
+#[test]
+fn test_rep_movsd_size_4() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x02, 0x00, 0x00, 0x00, // MOV RCX, 2
+        0xfc, // CLD
+        0xf3, 0xa5, // REP MOVSD
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_at_u32(&mem, 0x3000, 0xCAFEBABE);
+    write_mem_at_u32(&mem, 0x3004, 0xDEADBEEF);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_at_u32(&mem, 0x4000), 0xCAFEBABE);
+    assert_eq!(read_mem_at_u32(&mem, 0x4004), 0xDEADBEEF);
+    assert_eq!(regs.rdi, 0x4008);
+}
+
+#[test]
+fn test_rep_movsq_size_8() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x02, 0x00, 0x00, 0x00, // MOV RCX, 2
+        0xfc, // CLD
+        0xf3, 0x48, 0xa5, // REP MOVSQ
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_at_u64(&mem, 0x3000, 0x0102030405060708);
+    write_mem_at_u64(&mem, 0x3008, 0x1112131415161718);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_at_u64(&mem, 0x4000), 0x0102030405060708);
+    assert_eq!(read_mem_at_u64(&mem, 0x4008), 0x1112131415161718);
+    assert_eq!(regs.rdi, 0x4010);
+}
+
+#[test]
+fn test_rep_movsb_rcx_255() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0xFF, 0x00, 0x00, 0x00, // MOV RCX, 255
+        0xfc, // CLD
+        0xf3, 0xa4, // REP MOVSB
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0);
+    assert_eq!(regs.rsi, 0x30FF);
+    assert_eq!(regs.rdi, 0x40FF);
+}
+
+#[test]
+fn test_rep_movsd_odd_alignment() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x01, 0x30, 0x00, 0x00, // MOV RSI, 0x3001 (odd)
+        0x48, 0xc7, 0xc7, 0x03, 0x40, 0x00, 0x00, // MOV RDI, 0x4003 (odd)
+        0x48, 0xc7, 0xc1, 0x02, 0x00, 0x00, 0x00, // MOV RCX, 2
+        0xfc, // CLD
+        0xf3, 0xa5, // REP MOVSD
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_at_u32(&mem, 0x3001, 0x11223344);
+    write_mem_at_u32(&mem, 0x3005, 0x55667788);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_at_u32(&mem, 0x4003), 0x11223344);
+    assert_eq!(read_mem_at_u32(&mem, 0x4007), 0x55667788);
+    assert_eq!(regs.rdi, 0x400B);
+}
+
+#[test]
+fn test_rep_movsb_page_crossing() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0xFE, 0x0F, 0x00, 0x00, // MOV RSI, 0x0FFE
+        0x48, 0xc7, 0xc7, 0x00, 0x20, 0x00, 0x00, // MOV RDI, 0x2000
+        0x48, 0xc7, 0xc1, 0x04, 0x00, 0x00, 0x00, // MOV RCX, 4 (crosses page)
+        0xfc, // CLD
+        0xf3, 0xa4, // REP MOVSB
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    for i in 0..4 {
+        write_mem_at_u8(&mem, 0x0FFE + i, 0x10 + i as u8);
+    }
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    for i in 0..4 {
+        assert_eq!(read_mem_at_u8(&mem, 0x2000 + i), 0x10 + i as u8);
+    }
+    assert_eq!(regs.rcx, 0);
+}
+
+#[test]
+fn test_rep_movsq_backward_odd_count() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x28, 0x30, 0x00, 0x00, // MOV RSI, 0x3028
+        0x48, 0xc7, 0xc7, 0x28, 0x40, 0x00, 0x00, // MOV RDI, 0x4028
+        0x48, 0xc7, 0xc1, 0x05, 0x00, 0x00, 0x00, // MOV RCX, 5 (odd)
+        0xfd, // STD
+        0xf3, 0x48, 0xa5, // REP MOVSQ
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    for i in 0..5 {
+        write_mem_at_u64(&mem, 0x3000 + i * 8, i as u64);
+    }
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    for i in 0..5 {
+        assert_eq!(read_mem_at_u64(&mem, 0x4000 + i * 8), i as u64);
+    }
+    assert_eq!(regs.rcx, 0);
+}
+
+#[test]
+fn test_rep_movsb_fills_gaps() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x10, 0x00, 0x00, 0x00, // MOV RCX, 16
+        0xfc, // CLD
+        0xf3, 0xa4, // REP MOVSB
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    // Sparse pattern
+    for i in (0..16).step_by(2) {
+        write_mem_at_u8(&mem, 0x3000 + i, 0xAA);
+    }
+    run_until_hlt(&mut vcpu).unwrap();
+    for i in (0..16).step_by(2) {
+        assert_eq!(read_mem_at_u8(&mem, 0x4000 + i), 0xAA);
+        assert_eq!(read_mem_at_u8(&mem, 0x4000 + i + 1), 0);
+    }
+}
