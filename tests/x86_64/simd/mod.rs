@@ -1,1 +1,2 @@
+mod mmx;
 mod sse;
