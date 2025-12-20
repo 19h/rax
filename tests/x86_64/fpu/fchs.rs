@@ -1,17 +1,18 @@
-//! Tests for the FABS instruction.
+//! Tests for the FCHS instruction.
 //!
-//! FABS - Absolute Value
+//! FCHS - Change Sign
 //!
-//! Clears the sign bit of ST(0) to create the absolute value of the operand.
-//! The operation is ST(0) := |ST(0)|
+//! Complements the sign bit of ST(0). This operation changes a positive value
+//! into a negative value of equal magnitude or vice versa.
+//! The operation is SignBit(ST(0)) := NOT (SignBit(ST(0)))
 //!
-//! Opcode: D9 E1
+//! Opcode: D9 E0
 //!
 //! Flags affected:
 //! - C1: Set to 0
 //! - C0, C2, C3: Undefined
 //!
-//! Reference: /Users/int/dev/rax/docs/fabs.txt
+//! Reference: /Users/int/dev/rax/docs/fchs.txt
 
 use crate::common::{run_until_hlt, setup_vm};
 use rax::cpu::Registers;
@@ -30,19 +31,19 @@ fn read_f64(mem: &vm_memory::GuestMemoryMmap, addr: u64) -> f64 {
 }
 
 // ============================================================================
-// FABS - Absolute Value of Positive Numbers
+// FCHS - Change Sign: Positive to Negative
 // ============================================================================
 
 #[test]
-fn test_fabs_positive_small() {
-    // Load 3.14, take absolute value, store result
-    // FLD qword [0x2000]  ; D9 05 00 20 00 00 (load from address 0x2000)
-    // FABS                ; D9 E1
-    // FSTP qword [0x3000] ; DD 1D 00 30 00 00 (store to address 0x3000)
+fn test_fchs_positive_to_negative_small() {
+    // Load 3.14, change sign, store result
+    // FLD qword [0x2000]  ; DD 04 25 00 20 00 00
+    // FCHS                ; D9 E0
+    // FSTP qword [0x3000] ; DD 1C 25 00 30 00 00
     // HLT                 ; F4
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
@@ -53,32 +54,14 @@ fn test_fabs_positive_small() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 3.14, "FABS of positive 3.14 should remain 3.14");
+    assert_eq!(result, -3.14, "FCHS of 3.14 should be -3.14");
 }
 
 #[test]
-fn test_fabs_positive_large() {
+fn test_fchs_positive_one() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
-    ];
-
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 123456789.123456789);
-
-    run_until_hlt(&mut vcpu).unwrap();
-
-    let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 123456789.123456789, "FABS of large positive should remain positive");
-}
-
-#[test]
-fn test_fabs_positive_one() {
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
@@ -89,90 +72,90 @@ fn test_fabs_positive_one() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 1.0, "FABS of +1.0 should be 1.0");
+    assert_eq!(result, -1.0, "FCHS of 1.0 should be -1.0");
 }
 
 #[test]
-fn test_fabs_positive_fraction() {
+fn test_fchs_positive_large() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 0.5);
+    write_f64(&mem, 0x2000, 999999.999999);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 0.5, "FABS of 0.5 should be 0.5");
+    assert_eq!(result, -999999.999999, "FCHS of large positive should be negative");
 }
 
 #[test]
-fn test_fabs_positive_very_small() {
+fn test_fchs_positive_fraction() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 1e-10);
+    write_f64(&mem, 0x2000, 0.125);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 1e-10, "FABS of very small positive should remain positive");
+    assert_eq!(result, -0.125, "FCHS of 0.125 should be -0.125");
+}
+
+#[test]
+fn test_fchs_positive_very_small() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xE0,                                  // FCHS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 1e-100);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, -1e-100, "FCHS of very small positive should be negative");
 }
 
 // ============================================================================
-// FABS - Absolute Value of Negative Numbers
+// FCHS - Change Sign: Negative to Positive
 // ============================================================================
 
 #[test]
-fn test_fabs_negative_small() {
+fn test_fchs_negative_to_positive_small() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -3.14);
+    write_f64(&mem, 0x2000, -2.718);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 3.14, "FABS of -3.14 should be 3.14");
+    assert_eq!(result, 2.718, "FCHS of -2.718 should be 2.718");
 }
 
 #[test]
-fn test_fabs_negative_large() {
+fn test_fchs_negative_one() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
-    ];
-
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -987654321.987654321);
-
-    run_until_hlt(&mut vcpu).unwrap();
-
-    let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 987654321.987654321, "FABS of large negative should be positive");
-}
-
-#[test]
-fn test_fabs_negative_one() {
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
@@ -183,54 +166,72 @@ fn test_fabs_negative_one() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 1.0, "FABS of -1.0 should be 1.0");
+    assert_eq!(result, 1.0, "FCHS of -1.0 should be 1.0");
 }
 
 #[test]
-fn test_fabs_negative_fraction() {
+fn test_fchs_negative_large() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -0.25);
+    write_f64(&mem, 0x2000, -123456789.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 0.25, "FABS of -0.25 should be 0.25");
+    assert_eq!(result, 123456789.0, "FCHS of large negative should be positive");
 }
 
 #[test]
-fn test_fabs_negative_very_small() {
+fn test_fchs_negative_fraction() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -1e-10);
+    write_f64(&mem, 0x2000, -0.75);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 1e-10, "FABS of very small negative should be positive");
+    assert_eq!(result, 0.75, "FCHS of -0.75 should be 0.75");
+}
+
+#[test]
+fn test_fchs_negative_very_small() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xE0,                                  // FCHS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, -1e-50);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, 1e-50, "FCHS of very small negative should be positive");
 }
 
 // ============================================================================
-// FABS - Special Cases: Zero
+// FCHS - Special Cases: Zero
 // ============================================================================
 
 #[test]
-fn test_fabs_positive_zero() {
+fn test_fchs_positive_zero_to_negative_zero() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
@@ -241,15 +242,15 @@ fn test_fabs_positive_zero() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 0.0, "FABS of +0.0 should be +0.0");
-    assert!(!result.is_sign_negative(), "Result should be positive zero");
+    assert_eq!(result, -0.0, "FCHS of +0.0 should be -0.0");
+    assert!(result.is_sign_negative(), "Result should be negative zero");
 }
 
 #[test]
-fn test_fabs_negative_zero() {
+fn test_fchs_negative_zero_to_positive_zero() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
@@ -260,19 +261,19 @@ fn test_fabs_negative_zero() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 0.0, "FABS of -0.0 should be +0.0");
+    assert_eq!(result, 0.0, "FCHS of -0.0 should be +0.0");
     assert!(!result.is_sign_negative(), "Result should be positive zero");
 }
 
 // ============================================================================
-// FABS - Special Cases: Infinity
+// FCHS - Special Cases: Infinity
 // ============================================================================
 
 #[test]
-fn test_fabs_positive_infinity() {
+fn test_fchs_positive_infinity_to_negative_infinity() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
@@ -283,15 +284,16 @@ fn test_fabs_positive_infinity() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(result.is_infinite(), "FABS of +infinity should be +infinity");
-    assert!(!result.is_sign_negative(), "Result should be positive infinity");
+    assert_eq!(result, f64::NEG_INFINITY, "FCHS of +infinity should be -infinity");
+    assert!(result.is_infinite(), "Result should be infinite");
+    assert!(result.is_sign_negative(), "Result should be negative");
 }
 
 #[test]
-fn test_fabs_negative_infinity() {
+fn test_fchs_negative_infinity_to_positive_infinity() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
@@ -302,19 +304,20 @@ fn test_fabs_negative_infinity() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(result.is_infinite(), "FABS of -infinity should be +infinity");
-    assert!(!result.is_sign_negative(), "Result should be positive infinity");
+    assert_eq!(result, f64::INFINITY, "FCHS of -infinity should be +infinity");
+    assert!(result.is_infinite(), "Result should be infinite");
+    assert!(!result.is_sign_negative(), "Result should be positive");
 }
 
 // ============================================================================
-// FABS - Special Cases: NaN
+// FCHS - Special Cases: NaN
 // ============================================================================
 
 #[test]
-fn test_fabs_nan() {
+fn test_fchs_nan() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
@@ -325,201 +328,176 @@ fn test_fabs_nan() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(result.is_nan(), "FABS of NaN should remain NaN");
+    assert!(result.is_nan(), "FCHS of NaN should remain NaN");
 }
 
 #[test]
-fn test_fabs_negative_nan() {
+fn test_fchs_negative_nan() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    // Create a negative NaN by flipping sign bit
-    let neg_nan = -f64::NAN;
-    write_f64(&mem, 0x2000, neg_nan);
+    write_f64(&mem, 0x2000, -f64::NAN);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(result.is_nan(), "FABS of negative NaN should remain NaN");
+    assert!(result.is_nan(), "FCHS of negative NaN should remain NaN");
 }
 
 // ============================================================================
-// FABS - Sign Bit Clearing Tests
+// FCHS - Double Negation (Idempotent)
 // ============================================================================
 
 #[test]
-fn test_fabs_clears_sign_bit_negative() {
+fn test_fchs_double_negation_positive() {
+    // FCHS twice should return to original value
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
+        0xD9, 0xE0,                                  // FCHS (second time)
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -42.5);
+    write_f64(&mem, 0x2000, 42.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 42.5, "Value should be positive");
-    assert!(!result.is_sign_negative(), "Sign bit should be cleared");
+    assert_eq!(result, 42.0, "Double FCHS should return original positive value");
 }
 
 #[test]
-fn test_fabs_preserves_positive_sign_bit() {
+fn test_fchs_double_negation_negative() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
+        0xD9, 0xE0,                                  // FCHS (second time)
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 42.5);
+    write_f64(&mem, 0x2000, -42.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 42.5, "Value should remain positive");
-    assert!(!result.is_sign_negative(), "Sign bit should remain clear");
+    assert_eq!(result, -42.0, "Double FCHS should return original negative value");
+}
+
+#[test]
+fn test_fchs_double_negation_zero() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xE0,                                  // FCHS
+        0xD9, 0xE0,                                  // FCHS (second time)
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 0.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, 0.0, "Double FCHS of +0.0 should return +0.0");
+    assert!(!result.is_sign_negative(), "Result should be positive zero");
+}
+
+#[test]
+fn test_fchs_triple_negation() {
+    // Three FCHSs should be equivalent to one FCHS
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xE0,                                  // FCHS
+        0xD9, 0xE0,                                  // FCHS (second)
+        0xD9, 0xE0,                                  // FCHS (third)
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 17.5);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, -17.5, "Triple FCHS should negate the value");
 }
 
 // ============================================================================
-// FABS - Multiple Operations
+// FCHS - Edge Cases
 // ============================================================================
 
 #[test]
-fn test_fabs_twice() {
-    // FABS should be idempotent - applying it twice gives same result
+fn test_fchs_max_value() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xD9, 0xE1,                                  // FABS (second time)
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -7.5);
+    write_f64(&mem, 0x2000, f64::MAX);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 7.5, "FABS twice should give same result as once");
+    assert_eq!(result, -f64::MAX, "FCHS of MAX should be -MAX");
 }
 
 #[test]
-fn test_fabs_sequence() {
-    // Test FABS with multiple values on stack
+fn test_fchs_min_positive() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
-        0xF4,                                        // HLT
-    ];
-
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -1.5);
-    write_f64(&mem, 0x2008, 2.5);
-
-    run_until_hlt(&mut vcpu).unwrap();
-
-    let result1 = read_f64(&mem, 0x3000);
-    let result2 = read_f64(&mem, 0x3008);
-    assert_eq!(result1, 1.5, "First FABS result");
-    assert_eq!(result2, 2.5, "Second FABS result");
-}
-
-// ============================================================================
-// FABS - Edge Cases and Precision
-// ============================================================================
-
-#[test]
-fn test_fabs_max_value() {
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -f64::MAX);
+    write_f64(&mem, 0x2000, f64::MIN_POSITIVE);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, f64::MAX, "FABS of -MAX should be MAX");
+    assert_eq!(result, -f64::MIN_POSITIVE, "FCHS of MIN_POSITIVE should be -MIN_POSITIVE");
 }
 
 #[test]
-fn test_fabs_min_positive() {
+fn test_fchs_subnormal_positive() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -f64::MIN_POSITIVE);
+    let subnormal = f64::MIN_POSITIVE / 2.0;
+    write_f64(&mem, 0x2000, subnormal);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, f64::MIN_POSITIVE, "FABS of -MIN_POSITIVE should be MIN_POSITIVE");
+    assert!(result.is_sign_negative(), "FCHS of positive subnormal should be negative");
+    assert_eq!(result, -subnormal, "Magnitude should be preserved");
 }
 
 #[test]
-fn test_fabs_pi() {
+fn test_fchs_subnormal_negative() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
-    ];
-
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -std::f64::consts::PI);
-
-    run_until_hlt(&mut vcpu).unwrap();
-
-    let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, std::f64::consts::PI, "FABS of -PI should be PI");
-}
-
-#[test]
-fn test_fabs_e() {
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
-    ];
-
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -std::f64::consts::E);
-
-    run_until_hlt(&mut vcpu).unwrap();
-
-    let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, std::f64::consts::E, "FABS of -E should be E");
-}
-
-#[test]
-fn test_fabs_subnormal() {
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
@@ -531,21 +509,112 @@ fn test_fabs_subnormal() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(!result.is_sign_negative(), "FABS of subnormal should be positive");
+    assert!(!result.is_sign_negative(), "FCHS of negative subnormal should be positive");
+    assert_eq!(result, -subnormal, "Magnitude should be preserved");
+}
+
+// ============================================================================
+// FCHS - Mathematical Constants
+// ============================================================================
+
+#[test]
+fn test_fchs_pi() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xE0,                                  // FCHS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, std::f64::consts::PI);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, -std::f64::consts::PI, "FCHS of PI should be -PI");
 }
 
 #[test]
-fn test_fabs_various_magnitudes() {
-    // Test a range of different magnitudes
+fn test_fchs_e() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xE0,                                  // FCHS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, std::f64::consts::E);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, -std::f64::consts::E, "FCHS of E should be -E");
+}
+
+// ============================================================================
+// FCHS - Multiple Operations and Sequences
+// ============================================================================
+
+#[test]
+fn test_fchs_sequence() {
+    // Test FCHS with multiple values
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xE0,                                  // FCHS
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
+        0xD9, 0xE0,                                  // FCHS
+        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 10.5);
+    write_f64(&mem, 0x2008, -20.5);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result1 = read_f64(&mem, 0x3000);
+    let result2 = read_f64(&mem, 0x3008);
+    assert_eq!(result1, -10.5, "First FCHS result");
+    assert_eq!(result2, 20.5, "Second FCHS result");
+}
+
+#[test]
+fn test_fchs_with_arithmetic() {
+    // Test FCHS combined with addition
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xE0,                                  // FCHS
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
+        0xDE, 0xC1,                                  // FADDP (add and pop)
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 5.0);
+    write_f64(&mem, 0x2008, 3.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, -2.0, "FCHS(5.0) + 3.0 = -5.0 + 3.0 = -2.0");
+}
+
+#[test]
+fn test_fchs_various_magnitudes() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let test_values = vec![
-        -1e-100, -1e-50, -1e-10, -0.001, -0.1, -10.0, -100.0, -1e10, -1e50, -1e100,
+        1e-100, 1e-50, 1e-10, 0.001, 0.1, 10.0, 100.0, 1e10, 1e50, 1e100,
     ];
 
     for val in test_values {
@@ -555,90 +624,28 @@ fn test_fabs_various_magnitudes() {
         run_until_hlt(&mut vcpu).unwrap();
 
         let result = read_f64(&mem, 0x3000);
-        assert_eq!(result, val.abs(), "FABS of {} should be {}", val, val.abs());
+        assert_eq!(result, -val, "FCHS of {} should be {}", val, -val);
     }
 }
 
 #[test]
-fn test_fabs_mixed_operations() {
-    // Test FABS followed by other FPU operations (if needed for integration)
+fn test_fchs_quadruple_negation() {
+    // Four FCHSs should return to original
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xDE, 0xC9,                                  // FMULP (multiply and pop)
+        0xD9, 0xE0,                                  // FCHS
+        0xD9, 0xE0,                                  // FCHS
+        0xD9, 0xE0,                                  // FCHS
+        0xD9, 0xE0,                                  // FCHS
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -5.0);
-    write_f64(&mem, 0x2008, 2.0);
+    write_f64(&mem, 0x2000, 23.5);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 10.0, "FABS(-5.0) * 2.0 should be 10.0");
-}
-
-#[test]
-fn test_fabs_denormal_positive() {
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
-    ];
-
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    let denormal = f64::MIN_POSITIVE / 2.0;
-    write_f64(&mem, 0x2000, denormal);
-
-    run_until_hlt(&mut vcpu).unwrap();
-
-    let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, denormal, "FABS of positive denormal preserves value");
-}
-
-#[test]
-fn test_fabs_denormal_negative() {
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
-    ];
-
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    let denormal = -f64::MIN_POSITIVE / 2.0;
-    write_f64(&mem, 0x2000, denormal);
-
-    run_until_hlt(&mut vcpu).unwrap();
-
-    let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, -denormal, "FABS of negative denormal makes it positive");
-}
-
-#[test]
-fn test_fabs_alternating_signs() {
-    // Test a sequence of values with alternating signs
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
-    ];
-
-    let test_values = vec![-1.0, 2.0, -3.0, 4.0, -5.0];
-    let expected_values = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-
-    for (val, expected) in test_values.iter().zip(expected_values.iter()) {
-        let (mut vcpu, mem) = setup_vm(&code, None);
-        write_f64(&mem, 0x2000, *val);
-
-        run_until_hlt(&mut vcpu).unwrap();
-
-        let result = read_f64(&mem, 0x3000);
-        assert_eq!(result, *expected, "FABS of {} should be {}", val, expected);
-    }
+    assert_eq!(result, 23.5, "Quadruple FCHS should return original value");
 }
