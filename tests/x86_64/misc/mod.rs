@@ -7,3 +7,6 @@ mod prefetch;
 mod clflush;
 mod lock;
 mod monitor_mwait;
+mod ud;
+mod endbr32_endbr64;
+mod nop_variants;
