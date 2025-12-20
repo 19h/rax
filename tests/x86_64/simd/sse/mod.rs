@@ -169,3 +169,20 @@ mod pcmpistrm;
 mod pcmpestri;
 mod pcmpestrm;
 mod crc32;
+
+// SSE Non-Temporal Store Instructions (Additional)
+mod movntps_movntpd;
+mod movntq;
+mod movntss_movntsd;
+
+// SSE Prefetch Instructions
+mod prefetchnta_prefetcht0_prefetcht1_prefetcht2;
+
+// SSE Synchronization and Control Instructions
+mod pause;
+
+// SSE Cache Control Instructions
+mod clflushopt;
+
+// PCLMULQDQ Extended Tests
+mod pclmulqdq_extended;
