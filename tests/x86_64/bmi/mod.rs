@@ -15,6 +15,8 @@
 // - SARX: Arithmetic Right Shift Without Affecting Flags
 // - SHLX: Logical Left Shift Without Affecting Flags
 // - SHRX: Logical Right Shift Without Affecting Flags
+// - RORX: Rotate Right Logical Without Affecting Flags
+// - BZHI: Zero High Bits Starting with Specified Bit Position
 //
 // Additional Instructions:
 // - POPCNT: Count Number of Bits Set to 1
@@ -51,3 +53,12 @@ mod popcnt;
 
 #[cfg(test)]
 mod sarx_shlx_shrx;
+
+#[cfg(test)]
+mod sarx_shlx_shrx_extended;
+
+#[cfg(test)]
+mod rorx;
+
+#[cfg(test)]
+mod bzhi_extended;
