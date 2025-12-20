@@ -287,7 +287,7 @@ fn test_xor_rax_rax_zero() {
 #[test]
 fn test_xor_r8b_r8b_zero() {
     let code = [
-        0x44, 0x30, 0xc0, // XOR R8B, R8B
+        0x45, 0x30, 0xc0, // XOR R8B, R8B
         0xf4,
     ];
     let mut regs = Registers::default();

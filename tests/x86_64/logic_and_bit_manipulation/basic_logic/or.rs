@@ -100,7 +100,7 @@ fn test_or_rax_imm32_basic() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x123456780000FF78, "RAX: set byte 2");
+    assert_eq!(regs.rax, 0x1234567800FF0078, "RAX: set byte 2");
 }
 
 // ============================================================================
@@ -497,7 +497,7 @@ fn test_or_test_for_zero() {
 
     assert_eq!(regs.rax, 0x123456789ABCDEF0, "RAX unchanged");
     assert!(!zf_set(regs.rflags), "ZF clear (non-zero)");
-    assert!(sf_set(regs.rflags), "SF set (high bit = 1)");
+    assert!(!sf_set(regs.rflags), "SF clear (high bit = 0)");
     assert!(!of_set(regs.rflags), "OF cleared");
     assert!(!cf_set(regs.rflags), "CF cleared");
 }
