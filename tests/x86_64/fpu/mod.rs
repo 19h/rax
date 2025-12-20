@@ -14,6 +14,7 @@ mod fclex_fnclex;
 mod fcmovcc;
 mod fcom;
 mod fcomi_fcomip;
+mod fcos;
 mod fdiv;
 mod ffree;
 mod fild;

@@ -198,6 +198,16 @@ mod system_verr_verw;
 mod system_lar;
 #[path = "x86_64/system/lsl.rs"]
 mod system_lsl;
+#[path = "x86_64/system/rdmsr.rs"]
+mod system_rdmsr;
+#[path = "x86_64/system/wrmsr.rs"]
+mod system_wrmsr;
+#[path = "x86_64/system/invd_wbinvd_invlpg.rs"]
+mod system_invd_wbinvd_invlpg;
+#[path = "x86_64/system/fences.rs"]
+mod system_fences;
+#[path = "x86_64/system/tsx.rs"]
+mod system_tsx;
 
 // Stack operations
 #[path = "x86_64/stack_operations/pusha_popa.rs"]

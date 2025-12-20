@@ -40,3 +40,14 @@ mod vcvtss2sd_vcvtsd2ss;
 mod vcvtsi2ss_vcvtsi2sd;
 mod vcvtss2si_vcvtsd2si;
 mod vcvttss2si_vcvttsd2si;
+
+// AVX Permute Instructions
+mod vpermilps;
+mod vpermilpd;
+
+// AVX Blend Instructions
+mod vblendvps;
+mod vblendvpd;
+
+// AVX Dot Product
+mod vdppd;
