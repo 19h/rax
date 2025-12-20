@@ -162,3 +162,10 @@ mod movntdqa;
 mod addsubps_addsubpd;
 mod haddps_haddpd;
 mod hsubps_hsubpd;
+
+// SSE4.2 String Processing Instructions
+mod pcmpistri;
+mod pcmpistrm;
+mod pcmpestri;
+mod pcmpestrm;
+mod crc32;
