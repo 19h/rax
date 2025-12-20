@@ -674,3 +674,58 @@ fn test_fld_denormal_f64() {
     let result = read_st0_as_f64(&mem, 0x3000);
     assert!(result > 0.0 && result < f64::MIN_POSITIVE);
 }
+
+#[test]
+fn test_fld_m32fp_subnormal() {
+    // Test smallest positive subnormal
+    let code = [
+        0xD9, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    let subnormal = f32::from_bits(0x00000001); // Smallest positive subnormal
+    write_f32(&mem, DATA_ADDR, subnormal);
+
+    run_until_hlt(&mut vcpu).unwrap();
+    let result = read_st0_as_f64(&mem, 0x3000);
+    assert!(result > 0.0 && result < f32::MIN_POSITIVE as f64);
+}
+
+#[test]
+fn test_fld_m64fp_subnormal() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    let subnormal = f64::from_bits(0x0000000000000001); // Smallest positive subnormal
+    write_f64(&mem, DATA_ADDR, subnormal);
+
+    run_until_hlt(&mut vcpu).unwrap();
+    let result = read_st0_as_f64(&mem, 0x3000);
+    assert!(result > 0.0 && result < f64::MIN_POSITIVE);
+}
+
+#[test]
+fn test_fld_st_all_registers() {
+    // Test FLD from various ST(i) registers
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // FLD 1.0
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00, // FLD 2.0
+        0xDD, 0x04, 0x25, 0x10, 0x20, 0x00, 0x00, // FLD 3.0
+        0xDD, 0x04, 0x25, 0x18, 0x20, 0x00, 0x00, // FLD 4.0
+        0xD9, 0xC3, // FLD ST(3) ; Push 1.0
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, DATA_ADDR, 1.0);
+    write_f64(&mem, DATA_ADDR + 8, 2.0);
+    write_f64(&mem, DATA_ADDR + 16, 3.0);
+    write_f64(&mem, DATA_ADDR + 24, 4.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_st0_as_f64(&mem, 0x3000), 1.0);
+}

@@ -1,7 +1,9 @@
 mod control_flow;
 mod data_transfer;
+mod fpu;
 mod memory;
 mod misc;
+mod simd;
 mod string;
 mod sync;
 mod system;

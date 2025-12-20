@@ -1,17 +1,23 @@
-//! Tests for the FABS instruction.
+//! Tests for the FSQRT instruction.
 //!
-//! FABS - Absolute Value
+//! FSQRT - Square Root
 //!
-//! Clears the sign bit of ST(0) to create the absolute value of the operand.
-//! The operation is ST(0) := |ST(0)|
+//! Computes the square root of the source value in the ST(0) register and
+//! stores the result in ST(0).
+//! The operation is ST(0) := SquareRoot(ST(0))
 //!
-//! Opcode: D9 E1
+//! Opcode: D9 FA
 //!
 //! Flags affected:
-//! - C1: Set to 0
+//! - C1: Set to 0 if stack underflow occurred; Set if result was rounded up
 //! - C0, C2, C3: Undefined
 //!
-//! Reference: /Users/int/dev/rax/docs/fabs.txt
+//! Exceptions:
+//! - #IA: Source operand is a negative value (except -0), SNaN, or unsupported format
+//! - #D: Source operand is a denormal value
+//! - #P: Value cannot be represented exactly in destination format
+//!
+//! Reference: /Users/int/dev/rax/docs/fsqrt.txt
 
 use crate::common::{run_until_hlt, setup_vm};
 use rax::cpu::Registers;
@@ -30,207 +36,230 @@ fn read_f64(mem: &vm_memory::GuestMemoryMmap, addr: u64) -> f64 {
 }
 
 // ============================================================================
-// FABS - Absolute Value of Positive Numbers
+// FSQRT - Perfect Squares
 // ============================================================================
 
 #[test]
-fn test_fabs_positive_small() {
-    // Load 3.14, take absolute value, store result
-    // FLD qword [0x2000]  ; D9 05 00 20 00 00 (load from address 0x2000)
-    // FABS                ; D9 E1
-    // FSTP qword [0x3000] ; DD 1D 00 30 00 00 (store to address 0x3000)
+fn test_fsqrt_perfect_square_4() {
+    // Load 4.0, compute square root, store result
+    // FLD qword [0x2000]  ; DD 04 25 00 20 00 00
+    // FSQRT               ; D9 FA
+    // FSTP qword [0x3000] ; DD 1C 25 00 30 00 00
     // HLT                 ; F4
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 3.14);
+    write_f64(&mem, 0x2000, 4.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 3.14, "FABS of positive 3.14 should remain 3.14");
+    assert_eq!(result, 2.0, "FSQRT of 4.0 should be 2.0");
 }
 
 #[test]
-fn test_fabs_positive_large() {
+fn test_fsqrt_perfect_square_9() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 123456789.123456789);
+    write_f64(&mem, 0x2000, 9.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 123456789.123456789, "FABS of large positive should remain positive");
+    assert_eq!(result, 3.0, "FSQRT of 9.0 should be 3.0");
 }
 
 #[test]
-fn test_fabs_positive_one() {
+fn test_fsqrt_perfect_square_16() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 1.0);
+    write_f64(&mem, 0x2000, 16.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 1.0, "FABS of +1.0 should be 1.0");
+    assert_eq!(result, 4.0, "FSQRT of 16.0 should be 4.0");
 }
 
 #[test]
-fn test_fabs_positive_fraction() {
+fn test_fsqrt_perfect_square_25() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 0.5);
+    write_f64(&mem, 0x2000, 25.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 0.5, "FABS of 0.5 should be 0.5");
+    assert_eq!(result, 5.0, "FSQRT of 25.0 should be 5.0");
 }
 
 #[test]
-fn test_fabs_positive_very_small() {
+fn test_fsqrt_perfect_square_100() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 1e-10);
+    write_f64(&mem, 0x2000, 100.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 1e-10, "FABS of very small positive should remain positive");
-}
-
-// ============================================================================
-// FABS - Absolute Value of Negative Numbers
-// ============================================================================
-
-#[test]
-fn test_fabs_negative_small() {
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
-    ];
-
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -3.14);
-
-    run_until_hlt(&mut vcpu).unwrap();
-
-    let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 3.14, "FABS of -3.14 should be 3.14");
+    assert_eq!(result, 10.0, "FSQRT of 100.0 should be 10.0");
 }
 
 #[test]
-fn test_fabs_negative_large() {
+fn test_fsqrt_perfect_square_144() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -987654321.987654321);
+    write_f64(&mem, 0x2000, 144.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 987654321.987654321, "FABS of large negative should be positive");
-}
-
-#[test]
-fn test_fabs_negative_one() {
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
-    ];
-
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -1.0);
-
-    run_until_hlt(&mut vcpu).unwrap();
-
-    let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 1.0, "FABS of -1.0 should be 1.0");
-}
-
-#[test]
-fn test_fabs_negative_fraction() {
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
-    ];
-
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -0.25);
-
-    run_until_hlt(&mut vcpu).unwrap();
-
-    let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 0.25, "FABS of -0.25 should be 0.25");
-}
-
-#[test]
-fn test_fabs_negative_very_small() {
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
-    ];
-
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -1e-10);
-
-    run_until_hlt(&mut vcpu).unwrap();
-
-    let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 1e-10, "FABS of very small negative should be positive");
+    assert_eq!(result, 12.0, "FSQRT of 144.0 should be 12.0");
 }
 
 // ============================================================================
-// FABS - Special Cases: Zero
+// FSQRT - Non-Perfect Squares
 // ============================================================================
 
 #[test]
-fn test_fabs_positive_zero() {
+fn test_fsqrt_two() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 2.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    let expected = 2.0_f64.sqrt();
+    assert!((result - expected).abs() < 1e-15, "FSQRT of 2.0 should be approximately {}", expected);
+}
+
+#[test]
+fn test_fsqrt_three() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xFA,                                  // FSQRT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 3.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    let expected = 3.0_f64.sqrt();
+    assert!((result - expected).abs() < 1e-15, "FSQRT of 3.0 should be approximately {}", expected);
+}
+
+#[test]
+fn test_fsqrt_five() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xFA,                                  // FSQRT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 5.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    let expected = 5.0_f64.sqrt();
+    assert!((result - expected).abs() < 1e-15, "FSQRT of 5.0 should be approximately {}", expected);
+}
+
+#[test]
+fn test_fsqrt_pi() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xFA,                                  // FSQRT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, std::f64::consts::PI);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    let expected = std::f64::consts::PI.sqrt();
+    assert!((result - expected).abs() < 1e-15, "FSQRT of PI should be approximately {}", expected);
+}
+
+#[test]
+fn test_fsqrt_e() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xFA,                                  // FSQRT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, std::f64::consts::E);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    let expected = std::f64::consts::E.sqrt();
+    assert!((result - expected).abs() < 1e-15, "FSQRT of E should be approximately {}", expected);
+}
+
+// ============================================================================
+// FSQRT - Special Cases: Zero
+// ============================================================================
+
+#[test]
+fn test_fsqrt_positive_zero() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
@@ -241,15 +270,15 @@ fn test_fabs_positive_zero() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 0.0, "FABS of +0.0 should be +0.0");
+    assert_eq!(result, 0.0, "FSQRT of +0.0 should be +0.0");
     assert!(!result.is_sign_negative(), "Result should be positive zero");
 }
 
 #[test]
-fn test_fabs_negative_zero() {
+fn test_fsqrt_negative_zero() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
@@ -260,19 +289,19 @@ fn test_fabs_negative_zero() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 0.0, "FABS of -0.0 should be +0.0");
-    assert!(!result.is_sign_negative(), "Result should be positive zero");
+    assert_eq!(result, -0.0, "FSQRT of -0.0 should be -0.0");
+    assert!(result.is_sign_negative(), "Result should be negative zero");
 }
 
 // ============================================================================
-// FABS - Special Cases: Infinity
+// FSQRT - Special Cases: Infinity
 // ============================================================================
 
 #[test]
-fn test_fabs_positive_infinity() {
+fn test_fsqrt_positive_infinity() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
@@ -283,15 +312,15 @@ fn test_fabs_positive_infinity() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(result.is_infinite(), "FABS of +infinity should be +infinity");
-    assert!(!result.is_sign_negative(), "Result should be positive infinity");
+    assert_eq!(result, f64::INFINITY, "FSQRT of +infinity should be +infinity");
 }
 
 #[test]
-fn test_fabs_negative_infinity() {
+fn test_fsqrt_negative_infinity() {
+    // FSQRT of negative infinity should produce NaN (invalid operation)
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
@@ -302,19 +331,18 @@ fn test_fabs_negative_infinity() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(result.is_infinite(), "FABS of -infinity should be +infinity");
-    assert!(!result.is_sign_negative(), "Result should be positive infinity");
+    assert!(result.is_nan(), "FSQRT of -infinity should produce NaN");
 }
 
 // ============================================================================
-// FABS - Special Cases: NaN
+// FSQRT - Special Cases: NaN
 // ============================================================================
 
 #[test]
-fn test_fabs_nan() {
+fn test_fsqrt_nan() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
@@ -325,228 +353,242 @@ fn test_fabs_nan() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(result.is_nan(), "FABS of NaN should remain NaN");
-}
-
-#[test]
-fn test_fabs_negative_nan() {
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xF4,                                        // HLT
-    ];
-
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    // Create a negative NaN by flipping sign bit
-    let neg_nan = -f64::NAN;
-    write_f64(&mem, 0x2000, neg_nan);
-
-    run_until_hlt(&mut vcpu).unwrap();
-
-    let result = read_f64(&mem, 0x3000);
-    assert!(result.is_nan(), "FABS of negative NaN should remain NaN");
+    assert!(result.is_nan(), "FSQRT of NaN should remain NaN");
 }
 
 // ============================================================================
-// FABS - Sign Bit Clearing Tests
+// FSQRT - Negative Numbers (Invalid Operation)
 // ============================================================================
 
 #[test]
-fn test_fabs_clears_sign_bit_negative() {
+fn test_fsqrt_negative_one() {
+    // FSQRT of negative number (except -0) should produce NaN
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -42.5);
+    write_f64(&mem, 0x2000, -1.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 42.5, "Value should be positive");
-    assert!(!result.is_sign_negative(), "Sign bit should be cleared");
+    assert!(result.is_nan(), "FSQRT of -1.0 should produce NaN (invalid operation)");
 }
 
 #[test]
-fn test_fabs_preserves_positive_sign_bit() {
+fn test_fsqrt_negative_small() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 42.5);
+    write_f64(&mem, 0x2000, -0.5);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 42.5, "Value should remain positive");
-    assert!(!result.is_sign_negative(), "Sign bit should remain clear");
+    assert!(result.is_nan(), "FSQRT of -0.5 should produce NaN");
+}
+
+#[test]
+fn test_fsqrt_negative_large() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xFA,                                  // FSQRT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, -100.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert!(result.is_nan(), "FSQRT of -100.0 should produce NaN");
 }
 
 // ============================================================================
-// FABS - Multiple Operations
+// FSQRT - Fractional Values
 // ============================================================================
 
 #[test]
-fn test_fabs_twice() {
-    // FABS should be idempotent - applying it twice gives same result
+fn test_fsqrt_one_quarter() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
-        0xD9, 0xE1,                                  // FABS (second time)
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -7.5);
+    write_f64(&mem, 0x2000, 0.25);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 7.5, "FABS twice should give same result as once");
+    assert_eq!(result, 0.5, "FSQRT of 0.25 should be 0.5");
 }
 
 #[test]
-fn test_fabs_sequence() {
-    // Test FABS with multiple values on stack
+fn test_fsqrt_one_sixteenth() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xD9, 0xE1,                                  // FABS
-        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -1.5);
-    write_f64(&mem, 0x2008, 2.5);
+    write_f64(&mem, 0x2000, 0.0625);
 
     run_until_hlt(&mut vcpu).unwrap();
 
-    let result1 = read_f64(&mem, 0x3000);
-    let result2 = read_f64(&mem, 0x3008);
-    assert_eq!(result1, 1.5, "First FABS result");
-    assert_eq!(result2, 2.5, "Second FABS result");
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, 0.25, "FSQRT of 0.0625 should be 0.25");
+}
+
+#[test]
+fn test_fsqrt_decimal_fraction() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xFA,                                  // FSQRT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 0.01);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, 0.1, "FSQRT of 0.01 should be 0.1");
 }
 
 // ============================================================================
-// FABS - Edge Cases and Precision
+// FSQRT - Large Values
 // ============================================================================
 
 #[test]
-fn test_fabs_max_value() {
+fn test_fsqrt_large_perfect_square() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -f64::MAX);
+    write_f64(&mem, 0x2000, 10000.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, f64::MAX, "FABS of -MAX should be MAX");
+    assert_eq!(result, 100.0, "FSQRT of 10000.0 should be 100.0");
 }
 
 #[test]
-fn test_fabs_min_positive() {
+fn test_fsqrt_very_large() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -f64::MIN_POSITIVE);
+    write_f64(&mem, 0x2000, 1e100);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, f64::MIN_POSITIVE, "FABS of -MIN_POSITIVE should be MIN_POSITIVE");
+    let expected = 1e50;
+    assert_eq!(result, expected, "FSQRT of 1e100 should be 1e50");
 }
 
+// ============================================================================
+// FSQRT - Small Values
+// ============================================================================
+
 #[test]
-fn test_fabs_pi() {
+fn test_fsqrt_very_small() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -std::f64::consts::PI);
+    write_f64(&mem, 0x2000, 1e-100);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, std::f64::consts::PI, "FABS of -PI should be PI");
+    let expected = 1e-50;
+    assert!((result - expected).abs() < 1e-60, "FSQRT of 1e-100 should be approximately 1e-50");
 }
 
 #[test]
-fn test_fabs_e() {
+fn test_fsqrt_min_positive() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -std::f64::consts::E);
+    write_f64(&mem, 0x2000, f64::MIN_POSITIVE);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, std::f64::consts::E, "FABS of -E should be E");
+    assert!(result > 0.0, "FSQRT of MIN_POSITIVE should be positive");
+    assert!(result.is_finite(), "Result should be finite");
 }
 
+// ============================================================================
+// FSQRT - Precision Tests
+// ============================================================================
+
 #[test]
-fn test_fabs_subnormal() {
+fn test_fsqrt_precision_1() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    let subnormal = -f64::MIN_POSITIVE / 2.0;
-    write_f64(&mem, 0x2000, subnormal);
+    write_f64(&mem, 0x2000, 1.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert!(!result.is_sign_negative(), "FABS of subnormal should be positive");
+    assert_eq!(result, 1.0, "FSQRT of 1.0 should be exactly 1.0");
 }
 
 #[test]
-fn test_fabs_various_magnitudes() {
-    // Test a range of different magnitudes
+fn test_fsqrt_precision_check() {
+    // Test that FSQRT is accurate to double precision
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
-    let test_values = vec![
-        -1e-100, -1e-50, -1e-10, -0.001, -0.1, -10.0, -100.0, -1e10, -1e50, -1e100,
-    ];
+    let test_values = vec![2.0, 3.0, 5.0, 7.0, 10.0, 50.0, 123.456];
 
     for val in test_values {
         let (mut vcpu, mem) = setup_vm(&code, None);
@@ -555,16 +597,67 @@ fn test_fabs_various_magnitudes() {
         run_until_hlt(&mut vcpu).unwrap();
 
         let result = read_f64(&mem, 0x3000);
-        assert_eq!(result, val.abs(), "FABS of {} should be {}", val, val.abs());
+        let expected = val.sqrt();
+        let rel_error = ((result - expected) / expected).abs();
+        assert!(rel_error < 1e-15, "FSQRT of {} has relative error {} (expected < 1e-15)", val, rel_error);
     }
 }
 
+// ============================================================================
+// FSQRT - Idempotency and Combinations
+// ============================================================================
+
 #[test]
-fn test_fabs_mixed_operations() {
-    // Test FABS followed by other FPU operations (if needed for integration)
+fn test_fsqrt_twice() {
+    // FSQRT(FSQRT(16)) should be 2
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
+        0xD9, 0xFA,                                  // FSQRT (second time)
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 16.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, 2.0, "FSQRT(FSQRT(16)) should be 2");
+}
+
+#[test]
+fn test_fsqrt_sequence() {
+    // Test multiple FSQRT operations
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xFA,                                  // FSQRT
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
+        0xD9, 0xFA,                                  // FSQRT
+        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 64.0);
+    write_f64(&mem, 0x2008, 81.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result1 = read_f64(&mem, 0x3000);
+    let result2 = read_f64(&mem, 0x3008);
+    assert_eq!(result1, 8.0, "FSQRT(64) should be 8");
+    assert_eq!(result2, 9.0, "FSQRT(81) should be 9");
+}
+
+#[test]
+fn test_fsqrt_with_multiplication() {
+    // Test FSQRT(4) * 3 = 2 * 3 = 6
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
         0xDE, 0xC9,                                  // FMULP (multiply and pop)
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
@@ -572,73 +665,95 @@ fn test_fabs_mixed_operations() {
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -5.0);
-    write_f64(&mem, 0x2008, 2.0);
+    write_f64(&mem, 0x2000, 4.0);
+    write_f64(&mem, 0x2008, 3.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 10.0, "FABS(-5.0) * 2.0 should be 10.0");
+    assert_eq!(result, 6.0, "FSQRT(4) * 3 should be 6");
 }
 
+// ============================================================================
+// FSQRT - Additional Edge Cases
+// ============================================================================
+
 #[test]
-fn test_fabs_denormal_positive() {
+fn test_fsqrt_max_value() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    let denormal = f64::MIN_POSITIVE / 2.0;
-    write_f64(&mem, 0x2000, denormal);
+    write_f64(&mem, 0x2000, f64::MAX);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, denormal, "FABS of positive denormal preserves value");
+    assert!(result.is_finite(), "FSQRT of MAX should be finite");
+    assert!(result > 0.0, "FSQRT of MAX should be positive");
 }
 
 #[test]
-fn test_fabs_denormal_negative() {
+fn test_fsqrt_inverse_property() {
+    // Test that FSQRT(x) * FSQRT(x) = x
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
+        0xD8, 0xC8,                                  // FMUL ST(0), ST(0) (square the result)
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    let denormal = -f64::MIN_POSITIVE / 2.0;
-    write_f64(&mem, 0x2000, denormal);
+    let test_val = 42.0;
+    write_f64(&mem, 0x2000, test_val);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, -denormal, "FABS of negative denormal makes it positive");
+    assert!((result - test_val).abs() < 1e-14, "FSQRT(x)^2 should equal x");
 }
 
 #[test]
-fn test_fabs_alternating_signs() {
-    // Test a sequence of values with alternating signs
+fn test_fsqrt_power_of_two() {
+    // FSQRT(256) = 16
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xD9, 0xE1,                                  // FABS
+        0xD9, 0xFA,                                  // FSQRT
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT
     ];
 
-    let test_values = vec![-1.0, 2.0, -3.0, 4.0, -5.0];
-    let expected_values = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 256.0);
 
-    for (val, expected) in test_values.iter().zip(expected_values.iter()) {
-        let (mut vcpu, mem) = setup_vm(&code, None);
-        write_f64(&mem, 0x2000, *val);
+    run_until_hlt(&mut vcpu).unwrap();
 
-        run_until_hlt(&mut vcpu).unwrap();
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, 16.0, "FSQRT(256) should be 16");
+}
 
-        let result = read_f64(&mem, 0x3000);
-        assert_eq!(result, *expected, "FABS of {} should be {}", val, expected);
-    }
+#[test]
+fn test_fsqrt_nested() {
+    // FSQRT(FSQRT(256)) should be 4
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xD9, 0xFA,                                  // FSQRT
+        0xD9, 0xFA,                                  // FSQRT (second)
+        0xD9, 0xFA,                                  // FSQRT (third)
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 256.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, 2.0, "FSQRT(FSQRT(FSQRT(256))) should be 2");
 }
