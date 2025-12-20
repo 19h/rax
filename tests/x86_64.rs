@@ -180,6 +180,24 @@ mod memory_bound;
 // System instructions
 #[path = "x86_64/system/cpuid.rs"]
 mod system_cpuid;
+#[path = "x86_64/system/lgdt_lidt.rs"]
+mod system_lgdt_lidt;
+#[path = "x86_64/system/sgdt_sidt.rs"]
+mod system_sgdt_sidt;
+#[path = "x86_64/system/lldt.rs"]
+mod system_lldt;
+#[path = "x86_64/system/sldt.rs"]
+mod system_sldt;
+#[path = "x86_64/system/ltr.rs"]
+mod system_ltr;
+#[path = "x86_64/system/str.rs"]
+mod system_str;
+#[path = "x86_64/system/verr_verw.rs"]
+mod system_verr_verw;
+#[path = "x86_64/system/lar.rs"]
+mod system_lar;
+#[path = "x86_64/system/lsl.rs"]
+mod system_lsl;
 
 // Stack operations
 #[path = "x86_64/stack_operations/pusha_popa.rs"]
