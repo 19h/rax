@@ -19,6 +19,14 @@ mod orps_orpd;
 mod xorps_xorpd;
 mod andnps_andnpd;
 
+// SSE Mathematical Functions
+mod sqrtps_sqrtpd;
+mod sqrtss_sqrtsd;
+mod maxps_maxpd;
+mod minps_minpd;
+mod rcpps;
+mod rsqrtps;
+
 // SSE Conversion Instructions
 mod cvtps2pd;
 mod cvtpd2ps;

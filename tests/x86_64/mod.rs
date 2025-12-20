@@ -1,6 +1,7 @@
 mod control_flow;
 mod data_transfer;
 mod fpu;
+mod io;
 mod memory;
 mod misc;
 mod simd;
