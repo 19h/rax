@@ -833,3 +833,266 @@ fn test_repe_cmpsq_pointer_comparison() {
     assert_eq!(regs.rcx, 0);
     assert!(zf_set(regs.rflags));
 }
+
+#[test]
+fn test_repe_cmpsb_exact_match_count() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x05, 0x00, 0x00, 0x00, // MOV RCX, 5
+        0xfc, // CLD
+        0xf3, 0xa6, // REPE CMPSB
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    for i in 0..5 {
+        write_mem_at_u8(&mem, 0x3000 + i, i as u8);
+        write_mem_at_u8(&mem, 0x4000 + i, i as u8);
+    }
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0);
+    assert!(zf_set(regs.rflags));
+}
+
+#[test]
+fn test_repe_cmpsw_partial_match() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x05, 0x00, 0x00, 0x00, // MOV RCX, 5
+        0xfc, // CLD
+        0xf3, 0x66, 0xa7, // REPE CMPSW
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    for i in 0..3 {
+        write_mem_at_u16(&mem, 0x3000 + i * 2, 0x1111);
+        write_mem_at_u16(&mem, 0x4000 + i * 2, 0x1111);
+    }
+    write_mem_at_u16(&mem, 0x3006, 0x2222);
+    write_mem_at_u16(&mem, 0x4006, 0x3333);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 1);
+    assert!(!zf_set(regs.rflags));
+}
+
+#[test]
+fn test_repe_cmpsd_all_zeros() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x08, 0x00, 0x00, 0x00, // MOV RCX, 8
+        0xfc, // CLD
+        0xf3, 0xa7, // REPE CMPSD
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    for i in 0..8 {
+        write_mem_at_u32(&mem, 0x3000 + i * 4, 0);
+        write_mem_at_u32(&mem, 0x4000 + i * 4, 0);
+    }
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0);
+    assert!(zf_set(regs.rflags));
+}
+
+#[test]
+fn test_repe_cmpsq_single_element() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x01, 0x00, 0x00, 0x00, // MOV RCX, 1
+        0xfc, // CLD
+        0xf3, 0x48, 0xa7, // REPE CMPSQ
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_at_u64(&mem, 0x3000, 0x123456789ABCDEF0);
+    write_mem_at_u64(&mem, 0x4000, 0x123456789ABCDEF0);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0);
+    assert!(zf_set(regs.rflags));
+}
+
+#[test]
+fn test_repe_cmpsb_max_byte_values() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x04, 0x00, 0x00, 0x00, // MOV RCX, 4
+        0xfc, // CLD
+        0xf3, 0xa6, // REPE CMPSB
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_at_u8(&mem, 0x3000, 0x00);
+    write_mem_at_u8(&mem, 0x4000, 0x00);
+    write_mem_at_u8(&mem, 0x3001, 0xFF);
+    write_mem_at_u8(&mem, 0x4001, 0xFF);
+    write_mem_at_u8(&mem, 0x3002, 0x7F);
+    write_mem_at_u8(&mem, 0x4002, 0x7F);
+    write_mem_at_u8(&mem, 0x3003, 0x80);
+    write_mem_at_u8(&mem, 0x4003, 0x80);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0);
+    assert!(zf_set(regs.rflags));
+}
+
+#[test]
+fn test_repe_cmpsw_incremental() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x10, 0x00, 0x00, 0x00, // MOV RCX, 16
+        0xfc, // CLD
+        0xf3, 0x66, 0xa7, // REPE CMPSW
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    for i in 0..16 {
+        write_mem_at_u16(&mem, 0x3000 + i * 2, i as u16);
+        write_mem_at_u16(&mem, 0x4000 + i * 2, i as u16);
+    }
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0);
+}
+
+#[test]
+fn test_repe_cmpsd_repeating_pattern() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x10, 0x00, 0x00, 0x00, // MOV RCX, 16
+        0xfc, // CLD
+        0xf3, 0xa7, // REPE CMPSD
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    for i in 0..16 {
+        write_mem_at_u32(&mem, 0x3000 + i * 4, 0xABABABAB);
+        write_mem_at_u32(&mem, 0x4000 + i * 4, 0xABABABAB);
+    }
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0);
+}
+
+#[test]
+fn test_repe_cmpsq_alternating() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x08, 0x00, 0x00, 0x00, // MOV RCX, 8
+        0xfc, // CLD
+        0xf3, 0x48, 0xa7, // REPE CMPSQ
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    for i in 0..8 {
+        let val = if i % 2 == 0 { 0x1111111111111111 } else { 0x2222222222222222 };
+        write_mem_at_u64(&mem, 0x3000 + i * 8, val);
+        write_mem_at_u64(&mem, 0x4000 + i * 8, val);
+    }
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0);
+}
+
+#[test]
+fn test_repe_cmpsb_boundary_values() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x03, 0x00, 0x00, 0x00, // MOV RCX, 3
+        0xfc, // CLD
+        0xf3, 0xa6, // REPE CMPSB
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_at_u8(&mem, 0x3000, 0);
+    write_mem_at_u8(&mem, 0x4000, 0);
+    write_mem_at_u8(&mem, 0x3001, 0x80);
+    write_mem_at_u8(&mem, 0x4001, 0x80);
+    write_mem_at_u8(&mem, 0x3002, 0xFF);
+    write_mem_at_u8(&mem, 0x4002, 0xFF);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0);
+    assert!(zf_set(regs.rflags));
+}
+
+#[test]
+fn test_repe_cmpsw_count_255() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x50, 0x00, 0x00, // MOV RDI, 0x5000
+        0x48, 0xc7, 0xc1, 0xFF, 0x00, 0x00, 0x00, // MOV RCX, 255
+        0xfc, // CLD
+        0xf3, 0x66, 0xa7, // REPE CMPSW
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    for i in 0..255 {
+        write_mem_at_u16(&mem, 0x3000 + i * 2, 0xBEEF);
+        write_mem_at_u16(&mem, 0x5000 + i * 2, 0xBEEF);
+    }
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0);
+}
+
+#[test]
+fn test_repe_cmpsd_powers_of_two() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x08, 0x00, 0x00, 0x00, // MOV RCX, 8
+        0xfc, // CLD
+        0xf3, 0xa7, // REPE CMPSD
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    for i in 0..8 {
+        let val = 1u32 << i;
+        write_mem_at_u32(&mem, 0x3000 + i * 4, val);
+        write_mem_at_u32(&mem, 0x4000 + i * 4, val);
+    }
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0);
+}
+
+#[test]
+fn test_repe_cmpsq_fib_sequence() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x06, 0x00, 0x00, 0x00, // MOV RCX, 6
+        0xfc, // CLD
+        0xf3, 0x48, 0xa7, // REPE CMPSQ
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    let fib = [1u64, 1, 2, 3, 5, 8];
+    for (i, &val) in fib.iter().enumerate() {
+        write_mem_at_u64(&mem, 0x3000 + i as u64 * 8, val);
+        write_mem_at_u64(&mem, 0x4000 + i as u64 * 8, val);
+    }
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0);
+}
+
+#[test]
+fn test_repe_cmpsb_ascii_text() {
+    let code = [
+        0x48, 0xc7, 0xc6, 0x00, 0x30, 0x00, 0x00, // MOV RSI, 0x3000
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x0A, 0x00, 0x00, 0x00, // MOV RCX, 10
+        0xfc, // CLD
+        0xf3, 0xa6, // REPE CMPSB
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    let text = b"0123456789";
+    for (i, &byte) in text.iter().enumerate() {
+        write_mem_at_u8(&mem, 0x3000 + i as u64, byte);
+        write_mem_at_u8(&mem, 0x4000 + i as u64, byte);
+    }
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0);
+}
