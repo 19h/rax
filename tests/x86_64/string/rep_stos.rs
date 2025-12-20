@@ -870,3 +870,87 @@ fn test_rep_stos_rcx_countdown() {
     assert_eq!(regs.rcx, 0, "RCX must count down to 0");
     assert_eq!(regs.rdi, 0x4020, "RDI advanced by RCX");
 }
+
+#[test]
+fn test_rep_stosb_pattern_0x55() {
+    let code = [
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x10, 0x00, 0x00, 0x00, // MOV RCX, 16
+        0xb0, 0x55, // MOV AL, 0x55
+        0xfc, // CLD
+        0xf3, 0xaa, // REP STOSB
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    run_until_hlt(&mut vcpu).unwrap();
+    for i in 0..16 {
+        assert_eq!(read_mem_at_u8(&mem, 0x4000 + i), 0x55);
+    }
+}
+
+#[test]
+fn test_rep_stosw_pattern_0xAAAA() {
+    let code = [
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x08, 0x00, 0x00, 0x00, // MOV RCX, 8
+        0x66, 0xb8, 0xAA, 0xAA, // MOV AX, 0xAAAA
+        0xfc, // CLD
+        0xf3, 0x66, 0xab, // REP STOSW
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    run_until_hlt(&mut vcpu).unwrap();
+    for i in 0..8 {
+        assert_eq!(read_mem_at_u16(&mem, 0x4000 + i * 2), 0xAAAA);
+    }
+}
+
+#[test]
+fn test_rep_stosd_pattern_0x12345678() {
+    let code = [
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x08, 0x00, 0x00, 0x00, // MOV RCX, 8
+        0xb8, 0x78, 0x56, 0x34, 0x12, // MOV EAX, 0x12345678
+        0xfc, // CLD
+        0xf3, 0xab, // REP STOSD
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    run_until_hlt(&mut vcpu).unwrap();
+    for i in 0..8 {
+        assert_eq!(read_mem_at_u32(&mem, 0x4000 + i * 4), 0x12345678);
+    }
+}
+
+#[test]
+fn test_rep_stosq_sentinel_pattern() {
+    let code = [
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x04, 0x00, 0x00, 0x00, // MOV RCX, 4
+        0x48, 0xb8, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RAX, -1
+        0xfc, // CLD
+        0xf3, 0x48, 0xab, // REP STOSQ
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    run_until_hlt(&mut vcpu).unwrap();
+    for i in 0..4 {
+        assert_eq!(read_mem_at_u64(&mem, 0x4000 + i * 8), 0xFFFFFFFFFFFFFFFF);
+    }
+}
+
+#[test]
+fn test_rep_stosb_count_1() {
+    let code = [
+        0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
+        0x48, 0xc7, 0xc1, 0x01, 0x00, 0x00, 0x00, // MOV RCX, 1
+        0xb0, 0x88, // MOV AL, 0x88
+        0xfc, // CLD
+        0xf3, 0xaa, // REP STOSB
+        0xf4, // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_at_u8(&mem, 0x4000), 0x88);
+    assert_eq!(regs.rdi, 0x4001);
+}
