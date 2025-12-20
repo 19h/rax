@@ -512,7 +512,7 @@ fn test_idiv_rcx_register() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax as i64, -7999999, "RAX: quotient");
+    assert_eq!(regs.rax as i64, -8000000, "RAX: quotient");
 }
 
 // ============================================================================
@@ -580,7 +580,7 @@ fn test_idiv_r11_extended_register() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax as i64, -124999, "RAX: quotient");
+    assert_eq!(regs.rax as i64, -125000, "RAX: quotient");
 }
 
 // ============================================================================
@@ -590,7 +590,7 @@ fn test_idiv_r11_extended_register() {
 #[test]
 fn test_idiv_byte_ptr_mem() {
     let code = [
-        0xf6, 0x3d, 0x00, 0x10, 0x00, 0x00, // IDIV BYTE PTR [rip+0x1000]
+        0xf6, 0x3d, 0xfa, 0x0f, 0x00, 0x00, // IDIV BYTE PTR [rip+0x0FFA]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -609,7 +609,7 @@ fn test_idiv_byte_ptr_mem() {
 #[test]
 fn test_idiv_dword_ptr_mem() {
     let code = [
-        0xf7, 0x3d, 0x00, 0x10, 0x00, 0x00, // IDIV DWORD PTR [rip+0x1000]
+        0xf7, 0x3d, 0xfa, 0x0f, 0x00, 0x00, // IDIV DWORD PTR [rip+0x0FFA]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

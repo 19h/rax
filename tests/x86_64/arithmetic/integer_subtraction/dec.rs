@@ -536,7 +536,7 @@ fn test_dec_r15_to_zero() {
 #[test]
 fn test_dec_byte_ptr_mem() {
     let code = [
-        0xfe, 0x0d, 0x00, 0x10, 0x00, 0x00, // DEC BYTE PTR [rip+0x1000] (FE /1 with RIP-relative)
+        0xfe, 0x0d, 0xfa, 0x0f, 0x00, 0x00, // DEC BYTE PTR [rip+0x0FFA] (FE /1 with RIP-relative)
         0xf4,                               // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -551,7 +551,7 @@ fn test_dec_byte_ptr_mem() {
 #[test]
 fn test_dec_word_ptr_mem() {
     let code = [
-        0x66, 0xff, 0x0d, 0x00, 0x10, 0x00, 0x00, // DEC WORD PTR [rip+0x1000]
+        0x66, 0xff, 0x0d, 0xf9, 0x0f, 0x00, 0x00, // DEC WORD PTR [rip+0x0FF9]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -566,7 +566,7 @@ fn test_dec_word_ptr_mem() {
 #[test]
 fn test_dec_dword_ptr_mem() {
     let code = [
-        0xff, 0x0d, 0x00, 0x10, 0x00, 0x00, // DEC DWORD PTR [rip+0x1000]
+        0xff, 0x0d, 0xfa, 0x0f, 0x00, 0x00, // DEC DWORD PTR [rip+0x0FFA]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -581,7 +581,7 @@ fn test_dec_dword_ptr_mem() {
 #[test]
 fn test_dec_qword_ptr_mem() {
     let code = [
-        0x48, 0xff, 0x0d, 0x00, 0x10, 0x00, 0x00, // DEC QWORD PTR [rip+0x1000]
+        0x48, 0xff, 0x0d, 0xf9, 0x0f, 0x00, 0x00, // DEC QWORD PTR [rip+0x0FF9]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -596,7 +596,7 @@ fn test_dec_qword_ptr_mem() {
 #[test]
 fn test_dec_mem_underflow() {
     let code = [
-        0xfe, 0x0d, 0x00, 0x10, 0x00, 0x00, // DEC BYTE PTR [rip+0x1000]
+        0xfe, 0x0d, 0xfa, 0x0f, 0x00, 0x00, // DEC BYTE PTR [rip+0x0FFA]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

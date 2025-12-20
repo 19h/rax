@@ -482,7 +482,7 @@ fn test_mul_rax_large_values() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax, 0x0000000000000000, "RAX = 0");
-    assert_eq!(regs.rdx, 0x0000000001000000, "RDX contains high bits");
+    assert_eq!(regs.rdx, 0x0000000100000000, "RDX contains high bits");
     assert!(cf_set(regs.rflags), "CF should be set");
 }
 
@@ -604,7 +604,7 @@ fn test_mul_r15_overflow() {
 #[test]
 fn test_mul_byte_ptr_mem() {
     let code = [
-        0xf6, 0x25, 0x00, 0x10, 0x00, 0x00, // MUL BYTE PTR [rip+0x1000]
+        0xf6, 0x25, 0xfa, 0x0f, 0x00, 0x00, // MUL BYTE PTR [rip+0x0FFA]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -623,7 +623,7 @@ fn test_mul_byte_ptr_mem() {
 #[test]
 fn test_mul_word_ptr_mem() {
     let code = [
-        0x66, 0xf7, 0x25, 0x00, 0x10, 0x00, 0x00, // MUL WORD PTR [rip+0x1000]
+        0x66, 0xf7, 0x25, 0xf9, 0x0f, 0x00, 0x00, // MUL WORD PTR [rip+0x0FF9]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -642,7 +642,7 @@ fn test_mul_word_ptr_mem() {
 #[test]
 fn test_mul_dword_ptr_mem() {
     let code = [
-        0xf7, 0x25, 0x00, 0x10, 0x00, 0x00, // MUL DWORD PTR [rip+0x1000]
+        0xf7, 0x25, 0xfa, 0x0f, 0x00, 0x00, // MUL DWORD PTR [rip+0x0FFA]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -661,7 +661,7 @@ fn test_mul_dword_ptr_mem() {
 #[test]
 fn test_mul_qword_ptr_mem() {
     let code = [
-        0x48, 0xf7, 0x25, 0x00, 0x10, 0x00, 0x00, // MUL QWORD PTR [rip+0x1000]
+        0x48, 0xf7, 0x25, 0xf9, 0x0f, 0x00, 0x00, // MUL QWORD PTR [rip+0x0FF9]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
