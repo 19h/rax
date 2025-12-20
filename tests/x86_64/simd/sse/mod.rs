@@ -24,6 +24,8 @@ mod sqrtps_sqrtpd;
 mod sqrtss_sqrtsd;
 mod maxps_maxpd;
 mod minps_minpd;
+mod maxss_maxsd;
+mod minss_minsd;
 mod rcpps;
 mod rsqrtps;
 
@@ -44,6 +46,10 @@ mod cvttps2dq_cvttpd2dq;
 mod comiss_comisd;
 mod ucomiss_ucomisd;
 mod movmskps_movmskpd;
+
+// SSE Scalar Comparison Instructions (Extended)
+mod cmpss;
+mod cmpsd;
 
 // SSE Control/Status Register Instructions
 mod ldmxcsr_stmxcsr;
@@ -92,8 +98,10 @@ mod pshuflw;
 // SSE2/SSE4.1 Packed Integer Min/Max Instructions
 mod pminsb_pminsw_pminsd;
 mod pminub_pminuw_pminud;
+mod pminub_pminuw_extended;
 mod pmaxsb_pmaxsw_pmaxsd;
 mod pmaxub_pmaxuw_pmaxud;
+mod pmaxub_pmaxuw_extended;
 
 // SSE2/SSE4.1 Packed Multiply Instructions
 mod pmulhuw;
