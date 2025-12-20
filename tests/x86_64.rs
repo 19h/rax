@@ -248,3 +248,24 @@ mod sse_cvtdq2ps_cvtps2dq;
 mod sse_cvtdq2pd_cvtpd2dq;
 #[path = "x86_64/simd/sse/cvttps2dq_cvttpd2dq.rs"]
 mod sse_cvttps2dq_cvttpd2dq;
+
+// I/O Instructions
+#[path = "x86_64/io/in_out.rs"]
+mod io_in_out;
+#[path = "x86_64/io/ins_outs.rs"]
+mod io_ins_outs;
+
+// BCD Instructions
+#[path = "x86_64/bcd/aam_aad.rs"]
+mod bcd_aam_aad;
+#[path = "x86_64/bcd/daa_das.rs"]
+mod bcd_daa_das;
+
+// Control Flow - LOOP instructions
+#[path = "x86_64/control_flow/loop.rs"]
+mod control_flow_loop;
+
+// Misc - XLAT
+#[path = "x86_64/misc/xlat.rs"]
+mod misc_xlat;
+

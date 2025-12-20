@@ -51,3 +51,73 @@ mod vblendvpd;
 
 // AVX Dot Product
 mod vdppd;
+
+// AVX Scalar Arithmetic
+mod vaddss_vaddsd;
+mod vsubss_vsubsd;
+mod vmulss_vmulsd;
+mod vdivss_vdivsd;
+
+// AVX Add/Sub Packed
+mod vaddsubps_vaddsubpd;
+
+// AVX Rounding
+mod vroundps;
+mod vroundpd;
+mod vroundss;
+mod vroundsd;
+
+// AVX Comparison
+mod vcomisd;
+mod vcomiss;
+mod vucomisd;
+mod vucomiss;
+
+// AVX Scalar Move
+mod vmovss;
+mod vmovsd;
+
+// AVX Move Variants
+mod vmovhlps;
+mod vmovlhps;
+mod vmovlps;
+mod vmovhps;
+mod vmovlpd;
+mod vmovhpd;
+
+// AVX Duplicate Move
+mod vmovshdup;
+mod vmovsldup;
+mod vmovddup;
+
+// AVX Non-Temporal Move
+mod vmovntps;
+mod vmovntpd;
+mod vmovntdq;
+mod vmovntdqa;
+
+// AVX FMA (Fused Multiply-Add) Instructions
+mod vfmadd132ps;
+mod vfmadd213ps;
+mod vfmadd231ps;
+mod vfmadd132pd;
+mod vfmadd213pd;
+mod vfmadd231pd;
+mod vfmsub132ps;
+mod vfmsub213ps;
+mod vfmsub231ps;
+mod vfmsub132pd;
+mod vfmsub213pd;
+mod vfmsub231pd;
+mod vfnmadd132ps;
+mod vfnmadd213ps;
+mod vfnmadd231ps;
+mod vfnmadd132pd;
+mod vfnmadd213pd;
+mod vfnmadd231pd;
+mod vfnmsub132ps;
+mod vfnmsub213ps;
+mod vfnmsub231ps;
+mod vfnmsub132pd;
+mod vfnmsub213pd;
+mod vfnmsub231pd;

@@ -56,3 +56,35 @@ mod vpblendd;
 // AVX2 Permute Instructions
 mod vpermps;
 mod vpermpd;
+
+// AVX2 Saturating Arithmetic
+mod vpaddsb;
+mod vpaddsw;
+mod vpaddusb;
+mod vpaddusw;
+mod vpsubsb;
+mod vpsubsw;
+mod vpsubusb;
+mod vpsubusw;
+
+// AVX2 Multiply Operations
+mod vpmuldq;
+mod vpmuludq;
+
+// AVX2 Logical Operations
+mod vpandn;
+
+// AVX2 Shift Byte Operations
+mod vpslldq;
+mod vpsrldq;
+
+// AVX2 Mask Operations
+mod vpmovmskb;
+
+// AVX2 Blend Operations
+mod vpblendvb;
+mod vpblendw;
+
+// AVX2 Misc Operations
+mod vphminposuw;
+mod vmpsadbw;
