@@ -36,6 +36,9 @@ mod cvtsi2ss;
 mod cvtsi2sd;
 mod cvtss2si;
 mod cvtsd2si;
+mod cvtdq2ps_cvtps2dq;
+mod cvtdq2pd_cvtpd2dq;
+mod cvttps2dq_cvttpd2dq;
 
 // SSE Comparison and Sign Mask Instructions
 mod comiss_comisd;
@@ -47,6 +50,7 @@ mod ldmxcsr_stmxcsr;
 
 // SSE Data Movement Instructions
 mod movhlps_movlhps;
+mod movd_movq;
 
 // SSE Shuffle and Unpack Instructions
 mod shufps;
@@ -95,3 +99,23 @@ mod pmaxub_pmaxuw_pmaxud;
 mod pmulhuw;
 mod pmuludq;
 mod pmuldq;
+
+// SSSE3 Instructions
+mod pabsb_pabsw_pabsd;
+mod phaddw_phaddd;
+mod phsubw_phsubd;
+mod pmaddubsw;
+mod psignb_psignw_psignd;
+mod palignr;
+
+// SSE4.1 Instructions
+mod pblendw;
+mod pblendvb;
+
+// SSE Special Instructions
+mod rcpss;
+mod rsqrtss;
+mod maskmovdqu;
+mod movntdq;
+mod movnti;
+mod lfence_mfence_sfence;
