@@ -66,3 +66,15 @@ mod pcmpgtb_pcmpgtw_pcmpgtd;
 
 // SSE2 Packed Integer Logical Instructions
 mod pand_por_pxor_pandn;
+
+// SSE2 Packed Shift Instructions
+mod psllw_pslld_psllq;
+mod psrlw_psrld_psrlq;
+mod psraw_psrad;
+mod pslldq_psrldq;
+
+// SSE2/SSSE3 Packed Shuffle Instructions
+mod pshufd;
+mod pshufb;
+mod pshufhw;
+mod pshuflw;
