@@ -515,7 +515,7 @@ fn test_neg_r15_zero() {
 #[test]
 fn test_neg_byte_ptr_mem() {
     let code = [
-        0xf6, 0x1d, 0x00, 0x10, 0x00, 0x00, // NEG BYTE PTR [rip+0x1000]
+        0xf6, 0x1d, 0xfa, 0x0f, 0x00, 0x00, // NEG BYTE PTR [rip+0x0FFA]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -531,7 +531,7 @@ fn test_neg_byte_ptr_mem() {
 #[test]
 fn test_neg_word_ptr_mem() {
     let code = [
-        0x66, 0xf7, 0x1d, 0x00, 0x10, 0x00, 0x00, // NEG WORD PTR [rip+0x1000]
+        0x66, 0xf7, 0x1d, 0xf9, 0x0f, 0x00, 0x00, // NEG WORD PTR [rip+0x0FF9]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -546,7 +546,7 @@ fn test_neg_word_ptr_mem() {
 #[test]
 fn test_neg_dword_ptr_mem() {
     let code = [
-        0xf7, 0x1d, 0x00, 0x10, 0x00, 0x00, // NEG DWORD PTR [rip+0x1000]
+        0xf7, 0x1d, 0xfa, 0x0f, 0x00, 0x00, // NEG DWORD PTR [rip+0x0FFA]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -561,7 +561,7 @@ fn test_neg_dword_ptr_mem() {
 #[test]
 fn test_neg_qword_ptr_mem() {
     let code = [
-        0x48, 0xf7, 0x1d, 0x00, 0x10, 0x00, 0x00, // NEG QWORD PTR [rip+0x1000]
+        0x48, 0xf7, 0x1d, 0xf9, 0x0f, 0x00, 0x00, // NEG QWORD PTR [rip+0x0FF9]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -576,7 +576,7 @@ fn test_neg_qword_ptr_mem() {
 #[test]
 fn test_neg_mem_zero() {
     let code = [
-        0xf6, 0x1d, 0x00, 0x10, 0x00, 0x00, // NEG BYTE PTR [rip+0x1000]
+        0xf6, 0x1d, 0xfa, 0x0f, 0x00, 0x00, // NEG BYTE PTR [rip+0x0FFA]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
