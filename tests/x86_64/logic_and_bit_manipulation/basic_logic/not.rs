@@ -319,7 +319,7 @@ fn test_not_r11_basic() {
 #[test]
 fn test_not_byte_ptr_mem() {
     let code = [
-        0xf6, 0x15, 0x00, 0x10, 0x00, 0x00, // NOT BYTE PTR [rip+0x1000]
+        0xf6, 0x15, 0xfa, 0x0f, 0x00, 0x00, // NOT BYTE PTR [rip+0x0FFA]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -334,7 +334,7 @@ fn test_not_byte_ptr_mem() {
 #[test]
 fn test_not_word_ptr_mem() {
     let code = [
-        0x66, 0xf7, 0x15, 0x00, 0x10, 0x00, 0x00, // NOT WORD PTR [rip+0x1000]
+        0x66, 0xf7, 0x15, 0xf9, 0x0f, 0x00, 0x00, // NOT WORD PTR [rip+0x0FF9]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -349,7 +349,7 @@ fn test_not_word_ptr_mem() {
 #[test]
 fn test_not_dword_ptr_mem() {
     let code = [
-        0xf7, 0x15, 0x00, 0x10, 0x00, 0x00, // NOT DWORD PTR [rip+0x1000]
+        0xf7, 0x15, 0xfa, 0x0f, 0x00, 0x00, // NOT DWORD PTR [rip+0x0FFA]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -364,7 +364,7 @@ fn test_not_dword_ptr_mem() {
 #[test]
 fn test_not_qword_ptr_mem() {
     let code = [
-        0x48, 0xf7, 0x15, 0x00, 0x10, 0x00, 0x00, // NOT QWORD PTR [rip+0x1000]
+        0x48, 0xf7, 0x15, 0xf9, 0x0f, 0x00, 0x00, // NOT QWORD PTR [rip+0x0FF9]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

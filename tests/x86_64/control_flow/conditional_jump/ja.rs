@@ -1,6 +1,6 @@
-use rax::backend::emulator::x86_64::vcpu::Registers;
+use rax::cpu::Registers;
 
-#[path = "../../../common/mod.rs"]
+#[path = "../common/mod.rs"]
 mod common;
 use common::{run_until_hlt, setup_vm};
 

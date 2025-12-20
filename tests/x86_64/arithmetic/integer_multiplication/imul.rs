@@ -327,7 +327,7 @@ fn test_imul_rax_overflow() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax, 0x0000000000000000, "RAX = 0");
-    assert_eq!(regs.rdx, 0x0000000001000000, "RDX (high bits)");
+    assert_eq!(regs.rdx, 0x0000000100000000, "RDX (high bits)");
     assert!(cf_set(regs.rflags), "CF should be set");
 }
 
@@ -675,7 +675,7 @@ fn test_imul_r11_three_operand() {
 #[test]
 fn test_imul_byte_ptr_mem() {
     let code = [
-        0xf6, 0x2d, 0x00, 0x10, 0x00, 0x00, // IMUL BYTE PTR [rip+0x1000]
+        0xf6, 0x2d, 0xfa, 0x0f, 0x00, 0x00, // IMUL BYTE PTR [rip+0x0FFA]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -693,7 +693,7 @@ fn test_imul_byte_ptr_mem() {
 #[test]
 fn test_imul_two_op_mem() {
     let code = [
-        0x0f, 0xaf, 0x1d, 0x00, 0x10, 0x00, 0x00, // IMUL EBX, [rip+0x1000]
+        0x0f, 0xaf, 0x1d, 0xf9, 0x0f, 0x00, 0x00, // IMUL EBX, [rip+0x0FF9]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -711,7 +711,7 @@ fn test_imul_two_op_mem() {
 #[test]
 fn test_imul_three_op_mem() {
     let code = [
-        0x6b, 0x1d, 0x00, 0x10, 0x00, 0x00, 0x05, // IMUL EBX, [rip+0x1000], 5
+        0x6b, 0x1d, 0xf9, 0x0f, 0x00, 0x00, 0x05, // IMUL EBX, [rip+0x0FF9], 5
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

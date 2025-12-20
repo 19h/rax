@@ -28,6 +28,20 @@ mod arithmetic_integer_subtraction_neg;
 #[path = "x86_64/arithmetic/integer_subtraction/sbb.rs"]
 mod arithmetic_integer_subtraction_sbb;
 
+// Comprehensive arithmetic tests
+#[path = "x86_64/arithmetic/neg.rs"]
+mod arithmetic_neg;
+#[path = "x86_64/arithmetic/inc_dec.rs"]
+mod arithmetic_inc_dec;
+#[path = "x86_64/arithmetic/imul.rs"]
+mod arithmetic_imul;
+#[path = "x86_64/arithmetic/mul.rs"]
+mod arithmetic_mul;
+#[path = "x86_64/arithmetic/div.rs"]
+mod arithmetic_div;
+#[path = "x86_64/arithmetic/idiv.rs"]
+mod arithmetic_idiv;
+
 // Logic and bit manipulation
 #[path = "x86_64/logic_and_bit_manipulation/basic_logic/and.rs"]
 mod logic_basic_and;
@@ -43,6 +57,23 @@ mod logic_basic_xor;
 mod logic_bit_testing_bt;
 #[path = "x86_64/logic_and_bit_manipulation/bit_testing/btc.rs"]
 mod logic_bit_testing_btc;
+#[path = "x86_64/logic_and_bit_manipulation/bit_testing/btr.rs"]
+mod logic_bit_testing_btr;
+#[path = "x86_64/logic_and_bit_manipulation/bit_testing/bts.rs"]
+mod logic_bit_testing_bts;
+// New bit test module with comprehensive coverage
+#[path = "x86_64/bit/bt.rs"]
+mod bit_test_bt;
+#[path = "x86_64/bit/btc.rs"]
+mod bit_test_btc;
+#[path = "x86_64/bit/btr.rs"]
+mod bit_test_btr;
+#[path = "x86_64/bit/bts.rs"]
+mod bit_test_bts;
+#[path = "x86_64/logic_and_bit_manipulation/bit_scanning/bsf.rs"]
+mod logic_bit_scanning_bsf;
+#[path = "x86_64/logic_and_bit_manipulation/bit_scanning/bsr.rs"]
+mod logic_bit_scanning_bsr;
 #[path = "x86_64/logic_and_bit_manipulation/rotates_basic/rcl.rs"]
 mod logic_rotates_basic_rcl;
 #[path = "x86_64/logic_and_bit_manipulation/rotates_basic/rcr.rs"]
@@ -63,3 +94,57 @@ mod logic_shifts_double_precision_shrd;
 mod logic_shifts_logical_shl;
 #[path = "x86_64/logic_and_bit_manipulation/shifts_logical/shr.rs"]
 mod logic_shifts_logical_shr;
+
+// BMI (Bit Manipulation Instructions)
+#[path = "x86_64/bmi/blsi.rs"]
+mod bmi_blsi;
+#[path = "x86_64/bmi/blsmsk.rs"]
+mod bmi_blsmsk;
+#[path = "x86_64/bmi/blsr.rs"]
+mod bmi_blsr;
+#[path = "x86_64/bmi/andn.rs"]
+mod bmi_andn;
+#[path = "x86_64/bmi/bextr.rs"]
+mod bmi_bextr;
+
+// Data Transfer
+#[path = "x86_64/data_transfer/bswap.rs"]
+mod data_transfer_bswap;
+#[path = "x86_64/data_transfer/cmov.rs"]
+mod data_transfer_cmov;
+
+// Data Conversion
+#[path = "x86_64/conversion/movsx.rs"]
+mod conversion_movsx;
+#[path = "x86_64/conversion/movzx.rs"]
+mod conversion_movzx;
+#[path = "x86_64/conversion/cbw_cwde_cdqe.rs"]
+mod conversion_cbw_cwde_cdqe;
+
+// Synchronization primitives
+#[path = "x86_64/sync/cmpxchg.rs"]
+mod sync_cmpxchg;
+
+// Flag Manipulation
+#[path = "x86_64/flags/clc_stc_cmc.rs"]
+mod flags_clc_stc_cmc;
+#[path = "x86_64/flags/cld_std.rs"]
+mod flags_cld_std;
+#[path = "x86_64/flags/lahf_sahf.rs"]
+mod flags_lahf_sahf;
+#[path = "x86_64/flags/pushf_popf.rs"]
+mod flags_pushf_popf;
+
+// Memory operations
+#[path = "x86_64/memory/enter_leave.rs"]
+mod memory_enter_leave;
+#[path = "x86_64/memory/bound.rs"]
+mod memory_bound;
+
+// System instructions
+#[path = "x86_64/system/cpuid.rs"]
+mod system_cpuid;
+
+// Miscellaneous
+#[path = "x86_64/misc/nop.rs"]
+mod misc_nop;

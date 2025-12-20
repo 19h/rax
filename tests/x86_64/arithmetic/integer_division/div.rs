@@ -112,10 +112,8 @@ fn test_div_al_max_dividend() {
     regs.rax = 0xFFFF; // AX = 65535
     regs.rbx = 0xFF;   // BL = 255
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rax & 0xFF, 257, "AL: quotient"); // 65535 / 255 = 257
-    // Note: This might cause #DE if quotient > 255. Adjust if emulator handles this.
+    let regs = run_until_hlt(&mut vcpu);
+    assert!(regs.is_err(), "DIV should fault when quotient overflows 8-bit");
 }
 
 #[test]
@@ -438,9 +436,9 @@ fn test_div_rcx_register() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // 987654321098765 / 123456789 = 7999999 remainder 97888254
-    assert_eq!(regs.rax, 7999999, "RAX: quotient");
-    assert_eq!(regs.rdx, 97888254, "RDX: remainder");
+    // 987654321098765 / 123456789 = 8000000 remainder 9098765
+    assert_eq!(regs.rax, 8000000, "RAX: quotient");
+    assert_eq!(regs.rdx, 9098765, "RDX: remainder");
 }
 
 // ============================================================================
@@ -510,8 +508,8 @@ fn test_div_r11_extended_register() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 124999, "RAX: quotient");
-    assert_eq!(regs.rdx, 222666, "RDX: remainder");
+    assert_eq!(regs.rax, 125000, "RAX: quotient");
+    assert_eq!(regs.rdx, 39012, "RDX: remainder");
 }
 
 // ============================================================================
@@ -521,7 +519,7 @@ fn test_div_r11_extended_register() {
 #[test]
 fn test_div_byte_ptr_mem() {
     let code = [
-        0xf6, 0x35, 0x00, 0x10, 0x00, 0x00, // DIV BYTE PTR [rip+0x1000]
+        0xf6, 0x35, 0xfa, 0x0f, 0x00, 0x00, // DIV BYTE PTR [rip+0x0FFA]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -540,7 +538,7 @@ fn test_div_byte_ptr_mem() {
 #[test]
 fn test_div_word_ptr_mem() {
     let code = [
-        0x66, 0xf7, 0x35, 0x00, 0x10, 0x00, 0x00, // DIV WORD PTR [rip+0x1000]
+        0x66, 0xf7, 0x35, 0xf9, 0x0f, 0x00, 0x00, // DIV WORD PTR [rip+0x0FF9]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -560,7 +558,7 @@ fn test_div_word_ptr_mem() {
 #[test]
 fn test_div_dword_ptr_mem() {
     let code = [
-        0xf7, 0x35, 0x00, 0x10, 0x00, 0x00, // DIV DWORD PTR [rip+0x1000]
+        0xf7, 0x35, 0xfa, 0x0f, 0x00, 0x00, // DIV DWORD PTR [rip+0x0FFA]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -580,7 +578,7 @@ fn test_div_dword_ptr_mem() {
 #[test]
 fn test_div_qword_ptr_mem() {
     let code = [
-        0x48, 0xf7, 0x35, 0x00, 0x10, 0x00, 0x00, // DIV QWORD PTR [rip+0x1000]
+        0x48, 0xf7, 0x35, 0xf9, 0x0f, 0x00, 0x00, // DIV QWORD PTR [rip+0x0FF9]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
