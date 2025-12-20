@@ -9,6 +9,7 @@
 //!
 //! Reference: docs/adc.txt
 
+#[path = "../../common/mod.rs"]
 mod common;
 
 use common::*;
@@ -624,7 +625,7 @@ fn test_adc_overflow_with_carry() {
 
 #[test]
 fn test_adc_parity_with_carry() {
-    // 0x01 + 0x00 + 1 = 0x02 (even parity)
+    // 0x01 + 0x00 + 1 = 0x02 (odd parity)
     let code = [0x14, 0x00, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x01;
@@ -633,7 +634,7 @@ fn test_adc_parity_with_carry() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFF, 0x02);
-    assert!(pf_set(regs.rflags), "PF should be set (even parity)");
+    assert!(!pf_set(regs.rflags), "PF should be clear (odd parity)");
 }
 
 // ============================================================================

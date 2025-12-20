@@ -9,6 +9,7 @@
 //!
 //! Reference: docs/add.txt
 
+#[path = "../../common/mod.rs"]
 mod common;
 
 use common::*;

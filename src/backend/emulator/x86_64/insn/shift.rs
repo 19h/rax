@@ -340,6 +340,7 @@ fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u8) -
 
 /// Group 2: r/m8, imm8 (0xC0)
 pub fn group2_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    ctx.rip_relative_offset = 1;
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
     let op = (modrm >> 3) & 0x07;
@@ -368,6 +369,7 @@ pub fn group2_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<O
 /// Group 2: r/m, imm8 (0xC1)
 pub fn group2_rm_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
+    ctx.rip_relative_offset = 1;
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
     let op = (modrm >> 3) & 0x07;
@@ -508,6 +510,7 @@ pub fn group2_rm_cl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
 /// SHLD r/m, r, imm8 (0x0F 0xA4) - Double precision shift left
 pub fn shld_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
+    ctx.rip_relative_offset = 1;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     // Mask count: 6 bits for 64-bit ops, 5 bits for 16/32-bit ops
     let count_mask = if op_size == 8 { 0x3F } else { 0x1F };
@@ -560,6 +563,7 @@ pub fn shld_cl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 /// SHRD r/m, r, imm8 (0x0F 0xAC) - Double precision shift right
 pub fn shrd_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
+    ctx.rip_relative_offset = 1;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     // Mask count: 6 bits for 64-bit ops, 5 bits for 16/32-bit ops
     let count_mask = if op_size == 8 { 0x3F } else { 0x1F };

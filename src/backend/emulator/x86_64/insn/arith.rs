@@ -545,6 +545,7 @@ pub fn cmp_rax_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
 
 /// Group 1: r/m8, imm8 (0x80)
 pub fn group1_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    ctx.rip_relative_offset = 1;
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
     let op = (modrm >> 3) & 0x07;
@@ -636,6 +637,8 @@ pub fn group1_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<O
 /// Group 1: r/m, imm32 (0x81)
 pub fn group1_rm_imm32(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
+    let imm_size = if op_size == 8 { 4 } else { op_size };
+    ctx.rip_relative_offset = imm_size as usize;
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
     let op = (modrm >> 3) & 0x07;
@@ -649,7 +652,6 @@ pub fn group1_rm_imm32(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<O
         (vcpu.read_mem(addr, op_size)?, Some(addr))
     };
 
-    let imm_size = if op_size == 8 { 4 } else { op_size };
     let imm = ctx.consume_imm(imm_size)?;
     let imm = if op_size == 8 {
         imm as i32 as i64 as u64
@@ -668,6 +670,22 @@ pub fn group1_rm_imm32(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<O
             // OR
             let r = dst | imm;
             flags::update_flags_logic(&mut vcpu.regs.rflags, r, op_size);
+            (r, true)
+        }
+        2 => {
+            // ADC
+            let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
+            let cf_val = if cf_in { 1u64 } else { 0 };
+            let r = dst.wrapping_add(imm).wrapping_add(cf_val);
+            flags::update_flags_adc(&mut vcpu.regs.rflags, dst, imm, cf_in, r, op_size);
+            (r, true)
+        }
+        3 => {
+            // SBB
+            let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
+            let cf_val = if cf_in { 1u64 } else { 0 };
+            let r = dst.wrapping_sub(imm).wrapping_sub(cf_val);
+            flags::update_flags_sbb(&mut vcpu.regs.rflags, dst, imm, cf_in, r, op_size);
             (r, true)
         }
         4 => {
@@ -711,6 +729,7 @@ pub fn group1_rm_imm32(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<O
 /// Group 1: r/m, imm8 sign-extended (0x83)
 pub fn group1_rm_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
+    ctx.rip_relative_offset = 1;
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
     let op = (modrm >> 3) & 0x07;
@@ -826,6 +845,8 @@ pub fn imul_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
 /// IMUL r, r/m, imm (0x69) - 3-operand with 16/32-bit immediate
 pub fn imul_r_rm_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
+    let imm_size = if op_size == 8 { 4 } else { op_size };
+    ctx.rip_relative_offset = imm_size as usize;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
 
     let src = if is_memory {
@@ -835,7 +856,6 @@ pub fn imul_r_rm_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
     };
 
     // Immediate is sign-extended to operand size
-    let imm_size = if op_size == 8 { 4 } else { op_size };
     let imm = ctx.consume_imm(imm_size)?;
     let imm = if op_size == 8 {
         imm as i32 as i64 as u64
@@ -867,6 +887,7 @@ pub fn imul_r_rm_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
 /// IMUL r, r/m, imm8 (0x6B) - 3-operand with 8-bit immediate
 pub fn imul_r_rm_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
+    ctx.rip_relative_offset = 1;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
 
     let src = if is_memory {
