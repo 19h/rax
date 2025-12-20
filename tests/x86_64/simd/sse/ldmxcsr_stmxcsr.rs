@@ -380,3 +380,72 @@ fn test_mxcsr_state_preservation() {
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+#[test]
+fn test_stmxcsr_addr2() {
+    // Test STMXCSR to another address
+    let code = [
+        0x0f, 0xae, 0x1c, 0x25, 0x10, 0x30, 0x00, 0x00, // STMXCSR [0x3010]
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    run_until_hlt(&mut vcpu).unwrap();
+}
+
+#[test]
+fn test_ldmxcsr_addr2() {
+    // Test LDMXCSR from another address
+    let code = [
+        0x0f, 0xae, 0x14, 0x25, 0x10, 0x30, 0x00, 0x00, // LDMXCSR [0x3010]
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    run_until_hlt(&mut vcpu).unwrap();
+}
+
+#[test]
+fn test_ldmxcsr_denormal_mask() {
+    // Test loading MXCSR with denormal exception masked
+    let code = [
+        0x0f, 0xae, 0x14, 0x25, 0x00, 0x30, 0x00, 0x00, // LDMXCSR [0x3000]
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    run_until_hlt(&mut vcpu).unwrap();
+}
+
+#[test]
+fn test_stmxcsr_sequential() {
+    // Test sequential STMXCSR operations
+    let code = [
+        0x0f, 0xae, 0x1c, 0x25, 0x00, 0x30, 0x00, 0x00, // STMXCSR [0x3000]
+        0x0f, 0xae, 0x1c, 0x25, 0x00, 0x30, 0x00, 0x00, // STMXCSR [0x3000]
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    run_until_hlt(&mut vcpu).unwrap();
+}
+
+#[test]
+fn test_ldmxcsr_sequential() {
+    // Test sequential LDMXCSR operations
+    let code = [
+        0x0f, 0xae, 0x14, 0x25, 0x00, 0x30, 0x00, 0x00, // LDMXCSR [0x3000]
+        0x0f, 0xae, 0x14, 0x25, 0x00, 0x30, 0x00, 0x00, // LDMXCSR [0x3000]
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    run_until_hlt(&mut vcpu).unwrap();
+}
+
+#[test]
+fn test_ldmxcsr_rounding_mode_change() {
+    // Test changing rounding mode via LDMXCSR
+    let code = [
+        0x0f, 0xae, 0x14, 0x25, 0x00, 0x30, 0x00, 0x00, // LDMXCSR [0x3000]
+        0x0f, 0xae, 0x1c, 0x25, 0x04, 0x30, 0x00, 0x00, // STMXCSR [0x3004]
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    run_until_hlt(&mut vcpu).unwrap();
+}

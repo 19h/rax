@@ -479,3 +479,47 @@ fn test_ucomisd_negative_zero() {
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+#[test]
+fn test_ucomiss_large_vs_small() {
+    // Test large value vs small value comparison
+    let code = [
+        0x0f, 0x2e, 0xc6, // UCOMISS XMM0, XMM6
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    run_until_hlt(&mut vcpu).unwrap();
+}
+
+#[test]
+fn test_ucomisd_large_vs_small() {
+    // Test large double value vs small value comparison
+    let code = [
+        0x66, 0x0f, 0x2e, 0xc6, // UCOMISD XMM0, XMM6
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    run_until_hlt(&mut vcpu).unwrap();
+}
+
+#[test]
+fn test_ucomiss_xmm0_xmm8() {
+    // UCOMISS XMM0, XMM8
+    let code = [
+        0x41, 0x0f, 0x2e, 0xc0, // UCOMISS XMM0, XMM8
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    run_until_hlt(&mut vcpu).unwrap();
+}
+
+#[test]
+fn test_ucomisd_xmm0_xmm8() {
+    // UCOMISD XMM0, XMM8
+    let code = [
+        0x66, 0x41, 0x0f, 0x2e, 0xc0, // UCOMISD XMM0, XMM8
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    run_until_hlt(&mut vcpu).unwrap();
+}
