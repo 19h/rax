@@ -10,10 +10,19 @@
 // - ANDN: Logical AND NOT (dest = src1 & ~src2)
 // - BEXTR: Bit Field Extract (extract specified bits using start and length)
 //
+// BMI2 Instructions:
+// - MULX: Unsigned Multiply Without Affecting Flags (dest1:dest2 = rdx * src)
+// - SARX: Arithmetic Right Shift Without Affecting Flags
+// - SHLX: Logical Left Shift Without Affecting Flags
+// - SHRX: Logical Right Shift Without Affecting Flags
+//
+// Additional Instructions:
+// - POPCNT: Count Number of Bits Set to 1
+//
 // Each test file contains:
 // - Basic functionality tests
-// - 32-bit and 64-bit variants
-// - Flag behavior tests (ZF, CF, SF, OF)
+// - 16/32/64-bit variants (where applicable)
+// - Flag behavior tests (ZF, CF, SF, OF) or verification flags are NOT modified
 // - Edge cases (all zeros, all ones, boundary conditions)
 // - Memory operand tests
 // - Extended register tests (R8-R15)
@@ -33,3 +42,12 @@ mod andn;
 
 #[cfg(test)]
 mod bextr;
+
+#[cfg(test)]
+mod mulx;
+
+#[cfg(test)]
+mod popcnt;
+
+#[cfg(test)]
+mod sarx_shlx_shrx;
