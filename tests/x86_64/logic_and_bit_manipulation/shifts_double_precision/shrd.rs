@@ -83,9 +83,9 @@ fn test_shrd_ax_bx_1bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 0x4001, "AX: 0x0002 SHRD 1 = 0x4001");
+    assert_eq!(regs.rax & 0xFFFF, 0x0001, "AX: 0x0002 SHRD 1 = 0x0001");
     assert!(!cf_set(regs.rflags), "CF: bit shifted out was 0");
-    assert!(of_set(regs.rflags), "OF: sign changed from + to -");
+    assert!(!of_set(regs.rflags), "OF: no sign change");
 }
 
 #[test]
@@ -251,7 +251,7 @@ fn test_shrd_rax_count_masked_64bit() {
 
 #[test]
 fn test_shrd_rax_full_width() {
-    // SHRD by 64 should completely replace with source
+    // Count is masked to 6 bits for 64-bit operands (64 becomes 0)
     let code = [
         0x48, 0x0f, 0xad, 0xd8, // SHRD RAX, RBX, CL
         0xf4,
@@ -263,7 +263,7 @@ fn test_shrd_rax_full_width() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFEDCBA9876543210, "RAX: completely replaced by RBX");
+    assert_eq!(regs.rax, 0x123456789ABCDEF0, "RAX: unchanged when count masks to 0");
 }
 
 // ============================================================================
@@ -449,12 +449,12 @@ fn test_shrd_flag_behavior() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x40000000, "EAX: 0x00000001 SHRD 1 = 0x40000000");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000000, "EAX: 0x00000001 SHRD 1 = 0x00000000");
     assert!(cf_set(regs.rflags), "CF: bit shifted out was 1");
     // OF: sign changed from positive to negative? No, result is still positive
     assert!(!of_set(regs.rflags), "OF: no sign change");
     assert!(!sf_set(regs.rflags), "SF: result is positive");
-    assert!(!zf_set(regs.rflags), "ZF: result is not zero");
+    assert!(zf_set(regs.rflags), "ZF: result is zero");
 }
 
 #[test]
@@ -488,7 +488,7 @@ fn test_shrd_max_shift() {
 
     // Shift right by 31, only MSB of result comes from original EAX
     assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFE, "EAX: SHRD by 31");
-    assert!(cf_set(regs.rflags), "CF: LSB was 1");
+    assert!(!cf_set(regs.rflags), "CF: bit shifted out was 0");
 }
 
 #[test]
@@ -504,5 +504,5 @@ fn test_shrd_reverse_bytes() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x78000012, "EAX: byte manipulation");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x34567812, "EAX: byte manipulation");
 }
