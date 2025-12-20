@@ -4,7 +4,7 @@
 
 pub mod emulator;
 
-#[cfg(feature = "kvm")]
+#[cfg(all(feature = "kvm", target_os = "linux"))]
 pub mod kvm;
 
 use std::any::Any;
@@ -14,7 +14,7 @@ use vm_memory::GuestMemoryMmap;
 
 use crate::config::BackendKind;
 use crate::cpu::VCpu;
-#[cfg(not(feature = "kvm"))]
+#[cfg(not(all(feature = "kvm", target_os = "linux")))]
 use crate::error::Error;
 use crate::error::Result;
 
@@ -46,11 +46,11 @@ pub trait Backend: Send + Sync {
 /// Create a backend based on configuration.
 pub fn create(kind: BackendKind) -> Result<Box<dyn Backend>> {
     match kind {
-        #[cfg(feature = "kvm")]
+        #[cfg(all(feature = "kvm", target_os = "linux"))]
         BackendKind::Kvm => Ok(Box::new(kvm::KvmBackend::new()?)),
-        #[cfg(not(feature = "kvm"))]
+        #[cfg(not(all(feature = "kvm", target_os = "linux")))]
         BackendKind::Kvm => Err(Error::InvalidConfig(
-            "KVM backend not available (compile with --features kvm)".to_string(),
+            "KVM backend not available (requires Linux with --features kvm)".to_string(),
         )),
         BackendKind::Emulator => Ok(Box::new(emulator::EmulatorBackend::new())),
     }

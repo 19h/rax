@@ -32,7 +32,14 @@ pub enum BackendKind {
 
 impl Default for BackendKind {
     fn default() -> Self {
-        BackendKind::Kvm
+        #[cfg(target_os = "linux")]
+        {
+            BackendKind::Kvm
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            BackendKind::Emulator
+        }
     }
 }
 
