@@ -3,3 +3,7 @@ mod nop;
 mod pause;
 mod xlat;
 mod crc32;
+mod prefetch;
+mod clflush;
+mod lock;
+mod monitor_mwait;

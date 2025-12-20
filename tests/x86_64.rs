@@ -2,6 +2,10 @@
 
 // Aggregated test modules for the nested x86_64 instruction suites.
 
+// Common utilities
+#[path = "x86_64/common/mod.rs"]
+mod common;
+
 // Arithmetic
 #[path = "x86_64/arithmetic/integer_addition_carry/add.rs"]
 mod arithmetic_integer_addition_carry_add;
@@ -150,3 +154,13 @@ mod system_cpuid;
 // Miscellaneous
 #[path = "x86_64/misc/nop.rs"]
 mod misc_nop;
+
+// SSE/MMX Data Movement Between Integer and Floating-Point
+#[path = "x86_64/simd/sse/movd_movq.rs"]
+mod sse_movd_movq;
+#[path = "x86_64/simd/sse/cvtdq2ps_cvtps2dq.rs"]
+mod sse_cvtdq2ps_cvtps2dq;
+#[path = "x86_64/simd/sse/cvtdq2pd_cvtpd2dq.rs"]
+mod sse_cvtdq2pd_cvtpd2dq;
+#[path = "x86_64/simd/sse/cvttps2dq_cvttpd2dq.rs"]
+mod sse_cvttps2dq_cvttpd2dq;
