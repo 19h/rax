@@ -11,7 +11,7 @@ use tracing::{debug, info};
 use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestMemoryMmap};
 
 use crate::arch::{Arch, BootInfo};
-#[cfg(feature = "kvm")]
+#[cfg(all(feature = "kvm", target_os = "linux"))]
 use crate::backend::kvm::KvmVm;
 use crate::config::VmConfig;
 use crate::cpu::{CpuState, DescriptorTable, Registers, Segment, SystemRegisters};
@@ -553,7 +553,7 @@ impl Arch for X86_64Arch {
         })
     }
 
-    #[cfg(feature = "kvm")]
+    #[cfg(all(feature = "kvm", target_os = "linux"))]
     fn init_vm(&self, vm: &KvmVm, boot: &BootInfo) -> Result<()> {
         vm.create_irq_chip()?;
         vm.create_pit2()?;

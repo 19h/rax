@@ -1,12 +1,12 @@
 use crate::error::Result;
-#[cfg(feature = "kvm")]
+#[cfg(all(feature = "kvm", target_os = "linux"))]
 use kvm_bindings::kvm_userspace_memory_region;
-#[cfg(feature = "kvm")]
+#[cfg(all(feature = "kvm", target_os = "linux"))]
 use kvm_ioctls::VmFd;
 use tracing::info;
-#[cfg(feature = "kvm")]
+#[cfg(all(feature = "kvm", target_os = "linux"))]
 use vm_memory::{Address, GuestAddress, GuestMemory, GuestMemoryMmap, GuestMemoryRegion};
-#[cfg(not(feature = "kvm"))]
+#[cfg(not(all(feature = "kvm", target_os = "linux")))]
 use vm_memory::{GuestAddress, GuestMemoryMmap};
 
 pub const PAGE_SIZE: u64 = 4096;
@@ -39,7 +39,7 @@ impl GuestMemoryWrapper {
         Ok(GuestMemoryWrapper { mem, size })
     }
 
-    #[cfg(feature = "kvm")]
+    #[cfg(all(feature = "kvm", target_os = "linux"))]
     pub fn register(&self, vm_fd: &VmFd) -> Result<()> {
         for (slot, region) in self.mem.iter().enumerate() {
             info!(

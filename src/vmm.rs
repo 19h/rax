@@ -3,10 +3,10 @@ use std::sync::Arc;
 use tracing::{debug, info};
 
 use crate::arch::{self, Arch, BootInfo};
-#[cfg(feature = "kvm")]
+#[cfg(all(feature = "kvm", target_os = "linux"))]
 use crate::backend::kvm::KvmVm;
 use crate::backend::{self, Vm};
-#[cfg(feature = "kvm")]
+#[cfg(all(feature = "kvm", target_os = "linux"))]
 use crate::config::BackendKind;
 use crate::config::VmConfig;
 use crate::cpu::{VCpu, VcpuExit};
@@ -47,7 +47,7 @@ impl Vmm {
         let guest_mem = GuestMemoryWrapper::new(config.memory.bytes())?;
 
         // Register memory with VM (backend-specific)
-        #[cfg(feature = "kvm")]
+        #[cfg(all(feature = "kvm", target_os = "linux"))]
         if matches!(config.backend, BackendKind::Kvm) {
             let kvm_vm = vm
                 .as_any()
@@ -73,7 +73,7 @@ impl Vmm {
         let boot_info = arch.load_kernel(guest_mem.memory(), &config)?;
 
         // Initialize VM (backend-specific)
-        #[cfg(feature = "kvm")]
+        #[cfg(all(feature = "kvm", target_os = "linux"))]
         if matches!(config.backend, BackendKind::Kvm) {
             let kvm_vm = vm
                 .as_any()
