@@ -142,6 +142,18 @@ mod pinsrw;
 mod extractps;
 mod insertps;
 
+// SSE4.1 Sign/Zero Extension Instructions
+mod pmovsxbw_pmovsxbd_pmovsxbq;
+mod pmovsxwd_pmovsxwq_pmovsxdq;
+mod pmovzxbw_pmovzxbd_pmovzxbq;
+mod pmovzxwd_pmovzxwq_pmovzxdq;
+
+// SSE4.1 Additional Min/Max Instructions
+mod pminuw_pminud;
+mod pmaxuw_pmaxud;
+mod pminsb_pminsd;
+mod pmaxsb_pmaxsd;
+
 // SSE Special Instructions
 mod rcpss;
 mod rsqrtss;
@@ -186,3 +198,13 @@ mod clflushopt;
 
 // PCLMULQDQ Extended Tests
 mod pclmulqdq_extended;
+
+// SSE3/SSSE3/SSE4.1 Extended and Additional Tests
+mod fisttp_sse;
+mod monitor_mwait_extended;
+mod movddup_extended;
+mod movsldup_movshdup_extended;
+mod pmaddubsw_extended;
+mod phminposuw_extended;
+mod mpsadbw_extended;
+mod packusdw;
