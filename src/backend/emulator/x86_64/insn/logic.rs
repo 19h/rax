@@ -386,6 +386,7 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
             let dst = if modrm >> 6 == 3 {
                 vcpu.get_reg(rm, 1)
             } else {
+                ctx.rip_relative_offset = 1;
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
                 vcpu.mmu.read_u8(addr, &vcpu.sregs)? as u64
@@ -439,14 +440,15 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     match op {
         0 | 1 => {
             // TEST r/m, imm
+            let imm_size = if op_size == 8 { 4 } else { op_size };
             let dst = if modrm >> 6 == 3 {
                 vcpu.get_reg(rm, op_size)
             } else {
+                ctx.rip_relative_offset = imm_size as usize;
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
                 vcpu.read_mem(addr, op_size)?
             };
-            let imm_size = if op_size == 8 { 4 } else { op_size };
             let imm = ctx.consume_imm(imm_size)?;
             let imm = if op_size == 8 {
                 imm as i32 as i64 as u64

@@ -16,6 +16,7 @@ impl Decoder {
             address_size_override: false,
             rep_prefix: None,
             op_size: 4,
+            rip_relative_offset: 0,
         };
 
         loop {
@@ -112,7 +113,11 @@ impl X86_64Vcpu {
             let disp = i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]) as i64;
             extra += 4;
             // RIP points to the next instruction
-            let rip_after = self.regs.rip as i64 + modrm_offset as i64 + 1 + 4;
+            let rip_after = self.regs.rip as i64
+                + modrm_offset as i64
+                + 1
+                + 4
+                + ctx.rip_relative_offset as i64;
             addr = rip_after.wrapping_add(disp) as u64;
         } else {
             // Regular register indirect

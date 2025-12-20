@@ -180,6 +180,7 @@ pub fn bsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 /// Group 8: BT/BTS/BTR/BTC with immediate (0x0F 0xBA)
 pub fn group8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
+    ctx.rip_relative_offset = 1;
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
     let reg_op = (modrm >> 3) & 0x07;

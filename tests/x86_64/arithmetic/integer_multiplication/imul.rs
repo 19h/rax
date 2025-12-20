@@ -1,7 +1,7 @@
+#[path = "../../common/mod.rs"]
 mod common;
 
 use common::*;
-use rax::backend::emulator::x86_64::X86_64Vcpu;
 use rax::cpu::{Registers, VCpu};
 
 // IMUL — Signed Multiply
