@@ -47,3 +47,22 @@ mod ldmxcsr_stmxcsr;
 
 // SSE Data Movement Instructions
 mod movhlps_movlhps;
+
+// SSE Shuffle and Unpack Instructions
+mod shufps;
+mod shufpd;
+mod unpcklps;
+mod unpckhps;
+mod unpcklpd;
+mod unpckhpd;
+
+// SSE2 Packed Integer Arithmetic Instructions
+mod paddb_paddw_paddd_paddq;
+mod psubb_psubw_psubd_psubq;
+
+// SSE2 Packed Integer Comparison Instructions
+mod pcmpeqb_pcmpeqw_pcmpeqd;
+mod pcmpgtb_pcmpgtw_pcmpgtd;
+
+// SSE2 Packed Integer Logical Instructions
+mod pand_por_pxor_pandn;
