@@ -140,10 +140,22 @@ mod data_transfer_setcc;
 // Data Conversion
 #[path = "x86_64/conversion/movsx.rs"]
 mod conversion_movsx;
+#[path = "x86_64/conversion/movsxd.rs"]
+mod conversion_movsxd;
 #[path = "x86_64/conversion/movzx.rs"]
 mod conversion_movzx;
 #[path = "x86_64/conversion/cbw_cwde_cdqe.rs"]
 mod conversion_cbw_cwde_cdqe;
+#[path = "x86_64/conversion/cwd_cdq_cqo.rs"]
+mod conversion_cwd_cdq_cqo;
+#[path = "x86_64/conversion/cvtpi2ps_cvtps2pi.rs"]
+mod conversion_cvtpi2ps_cvtps2pi;
+#[path = "x86_64/conversion/cvtpi2pd_cvtpd2pi.rs"]
+mod conversion_cvtpi2pd_cvtpd2pi;
+#[path = "x86_64/conversion/cvttps2pi_cvttpd2pi.rs"]
+mod conversion_cvttps2pi_cvttpd2pi;
+#[path = "x86_64/conversion/cvtss2si_cvtsd2si_extended.rs"]
+mod conversion_cvtss2si_cvtsd2si_extended;
 
 // Synchronization primitives
 #[path = "x86_64/sync/cmpxchg.rs"]
@@ -169,9 +181,35 @@ mod memory_bound;
 #[path = "x86_64/system/cpuid.rs"]
 mod system_cpuid;
 
+// Stack operations
+#[path = "x86_64/stack_operations/pusha_popa.rs"]
+mod stack_operations_pusha_popa;
+
 // Miscellaneous
 #[path = "x86_64/misc/nop.rs"]
 mod misc_nop;
+#[path = "x86_64/misc/cpuid_extended.rs"]
+mod misc_cpuid_extended;
+#[path = "x86_64/misc/xgetbv_xsetbv.rs"]
+mod misc_xgetbv_xsetbv;
+#[path = "x86_64/misc/movbe_extended.rs"]
+mod misc_movbe_extended;
+#[path = "x86_64/misc/xsave_xrstor.rs"]
+mod misc_xsave_xrstor;
+
+// x87 FPU State Management and Status Instructions
+#[path = "x86_64/fpu/fstsw_fnstsw.rs"]
+mod fpu_fstsw_fnstsw;
+#[path = "x86_64/fpu/fclex_fnclex.rs"]
+mod fpu_fclex_fnclex;
+#[path = "x86_64/fpu/finit_fninit.rs"]
+mod fpu_finit_fninit;
+#[path = "x86_64/fpu/fxsave_fxrstor.rs"]
+mod fpu_fxsave_fxrstor;
+#[path = "x86_64/fpu/fldenv_fstenv.rs"]
+mod fpu_fldenv_fstenv;
+#[path = "x86_64/fpu/fsave_frstor.rs"]
+mod fpu_fsave_frstor;
 
 // SSE/MMX Data Movement Between Integer and Floating-Point
 #[path = "x86_64/simd/sse/movd_movq.rs"]
