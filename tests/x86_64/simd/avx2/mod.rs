@@ -52,3 +52,7 @@ mod vpbroadcastb_vpbroadcastw;
 mod vpbroadcastd_vpbroadcastq;
 mod vbroadcasti128;
 mod vpblendd;
+
+// AVX2 Permute Instructions
+mod vpermps;
+mod vpermpd;
