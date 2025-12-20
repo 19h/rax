@@ -217,3 +217,27 @@ mod packusdw;
 // AES-NI Instructions
 mod aesenc_aesenclast;
 mod aesdec_aesdeclast;
+mod aesimc_aeskeygenassist;
+
+// MMX/SSE Conversion Instructions (Additional)
+mod cvtpi2ps_cvtps2pi;
+mod cvtpi2pd_cvtpd2pi;
+mod cvttps2pi_cvttpd2pi;
+mod cvttsd2si_cvttss2si;
+
+// MMX Data Movement Instructions
+mod movq_movq2dq_movdq2q;
+mod maskmovq_emms;
+
+// SSE Scalar Data Movement Instructions
+mod movss_movsd_scalar;
+mod movhps_movlps_movhpd_movlpd;
+
+// MMX Packed Multiply Instructions
+mod pmullw;
+
+// MMX Shuffle Instructions
+mod pshufw;
+
+// PCLMULQDQ Instructions
+mod pclmulqdq;
