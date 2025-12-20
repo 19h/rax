@@ -104,13 +104,35 @@ mod pmuldq;
 mod pabsb_pabsw_pabsd;
 mod phaddw_phaddd;
 mod phsubw_phsubd;
+mod phaddsw_phsubsw;
 mod pmaddubsw;
+mod pmulhrsw;
 mod psignb_psignw_psignd;
 mod palignr;
+
+// SSE2/SSE4.1 Packed Multiply and Add Instructions
+mod pmaddwd;
 
 // SSE4.1 Instructions
 mod pblendw;
 mod pblendvb;
+mod blendps_blendpd;
+mod blendvps_blendvpd;
+mod roundps_roundpd;
+mod roundss_roundsd;
+mod phminposuw;
+mod pcmpeqq;
+mod dpps;
+mod dppd;
+mod mpsadbw;
+mod pmulld;
+mod ptest;
+mod pextrb_pextrd_pextrq;
+mod pextrw;
+mod pinsrb_pinsrd_pinsrq;
+mod pinsrw;
+mod extractps;
+mod insertps;
 
 // SSE Special Instructions
 mod rcpss;
