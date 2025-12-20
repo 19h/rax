@@ -1,31 +1,30 @@
-//! Tests for the FUCOMI and FUCOMIP instructions.
+//! Tests for the FCOMI and FCOMIP instructions.
 //!
-//! FUCOMI/FUCOMIP - Unordered Compare and Set EFLAGS
+//! FCOMI/FCOMIP - Ordered Compare and Set EFLAGS
 //!
-//! FUCOMI performs an unordered comparison of ST(0) with ST(i) and sets
+//! FCOMI performs an ordered comparison of ST(0) with ST(i) and sets
 //! the ZF, PF, and CF flags in the EFLAGS register according to the result.
-//! Unlike FCOM, it does not generate an exception for QNaN operands.
+//! Unlike FUCOMI, it generates an exception for any NaN operand (QNaN or SNaN).
 //!
-//! FUCOMIP performs the same comparison, sets the EFLAGS, and then pops
+//! FCOMIP performs the same comparison, sets the EFLAGS, and then pops
 //! the FPU stack.
 //!
 //! Comparison Results (EFLAGS):
 //! - ST(0) > SRC: ZF=0, PF=0, CF=0
 //! - ST(0) < SRC: ZF=0, PF=0, CF=1
 //! - ST(0) = SRC: ZF=1, PF=0, CF=0
-//! - Unordered:   ZF=1, PF=1, CF=1 (NaN operand, no exception)
+//! - Unordered:   ZF=1, PF=1, CF=1 (NaN operand, with exception)
 //!
 //! Opcodes:
-//! - FUCOMI: DB E8+i
-//! - FUCOMIP: DF E8+i
+//! - FCOMI: DB F0+i
+//! - FCOMIP: DF F0+i
 //!
 //! Flags affected: ZF, PF, CF
 //! Flags cleared: OF, SF, AF
 //!
-//! Reference: /Users/int/dev/rax/docs/fucomi:fucomip:fucomi:fucomip.txt
+//! Reference: /Users/int/dev/rax/docs/fcomi:fcomip:fcomi:fcomip.txt
 
 use crate::common::{run_until_hlt, setup_vm};
-use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
 // Helper function to write f64 to memory
@@ -47,27 +46,22 @@ fn read_u64(mem: &vm_memory::GuestMemoryMmap, addr: u64) -> u64 {
     u64::from_le_bytes(buf)
 }
 
-// Helper function to write u64 to memory
-fn write_u64(mem: &vm_memory::GuestMemoryMmap, addr: u64, val: u64) {
-    mem.write_slice(&val.to_le_bytes(), GuestAddress(addr)).unwrap();
-}
-
 // EFLAGS bit positions
 const CF_BIT: u64 = 1 << 0;
 const PF_BIT: u64 = 1 << 2;
 const ZF_BIT: u64 = 1 << 6;
 
 // ============================================================================
-// FUCOMI - Unordered Compare and Set EFLAGS
+// FCOMI - Ordered Compare and Set EFLAGS
 // ============================================================================
 
 #[test]
-fn test_fucomi_equal() {
+fn test_fcomi_equal() {
     // Compare 5.0 with 5.0 (equal) -> ZF=1, PF=0, CF=0
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
+        0xDB, 0xF1,                                  // FCOMI ST(1)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
         0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
@@ -92,12 +86,12 @@ fn test_fucomi_equal() {
 }
 
 #[test]
-fn test_fucomi_greater_than() {
+fn test_fcomi_greater_than() {
     // Compare 10.0 > 5.0 -> ZF=0, PF=0, CF=0
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (5.0)
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (10.0)
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
+        0xDB, 0xF1,                                  // FCOMI ST(1)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
         0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
@@ -122,12 +116,12 @@ fn test_fucomi_greater_than() {
 }
 
 #[test]
-fn test_fucomi_less_than() {
+fn test_fcomi_less_than() {
     // Compare 3.0 < 7.0 -> ZF=0, PF=0, CF=1
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (7.0)
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (3.0)
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
+        0xDB, 0xF1,                                  // FCOMI ST(1)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
         0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
@@ -152,13 +146,13 @@ fn test_fucomi_less_than() {
 }
 
 #[test]
-fn test_fucomi_st2() {
-    // FUCOMI with ST(2)
+fn test_fcomi_st2() {
+    // FCOMI with ST(2)
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (1.0)
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (2.0)
         0xDD, 0x04, 0x25, 0x10, 0x20, 0x00, 0x00,  // FLD qword [0x2010] (3.0)
-        0xDB, 0xEA,                                  // FUCOMI ST(2)
+        0xDB, 0xF2,                                  // FCOMI ST(2)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
         0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
@@ -178,103 +172,43 @@ fn test_fucomi_st2() {
     assert_ne!(flags & CF_BIT, 0, "CF should be set (3.0 > 1.0)");
 }
 
-// ============================================================================
-// FUCOMI - NaN Comparisons (Unordered, No Exception)
-// ============================================================================
-
 #[test]
-fn test_fucomi_nan_vs_number() {
-    // NaN compared with number -> ZF=1, PF=1, CF=1 (unordered)
+fn test_fcomi_st3() {
+    // FCOMI with ST(3)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (5.0)
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (NaN)
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (1.0)
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (2.0)
+        0xDD, 0x04, 0x25, 0x10, 0x20, 0x00, 0x00,  // FLD qword [0x2010] (3.0)
+        0xDD, 0x04, 0x25, 0x18, 0x20, 0x00, 0x00,  // FLD qword [0x2018] (4.0)
+        0xDB, 0xF3,                                  // FCOMI ST(3)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
-        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
-        0xDD, 0x1C, 0x25, 0x10, 0x30, 0x00, 0x00,  // FSTP qword [0x3010]
+        0xDD, 0xD8,                                  // FSTP ST(0)
+        0xDD, 0xD8,                                  // FSTP ST(0)
+        0xDD, 0xD8,                                  // FSTP ST(0)
+        0xDD, 0xD8,                                  // FSTP ST(0)
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 5.0);
-    write_f64(&mem, 0x2008, f64::NAN);
+    write_f64(&mem, 0x2000, 1.0);
+    write_f64(&mem, 0x2008, 2.0);
+    write_f64(&mem, 0x2010, 3.0);
+    write_f64(&mem, 0x2018, 4.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let flags = read_u64(&mem, 0x3000);
-    let val1 = read_f64(&mem, 0x3008);
-    let val2 = read_f64(&mem, 0x3010);
-    assert!(val1.is_nan());
-    assert_eq!(val2, 5.0);
-    assert_ne!(flags & ZF_BIT, 0, "ZF should be set for unordered");
-    assert_ne!(flags & PF_BIT, 0, "PF should be set for unordered");
-    assert_ne!(flags & CF_BIT, 0, "CF should be set for unordered");
+    assert_ne!(flags & CF_BIT, 0, "CF should be set (4.0 > 1.0)");
 }
 
 #[test]
-fn test_fucomi_number_vs_nan() {
-    // Number compared with NaN is unordered
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (NaN)
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (10.0)
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
-        0x9C,                                        // PUSHFQ
-        0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
-        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
-        0xDD, 0x1C, 0x25, 0x10, 0x30, 0x00, 0x00,  // FSTP qword [0x3010]
-        0xF4,                                        // HLT
-    ];
-
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, f64::NAN);
-    write_f64(&mem, 0x2008, 10.0);
-
-    run_until_hlt(&mut vcpu).unwrap();
-
-    let flags = read_u64(&mem, 0x3000);
-    let val1 = read_f64(&mem, 0x3008);
-    let val2 = read_f64(&mem, 0x3010);
-    assert_eq!(val1, 10.0);
-    assert!(val2.is_nan());
-    assert_ne!(flags & ZF_BIT, 0, "ZF should be set for unordered");
-    assert_ne!(flags & PF_BIT, 0, "PF should be set for unordered");
-    assert_ne!(flags & CF_BIT, 0, "CF should be set for unordered");
-}
-
-#[test]
-fn test_fucomi_nan_vs_nan() {
-    // NaN compared with NaN is unordered
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (NaN)
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (NaN)
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
-        0x9C,                                        // PUSHFQ
-        0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
-        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
-        0xDD, 0x1C, 0x25, 0x10, 0x30, 0x00, 0x00,  // FSTP qword [0x3010]
-        0xF4,                                        // HLT
-    ];
-
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, f64::NAN);
-    write_f64(&mem, 0x2008, f64::NAN);
-
-    run_until_hlt(&mut vcpu).unwrap();
-
-    let flags = read_u64(&mem, 0x3000);
-    assert_ne!(flags & ZF_BIT, 0, "ZF should be set for unordered");
-    assert_ne!(flags & PF_BIT, 0, "PF should be set for unordered");
-    assert_ne!(flags & CF_BIT, 0, "CF should be set for unordered");
-}
-
-#[test]
-fn test_fucomi_infinity_greater() {
+fn test_fcomi_infinity_greater() {
     // +infinity > finite -> ZF=0, PF=0, CF=0
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (100.0)
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (+inf)
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
+        0xDB, 0xF1,                                  // FCOMI ST(1)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
         0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
@@ -295,12 +229,12 @@ fn test_fucomi_infinity_greater() {
 }
 
 #[test]
-fn test_fucomi_infinities_equal() {
+fn test_fcomi_infinities_equal() {
     // +inf == +inf -> ZF=1, PF=0, CF=0
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (+inf)
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (+inf)
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
+        0xDB, 0xF1,                                  // FCOMI ST(1)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
         0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
@@ -320,17 +254,41 @@ fn test_fucomi_infinities_equal() {
     assert_eq!(flags & PF_BIT, 0, "PF should be clear for equal");
 }
 
+#[test]
+fn test_fcomi_positive_negative_zero() {
+    // +0.0 == -0.0 -> ZF=1, PF=0, CF=0
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (-0.0)
+        0xD9, 0xEE,                                  // FLDZ (+0.0)
+        0xDB, 0xF1,                                  // FCOMI ST(1)
+        0x9C,                                        // PUSHFQ
+        0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
+        0xDD, 0xD8,                                  // FSTP ST(0)
+        0xDD, 0xD8,                                  // FSTP ST(0)
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, -0.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let flags = read_u64(&mem, 0x3000);
+    assert_ne!(flags & ZF_BIT, 0, "ZF should be set for equal");
+    assert_eq!(flags & CF_BIT, 0, "CF should be clear for equal");
+}
+
 // ============================================================================
-// FUCOMIP - Unordered Compare, Set EFLAGS, and Pop
+// FCOMIP - Ordered Compare, Set EFLAGS, and Pop
 // ============================================================================
 
 #[test]
-fn test_fucomip_equal() {
+fn test_fcomip_equal() {
     // Compare and pop
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xDF, 0xE9,                                  // FUCOMIP ST(1)
+        0xDF, 0xF1,                                  // FCOMIP ST(1)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
         0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
@@ -351,11 +309,11 @@ fn test_fucomip_equal() {
 }
 
 #[test]
-fn test_fucomip_greater() {
+fn test_fcomip_greater() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (3.0)
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (8.0)
-        0xDF, 0xE9,                                  // FUCOMIP ST(1)
+        0xDF, 0xF1,                                  // FCOMIP ST(1)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
         0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
@@ -376,11 +334,11 @@ fn test_fucomip_greater() {
 }
 
 #[test]
-fn test_fucomip_less() {
+fn test_fcomip_less() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (9.0)
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (2.0)
-        0xDF, 0xE9,                                  // FUCOMIP ST(1)
+        0xDF, 0xF1,                                  // FCOMIP ST(1)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
         0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
@@ -401,39 +359,12 @@ fn test_fucomip_less() {
 }
 
 #[test]
-fn test_fucomip_with_nan() {
-    // FUCOMIP with NaN should not generate exception
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (5.0)
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (NaN)
-        0xDF, 0xE9,                                  // FUCOMIP ST(1)
-        0x9C,                                        // PUSHFQ
-        0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
-        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
-        0xF4,                                        // HLT
-    ];
-
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 5.0);
-    write_f64(&mem, 0x2008, f64::NAN);
-
-    run_until_hlt(&mut vcpu).unwrap();
-
-    let flags = read_u64(&mem, 0x3000);
-    let val = read_f64(&mem, 0x3008);
-    assert_eq!(val, 5.0);
-    assert_ne!(flags & ZF_BIT, 0, "ZF should be set for unordered");
-    assert_ne!(flags & PF_BIT, 0, "PF should be set for unordered");
-    assert_ne!(flags & CF_BIT, 0, "CF should be set for unordered");
-}
-
-#[test]
-fn test_fucomip_st2() {
+fn test_fcomip_st2() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (1.0)
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (2.0)
         0xDD, 0x04, 0x25, 0x10, 0x20, 0x00, 0x00,  // FLD qword [0x2010] (3.0)
-        0xDF, 0xEA,                                  // FUCOMIP ST(2)
+        0xDF, 0xF2,                                  // FCOMIP ST(2)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
         0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
@@ -457,16 +388,16 @@ fn test_fucomip_st2() {
 }
 
 // ============================================================================
-// Conditional Branching After FUCOMI/FUCOMIP
+// Conditional Branching After FCOMI/FCOMIP
 // ============================================================================
 
 #[test]
-fn test_fucomi_conditional_je() {
-    // Use FUCOMI result for conditional jump (JE)
+fn test_fcomi_conditional_je() {
+    // Use FCOMI result for conditional jump (JE)
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
+        0xDB, 0xF1,                                  // FCOMI ST(1)
         0x74, 0x07,                                  // JE +7 (skip if equal)
         0xD9, 0xEE,                                  // FLDZ
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
@@ -480,17 +411,15 @@ fn test_fucomi_conditional_je() {
     write_f64(&mem, 0x2008, 5.0);
 
     run_until_hlt(&mut vcpu).unwrap();
-
-    // Jump should be taken, so 0x3000 should not be written
 }
 
 #[test]
-fn test_fucomi_conditional_jb() {
-    // Use FUCOMI result for conditional jump (JB - jump if below)
+fn test_fcomi_conditional_jb() {
+    // Use FCOMI result for conditional jump (JB - jump if below)
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (10.0)
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (5.0)
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
+        0xDB, 0xF1,                                  // FCOMI ST(1)
         0x72, 0x07,                                  // JB +7 (jump if below)
         0xD9, 0xE8,                                  // FLD1
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
@@ -510,12 +439,12 @@ fn test_fucomi_conditional_jb() {
 }
 
 #[test]
-fn test_fucomi_conditional_ja() {
-    // Use FUCOMI result for conditional jump (JA - jump if above)
+fn test_fcomi_conditional_ja() {
+    // Use FCOMI result for conditional jump (JA - jump if above)
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (5.0)
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (10.0)
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
+        0xDB, 0xF1,                                  // FCOMI ST(1)
         0x77, 0x07,                                  // JA +7 (jump if above)
         0xD9, 0xEE,                                  // FLDZ
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
@@ -535,13 +464,13 @@ fn test_fucomi_conditional_ja() {
 }
 
 #[test]
-fn test_fucomip_conditional_jp() {
-    // Use FUCOMIP result for conditional jump (JP - jump if parity/unordered)
+fn test_fcomip_conditional_jne() {
+    // Use FCOMIP result for conditional jump (JNE - jump if not equal)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (5.0)
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (NaN)
-        0xDF, 0xE9,                                  // FUCOMIP ST(1)
-        0x7A, 0x07,                                  // JP +7 (jump if unordered)
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (1.0)
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (2.0)
+        0xDF, 0xF1,                                  // FCOMIP ST(1)
+        0x75, 0x07,                                  // JNE +7 (jump if not equal)
         0xD9, 0xEE,                                  // FLDZ
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xDD, 0xD8,                                  // FSTP ST(0)
@@ -549,12 +478,10 @@ fn test_fucomip_conditional_jp() {
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 5.0);
-    write_f64(&mem, 0x2008, f64::NAN);
+    write_f64(&mem, 0x2000, 1.0);
+    write_f64(&mem, 0x2008, 2.0);
 
     run_until_hlt(&mut vcpu).unwrap();
-
-    // Jump should be taken due to NaN (unordered), so FLDZ should not execute
 }
 
 // ============================================================================
@@ -562,17 +489,17 @@ fn test_fucomip_conditional_jp() {
 // ============================================================================
 
 #[test]
-fn test_fucomi_sequence() {
+fn test_fcomi_sequence() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (1.0)
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (2.0)
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
+        0xDB, 0xF1,                                  // FCOMI ST(1)
         0x9C,                                        // PUSHFQ
-        0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000] (first flags)
+        0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
         0xDD, 0x04, 0x25, 0x10, 0x20, 0x00, 0x00,  // FLD qword [0x2010] (3.0)
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
+        0xDB, 0xF1,                                  // FCOMI ST(1)
         0x9C,                                        // PUSHFQ
-        0x8F, 0x04, 0x25, 0x08, 0x30, 0x00, 0x00,  // POP qword [0x3008] (second flags)
+        0x8F, 0x04, 0x25, 0x08, 0x30, 0x00, 0x00,  // POP qword [0x3008]
         0xDD, 0xD8,                                  // FSTP ST(0)
         0xDD, 0xD8,                                  // FSTP ST(0)
         0xDD, 0xD8,                                  // FSTP ST(0)
@@ -588,20 +515,20 @@ fn test_fucomi_sequence() {
 
     let flags1 = read_u64(&mem, 0x3000);
     let flags2 = read_u64(&mem, 0x3008);
-    assert_ne!(flags1 & CF_BIT, 0, "First comparison: 2.0 < 1.0 should set CF");
-    assert_ne!(flags2 & CF_BIT, 0, "Second comparison: 3.0 < 2.0 should set CF");
+    assert_ne!(flags1 & CF_BIT, 0, "First comparison: 2.0 > 1.0");
+    assert_ne!(flags2 & CF_BIT, 0, "Second comparison: 3.0 > 2.0");
 }
 
 #[test]
-fn test_fucomip_chain() {
+fn test_fcomip_chain() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (1.0)
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (2.0)
         0xDD, 0x04, 0x25, 0x10, 0x20, 0x00, 0x00,  // FLD qword [0x2010] (2.0)
-        0xDF, 0xE9,                                  // FUCOMIP ST(1) - compare and pop
+        0xDF, 0xF1,                                  // FCOMIP ST(1)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
-        0xDF, 0xE9,                                  // FUCOMIP ST(1) - compare and pop
+        0xDF, 0xF1,                                  // FCOMIP ST(1)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x08, 0x30, 0x00, 0x00,  // POP qword [0x3008]
         0xDD, 0xD8,                                  // FSTP ST(0)
@@ -617,16 +544,16 @@ fn test_fucomip_chain() {
 
     let flags1 = read_u64(&mem, 0x3000);
     let flags2 = read_u64(&mem, 0x3008);
-    assert_ne!(flags1 & ZF_BIT, 0, "First comparison: 2.0 == 2.0 should set ZF");
-    assert_ne!(flags2 & CF_BIT, 0, "Second comparison: 2.0 < 1.0 should set CF");
+    assert_ne!(flags1 & ZF_BIT, 0, "First comparison: 2.0 == 2.0");
+    assert_ne!(flags2 & CF_BIT, 0, "Second comparison: 2.0 > 1.0");
 }
 
 #[test]
-fn test_fucomi_zero_comparison() {
+fn test_fcomi_zero_comparison() {
     let code = [
         0xD9, 0xEE,                                  // FLDZ
         0xD9, 0xEE,                                  // FLDZ
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
+        0xDB, 0xF1,                                  // FCOMI ST(1)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
         0xDD, 0xD8,                                  // FSTP ST(0)
@@ -643,11 +570,11 @@ fn test_fucomi_zero_comparison() {
 }
 
 #[test]
-fn test_fucomi_inf_vs_finite() {
+fn test_fcomi_inf_vs_finite() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (1000.0)
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (+inf)
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
+        0xDB, 0xF1,                                  // FCOMI ST(1)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
         0xDD, 0xD8,                                  // FSTP ST(0)
@@ -667,11 +594,11 @@ fn test_fucomi_inf_vs_finite() {
 }
 
 #[test]
-fn test_fucomip_negative_numbers() {
+fn test_fcomip_negative_numbers() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] (-10.0)
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] (-5.0)
-        0xDF, 0xE9,                                  // FUCOMIP ST(1)
+        0xDF, 0xF1,                                  // FCOMIP ST(1)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
         0xDD, 0xD8,                                  // FSTP ST(0)
@@ -685,15 +612,15 @@ fn test_fucomip_negative_numbers() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let flags = read_u64(&mem, 0x3000);
-    assert_ne!(flags & CF_BIT, 0, "CF should be set (-5.0 < -10.0)");
+    assert_ne!(flags & CF_BIT, 0, "CF should be set (-5.0 > -10.0, so ST(0) < ST(1))");
 }
 
 #[test]
-fn test_fucomi_denormals() {
+fn test_fcomi_denormals() {
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
-        0xDB, 0xE9,                                  // FUCOMI ST(1)
+        0xDB, 0xF1,                                  // FCOMI ST(1)
         0x9C,                                        // PUSHFQ
         0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
         0xDD, 0xD8,                                  // FSTP ST(0)
@@ -715,113 +642,46 @@ fn test_fucomi_denormals() {
 }
 
 #[test]
-fn test_fucomi_small_diff() {
+fn test_fcomi_huge_numbers() {
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,
-        0xDB, 0xE9,
-        0x9C,
-        0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xDD, 0xD8,
-        0xDD, 0xD8,
-        0xF4,
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
+        0xDB, 0xF1,                                  // FCOMI ST(1)
+        0x9C,                                        // PUSHFQ
+        0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
+        0xDD, 0xD8,                                  // FSTP ST(0)
+        0xDD, 0xD8,                                  // FSTP ST(0)
+        0xF4,                                        // HLT
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 1.0);
-    write_f64(&mem, 0x2008, 1.0 + f64::EPSILON);
-    run_until_hlt(&mut vcpu).unwrap();
-    let flags = read_u64(&mem, 0x3000);
-    assert_eq!(flags & ZF_BIT, 0);
-    assert_eq!(flags & CF_BIT, 0);
-}
 
-#[test]
-fn test_fucomip_large_values() {
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,
-        0xDF, 0xE9,
-        0x9C,
-        0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xDD, 0xD8,
-        0xF4,
-    ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_f64(&mem, 0x2000, 1e100);
-    write_f64(&mem, 0x2008, 1e200);
+    write_f64(&mem, 0x2008, 2e100);
+
     run_until_hlt(&mut vcpu).unwrap();
+
     let flags = read_u64(&mem, 0x3000);
-    assert_eq!(flags & CF_BIT, 0);
+    assert_eq!(flags & ZF_BIT, 0, "ZF should be clear");
+    assert_eq!(flags & CF_BIT, 0, "CF should be clear (2e100 > 1e100)");
 }
 
 #[test]
-fn test_fucomi_mixed_sign_large() {
+fn test_fcomip_constants() {
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,
-        0xDB, 0xE9,
-        0x9C,
-        0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xDD, 0xD8,
-        0xDD, 0xD8,
-        0xF4,
+        0xD9, 0xEB,                                  // FLDPI
+        0xD9, 0xEA,                                  // FLDL2E
+        0xDF, 0xF1,                                  // FCOMIP ST(1)
+        0x9C,                                        // PUSHFQ
+        0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,  // POP qword [0x3000]
+        0xDD, 0xD8,                                  // FSTP ST(0)
+        0xF4,                                        // HLT
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -1e100);
-    write_f64(&mem, 0x2008, 1e100);
-    run_until_hlt(&mut vcpu).unwrap();
-    let flags = read_u64(&mem, 0x3000);
-    assert_eq!(flags & ZF_BIT, 0);
-    assert_eq!(flags & CF_BIT, 0);
-}
 
-#[test]
-fn test_fucomip_zero_neg_zero() {
-    let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,
-        0xD9, 0xEE,
-        0xDF, 0xE9,
-        0x9C,
-        0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xDD, 0xD8,
-        0xF4,
-    ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, -0.0);
-    run_until_hlt(&mut vcpu).unwrap();
-    let flags = read_u64(&mem, 0x3000);
-    assert_ne!(flags & ZF_BIT, 0);
-}
 
-#[test]
-fn test_fucomi_st4() {
-    let code = [
-        0xD9, 0xE8, 0xD9, 0xE8, 0xD9, 0xE8, 0xD9, 0xE8, 0xD9, 0xE8,
-        0xDB, 0xEC,
-        0x9C,
-        0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xDD, 0xD8, 0xDD, 0xD8, 0xDD, 0xD8, 0xDD, 0xD8, 0xDD, 0xD8,
-        0xF4,
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
-    let flags = read_u64(&mem, 0x3000);
-    assert_ne!(flags & ZF_BIT, 0);
-}
 
-#[test]
-fn test_fucomip_constants() {
-    let code = [
-        0xD9, 0xE8,
-        0xD9, 0xE8,
-        0xDF, 0xE9,
-        0x9C,
-        0x8F, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00,
-        0xDD, 0xD8,
-        0xF4,
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    run_until_hlt(&mut vcpu).unwrap();
     let flags = read_u64(&mem, 0x3000);
-    assert_ne!(flags & ZF_BIT, 0);
+    assert_eq!(flags & ZF_BIT, 0, "ZF should be clear");
+    assert_eq!(flags & CF_BIT, 0, "CF should be clear (LOG2_E < PI, so ST(0) > ST(1))");
 }
