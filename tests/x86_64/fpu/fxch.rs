@@ -569,3 +569,203 @@ fn test_fxch_alternating_exchanges() {
     let result = read_f64(&mem, 0x3000);
     assert_eq!(result, 1.0, "After alternating FXCH");
 }
+
+#[test]
+fn test_fxch_multiple_values_deep_stack() {
+    // Test with full stack depth
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] ; 1.0
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] ; 2.0
+        0xDD, 0x04, 0x25, 0x10, 0x20, 0x00, 0x00,  // FLD qword [0x2010] ; 3.0
+        0xDD, 0x04, 0x25, 0x18, 0x20, 0x00, 0x00,  // FLD qword [0x2018] ; 4.0
+        0xDD, 0x04, 0x25, 0x20, 0x20, 0x00, 0x00,  // FLD qword [0x2020] ; 5.0
+        0xD9, 0xCC,                                  // FXCH ST(4) ; bring 1.0 to top
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 1.0);
+    write_f64(&mem, 0x2008, 2.0);
+    write_f64(&mem, 0x2010, 3.0);
+    write_f64(&mem, 0x2018, 4.0);
+    write_f64(&mem, 0x2020, 5.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, 1.0, "FXCH ST(4) should bring bottom to top");
+}
+
+#[test]
+fn test_fxch_pi_and_e() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] ; PI
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] ; E
+        0xD9, 0xC9,                                  // FXCH ST(1)
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, std::f64::consts::PI);
+    write_f64(&mem, 0x2008, std::f64::consts::E);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result1 = read_f64(&mem, 0x3000);
+    let result2 = read_f64(&mem, 0x3008);
+    assert_eq!(result1, std::f64::consts::PI, "FXCH with PI");
+    assert_eq!(result2, std::f64::consts::E, "FXCH with E");
+}
+
+#[test]
+fn test_fxch_max_and_min() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
+        0xD9, 0xC9,                                  // FXCH ST(1)
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, f64::MAX);
+    write_f64(&mem, 0x2008, f64::MIN_POSITIVE);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, f64::MAX, "FXCH with MAX value");
+}
+
+#[test]
+fn test_fxch_mixed_signs() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
+        0xDD, 0x04, 0x25, 0x10, 0x20, 0x00, 0x00,  // FLD qword [0x2010]
+        0xD9, 0xCA,                                  // FXCH ST(2)
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 100.0);
+    write_f64(&mem, 0x2008, -50.0);
+    write_f64(&mem, 0x2010, 25.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, 100.0, "FXCH with mixed signs");
+}
+
+#[test]
+fn test_fxch_fractional_values() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
+        0xD9, 0xC9,                                  // FXCH ST(1)
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 0.123456789);
+    write_f64(&mem, 0x2008, 0.987654321);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, 0.123456789, "FXCH preserves fractional precision");
+}
+
+#[test]
+fn test_fxch_power_of_two_values() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
+        0xD9, 0xC9,                                  // FXCH ST(1)
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 1024.0);
+    write_f64(&mem, 0x2008, 2048.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, 1024.0, "FXCH with powers of 2");
+}
+
+#[test]
+fn test_fxch_after_arithmetic() {
+    // FXCH after arithmetic operation
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] ; 10.0
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] ; 5.0
+        0xDE, 0xC1,                                  // FADDP ; ST(0) = 15.0
+        0xDD, 0x04, 0x25, 0x10, 0x20, 0x00, 0x00,  // FLD qword [0x2010] ; 3.0
+        0xD9, 0xC9,                                  // FXCH ST(1) ; swap 3.0 and 15.0
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000] ; store 15.0
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 10.0);
+    write_f64(&mem, 0x2008, 5.0);
+    write_f64(&mem, 0x2010, 3.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, 15.0, "FXCH after arithmetic");
+}
+
+#[test]
+fn test_fxch_before_comparison() {
+    // Use FXCH to prepare for comparison
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
+        0xD9, 0xC9,                                  // FXCH ST(1)
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 7.5);
+    write_f64(&mem, 0x2008, 3.5);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result = read_f64(&mem, 0x3000);
+    assert_eq!(result, 7.5, "FXCH for comparison setup");
+}
+
+#[test]
+fn test_fxch_zero_and_nonzero() {
+    let code = [
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
+        0xD9, 0xC9,                                  // FXCH ST(1)
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
+        0xDD, 0x1C, 0x25, 0x08, 0x30, 0x00, 0x00,  // FSTP qword [0x3008]
+        0xF4,                                        // HLT
+    ];
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_f64(&mem, 0x2000, 0.0);
+    write_f64(&mem, 0x2008, 100.0);
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let result1 = read_f64(&mem, 0x3000);
+    let result2 = read_f64(&mem, 0x3008);
+    assert_eq!(result1, 0.0, "Zero value exchanged");
+    assert_eq!(result2, 100.0, "Non-zero value exchanged");
+}

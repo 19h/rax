@@ -18,3 +18,24 @@ mod andps_andpd;
 mod orps_orpd;
 mod xorps_xorpd;
 mod andnps_andnpd;
+
+// SSE Conversion Instructions
+mod cvtps2pd;
+mod cvtpd2ps;
+mod cvtss2sd;
+mod cvtsd2ss;
+mod cvtsi2ss;
+mod cvtsi2sd;
+mod cvtss2si;
+mod cvtsd2si;
+
+// SSE Comparison and Sign Mask Instructions
+mod comiss_comisd;
+mod ucomiss_ucomisd;
+mod movmskps_movmskpd;
+
+// SSE Control/Status Register Instructions
+mod ldmxcsr_stmxcsr;
+
+// SSE Data Movement Instructions
+mod movhlps_movlhps;
