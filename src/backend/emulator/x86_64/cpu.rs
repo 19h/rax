@@ -43,6 +43,7 @@ pub(super) struct InsnContext {
     pub address_size_override: bool,
     pub rep_prefix: Option<u8>,
     pub op_size: u8,
+    pub rip_relative_offset: usize,
 }
 
 impl InsnContext {

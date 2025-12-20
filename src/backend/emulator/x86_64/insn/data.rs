@@ -134,6 +134,7 @@ pub fn lea(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 
 /// MOV r/m8, imm8 (0xC6 /0)
 pub fn mov_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    ctx.rip_relative_offset = 1;
     let (_, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let imm = ctx.consume_u8()?;
 
@@ -149,9 +150,10 @@ pub fn mov_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
 /// MOV r/m, imm (0xC7 /0)
 pub fn mov_rm_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
+    let imm_size = if op_size == 8 { 4 } else { op_size };
+    ctx.rip_relative_offset = imm_size as usize;
     let (_, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
 
-    let imm_size = if op_size == 8 { 4 } else { op_size };
     let imm = ctx.consume_imm(imm_size)?;
     let imm = if op_size == 8 {
         imm as i32 as i64 as u64
