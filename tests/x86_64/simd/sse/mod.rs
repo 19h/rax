@@ -59,6 +59,12 @@ mod unpckhpd;
 // SSE2 Packed Integer Arithmetic Instructions
 mod paddb_paddw_paddd_paddq;
 mod psubb_psubw_psubd_psubq;
+mod paddsb_paddsw;
+mod paddusb_paddusw;
+mod psubsb_psubsw;
+mod psubusb_psubusw;
+mod pavgb_pavgw;
+mod psadbw;
 
 // SSE2 Packed Integer Comparison Instructions
 mod pcmpeqb_pcmpeqw_pcmpeqd;
@@ -78,3 +84,14 @@ mod pshufd;
 mod pshufb;
 mod pshufhw;
 mod pshuflw;
+
+// SSE2/SSE4.1 Packed Integer Min/Max Instructions
+mod pminsb_pminsw_pminsd;
+mod pminub_pminuw_pminud;
+mod pmaxsb_pmaxsw_pmaxsd;
+mod pmaxub_pmaxuw_pmaxud;
+
+// SSE2/SSE4.1 Packed Multiply Instructions
+mod pmulhuw;
+mod pmuludq;
+mod pmuldq;
