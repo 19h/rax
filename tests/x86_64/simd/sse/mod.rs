@@ -46,6 +46,7 @@ mod cvttps2dq_cvttpd2dq;
 mod comiss_comisd;
 mod ucomiss_ucomisd;
 mod movmskps_movmskpd;
+mod pmovmskb;
 
 // SSE Scalar Comparison Instructions (Extended)
 mod cmpss;
@@ -65,6 +66,8 @@ mod unpcklps;
 mod unpckhps;
 mod unpcklpd;
 mod unpckhpd;
+mod punpckhbw_punpckhwd_punpckhdq_punpckhqdq;
+mod punpcklbw_punpcklwd_punpckldq_punpcklqdq;
 
 // SSE2 Packed Integer Arithmetic Instructions
 mod paddb_paddw_paddd_paddq;
@@ -79,6 +82,7 @@ mod psadbw;
 // SSE2 Packed Integer Comparison Instructions
 mod pcmpeqb_pcmpeqw_pcmpeqd;
 mod pcmpgtb_pcmpgtw_pcmpgtd;
+mod pcmpgtq;
 
 // SSE2 Packed Integer Logical Instructions
 mod pand_por_pxor_pandn;
@@ -105,6 +109,7 @@ mod pmaxub_pmaxuw_extended;
 
 // SSE2/SSE4.1 Packed Multiply Instructions
 mod pmulhuw;
+mod pmulhw;
 mod pmuludq;
 mod pmuldq;
 
@@ -208,3 +213,7 @@ mod pmaddubsw_extended;
 mod phminposuw_extended;
 mod mpsadbw_extended;
 mod packusdw;
+
+// AES-NI Instructions
+mod aesenc_aesenclast;
+mod aesdec_aesdeclast;
