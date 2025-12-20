@@ -243,6 +243,9 @@ impl X86_64Vcpu {
             0xCB => insn::control::retf(self, ctx),
             0x70..=0x7F => insn::control::jcc_rel8(self, ctx, opcode & 0x0F),
 
+            // VEX-encoded instructions (partial support)
+            0xC4 => self.execute_vex(ctx),
+
             // I/O
             0xE4 => insn::io::in_al_imm8(self, ctx),
             0xE5 => insn::io::in_ax_imm8(self, ctx),
@@ -393,6 +396,63 @@ impl X86_64Vcpu {
                 opcode, self.regs.rip
             ))),
         }
+    }
+
+    fn execute_vex(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        // VEX 3-byte prefix (0xC4)
+        let vex1 = ctx.consume_u8()?;
+        let vex2 = ctx.consume_u8()?;
+        let opcode = ctx.consume_u8()?;
+
+        let vex_r = (vex1 >> 7) & 1;
+        let vex_x = (vex1 >> 6) & 1;
+        let vex_b = (vex1 >> 5) & 1;
+        let m_mmmm = vex1 & 0x1F;
+
+        let vex_w = (vex2 >> 7) & 1;
+        let vex_l = (vex2 >> 2) & 1;
+        let vex_pp = vex2 & 0x03;
+
+        // Only handle VEX.LZ.F2.0F3A.W{0,1} F0 /r ib (RORX)
+        if m_mmmm == 0x3 && vex_pp == 0x2 && vex_l == 0 && opcode == 0xF0 {
+            let rex_r = (vex_r ^ 1) & 1;
+            let rex_x = (vex_x ^ 1) & 1;
+            let rex_b = (vex_b ^ 1) & 1;
+            let mut rex = 0x40 | (rex_r << 2) | (rex_x << 1) | rex_b;
+            if vex_w != 0 {
+                rex |= 0x08;
+            }
+
+            ctx.rex = Some(rex);
+            ctx.op_size = if vex_w != 0 { 8 } else { 4 };
+            ctx.rip_relative_offset = 1;
+
+            let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+            let src = if is_memory {
+                self.read_mem(addr, ctx.op_size)?
+            } else {
+                self.get_reg(rm, ctx.op_size)
+            };
+            let imm = ctx.consume_u8()?;
+            let bits = if ctx.op_size == 8 { 64u32 } else { 32u32 };
+            let mask = if bits == 64 { !0u64 } else { 0xFFFF_FFFFu64 };
+            let count_mask = if bits == 64 { 0x3F } else { 0x1F };
+            let count = (imm & count_mask) as u32;
+            let src = src & mask;
+            let result = if count == 0 {
+                src
+            } else {
+                ((src >> count) | (src << (bits - count))) & mask
+            };
+            self.set_reg(reg, result, ctx.op_size);
+            self.regs.rip += ctx.cursor as u64;
+            return Ok(None);
+        }
+
+        Err(Error::Emulator(format!(
+            "unimplemented VEX instruction m={:#x} pp={} l={} opcode={:#x}",
+            m_mmmm, vex_pp, vex_l, opcode
+        )))
     }
 
     /// Execute two-byte opcodes (0x0F prefix).

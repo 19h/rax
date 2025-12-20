@@ -16,15 +16,16 @@ fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Result<u
     let of_bit = flags::bits::OF;
     let old_cf = (vcpu.regs.rflags & cf_bit) != 0;
 
+    let is_rotate = op <= 3;
     let (result, cf, of) = match op {
         0 => {
             // ROL
             let result = val.rotate_left(count as u32);
             let cf = (result & 1) != 0;
             let of = if count == 1 {
-                ((result >> 7) ^ (result & 1)) != 0
+                Some(((result >> 7) ^ (result & 1)) != 0)
             } else {
-                false
+                None
             };
             (result, cf, of)
         }
@@ -33,9 +34,9 @@ fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Result<u
             let result = val.rotate_right(count as u32);
             let cf = (result >> 7) != 0;
             let of = if count == 1 {
-                ((result >> 7) ^ ((result >> 6) & 1)) != 0
+                Some(((result >> 7) ^ ((result >> 6) & 1)) != 0)
             } else {
-                false
+                None
             };
             (result, cf, of)
         }
@@ -56,9 +57,9 @@ fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Result<u
             let result = (wide & 0xFF) as u8;
             let new_cf = (wide >> 8) & 1 != 0;
             let of = if count == 1 {
-                ((result >> 7) != 0) ^ new_cf
+                Some(((result >> 7) != 0) ^ new_cf)
             } else {
-                false
+                None
             };
             (result, new_cf, of)
         }
@@ -79,9 +80,9 @@ fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Result<u
             let result = (wide & 0xFF) as u8;
             let new_cf = (wide >> 8) & 1 != 0;
             let of = if count == 1 {
-                ((result >> 7) ^ ((result >> 6) & 1)) != 0
+                Some(((result >> 7) ^ ((result >> 6) & 1)) != 0)
             } else {
-                false
+                None
             };
             (result, new_cf, of)
         }
@@ -94,9 +95,9 @@ fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Result<u
                 false
             };
             let of = if count == 1 {
-                ((result >> 7) ^ (cf as u8)) != 0
+                Some(((result >> 7) ^ (cf as u8)) != 0)
             } else {
-                false
+                Some(false)
             };
             (result, cf, of)
         }
@@ -108,7 +109,11 @@ fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Result<u
             } else {
                 false
             };
-            let of = if count == 1 { (val >> 7) != 0 } else { false };
+            let of = if count == 1 {
+                Some((val >> 7) != 0)
+            } else {
+                Some(false)
+            };
             (result, cf, of)
         }
         7 => {
@@ -127,14 +132,16 @@ fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Result<u
             } else {
                 false
             };
-            let of = false;
+            let of = Some(false);
             (result, cf, of)
         }
         _ => return Err(Error::Emulator(format!("unimplemented shift8 op: {}", op))),
     };
 
-    // Update ZF, SF, PF first (this clears CF and OF)
-    flags::update_flags_logic(&mut vcpu.regs.rflags, result as u64, 1);
+    if !is_rotate {
+        // Update ZF, SF, PF first (this clears CF and OF)
+        flags::update_flags_logic(&mut vcpu.regs.rflags, result as u64, 1);
+    }
 
     // Now set CF and OF based on the shift/rotate operation
     if cf {
@@ -142,10 +149,12 @@ fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Result<u
     } else {
         vcpu.regs.rflags &= !cf_bit;
     }
-    if of {
-        vcpu.regs.rflags |= of_bit;
-    } else {
-        vcpu.regs.rflags &= !of_bit;
+    if let Some(of) = of {
+        if of {
+            vcpu.regs.rflags |= of_bit;
+        } else {
+            vcpu.regs.rflags &= !of_bit;
+        }
     }
 
     Ok(result)
@@ -166,6 +175,7 @@ fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u8) -
     let of_bit = flags::bits::OF;
     let old_cf = (vcpu.regs.rflags & cf_bit) != 0;
 
+    let is_rotate = op <= 3;
     let (result, cf, of) = match op {
         0 => {
             // ROL
@@ -177,9 +187,9 @@ fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u8) -
             };
             let cf = (result & 1) != 0;
             let of = if count == 1 {
-                (((result >> (bits - 1)) ^ result) & 1) != 0
+                Some((((result >> (bits - 1)) ^ result) & 1) != 0)
             } else {
-                false
+                None
             };
             (result, cf, of)
         }
@@ -193,9 +203,9 @@ fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u8) -
             };
             let cf = (result >> (bits - 1)) != 0;
             let of = if count == 1 {
-                ((result >> (bits - 1)) ^ ((result >> (bits - 2)) & 1)) != 0
+                Some(((result >> (bits - 1)) ^ ((result >> (bits - 2)) & 1)) != 0)
             } else {
-                false
+                None
             };
             (result, cf, of)
         }
@@ -221,9 +231,9 @@ fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u8) -
 
             let new_cf = carry;
             let of = if count == 1 {
-                ((result >> (bits - 1)) & 1 != 0) ^ new_cf
+                Some(((result >> (bits - 1)) & 1 != 0) ^ new_cf)
             } else {
-                false
+                None
             };
             (result, new_cf, of)
         }
@@ -248,9 +258,9 @@ fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u8) -
             let new_cf = carry;
             let of = if count == 1 {
                 // OF = MSB XOR (MSB-1)
-                ((result >> (bits - 1)) ^ (result >> (bits - 2))) & 1 != 0
+                Some(((result >> (bits - 1)) ^ (result >> (bits - 2))) & 1 != 0)
             } else {
-                false
+                None
             };
             (result & mask, new_cf, of)
         }
@@ -267,9 +277,9 @@ fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u8) -
                 false
             };
             let of = if count == 1 {
-                ((result >> (bits - 1)) ^ (cf as u64)) != 0
+                Some(((result >> (bits - 1)) ^ (cf as u64)) != 0)
             } else {
-                false
+                Some(false)
             };
             (result, cf, of)
         }
@@ -286,9 +296,9 @@ fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u8) -
                 false
             };
             let of = if count == 1 {
-                (val >> (bits - 1)) != 0
+                Some((val >> (bits - 1)) != 0)
             } else {
-                false
+                Some(false)
             };
             (result, cf, of)
         }
@@ -314,14 +324,16 @@ fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u8) -
             } else {
                 false
             };
-            let of = false;
+            let of = Some(false);
             (result, cf, of)
         }
         _ => return Err(Error::Emulator(format!("unimplemented shift op: {}", op))),
     };
 
-    // Update ZF, SF, PF first (this clears CF and OF)
-    flags::update_flags_logic(&mut vcpu.regs.rflags, result, size);
+    if !is_rotate {
+        // Update ZF, SF, PF first (this clears CF and OF)
+        flags::update_flags_logic(&mut vcpu.regs.rflags, result, size);
+    }
 
     // Now set CF and OF based on the shift/rotate operation
     if cf {
@@ -329,10 +341,12 @@ fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u8) -
     } else {
         vcpu.regs.rflags &= !cf_bit;
     }
-    if of {
-        vcpu.regs.rflags |= of_bit;
-    } else {
-        vcpu.regs.rflags &= !of_bit;
+    if let Some(of) = of {
+        if of {
+            vcpu.regs.rflags |= of_bit;
+        } else {
+            vcpu.regs.rflags &= !of_bit;
+        }
     }
 
     Ok(result)
@@ -617,9 +631,13 @@ pub fn shrd_cl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 fn execute_shld(vcpu: &mut X86_64Vcpu, dst: u64, src: u64, count: u8, size: u8) -> u64 {
     let bits = (size * 8) as u32;
     let mask = if bits == 64 { !0u64 } else { (1u64 << bits) - 1 };
-    let count = (count as u32) % bits;
+    let count_mask = if bits == 64 { 0x3F } else { 0x1F };
+    let count = (count as u32) & count_mask;
 
     if count == 0 {
+        return dst & mask;
+    }
+    if count > bits {
         return dst & mask;
     }
 
@@ -642,6 +660,7 @@ fn execute_shld(vcpu: &mut X86_64Vcpu, dst: u64, src: u64, count: u8, size: u8) 
         false
     };
 
+    flags::update_flags_logic(&mut vcpu.regs.rflags, result, size);
     if cf {
         vcpu.regs.rflags |= flags::bits::CF;
     } else {
@@ -652,7 +671,6 @@ fn execute_shld(vcpu: &mut X86_64Vcpu, dst: u64, src: u64, count: u8, size: u8) 
     } else {
         vcpu.regs.rflags &= !flags::bits::OF;
     }
-    flags::update_flags_logic(&mut vcpu.regs.rflags, result, size);
 
     result
 }
@@ -661,9 +679,13 @@ fn execute_shld(vcpu: &mut X86_64Vcpu, dst: u64, src: u64, count: u8, size: u8) 
 fn execute_shrd(vcpu: &mut X86_64Vcpu, dst: u64, src: u64, count: u8, size: u8) -> u64 {
     let bits = (size * 8) as u32;
     let mask = if bits == 64 { !0u64 } else { (1u64 << bits) - 1 };
-    let count = (count as u32) % bits;
+    let count_mask = if bits == 64 { 0x3F } else { 0x1F };
+    let count = (count as u32) & count_mask;
 
     if count == 0 {
+        return dst & mask;
+    }
+    if count > bits {
         return dst & mask;
     }
 
@@ -686,6 +708,7 @@ fn execute_shrd(vcpu: &mut X86_64Vcpu, dst: u64, src: u64, count: u8, size: u8) 
         false
     };
 
+    flags::update_flags_logic(&mut vcpu.regs.rflags, result, size);
     if cf {
         vcpu.regs.rflags |= flags::bits::CF;
     } else {
@@ -696,7 +719,6 @@ fn execute_shrd(vcpu: &mut X86_64Vcpu, dst: u64, src: u64, count: u8, size: u8) 
     } else {
         vcpu.regs.rflags &= !flags::bits::OF;
     }
-    flags::update_flags_logic(&mut vcpu.regs.rflags, result, size);
 
     result
 }
