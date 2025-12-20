@@ -7,6 +7,8 @@
 //! - MUL (Unsigned Multiply)
 //! - DIV (Unsigned Divide)
 //! - IDIV (Signed Divide)
+//! - ADCX/ADOX (Multi-precision Arithmetic)
+//! - BCD (Binary Coded Decimal) arithmetic instructions
 
 pub mod neg;
 pub mod inc_dec;
@@ -14,3 +16,5 @@ pub mod imul;
 pub mod mul;
 pub mod div;
 pub mod idiv;
+pub mod adcx_adox;
+pub mod bcd;

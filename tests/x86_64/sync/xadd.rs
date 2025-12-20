@@ -642,3 +642,17 @@ fn test_xadd_fetch_and_add_pattern() {
     assert_eq!(mem_val, 55, "Memory should be 55 (42 + 13)");
     assert_eq!(regs.rcx & 0xFFFFFFFF, 42, "ECX contains old value (fetched)");
 }
+
+#[test]
+fn test_xadd_8bit_different_registers() {
+    let code = [
+        0x48, 0xc7, 0xc2, 0x10, 0x00, 0x00, 0x00, // MOV RDX, 0x10
+        0x48, 0xc7, 0xc6, 0x20, 0x00, 0x00, 0x00, // MOV RSI, 0x20
+        0x0f, 0xc0, 0xf2, // XADD DL, SIL
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rdx & 0xFF, 0x30, "DL should be 0x30");
+    assert_eq!(regs.rsi & 0xFF, 0x10, "SIL should be 0x10");
+}
