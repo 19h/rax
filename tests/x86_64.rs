@@ -112,6 +112,8 @@ mod bmi_bextr;
 mod data_transfer_bswap;
 #[path = "x86_64/data_transfer/cmov.rs"]
 mod data_transfer_cmov;
+#[path = "x86_64/data_transfer/setcc.rs"]
+mod data_transfer_setcc;
 
 // Data Conversion
 #[path = "x86_64/conversion/movsx.rs"]
