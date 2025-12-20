@@ -1,6 +1,7 @@
 mod hlt;
 mod nop;
 mod pause;
+mod wait_fwait;
 mod xlat;
 mod crc32;
 mod prefetch;

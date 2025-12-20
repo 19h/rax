@@ -1,5 +1,7 @@
 mod emms;
 mod movq;
+mod packsswb_packssdw_mmx;
+mod packuswb_mmx;
 mod paddb_paddw_paddd;
 mod pand_por_pxor;
 mod pcmpeqb_pcmpeqw_pcmpeqd;
@@ -7,3 +9,5 @@ mod pmulhw;
 mod pmullw;
 mod pshufw;
 mod psubb_psubw_psubd;
+mod punpckhbw_punpckhwd;
+mod punpcklbw_punpcklwd;

@@ -141,3 +141,16 @@ mod maskmovdqu;
 mod movntdq;
 mod movnti;
 mod lfence_mfence_sfence;
+
+// SSE3 Move and Duplicate Instructions
+mod movshdup_movsldup;
+mod movddup;
+mod lddqu;
+
+// SSE4.1 Non-Temporal Load
+mod movntdqa;
+
+// SSE3 Horizontal Arithmetic Instructions
+mod addsubps_addsubpd;
+mod haddps_haddpd;
+mod hsubps_hsubpd;
