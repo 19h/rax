@@ -90,10 +90,11 @@ fn test_wrmsr_preserves_flags() {
 #[test]
 fn test_wrmsr_preserves_other_registers() {
     // WRMSR should not modify other registers
+    // Use values with bit 31 clear to avoid sign-extension issues
     let code = [
         0x48, 0xC7, 0xC3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242
-        0x48, 0xC7, 0xC6, 0xAA, 0xAA, 0xAA, 0xAA, // MOV RSI, 0xAAAAAAAA
-        0x48, 0xC7, 0xC7, 0xBB, 0xBB, 0xBB, 0xBB, // MOV RDI, 0xBBBBBBBB
+        0x48, 0xC7, 0xC6, 0x55, 0x55, 0x55, 0x55, // MOV RSI, 0x55555555 (bit 31 clear)
+        0x48, 0xC7, 0xC7, 0x66, 0x66, 0x66, 0x66, // MOV RDI, 0x66666666 (bit 31 clear)
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0
         0x48, 0xC7, 0xC2, 0x00, 0x00, 0x00, 0x00, // MOV RDX, 0
@@ -105,8 +106,8 @@ fn test_wrmsr_preserves_other_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rbx, 0x42424242, "RBX should not be modified");
-    assert_eq!(regs.rsi, 0xAAAAAAAA, "RSI should not be modified");
-    assert_eq!(regs.rdi, 0xBBBBBBBB, "RDI should not be modified");
+    assert_eq!(regs.rsi, 0x55555555, "RSI should not be modified");
+    assert_eq!(regs.rdi, 0x66666666, "RDI should not be modified");
 }
 
 // ============================================================================
@@ -270,16 +271,19 @@ fn test_wrmsr_different_msrs() {
 #[test]
 fn test_wrmsr_loop() {
     // Write MSR in a loop
+    // Offsets: 0-6 MOV RCX, 7-13 MOV RBX, 14-16 XOR RAX, 17-19 XOR RDX
+    //          20-21 WRMSR (loop_start), 22-24 INC RAX, 25-27 DEC RBX, 28-29 JNZ, 30 HLT
+    // JNZ target = 20, RIP after JNZ = 30, offset = -10 = 0xF6
     let code = [
         0x48, 0xC7, 0xC1, 0x00, 0x01, 0x00, 0x00, // MOV RCX, 0x100
         0x48, 0xC7, 0xC3, 0x03, 0x00, 0x00, 0x00, // MOV RBX, 3 (loop counter)
         0x48, 0x31, 0xC0,                         // XOR RAX, RAX
         0x48, 0x31, 0xD2,                         // XOR RDX, RDX
-        // loop_start:
+        // loop_start (offset 20):
         0x0F, 0x30,                               // WRMSR
         0x48, 0xFF, 0xC0,                         // INC RAX (change value)
         0x48, 0xFF, 0xCB,                         // DEC RBX
-        0x75, 0xF7,                               // JNZ loop_start
+        0x75, 0xF6,                               // JNZ loop_start (offset -10)
         0xF4,                                      // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

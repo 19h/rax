@@ -608,10 +608,11 @@ fn test_cpuid_extended_leaf_is_not_lower_than_standard() {
 #[test]
 fn test_cpuid_returns_consistent_values_for_same_input() {
     // Calling CPUID twice with same input should return same output
+    // Note: CPUID modifies EAX, EBX, ECX, EDX, so save to RSI which is not touched
     let code = [
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1 (first call)
         0x0f, 0xa2,                    // CPUID
-        0x89, 0xc1,                    // MOV ECX, EAX (save EAX from first call)
+        0x89, 0xc6,                    // MOV ESI, EAX (save EAX from first call)
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1 (second call)
         0x0f, 0xa2,                    // CPUID
         0xf4,                          // HLT
@@ -621,7 +622,7 @@ fn test_cpuid_returns_consistent_values_for_same_input() {
 
     // Both calls should return same EAX value
     let eax_second = regs.rax & 0xFFFFFFFF;
-    let eax_first = regs.rcx & 0xFFFFFFFF;
+    let eax_first = regs.rsi & 0xFFFFFFFF;
     assert_eq!(eax_first, eax_second, "CPUID should return consistent values");
 }
 
