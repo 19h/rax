@@ -29,7 +29,7 @@
 //!
 //! Reference: /Users/int/dev/rax/docs/fld1:fldl2t:fldl2e:fldpi:fldlg2:fldln2:fldz.txt
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 

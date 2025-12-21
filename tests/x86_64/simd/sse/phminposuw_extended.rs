@@ -3,7 +3,7 @@ use crate::common::{run_until_hlt, setup_vm};
 // PHMINPOSUW Extended Tests - Additional comprehensive coverage
 //
 // Packed Horizontal Word Minimum with Index
-Opcode: 66 0F 38 41 /r
+// Opcode: 66 0F 38 41 /r
 
 const ALIGNED_ADDR: u64 = 0x3000;
 

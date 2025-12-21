@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 
 // PABSB/PABSW/PABSD - Packed Absolute Value
 //
@@ -179,7 +179,7 @@ fn test_pabsb_xmm1_mem_negative() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    let data: [u8; 16] = [0x80; 16]; // All INT8_MIN
+    let data: [u8; 16] = [0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80]; // All INT8_MIN
     mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -350,7 +350,7 @@ fn test_pabsw_xmm1_mem_negative() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    let data: [u8; 16] = [0x00, 0x80; 8]; // All INT16_MIN
+    let data: [u8; 16] = [0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80]; // All INT16_MIN
     mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -523,7 +523,7 @@ fn test_pabsd_xmm1_mem_negative() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
-    let data: [u8; 16] = [0x00, 0x00, 0x00, 0x80; 4]; // All INT32_MIN
+    let data: [u8; 16] = [0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80]; // All INT32_MIN
     mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();

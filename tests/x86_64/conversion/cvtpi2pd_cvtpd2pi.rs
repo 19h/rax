@@ -1,8 +1,6 @@
 use rax::cpu::Registers;
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm};
+use crate::common::{run_until_hlt, setup_vm};
 
 // CVTPI2PD — Convert Packed Dword Integers to Packed Double Precision Floating-Point Values
 // CVTPD2PI — Convert Packed Double Precision Floating-Point Values to Packed Dword Integers

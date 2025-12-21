@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 // VPMOVZXBW/VPMOVZXBD/VPMOVZXBQ - Zero Extend Packed Bytes (AVX2)
@@ -113,7 +113,7 @@ fn test_vpmovzxbw_ymm5_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0xFF; 16];
+    let data = vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -126,7 +126,7 @@ fn test_vpmovzxbw_ymm11_mem() {
     full_code.extend_from_slice(&[
         0xc4, 0x62, 0x7d, 0x30, 0x18, // VPMOVZXBW YMM11, [RAX]
         0xf4, // HLT
-    ];
+    ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data = vec![0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
@@ -502,7 +502,7 @@ fn test_vpmovzxbw_mem_zero_bytes() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0x00; 16];
+    let data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -518,7 +518,7 @@ fn test_vpmovzxbd_mem_zero_bytes() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0x00; 8];
+    let data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -534,7 +534,7 @@ fn test_vpmovzxbq_mem_zero_bytes() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0x00; 4];
+    let data = vec![0x00, 0x00, 0x00, 0x00];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

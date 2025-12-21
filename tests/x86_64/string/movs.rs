@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{setup_vm_legacy as setup_vm, run_until_hlt_legacy as run_until_hlt, VM, Bytes};
 
 // MOVS/MOVSB/MOVSW/MOVSD/MOVSQ - Move Data from String to String
 // Moves data from [RSI] to [RDI], increments/decrements both based on DF
@@ -281,8 +281,8 @@ fn test_rep_movsq_copy() {
     let mut vm = setup_vm(&code);
     vm = run_until_hlt(vm);
     let dest = vm.read_memory(0x4000, 16);
-    assert_eq!(&dest[0..8], &[0x11; 8]);
-    assert_eq!(&dest[8..16], &[0x22; 8]);
+    assert_eq!(&dest[0..8], &[0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11]);
+    assert_eq!(&dest[8..16], &[0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22]);
 }
 
 #[test]

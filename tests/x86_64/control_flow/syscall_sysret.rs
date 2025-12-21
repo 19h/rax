@@ -1,4 +1,4 @@
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 use rax::cpu::Registers;
 
 // Comprehensive tests for SYSCALL/SYSRET instructions

@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
@@ -140,7 +140,7 @@ fn test_vmaskmovps_load_xmm5_xmm6_mem() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 16] = [0; 16];
+    let test_data: [u8; 16] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -155,7 +155,7 @@ fn test_vmaskmovps_load_xmm6_xmm7_mem() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 16] = [0xff; 16];
+    let test_data: [u8; 16] = [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
     mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -170,7 +170,7 @@ fn test_vmaskmovps_load_xmm7_xmm0_mem() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 16] = [0x00, 0x00, 0x80, 0x3f; 4];
+    let test_data: [u8; 16] = [0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f];
     mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -189,7 +189,7 @@ fn test_vmaskmovps_load_xmm8_xmm9_mem() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 16] = [0x00, 0x00, 0x00, 0x40; 4]; // 2.0
+    let test_data: [u8; 16] = [0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x40]; // 2.0
     mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -204,7 +204,7 @@ fn test_vmaskmovps_load_xmm9_xmm10_mem() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 16] = [0x00, 0x00, 0x40, 0x40; 4]; // 3.0
+    let test_data: [u8; 16] = [0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x40, 0x40]; // 3.0
     mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -219,7 +219,7 @@ fn test_vmaskmovps_load_xmm10_xmm11_mem() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 16] = [0x00, 0x00, 0x80, 0x40; 4]; // 4.0
+    let test_data: [u8; 16] = [0x00, 0x00, 0x80, 0x40, 0x00, 0x00, 0x80, 0x40, 0x00, 0x00, 0x80, 0x40, 0x00, 0x00, 0x80, 0x40]; // 4.0
     mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -234,7 +234,7 @@ fn test_vmaskmovps_load_xmm15_xmm14_mem() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 16] = [0x00, 0x00, 0xa0, 0x40; 4]; // 5.0
+    let test_data: [u8; 16] = [0x00, 0x00, 0xa0, 0x40, 0x00, 0x00, 0xa0, 0x40, 0x00, 0x00, 0xa0, 0x40, 0x00, 0x00, 0xa0, 0x40]; // 5.0
     mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -277,7 +277,7 @@ fn test_vmaskmovps_load_ymm1_ymm2_mem() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 32] = [0; 32];
+    let test_data: [u8; 32] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -292,7 +292,7 @@ fn test_vmaskmovps_load_ymm2_ymm3_mem() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 32] = [0xff; 32];
+    let test_data: [u8; 32] = [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
     mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -307,7 +307,7 @@ fn test_vmaskmovps_load_ymm8_ymm9_mem() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 32] = [0x00, 0x00, 0x80, 0x3f; 8];
+    let test_data: [u8; 32] = [0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f];
     mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -518,7 +518,7 @@ fn test_vmaskmovpd_load_ymm1_ymm2_mem() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 32] = [0; 32];
+    let test_data: [u8; 32] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -533,7 +533,7 @@ fn test_vmaskmovpd_load_ymm8_ymm9_mem() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 32] = [0xff; 32];
+    let test_data: [u8; 32] = [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
     mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -638,7 +638,7 @@ fn test_vmaskmovps_load_store_roundtrip() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 16] = [0x00, 0x00, 0x80, 0x3f; 4];
+    let test_data: [u8; 16] = [0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f];
     mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();

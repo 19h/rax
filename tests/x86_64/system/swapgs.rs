@@ -20,10 +20,7 @@
 //!
 //! Reference: docs/swapgs.txt
 
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // IA32_KERNEL_GS_BASE MSR address

@@ -1,7 +1,4 @@
-#[path = "../../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // BZHI - Zero High Bits Starting with Specified Bit Position (BMI2)

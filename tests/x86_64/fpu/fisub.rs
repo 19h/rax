@@ -7,7 +7,7 @@
 //! Opcode: DE /4 - FISUB m16int  ; ST(0) = ST(0) - m16int
 //! Opcode: DA /4 - FISUB m32int  ; ST(0) = ST(0) - m32int
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 

@@ -1,7 +1,4 @@
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // AAA — ASCII Adjust After Addition
@@ -273,7 +270,7 @@ fn test_aas_values_0a_through_0f() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected_al = ((val as i8 - 6) as u8) & 0x0F;
-        assert_eq!(regs.rax & 0xFF, expected_al, "AL should be adjusted for value 0x{:02X}", val);
+        assert_eq!(regs.rax & 0xFF, expected_al as u64, "AL should be adjusted for value 0x{:02X}", val);
         assert_eq!((regs.rax >> 8) & 0xFF, 0xFF, "AH should be 0xFF for value 0x{:02X}", val);
         assert!(cf_set(regs.rflags), "CF should be set for value 0x{:02X}", val);
         assert!(af_set(regs.rflags), "AF should be set for value 0x{:02X}", val);

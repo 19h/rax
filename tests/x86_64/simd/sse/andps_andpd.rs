@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 // ANDPS/ANDPD - Bitwise Logical AND of Packed Floating-Point Values
@@ -49,8 +49,8 @@ fn test_andps_all_ones_all_ones() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -67,8 +67,8 @@ fn test_andps_all_ones_all_zeros() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0x00; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -85,8 +85,8 @@ fn test_andps_alternating_bits() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xAA; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0x55; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -145,8 +145,8 @@ fn test_andps_reg_reg_xmm2_xmm3() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0xAA; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -163,8 +163,8 @@ fn test_andps_xmm7_xmm6() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xF0; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0x0F; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -183,8 +183,8 @@ fn test_andps_xmm15_xmm8() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0x33; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -202,8 +202,8 @@ fn test_andps_memory_operand() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xCC; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0x3C; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -246,8 +246,8 @@ fn test_andpd_all_ones_all_ones() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -264,8 +264,8 @@ fn test_andpd_all_ones_all_zeros() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0x00; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -282,8 +282,8 @@ fn test_andpd_alternating_bits() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xAA; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0x55; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -342,8 +342,8 @@ fn test_andpd_reg_reg_xmm2_xmm3() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0xAA; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -360,8 +360,8 @@ fn test_andpd_xmm7_xmm6() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xF0; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0x0F; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -380,8 +380,8 @@ fn test_andpd_xmm15_xmm8() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0x33; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -399,8 +399,8 @@ fn test_andpd_memory_operand() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xCC; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0x3C; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -443,7 +443,7 @@ fn test_andps_with_infinity() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     mem.write_slice(&make_4floats(f32::INFINITY, f32::NEG_INFINITY, 1.0, 2.0),
                      GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -462,7 +462,7 @@ fn test_andpd_with_infinity() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     mem.write_slice(&make_2doubles(f64::INFINITY, f64::NEG_INFINITY),
                      GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -481,7 +481,7 @@ fn test_andps_with_nan() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     mem.write_slice(&make_4floats(f32::NAN, 1.0, 2.0, 3.0),
                      GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -500,27 +500,27 @@ fn test_andpd_with_nan() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     mem.write_slice(&make_2doubles(f64::NAN, 1.0),
                      GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
 // Additional 20 tests for comprehensive coverage
-#[test] fn test_andps_nibble_pattern_1() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x00, 0x0f, 0x28, 0x0b, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x0F; 16], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0xF0; 16], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
-#[test] fn test_andpd_nibble_pattern_1() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x00, 0x66, 0x0f, 0x28, 0x0b, 0x66, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x0F; 16], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0xF0; 16], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
-#[test] fn test_andps_byte_pattern_0x33() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x00, 0x0f, 0x28, 0x0b, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x33; 16], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0xCC; 16], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
-#[test] fn test_andpd_byte_pattern_0x33() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x00, 0x66, 0x0f, 0x28, 0x0b, 0x66, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x33; 16], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0xCC; 16], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
+#[test] fn test_andps_nibble_pattern_1() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x00, 0x0f, 0x28, 0x0b, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
+#[test] fn test_andpd_nibble_pattern_1() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x00, 0x66, 0x0f, 0x28, 0x0b, 0x66, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
+#[test] fn test_andps_byte_pattern_0x33() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x00, 0x0f, 0x28, 0x0b, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
+#[test] fn test_andpd_byte_pattern_0x33() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x00, 0x66, 0x0f, 0x28, 0x0b, 0x66, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
 #[test] fn test_andps_self() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x00, 0x0f, 0x54, 0xc0, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&make_4floats(1.0, 2.0, 3.0, 4.0), GuestAddress(ALIGNED_ADDR)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
 #[test] fn test_andpd_self() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x00, 0x66, 0x0f, 0x54, 0xc0, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&make_2doubles(1.0, 2.0), GuestAddress(ALIGNED_ADDR)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
-#[test] fn test_andps_chained() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x00, 0x0f, 0x28, 0x0b, 0x0f, 0x54, 0xc1, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x0F; 16], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
-#[test] fn test_andpd_chained() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x00, 0x66, 0x0f, 0x28, 0x0b, 0x66, 0x0f, 0x54, 0xc1, 0x66, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x0F; 16], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
+#[test] fn test_andps_chained() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x00, 0x0f, 0x28, 0x0b, 0x0f, 0x54, 0xc1, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
+#[test] fn test_andpd_chained() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x00, 0x66, 0x0f, 0x28, 0x0b, 0x66, 0x0f, 0x54, 0xc1, 0x66, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
 // Additional tests to reach 40+ count
 #[test] fn test_andps_pattern_1() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x00, 0x0f, 0x28, 0x0b, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0xFF, 0xEE, 0xDD, 0xCC, 0xBB, 0xAA, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
 #[test] fn test_andpd_pattern_1() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x00, 0x66, 0x0f, 0x28, 0x0b, 0x66, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0xFF, 0xEE, 0xDD, 0xCC, 0xBB, 0xAA, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
-#[test] fn test_andps_pattern_2() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x00, 0x0f, 0x28, 0x0b, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x01; 16], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x01; 16], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
-#[test] fn test_andpd_pattern_2() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x00, 0x66, 0x0f, 0x28, 0x0b, 0x66, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x01; 16], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x01; 16], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
-#[test] fn test_andps_pattern_3() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x00, 0x0f, 0x28, 0x0b, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x80; 16], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x80; 16], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
-#[test] fn test_andpd_pattern_3() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x00, 0x66, 0x0f, 0x28, 0x0b, 0x66, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x80; 16], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x80; 16], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
-#[test] fn test_andps_pattern_4() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x00, 0x0f, 0x28, 0x0b, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x7F; 16], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x01; 16], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
-#[test] fn test_andpd_pattern_4() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x00, 0x66, 0x0f, 0x28, 0x0b, 0x66, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x7F; 16], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x01; 16], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
-#[test] fn test_andps_xmm4_xmm5() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x20, 0x0f, 0x28, 0x2b, 0x0f, 0x54, 0xe5, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0xC3; 16], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x3C; 16], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
-#[test] fn test_andpd_xmm4_xmm5() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x20, 0x66, 0x0f, 0x28, 0x2b, 0x66, 0x0f, 0x54, 0xe5, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0xC3; 16], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x3C; 16], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
+#[test] fn test_andps_pattern_2() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x00, 0x0f, 0x28, 0x0b, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
+#[test] fn test_andpd_pattern_2() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x00, 0x66, 0x0f, 0x28, 0x0b, 0x66, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
+#[test] fn test_andps_pattern_3() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x00, 0x0f, 0x28, 0x0b, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
+#[test] fn test_andpd_pattern_3() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x00, 0x66, 0x0f, 0x28, 0x0b, 0x66, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
+#[test] fn test_andps_pattern_4() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x00, 0x0f, 0x28, 0x0b, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
+#[test] fn test_andpd_pattern_4() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x00, 0x66, 0x0f, 0x28, 0x0b, 0x66, 0x0f, 0x54, 0xc1, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
+#[test] fn test_andps_xmm4_xmm5() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x0f, 0x28, 0x20, 0x0f, 0x28, 0x2b, 0x0f, 0x54, 0xe5, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }
+#[test] fn test_andpd_xmm4_xmm5() { let code = [0x48, 0xb8]; let mut full_code = code.to_vec(); full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes()); full_code.extend_from_slice(&[0x48, 0xbb]); full_code.extend_from_slice(&ALIGNED_ADDR2.to_le_bytes()); full_code.extend_from_slice(&[0x66, 0x0f, 0x28, 0x20, 0x66, 0x0f, 0x28, 0x2b, 0x66, 0x0f, 0x54, 0xe5, 0xf4]); let (mut vcpu, mem) = setup_vm(&full_code, None); mem.write_slice(&[0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3], GuestAddress(ALIGNED_ADDR)).unwrap(); mem.write_slice(&[0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C], GuestAddress(ALIGNED_ADDR2)).unwrap(); run_until_hlt(&mut vcpu).unwrap(); }

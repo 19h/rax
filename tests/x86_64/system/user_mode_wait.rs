@@ -13,10 +13,7 @@
 //! References: docs/umonitor.txt, docs/umwait.txt, docs/tpause.txt,
 //!            docs/clui.txt, docs/stui.txt, docs/ptwrite.txt
 
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // ============================================================================

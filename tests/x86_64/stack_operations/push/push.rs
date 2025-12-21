@@ -1,8 +1,6 @@
 use rax::cpu::Registers;
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm};
+use crate::common::*;
 
 // PUSH - Push Value onto Stack
 // Decrements RSP and stores value at new RSP location
@@ -23,7 +21,7 @@ fn test_push_rax() {
 
     // Read value from stack
     let mut stack_val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(0x0FF8)).unwrap();
     let pushed_val = u64::from_le_bytes(stack_val);
     assert_eq!(pushed_val, 0x44332211, "Pushed value should be on stack");
 }
@@ -43,7 +41,7 @@ fn test_push_rbx() {
     assert_eq!(regs.rsp, 0x1FF8, "RSP decremented by 8");
 
     let mut stack_val = [0u8; 8];
-    vm.read_memory(0x1FF8, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(0x1FF8)).unwrap();
     assert_eq!(u64::from_le_bytes(stack_val), 0xDDCCBBAA, "RBX value on stack");
 }
 
@@ -58,7 +56,7 @@ fn test_push_rcx() {
     assert_eq!(regs.rsp, 0x0FF8, "RSP decremented");
 
     let mut stack_val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(0x0FF8)).unwrap();
     assert_eq!(u64::from_le_bytes(stack_val), 0x1234567890ABCDEF);
 }
 
@@ -90,11 +88,11 @@ fn test_push_all_gp_registers() {
 
     // Verify each value on stack
     let mut val = [0u8; 8];
-    vm.read_memory(0x1000 - 8, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x1000 - 8)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0x1111111111111111, "RAX");
-    vm.read_memory(0x1000 - 16, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x1000 - 16)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0x2222222222222222, "RBX");
-    vm.read_memory(0x1000 - 24, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x1000 - 24)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0x3333333333333333, "RCX");
 }
 
@@ -110,7 +108,7 @@ fn test_push_r8() {
     assert_eq!(regs.rsp, 0x0FF8);
 
     let mut val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x0FF8)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0xAAAAAAAAAAAAAAAA);
 }
 
@@ -125,7 +123,7 @@ fn test_push_r15() {
     assert_eq!(regs.rsp, 0x0FF8);
 
     let mut val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x0FF8)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0xBBBBBBBBBBBBBBBB);
 }
 
@@ -140,7 +138,7 @@ fn test_push_imm8() {
     assert_eq!(regs.rsp, 0x0FF8);
 
     let mut val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x0FF8)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0x42);
 }
 
@@ -154,7 +152,7 @@ fn test_push_imm8_negative() {
     assert_eq!(regs.rsp, 0x0FF8);
 
     let mut val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x0FF8)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0xFFFFFFFFFFFFFFFF);
 }
 
@@ -168,7 +166,7 @@ fn test_push_imm32() {
     assert_eq!(regs.rsp, 0x0FF8);
 
     let mut val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x0FF8)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0x12345678);
 }
 
@@ -182,7 +180,7 @@ fn test_push_zero() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x0FF8)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0);
 }
 
@@ -205,11 +203,11 @@ fn test_multiple_push() {
     assert_eq!(regs.rsp, 0x1000 - 24, "RSP decremented by 3*8");
 
     let mut val = [0u8; 8];
-    vm.read_memory(0x1000 - 8, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x1000 - 8)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0x11, "First push (RAX)");
-    vm.read_memory(0x1000 - 16, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x1000 - 16)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0x22, "Second push (RBX)");
-    vm.read_memory(0x1000 - 24, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x1000 - 24)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0x33, "Third push (RCX)");
 }
 
@@ -240,7 +238,7 @@ fn test_push_rsp() {
     assert_eq!(regs.rsp, 0x0FF8, "RSP decremented");
 
     let mut val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x0FF8)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0x1000, "Original RSP value pushed");
 }
 
@@ -261,7 +259,7 @@ fn test_stack_grows_down() {
 
     // Most recent push is at lowest address
     let mut val = [0u8; 8];
-    vm.read_memory(regs.rsp, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(regs.rsp)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 3, "Top of stack is 3");
 }
 
@@ -276,7 +274,7 @@ fn test_push_max_value() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x0FF8)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0xFFFFFFFFFFFFFFFF);
 }
 
@@ -296,7 +294,7 @@ fn test_push_then_modify() {
     assert_eq!(regs.rax, 0x99, "RAX modified");
 
     let mut val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x0FF8)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0x42, "Stack has original value");
 }
 
@@ -322,7 +320,7 @@ fn test_push_practical_function_prologue() {
 
     // Verify saved values
     let mut val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(0x0FF8)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0x2000, "Old RBP saved");
 }
 
@@ -360,13 +358,13 @@ fn test_push_chain_order() {
 
     // Stack layout (top to bottom): 40, 30, 20, 10
     let mut val = [0u8; 8];
-    vm.read_memory(regs.rsp, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(regs.rsp)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 40, "Top of stack");
-    vm.read_memory(regs.rsp + 8, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(regs.rsp + 8)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 30);
-    vm.read_memory(regs.rsp + 16, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(regs.rsp + 16)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 20);
-    vm.read_memory(regs.rsp + 24, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(regs.rsp + 24)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 10, "Bottom of our pushes");
 }
 
@@ -399,6 +397,6 @@ fn test_push_all_extended_regs() {
     assert_eq!(regs.rsp, 0x1000 - 64, "8 registers * 8 bytes");
 
     let mut val = [0u8; 8];
-    vm.read_memory(regs.rsp, &mut val).unwrap();
+    vm.read_slice(&mut val, GuestAddress(regs.rsp)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0x0F, "R15 on top");
 }

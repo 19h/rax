@@ -1,10 +1,7 @@
-use crate::common::{run_until_hlt, setup_vm, read_mem_u8, read_mem_u16, read_mem_u32, read_mem_u64, write_mem_u8, write_mem_u16, write_mem_u32, write_mem_u64};
+use crate::common::*;
 
 // XCHG Extended Tests - Comprehensive patterns for exchange instruction
 // XCHG is implicitly atomic (LOCK prefix not needed for memory operands)
-
-#[path = "../common/mod.rs"]
-mod common;
 
 // ===== BASIC REGISTER-REGISTER EXCHANGE =====
 

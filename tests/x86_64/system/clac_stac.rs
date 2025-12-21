@@ -21,10 +21,7 @@
 //!
 //! Reference: docs/clac.txt, docs/stac.txt
 
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // AC flag is bit 18 of RFLAGS

@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 // VPMOVSXWD/VPMOVSXWQ/VPMOVSXDQ - Sign Extend Packed Words/Dwords (AVX2)
@@ -114,7 +114,7 @@ fn test_vpmovsxwd_ymm5_mem_negative() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0xFF; 16]; // All -1 in signed 16-bit
+    let data = vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]; // All -1 in signed 16-bit
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -348,7 +348,7 @@ fn test_vpmovsxdq_ymm5_mem_negative() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0xFF; 16]; // All -1 in signed 32-bit
+    let data = vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]; // All -1 in signed 32-bit
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -511,7 +511,7 @@ fn test_vpmovsxwd_mem_zero_words() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0x00; 16];
+    let data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -527,7 +527,7 @@ fn test_vpmovsxwq_mem_zero_words() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0x00; 8];
+    let data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -543,7 +543,7 @@ fn test_vpmovsxdq_mem_zero_dwords() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0x00; 16];
+    let data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

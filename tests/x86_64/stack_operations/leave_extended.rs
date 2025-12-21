@@ -539,7 +539,7 @@ fn test_leave_with_zero_saved_rbp() {
 #[test]
 fn test_leave_stack_grows_correctly() {
     let code = [
-        0xc8, 0x100, 0x00, 0x00, // ENTER 256, 0
+        0xc8, 0x00, 0x01, 0x00, // ENTER 256, 0
         0xc9, // LEAVE
         0xf4, // HLT
     ];

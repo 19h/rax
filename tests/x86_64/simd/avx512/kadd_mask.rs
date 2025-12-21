@@ -13,10 +13,7 @@
 //!
 //! References: Intel SDM Vol. 2, KADD instruction documentation
 
-#[path = "../../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // ============================================================================

@@ -1,4 +1,4 @@
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 
 // PHSUBW/PHSUBD - Packed Horizontal Subtract
 //
@@ -572,7 +572,7 @@ fn test_phsubw_mem_displacement() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x05, 0x00, 0x03, 0x00; 4], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x05, 0x00, 0x03, 0x00, 0x05, 0x00, 0x03, 0x00, 0x05, 0x00, 0x03, 0x00, 0x05, 0x00, 0x03, 0x00], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -590,6 +590,6 @@ fn test_phsubd_mem_displacement() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x05, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00; 2], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x05, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

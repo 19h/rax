@@ -14,10 +14,7 @@
 //!
 //! Reference: /Users/int/dev/rax/docs/psubusb:psubusw.txt
 
-#[path = "../../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 
 fn write_mm_via_mem(mem: &vm_memory::GuestMemoryMmap, addr: u64, value: u64) {
     write_mem_at_u64(mem, addr, value);
@@ -150,7 +147,7 @@ fn test_psubusb_mixed_saturation() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     // Mix: some saturate, some don't
-    write_mm_via_mem(&mem, 0x2000, 0xFF8050281410 0801);
+    write_mm_via_mem(&mem, 0x2000, 0xFF80502814100801);
     write_mm_via_mem(&mem, 0x2008, 0x01A05028140A0802);
 
     run_until_hlt(&mut vcpu).unwrap();

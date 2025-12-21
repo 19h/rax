@@ -19,7 +19,7 @@
 //!
 //! Reference: /Users/int/dev/rax/docs/finit:fninit.txt
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 fn write_f64(mem: &vm_memory::GuestMemoryMmap, addr: u64, val: f64) {

@@ -12,9 +12,6 @@ use crate::common::{run_until_hlt, setup_vm};
 // The destination is always a 32-bit or 64-bit register
 // For 64-bit destination, upper 32 bits are zeroed
 
-#[path = "../common/mod.rs"]
-mod common;
-
 // ===== CRC32 8-BIT TESTS =====
 
 #[test]

@@ -15,7 +15,7 @@
 //!
 //! Reference: /Users/int/dev/rax/docs/fyl2xp1.txt
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
@@ -486,7 +486,7 @@ fn test_fyl2xp1_precision_small_values() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    let expected = (1.0 + 1e-10).log2();
+    let expected = (1.0_f64 + 1e-10).log2();
     assert!((result - expected).abs() < 1e-15, "High precision for small x");
 }
 

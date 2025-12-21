@@ -3,9 +3,6 @@ use crate::common::{run_until_hlt, setup_vm, read_mem_u8, read_mem_u16, read_mem
 // LOCK Prefix Tests - Comprehensive tests for LOCK prefix with various instructions
 // The LOCK prefix (0xF0) ensures atomic execution on multiprocessor systems
 
-#[path = "../common/mod.rs"]
-mod common;
-
 // ===== LOCK ADD TESTS =====
 
 #[test]

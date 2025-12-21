@@ -18,10 +18,7 @@
 //!            docs/saveprevssp.txt, docs/setssbsy.txt, docs/wrussd:wrussq.txt,
 //!            docs/clac.txt, docs/stac.txt
 
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // ============================================================================

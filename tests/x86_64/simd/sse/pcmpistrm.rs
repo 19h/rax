@@ -1,4 +1,4 @@
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 
 // PCMPISTRM - Packed Compare Implicit Length Strings, Return Mask
 //
@@ -688,8 +688,8 @@ fn test_pcmpistrm_empty_strings() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // Both strings empty (null at start)
-    let data1: [u8; 16] = [0x00; 16];
-    let data2: [u8; 16] = [0x00; 16];
+    let data1: [u8; 16] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+    let data2: [u8; 16] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
     mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
@@ -709,7 +709,7 @@ fn test_pcmpistrm_full_16_bytes() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data1: [u8; 16] = [0x61; 16]; // All 'a'
+    let data1: [u8; 16] = [0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61]; // All 'a'
     let data2: [u8; 16] = [0x62, 0x61, 0x62, 0x61, 0x62, 0x61, 0x62, 0x61,
                            0x62, 0x61, 0x62, 0x61, 0x62, 0x61, 0x62, 0x61];
     mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();

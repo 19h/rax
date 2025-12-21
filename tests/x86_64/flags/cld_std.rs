@@ -1,8 +1,5 @@
 // Module path for tests run via x86_64.rs
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // CLD - Clear Direction Flag

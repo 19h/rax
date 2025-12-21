@@ -1,7 +1,4 @@
 // Module path for tests run via x86_64.rs
-#[path = "../common/mod.rs"]
-mod common;
-
 use crate::common::{run_until_hlt, setup_vm, cf_set};
 use rax::cpu::Registers;
 

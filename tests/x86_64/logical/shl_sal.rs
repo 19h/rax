@@ -33,10 +33,10 @@ fn test_shl_al_1_basic() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rax & 0xFF, 0x84, "AL: 0x42 << 1 = 0x84");
-    assert\!(\!cf_set(regs.rflags), "CF clear (MSB was 0)");
-    assert\!(of_set(regs.rflags), "OF: MSB XOR CF = 1 XOR 0 = 1");
-    assert\!(sf_set(regs.rflags), "SF set (bit 7 = 1)");
+    assert_eq!(regs.rax & 0xFF, 0x84, "AL: 0x42 << 1 = 0x84");
+    assert!(!cf_set(regs.rflags), "CF clear (MSB was 0)");
+    assert!(of_set(regs.rflags), "OF: MSB XOR CF = 1 XOR 0 = 1");
+    assert!(sf_set(regs.rflags), "SF set (bit 7 = 1)");
 }
 
 #[test]
@@ -47,9 +47,9 @@ fn test_shl_al_1_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rax & 0xFF, 0x02, "AL: 0x81 << 1 = 0x02");
-    assert\!(cf_set(regs.rflags), "CF set (MSB was 1)");
-    assert\!(of_set(regs.rflags), "OF: MSB XOR CF = 0 XOR 1 = 1");
+    assert_eq!(regs.rax & 0xFF, 0x02, "AL: 0x81 << 1 = 0x02");
+    assert!(cf_set(regs.rflags), "CF set (MSB was 1)");
+    assert!(of_set(regs.rflags), "OF: MSB XOR CF = 0 XOR 1 = 1");
 }
 
 #[test]
@@ -60,9 +60,9 @@ fn test_shl_al_1_no_overflow() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rax & 0xFF, 0x80, "AL: 0xC0 << 1 = 0x80");
-    assert\!(cf_set(regs.rflags), "CF set");
-    assert\!(\!of_set(regs.rflags), "OF clear: MSB XOR CF = 1 XOR 1 = 0");
+    assert_eq!(regs.rax & 0xFF, 0x80, "AL: 0xC0 << 1 = 0x80");
+    assert!(cf_set(regs.rflags), "CF set");
+    assert!(!of_set(regs.rflags), "OF clear: MSB XOR CF = 1 XOR 1 = 0");
 }
 
 #[test]
@@ -74,9 +74,9 @@ fn test_shl_bl_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rbx & 0xFF, 0x80, "BL: 0x01 << 7 = 0x80");
-    assert\!(\!cf_set(regs.rflags), "CF: last bit shifted out was 0");
-    assert\!(sf_set(regs.rflags), "SF set");
+    assert_eq!(regs.rbx & 0xFF, 0x80, "BL: 0x01 << 7 = 0x80");
+    assert!(!cf_set(regs.rflags), "CF: last bit shifted out was 0");
+    assert!(sf_set(regs.rflags), "SF set");
 }
 
 #[test]
@@ -87,9 +87,9 @@ fn test_shl_cl_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rcx & 0xFF, 0x88, "CL: 0x11 << 3 = 0x88");
-    assert\!(\!cf_set(regs.rflags), "CF: last bit shifted out was 0");
-    assert\!(sf_set(regs.rflags), "SF set");
+    assert_eq!(regs.rcx & 0xFF, 0x88, "CL: 0x11 << 3 = 0x88");
+    assert!(!cf_set(regs.rflags), "CF: last bit shifted out was 0");
+    assert!(sf_set(regs.rflags), "SF set");
 }
 
 #[test]
@@ -100,9 +100,9 @@ fn test_shl_al_to_zero() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rax & 0xFF, 0x00, "AL: all bits shifted out");
-    assert\!(zf_set(regs.rflags), "ZF set (result is zero)");
-    assert\!(\!sf_set(regs.rflags), "SF clear");
+    assert_eq!(regs.rax & 0xFF, 0x00, "AL: all bits shifted out");
+    assert!(zf_set(regs.rflags), "ZF set (result is zero)");
+    assert!(!sf_set(regs.rflags), "SF clear");
 }
 
 #[test]
@@ -114,7 +114,7 @@ fn test_shl_count_masked_8bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rax & 0xFF, 0x88, "AL: 0x11 << 3 = 0x88 (count masked)");
+    assert_eq!(regs.rax & 0xFF, 0x88, "AL: 0x11 << 3 = 0x88 (count masked)");
 }
 
 #[test]
@@ -127,8 +127,8 @@ fn test_shl_count_zero_preserves_flags() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rax & 0xFF, 0x42, "AL unchanged");
-    assert_eq\!(regs.rflags, initial_flags, "Flags unchanged when count is 0");
+    assert_eq!(regs.rax & 0xFF, 0x42, "AL unchanged");
+    assert_eq!(regs.rflags, initial_flags, "Flags unchanged when count is 0");
 }
 
 #[test]
@@ -139,7 +139,7 @@ fn test_shl_dh_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!((regs.rdx >> 8) & 0xFF, 0x84, "DH: 0x42 << 1 = 0x84");
+    assert_eq!((regs.rdx >> 8) & 0xFF, 0x84, "DH: 0x42 << 1 = 0x84");
 }
 
 // ============================================================================
@@ -154,10 +154,10 @@ fn test_shl_ax_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rax & 0xFFFF, 0x8642, "AX: 0x4321 << 1 = 0x8642");
-    assert\!(\!cf_set(regs.rflags), "CF clear");
-    assert\!(of_set(regs.rflags), "OF: MSB XOR CF");
-    assert\!(sf_set(regs.rflags), "SF set");
+    assert_eq!(regs.rax & 0xFFFF, 0x8642, "AX: 0x4321 << 1 = 0x8642");
+    assert!(!cf_set(regs.rflags), "CF clear");
+    assert!(of_set(regs.rflags), "OF: MSB XOR CF");
+    assert!(sf_set(regs.rflags), "SF set");
 }
 
 #[test]
@@ -169,9 +169,9 @@ fn test_shl_ax_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rax & 0xFFFF, 0x8000, "AX: 0x0001 << 15 = 0x8000");
-    assert\!(\!cf_set(regs.rflags), "CF: last bit shifted out was 0");
-    assert\!(sf_set(regs.rflags), "SF set");
+    assert_eq!(regs.rax & 0xFFFF, 0x8000, "AX: 0x0001 << 15 = 0x8000");
+    assert!(!cf_set(regs.rflags), "CF: last bit shifted out was 0");
+    assert!(sf_set(regs.rflags), "SF set");
 }
 
 #[test]
@@ -182,7 +182,7 @@ fn test_shl_bx_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rbx & 0xFFFF, 0x2340, "BX: 0x1234 << 4 = 0x2340");
+    assert_eq!(regs.rbx & 0xFFFF, 0x2340, "BX: 0x1234 << 4 = 0x2340");
 }
 
 #[test]
@@ -193,8 +193,8 @@ fn test_shl_cx_to_zero() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rcx & 0xFFFF, 0x0000, "CX: all bits shifted out");
-    assert\!(zf_set(regs.rflags), "ZF set");
+    assert_eq!(regs.rcx & 0xFFFF, 0x0000, "CX: all bits shifted out");
+    assert!(zf_set(regs.rflags), "ZF set");
 }
 
 #[test]
@@ -205,8 +205,8 @@ fn test_shl_si_1_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rsi & 0xFFFF, 0x0002, "SI: 0x8001 << 1 = 0x0002");
-    assert\!(cf_set(regs.rflags), "CF set (MSB was 1)");
+    assert_eq!(regs.rsi & 0xFFFF, 0x0002, "SI: 0x8001 << 1 = 0x0002");
+    assert!(cf_set(regs.rflags), "CF set (MSB was 1)");
 }
 
 // ============================================================================
@@ -221,9 +221,9 @@ fn test_shl_eax_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rax, 0x2468ACF0, "EAX: 0x12345678 << 1 = 0x2468ACF0");
-    assert\!(\!cf_set(regs.rflags), "CF clear");
-    assert\!(\!of_set(regs.rflags), "OF clear");
+    assert_eq!(regs.rax, 0x2468ACF0, "EAX: 0x12345678 << 1 = 0x2468ACF0");
+    assert!(!cf_set(regs.rflags), "CF clear");
+    assert!(!of_set(regs.rflags), "OF clear");
 }
 
 #[test]
@@ -235,9 +235,9 @@ fn test_shl_ebx_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rbx, 0x80000000, "EBX: 0x00000001 << 31 = 0x80000000");
-    assert\!(\!cf_set(regs.rflags), "CF: last bit shifted out was 0");
-    assert\!(sf_set(regs.rflags), "SF set");
+    assert_eq!(regs.rbx, 0x80000000, "EBX: 0x00000001 << 31 = 0x80000000");
+    assert!(!cf_set(regs.rflags), "CF: last bit shifted out was 0");
+    assert!(sf_set(regs.rflags), "SF set");
 }
 
 #[test]
@@ -248,7 +248,7 @@ fn test_shl_ecx_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rcx, 0x12345600, "ECX: 0x00123456 << 8 = 0x12345600");
+    assert_eq!(regs.rcx, 0x12345600, "ECX: 0x00123456 << 8 = 0x12345600");
 }
 
 #[test]
@@ -259,7 +259,7 @@ fn test_shl_esi_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rsi, 0x56780000, "ESI: 0x12345678 << 16 = 0x56780000");
+    assert_eq!(regs.rsi, 0x56780000, "ESI: 0x12345678 << 16 = 0x56780000");
 }
 
 #[test]
@@ -270,8 +270,8 @@ fn test_shl_edi_to_zero() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rdi, 0x00000000, "EDI: all bits shifted out");
-    assert\!(zf_set(regs.rflags), "ZF set");
+    assert_eq!(regs.rdi, 0x00000000, "EDI: all bits shifted out");
+    assert!(zf_set(regs.rflags), "ZF set");
 }
 
 // ============================================================================
@@ -286,9 +286,9 @@ fn test_shl_rax_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rax, 0x2468ACF13579BDE0, "RAX: << 1");
-    assert\!(\!cf_set(regs.rflags), "CF clear");
-    assert\!(\!of_set(regs.rflags), "OF clear");
+    assert_eq!(regs.rax, 0x2468ACF13579BDE0, "RAX: << 1");
+    assert!(!cf_set(regs.rflags), "CF clear");
+    assert!(!of_set(regs.rflags), "OF clear");
 }
 
 #[test]
@@ -300,9 +300,9 @@ fn test_shl_rbx_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rbx, 0x8000000000000000, "RBX: 0x01 << 63 = 0x8000...0");
-    assert\!(\!cf_set(regs.rflags), "CF: last bit shifted out was 0");
-    assert\!(sf_set(regs.rflags), "SF set");
+    assert_eq!(regs.rbx, 0x8000000000000000, "RBX: 0x01 << 63 = 0x8000...0");
+    assert!(!cf_set(regs.rflags), "CF: last bit shifted out was 0");
+    assert!(sf_set(regs.rflags), "SF set");
 }
 
 #[test]
@@ -313,7 +313,7 @@ fn test_shl_rcx_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rcx, 0x123456789ABC0000, "RCX: << 16");
+    assert_eq!(regs.rcx, 0x123456789ABC0000, "RCX: << 16");
 }
 
 #[test]
@@ -324,7 +324,7 @@ fn test_shl_rsi_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rsi, 0x9ABCDEF000000000, "RSI: << 32");
+    assert_eq!(regs.rsi, 0x9ABCDEF000000000, "RSI: << 32");
 }
 
 #[test]
@@ -335,8 +335,8 @@ fn test_shl_rdi_to_zero() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rdi, 0x0000000000000000, "RDI: all bits shifted out");
-    assert\!(zf_set(regs.rflags), "ZF set");
+    assert_eq!(regs.rdi, 0x0000000000000000, "RDI: all bits shifted out");
+    assert!(zf_set(regs.rflags), "ZF set");
 }
 
 #[test]
@@ -348,7 +348,7 @@ fn test_shl_count_masked_64bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rax, 0x0000000000000008, "RAX: 0x01 << 3 = 0x08 (count masked)");
+    assert_eq!(regs.rax, 0x0000000000000008, "RAX: 0x01 << 3 = 0x08 (count masked)");
 }
 
 // ============================================================================
@@ -363,7 +363,7 @@ fn test_shl_r8b_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.r8 & 0xFF, 0x84, "R8B: 0x42 << 1 = 0x84");
+    assert_eq!(regs.r8 & 0xFF, 0x84, "R8B: 0x42 << 1 = 0x84");
 }
 
 #[test]
@@ -375,7 +375,7 @@ fn test_shl_r9w_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.r9 & 0xFFFF, 0x8000, "R9W: 0x0001 << 15 = 0x8000");
+    assert_eq!(regs.r9 & 0xFFFF, 0x8000, "R9W: 0x0001 << 15 = 0x8000");
 }
 
 #[test]
@@ -386,7 +386,7 @@ fn test_shl_r10d_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.r10, 0x12345600, "R10D: << 8");
+    assert_eq!(regs.r10, 0x12345600, "R10D: << 8");
 }
 
 #[test]
@@ -397,7 +397,7 @@ fn test_shl_r11_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.r11, 0x2468ACF13579BDE0, "R11: << 1");
+    assert_eq!(regs.r11, 0x2468ACF13579BDE0, "R11: << 1");
 }
 
 #[test]
@@ -409,7 +409,7 @@ fn test_shl_r12_cl() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.r12, 0x0000000100000000, "R12: << 32");
+    assert_eq!(regs.r12, 0x0000000100000000, "R12: << 32");
 }
 
 #[test]
@@ -420,7 +420,7 @@ fn test_shl_r15_imm8() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.r15, 0x123456789ABC0000, "R15: << 16");
+    assert_eq!(regs.r15, 0x123456789ABC0000, "R15: << 16");
 }
 
 // ============================================================================
@@ -439,7 +439,7 @@ fn test_shl_byte_ptr_1() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
     let result = read_mem_u8(&mem);
 
-    assert_eq\!(result, 0x84, "Memory: 0x42 << 1 = 0x84");
+    assert_eq!(result, 0x84, "Memory: 0x42 << 1 = 0x84");
 }
 
 #[test]
@@ -458,7 +458,7 @@ fn test_shl_word_ptr_cl() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
     let result = read_mem_u16(&mem);
 
-    assert_eq\!(result, 0x8000, "Memory: 0x0001 << 15 = 0x8000");
+    assert_eq!(result, 0x8000, "Memory: 0x0001 << 15 = 0x8000");
 }
 
 #[test]
@@ -473,7 +473,7 @@ fn test_shl_dword_ptr_imm8() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
     let result = read_mem_u32(&mem);
 
-    assert_eq\!(result, 0x12345600, "Memory: << 8");
+    assert_eq!(result, 0x12345600, "Memory: << 8");
 }
 
 #[test]
@@ -488,7 +488,7 @@ fn test_shl_qword_ptr_imm8() {
     let _ = run_until_hlt(&mut vcpu).unwrap();
     let result = read_mem_u64(&mem);
 
-    assert_eq\!(result, 0x123456789ABC0000, "Memory: << 16");
+    assert_eq!(result, 0x123456789ABC0000, "Memory: << 16");
 }
 
 // ============================================================================
@@ -504,8 +504,8 @@ fn test_shl_parity_even() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Result = 0x04 (one 1-bit = odd parity)
-    assert_eq\!(regs.rax & 0xFF, 0x04);
-    assert\!(\!pf_set(regs.rflags), "PF clear (odd parity)");
+    assert_eq!(regs.rax & 0xFF, 0x04);
+    assert!(!pf_set(regs.rflags), "PF clear (odd parity)");
 }
 
 #[test]
@@ -517,8 +517,8 @@ fn test_shl_parity_odd() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Result = 0x0C (two 1-bits = even parity)
-    assert_eq\!(regs.rax & 0xFF, 0x0C);
-    assert\!(pf_set(regs.rflags), "PF set (even parity)");
+    assert_eq!(regs.rax & 0xFF, 0x0C);
+    assert!(pf_set(regs.rflags), "PF set (even parity)");
 }
 
 // ============================================================================
@@ -537,5 +537,5 @@ fn test_shl_multiple_operations() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq\!(regs.rax & 0xFF, 0x84, "AL: 0x21 << 2 = 0x84");
+    assert_eq!(regs.rax & 0xFF, 0x84, "AL: 0x21 << 2 = 0x84");
 }

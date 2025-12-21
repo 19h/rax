@@ -1,7 +1,4 @@
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // SUB — Integer Subtraction
@@ -350,7 +347,7 @@ fn test_sub_all_64bit_registers() {
 #[test]
 fn test_sub_byte_ptr_imm8() {
     let code = [
-        0x80, 0x2D, 0xF7, 0x0F, 0x00, 0x00, 0x10, // SUB BYTE PTR [rip+0x0FF7], 0x10
+        0x80, 0x2D, 0xFA, 0x0F, 0x00, 0x00, 0x10, // SUB BYTE PTR [rip+0x0FF7], 0x10
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -365,7 +362,7 @@ fn test_sub_byte_ptr_imm8() {
 #[test]
 fn test_sub_qword_ptr_r64() {
     let code = [
-        0x48, 0x29, 0x1d, 0xF6, 0x0F, 0x00, 0x00, // SUB QWORD PTR [rip+0x0FF6], RBX
+        0x48, 0x29, 0x1d, 0xF9, 0x0F, 0x00, 0x00, // SUB QWORD PTR [rip+0x0FF6], RBX
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -383,7 +380,7 @@ fn test_sub_qword_ptr_r64() {
 #[test]
 fn test_sub_r64_from_memory() {
     let code = [
-        0x48, 0x2B, 0x05, 0xF6, 0x0F, 0x00, 0x00, // SUB RAX, QWORD PTR [rip+0x0FF6]
+        0x48, 0x2B, 0x05, 0xF9, 0x0F, 0x00, 0x00, // SUB RAX, QWORD PTR [rip+0x0FF6]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

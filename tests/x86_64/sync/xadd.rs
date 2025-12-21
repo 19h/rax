@@ -1,4 +1,4 @@
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 
 // XADD - Exchange and Add
 // Opcode: 0F C0 (8-bit), 0F C1 (16/32/64-bit)
@@ -12,9 +12,6 @@ use crate::common::{Bytes, run_until_hlt, setup_vm};
 //   dest = temp
 //
 // Flags: Sets CF, PF, AF, ZF, SF, OF based on the addition result
-
-#[path = "../common/mod.rs"]
-mod common;
 
 // ===== BASIC 8-BIT REGISTER-REGISTER TESTS =====
 

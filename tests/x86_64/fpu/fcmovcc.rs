@@ -29,7 +29,7 @@
 //! Reference: /Users/int/dev/rax/docs/fcmovb:fcmove:fcmovbe:fcmovu.txt
 //! Reference: /Users/int/dev/rax/docs/fcmovnb:fcmovne:fcmovnbe:fcmovnu.txt
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 

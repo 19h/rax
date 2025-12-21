@@ -14,10 +14,7 @@
 //!
 //! Reference: /Users/int/dev/rax/docs/paddusb:paddusw.txt
 
-#[path = "../../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 
 fn write_mm_via_mem(mem: &vm_memory::GuestMemoryMmap, addr: u64, value: u64) {
     write_mem_at_u64(mem, addr, value);
@@ -358,7 +355,7 @@ fn test_paddusb_mm_m64() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x02040608 0A0C0E10, "PADDUSB: memory operand");
+    assert_eq!(result, 0x020406080A0C0E10, "PADDUSB: memory operand");
 }
 
 #[test]
@@ -495,7 +492,7 @@ fn test_paddusb_all_mm_registers() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x02040608 0A0C0E10, "PADDUSB: MM5 and MM6");
+    assert_eq!(result, 0x020406080A0C0E10, "PADDUSB: MM5 and MM6");
 }
 
 #[test]

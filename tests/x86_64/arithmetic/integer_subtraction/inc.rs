@@ -8,10 +8,7 @@
 //!
 //! Reference: docs/inc.txt
 
-#[path = "../../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::backend::emulator::x86_64::flags;
 use rax::cpu::Registers;
 

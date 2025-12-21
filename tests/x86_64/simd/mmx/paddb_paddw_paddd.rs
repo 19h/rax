@@ -13,10 +13,7 @@
 //!
 //! Reference: docs/paddb:paddw:paddd:paddq.txt
 
-#[path = "../../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // Helper to write 64-bit value to MM register via memory

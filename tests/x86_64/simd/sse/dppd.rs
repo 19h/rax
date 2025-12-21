@@ -1,4 +1,4 @@
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 
 // DPPD - Dot Product of Packed Double Precision Floating-Point Values
 //

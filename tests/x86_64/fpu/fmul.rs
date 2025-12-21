@@ -6,7 +6,7 @@
 //!
 //! Reference: /Users/int/dev/rax/docs/fmul:fmulp:fimul.txt
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 

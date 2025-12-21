@@ -22,10 +22,7 @@
 //!
 //! Reference: docs/rdpkru.txt, docs/wrpkru.txt
 
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // ============================================================================
