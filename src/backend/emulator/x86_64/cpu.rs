@@ -1195,9 +1195,20 @@ impl VCpu for X86_64Vcpu {
         };
         static HIST_IDX: AtomicUsize = AtomicUsize::new(0);
 
+        // Per-run iteration limit to prevent infinite loops in tests
+        let mut run_iterations = 0u64;
+        const MAX_RUN_ITERATIONS: u64 = 100_000;
+
         loop {
             if self.halted {
                 return Ok(VcpuExit::Hlt);
+            }
+
+            run_iterations += 1;
+            if run_iterations > MAX_RUN_ITERATIONS {
+                return Err(crate::error::Error::Emulator(format!(
+                    "exceeded {} iterations in run() at RIP={:#x}", MAX_RUN_ITERATIONS, self.regs.rip
+                )));
             }
 
             let insn_count = TOTAL_INSN.fetch_add(1, Ordering::Relaxed) + 1;
@@ -1962,6 +1973,10 @@ impl VCpu for X86_64Vcpu {
                         "hit halt loop at RIP={:#x}", rip
                     )));
                 }
+            }
+
+            if insn_count % 10_000 == 0 {
+                panic!("Circuit breaker, ran for 10_000 instructions");
             }
 
             // Log progress periodically
