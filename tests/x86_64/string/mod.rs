@@ -15,3 +15,5 @@ mod repe_scas;
 // REPNE/REPNZ prefix tests
 mod repne_cmps;
 mod repne_scas;
+
+mod string_ops;
