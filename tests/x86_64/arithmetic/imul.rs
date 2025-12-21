@@ -681,7 +681,8 @@ fn test_imul_byte_ptr_mem() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u8(&mem, 10);
 
-    let mut regs = Registers::default();
+    // Get current regs to preserve RIP, then modify
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rax = 20; // AL = 20
     vcpu.set_regs(&regs).unwrap();
 
