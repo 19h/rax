@@ -133,8 +133,22 @@ pub fn lea(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
     Ok(None)
 }
 
-/// MOV r/m8, imm8 (0xC6 /0)
+/// MOV r/m8, imm8 (0xC6 /0) or XABORT (0xC6 F8 imm8)
 pub fn mov_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // Check for XABORT (C6 F8 imm8) - ModRM F8 has reg=7
+    let modrm = ctx.peek_u8()?;
+    let reg = (modrm >> 3) & 0x07;
+
+    if reg == 7 {
+        // XABORT - abort transaction with status
+        ctx.consume_u8()?; // consume ModRM
+        let _status = ctx.consume_u8()?; // status code
+        // TSX not supported - XABORT has no effect outside transaction
+        // In a real transaction, this would jump to fallback
+        vcpu.regs.rip += ctx.cursor as u64;
+        return Ok(None);
+    }
+
     ctx.rip_relative_offset = 1;
     let (_, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let imm = ctx.consume_u8()?;
@@ -148,8 +162,27 @@ pub fn mov_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
     Ok(None)
 }
 
-/// MOV r/m, imm (0xC7 /0)
+/// MOV r/m, imm (0xC7 /0) or XBEGIN (0xC7 F8 rel32)
 pub fn mov_rm_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // Check for XBEGIN (C7 F8 rel32) - ModRM F8 has mod=11, reg=7, r/m=0
+    let modrm = ctx.peek_u8()?;
+    let reg = (modrm >> 3) & 0x07;
+
+    if reg == 7 {
+        // XBEGIN - begin transaction
+        ctx.consume_u8()?; // consume ModRM
+        let rel32 = ctx.consume_u32()? as i32;
+        // TSX not supported - always abort immediately (this is valid behavior)
+        // Set EAX to abort status code: we use 0 (capacity abort, retry may help)
+        vcpu.regs.rax = 0;
+        // Jump to fallback address
+        let fallback = (vcpu.regs.rip as i64)
+            .wrapping_add(ctx.cursor as i64)
+            .wrapping_add(rel32 as i64) as u64;
+        vcpu.regs.rip = fallback;
+        return Ok(None);
+    }
+
     let op_size = ctx.op_size;
     let imm_size = if op_size == 8 { 4 } else { op_size };
     ctx.rip_relative_offset = imm_size as usize;
