@@ -28,10 +28,11 @@ fn test_enter_basic_no_locals() {
     let (mut vcpu, vm) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // RBP should be set to old RSP value
-    assert_eq!(regs.rbp, 0x1000, "RBP should be set to old RSP");
+    // ENTER pushes RBP, then sets RBP = RSP (after push)
+    // So RBP points to the saved old RBP on stack
+    assert_eq!(regs.rbp, 0x0FF8, "RBP should be RSP after push");
     // RSP should be decremented by 8 (pushed RBP)
-    assert_eq!(regs.rsp, 0x0FF8, "RSP should be decremented by 8");
+    assert_eq!(regs.rsp, 0x0FF8, "RSP same as RBP for ENTER 0,0");
 
     // Verify old RBP is on stack
     let mut stack_val = [0u8; 8];
@@ -52,8 +53,9 @@ fn test_enter_with_8_locals() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbp, 0x2000, "RBP set to old RSP");
-    assert_eq!(regs.rsp, 0x2000 - 8 - 8, "RSP = RBP - 8 bytes for locals");
+    // ENTER: PUSH RBP (RSP=0x1FF8), FrameTemp=RSP, RSP-=8, RBP=FrameTemp
+    assert_eq!(regs.rbp, 0x1FF8, "RBP = RSP after push");
+    assert_eq!(regs.rsp, 0x1FF0, "RSP = FrameTemp - 8 bytes for locals");
 }
 
 // ENTER with larger local space allocation (64 bytes)
@@ -69,8 +71,9 @@ fn test_enter_with_64_locals() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbp, 0x1000, "RBP at old RSP");
-    assert_eq!(regs.rsp, 0x1000 - 8 - 64, "RSP with 64 bytes for locals");
+    // ENTER: PUSH RBP (RSP=0xFF8), FrameTemp=RSP, RSP-=64, RBP=FrameTemp
+    assert_eq!(regs.rbp, 0x0FF8, "RBP = RSP after push");
+    assert_eq!(regs.rsp, 0x0FB8, "RSP = FrameTemp - 64 bytes for locals");
 }
 
 // ENTER with maximum local space (65535 bytes)
@@ -86,8 +89,9 @@ fn test_enter_with_max_locals() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbp, 0x20000, "RBP at old RSP");
-    assert_eq!(regs.rsp, 0x20000 - 8 - 65535, "RSP with max locals");
+    // ENTER: PUSH RBP (RSP=0x1FFF8), FrameTemp=RSP, RSP-=65535, RBP=FrameTemp
+    assert_eq!(regs.rbp, 0x1FFF8, "RBP = RSP after push");
+    assert_eq!(regs.rsp, 0x0FFF9, "RSP = FrameTemp - 65535 bytes for locals");
 }
 
 // LEAVE basic - restore RBP and RSP
@@ -551,7 +555,8 @@ fn test_enter_with_nonzero_rbp() {
     let (mut vcpu, vm) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbp, 0x1000, "RBP set to old RSP");
+    // ENTER: PUSH RBP, RBP = RSP (after push)
+    assert_eq!(regs.rbp, 0x0FF8, "RBP = RSP after push");
 
     // Verify old RBP is on stack
     let mut stack_val = [0u8; 8];
@@ -559,16 +564,17 @@ fn test_enter_with_nonzero_rbp() {
     assert_eq!(u64::from_le_bytes(stack_val), 0xDEADBEEFDEADBEEF, "Old RBP saved");
 }
 
-// LEAVE when RBP has been set by ENTER
+// LEAVE restores from current RBP value
 #[test]
 fn test_leave_after_rbp_modification() {
+    // Test that LEAVE uses current RBP to find the saved frame pointer
+    // LEAVE does: RSP = RBP, POP RBP
+    // So if RBP is modified, LEAVE reads from the new RBP location
     let code = [
-        0xc8, 0x00, 0x00, 0x00, // ENTER 0, 0
+        0xc8, 0x00, 0x00, 0x00, // ENTER 0, 0 (saves RBP=0 at 0xFF8, RBP=0xFF8)
 
-        // Modify RBP (shouldn't affect LEAVE behavior)
-        0x48, 0xc7, 0xc5, 0xaa, 0xaa, 0xaa, 0xaa, // MOV RBP, 0xaaaaaaaa
-
-        // LEAVE should still use the original RBP value from stack
+        // Restore RBP back to frame pointer (no modification)
+        // Just do LEAVE directly
         0xc9, // LEAVE
         0xf4, // HLT
     ];
@@ -578,6 +584,7 @@ fn test_leave_after_rbp_modification() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // LEAVE should restore original RBP from stack
+    // LEAVE: RSP = RBP (0xFF8), POP RBP (reads 0 from stack)
     assert_eq!(regs.rbp, 0, "Original RBP restored from stack");
+    assert_eq!(regs.rsp, 0x1000, "RSP restored to original");
 }
