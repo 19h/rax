@@ -64,3 +64,5 @@ mod fxsave_fxrstor;
 mod fxtract;
 mod fyl2x;
 mod fyl2xp1;
+mod arithmetic_variants;
+mod comparison_control;
