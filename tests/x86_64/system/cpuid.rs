@@ -395,11 +395,12 @@ fn test_cpuid_deterministic() {
 // CPUID doesn't affect other registers unnecessarily
 #[test]
 fn test_cpuid_preserves_other_registers() {
+    // Use values with bit 31 clear to avoid sign-extension issues with MOV r64, imm32
     let code = [
         0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
         0x48, 0xc7, 0xc2, 0x42, 0x42, 0x42, 0x42, // MOV RDX, 0x42424242
-        0x48, 0xc7, 0xc6, 0x99, 0x99, 0x99, 0x99, // MOV RSI, 0x99999999
-        0x48, 0xc7, 0xc7, 0xaa, 0xaa, 0xaa, 0xaa, // MOV RDI, 0xaaaaaaaa
+        0x48, 0xc7, 0xc6, 0x55, 0x55, 0x55, 0x55, // MOV RSI, 0x55555555
+        0x48, 0xc7, 0xc7, 0x66, 0x66, 0x66, 0x66, // MOV RDI, 0x66666666
         0x0f, 0xa2, // CPUID
         0xf4, // HLT
     ];
@@ -409,8 +410,8 @@ fn test_cpuid_preserves_other_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // RSI and RDI should be unchanged
-    assert_eq!(regs.rsi, 0x99999999, "RSI should not be affected");
-    assert_eq!(regs.rdi, 0xaaaaaaaa, "RDI should not be affected");
+    assert_eq!(regs.rsi, 0x55555555, "RSI should not be affected");
+    assert_eq!(regs.rdi, 0x66666666, "RDI should not be affected");
 }
 
 // Multiple CPUID calls in sequence

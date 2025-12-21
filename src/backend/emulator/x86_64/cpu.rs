@@ -276,6 +276,7 @@ impl X86_64Vcpu {
             0xC7 => insn::data::mov_rm_imm(self, ctx),
             0x50..=0x57 => insn::data::push_r64(self, ctx, opcode),
             0x58..=0x5F => insn::data::pop_r64(self, ctx, opcode),
+            0x8F => insn::data::pop_rm(self, ctx),
             0x6A => insn::data::push_imm8(self, ctx),
             0x68 => insn::data::push_imm32(self, ctx),
             0x87 => insn::data::xchg_r_rm(self, ctx),

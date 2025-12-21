@@ -246,6 +246,21 @@ pub fn pop_r64(
     Ok(None)
 }
 
+/// POP r/m64 (0x8F /0)
+pub fn pop_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
+    let (_reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let value = vcpu.pop64()?;
+
+    if is_memory {
+        vcpu.write_mem(addr, value, op_size)?;
+    } else {
+        vcpu.set_reg(rm, value, op_size);
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
 /// XCHG r, r/m (0x87)
 pub fn xchg_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
