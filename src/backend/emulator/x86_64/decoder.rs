@@ -49,6 +49,11 @@ impl X86_64Vcpu {
         modrm_offset: usize,
     ) -> Result<(u64, usize)> {
         let bytes = &ctx.bytes[modrm_offset..];
+        eprintln!("[DEBUG] decode_modrm_addr: modrm_offset={} ctx.bytes.len={} bytes.len={} rip={:#x}",
+            modrm_offset, ctx.bytes.len(), bytes.len(), self.regs.rip);
+        if modrm_offset < ctx.bytes.len() {
+            eprintln!("[DEBUG] bytes[modrm_offset..] = {:02x?}", &ctx.bytes[modrm_offset..std::cmp::min(modrm_offset + 8, ctx.bytes.len())]);
+        }
         if bytes.is_empty() {
             return Err(Error::Emulator("ModR/M: no bytes".to_string()));
         }
@@ -119,8 +124,12 @@ impl X86_64Vcpu {
                 + 4
                 + ctx.rip_relative_offset as i64;
             addr = rip_after.wrapping_add(disp) as u64;
+            eprintln!("[DEBUG] RIP-rel: modrm={:#x} rm_field={} mod_bits={} disp={:#x} rip={:#x} modrm_offset={} rip_rel_offset={} addr={:#x}",
+                modrm, rm_field, mod_bits, disp, self.regs.rip, modrm_offset, ctx.rip_relative_offset, addr);
         } else {
             // Regular register indirect
+            eprintln!("[DEBUG] RegIndirect: modrm={:#x} rm_field={} mod_bits={} rm={} addr={:#x}",
+                modrm, rm_field, mod_bits, rm, self.get_reg(rm, 8));
             addr = self.get_reg(rm, 8);
         }
 
