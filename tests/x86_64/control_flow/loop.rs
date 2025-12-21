@@ -26,13 +26,18 @@ fn test_loop_basic_count_1() {
     assert_eq!(cpu.get_rcx(), 0, "RCX should be decremented to 0");
 }
 
+// NOTE: test_loop_count_zero is removed because LOOP with ECX=0 is untestable.
+// LOOP decrements ECX first, then checks if non-zero. When ECX=0, it wraps to
+// 0xFFFFFFFF and loops ~4 billion times, which is not practical to test.
+// The x86 way to handle "skip if counter is zero" is JECXZ, not LOOP.
+
 #[test]
-fn test_loop_count_zero() {
-    // LOOP with RCX=0 (does not execute body)
+fn test_jecxz_skips_when_zero() {
+    // JECXZ jumps if ECX is zero - the proper way to skip a loop body
     let code = &[
         0xB9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x48, 0xFF, 0xC0,             // INC RAX
-        0xE2, 0xFB,                   // LOOP -5
+        0x67, 0xE3, 0x03,             // JECXZ +3 (skip INC RAX)
+        0x48, 0xFF, 0xC0,             // INC RAX (skipped)
         0xF4,                         // HLT
     ];
     let mut cpu = create_test_cpu(code);
@@ -40,8 +45,8 @@ fn test_loop_count_zero() {
 
     run_test(&mut cpu);
 
-    assert_eq!(cpu.get_rax(), 0, "LOOP with RCX=0 should not execute body");
-    assert_eq!(cpu.get_rcx(), 0xFFFF_FFFF, "RCX should wrap to 0xFFFFFFFF");
+    assert_eq!(cpu.get_rax(), 0, "JECXZ should skip body when ECX=0");
+    assert_eq!(cpu.get_rcx() & 0xFFFFFFFF, 0, "ECX should remain 0");
 }
 
 #[test]
@@ -143,21 +148,22 @@ fn test_loope_zf_becomes_clear() {
 }
 
 #[test]
-fn test_loope_with_cmp() {
-    // LOOPE with CMP instruction
+fn test_loopne_with_cmp() {
+    // LOOPNE loops while ZF=0 (not equal), stops when ZF=1 (equal) or ECX=0
+    // This loops until CMP RBX, 5 sets ZF=1 (when RBX equals 5)
     let code = &[
         0xB9, 0x0A, 0x00, 0x00, 0x00, // MOV ECX, 10
         0xBB, 0x00, 0x00, 0x00, 0x00, // MOV EBX, 0
         0x48, 0xFF, 0xC3,             // INC RBX (loop body)
         0x48, 0x83, 0xFB, 0x05,       // CMP RBX, 5
-        0xE1, 0xF6,                   // LOOPE -10
+        0xE0, 0xF6,                   // LOOPNE -10 (0xE0 = LOOPNE, not 0xE1 = LOOPE)
         0xF4,                         // HLT
     ];
     let mut cpu = create_test_cpu(code);
 
     run_test(&mut cpu);
 
-    assert_eq!(cpu.get_rbx(), 5, "LOOPE should stop when RBX=5");
+    assert_eq!(cpu.get_rbx(), 5, "LOOPNE should stop when RBX=5 (ZF=1)");
     assert_eq!(cpu.get_rcx(), 5, "RCX should be 5 (10-5 iterations)");
 }
 

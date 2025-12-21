@@ -533,7 +533,7 @@ fn test_mulx_64bit_sequential_multiplications() {
     let code = [
         0xc4, 0xe2, 0xe3, 0xf6, 0xc1, // MULX RAX, RBX, RCX (first)
         0x48, 0x89, 0xda,             // mov rdx, rbx (move result to rdx)
-        0xc4, 0xe2, 0x93, 0xf6, 0xc1, // MULX R8, R9, RCX (second)
+        0xc4, 0x62, 0xb3, 0xf6, 0xc1, // MULX R8, R9, RCX (R~=0 for R8, vvvv=0110=R9, B~=1 for RCX)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -563,7 +563,7 @@ fn test_mulx_32bit_prime_numbers() {
 
     // 104729 * 104743 = 10971043847
     assert_eq!(regs.rbx & 0xFFFFFFFF, 10971043847 & 0xFFFFFFFF, "EBX should contain low bits");
-    assert_eq!(regs.rax & 0xFFFFFFFF, (10971043847u64 >> 32) as u32, "EAX should contain high bits");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 10971043847u64 >> 32, "EAX should contain high bits");
 }
 
 #[test]

@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{Bytes, run_until_hlt, setup_vm};
 
 // UNPCKLPD - Unpack and Interleave Low Packed Double Precision Floating-Point Values
 //

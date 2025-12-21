@@ -32,7 +32,7 @@ fn test_div_al_simple() {
     // 100 / 10 = 10 remainder 0
     // AX = 100 (AH=0, AL=100)
     let code = [
-        0xf6, 0xfb, // DIV BL (F6 /6, ModRM=11_111_011)
+        0xf6, 0xf3, // DIV BL (F6 /6, ModRM=11_110_011)
         0xf4,       // HLT
     ];
     let mut regs = Registers::default();
@@ -48,7 +48,7 @@ fn test_div_al_simple() {
 #[test]
 fn test_div_al_with_remainder() {
     // 100 / 7 = 14 remainder 2
-    let code = [0xf6, 0xfb, 0xf4];
+    let code = [0xf6, 0xf3, 0xf4]; // DIV BL
     let mut regs = Registers::default();
     regs.rax = 100;
     regs.rbx = 7;
@@ -62,7 +62,7 @@ fn test_div_al_with_remainder() {
 #[test]
 fn test_div_al_max_dividend() {
     // 255 / 1 = 255 remainder 0
-    let code = [0xf6, 0xfb, 0xf4];
+    let code = [0xf6, 0xf3, 0xf4]; // DIV BL
     let mut regs = Registers::default();
     regs.rax = 255;
     regs.rbx = 1;
@@ -77,7 +77,7 @@ fn test_div_al_max_dividend() {
 fn test_div_al_large_dividend() {
     // 300 / 10 = 30 remainder 0
     // AX = 300 (0x012C)
-    let code = [0xf6, 0xfb, 0xf4];
+    let code = [0xf6, 0xf3, 0xf4]; // DIV BL
     let mut regs = Registers::default();
     regs.rax = 300;
     regs.rbx = 10;
@@ -91,7 +91,7 @@ fn test_div_al_large_dividend() {
 #[test]
 fn test_div_al_one() {
     // 5 / 1 = 5 remainder 0
-    let code = [0xf6, 0xfb, 0xf4];
+    let code = [0xf6, 0xf3, 0xf4]; // DIV BL
     let mut regs = Registers::default();
     regs.rax = 5;
     regs.rbx = 1;
@@ -109,7 +109,7 @@ fn test_div_al_one() {
 fn test_div_ax_simple() {
     // 1000 / 10 = 100 remainder 0
     let code = [
-        0x66, 0xf7, 0xfb, // DIV BX (66 F7 /6)
+        0x66, 0xf7, 0xf3, // DIV BX (66 F7 /6)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -125,7 +125,7 @@ fn test_div_ax_simple() {
 #[test]
 fn test_div_ax_with_remainder() {
     // 1000 / 7 = 142 remainder 6
-    let code = [0x66, 0xf7, 0xfb, 0xf4];
+    let code = [0x66, 0xf7, 0xf3, 0xf4]; // DIV BX
     let mut regs = Registers::default();
     regs.rax = 1000;
     regs.rbx = 7;
@@ -139,7 +139,7 @@ fn test_div_ax_with_remainder() {
 #[test]
 fn test_div_ax_dx_nonzero() {
     // (DX:AX) = 0x00011000 (69632) / 100 = 696 remainder 32
-    let code = [0x66, 0xf7, 0xfb, 0xf4];
+    let code = [0x66, 0xf7, 0xf3, 0xf4]; // DIV BX
     let mut regs = Registers::default();
     regs.rax = 0x1000;  // 4096
     regs.rdx = 0x0001;  // High 16 bits = 1
@@ -156,7 +156,7 @@ fn test_div_ax_dx_nonzero() {
 #[test]
 fn test_div_ax_max_quotient() {
     // 65535 / 1 = 65535 remainder 0 (max 16-bit)
-    let code = [0x66, 0xf7, 0xfb, 0xf4];
+    let code = [0x66, 0xf7, 0xf3, 0xf4]; // DIV BX
     let mut regs = Registers::default();
     regs.rax = 0xFFFF;
     regs.rbx = 1;
@@ -175,7 +175,7 @@ fn test_div_ax_max_quotient() {
 fn test_div_eax_simple() {
     // 1000000 / 1000 = 1000 remainder 0
     let code = [
-        0xf7, 0xfb, // DIV EBX (F7 /6)
+        0xf7, 0xf3, // DIV EBX (F7 /6)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -191,7 +191,7 @@ fn test_div_eax_simple() {
 #[test]
 fn test_div_eax_with_remainder() {
     // 1000000 / 7 = 142857 remainder 1
-    let code = [0xf7, 0xfb, 0xf4];
+    let code = [0xf7, 0xf3, 0xf4]; // DIV EBX
     let mut regs = Registers::default();
     regs.rax = 1000000;
     regs.rbx = 7;
@@ -207,7 +207,7 @@ fn test_div_eax_edx_nonzero() {
     // (EDX:EAX) / divisor
     // EDX=0x00000001, EAX=0x00000000 = 0x100000000 = 4294967296
     // 4294967296 / 100 = 42949672 remainder 96
-    let code = [0xf7, 0xfb, 0xf4];
+    let code = [0xf7, 0xf3, 0xf4]; // DIV EBX
     let mut regs = Registers::default();
     regs.rax = 0x00000000;
     regs.rdx = 0x00000001;
@@ -222,7 +222,7 @@ fn test_div_eax_edx_nonzero() {
 #[test]
 fn test_div_eax_max_quotient() {
     // 0xFFFFFFFF / 1 = 0xFFFFFFFF remainder 0
-    let code = [0xf7, 0xfb, 0xf4];
+    let code = [0xf7, 0xf3, 0xf4]; // DIV EBX
     let mut regs = Registers::default();
     regs.rax = 0xFFFFFFFF;
     regs.rbx = 1;
@@ -236,7 +236,7 @@ fn test_div_eax_max_quotient() {
 #[test]
 fn test_div_eax_one() {
     // 1234567 / 1 = 1234567 remainder 0
-    let code = [0xf7, 0xfb, 0xf4];
+    let code = [0xf7, 0xf3, 0xf4]; // DIV EBX
     let mut regs = Registers::default();
     regs.rax = 1234567;
     regs.rbx = 1;
@@ -255,7 +255,7 @@ fn test_div_eax_one() {
 fn test_div_rax_simple() {
     // 1000000000000 / 1000000 = 1000000 remainder 0
     let code = [
-        0x48, 0xf7, 0xfb, // DIV RBX (REX.W F7 /6)
+        0x48, 0xf7, 0xf3, // DIV RBX (REX.W F7 /6)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -271,7 +271,7 @@ fn test_div_rax_simple() {
 #[test]
 fn test_div_rax_with_remainder() {
     // 1000000000000 / 7 = 142857142857 remainder 1
-    let code = [0x48, 0xf7, 0xfb, 0xf4];
+    let code = [0x48, 0xf7, 0xf3, 0xf4]; // DIV RBX
     let mut regs = Registers::default();
     regs.rax = 1000000000000;
     regs.rbx = 7;
@@ -286,7 +286,7 @@ fn test_div_rax_with_remainder() {
 fn test_div_rax_rdx_nonzero() {
     // (RDX:RAX) = 0x0000000100000000 = 2^32
     // 2^32 / 1000 = 4294967 remainder 296
-    let code = [0x48, 0xf7, 0xfb, 0xf4];
+    let code = [0x48, 0xf7, 0xf3, 0xf4]; // DIV RBX
     let mut regs = Registers::default();
     regs.rax = 0x0000000000000000;
     regs.rdx = 0x0000000100000000;
@@ -301,7 +301,7 @@ fn test_div_rax_rdx_nonzero() {
 #[test]
 fn test_div_rax_max_quotient() {
     // 0xFFFFFFFFFFFFFFFF / 1 = max remainder 0
-    let code = [0x48, 0xf7, 0xfb, 0xf4];
+    let code = [0x48, 0xf7, 0xf3, 0xf4]; // DIV RBX
     let mut regs = Registers::default();
     regs.rax = 0xFFFFFFFFFFFFFFFF;
     regs.rbx = 1;
@@ -315,7 +315,7 @@ fn test_div_rax_max_quotient() {
 #[test]
 fn test_div_rax_one() {
     // 123456789123456789 / 1
-    let code = [0x48, 0xf7, 0xfb, 0xf4];
+    let code = [0x48, 0xf7, 0xf3, 0xf4]; // DIV RBX
     let mut regs = Registers::default();
     regs.rax = 123456789123456789;
     regs.rbx = 1;
@@ -332,8 +332,8 @@ fn test_div_rax_one() {
 
 #[test]
 fn test_div_cl_register() {
-    // DIV CL (8-bit)
-    let code = [0xf6, 0xf9, 0xf4];
+    // DIV CL (8-bit) - ModRM 11_110_001 = 0xF1
+    let code = [0xf6, 0xf1, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 100;
     regs.rcx = 10;
@@ -346,8 +346,8 @@ fn test_div_cl_register() {
 
 #[test]
 fn test_div_dx_16bit() {
-    // DIV DX (16-bit)
-    let code = [0x66, 0xf7, 0xfa, 0xf4]; // DIV DX
+    // DIV DX (16-bit) - ModRM 11_110_010 = 0xF2
+    let code = [0x66, 0xf7, 0xf2, 0xf4]; // DIV DX
     let mut regs = Registers::default();
     regs.rax = 10000;
     regs.rdx = 0;  // Clear high part
@@ -361,8 +361,8 @@ fn test_div_dx_16bit() {
 
 #[test]
 fn test_div_ecx_32bit() {
-    // DIV ECX (32-bit)
-    let code = [0xf7, 0xf9, 0xf4]; // DIV ECX
+    // DIV ECX (32-bit) - ModRM 11_110_001 = 0xF1
+    let code = [0xf7, 0xf1, 0xf4]; // DIV ECX
     let mut regs = Registers::default();
     regs.rax = 1000000;
     regs.rdx = 0;
@@ -380,7 +380,7 @@ fn test_div_ecx_32bit() {
 
 #[test]
 fn test_div_r8b() {
-    let code = [0x41, 0xf6, 0xf8, 0xf4]; // DIV R8B
+    let code = [0x41, 0xf6, 0xf0, 0xf4]; // DIV R8B (ModRM 11_110_000 = 0xF0)
     let mut regs = Registers::default();
     regs.rax = 100;
     regs.r8 = 10;
@@ -393,7 +393,7 @@ fn test_div_r8b() {
 
 #[test]
 fn test_div_r10d() {
-    let code = [0x41, 0xf7, 0xfa, 0xf4]; // DIV R10D
+    let code = [0x41, 0xf7, 0xf2, 0xf4]; // DIV R10D (ModRM 11_110_010 = 0xF2)
     let mut regs = Registers::default();
     regs.rax = 1000000;
     regs.rdx = 0;
@@ -407,7 +407,7 @@ fn test_div_r10d() {
 
 #[test]
 fn test_div_r15() {
-    let code = [0x49, 0xf7, 0xff, 0xf4]; // DIV R15
+    let code = [0x49, 0xf7, 0xf7, 0xf4]; // DIV R15 (ModRM 11_110_111 = 0xF7)
     let mut regs = Registers::default();
     regs.rax = 1000000000000;
     regs.rdx = 0;
@@ -489,7 +489,7 @@ fn test_div_qword_ptr_mem() {
 #[test]
 fn test_div_small_dividend() {
     // 5 / 10 = 0 remainder 5
-    let code = [0xf6, 0xfb, 0xf4];
+    let code = [0xf6, 0xf3, 0xf4]; // DIV BL
     let mut regs = Registers::default();
     regs.rax = 5;
     regs.rbx = 10;
@@ -503,7 +503,7 @@ fn test_div_small_dividend() {
 #[test]
 fn test_div_power_of_two() {
     // 1024 / 256 = 4 remainder 0
-    let code = [0xf7, 0xfb, 0xf4];
+    let code = [0xf7, 0xf3, 0xf4]; // DIV EBX
     let mut regs = Registers::default();
     regs.rax = 1024;
     regs.rdx = 0;
@@ -520,7 +520,7 @@ fn test_div_result_in_upper() {
     // Large dividend in upper register
     // (EDX:EAX) = (0x0000000F, 0xFFFFFFFF) = 0x0FFFFFFFFF
     // 0x0FFFFFFFFF / 0x100000000 = 15 remainder 0xFFFFFFFF
-    let code = [0xf7, 0xfb, 0xf4];
+    let code = [0xf7, 0xf3, 0xf4]; // DIV EBX
     let mut regs = Registers::default();
     regs.rax = 0xFFFFFFFF;
     regs.rdx = 0x0000000F;

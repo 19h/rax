@@ -16,8 +16,9 @@ use rax::cpu::Registers;
 #[test]
 fn test_andn_eax_ebx_ecx_basic() {
     // ANDN EAX, EBX, ECX - dest = ebx & ~ecx
+    // ModRM 0xC1: mod=11, reg=0 (EAX), r/m=1 (ECX)
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -26,8 +27,8 @@ fn test_andn_eax_ebx_ecx_basic() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // ~0b0000_1111 = 0xFFFFFFF0, 0b1111_1111 & 0xFFFFFFF0 = 0xFFFFFFF0
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFF0, "EAX should contain EBX AND NOT ECX");
+    // ~0b0000_1111 = 0xFFFFFFF0, 0b1111_1111 & 0xFFFFFFF0 = 0xF0
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0xF0, "EAX should contain EBX AND NOT ECX");
     assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
     assert!(!cf_set(regs.rflags), "CF should be clear");
 }
@@ -36,7 +37,7 @@ fn test_andn_eax_ebx_ecx_basic() {
 fn test_andn_eax_ebx_ecx_zero_result() {
     // ANDN that results in zero
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -53,7 +54,7 @@ fn test_andn_eax_ebx_ecx_zero_result() {
 fn test_andn_eax_ebx_ecx_all_ones_mask() {
     // ANDN with all 1s in second operand
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -69,7 +70,7 @@ fn test_andn_eax_ebx_ecx_all_ones_mask() {
 fn test_andn_rax_rbx_rcx_64bit() {
     // ANDN RAX, RBX, RCX - 64-bit version
     let code = [
-        0xc4, 0xe2, 0xe0, 0xf2, 0xc3, // ANDN RAX, RBX, RCX
+        0xc4, 0xe2, 0xe0, 0xf2, 0xc1, // ANDN RAX, RBX, RCX (ModRM: r/m=1 RCX)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -87,7 +88,7 @@ fn test_andn_rax_rbx_rcx_64bit() {
 fn test_andn_basic_bit_patterns() {
     // Test with basic bit patterns
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
 
@@ -113,7 +114,7 @@ fn test_andn_basic_bit_patterns() {
 fn test_andn_single_bit_first_operand() {
     // Test with single bit in first operand
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
 
@@ -132,7 +133,7 @@ fn test_andn_single_bit_first_operand() {
 fn test_andn_single_bit_second_operand() {
     // Test with single bit in second operand
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
 
@@ -151,8 +152,11 @@ fn test_andn_single_bit_second_operand() {
 #[test]
 fn test_andn_with_extended_registers() {
     // ANDN R8D, R9D, R10D
+    // VEX byte1 0x42: R=0(REX.R=1), X=1(REX.X=0), B=0(REX.B=1), m_mmmm=2
+    // VEX byte2 0x30: W=0, vvvv=6(~9), L=0, pp=0
+    // ModRM 0xC2: mod=11, reg=0(+REX.R=8=R8), r/m=2(+REX.B=10=R10)
     let code = [
-        0xc4, 0x42, 0x50, 0xf2, 0xd2, // ANDN R8D, R9D, R10D
+        0xc4, 0x42, 0x30, 0xf2, 0xc2, // ANDN R8D, R9D, R10D
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -161,15 +165,15 @@ fn test_andn_with_extended_registers() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // ~0b0011_1100 = 0xFFFFFFC3, 0b1111_0000 & 0xFFFFFFC3 = 0xFFFFFFC0
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0xFFFFFFC0, "R8D should contain R9D AND NOT R10D");
+    // ~0b0011_1100 = 0xFFFFFFC3, 0b1111_0000 & 0xFFFFFFC3 = 0xC0
+    assert_eq!(regs.r8 & 0xFFFFFFFF, 0xC0, "R8D should contain R9D AND NOT R10D");
 }
 
 #[test]
 fn test_andn_preserves_first_operand() {
     // ANDN should not modify the first source operand
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -185,8 +189,9 @@ fn test_andn_preserves_first_operand() {
 #[test]
 fn test_andn_mem32() {
     // ANDN EAX, EBX, [mem]
+    // ModRM 0x04: mod=00, reg=0 (EAX), r/m=4 (SIB follows)
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0x1c, 0x25, 0x00, 0x20, 0x00, 0x00, // ANDN EAX, EBX, [DATA_ADDR]
+        0xc4, 0xe2, 0x60, 0xf2, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // ANDN EAX, EBX, [DATA_ADDR]
         0xf4,
     ];
     let mut initial_regs = Registers::default();
@@ -201,8 +206,9 @@ fn test_andn_mem32() {
 #[test]
 fn test_andn_mem64() {
     // ANDN RAX, RBX, [mem]
+    // ModRM 0x04: mod=00, reg=0 (RAX), r/m=4 (SIB follows)
     let code = [
-        0xc4, 0xe2, 0xe0, 0xf2, 0x1c, 0x25, 0x00, 0x20, 0x00, 0x00, // ANDN RAX, RBX, [DATA_ADDR]
+        0xc4, 0xe2, 0xe0, 0xf2, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // ANDN RAX, RBX, [DATA_ADDR]
         0xf4,
     ];
     let mut initial_regs = Registers::default();
@@ -220,7 +226,7 @@ fn test_andn_mem64() {
 fn test_andn_mask_extraction() {
     // Practical use: extract bits where mask is zero
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -238,7 +244,7 @@ fn test_andn_mask_extraction() {
 fn test_andn_complementary_masks() {
     // Test with complementary bitmasks
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
 
@@ -263,7 +269,7 @@ fn test_andn_complementary_masks() {
 fn test_andn_64bit_comprehensive() {
     // Comprehensive 64-bit test
     let code = [
-        0xc4, 0xe2, 0xe0, 0xf2, 0xc3, // ANDN RAX, RBX, RCX
+        0xc4, 0xe2, 0xe0, 0xf2, 0xc1, // ANDN RAX, RBX, RCX (ModRM: r/m=1 RCX)
         0xf4,
     ];
     let test_cases = [
@@ -288,7 +294,7 @@ fn test_andn_64bit_comprehensive() {
 fn test_andn_flags_zf_only() {
     // Test that only ZF is affected by ANDN
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
 
@@ -315,7 +321,7 @@ fn test_andn_flags_zf_only() {
 fn test_andn_identity_operations() {
     // Test identity-like operations
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
 
@@ -340,7 +346,7 @@ fn test_andn_identity_operations() {
 fn test_andn_sequential_operations() {
     // Test sequential ANDN operations
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
     let mut value = 0xFFFFFFFFu32;
@@ -356,14 +362,16 @@ fn test_andn_sequential_operations() {
         value = (result_regs.rax & 0xFFFFFFFF) as u32;
     }
 
-    assert_eq!(value, 0xF0F0F0F0u32, "Sequential ANDNs should produce correct result");
+    // Step 1: 0xFFFFFFFF & ~0xF0F0F0F0 = 0x0F0F0F0F
+    // Step 2: 0x0F0F0F0F & ~0x0F0F0F0F = 0x00000000
+    assert_eq!(value, 0x00000000u32, "Sequential ANDNs should produce correct result");
 }
 
 #[test]
 fn test_andn_byte_patterns() {
     // Test with various byte-aligned patterns
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
 
@@ -389,7 +397,7 @@ fn test_andn_byte_patterns() {
 fn test_andn_practical_bit_selection() {
     // Practical use: select bits from first operand where mask is zero
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -408,7 +416,7 @@ fn test_andn_practical_bit_selection() {
 fn test_andn_64bit_high_low_bits() {
     // Test 64-bit with mixed high and low bits
     let code = [
-        0xc4, 0xe2, 0xe0, 0xf2, 0xc3, // ANDN RAX, RBX, RCX
+        0xc4, 0xe2, 0xe0, 0xf2, 0xc1, // ANDN RAX, RBX, RCX (ModRM: r/m=1 RCX)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -424,7 +432,7 @@ fn test_andn_64bit_high_low_bits() {
 fn test_andn_rotate_pattern() {
     // Test with rotated bit patterns
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -440,7 +448,7 @@ fn test_andn_rotate_pattern() {
 fn test_andn_all_zero_patterns() {
     // Test with patterns resulting in zero
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
     let test_cases = [
@@ -464,7 +472,7 @@ fn test_andn_all_zero_patterns() {
 fn test_andn_high_low_extraction_64bit() {
     // Extract high/low parts using ANDN
     let code = [
-        0xc4, 0xe2, 0xe0, 0xf2, 0xc3, // ANDN RAX, RBX, RCX
+        0xc4, 0xe2, 0xe0, 0xf2, 0xc1, // ANDN RAX, RBX, RCX (ModRM: r/m=1 RCX)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -475,20 +483,21 @@ fn test_andn_high_low_extraction_64bit() {
 
     // ~0xFFFFFFFF_00000000 = 0x00000000_FFFFFFFF
     // 0x12345678_ABCDEF00 & 0x00000000_FFFFFFFF = 0x00000000_ABCDEF00
-    assert_eq!(regs.rax, 0x0000000000000000u64, "Extract lower 32 bits");
+    assert_eq!(regs.rax, 0x00000000ABCDEF00u64, "Extract lower 32 bits");
 }
 
 #[test]
 fn test_andn_gradient_patterns() {
     // Test with gradient bit patterns
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
     let test_cases = [
         (0xF0000000u32, 0x0F000000u32, 0xF0000000u32),
         (0x0F000000u32, 0xF0000000u32, 0x0F000000u32),
-        (0x00F00000u32, 0xFF00FF00u32, 0x00000000u32),
+        // 0x00F00000 & ~0xFF00FF00 = 0x00F00000 & 0x00FF00FF = 0x00F00000
+        (0x00F00000u32, 0xFF00FF00u32, 0x00F00000u32),
     ];
 
     for (ebx, ecx, expected) in &test_cases {
@@ -505,8 +514,10 @@ fn test_andn_gradient_patterns() {
 #[test]
 fn test_andn_with_r15() {
     // Test with R15 register
+    // VEX byte 0x62: R=0(REX.R=1), X=1(REX.X=0), B=1(REX.B=0), m_mmmm=2
+    // ModRM 0xf9: mod=11, reg=111(+REX.R=15=R15), r/m=001(+REX.B=0=RCX)
     let code = [
-        0xc4, 0x42, 0x80, 0xf2, 0xf9, // ANDN R15, R15, RCX (or use different regs)
+        0xc4, 0x62, 0x80, 0xf2, 0xf9, // ANDN R15, R15, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -524,7 +535,7 @@ fn test_andn_with_r15() {
 fn test_andn_chained_operations() {
     // Chain multiple ANDN operations
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
     let mut value = 0xFFFFFFFFu32;
@@ -539,32 +550,38 @@ fn test_andn_chained_operations() {
         value = (result.rax & 0xFFFFFFFF) as u32;
     }
 
-    // After 3 chained ANDN operations
-    assert_eq!(value, 0x0F0F0F0Fu32, "Chained ANDN operations");
+    // After 3 chained ANDN operations:
+    // Step 1: 0xFFFFFFFF & ~0xF0F0F0F0 = 0x0F0F0F0F
+    // Step 2: 0x0F0F0F0F & ~0x00FF00FF = 0x0F000F00
+    // Step 3: 0x0F000F00 & ~0x0F0F0F0F = 0x00000000
+    assert_eq!(value, 0x00000000u32, "Chained ANDN operations");
 }
 
 #[test]
 fn test_andn_nibble_extraction() {
     // Extract individual nibbles using ANDN
+    // For 0xABCDEF12: nibble0=2, nibble1=1, nibble2=F, nibble3=E
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
     let mut regs = Registers::default();
     regs.rbx = 0xABCDEF12;
 
+    // (mask, expected_result): result = 0xABCDEF12 & ~mask
     let masks = [
-        (0xFFFFFFF0u32, 0x00000002u32), // Extract nibble 0
-        (0xFFFFFF0Fu32, 0x00000010u32), // Extract nibble 1
-        (0xFFFFF0FFu32, 0x00000100u32), // Extract nibble 2
-        (0xFFFF0FFFu32, 0x00001000u32), // Extract nibble 3
+        (0xFFFFFFF0u32, 0x00000002u32), // Extract nibble 0: ~0xFFFFFFF0 = 0x0F, 0x12 & 0x0F = 0x02
+        (0xFFFFFF0Fu32, 0x00000010u32), // Extract nibble 1: ~0xFFFFFF0F = 0xF0, 0x12 & 0xF0 = 0x10
+        (0xFFFFF0FFu32, 0x00000F00u32), // Extract nibble 2: ~0xFFFFF0FF = 0xF00, 0xEF12 & 0xF00 = 0xF00
+        (0xFFFF0FFFu32, 0x0000E000u32), // Extract nibble 3: ~0xFFFF0FFF = 0xF000, 0xEF12 & 0xF000 = 0xE000
     ];
 
-    for (mask, expected_bits) in &masks {
-        regs.rcx = *mask as u64;
-        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    for (mask, expected) in &masks {
+        let mut test_regs = regs.clone();
+        test_regs.rcx = *mask as u64;
+        let (mut vcpu, _) = setup_vm(&code, Some(test_regs));
         let result = run_until_hlt(&mut vcpu).unwrap();
-        assert!(result.rax & expected_bits != 0 || *expected_bits == 0, "Nibble extraction check");
+        assert_eq!(result.rax & 0xFFFFFFFF, *expected as u64, "Nibble extraction for mask {:#x}", mask);
     }
 }
 
@@ -572,7 +589,7 @@ fn test_andn_nibble_extraction() {
 fn test_andn_boundary_transitions() {
     // Test bit patterns at byte/word boundaries
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
     let test_cases = [
@@ -597,7 +614,7 @@ fn test_andn_boundary_transitions() {
 fn test_andn_symmetric_patterns() {
     // Test with symmetric bit patterns
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
     let test_cases = [
@@ -621,7 +638,7 @@ fn test_andn_symmetric_patterns() {
 fn test_andn_inverse_extraction() {
     // Use ANDN to extract inverse mask regions
     let code = [
-        0xc4, 0xe2, 0x60, 0xf2, 0xc3, // ANDN EAX, EBX, ECX
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX, EBX, ECX (ModRM: r/m=1 ECX)
         0xf4,
     ];
     let mut regs = Registers::default();

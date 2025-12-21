@@ -200,7 +200,7 @@ fn test_blsi_single_bit_positions_64bit() {
 fn test_blsi_with_extended_registers() {
     // BLSI R8D, R9D
     let code = [
-        0xc4, 0x42, 0x78, 0xf3, 0xd9, // BLSI R8D, R9D
+        0xc4, 0x42, 0x38, 0xf3, 0xd9, // BLSI R8D, R9D (vvvv=0111 inv=8=R8, B=0 for R9)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -451,18 +451,19 @@ fn test_blsi_max_value_64bit() {
 
 #[test]
 fn test_blsi_flags_behavior() {
-    // Test that SF and OF are cleared
+    // Test that OF is cleared and SF is set according to result
+    // Note: Intel docs say "ZF and SF are updated based on the result. OF is cleared."
     let code = [
         0xc4, 0xe2, 0x78, 0xf3, 0xdb, // BLSI EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rbx = 0x80000000; // Would have SF set if treated as signed
-    regs.rflags = 0x2 | (1 << 7) | (1 << 11); // Set SF and OF
+    regs.rbx = 0x80000000; // Only bit 31 set, result will also be 0x80000000 (sign bit set)
+    regs.rflags = 0x2 | (1 << 11); // Set OF to verify it gets cleared
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(!sf_set(regs.rflags), "SF should be clear");
+    assert!(sf_set(regs.rflags), "SF should be set (result has sign bit)");
     assert!(!of_set(regs.rflags), "OF should be clear");
 }
 

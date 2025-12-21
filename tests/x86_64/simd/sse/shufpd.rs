@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{Bytes, run_until_hlt, setup_vm};
 
 // SHUFPD - Packed Interleave Shuffle of Pairs of Double Precision Floating-Point Values
 //

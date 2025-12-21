@@ -295,12 +295,14 @@ impl X86_64Vcpu {
             0x1B => insn::arith::sbb_r_rm(self, ctx),
             0x1C => insn::arith::sbb_al_imm8(self, ctx),
             0x1D => insn::arith::sbb_rax_imm(self, ctx),
+            0x27 => insn::arith::daa(self, ctx),
             0x28 => insn::arith::sub_rm8_r8(self, ctx),
             0x29 => insn::arith::sub_rm_r(self, ctx),
             0x2A => insn::arith::sub_r8_rm8(self, ctx),
             0x2B => insn::arith::sub_r_rm(self, ctx),
             0x2C => insn::arith::sub_al_imm8(self, ctx),
             0x2D => insn::arith::sub_rax_imm(self, ctx),
+            0x2F => insn::arith::das(self, ctx),
             0x38 => insn::arith::cmp_rm8_r8(self, ctx),
             0x39 => insn::arith::cmp_rm_r(self, ctx),
             0x3A => insn::arith::cmp_r8_rm8(self, ctx),
@@ -349,6 +351,10 @@ impl X86_64Vcpu {
             0xD2 => insn::shift::group2_rm8_cl(self, ctx),
             0xD3 => insn::shift::group2_rm_cl(self, ctx),
 
+            // BCD Adjust
+            0xD4 => insn::arith::aam(self, ctx),
+            0xD5 => insn::arith::aad(self, ctx),
+
             // System/Flags
             0xFA => insn::system::cli(self, ctx),
             0xFB => insn::system::sti(self, ctx),
@@ -366,6 +372,7 @@ impl X86_64Vcpu {
             0xE0 => insn::control::loopnz(self, ctx),
             0xE1 => insn::control::loopz(self, ctx),
             0xE2 => insn::control::loop_rel8(self, ctx),
+            0xE3 => insn::control::jrcxz(self, ctx),
 
             // Interrupts
             0xCC => insn::control::int3(self, ctx),
@@ -413,20 +420,23 @@ impl X86_64Vcpu {
         let vex_l = (vex2 >> 2) & 1;
         let vex_pp = vex2 & 0x03;
 
-        // Only handle VEX.LZ.F2.0F3A.W{0,1} F0 /r ib (RORX)
-        if m_mmmm == 0x3 && vex_pp == 0x2 && vex_l == 0 && opcode == 0xF0 {
-            let rex_r = (vex_r ^ 1) & 1;
-            let rex_x = (vex_x ^ 1) & 1;
-            let rex_b = (vex_b ^ 1) & 1;
-            let mut rex = 0x40 | (rex_r << 2) | (rex_x << 1) | rex_b;
-            if vex_w != 0 {
-                rex |= 0x08;
-            }
+        // Set up REX and operand size from VEX
+        let rex_r = (vex_r ^ 1) & 1;
+        let rex_x = (vex_x ^ 1) & 1;
+        let rex_b = (vex_b ^ 1) & 1;
+        let mut rex = 0x40 | (rex_r << 2) | (rex_x << 1) | rex_b;
+        if vex_w != 0 {
+            rex |= 0x08;
+        }
+        ctx.rex = Some(rex);
+        ctx.op_size = if vex_w != 0 { 8 } else { 4 };
+        ctx.rip_relative_offset = 1;
 
-            ctx.rex = Some(rex);
-            ctx.op_size = if vex_w != 0 { 8 } else { 4 };
-            ctx.rip_relative_offset = 1;
+        // VEX.vvvv register (inverted in VEX encoding)
+        let vvvv = ((vex2 >> 3) & 0x0F) ^ 0x0F;
 
+        // VEX.LZ.F2.0F3A.W{0,1} F0 /r ib (RORX)
+        if m_mmmm == 0x3 && vex_pp == 0x3 && vex_l == 0 && opcode == 0xF0 {
             let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
             let src = if is_memory {
                 self.read_mem(addr, ctx.op_size)?
@@ -449,6 +459,248 @@ impl X86_64Vcpu {
             return Ok(None);
         }
 
+        // VEX.LZ.0F38 BMI1/BMI2 instructions
+        if m_mmmm == 0x2 && vex_l == 0 {
+            let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+
+            match (vex_pp, opcode) {
+                // ANDN: VEX.LZ.0F38.W{0,1} F2 /r
+                // dest = src1 & ~src2, where vvvv=src1, r/m=src2
+                (0, 0xF2) => {
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let src1 = self.get_reg(vvvv, ctx.op_size) & mask;
+                    let src2 = if is_memory {
+                        self.read_mem(addr, ctx.op_size)? & mask
+                    } else {
+                        self.get_reg(rm, ctx.op_size) & mask
+                    };
+                    let result = src1 & (!src2);
+                    self.set_reg(reg, result & mask, ctx.op_size);
+                    // SF and ZF based on result, OF and CF cleared
+                    let sf = if ctx.op_size == 8 { (result >> 63) & 1 } else { (result >> 31) & 1 };
+                    let zf = if result == 0 { 1 } else { 0 };
+                    self.regs.rflags &= !(flags::bits::SF | flags::bits::ZF | flags::bits::OF | flags::bits::CF);
+                    if sf != 0 { self.regs.rflags |= flags::bits::SF; }
+                    if zf != 0 { self.regs.rflags |= flags::bits::ZF; }
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                // BLSI: VEX.LZ.0F38.W{0,1} F3 /3
+                // BLSMSK: VEX.LZ.0F38.W{0,1} F3 /2
+                // BLSR: VEX.LZ.0F38.W{0,1} F3 /1
+                (0, 0xF3) => {
+                    let modrm = ctx.peek_u8()?;
+                    let reg_op = (modrm >> 3) & 0x07;
+                    let (_, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let src = if is_memory {
+                        self.read_mem(addr, ctx.op_size)? & mask
+                    } else {
+                        self.get_reg(rm, ctx.op_size) & mask
+                    };
+                    let result = match reg_op {
+                        1 => src & src.wrapping_sub(1), // BLSR: src & (src - 1)
+                        2 => src ^ src.wrapping_sub(1), // BLSMSK: src ^ (src - 1)
+                        3 => src.wrapping_neg() & src,  // BLSI: (-src) & src
+                        _ => return Err(Error::Emulator(format!("unimplemented VEX.0F38.F3 /{}", reg_op))),
+                    };
+                    self.set_reg(vvvv, result & mask, ctx.op_size);
+                    // Set flags
+                    // SF based on result sign
+                    let sf = if ctx.op_size == 8 { (result >> 63) & 1 } else { (result >> 31) & 1 };
+                    // ZF based on result for BLSI/BLSR, based on src for BLSMSK
+                    let zf = match reg_op {
+                        2 => if src == 0 { 1 } else { 0 },      // BLSMSK: ZF = (src == 0)
+                        _ => if result == 0 { 1 } else { 0 },   // BLSI/BLSR: ZF = (result == 0)
+                    };
+                    // CF: BLSMSK sets CF if src != 0, BLSI/BLSR set CF if src == 0
+                    let cf = match reg_op {
+                        2 => if src != 0 { 1 } else { 0 },      // BLSMSK: CF = (src != 0)
+                        _ => if src == 0 { 1 } else { 0 },      // BLSI/BLSR: CF = (src == 0)
+                    };
+                    self.regs.rflags &= !(flags::bits::SF | flags::bits::ZF | flags::bits::OF | flags::bits::CF);
+                    if sf != 0 { self.regs.rflags |= flags::bits::SF; }
+                    if zf != 0 { self.regs.rflags |= flags::bits::ZF; }
+                    if cf != 0 { self.regs.rflags |= flags::bits::CF; }
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                // BZHI: VEX.LZ.0F38.W{0,1} F5 /r
+                (0, 0xF5) => {
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let src = if is_memory {
+                        self.read_mem(addr, ctx.op_size)? & mask
+                    } else {
+                        self.get_reg(rm, ctx.op_size) & mask
+                    };
+                    let index = (self.get_reg(vvvv, ctx.op_size) & 0xFF) as u32;
+                    let bits = if ctx.op_size == 8 { 64u32 } else { 32u32 };
+                    let result = if index >= bits {
+                        src
+                    } else {
+                        src & ((1u64 << index) - 1)
+                    };
+                    self.set_reg(reg, result, ctx.op_size);
+                    // SF and ZF based on result, CF = (index >= bits)
+                    let sf = if ctx.op_size == 8 { (result >> 63) & 1 } else { (result >> 31) & 1 };
+                    let zf = if result == 0 { 1 } else { 0 };
+                    let cf = if index >= bits { 1 } else { 0 };
+                    self.regs.rflags &= !(flags::bits::SF | flags::bits::ZF | flags::bits::OF | flags::bits::CF);
+                    if sf != 0 { self.regs.rflags |= flags::bits::SF; }
+                    if zf != 0 { self.regs.rflags |= flags::bits::ZF; }
+                    if cf != 0 { self.regs.rflags |= flags::bits::CF; }
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                // BEXTR: VEX.LZ.0F38.W{0,1} F7 /r
+                (0, 0xF7) => {
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let src = if is_memory {
+                        self.read_mem(addr, ctx.op_size)? & mask
+                    } else {
+                        self.get_reg(rm, ctx.op_size) & mask
+                    };
+                    let control = self.get_reg(vvvv, ctx.op_size);
+                    let start = (control & 0xFF) as u32;
+                    let len = ((control >> 8) & 0xFF) as u32;
+                    let bits = if ctx.op_size == 8 { 64u32 } else { 32u32 };
+                    let result = if start >= bits || len == 0 {
+                        0
+                    } else {
+                        let shifted = src >> start;
+                        if len >= bits {
+                            shifted
+                        } else {
+                            shifted & ((1u64 << len) - 1)
+                        }
+                    };
+                    self.set_reg(reg, result, ctx.op_size);
+                    let zf = if result == 0 { 1 } else { 0 };
+                    self.regs.rflags &= !(flags::bits::ZF | flags::bits::OF | flags::bits::CF);
+                    if zf != 0 { self.regs.rflags |= flags::bits::ZF; }
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                // MULX: VEX.LZ.F2.0F38.W{0,1} F6 /r
+                (3, 0xF6) => {
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let src1 = if ctx.op_size == 8 { self.regs.rdx } else { self.regs.rdx & mask };
+                    let src2 = if is_memory {
+                        self.read_mem(addr, ctx.op_size)? & mask
+                    } else {
+                        self.get_reg(rm, ctx.op_size) & mask
+                    };
+                    let (hi, lo) = if ctx.op_size == 8 {
+                        let prod = (src1 as u128) * (src2 as u128);
+                        ((prod >> 64) as u64, prod as u64)
+                    } else {
+                        let prod = (src1 as u64) * (src2 as u64);
+                        ((prod >> 32) as u64 & mask, prod as u64 & mask)
+                    };
+                    // Write low first, then high (so high wins if both destinations are the same)
+                    self.set_reg(vvvv, lo, ctx.op_size);
+                    self.set_reg(reg, hi, ctx.op_size);
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                // PDEP: VEX.LZ.F2.0F38.W{0,1} F5 /r
+                (3, 0xF5) => {
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let src = self.get_reg(vvvv, ctx.op_size) & mask;
+                    let selector = if is_memory {
+                        self.read_mem(addr, ctx.op_size)? & mask
+                    } else {
+                        self.get_reg(rm, ctx.op_size) & mask
+                    };
+                    let mut result = 0u64;
+                    let mut k = 0u32;
+                    for i in 0..ctx.op_size * 8 {
+                        if (selector >> i) & 1 != 0 {
+                            if (src >> k) & 1 != 0 {
+                                result |= 1 << i;
+                            }
+                            k += 1;
+                        }
+                    }
+                    self.set_reg(reg, result & mask, ctx.op_size);
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                // PEXT: VEX.LZ.F3.0F38.W{0,1} F5 /r
+                (2, 0xF5) => {
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let src = self.get_reg(vvvv, ctx.op_size) & mask;
+                    let selector = if is_memory {
+                        self.read_mem(addr, ctx.op_size)? & mask
+                    } else {
+                        self.get_reg(rm, ctx.op_size) & mask
+                    };
+                    let mut result = 0u64;
+                    let mut k = 0u32;
+                    for i in 0..ctx.op_size * 8 {
+                        if (selector >> i) & 1 != 0 {
+                            if (src >> i) & 1 != 0 {
+                                result |= 1 << k;
+                            }
+                            k += 1;
+                        }
+                    }
+                    self.set_reg(reg, result & mask, ctx.op_size);
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                // SARX: VEX.LZ.F3.0F38.W{0,1} F7 /r
+                (2, 0xF7) => {
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let src = if is_memory {
+                        self.read_mem(addr, ctx.op_size)? & mask
+                    } else {
+                        self.get_reg(rm, ctx.op_size) & mask
+                    };
+                    let count_mask = if ctx.op_size == 8 { 0x3F } else { 0x1F };
+                    let count = (self.get_reg(vvvv, ctx.op_size) & count_mask) as u32;
+                    let result = if ctx.op_size == 8 {
+                        ((src as i64) >> count) as u64
+                    } else {
+                        (((src as u32 as i32) >> count) as u32) as u64
+                    };
+                    self.set_reg(reg, result & mask, ctx.op_size);
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                // SHRX: VEX.LZ.F2.0F38.W{0,1} F7 /r
+                (3, 0xF7) => {
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let src = if is_memory {
+                        self.read_mem(addr, ctx.op_size)? & mask
+                    } else {
+                        self.get_reg(rm, ctx.op_size) & mask
+                    };
+                    let count_mask = if ctx.op_size == 8 { 0x3F } else { 0x1F };
+                    let count = (self.get_reg(vvvv, ctx.op_size) & count_mask) as u32;
+                    let result = src >> count;
+                    self.set_reg(reg, result & mask, ctx.op_size);
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                // SHLX: VEX.LZ.66.0F38.W{0,1} F7 /r
+                (1, 0xF7) => {
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let src = if is_memory {
+                        self.read_mem(addr, ctx.op_size)? & mask
+                    } else {
+                        self.get_reg(rm, ctx.op_size) & mask
+                    };
+                    let count_mask = if ctx.op_size == 8 { 0x3F } else { 0x1F };
+                    let count = (self.get_reg(vvvv, ctx.op_size) & count_mask) as u32;
+                    let result = src << count;
+                    self.set_reg(reg, result & mask, ctx.op_size);
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                _ => {}
+            }
+        }
+
         Err(Error::Emulator(format!(
             "unimplemented VEX instruction m={:#x} pp={} l={} opcode={:#x}",
             m_mmmm, vex_pp, vex_l, opcode
@@ -461,13 +713,16 @@ impl X86_64Vcpu {
 
         match opcode2 {
             // System
-            0xA2 => insn::system::cpuid(self, ctx),
+            0x00 => insn::system::group6(self, ctx),
+            0x01 => self.execute_0f01(ctx),
+            0x02 => insn::system::lar(self, ctx),
+            0x03 => insn::system::lsl(self, ctx),
+            0x20 => insn::system::mov_r_cr(self, ctx),
+            0x22 => insn::system::mov_cr_r(self, ctx),
             0x30 => insn::system::wrmsr(self, ctx),
             0x31 => insn::system::rdtsc(self, ctx),
             0x32 => insn::system::rdmsr(self, ctx),
-            0x01 => self.execute_0f01(ctx),
-            0x20 => insn::system::mov_r_cr(self, ctx),
-            0x22 => insn::system::mov_cr_r(self, ctx),
+            0xA2 => insn::system::cpuid(self, ctx),
             0xAE => self.execute_0fae(ctx),
 
             // Control flow
@@ -525,6 +780,131 @@ impl X86_64Vcpu {
             // NOP variants
             0x1E => insn::system::endbr(self, ctx),
             0x1F => insn::system::nop_rm(self, ctx),
+
+            // MOVD/MOVQ
+            0x6E => {
+                if ctx.operand_size_override {
+                    // 66 0F 6E: MOVD/MOVQ xmm, r/m32 (or r/m64 with REX.W)
+                    insn::data::movd_xmm_rm(self, ctx)
+                } else {
+                    // NP 0F 6E: MOVD/MOVQ mm, r/m32 (or r/m64 with REX.W)
+                    insn::data::movd_mm_rm(self, ctx)
+                }
+            }
+            0x7E => {
+                if ctx.rep_prefix == Some(0xF3) {
+                    // F3 0F 7E: MOVQ xmm1, xmm2/m64
+                    insn::data::movq_xmm_xmm_m64(self, ctx)
+                } else if ctx.operand_size_override {
+                    // 66 0F 7E: MOVD/MOVQ r/m32, xmm (or r/m64 with REX.W)
+                    insn::data::movd_rm_xmm(self, ctx)
+                } else {
+                    // NP 0F 7E: MOVD/MOVQ r/m32, mm (or r/m64 with REX.W)
+                    insn::data::movd_rm_mm(self, ctx)
+                }
+            }
+            0xD6 => {
+                if ctx.operand_size_override {
+                    // 66 0F D6: MOVQ xmm2/m64, xmm1
+                    insn::data::movq_xmm_m64_xmm(self, ctx)
+                } else {
+                    Err(Error::Emulator(format!(
+                        "unimplemented 0x0F 0xD6 opcode variant at RIP={:#x}",
+                        self.regs.rip
+                    )))
+                }
+            }
+
+            // SSE/SSE2 Conversion Instructions
+            0x5A => {
+                if ctx.rep_prefix == Some(0xF3) {
+                    // F3 0F 5A: CVTSS2SD xmm1, xmm2/m32
+                    insn::data::cvtss2sd(self, ctx)
+                } else if ctx.rep_prefix == Some(0xF2) {
+                    // F2 0F 5A: CVTSD2SS xmm1, xmm2/m64
+                    insn::data::cvtsd2ss(self, ctx)
+                } else if ctx.operand_size_override {
+                    // 66 0F 5A: CVTPD2PS xmm1, xmm2/m128
+                    insn::data::cvtpd2ps(self, ctx)
+                } else {
+                    // NP 0F 5A: CVTPS2PD xmm1, xmm2/m64
+                    insn::data::cvtps2pd(self, ctx)
+                }
+            }
+            0x5B => {
+                if ctx.rep_prefix == Some(0xF3) {
+                    // F3 0F 5B: CVTTPS2DQ xmm1, xmm2/m128
+                    insn::data::cvttps2dq(self, ctx)
+                } else if ctx.operand_size_override {
+                    // 66 0F 5B: CVTPS2DQ xmm1, xmm2/m128
+                    insn::data::cvtps2dq(self, ctx)
+                } else {
+                    // NP 0F 5B: CVTDQ2PS xmm1, xmm2/m128
+                    insn::data::cvtdq2ps(self, ctx)
+                }
+            }
+            0x2A => {
+                if ctx.rep_prefix == Some(0xF3) {
+                    // F3 0F 2A: CVTSI2SS xmm1, r/m32 or r/m64
+                    insn::data::cvtsi2ss(self, ctx)
+                } else if ctx.rep_prefix == Some(0xF2) {
+                    // F2 0F 2A: CVTSI2SD xmm1, r/m32 or r/m64
+                    insn::data::cvtsi2sd(self, ctx)
+                } else if ctx.operand_size_override {
+                    // 66 0F 2A: CVTPI2PD xmm, mm/m64
+                    insn::data::cvtpi2pd(self, ctx)
+                } else {
+                    // NP 0F 2A: CVTPI2PS xmm, mm/m64
+                    insn::data::cvtpi2ps(self, ctx)
+                }
+            }
+            0x2C => {
+                if ctx.rep_prefix == Some(0xF3) {
+                    // F3 0F 2C: CVTTSS2SI r32/r64, xmm1/m32
+                    insn::data::cvttss2si(self, ctx)
+                } else if ctx.rep_prefix == Some(0xF2) {
+                    // F2 0F 2C: CVTTSD2SI r32/r64, xmm1/m64
+                    insn::data::cvttsd2si(self, ctx)
+                } else if ctx.operand_size_override {
+                    // 66 0F 2C: CVTTPD2PI mm, xmm/m128
+                    insn::data::cvttpd2pi(self, ctx)
+                } else {
+                    // NP 0F 2C: CVTTPS2PI mm, xmm/m64
+                    insn::data::cvttps2pi(self, ctx)
+                }
+            }
+            0x2D => {
+                if ctx.rep_prefix == Some(0xF3) {
+                    // F3 0F 2D: CVTSS2SI r32/r64, xmm1/m32
+                    insn::data::cvtss2si(self, ctx)
+                } else if ctx.rep_prefix == Some(0xF2) {
+                    // F2 0F 2D: CVTSD2SI r32/r64, xmm1/m64
+                    insn::data::cvtsd2si(self, ctx)
+                } else if ctx.operand_size_override {
+                    // 66 0F 2D: CVTPD2PI mm, xmm/m128
+                    insn::data::cvtpd2pi(self, ctx)
+                } else {
+                    // NP 0F 2D: CVTPS2PI mm, xmm/m64
+                    insn::data::cvtps2pi(self, ctx)
+                }
+            }
+            0xE6 => {
+                if ctx.rep_prefix == Some(0xF3) {
+                    // F3 0F E6: CVTDQ2PD xmm1, xmm2/m64
+                    insn::data::cvtdq2pd(self, ctx)
+                } else if ctx.rep_prefix == Some(0xF2) {
+                    // F2 0F E6: CVTPD2DQ xmm1, xmm2/m128
+                    insn::data::cvtpd2dq(self, ctx)
+                } else if ctx.operand_size_override {
+                    // 66 0F E6: CVTTPD2DQ xmm1, xmm2/m128
+                    insn::data::cvttpd2dq(self, ctx)
+                } else {
+                    Err(Error::Emulator(format!(
+                        "unimplemented 0x0F 0xE6 opcode variant at RIP={:#x}",
+                        self.regs.rip
+                    )))
+                }
+            }
 
             _ => Err(Error::Emulator(format!(
                 "unimplemented 0x0F opcode: {:#04x} at RIP={:#x}",
@@ -599,38 +979,10 @@ impl X86_64Vcpu {
             1 => self.regs.rcx,
             2 => self.regs.rdx,
             3 => self.regs.rbx,
-            4 => {
-                if size == 1 && self.sregs.efer & 0x400 == 0 {
-                    // AH in legacy mode
-                    (self.regs.rax >> 8) & 0xFF
-                } else {
-                    self.regs.rsp
-                }
-            }
-            5 => {
-                if size == 1 && self.sregs.efer & 0x400 == 0 {
-                    // CH in legacy mode
-                    (self.regs.rcx >> 8) & 0xFF
-                } else {
-                    self.regs.rbp
-                }
-            }
-            6 => {
-                if size == 1 && self.sregs.efer & 0x400 == 0 {
-                    // DH in legacy mode
-                    (self.regs.rdx >> 8) & 0xFF
-                } else {
-                    self.regs.rsi
-                }
-            }
-            7 => {
-                if size == 1 && self.sregs.efer & 0x400 == 0 {
-                    // BH in legacy mode
-                    (self.regs.rbx >> 8) & 0xFF
-                } else {
-                    self.regs.rdi
-                }
-            }
+            4 => self.regs.rsp,
+            5 => self.regs.rbp,
+            6 => self.regs.rsi,
+            7 => self.regs.rdi,
             8 => self.regs.r8,
             9 => self.regs.r9,
             10 => self.regs.r10,
@@ -651,41 +1003,60 @@ impl X86_64Vcpu {
         }
     }
 
+    /// Set an 8-bit register value, correctly handling AH/CH/DH/BH when no REX prefix
+    pub(super) fn set_reg8(&mut self, reg: u8, value: u64, has_rex: bool) {
+        // In 64-bit mode, without REX prefix, reg 4-7 are AH/CH/DH/BH
+        // With REX prefix, reg 4-7 are SPL/BPL/SIL/DIL
+        if !has_rex {
+            match reg & 0x07 {
+                4 => {
+                    self.regs.rax = (self.regs.rax & !0xFF00) | ((value & 0xFF) << 8);
+                    return;
+                }
+                5 => {
+                    self.regs.rcx = (self.regs.rcx & !0xFF00) | ((value & 0xFF) << 8);
+                    return;
+                }
+                6 => {
+                    self.regs.rdx = (self.regs.rdx & !0xFF00) | ((value & 0xFF) << 8);
+                    return;
+                }
+                7 => {
+                    self.regs.rbx = (self.regs.rbx & !0xFF00) | ((value & 0xFF) << 8);
+                    return;
+                }
+                _ => {}
+            }
+        }
+        self.set_reg(reg, value, 1);
+    }
+
+    /// Get an 8-bit register value, correctly handling AH/CH/DH/BH when no REX prefix
+    pub(super) fn get_reg8(&self, reg: u8, has_rex: bool) -> u64 {
+        // In 64-bit mode, without REX prefix, reg 4-7 are AH/CH/DH/BH
+        // With REX prefix, reg 4-7 are SPL/BPL/SIL/DIL
+        if !has_rex {
+            match reg & 0x07 {
+                4 => return (self.regs.rax >> 8) & 0xFF,
+                5 => return (self.regs.rcx >> 8) & 0xFF,
+                6 => return (self.regs.rdx >> 8) & 0xFF,
+                7 => return (self.regs.rbx >> 8) & 0xFF,
+                _ => {}
+            }
+        }
+        self.get_reg(reg, 1)
+    }
+
     pub(super) fn set_reg(&mut self, reg: u8, value: u64, size: u8) {
         let reg_ref = match reg & 0x0F {
             0 => &mut self.regs.rax,
             1 => &mut self.regs.rcx,
             2 => &mut self.regs.rdx,
             3 => &mut self.regs.rbx,
-            4 => {
-                if size == 1 && self.sregs.efer & 0x400 == 0 {
-                    // AH in legacy mode
-                    self.regs.rax = (self.regs.rax & !0xFF00) | ((value & 0xFF) << 8);
-                    return;
-                }
-                &mut self.regs.rsp
-            }
-            5 => {
-                if size == 1 && self.sregs.efer & 0x400 == 0 {
-                    self.regs.rcx = (self.regs.rcx & !0xFF00) | ((value & 0xFF) << 8);
-                    return;
-                }
-                &mut self.regs.rbp
-            }
-            6 => {
-                if size == 1 && self.sregs.efer & 0x400 == 0 {
-                    self.regs.rdx = (self.regs.rdx & !0xFF00) | ((value & 0xFF) << 8);
-                    return;
-                }
-                &mut self.regs.rsi
-            }
-            7 => {
-                if size == 1 && self.sregs.efer & 0x400 == 0 {
-                    self.regs.rbx = (self.regs.rbx & !0xFF00) | ((value & 0xFF) << 8);
-                    return;
-                }
-                &mut self.regs.rdi
-            }
+            4 => &mut self.regs.rsp,
+            5 => &mut self.regs.rbp,
+            6 => &mut self.regs.rsi,
+            7 => &mut self.regs.rdi,
             8 => &mut self.regs.r8,
             9 => &mut self.regs.r9,
             10 => &mut self.regs.r10,

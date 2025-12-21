@@ -45,7 +45,7 @@ fn test_in_al_imm8_various_ports() {
             0xE4, port, // IN AL, port
             0xF4,       // HLT
         ];
-        let mut cpu = create_test_cpu(&code);
+        let mut cpu = create_test_cpu(code);
         run_test(&mut cpu);
     }
 }
@@ -202,7 +202,7 @@ fn test_in_eax_dx_all_ports() {
             0xED, // IN EAX, DX
             0xF4, // HLT
         ];
-        let mut cpu = create_test_cpu(&code);
+        let mut cpu = create_test_cpu(code);
         cpu.set_rdx(port);
         run_test(&mut cpu);
     }
@@ -233,7 +233,7 @@ fn test_out_imm8_al_various_values() {
             0xE6, 0x80, // OUT 0x80, AL
             0xF4,       // HLT
         ];
-        let mut cpu = create_test_cpu(&code);
+        let mut cpu = create_test_cpu(code);
         cpu.set_rax(value as u64);
         run_test(&mut cpu);
     }
@@ -338,13 +338,13 @@ fn test_out_dx_al_high_port() {
 fn test_out_dx_al_multiple_writes() {
     // Multiple OUT operations
     let code = &[
-        0xB0, 0x20,       // MOV AL, 0x20
-        0xBA, 0x20, 0x00, // MOV DX, 0x20
-        0xEE,             // OUT DX, AL
-        0xB0, 0x21,       // MOV AL, 0x21
-        0xBA, 0x21, 0x00, // MOV DX, 0x21
-        0xEE,             // OUT DX, AL
-        0xF4,             // HLT
+        0xB0, 0x20,             // MOV AL, 0x20
+        0xBA, 0x20, 0x00, 0x00, 0x00, // MOV EDX, 0x20
+        0xEE,                   // OUT DX, AL
+        0xB0, 0x21,             // MOV AL, 0x21
+        0xBA, 0x21, 0x00, 0x00, 0x00, // MOV EDX, 0x21
+        0xEE,                   // OUT DX, AL
+        0xF4,                   // HLT
     ];
     let mut cpu = create_test_cpu(code);
 
@@ -391,7 +391,7 @@ fn test_out_dx_eax_port() {
 fn test_out_dx_eax_pci_config() {
     // Simulate PCI configuration space access
     let code = &[
-        0xBA, 0xF8, 0x0C, // MOV DX, 0x0CF8
+        0xBA, 0xF8, 0x0C, 0x00, 0x00, // MOV EDX, 0x0CF8 (32-bit imm, zero-extends to RDX)
         0xB8, 0x00, 0x00, 0x00, 0x80, // MOV EAX, 0x80000000
         0xEF,             // OUT DX, EAX
         0xF4,             // HLT
@@ -409,7 +409,7 @@ fn test_out_dx_eax_pci_config() {
 fn test_in_out_sequence() {
     // Read-modify-write sequence
     let code = &[
-        0xBA, 0x60, 0x00, // MOV DX, 0x60
+        0xBA, 0x60, 0x00, 0x00, 0x00, // MOV EDX, 0x60
         0xEC,             // IN AL, DX
         0x0C, 0x01,       // OR AL, 1
         0xEE,             // OUT DX, AL
@@ -424,13 +424,13 @@ fn test_in_out_sequence() {
 fn test_multiple_port_access() {
     // Access multiple ports in sequence
     let code = &[
-        0xBA, 0x40, 0x00, // MOV DX, 0x40
+        0xBA, 0x40, 0x00, 0x00, 0x00, // MOV EDX, 0x40
         0xEC,             // IN AL, DX
-        0xBA, 0x41, 0x00, // MOV DX, 0x41
+        0xBA, 0x41, 0x00, 0x00, 0x00, // MOV EDX, 0x41
         0xEC,             // IN AL, DX
-        0xBA, 0x42, 0x00, // MOV DX, 0x42
+        0xBA, 0x42, 0x00, 0x00, 0x00, // MOV EDX, 0x42
         0xEC,             // IN AL, DX
-        0xBA, 0x43, 0x00, // MOV DX, 0x43
+        0xBA, 0x43, 0x00, 0x00, 0x00, // MOV EDX, 0x43
         0xEC,             // IN AL, DX
         0xF4,             // HLT
     ];
@@ -448,7 +448,7 @@ fn test_io_size_8bit() {
     // 8-bit I/O
     let code = &[
         0xB0, 0xAA,       // MOV AL, 0xAA
-        0xBA, 0x80, 0x00, // MOV DX, 0x80
+        0xBA, 0x80, 0x00, 0x00, 0x00, // MOV EDX, 0x80
         0xEE,             // OUT DX, AL
         0xB0, 0x00,       // MOV AL, 0
         0xEC,             // IN AL, DX
@@ -464,7 +464,7 @@ fn test_io_size_16bit() {
     // 16-bit I/O
     let code = &[
         0x66, 0xB8, 0x34, 0x12, // MOV AX, 0x1234
-        0xBA, 0xD0, 0x03,       // MOV DX, 0x3D0
+        0xBA, 0xD0, 0x03, 0x00, 0x00, // MOV EDX, 0x3D0
         0x66, 0xEF,             // OUT DX, AX
         0x66, 0xB8, 0x00, 0x00, // MOV AX, 0
         0x66, 0xED,             // IN AX, DX
@@ -480,7 +480,7 @@ fn test_io_size_32bit() {
     // 32-bit I/O
     let code = &[
         0xB8, 0xEF, 0xBE, 0xAD, 0xDE, // MOV EAX, 0xDEADBEEF
-        0xBA, 0xF8, 0x0C,             // MOV DX, 0x0CF8
+        0xBA, 0xF8, 0x0C, 0x00, 0x00, // MOV EDX, 0x0CF8
         0xEF,                         // OUT DX, EAX
         0xB8, 0x00, 0x00, 0x00, 0x00, // MOV EAX, 0
         0xED,                         // IN EAX, DX
@@ -553,7 +553,7 @@ fn test_in_out_boundary_ports() {
             0xE6, port as u8, // OUT port, AL
             0xF4,             // HLT
         ];
-        let mut cpu = create_test_cpu(&code);
+        let mut cpu = create_test_cpu(code);
         cpu.set_rax(0x42);
         run_test(&mut cpu);
 
@@ -562,7 +562,7 @@ fn test_in_out_boundary_ports() {
             0xE4, port as u8, // IN AL, port
             0xF4,             // HLT
         ];
-        let mut cpu = create_test_cpu(&code);
+        let mut cpu = create_test_cpu(code);
         run_test(&mut cpu);
     }
 }

@@ -166,8 +166,9 @@ fn test_bextr_beyond_boundary() {
 #[test]
 fn test_bextr_with_extended_registers() {
     // BEXTR R8D, R9D, R10D
+    // VEX: R~=0, X~=1, B~=0, vvvv=0101 (R10 inverted)
     let code = [
-        0xc4, 0x42, 0x50, 0xf7, 0xd1, // BEXTR R8D, R9D, R10D
+        0xc4, 0x42, 0x28, 0xf7, 0xc1, // BEXTR R8D, R9D, R10D (vvvv=0101=R10, R~=0 for R8, B~=0 for R9)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -199,15 +200,15 @@ fn test_bextr_preserves_operands() {
 #[test]
 fn test_bextr_mem32() {
     // BEXTR EAX, [mem], ECX
+    // ModRM 0x04: mod=00, reg=0 (EAX), r/m=4 (SIB follows)
     let code = [
-        0xc4, 0xe2, 0x70, 0xf7, 0x1c, 0x25, 0x00, 0x20, 0x00, 0x00, // BEXTR EAX, [DATA_ADDR], ECX
+        0xc4, 0xe2, 0x70, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // BEXTR EAX, [DATA_ADDR], ECX
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_mem_u32(&mem, 0xDEADBEEF);
     let mut regs = Registers::default();
-    regs.rcx = (8 << 8) | 8;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    regs.rcx = (8 << 8) | 8; // length=8, start=8
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    write_mem_u32(&mem, 0xDEADBEEF);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Extract 8 bits starting at bit 8 from 0xDEADBEEF
@@ -218,20 +219,20 @@ fn test_bextr_mem32() {
 #[test]
 fn test_bextr_mem64() {
     // BEXTR RAX, [mem], RCX
+    // ModRM 0x04: mod=00, reg=0 (RAX), r/m=4 (SIB follows)
     let code = [
-        0xc4, 0xe2, 0xf0, 0xf7, 0x1c, 0x25, 0x00, 0x20, 0x00, 0x00, // BEXTR RAX, [DATA_ADDR], RCX
+        0xc4, 0xe2, 0xf0, 0xf7, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // BEXTR RAX, [DATA_ADDR], RCX
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_mem_u64(&mem, 0x0123456789ABCDEF);
     let mut regs = Registers::default();
-    regs.rcx = (16 << 8) | 16;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    regs.rcx = (16 << 8) | 16; // length=16, start=16
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    write_mem_u64(&mem, 0x0123456789ABCDEF);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Extract 16 bits starting at bit 16 from 0x0123456789ABCDEF
-    // 0x0123456789ABCDEF >> 16 = 0x0000012345678, mask 16 bits = 0x5678
-    assert_eq!(regs.rax, 0x5678, "RAX should contain extracted bits from memory");
+    // 0x0123456789ABCDEF >> 16 = 0x01234567_89AB, mask 16 bits = 0x89AB
+    assert_eq!(regs.rax, 0x89AB, "RAX should contain extracted bits from memory");
 }
 
 #[test]
@@ -290,6 +291,10 @@ fn test_bextr_bit_shifting() {
     let mut regs = Registers::default();
     // Bit-packed: [bits 0-3: version], [bits 4-11: flags], [bits 12-27: id], [bits 28-31: type]
     regs.rbx = 0xABCD1234;
+    // 0xABCD1234 >> 0 & 0xF = 0x4 (version)
+    // 0xABCD1234 >> 4 & 0xFF = 0x23 (flags)
+    // 0xABCD1234 >> 12 & 0xFFFF = 0xBCD1 (id)
+    // 0xABCD1234 >> 28 & 0xF = 0xA (type)
 
     // Extract version (bits 0-3)
     regs.rcx = (4 << 8) | 0;
@@ -307,7 +312,7 @@ fn test_bextr_bit_shifting() {
     regs.rcx = (16 << 8) | 12;
     let (mut vcpu, _) = setup_vm(&code, Some(regs.clone()));
     let result = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(result.rax & 0xFFFFFFFF, 0x1CD, "ID extraction failed");
+    assert_eq!(result.rax & 0xFFFFFFFF, 0xBCD1, "ID extraction failed");
 
     // Extract type (bits 28-31)
     regs.rcx = (4 << 8) | 28;
@@ -437,10 +442,13 @@ fn test_bextr_comprehensive_64bit() {
     ];
     let mut regs = Registers::default();
     regs.rbx = 0x0123456789ABCDEF;
+    // In little-endian byte order: EF, CD, AB, 89, 67, 45, 23, 01
+    // 0x0123456789ABCDEF >> 32 = 0x01234567
+    // (0x01234567 >> 0) & 0xFF = 0x67
 
     let test_cases = [
         ((8 << 8) | 0, 0xEF),           // Low byte
-        ((8 << 8) | 32, 0x89),          // Mid-low byte at 32-bit boundary
+        ((8 << 8) | 32, 0x67),          // Byte at 32-bit boundary: (val >> 32) & 0xFF = 0x67
         ((16 << 8) | 32, 0x4567),       // 16 bits starting at 32-bit boundary
         ((32 << 8) | 32, 0x01234567),   // High 32 bits
         ((8 << 8) | 56, 0x01),          // High byte
@@ -509,12 +517,15 @@ fn test_bextr_cross_word_extraction() {
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rbx = 0xDEADBEEFu32;
+    regs.rbx = 0xDEADBEEFu64;
+    // 0xDEADBEEF >> 12 & 0xFF = 0xDB
+    // 0xDEADBEEF >> 14 & 0xFF = 0xB6
+    // 0xDEADBEEF >> 10 & 0xFFF = 0xB6F
 
     let test_cases = [
-        ((8 << 8) | 12, 0xBE),  // Cross 12-bit
-        ((8 << 8) | 14, 0xEF),  // Cross 14-bit
-        ((12 << 8) | 10, 0xADF), // 12-bit extraction starting at 10
+        ((8 << 8) | 12, 0xDB),   // 8 bits at pos 12: (0xDEADBEEF >> 12) & 0xFF
+        ((8 << 8) | 14, 0xB6),   // 8 bits at pos 14: (0xDEADBEEF >> 14) & 0xFF
+        ((12 << 8) | 10, 0xB6F), // 12 bits at pos 10: (0xDEADBEEF >> 10) & 0xFFF
     ];
 
     for (params, expected) in &test_cases {
@@ -568,9 +579,10 @@ fn test_bextr_multi_byte_sequential() {
 
 #[test]
 fn test_bextr_with_r8_r10() {
-    // Test using R8 and R10
+    // Test using R8, R10 as source, R9 as control
+    // VEX: R~=0, X~=1, B~=0, vvvv=0110 (R9 inverted from 9)
     let code = [
-        0xc4, 0x42, 0x50, 0xf7, 0xd2, // BEXTR R8D, R10D, R9D
+        0xc4, 0x42, 0x30, 0xf7, 0xc2, // BEXTR R8D, R10D, R9D (vvvv=0110=R9, rm=2+B=R10)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -682,15 +694,19 @@ fn test_bextr_offset_length_combinations() {
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rbx = 0xCDEF0123u32;
+    regs.rbx = 0xCDEF0123u64;
+    // 0xCDEF0123 = 0b11001101111011110000000100100011
+    // bit 0 = 1, bit 31 = 1
+    // bits 0-1 = 0b11 = 3, bits 30-31 = 0b11 = 3
+    // bits 0-2 = 0b011 = 3, bits 29-31 = 0b110 = 6
 
     let test_cases = [
-        ((1 << 8) | 0, 0x03),       // 1 bit at 0
-        ((1 << 8) | 31, 0x01),      // 1 bit at 31
-        ((2 << 8) | 0, 0x03),       // 2 bits at 0
-        ((2 << 8) | 30, 0x01),      // 2 bits at 30
-        ((3 << 8) | 0, 0x03),       // 3 bits at 0
-        ((3 << 8) | 29, 0x01),      // 3 bits at 29
+        ((1 << 8) | 0, 0x01),       // 1 bit at 0: bit 0 = 1
+        ((1 << 8) | 31, 0x01),      // 1 bit at 31: bit 31 = 1
+        ((2 << 8) | 0, 0x03),       // 2 bits at 0: bits 0-1 = 0b11
+        ((2 << 8) | 30, 0x03),      // 2 bits at 30: bits 30-31 = 0b11
+        ((3 << 8) | 0, 0x03),       // 3 bits at 0: bits 0-2 = 0b011
+        ((3 << 8) | 29, 0x06),      // 3 bits at 29: bits 29-31 = 0b110
     ];
 
     for (params, expected) in &test_cases {
