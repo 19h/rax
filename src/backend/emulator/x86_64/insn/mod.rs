@@ -4,6 +4,7 @@ pub mod arith;
 pub mod bit;
 pub mod control;
 pub mod data;
+pub mod fpu;
 pub mod io;
 pub mod logic;
 pub mod shift;

@@ -18,12 +18,109 @@ use crate::error::{Error, Result};
 /// Maximum instruction length for x86_64.
 const MAX_INSN_LEN: usize = 15;
 
+/// x87 FPU state.
+#[derive(Clone, Debug)]
+pub struct FpuState {
+    /// FPU control word (default 0x037F)
+    pub control_word: u16,
+    /// FPU status word (default 0x0000)
+    pub status_word: u16,
+    /// FPU tag word (default 0xFFFF - all empty)
+    pub tag_word: u16,
+    /// FPU data pointer
+    pub data_ptr: u64,
+    /// FPU instruction pointer
+    pub instr_ptr: u64,
+    /// FPU last opcode
+    pub last_opcode: u16,
+    /// FPU register stack (8 x 80-bit, stored as f64 for simplicity)
+    pub st: [f64; 8],
+    /// Top of stack pointer (0-7), stored in status word bits 11-13
+    pub top: u8,
+}
+
+impl Default for FpuState {
+    fn default() -> Self {
+        FpuState {
+            control_word: 0x037F, // Round to nearest, all exceptions masked, 64-bit precision
+            status_word: 0x0000,
+            tag_word: 0xFFFF, // All registers empty
+            data_ptr: 0,
+            instr_ptr: 0,
+            last_opcode: 0,
+            st: [0.0; 8],
+            top: 0,
+        }
+    }
+}
+
+impl FpuState {
+    /// Initialize FPU to default state (FINIT/FNINIT)
+    pub fn init(&mut self) {
+        self.control_word = 0x037F;
+        self.status_word = 0x0000;
+        self.tag_word = 0xFFFF;
+        self.data_ptr = 0;
+        self.instr_ptr = 0;
+        self.last_opcode = 0;
+        self.top = 0;
+        // Note: register values are preserved, just tagged as empty
+    }
+
+    /// Get physical register index from stack-relative index
+    #[inline]
+    pub fn st_index(&self, i: u8) -> usize {
+        ((self.top.wrapping_add(i)) & 7) as usize
+    }
+
+    /// Push a value onto the FPU stack
+    pub fn push(&mut self, value: f64) {
+        self.top = self.top.wrapping_sub(1) & 7;
+        self.st[self.top as usize] = value;
+        // Update tag for this register (mark as valid)
+        let tag_shift = (self.top as u16) * 2;
+        self.tag_word &= !(3 << tag_shift);
+        // 0 = valid, 1 = zero, 2 = special, 3 = empty
+        if value == 0.0 {
+            self.tag_word |= 1 << tag_shift;
+        }
+        // Update TOP in status word
+        self.status_word = (self.status_word & !0x3800) | ((self.top as u16) << 11);
+    }
+
+    /// Pop a value from the FPU stack
+    pub fn pop(&mut self) -> f64 {
+        let value = self.st[self.top as usize];
+        // Mark register as empty
+        let tag_shift = (self.top as u16) * 2;
+        self.tag_word |= 3 << tag_shift;
+        self.top = self.top.wrapping_add(1) & 7;
+        // Update TOP in status word
+        self.status_word = (self.status_word & !0x3800) | ((self.top as u16) << 11);
+        value
+    }
+
+    /// Get ST(i) value
+    #[inline]
+    pub fn get_st(&self, i: u8) -> f64 {
+        self.st[self.st_index(i)]
+    }
+
+    /// Set ST(i) value
+    #[inline]
+    pub fn set_st(&mut self, i: u8, value: f64) {
+        let idx = self.st_index(i);
+        self.st[idx] = value;
+    }
+}
+
 /// Emulated x86_64 vCPU.
 pub struct X86_64Vcpu {
     id: u32,
     pub(super) regs: Registers,
     pub(super) sregs: SystemRegisters,
     pub(super) mmu: Mmu,
+    pub(super) fpu: FpuState,
     pub(super) halted: bool,
     io_pending: Option<IoPending>,
     trace_enabled: bool,
@@ -144,6 +241,7 @@ impl X86_64Vcpu {
             regs: Registers::default(),
             sregs: SystemRegisters::default(),
             mmu: Mmu::new(mem),
+            fpu: FpuState::default(),
             halted: false,
             io_pending: None,
             trace_enabled: std::env::var("RAX_TRACE").is_ok(),
@@ -404,6 +502,22 @@ impl X86_64Vcpu {
             0xAF => insn::string::scas(self, ctx),
             0xA6 => insn::string::cmpsb(self, ctx),
             0xA7 => insn::string::cmps(self, ctx),
+
+            // FWAIT/WAIT - check for pending FPU exceptions (NOP in emulator)
+            0x9B => {
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+
+            // x87 FPU escape opcodes
+            0xD8 => insn::fpu::escape_d8(self, ctx),
+            0xD9 => insn::fpu::escape_d9(self, ctx),
+            0xDA => insn::fpu::escape_da(self, ctx),
+            0xDB => insn::fpu::escape_db(self, ctx),
+            0xDC => insn::fpu::escape_dc(self, ctx),
+            0xDD => insn::fpu::escape_dd(self, ctx),
+            0xDE => insn::fpu::escape_de(self, ctx),
+            0xDF => insn::fpu::escape_df(self, ctx),
 
             _ => Err(Error::Emulator(format!(
                 "unimplemented opcode: {:#04x} at RIP={:#x}",
@@ -1253,6 +1367,59 @@ impl X86_64Vcpu {
             8 => self.mmu.write_u64(addr, value, &self.sregs),
             _ => Err(Error::Emulator(format!("invalid memory access size: {}", size))),
         }
+    }
+
+    // FPU memory access helpers
+    pub(super) fn read_mem16(&self, addr: u64) -> Result<u16> {
+        self.mmu.read_u16(addr, &self.sregs)
+    }
+
+    pub(super) fn write_mem16(&mut self, addr: u64, value: u16) -> Result<()> {
+        self.mmu.write_u16(addr, value, &self.sregs)
+    }
+
+    pub(super) fn read_mem32(&self, addr: u64) -> Result<u32> {
+        self.mmu.read_u32(addr, &self.sregs)
+    }
+
+    pub(super) fn write_mem32(&mut self, addr: u64, value: u32) -> Result<()> {
+        self.mmu.write_u32(addr, value, &self.sregs)
+    }
+
+    pub(super) fn read_mem64(&self, addr: u64) -> Result<u64> {
+        self.mmu.read_u64(addr, &self.sregs)
+    }
+
+    pub(super) fn write_mem64(&mut self, addr: u64, value: u64) -> Result<()> {
+        self.mmu.write_u64(addr, value, &self.sregs)
+    }
+
+    pub(super) fn read_f32(&self, addr: u64) -> Result<f32> {
+        let bits = self.mmu.read_u32(addr, &self.sregs)?;
+        Ok(f32::from_bits(bits))
+    }
+
+    pub(super) fn write_f32(&mut self, addr: u64, value: f32) -> Result<()> {
+        self.mmu.write_u32(addr, value.to_bits(), &self.sregs)
+    }
+
+    pub(super) fn read_f64(&self, addr: u64) -> Result<f64> {
+        let bits = self.mmu.read_u64(addr, &self.sregs)?;
+        Ok(f64::from_bits(bits))
+    }
+
+    pub(super) fn write_f64(&mut self, addr: u64, value: f64) -> Result<()> {
+        self.mmu.write_u64(addr, value.to_bits(), &self.sregs)
+    }
+
+    pub(super) fn read_bytes(&self, addr: u64, len: usize) -> Result<Vec<u8>> {
+        let mut buf = vec![0u8; len];
+        self.mmu.read(addr, &mut buf, &self.sregs)?;
+        Ok(buf)
+    }
+
+    pub(super) fn write_bytes(&mut self, addr: u64, data: &[u8]) -> Result<()> {
+        self.mmu.write(addr, data, &self.sregs)
     }
 
     // Stack helpers
