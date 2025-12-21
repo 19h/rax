@@ -531,7 +531,7 @@ fn test_idiv_r15() {
 fn test_idiv_byte_ptr_mem() {
     let code = [
         0x66, 0x98, // CBW (needs 0x66 in 64-bit mode)
-        0xf6, 0x3d, 0xf9, 0x0f, 0x00, 0x00, // IDIV BYTE PTR [rip+0x0FF9] - adjusted for longer code
+        0xf6, 0x3d, 0xf8, 0x0f, 0x00, 0x00, // IDIV BYTE PTR [rip+0x0FF8] (DATA_ADDR=0x2000, RIP after=0x1008)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -551,7 +551,7 @@ fn test_idiv_byte_ptr_mem() {
 fn test_idiv_dword_ptr_mem() {
     let code = [
         0x99,       // CDQ
-        0xf7, 0x3d, 0xfa, 0x0f, 0x00, 0x00, // IDIV DWORD PTR [rip+0x0FFA]
+        0xf7, 0x3d, 0xf9, 0x0f, 0x00, 0x00, // IDIV DWORD PTR [rip+0x0FF9] (DATA_ADDR=0x2000, RIP after=0x1007)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -572,7 +572,7 @@ fn test_idiv_dword_ptr_mem() {
 fn test_idiv_qword_ptr_mem() {
     let code = [
         0x48, 0x99,    // CQO
-        0x48, 0xf7, 0x3d, 0xf9, 0x0f, 0x00, 0x00, // IDIV QWORD PTR [rip+0x0FF9]
+        0x48, 0xf7, 0x3d, 0xf7, 0x0f, 0x00, 0x00, // IDIV QWORD PTR [rip+0x0FF7] (DATA_ADDR=0x2000, RIP after=0x1009)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

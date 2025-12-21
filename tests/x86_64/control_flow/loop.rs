@@ -88,16 +88,18 @@ fn test_loop_count_100() {
 #[test]
 fn test_loop_nested() {
     // Nested LOOP
+    // Positions: 0-4 MOV ECX, 5 PUSH RBX, 6-10 MOV EBX, 11-13 INC RAX,
+    //            14-15 DEC EBX, 16-17 JNZ, 18-19 LOOP, 20 POP, 21 HLT
     let code = &[
-        0xB9, 0x03, 0x00, 0x00, 0x00, // MOV ECX, 3 (outer)
-        0x53,                         // PUSH RBX
-        0xBB, 0x02, 0x00, 0x00, 0x00, // MOV EBX, 2 (inner)
-        0x48, 0xFF, 0xC0,             // INC RAX (inner body)
-        0xFF, 0xCB,                   // DEC EBX
-        0x75, 0xF9,                   // JNZ -7 (inner loop)
-        0xE2, 0xF0,                   // LOOP outer
-        0x5B,                         // POP RBX
-        0xF4,                         // HLT
+        0xB9, 0x03, 0x00, 0x00, 0x00, // MOV ECX, 3 (outer) [0-4]
+        0x53,                         // PUSH RBX [5]
+        0xBB, 0x02, 0x00, 0x00, 0x00, // MOV EBX, 2 (inner) [6-10]
+        0x48, 0xFF, 0xC0,             // INC RAX (inner body) [11-13]
+        0xFF, 0xCB,                   // DEC EBX [14-15]
+        0x75, 0xF9,                   // JNZ -7 (inner loop: 18 - 7 = 11) [16-17]
+        0xE2, 0xF1,                   // LOOP outer (20 - 15 = 5) [18-19]
+        0x5B,                         // POP RBX [20]
+        0xF4,                         // HLT [21]
     ];
     let mut cpu = create_test_cpu(code);
     cpu.set_rax(0);
@@ -151,13 +153,14 @@ fn test_loope_zf_becomes_clear() {
 fn test_loopne_with_cmp() {
     // LOOPNE loops while ZF=0 (not equal), stops when ZF=1 (equal) or ECX=0
     // This loops until CMP RBX, 5 sets ZF=1 (when RBX equals 5)
+    // Positions: 0-4 MOV ECX, 5-9 MOV EBX, 10-12 INC, 13-16 CMP, 17-18 LOOPNE, 19 HLT
     let code = &[
-        0xB9, 0x0A, 0x00, 0x00, 0x00, // MOV ECX, 10
-        0xBB, 0x00, 0x00, 0x00, 0x00, // MOV EBX, 0
-        0x48, 0xFF, 0xC3,             // INC RBX (loop body)
-        0x48, 0x83, 0xFB, 0x05,       // CMP RBX, 5
-        0xE0, 0xF6,                   // LOOPNE -10 (0xE0 = LOOPNE, not 0xE1 = LOOPE)
-        0xF4,                         // HLT
+        0xB9, 0x0A, 0x00, 0x00, 0x00, // MOV ECX, 10 [0-4]
+        0xBB, 0x00, 0x00, 0x00, 0x00, // MOV EBX, 0 [5-9]
+        0x48, 0xFF, 0xC3,             // INC RBX (loop body) [10-12]
+        0x48, 0x83, 0xFB, 0x05,       // CMP RBX, 5 [13-16]
+        0xE0, 0xF7,                   // LOOPNE -9 (19 - 9 = 10) [17-18]
+        0xF4,                         // HLT [19]
     ];
     let mut cpu = create_test_cpu(code);
 
@@ -330,13 +333,14 @@ fn test_loop_with_string_operations() {
 #[test]
 fn test_loopne_search_pattern() {
     // Use LOOPNE to search for a value
+    // Positions: 0-4 MOV ECX, 5-9 MOV EBX, 10-12 INC, 13-16 CMP, 17-18 LOOPNE, 19 HLT
     let code = &[
-        0xB9, 0x0A, 0x00, 0x00, 0x00, // MOV ECX, 10
-        0xBB, 0x00, 0x00, 0x00, 0x00, // MOV EBX, 0
-        0x48, 0xFF, 0xC3,             // INC RBX
-        0x48, 0x83, 0xFB, 0x07,       // CMP RBX, 7
-        0xE0, 0xF6,                   // LOOPNE -10 (loop while not 7)
-        0xF4,                         // HLT
+        0xB9, 0x0A, 0x00, 0x00, 0x00, // MOV ECX, 10 [0-4]
+        0xBB, 0x00, 0x00, 0x00, 0x00, // MOV EBX, 0 [5-9]
+        0x48, 0xFF, 0xC3,             // INC RBX [10-12]
+        0x48, 0x83, 0xFB, 0x07,       // CMP RBX, 7 [13-16]
+        0xE0, 0xF7,                   // LOOPNE -9 (19 - 9 = 10) [17-18]
+        0xF4,                         // HLT [19]
     ];
     let mut cpu = create_test_cpu(code);
 
@@ -381,15 +385,16 @@ fn test_all_loop_variants_in_sequence() {
 #[test]
 fn test_loop_forward_backward_combinations() {
     // Test forward and backward LOOP jumps
+    // Positions: 0-4 MOV ECX, 5-7 INC, 8-11 CMP, 12-13 JZ, 14-15 LOOP, 16-20 MOV ECX, 21-22 JMP, 23 HLT
     let code = &[
-        0xB9, 0x03, 0x00, 0x00, 0x00, // MOV ECX, 3
-        0x48, 0xFF, 0xC0,             // INC RAX (label: start)
-        0x48, 0x83, 0xF8, 0x10,       // CMP RAX, 16
-        0x74, 0x05,                   // JZ +5 (to end)
-        0xE2, 0xF3,                   // LOOP -13 (back to start)
-        0xB9, 0x03, 0x00, 0x00, 0x00, // MOV ECX, 3 (reload)
-        0xEB, 0xED,                   // JMP back
-        0xF4,                         // HLT (label: end)
+        0xB9, 0x03, 0x00, 0x00, 0x00, // MOV ECX, 3 [0-4]
+        0x48, 0xFF, 0xC0,             // INC RAX (label: start) [5-7]
+        0x48, 0x83, 0xF8, 0x10,       // CMP RAX, 16 [8-11]
+        0x74, 0x09,                   // JZ +9 (14+9=23, to HLT) [12-13]
+        0xE2, 0xF5,                   // LOOP -11 (16-11=5, back to INC) [14-15]
+        0xB9, 0x03, 0x00, 0x00, 0x00, // MOV ECX, 3 (reload) [16-20]
+        0xEB, 0xEE,                   // JMP -18 (23-18=5, back to INC) [21-22]
+        0xF4,                         // HLT (label: end) [23]
     ];
     let mut cpu = create_test_cpu(code);
     cpu.set_rax(0);
@@ -402,12 +407,13 @@ fn test_loop_forward_backward_combinations() {
 #[test]
 fn test_jrcxz_multiple_checks() {
     // Multiple JRCXZ checks
+    // Positions: 0-1 JRCXZ, 2-4 INC, 5-7 DEC, 8-9 JMP, 10 HLT
     let code = &[
-        0xE3, 0x05,                   // JRCXZ +5 (skip if RCX=0)
-        0x48, 0xFF, 0xC0,             // INC RAX
-        0x48, 0xFF, 0xC9,             // DEC RCX
-        0xEB, 0xF7,                   // JMP -9 (back)
-        0xF4,                         // HLT
+        0xE3, 0x08,                   // JRCXZ +8 (2+8=10, to HLT if RCX=0) [0-1]
+        0x48, 0xFF, 0xC0,             // INC RAX [2-4]
+        0x48, 0xFF, 0xC9,             // DEC RCX [5-7]
+        0xEB, 0xF6,                   // JMP -10 (10-10=0, back to JRCXZ) [8-9]
+        0xF4,                         // HLT [10]
     ];
     let mut cpu = create_test_cpu(code);
     cpu.set_rcx(5);

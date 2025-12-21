@@ -64,7 +64,12 @@ pub fn run_until_hlt(vcpu: &mut X86_64Vcpu) -> Result<Registers> {
         }
         match vcpu.run()? {
             VcpuExit::Hlt => break,
-            VcpuExit::IoIn { .. } | VcpuExit::IoOut { .. } => continue,
+            VcpuExit::IoIn { size, .. } => {
+                // Complete I/O with zeros (simulated I/O)
+                let data = vec![0u8; size as usize];
+                vcpu.complete_io_in(&data);
+            }
+            VcpuExit::IoOut { .. } => continue,
             _ => continue,
         }
     }

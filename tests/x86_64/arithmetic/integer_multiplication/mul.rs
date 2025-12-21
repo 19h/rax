@@ -637,8 +637,9 @@ fn test_mul_word_ptr_mem() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 100000, "AX: 1000 * 100");
-    assert_eq!(regs.rdx & 0xFFFF, 1, "DX should have overflow");
+    // 1000 * 100 = 100000 = 0x186A0, AX = 0x86A0 = 34464, DX = 0x1
+    assert_eq!(regs.rax & 0xFFFF, 34464, "AX: low 16 bits of 1000 * 100");
+    assert_eq!(regs.rdx & 0xFFFF, 1, "DX: high 16 bits");
 }
 
 #[test]

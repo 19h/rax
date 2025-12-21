@@ -30,7 +30,7 @@ fn test_rorx_eax_ebx_imm8() {
     // RORX EAX, EBX, imm8 (VEX.LZ.F2.0F3A.W0 F0 /r ib)
     // VEX encoding: C4 E3 7B F0 C3 04
     let code = [
-        0xc4, 0xe3, 0x7a, 0xf0, 0xc3, 0x04, // RORX EAX, EBX, 4
+        0xc4, 0xe3, 0x7b, 0xf0, 0xc3, 0x04, // RORX EAX, EBX, 4
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -46,7 +46,7 @@ fn test_rorx_eax_ebx_imm8() {
 fn test_rorx_eax_no_flags() {
     // RORX should not affect any flags
     let code = [
-        0xc4, 0xe3, 0x7a, 0xf0, 0xc3, 0x04, // RORX EAX, EBX, 4
+        0xc4, 0xe3, 0x7b, 0xf0, 0xc3, 0x04, // RORX EAX, EBX, 4
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -65,7 +65,7 @@ fn test_rorx_eax_no_flags() {
 fn test_rorx_eax_rotate_8() {
     // Rotate by 8 bits
     let code = [
-        0xc4, 0xe3, 0x7a, 0xf0, 0xc3, 0x08, // RORX EAX, EBX, 8
+        0xc4, 0xe3, 0x7b, 0xf0, 0xc3, 0x08, // RORX EAX, EBX, 8
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -80,7 +80,7 @@ fn test_rorx_eax_rotate_8() {
 fn test_rorx_eax_rotate_1() {
     // Rotate by 1 bit
     let code = [
-        0xc4, 0xe3, 0x7a, 0xf0, 0xc3, 0x01, // RORX EAX, EBX, 1
+        0xc4, 0xe3, 0x7b, 0xf0, 0xc3, 0x01, // RORX EAX, EBX, 1
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -95,7 +95,7 @@ fn test_rorx_eax_rotate_1() {
 fn test_rorx_eax_full_rotation() {
     // Rotate by 32 bits should return to original
     let code = [
-        0xc4, 0xe3, 0x7a, 0xf0, 0xc3, 0x20, // RORX EAX, EBX, 32
+        0xc4, 0xe3, 0x7b, 0xf0, 0xc3, 0x20, // RORX EAX, EBX, 32
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -110,7 +110,7 @@ fn test_rorx_eax_full_rotation() {
 fn test_rorx_eax_count_masked() {
     // Count is masked to 5 bits for 32-bit operands
     let code = [
-        0xc4, 0xe3, 0x7a, 0xf0, 0xc3, 0x28, // RORX EAX, EBX, 0x28 (40)
+        0xc4, 0xe3, 0x7b, 0xf0, 0xc3, 0x28, // RORX EAX, EBX, 0x28 (40)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -131,7 +131,7 @@ fn test_rorx_rax_rbx_imm8() {
     // RORX RAX, RBX, imm8 (VEX.LZ.F2.0F3A.W1 F0 /r ib)
     // VEX encoding: C4 E3 FB F0 C3 04
     let code = [
-        0xc4, 0xe3, 0xfa, 0xf0, 0xc3, 0x04, // RORX RAX, RBX, 4
+        0xc4, 0xe3, 0xfb, 0xf0, 0xc3, 0x04, // RORX RAX, RBX, 4
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -147,7 +147,7 @@ fn test_rorx_rax_rbx_imm8() {
 fn test_rorx_rax_no_flags() {
     // RORX should not affect any flags (64-bit)
     let code = [
-        0xc4, 0xe3, 0xfa, 0xf0, 0xc3, 0x10, // RORX RAX, RBX, 16
+        0xc4, 0xe3, 0xfb, 0xf0, 0xc3, 0x10, // RORX RAX, RBX, 16
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -164,7 +164,7 @@ fn test_rorx_rax_no_flags() {
 fn test_rorx_rax_rotate_16() {
     // Rotate by 16 bits
     let code = [
-        0xc4, 0xe3, 0xfa, 0xf0, 0xc3, 0x10, // RORX RAX, RBX, 16
+        0xc4, 0xe3, 0xfb, 0xf0, 0xc3, 0x10, // RORX RAX, RBX, 16
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -179,7 +179,7 @@ fn test_rorx_rax_rotate_16() {
 fn test_rorx_rax_rotate_32() {
     // Rotate by 32 bits
     let code = [
-        0xc4, 0xe3, 0xfa, 0xf0, 0xc3, 0x20, // RORX RAX, RBX, 32
+        0xc4, 0xe3, 0xfb, 0xf0, 0xc3, 0x20, // RORX RAX, RBX, 32
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -194,7 +194,7 @@ fn test_rorx_rax_rotate_32() {
 fn test_rorx_rax_full_rotation() {
     // Rotate by 64 bits should return to original
     let code = [
-        0xc4, 0xe3, 0xfa, 0xf0, 0xc3, 0x40, // RORX RAX, RBX, 64
+        0xc4, 0xe3, 0xfb, 0xf0, 0xc3, 0x40, // RORX RAX, RBX, 64
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -209,7 +209,7 @@ fn test_rorx_rax_full_rotation() {
 fn test_rorx_rax_count_masked() {
     // Count is masked to 6 bits for 64-bit operands
     let code = [
-        0xc4, 0xe3, 0xfa, 0xf0, 0xc3, 0x50, // RORX RAX, RBX, 0x50 (80)
+        0xc4, 0xe3, 0xfb, 0xf0, 0xc3, 0x50, // RORX RAX, RBX, 0x50 (80)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -229,7 +229,7 @@ fn test_rorx_rax_count_masked() {
 fn test_rorx_r8d_r9d_imm8() {
     // RORX R8D, R9D, imm8
     let code = [
-        0xc4, 0x43, 0x7a, 0xf0, 0xc1, 0x08, // RORX R8D, R9D, 8
+        0xc4, 0x43, 0x7b, 0xf0, 0xc1, 0x08, // RORX R8D, R9D, 8
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -244,7 +244,7 @@ fn test_rorx_r8d_r9d_imm8() {
 fn test_rorx_r14_r15_imm8() {
     // RORX R14, R15, imm8
     let code = [
-        0xc4, 0x43, 0xfa, 0xf0, 0xf7, 0x10, // RORX R14, R15, 16
+        0xc4, 0x43, 0xfb, 0xf0, 0xf7, 0x10, // RORX R14, R15, 16
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -263,7 +263,7 @@ fn test_rorx_r14_r15_imm8() {
 fn test_rorx_eax_dword_ptr() {
     // RORX EAX, dword ptr [DATA_ADDR], imm8
     let code = [
-        0xc4, 0xe3, 0x7a, 0xf0, 0x04, 0x25, // RORX EAX, dword ptr [DATA_ADDR], imm8
+        0xc4, 0xe3, 0x7b, 0xf0, 0x04, 0x25, // RORX EAX, dword ptr [DATA_ADDR], imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -286,7 +286,7 @@ fn test_rorx_eax_dword_ptr() {
 fn test_rorx_rax_qword_ptr() {
     // RORX RAX, qword ptr [DATA_ADDR], imm8
     let code = [
-        0xc4, 0xe3, 0xfa, 0xf0, 0x04, 0x25, // RORX RAX, qword ptr [DATA_ADDR], imm8
+        0xc4, 0xe3, 0xfb, 0xf0, 0x04, 0x25, // RORX RAX, qword ptr [DATA_ADDR], imm8
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -313,7 +313,7 @@ fn test_rorx_rax_qword_ptr() {
 fn test_rorx_separate_dest_source() {
     // RORX can use different registers for dest and source
     let code = [
-        0xc4, 0xe3, 0x7a, 0xf0, 0xc3, 0x04, // RORX EAX, EBX, 4
+        0xc4, 0xe3, 0x7b, 0xf0, 0xc3, 0x04, // RORX EAX, EBX, 4
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -345,7 +345,7 @@ fn test_rorx_vs_ror_flags() {
 
     // Now do RORX
     let code_rorx = [
-        0xc4, 0xe3, 0x7a, 0xf0, 0xc3, 0x04, // RORX EAX, EBX, 4
+        0xc4, 0xe3, 0x7b, 0xf0, 0xc3, 0x04, // RORX EAX, EBX, 4
         0xf4,
     ];
     let mut regs_rorx = Registers::default();
@@ -363,7 +363,7 @@ fn test_rorx_vs_ror_flags() {
 fn test_rorx_byte_swap() {
     // Use RORX for byte manipulation
     let code = [
-        0xc4, 0xe3, 0x7a, 0xf0, 0xc3, 0x08, // RORX EAX, EBX, 8
+        0xc4, 0xe3, 0x7b, 0xf0, 0xc3, 0x08, // RORX EAX, EBX, 8
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -378,7 +378,7 @@ fn test_rorx_byte_swap() {
 fn test_rorx_all_ones() {
     // Rotate all ones
     let code = [
-        0xc4, 0xe3, 0x7a, 0xf0, 0xc3, 0x01, // RORX EAX, EBX, 1
+        0xc4, 0xe3, 0x7b, 0xf0, 0xc3, 0x01, // RORX EAX, EBX, 1
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -393,7 +393,7 @@ fn test_rorx_all_ones() {
 fn test_rorx_alternating_bits() {
     // Test with alternating bit pattern
     let code = [
-        0xc4, 0xe3, 0x7a, 0xf0, 0xc3, 0x01, // RORX EAX, EBX, 1
+        0xc4, 0xe3, 0x7b, 0xf0, 0xc3, 0x01, // RORX EAX, EBX, 1
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -408,7 +408,7 @@ fn test_rorx_alternating_bits() {
 fn test_rorx_nibble_swap() {
     // Swap nibbles within bytes
     let code = [
-        0xc4, 0xe3, 0x7a, 0xf0, 0xc3, 0x04, // RORX EAX, EBX, 4
+        0xc4, 0xe3, 0x7b, 0xf0, 0xc3, 0x04, // RORX EAX, EBX, 4
         0xf4,
     ];
     let mut regs = Registers::default();

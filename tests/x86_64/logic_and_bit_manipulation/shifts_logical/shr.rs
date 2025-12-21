@@ -226,7 +226,8 @@ fn test_shr_ax_imm8() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0x0123, "AX: 0x1234 >> 4 = 0x0123");
-    assert!(cf_set(regs.rflags), "CF should be set (bit 31 was 1)");
+    // CF = bit 3 of 0x1234 = 0 (last bit shifted out)
+    assert!(!cf_set(regs.rflags), "CF should be clear (bit 3 of 0x1234 was 0)");
 }
 
 #[test]
@@ -384,7 +385,8 @@ fn test_shr_rax_imm8() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax, 0x0000000012345678, "RAX: high 32 bits shifted to low 32");
-    assert!(!cf_set(regs.rflags), "CF should be clear");
+    // CF = bit 31 of original = MSB of 0x9ABCDEF0 = 1
+    assert!(cf_set(regs.rflags), "CF should be set (bit 31 of 0x9ABCDEF0 is 1)");
 }
 
 #[test]
