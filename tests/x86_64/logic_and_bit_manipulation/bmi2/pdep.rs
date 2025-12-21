@@ -15,7 +15,7 @@ use rax::cpu::Registers;
 fn test_pdep_eax_ebx_ecx_all_mask() {
     // PDEP EAX, EBX, ECX - mask all ones (identity)
     let code = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -31,7 +31,7 @@ fn test_pdep_eax_ebx_ecx_all_mask() {
 fn test_pdep_eax_ebx_ecx_zero_mask() {
     // PDEP EAX, EBX, ECX - mask all zeros
     let code = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -47,7 +47,7 @@ fn test_pdep_eax_ebx_ecx_zero_mask() {
 fn test_pdep_eax_ebx_ecx_single_bit_mask() {
     // PDEP with single bit mask
     let code = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -63,7 +63,7 @@ fn test_pdep_eax_ebx_ecx_single_bit_mask() {
 fn test_pdep_eax_ebx_ecx_alternating_mask() {
     // PDEP with alternating mask 0101...0101
     let code = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -80,7 +80,7 @@ fn test_pdep_eax_ebx_ecx_alternating_mask() {
 fn test_pdep_eax_ebx_ecx_low_nibble() {
     // Deposit lower 4 bits into specific positions
     let code = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -96,7 +96,7 @@ fn test_pdep_eax_ebx_ecx_low_nibble() {
 fn test_pdep_rax_rbx_rcx_64bit() {
     // PDEP RAX, RBX, RCX - 64-bit version
     let code = [
-        0xc4, 0xe2, 0xf2, 0xf5, 0xc3, // PDEP RAX, RBX, RCX (W1)
+        0xc4, 0xe2, 0xf3, 0xf5, 0xc3, // PDEP RAX, RBX, RCX (W1)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -112,7 +112,7 @@ fn test_pdep_rax_rbx_rcx_64bit() {
 fn test_pdep_sparse_mask() {
     // PDEP with sparse mask
     let code = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -144,7 +144,7 @@ fn test_pdep_with_extended_registers() {
 fn test_pdep_mem32() {
     // PDEP EAX, EBX, [mem]
     let code = [
-        0xc4, 0xe2, 0x72, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PDEP EAX, EBX, [DATA_ADDR]
+        0xc4, 0xe2, 0x73, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PDEP EAX, EBX, [DATA_ADDR]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -160,7 +160,7 @@ fn test_pdep_mem32() {
 fn test_pdep_mem64() {
     // PDEP RAX, RBX, [mem]
     let code = [
-        0xc4, 0xe2, 0xf2, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PDEP RAX, RBX, [DATA_ADDR]
+        0xc4, 0xe2, 0xf3, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PDEP RAX, RBX, [DATA_ADDR]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -176,7 +176,7 @@ fn test_pdep_mem64() {
 fn test_pdep_preserves_sources() {
     // PDEP should not modify source operands
     let code = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -201,7 +201,7 @@ fn test_pdep_sequential_deposits() {
 
     for (src, mask, expected) in test_cases {
         let code = [
-            0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+            0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -218,7 +218,7 @@ fn test_pdep_sequential_deposits() {
 fn test_pdep_extract_nibbles() {
     // Deposit nibbles to specific positions
     let code = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -235,7 +235,7 @@ fn test_pdep_extract_nibbles() {
 fn test_pdep_bit_scatter() {
     // Scatter bits according to mask
     let code = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -252,7 +252,7 @@ fn test_pdep_power_of_two_masks() {
     // Test with power of 2 masks
     for bit_pos in 0..32 {
         let code = [
-            0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+            0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -269,11 +269,11 @@ fn test_pdep_power_of_two_masks() {
 fn test_pdep_inverse_of_pext() {
     // PDEP is the inverse of PEXT with the same mask
     let code_pext = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let code_pdep = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
         0xf4,
     ];
 
@@ -303,7 +303,7 @@ fn test_pdep_inverse_of_pext() {
 fn test_pdep_excess_source_bits() {
     // More source bits than mask bits - excess ignored
     let code = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -319,7 +319,7 @@ fn test_pdep_excess_source_bits() {
 fn test_pdep_byte_expansion() {
     // Expand byte to word with gaps
     let code = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -335,7 +335,7 @@ fn test_pdep_byte_expansion() {
 fn test_pdep_zero_source() {
     // Zero source always produces zero
     let code = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -351,7 +351,7 @@ fn test_pdep_zero_source() {
 fn test_pdep_64bit_high_positions() {
     // Deposit to high positions in 64-bit
     let code = [
-        0xc4, 0xe2, 0xf2, 0xf5, 0xc3, // PDEP RAX, RBX, RCX
+        0xc4, 0xe2, 0xf3, 0xf5, 0xc3, // PDEP RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -374,7 +374,7 @@ fn test_pdep_pattern_generation() {
 
     for (src, mask, expected) in test_cases {
         let code = [
-            0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+            0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -391,7 +391,7 @@ fn test_pdep_pattern_generation() {
 fn test_pdep_consecutive_mask_bits() {
     // Consecutive mask bits act like simple masking
     let code = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -407,7 +407,7 @@ fn test_pdep_consecutive_mask_bits() {
 fn test_pdep_field_packing() {
     // Pack multiple fields using mask
     let code = [
-        0xc4, 0xe2, 0x72, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf5, 0xc3, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();

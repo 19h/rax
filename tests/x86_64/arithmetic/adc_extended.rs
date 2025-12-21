@@ -457,12 +457,11 @@ fn test_adc_dword_ptr_r32() {
         0x11, 0x1d, 0xFA, 0x0F, 0x00, 0x00, // ADC DWORD PTR [rip+0x0FFA], EBX (target: 0x2000)
         0xf4,                               // HLT
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    write_mem_u32(&mem, 0x40000000);
     let mut regs = Registers::default();
     regs.rbx = 0x30000000;
     regs.rflags = 0x01; // Set CF
-    vcpu.set_regs(&regs).unwrap();
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    write_mem_u32(&mem, 0x40000000);
 
     let _ = run_until_hlt(&mut vcpu).unwrap();
     let result = read_mem_u32(&mem);

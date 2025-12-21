@@ -265,7 +265,7 @@ fn test_movdqa_xmm1_to_mem_aligned() {
         0xf4, // HLT
     ]);
 
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm(&full_code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -282,7 +282,7 @@ fn test_movdqa_xmm7_to_mem_aligned() {
         0xf4, // HLT
     ]);
 
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm(&full_code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -299,7 +299,7 @@ fn test_movdqa_xmm8_to_mem_aligned() {
         0xf4, // HLT
     ]);
 
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm(&full_code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -316,7 +316,7 @@ fn test_movdqa_xmm15_to_mem_aligned() {
         0xf4, // HLT
     ]);
 
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm(&full_code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -496,12 +496,18 @@ fn test_movdqa_base_displacement() {
 #[test]
 fn test_movdqa_rip_relative() {
     // MOVDQA XMM0, [RIP + displacement]
+    // Code starts at 0x1000, instruction is 9 bytes (8 + HLT)
+    // After the MOVDQA (8 bytes), RIP = 0x1008
+    // We need [RIP+disp] to be 16-byte aligned
+    // To read from 0x1010: disp = 0x1010 - 0x1008 = 8
     let code = [
-        0x66, 0x0f, 0x6f, 0x05, 0x00, 0x00, 0x00, 0x00, // MOVDQA XMM0, [RIP+0]
+        0x66, 0x0f, 0x6f, 0x05, 0x08, 0x00, 0x00, 0x00, // MOVDQA XMM0, [RIP+8]
         0xf4, // HLT
     ];
 
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    // Write data at 0x1010 (16-byte aligned)
+    mem.write_slice(&[0xAA; 16], GuestAddress(0x1010)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -577,7 +583,7 @@ fn test_movdqa_roundtrip_reg_mem_reg() {
         0xf4, // HLT
     ]);
 
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm(&full_code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -600,8 +606,9 @@ fn test_movdqa_chain_move() {
 // ============================================================================
 
 #[test]
-fn test_movdqa_at_0x1000_aligned() {
-    const TEST_ADDR: u64 = 0x1000;
+fn test_movdqa_at_0x2000_aligned() {
+    // Use DATA_ADDR (0x2000) to avoid overlapping with code at 0x1000
+    const TEST_ADDR: u64 = 0x2000;
     let code = [
         0x48, 0xb8, // MOV RAX, imm64
     ];
