@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{Bytes, run_until_hlt, setup_vm};
 
 // CVTPS2PD - Convert Packed Single Precision Floating-Point Values to Packed Double Precision
 //

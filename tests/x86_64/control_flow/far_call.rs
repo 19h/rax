@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{Bytes, run_until_hlt, setup_vm};
 use rax::cpu::Registers;
 
 // Comprehensive tests for FAR CALL instruction (inter-segment call)

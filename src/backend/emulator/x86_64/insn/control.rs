@@ -345,6 +345,26 @@ pub fn loop_rel8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     Ok(None)
 }
 
+/// JRCXZ/JECXZ rel8 (0xE3) - Jump if RCX/ECX is zero
+pub fn jrcxz(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let disp = ctx.consume_u8()? as i8 as i64;
+    let next_rip = vcpu.regs.rip + ctx.cursor as u64;
+
+    // Use address size to determine counter (RCX in 64-bit mode, ECX with override)
+    let counter = if ctx.address_size_override {
+        vcpu.regs.rcx as u32 as u64
+    } else {
+        vcpu.regs.rcx
+    };
+
+    if counter == 0 {
+        vcpu.regs.rip = (next_rip as i64 + disp) as u64;
+    } else {
+        vcpu.regs.rip = next_rip;
+    }
+    Ok(None)
+}
+
 /// ENTER imm16, imm8 (0xC8) - Create stack frame
 pub fn enter(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let alloc_size = ctx.consume_u16()? as u64;

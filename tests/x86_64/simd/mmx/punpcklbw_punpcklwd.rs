@@ -12,7 +12,7 @@
 //!
 //! Reference: docs/punpcklbw:punpcklwd:punpckldq:punpcklqdq.txt
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{Bytes, run_until_hlt, setup_vm};
 use vm_memory::GuestMemoryMmap;
 
 // Helper to write 64-bit value to memory

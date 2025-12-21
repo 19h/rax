@@ -109,7 +109,8 @@ fn test_movsxd_rbx_eax() {
 
 #[test]
 fn test_movsxd_r8_ebx() {
-    let code = [0x4d, 0x63, 0xc3, 0xf4]; // MOVSXD R8, EBX
+    // REX.W + REX.R = 0x4C (R8 as dest), 0x4D would incorrectly set REX.B
+    let code = [0x4c, 0x63, 0xc3, 0xf4]; // MOVSXD R8, EBX
     let mut regs = Registers::default();
     regs.rbx = 0x7FFFFFFF; // Positive
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -119,7 +120,8 @@ fn test_movsxd_r8_ebx() {
 
 #[test]
 fn test_movsxd_r9_ecx() {
-    let code = [0x4d, 0x63, 0xc9, 0xf4]; // MOVSXD R9, ECX
+    // REX.W + REX.R = 0x4C
+    let code = [0x4c, 0x63, 0xc9, 0xf4]; // MOVSXD R9, ECX
     let mut regs = Registers::default();
     regs.rcx = 0x80000000; // Negative
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -129,9 +131,11 @@ fn test_movsxd_r9_ecx() {
 
 #[test]
 fn test_movsxd_r10_edx() {
-    let code = [0x4d, 0x63, 0xd2, 0xf4]; // MOVSXD R10, EDX
+    // REX.W + REX.R = 0x4C (R10 as dest), ModRM 0xD2 = reg=2, r/m=2 (EDX as source)
+    // 0x4D would set REX.B which extends r/m to R10D
+    let code = [0x4c, 0x63, 0xd2, 0xf4]; // MOVSXD R10, EDX
     let mut regs = Registers::default();
-    regs.rdx = 0xFFFFFFFF; // -1
+    regs.rdx = 0xFFFFFFFF; // -1 in i32
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.r10, 0xFFFFFFFFFFFFFFFF, "R10 should be -1");
@@ -139,7 +143,8 @@ fn test_movsxd_r10_edx() {
 
 #[test]
 fn test_movsxd_r11_esi() {
-    let code = [0x4d, 0x63, 0xde, 0xf4]; // MOVSXD R11, ESI
+    // REX.W + REX.R = 0x4C (R11 as dest), not 0x4D which sets REX.B
+    let code = [0x4c, 0x63, 0xde, 0xf4]; // MOVSXD R11, ESI
     let mut regs = Registers::default();
     regs.rsi = 0x42424242;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -149,7 +154,8 @@ fn test_movsxd_r11_esi() {
 
 #[test]
 fn test_movsxd_r12_edi() {
-    let code = [0x4d, 0x63, 0xe7, 0xf4]; // MOVSXD R12, EDI
+    // REX.W + REX.R = 0x4C
+    let code = [0x4c, 0x63, 0xe7, 0xf4]; // MOVSXD R12, EDI
     let mut regs = Registers::default();
     regs.rdi = 0xF0F0F0F0; // Negative
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -159,7 +165,8 @@ fn test_movsxd_r12_edi() {
 
 #[test]
 fn test_movsxd_r13_eax() {
-    let code = [0x4d, 0x63, 0xe8, 0xf4]; // MOVSXD R13, EAX
+    // REX.W + REX.R = 0x4C
+    let code = [0x4c, 0x63, 0xe8, 0xf4]; // MOVSXD R13, EAX
     let mut regs = Registers::default();
     regs.rax = 0x00000000; // Zero
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -169,7 +176,8 @@ fn test_movsxd_r13_eax() {
 
 #[test]
 fn test_movsxd_r14_ebx() {
-    let code = [0x4d, 0x63, 0xf3, 0xf4]; // MOVSXD R14, EBX
+    // REX.W + REX.R = 0x4C
+    let code = [0x4c, 0x63, 0xf3, 0xf4]; // MOVSXD R14, EBX
     let mut regs = Registers::default();
     regs.rbx = 0x00000001; // Positive
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -179,7 +187,8 @@ fn test_movsxd_r14_ebx() {
 
 #[test]
 fn test_movsxd_r15_ecx() {
-    let code = [0x4d, 0x63, 0xf9, 0xf4]; // MOVSXD R15, ECX
+    // REX.W + REX.R = 0x4C
+    let code = [0x4c, 0x63, 0xf9, 0xf4]; // MOVSXD R15, ECX
     let mut regs = Registers::default();
     regs.rcx = 0x7FFFFFFF; // Max positive
     let (mut vcpu, _) = setup_vm(&code, Some(regs));

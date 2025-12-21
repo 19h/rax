@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{Bytes, run_until_hlt, setup_vm};
 
 // UNPCKHPS - Unpack and Interleave High Packed Single Precision Floating-Point Values
 //

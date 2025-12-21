@@ -156,13 +156,41 @@ pub fn rdmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     Ok(None)
 }
 
-/// Group 7 - LGDT, LIDT, INVLPG, etc. (0x0F 0x01)
+/// Group 7 - SGDT, SIDT, LGDT, LIDT, SMSW, LMSW, INVLPG, etc. (0x0F 0x01)
 pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
     let reg_op = (modrm >> 3) & 0x07;
 
     match reg_op {
+        // SGDT m16&64 - Store Global Descriptor Table
+        0 => {
+            if modrm >> 6 == 3 {
+                return Err(Error::Emulator(
+                    "SGDT: requires memory operand".to_string(),
+                ));
+            }
+            let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+            ctx.cursor = modrm_start + 1 + extra;
+            // Write 10 bytes: 2-byte limit + 8-byte base
+            vcpu.mmu.write_u16(addr, vcpu.sregs.gdt.limit, &vcpu.sregs)?;
+            vcpu.mmu.write_u64(addr + 2, vcpu.sregs.gdt.base, &vcpu.sregs)?;
+            vcpu.regs.rip += ctx.cursor as u64;
+        }
+        // SIDT m16&64 - Store Interrupt Descriptor Table
+        1 => {
+            if modrm >> 6 == 3 {
+                return Err(Error::Emulator(
+                    "SIDT: requires memory operand".to_string(),
+                ));
+            }
+            let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+            ctx.cursor = modrm_start + 1 + extra;
+            // Write 10 bytes: 2-byte limit + 8-byte base
+            vcpu.mmu.write_u16(addr, vcpu.sregs.idt.limit, &vcpu.sregs)?;
+            vcpu.mmu.write_u64(addr + 2, vcpu.sregs.idt.base, &vcpu.sregs)?;
+            vcpu.regs.rip += ctx.cursor as u64;
+        }
         // LGDT m16&64
         2 => {
             if modrm >> 6 == 3 {
@@ -193,6 +221,38 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             let base = vcpu.mmu.read_u64(addr + 2, &vcpu.sregs)?;
             vcpu.sregs.idt.limit = limit;
             vcpu.sregs.idt.base = base;
+            vcpu.regs.rip += ctx.cursor as u64;
+        }
+        // SMSW r/m16 - Store Machine Status Word (lower 16 bits of CR0)
+        4 => {
+            let rm = (modrm & 0x07) | ctx.rex_b();
+            let is_memory = modrm >> 6 != 3;
+            let msw = (vcpu.sregs.cr0 & 0xFFFF) as u16;
+            if is_memory {
+                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+                ctx.cursor = modrm_start + 1 + extra;
+                vcpu.mmu.write_u16(addr, msw, &vcpu.sregs)?;
+            } else {
+                // Store to register - zero extends to 32/64 bits in long mode
+                vcpu.set_reg(rm, msw as u64, ctx.op_size);
+            }
+            vcpu.regs.rip += ctx.cursor as u64;
+        }
+        // LMSW r/m16 - Load Machine Status Word (lower 16 bits of CR0)
+        6 => {
+            let rm = (modrm & 0x07) | ctx.rex_b();
+            let is_memory = modrm >> 6 != 3;
+            let msw = if is_memory {
+                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+                ctx.cursor = modrm_start + 1 + extra;
+                vcpu.mmu.read_u16(addr, &vcpu.sregs)?
+            } else {
+                vcpu.get_reg(rm, 2) as u16
+            };
+            // LMSW can set PE (bit 0) but cannot clear it
+            // It only affects bits 0-3 of CR0
+            let mask = 0x000F_u64;
+            vcpu.sregs.cr0 = (vcpu.sregs.cr0 & !mask) | ((msw as u64) & mask);
             vcpu.regs.rip += ctx.cursor as u64;
         }
         // INVLPG m
@@ -452,6 +512,167 @@ pub fn nop_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         let (_, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
         ctx.cursor = modrm_start + 1 + extra;
     }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// Group 6 - SLDT, STR, LLDT, LTR, VERR, VERW (0x0F 0x00)
+pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let modrm_start = ctx.cursor;
+    let modrm = ctx.consume_u8()?;
+    let reg_op = (modrm >> 3) & 0x07;
+    let rm = (modrm & 0x07) | ctx.rex_b();
+    let is_memory = modrm >> 6 != 3;
+
+    match reg_op {
+        // SLDT - Store Local Descriptor Table (0x0F 0x00 /0)
+        0 => {
+            let selector = vcpu.sregs.ldt.selector;
+            if is_memory {
+                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+                ctx.cursor = modrm_start + 1 + extra;
+                vcpu.mmu.write_u16(addr, selector, &vcpu.sregs)?;
+            } else {
+                // Writing to register - zero-extends for 32/64-bit registers
+                vcpu.set_reg(rm, selector as u64, ctx.op_size);
+            }
+        }
+        // STR - Store Task Register (0x0F 0x00 /1)
+        1 => {
+            let selector = vcpu.sregs.tr.selector;
+            if is_memory {
+                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+                ctx.cursor = modrm_start + 1 + extra;
+                vcpu.mmu.write_u16(addr, selector, &vcpu.sregs)?;
+            } else {
+                vcpu.set_reg(rm, selector as u64, ctx.op_size);
+            }
+        }
+        // LLDT - Load Local Descriptor Table (0x0F 0x00 /2)
+        2 => {
+            let selector = if is_memory {
+                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+                ctx.cursor = modrm_start + 1 + extra;
+                vcpu.mmu.read_u16(addr, &vcpu.sregs)?
+            } else {
+                vcpu.get_reg(rm, 2) as u16
+            };
+            vcpu.sregs.ldt.selector = selector;
+            // In a real implementation, we'd load the descriptor from the GDT
+            // For emulation purposes, just store the selector
+        }
+        // LTR - Load Task Register (0x0F 0x00 /3)
+        3 => {
+            let selector = if is_memory {
+                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+                ctx.cursor = modrm_start + 1 + extra;
+                vcpu.mmu.read_u16(addr, &vcpu.sregs)?
+            } else {
+                vcpu.get_reg(rm, 2) as u16
+            };
+            vcpu.sregs.tr.selector = selector;
+            // In a real implementation, we'd load the TSS descriptor from the GDT
+        }
+        // VERR - Verify Read (0x0F 0x00 /4)
+        4 => {
+            let _selector = if is_memory {
+                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+                ctx.cursor = modrm_start + 1 + extra;
+                vcpu.mmu.read_u16(addr, &vcpu.sregs)?
+            } else {
+                vcpu.get_reg(rm, 2) as u16
+            };
+            // In real hardware, this checks if the selector is readable
+            // For emulation, we'll just set ZF=1 (readable) for non-null selectors
+            if _selector != 0 {
+                vcpu.regs.rflags |= flags::bits::ZF;
+            } else {
+                vcpu.regs.rflags &= !flags::bits::ZF;
+            }
+        }
+        // VERW - Verify Write (0x0F 0x00 /5)
+        5 => {
+            let _selector = if is_memory {
+                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+                ctx.cursor = modrm_start + 1 + extra;
+                vcpu.mmu.read_u16(addr, &vcpu.sregs)?
+            } else {
+                vcpu.get_reg(rm, 2) as u16
+            };
+            // For emulation, set ZF=1 (writable) for non-null selectors
+            if _selector != 0 {
+                vcpu.regs.rflags |= flags::bits::ZF;
+            } else {
+                vcpu.regs.rflags &= !flags::bits::ZF;
+            }
+        }
+        _ => {
+            return Err(Error::Emulator(format!(
+                "unimplemented 0F 00 /{} at RIP={:#x}",
+                reg_op, vcpu.regs.rip
+            )));
+        }
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// LAR - Load Access Rights (0x0F 0x02)
+pub fn lar(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let modrm_start = ctx.cursor;
+    let modrm = ctx.consume_u8()?;
+    let reg = ((modrm >> 3) & 0x07) | ctx.rex_r();
+    let rm = (modrm & 0x07) | ctx.rex_b();
+    let is_memory = modrm >> 6 != 3;
+
+    let selector = if is_memory {
+        let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+        ctx.cursor = modrm_start + 1 + extra;
+        vcpu.mmu.read_u16(addr, &vcpu.sregs)?
+    } else {
+        vcpu.get_reg(rm, 2) as u16
+    };
+
+    // In a real implementation, we'd read the descriptor from GDT/LDT
+    // For emulation, return a standard code/data segment access rights
+    if selector != 0 {
+        // Return typical access rights: present, ring 0, code/data segment
+        let access_rights: u64 = 0x00CF9300; // Standard access rights
+        vcpu.set_reg(reg, access_rights, ctx.op_size);
+        vcpu.regs.rflags |= flags::bits::ZF; // Valid selector
+    } else {
+        vcpu.regs.rflags &= !flags::bits::ZF; // Null selector
+    }
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// LSL - Load Segment Limit (0x0F 0x03)
+pub fn lsl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let modrm_start = ctx.cursor;
+    let modrm = ctx.consume_u8()?;
+    let reg = ((modrm >> 3) & 0x07) | ctx.rex_r();
+    let rm = (modrm & 0x07) | ctx.rex_b();
+    let is_memory = modrm >> 6 != 3;
+
+    let selector = if is_memory {
+        let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+        ctx.cursor = modrm_start + 1 + extra;
+        vcpu.mmu.read_u16(addr, &vcpu.sregs)?
+    } else {
+        vcpu.get_reg(rm, 2) as u16
+    };
+
+    // For emulation, return max limit for valid selectors
+    if selector != 0 {
+        let limit: u64 = 0xFFFFFFFF; // Max 4GB limit (granularity bit set)
+        vcpu.set_reg(reg, limit, ctx.op_size);
+        vcpu.regs.rflags |= flags::bits::ZF; // Valid selector
+    } else {
+        vcpu.regs.rflags &= !flags::bits::ZF; // Null selector
+    }
+
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

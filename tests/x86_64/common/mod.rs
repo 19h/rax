@@ -5,7 +5,7 @@
 
 use std::sync::Arc;
 
-use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
+pub use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
 use rax::backend::emulator::x86_64::{X86_64Vcpu, flags};
 use rax::cpu::{Registers, SystemRegisters, VCpu, VcpuExit};
@@ -53,7 +53,15 @@ pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Ar
 
 /// Run the VM until HLT and return final register state
 pub fn run_until_hlt(vcpu: &mut X86_64Vcpu) -> Result<Registers> {
+    const MAX_ITERATIONS: u64 = 10_000; // Limit iterations to prevent hangs
+    let mut iterations = 0;
     loop {
+        iterations += 1;
+        if iterations > MAX_ITERATIONS {
+            return Err(rax::error::Error::Emulator(format!(
+                "exceeded {} iterations at RIP={:#x}", MAX_ITERATIONS, vcpu.get_regs()?.rip
+            )));
+        }
         match vcpu.run()? {
             VcpuExit::Hlt => break,
             VcpuExit::IoIn { .. } | VcpuExit::IoOut { .. } => continue,
@@ -193,4 +201,104 @@ pub fn read_mem_at_u64(mem: &GuestMemoryMmap, addr: u64) -> u64 {
     let mut buf = [0u8; 8];
     mem.read_slice(&mut buf, GuestAddress(addr)).unwrap();
     u64::from_le_bytes(buf)
+}
+
+/// A wrapper around X86_64Vcpu that provides convenient getter/setter methods
+/// for individual registers, matching the API expected by some test files.
+pub struct TestCpu {
+    vcpu: X86_64Vcpu,
+    mem: Arc<GuestMemoryMmap>,
+    regs: Registers,
+}
+
+impl TestCpu {
+    pub fn new(code: &[u8]) -> Self {
+        let (vcpu, mem) = setup_vm(code, None);
+        let regs = vcpu.get_regs().unwrap();
+        Self { vcpu, mem, regs }
+    }
+
+    pub fn set_rax(&mut self, value: u64) {
+        self.regs.rax = value;
+        self.vcpu.set_regs(&self.regs).unwrap();
+    }
+
+    pub fn set_rbx(&mut self, value: u64) {
+        self.regs.rbx = value;
+        self.vcpu.set_regs(&self.regs).unwrap();
+    }
+
+    pub fn set_rcx(&mut self, value: u64) {
+        self.regs.rcx = value;
+        self.vcpu.set_regs(&self.regs).unwrap();
+    }
+
+    pub fn set_rdx(&mut self, value: u64) {
+        self.regs.rdx = value;
+        self.vcpu.set_regs(&self.regs).unwrap();
+    }
+
+    pub fn set_rsi(&mut self, value: u64) {
+        self.regs.rsi = value;
+        self.vcpu.set_regs(&self.regs).unwrap();
+    }
+
+    pub fn set_rdi(&mut self, value: u64) {
+        self.regs.rdi = value;
+        self.vcpu.set_regs(&self.regs).unwrap();
+    }
+
+    pub fn set_rflags(&mut self, value: u64) {
+        self.regs.rflags = value | 0x2; // Ensure reserved bit is set
+        self.vcpu.set_regs(&self.regs).unwrap();
+    }
+
+    pub fn get_rax(&self) -> u64 {
+        self.vcpu.get_regs().unwrap().rax
+    }
+
+    pub fn get_rbx(&self) -> u64 {
+        self.vcpu.get_regs().unwrap().rbx
+    }
+
+    pub fn get_rcx(&self) -> u64 {
+        self.vcpu.get_regs().unwrap().rcx
+    }
+
+    pub fn get_rdx(&self) -> u64 {
+        self.vcpu.get_regs().unwrap().rdx
+    }
+
+    pub fn get_rsi(&self) -> u64 {
+        self.vcpu.get_regs().unwrap().rsi
+    }
+
+    pub fn get_rdi(&self) -> u64 {
+        self.vcpu.get_regs().unwrap().rdi
+    }
+
+    pub fn get_rflags(&self) -> u64 {
+        self.vcpu.get_regs().unwrap().rflags
+    }
+
+    pub fn get_memory(&self) -> &Arc<GuestMemoryMmap> {
+        &self.mem
+    }
+
+    /// Refresh internal register cache from vcpu
+    pub fn refresh_regs(&mut self) {
+        self.regs = self.vcpu.get_regs().unwrap();
+    }
+}
+
+/// Create a test CPU with the given code.
+/// This is a convenience wrapper for tests that prefer the TestCpu API.
+pub fn create_test_cpu(code: &[u8]) -> TestCpu {
+    TestCpu::new(code)
+}
+
+/// Run the test CPU until HLT.
+pub fn run_test(cpu: &mut TestCpu) {
+    run_until_hlt(&mut cpu.vcpu).unwrap();
+    cpu.refresh_regs();
 }

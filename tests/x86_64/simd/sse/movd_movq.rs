@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{Bytes, run_until_hlt, setup_vm};
 
 // MOVD/MOVQ - Move Doubleword/Quadword
 // Opcode: 66 0F 6E /r         MOVD xmm, r/m32

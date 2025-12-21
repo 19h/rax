@@ -18,7 +18,7 @@ use rax::cpu::Registers;
 fn test_blsr_eax_ebx_bit_0() {
     // BLSR EAX, EBX - reset bit 0 (only bit set)
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -35,7 +35,7 @@ fn test_blsr_eax_ebx_bit_0() {
 fn test_blsr_eax_ebx_bit_3() {
     // BLSR EAX, EBX - reset bit 3
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -51,7 +51,7 @@ fn test_blsr_eax_ebx_bit_3() {
 fn test_blsr_eax_ebx_multiple_bits() {
     // BLSR EAX, EBX - reset lowest of multiple bits
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -67,7 +67,7 @@ fn test_blsr_eax_ebx_multiple_bits() {
 fn test_blsr_rax_rbx_bit_0() {
     // BLSR RAX, RBX - 64-bit version with bit 0
     let code = [
-        0xc4, 0xe2, 0xf0, 0xf3, 0xcb, // BLSR RAX, RBX
+        0xc4, 0xe2, 0xf8, 0xf3, 0xcb, // BLSR RAX, RBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -83,7 +83,7 @@ fn test_blsr_rax_rbx_bit_0() {
 fn test_blsr_zero_source() {
     // BLSR with zero source
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -100,7 +100,7 @@ fn test_blsr_zero_source() {
 fn test_blsr_all_bits_set() {
     // BLSR with all bits set
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -116,7 +116,7 @@ fn test_blsr_all_bits_set() {
 fn test_blsr_alternating_pattern() {
     // BLSR with alternating pattern 1010...1010
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -131,7 +131,7 @@ fn test_blsr_alternating_pattern() {
 fn test_blsr_alternating_pattern_inverted() {
     // BLSR with alternating pattern 0101...0101
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -147,7 +147,7 @@ fn test_blsr_single_bit_positions_32bit() {
     // Test each individual bit position for 32-bit
     for bit_pos in 0..32 {
         let code = [
-            0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+            0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -165,7 +165,7 @@ fn test_blsr_single_bit_positions_64bit() {
     // Test each individual bit position for 64-bit
     for bit_pos in 0..64 {
         let code = [
-            0xc4, 0xe2, 0xf0, 0xf3, 0xcb, // BLSR RAX, RBX
+            0xc4, 0xe2, 0xf8, 0xf3, 0xcb, // BLSR RAX, RBX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -182,7 +182,7 @@ fn test_blsr_single_bit_positions_64bit() {
 fn test_blsr_with_extended_registers() {
     // BLSR R8D, R9D
     let code = [
-        0xc4, 0x42, 0x68, 0xf3, 0xd9, // BLSR R8D, R9D
+        0xc4, 0x42, 0x38, 0xf3, 0xc9, // BLSR R8D, R9D (vvvv=0111 inv=8=R8, r/m=001+B=R9)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -197,7 +197,7 @@ fn test_blsr_with_extended_registers() {
 fn test_blsr_mem32() {
     // BLSR EAX, [mem]
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0x1c, 0x25, 0x00, 0x20, 0x00, 0x00, // BLSR EAX, [DATA_ADDR]
+        0xc4, 0xe2, 0x78, 0xf3, 0x0c, 0x25, 0x00, 0x20, 0x00, 0x00, // BLSR EAX, [DATA_ADDR]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -211,7 +211,7 @@ fn test_blsr_mem32() {
 fn test_blsr_mem64() {
     // BLSR RAX, [mem]
     let code = [
-        0xc4, 0xe2, 0xf0, 0xf3, 0x1c, 0x25, 0x00, 0x20, 0x00, 0x00, // BLSR RAX, [DATA_ADDR]
+        0xc4, 0xe2, 0xf8, 0xf3, 0x0c, 0x25, 0x00, 0x20, 0x00, 0x00, // BLSR RAX, [DATA_ADDR]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -225,7 +225,7 @@ fn test_blsr_mem64() {
 fn test_blsr_trailing_zeros() {
     // BLSR with trailing zeros
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -240,7 +240,7 @@ fn test_blsr_trailing_zeros() {
 fn test_blsr_sparse_pattern() {
     // BLSR with sparse bit pattern
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -255,7 +255,7 @@ fn test_blsr_sparse_pattern() {
 fn test_blsr_preserves_source() {
     // BLSR should not modify source operand
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -270,7 +270,7 @@ fn test_blsr_preserves_source() {
 fn test_blsr_vs_and_sub() {
     // BLSR is equivalent to src & (src - 1)
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
     let value = 0x12345678u32;
@@ -288,7 +288,7 @@ fn test_blsr_power_of_two() {
     // BLSR of power of two returns zero
     for i in 0..32 {
         let code = [
-            0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+            0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -304,7 +304,7 @@ fn test_blsr_power_of_two() {
 fn test_blsr_consecutive_bits() {
     // BLSR with consecutive bits set
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -319,7 +319,7 @@ fn test_blsr_consecutive_bits() {
 fn test_blsr_sign_bit() {
     // BLSR with sign bit set
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -335,7 +335,7 @@ fn test_blsr_sign_bit() {
 fn test_blsr_iterative_removal() {
     // Use BLSR to iterate through set bits
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
 
@@ -359,7 +359,7 @@ fn test_blsr_iterative_removal() {
 fn test_blsr_high_bits_64() {
     // BLSR with high bits in 64-bit operand
     let code = [
-        0xc4, 0xe2, 0xf0, 0xf3, 0xcb, // BLSR RAX, RBX
+        0xc4, 0xe2, 0xf8, 0xf3, 0xcb, // BLSR RAX, RBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -375,7 +375,7 @@ fn test_blsr_high_bits_64() {
 fn test_blsr_mixed_high_low_64() {
     // BLSR with both high and low bits
     let code = [
-        0xc4, 0xe2, 0xf0, 0xf3, 0xcb, // BLSR RAX, RBX
+        0xc4, 0xe2, 0xf8, 0xf3, 0xcb, // BLSR RAX, RBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -390,7 +390,7 @@ fn test_blsr_mixed_high_low_64() {
 fn test_blsr_flags_zf() {
     // Test ZF flag behavior
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
 
@@ -413,7 +413,7 @@ fn test_blsr_flags_zf() {
 fn test_blsr_practical_popcount() {
     // Practical use: count set bits by repeatedly applying BLSR
     let code = [
-        0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,
     ];
 
@@ -445,7 +445,7 @@ fn test_blsr_byte_boundaries_32bit() {
 
     for (input, expected) in &test_cases {
         let code = [
-            0xc4, 0xe2, 0x68, 0xf3, 0xcb, // BLSR EAX, EBX
+            0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -461,7 +461,7 @@ fn test_blsr_byte_boundaries_32bit() {
 fn test_blsr_64bit_comprehensive() {
     // Comprehensive 64-bit test
     let code = [
-        0xc4, 0xe2, 0xf0, 0xf3, 0xcb, // BLSR RAX, RBX
+        0xc4, 0xe2, 0xf8, 0xf3, 0xcb, // BLSR RAX, RBX
         0xf4,
     ];
     let test_cases = [

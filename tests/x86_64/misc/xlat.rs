@@ -23,7 +23,7 @@ fn test_xlat_basic() {
         0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
         0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
     ];
-    mem.write(&table, 0x2000).unwrap();
+    mem.write_slice(&table, GuestAddress(0x2000)).unwrap();
 
     cpu.set_rbx(0x2000); // Table base
     cpu.set_rax(0x05);   // Index (AL=5)
@@ -44,7 +44,7 @@ fn test_xlat_index_zero() {
     let mem = cpu.get_memory();
 
     let table: [u8; 10] = [0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00, 0x11, 0x22, 0x33];
-    mem.write(&table, 0x3000).unwrap();
+    mem.write_slice(&table, GuestAddress(0x3000)).unwrap();
 
     cpu.set_rbx(0x3000);
     cpu.set_rax(0x00);
@@ -69,7 +69,7 @@ fn test_xlat_index_255() {
     for i in 0..256 {
         table[i] = (i ^ 0xFF) as u8; // Complement pattern
     }
-    mem.write(&table, 0x2000).unwrap();
+    mem.write_slice(&table, GuestAddress(0x2000)).unwrap();
 
     cpu.set_rbx(0x2000);
     cpu.set_rax(0xFF);
@@ -98,14 +98,14 @@ fn test_xlat_ascii_uppercase_to_lowercase() {
     for i in 65..=90 {
         table[i] = (i + 32) as u8;
     }
-    mem.write(&table, 0x4000).unwrap();
+    mem.write_slice(&table, GuestAddress(0x4000)).unwrap();
 
     cpu.set_rbx(0x4000);
     cpu.set_rax(b'A' as u64); // 65
 
     run_test(&mut cpu);
 
-    assert_eq!(cpu.get_rax() & 0xFF, b'a', "XLAT: 'A' -> 'a'");
+    assert_eq!(cpu.get_rax() & 0xFF, b'a' as u64, "XLAT: 'A' -> 'a'");
 }
 
 #[test]
@@ -119,7 +119,7 @@ fn test_xlat_preserves_high_bits_of_rax() {
     let mem = cpu.get_memory();
 
     let table: [u8; 10] = [0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99];
-    mem.write(&table, 0x2000).unwrap();
+    mem.write_slice(&table, GuestAddress(0x2000)).unwrap();
 
     cpu.set_rbx(0x2000);
     cpu.set_rax(0x12345678_9ABCDE03); // AL=3
@@ -144,14 +144,14 @@ fn test_xlat_hex_digit_conversion() {
         b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7',
         b'8', b'9', b'A', b'B', b'C', b'D', b'E', b'F',
     ];
-    mem.write(&table, 0x5000).unwrap();
+    mem.write_slice(&table, GuestAddress(0x5000)).unwrap();
 
     cpu.set_rbx(0x5000);
     cpu.set_rax(0x0A); // 10 (hex A)
 
     run_test(&mut cpu);
 
-    assert_eq!(cpu.get_rax() & 0xFF, b'A', "XLAT: 0x0A -> 'A'");
+    assert_eq!(cpu.get_rax() & 0xFF, b'A' as u64, "XLAT: 0x0A -> 'A'");
 }
 
 #[test]
@@ -168,7 +168,7 @@ fn test_xlat_identity_mapping() {
     for i in 0..256 {
         table[i] = i as u8;
     }
-    mem.write(&table, 0x2000).unwrap();
+    mem.write_slice(&table, GuestAddress(0x2000)).unwrap();
 
     cpu.set_rbx(0x2000);
     cpu.set_rax(0x42);
