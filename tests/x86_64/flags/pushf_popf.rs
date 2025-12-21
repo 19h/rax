@@ -64,6 +64,7 @@ fn test_pushf_popf_roundtrip() {
     ];
     let mut regs = Registers::default();
     regs.rflags = 0x2 | 1 | (1 << 6) | (1 << 7); // CF, ZF, SF set
+    regs.rsp = 0x8010; // Set valid stack pointer
     let initial_flags = regs.rflags;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -121,6 +122,7 @@ fn test_pushf_with_no_flags_set() {
     ];
     let mut regs = Registers::default();
     regs.rflags = 0x2; // Only reserved bit
+    regs.rsp = 0x8010; // Set valid stack pointer
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -137,6 +139,7 @@ fn test_pushf_with_all_status_flags() {
     ];
     let mut regs = Registers::default();
     regs.rflags = 0x2 | 1 | (1 << 2) | (1 << 4) | (1 << 6) | (1 << 7) | (1 << 11); // CF, PF, AF, ZF, SF, OF
+    regs.rsp = 0x8010; // Set valid stack pointer
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -159,6 +162,7 @@ fn test_pushf_does_not_modify_registers() {
     regs.rax = 0x1111111111111111;
     regs.rbx = 0x2222222222222222;
     regs.rcx = 0x3333333333333333;
+    regs.rsp = 0x8010; // Set valid stack pointer
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -244,6 +248,7 @@ fn test_pushf_popf_with_flag_changes() {
     ];
     let mut regs = Registers::default();
     regs.rflags = 0x2; // No flags set initially
+    regs.rsp = 0x8010; // Set valid stack pointer
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -283,6 +288,7 @@ fn test_pushf_with_df_set() {
     ];
     let mut regs = Registers::default();
     regs.rflags = 0x2 | (1 << 10); // DF set
+    regs.rsp = 0x8010; // Set valid stack pointer
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -299,6 +305,7 @@ fn test_pushf_with_if_set() {
     ];
     let mut regs = Registers::default();
     regs.rflags = 0x2 | (1 << 9); // IF set
+    regs.rsp = 0x8010; // Set valid stack pointer
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -337,6 +344,7 @@ fn test_pushf_preserves_reserved_bits() {
     ];
     let mut regs = Registers::default();
     regs.rflags = 0x2; // Reserved bit 1
+    regs.rsp = 0x8010; // Set valid stack pointer
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -359,6 +367,7 @@ fn test_pushf_popf_flag_filter() {
         | (1 << 6)          // ZF
         | (1 << 7)          // SF
         | (1 << 11);        // OF
+    regs.rsp = 0x8010; // Set valid stack pointer
 
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -382,6 +391,7 @@ fn test_pushf_before_exception_recovery() {
     ];
     let mut regs = Registers::default();
     regs.rflags = 0x2 | 1; // CF set
+    regs.rsp = 0x8010; // Set valid stack pointer
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -447,6 +457,7 @@ fn test_pushf_popf_chain() {
     ];
     let mut regs = Registers::default();
     regs.rflags = 0x2;
+    regs.rsp = 0x8020; // Set valid stack pointer (needs extra room for two pushes)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -505,6 +516,7 @@ fn test_pushf_popf_stress_sequence() {
     ];
     let mut regs = Registers::default();
     regs.rflags = 0x2 | 1 | (1 << 6) | (1 << 7);
+    regs.rsp = 0x8010; // Set valid stack pointer
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -526,6 +538,7 @@ fn test_pushf_popf_with_arithmetic() {
     ];
     let mut regs = Registers::default();
     regs.rflags = 0x2; // No flags initially
+    regs.rsp = 0x8010; // Set valid stack pointer
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
