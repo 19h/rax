@@ -23,6 +23,8 @@ pub struct Registers {
     pub rflags: u64,
     /// XMM registers (128-bit each, stored as [low, high])
     pub xmm: [[u64; 2]; 16],
+    /// YMM upper 128-bits (bits 255:128 of YMM registers)
+    pub ymm_high: [[u64; 2]; 16],
     /// MMX registers (64-bit each, aliased to low 64 bits of x87 FPU stack)
     pub mm: [u64; 8],
 }
