@@ -1632,3 +1632,157 @@ pub fn cvttpd2pi(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
+
+/// MOVDQA xmm1, xmm2/m128 (66 0F 6F /r)
+/// Move aligned packed integer values from xmm2/m128 to xmm1
+/// Memory operand must be 16-byte aligned, otherwise #GP exception
+pub fn movdqa_xmm_xmm_m128(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+
+    if is_memory {
+        // MOVDQA requires 16-byte alignment for memory operands
+        if addr & 0xF != 0 {
+            return Err(Error::Emulator(format!(
+                "MOVDQA: unaligned memory access at {:#x} (must be 16-byte aligned)",
+                addr
+            )));
+        }
+        // Read 128 bits from memory
+        let low = vcpu.read_mem(addr, 8)?;
+        let high = vcpu.read_mem(addr + 8, 8)?;
+        vcpu.regs.xmm[xmm_dst][0] = low;
+        vcpu.regs.xmm[xmm_dst][1] = high;
+    } else {
+        // XMM to XMM move
+        let xmm_src = rm as usize;
+        vcpu.regs.xmm[xmm_dst][0] = vcpu.regs.xmm[xmm_src][0];
+        vcpu.regs.xmm[xmm_dst][1] = vcpu.regs.xmm[xmm_src][1];
+    }
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// MOVDQU xmm1, xmm2/m128 (F3 0F 6F /r)
+/// Move unaligned packed integer values from xmm2/m128 to xmm1
+pub fn movdqu_xmm_xmm_m128(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+
+    if is_memory {
+        // MOVDQU allows unaligned memory access
+        let low = vcpu.read_mem(addr, 8)?;
+        let high = vcpu.read_mem(addr + 8, 8)?;
+        vcpu.regs.xmm[xmm_dst][0] = low;
+        vcpu.regs.xmm[xmm_dst][1] = high;
+    } else {
+        // XMM to XMM move
+        let xmm_src = rm as usize;
+        vcpu.regs.xmm[xmm_dst][0] = vcpu.regs.xmm[xmm_src][0];
+        vcpu.regs.xmm[xmm_dst][1] = vcpu.regs.xmm[xmm_src][1];
+    }
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// MOVQ mm, mm/m64 (NP 0F 6F /r)
+/// Move quadword from mm/m64 to MMX register
+pub fn movq_mm_mm_m64(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x07) as usize;
+
+    let value = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        let mm_src = (rm & 0x07) as usize;
+        vcpu.regs.mm[mm_src]
+    };
+
+    vcpu.regs.mm[mm_dst] = value;
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// MOVDQA xmm2/m128, xmm1 (66 0F 7F /r)
+/// Store aligned packed integer values from xmm1 to xmm2/m128
+/// Memory operand must be 16-byte aligned, otherwise #GP exception
+pub fn movdqa_xmm_m128_xmm(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_src = reg as usize;
+
+    if is_memory {
+        // MOVDQA requires 16-byte alignment for memory operands
+        if addr & 0xF != 0 {
+            return Err(Error::Emulator(format!(
+                "MOVDQA: unaligned memory access at {:#x} (must be 16-byte aligned)",
+                addr
+            )));
+        }
+        // Write 128 bits to memory
+        vcpu.write_mem(addr, vcpu.regs.xmm[xmm_src][0], 8)?;
+        vcpu.write_mem(addr + 8, vcpu.regs.xmm[xmm_src][1], 8)?;
+    } else {
+        // XMM to XMM move
+        let xmm_dst = rm as usize;
+        vcpu.regs.xmm[xmm_dst][0] = vcpu.regs.xmm[xmm_src][0];
+        vcpu.regs.xmm[xmm_dst][1] = vcpu.regs.xmm[xmm_src][1];
+    }
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// MOVDQU xmm2/m128, xmm1 (F3 0F 7F /r)
+/// Store unaligned packed integer values from xmm1 to xmm2/m128
+pub fn movdqu_xmm_m128_xmm(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_src = reg as usize;
+
+    if is_memory {
+        // MOVDQU allows unaligned memory access
+        vcpu.write_mem(addr, vcpu.regs.xmm[xmm_src][0], 8)?;
+        vcpu.write_mem(addr + 8, vcpu.regs.xmm[xmm_src][1], 8)?;
+    } else {
+        // XMM to XMM move
+        let xmm_dst = rm as usize;
+        vcpu.regs.xmm[xmm_dst][0] = vcpu.regs.xmm[xmm_src][0];
+        vcpu.regs.xmm[xmm_dst][1] = vcpu.regs.xmm[xmm_src][1];
+    }
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// MOVQ mm/m64, mm (NP 0F 7F /r)
+/// Store quadword from MMX register to mm/m64
+pub fn movq_mm_m64_mm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_src = (reg & 0x07) as usize;
+
+    let value = vcpu.regs.mm[mm_src];
+
+    if is_memory {
+        vcpu.write_mem(addr, value, 8)?;
+    } else {
+        let mm_dst = (rm & 0x07) as usize;
+        vcpu.regs.mm[mm_dst] = value;
+    }
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}

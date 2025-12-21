@@ -1043,6 +1043,34 @@ impl X86_64Vcpu {
             // 0F 38 escape - MOVBE and other instructions
             0x38 => self.execute_0f38(ctx),
 
+            // MOVDQA/MOVDQU/MOVQ load (0x6F)
+            0x6F => {
+                if ctx.rep_prefix == Some(0xF3) {
+                    // F3 0F 6F: MOVDQU xmm, xmm/m128 (unaligned)
+                    insn::data::movdqu_xmm_xmm_m128(self, ctx)
+                } else if ctx.operand_size_override {
+                    // 66 0F 6F: MOVDQA xmm, xmm/m128 (aligned)
+                    insn::data::movdqa_xmm_xmm_m128(self, ctx)
+                } else {
+                    // NP 0F 6F: MOVQ mm, mm/m64 (MMX)
+                    insn::data::movq_mm_mm_m64(self, ctx)
+                }
+            }
+
+            // MOVDQA/MOVDQU/MOVQ store (0x7F)
+            0x7F => {
+                if ctx.rep_prefix == Some(0xF3) {
+                    // F3 0F 7F: MOVDQU xmm/m128, xmm (unaligned)
+                    insn::data::movdqu_xmm_m128_xmm(self, ctx)
+                } else if ctx.operand_size_override {
+                    // 66 0F 7F: MOVDQA xmm/m128, xmm (aligned)
+                    insn::data::movdqa_xmm_m128_xmm(self, ctx)
+                } else {
+                    // NP 0F 7F: MOVQ mm/m64, mm (MMX)
+                    insn::data::movq_mm_m64_mm(self, ctx)
+                }
+            }
+
             _ => Err(Error::Emulator(format!(
                 "unimplemented 0x0F opcode: {:#04x} at RIP={:#x}",
                 opcode2, self.regs.rip
