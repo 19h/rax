@@ -1,7 +1,4 @@
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::backend::emulator::x86_64::flags;
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
@@ -881,8 +878,8 @@ fn test_repne_scasd_powers_of_two() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     
     let powers = [1u32, 2, 4, 8, 16, 32, 64, 128];
-    for i in 0..8 {
-        write_mem_at_u32(&mem, 0x4000 + i * 4, powers[i]);
+    for i in 0..8u64 {
+        write_mem_at_u32(&mem, 0x4000 + i * 4, powers[i as usize]);
     }
     
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -1002,8 +999,8 @@ fn test_repne_scasb_hex_digits() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     
     let hex = b"0123456789ABCDEF";
-    for i in 0..16 {
-        write_mem_at_u8(&mem, 0x4000 + i, hex[i]);
+    for i in 0..16u64 {
+        write_mem_at_u8(&mem, 0x4000 + i, hex[i as usize]);
     }
     
     let regs = run_until_hlt(&mut vcpu).unwrap();

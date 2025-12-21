@@ -22,7 +22,7 @@
 //!
 //! References: /Users/int/dev/rax/docs/finit:fninit.txt
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 // FPU default values

@@ -1,8 +1,6 @@
 use rax::cpu::Registers;
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm};
+use crate::common::{run_until_hlt, setup_vm};
 
 // CMOVcc - Conditional Move Instructions (0F 4x family)
 // Moves source to destination if condition code is true, preserving destination if false

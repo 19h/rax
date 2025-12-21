@@ -1,4 +1,4 @@
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 
 // PCMPESTRI - Packed Compare Explicit Length Strings, Return Index
 //
@@ -115,7 +115,7 @@ fn test_pcmpestri_full_16_bytes() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data1: [u8; 16] = [0x61; 16]; // All 'a'
+    let data1: [u8; 16] = [0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61]; // All 'a'
     let data2: [u8; 16] = [0x62, 0x61, 0x62, 0x61, 0x62, 0x61, 0x62, 0x61,
                            0x62, 0x61, 0x62, 0x61, 0x62, 0x61, 0x62, 0x61];
     mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();

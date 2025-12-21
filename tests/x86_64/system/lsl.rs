@@ -1,8 +1,6 @@
 use rax::cpu::Registers;
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm, write_mem_at_u16, zf_set, DATA_ADDR};
+use crate::common::{run_until_hlt, setup_vm, write_mem_at_u16, zf_set, DATA_ADDR};
 
 // LSL - Load Segment Limit
 // Opcode: 0F 03 /r

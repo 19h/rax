@@ -1,7 +1,4 @@
 // Module path for tests run via x86_64.rs
-#[path = "../common/mod.rs"]
-mod common;
-
 use crate::common::{run_until_hlt, setup_vm, cf_set, zf_set, sf_set, of_set, pf_set, read_mem_at_u8, read_mem_at_u16, read_mem_at_u32, read_mem_at_u64, write_mem_at_u8, write_mem_at_u16, write_mem_at_u32, write_mem_at_u64};
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};

@@ -14,7 +14,7 @@
 //!
 //! Reference: docs/packsswb:packssdw.txt
 
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::GuestMemoryMmap;
 
 // Helper to write 64-bit value to memory
@@ -416,7 +416,7 @@ fn test_packssdw_mm5_mm6() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x5678123400ABC0DEF, "PACKSSDW: MM5 with MM6");
+    assert_eq!(result, 0x5678123400ABC0DE, "PACKSSDW: MM5 with MM6");
 }
 
 #[test]

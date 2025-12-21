@@ -1,8 +1,6 @@
 use rax::cpu::Registers;
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm, write_mem_u8, write_mem_u16};
+use crate::common::{run_until_hlt, setup_vm, write_mem_u8, write_mem_u16};
 
 // MOVZX - Move with Zero Extension
 // Copies a byte or word from the source to a larger register with zero extension

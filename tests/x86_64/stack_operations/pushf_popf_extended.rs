@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm, cf_set, zf_set, sf_set, pf_set, af_set, of_set, df_set};
+use crate::common::*;
 use rax::cpu::Registers;
 
 // Comprehensive tests for PUSHF/POPF/PUSHFQ/POPFQ instructions
@@ -30,7 +30,7 @@ fn test_pushfq_basic() {
 
     // Read flags from stack
     let mut stack_val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(0x0FF8)).unwrap();
     let pushed_flags = u64::from_le_bytes(stack_val);
     assert_ne!(pushed_flags, 0, "Flags should be pushed");
 }
@@ -48,7 +48,7 @@ fn test_pushfq_with_carry_set() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut stack_val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(0x0FF8)).unwrap();
     let pushed_flags = u64::from_le_bytes(stack_val);
     assert_ne!(pushed_flags & 0x01, 0, "CF should be set in pushed flags");
 }
@@ -66,7 +66,7 @@ fn test_pushfq_with_zero_set() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut stack_val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(0x0FF8)).unwrap();
     let pushed_flags = u64::from_le_bytes(stack_val);
     assert_ne!(pushed_flags & 0x40, 0, "ZF should be set in pushed flags");
 }
@@ -85,7 +85,7 @@ fn test_pushfq_with_sign_set() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut stack_val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(0x0FF8)).unwrap();
     let pushed_flags = u64::from_le_bytes(stack_val);
     assert_ne!(pushed_flags & 0x80, 0, "SF should be set in pushed flags");
 }
@@ -104,7 +104,7 @@ fn test_pushfq_multiple_flags() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut stack_val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(0x0FF8)).unwrap();
     let pushed_flags = u64::from_le_bytes(stack_val);
     assert_ne!(pushed_flags & 0x01, 0, "CF should be set");
     assert_ne!(pushed_flags & 0x40, 0, "ZF should be set");
@@ -144,9 +144,9 @@ fn test_pushfq_multiple_times() {
     assert_eq!(regs.rsp, 0x1000 - 16, "RSP decremented twice");
 
     let mut stack_val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(0x0FF8)).unwrap();
     let first_flags = u64::from_le_bytes(stack_val);
-    vm.read_memory(0x0FF0, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(0x0FF0)).unwrap();
     let second_flags = u64::from_le_bytes(stack_val);
 
     assert_ne!(first_flags & 0x01, 0, "First PUSHFQ has CF set");
@@ -453,7 +453,7 @@ fn test_pushfq_popfq_preserves_reserved_bits() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut stack_val = [0u8; 8];
-    vm.read_memory(regs.rsp, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(regs.rsp)).unwrap();
     let pushed_flags = u64::from_le_bytes(stack_val);
 
     // Bit 1 should always be set (reserved)
@@ -474,7 +474,7 @@ fn test_pushfq_with_overflow() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut stack_val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(0x0FF8)).unwrap();
     let pushed_flags = u64::from_le_bytes(stack_val);
     assert_ne!(pushed_flags & 0x800, 0, "OF should be set in pushed flags");
 }
@@ -510,7 +510,7 @@ fn test_pushfq_with_direction_flag() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut stack_val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(0x0FF8)).unwrap();
     let pushed_flags = u64::from_le_bytes(stack_val);
     assert_ne!(pushed_flags & 0x400, 0, "DF should be set in pushed flags");
 }
@@ -574,7 +574,7 @@ fn test_pushfq_after_comparison() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut stack_val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(0x0FF8)).unwrap();
     let pushed_flags = u64::from_le_bytes(stack_val);
     assert_eq!(pushed_flags & 0x01, 0, "CF should be clear (10 >= 5)");
     assert_eq!(pushed_flags & 0x40, 0, "ZF should be clear (10 != 5)");
@@ -644,7 +644,7 @@ fn test_pushfq_with_parity_flag() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut stack_val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(0x0FF8)).unwrap();
     let pushed_flags = u64::from_le_bytes(stack_val);
     assert_ne!(pushed_flags & 0x04, 0, "PF should be set in pushed flags");
 }
@@ -682,7 +682,7 @@ fn test_pushfq_with_auxiliary_carry() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let mut stack_val = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut stack_val).unwrap();
+    vm.read_slice(&mut stack_val, GuestAddress(0x0FF8)).unwrap();
     let pushed_flags = u64::from_le_bytes(stack_val);
     assert_ne!(pushed_flags & 0x10, 0, "AF should be set in pushed flags");
 }

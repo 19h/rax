@@ -1,11 +1,8 @@
-use crate::common::{run_until_hlt, setup_vm, read_mem_u32, read_mem_u64, write_mem_u32, write_mem_u64};
+use crate::common::*;
 
 // MFENCE Tests - Memory Fence for ordering loads and stores
 // MFENCE: 0F AE F0
 // Serializes all load and store operations before and after the fence
-
-#[path = "../common/mod.rs"]
-mod common;
 
 #[test]
 fn test_mfence_basic() {

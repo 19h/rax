@@ -10,7 +10,7 @@
 //! References: /Users/int/dev/rax/docs/fdiv:fdivp:fidiv.txt
 //!             /Users/int/dev/rax/docs/fdivr:fdivrp:fidivr.txt
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 

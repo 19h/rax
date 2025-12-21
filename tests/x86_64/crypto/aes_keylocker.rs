@@ -20,10 +20,7 @@
 //!            docs/aesenc256kl.txt, docs/aesdecwide128kl.txt, docs/aesdecwide256kl.txt,
 //!            docs/aesencwide128kl.txt, docs/aesencwide256kl.txt
 
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // ============================================================================

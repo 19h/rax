@@ -1,8 +1,5 @@
 // Module path for tests run via x86_64.rs
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // MOVSX - Move with Sign Extension (Comprehensive Extended Tests)
@@ -325,9 +322,9 @@ fn test_movsxd_boundary_values_dword() {
     let test_cases = vec![
         (0x00000000, 0x0000000000000000u64),
         (0x00000001, 0x0000000000000001u64),
-        (0x7FFFFFFF, 0x000000007FFFFFFFu64), // Max positive
-        (0x80000000, 0xFFFFFFFF80000000u64), // Min negative
-        (0xFFFFFFFF, 0xFFFFFFFFFFFFFFFFu64), // -1
+        (0x7FFFFFFFu32 as i32, 0x000000007FFFFFFFu64), // Max positive
+        (0x80000000u32 as i32, 0xFFFFFFFF80000000u64), // Min negative
+        (0xFFFFFFFFu32 as i32, 0xFFFFFFFFFFFFFFFFu64), // -1
     ];
 
     for (input, expected) in test_cases {

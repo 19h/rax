@@ -10,10 +10,7 @@
 //!
 //! Reference: docs/ins:insb:insw:insd.txt
 
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::{Registers, VcpuExit};
 use rax::backend::emulator::x86_64::flags;
 
@@ -38,7 +35,7 @@ fn test_insb_basic() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0x60);
                 assert_eq!(size, 1);
-                vcpu.set_io_result(&[0x42]).unwrap();
+                vcpu.complete_io_in(&[0x42]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -63,7 +60,7 @@ fn test_insb_df_clear_increment() {
     loop {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { .. } => {
-                vcpu.set_io_result(&[0xAA]).unwrap();
+                vcpu.complete_io_in(&[0xAA]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -87,7 +84,7 @@ fn test_insb_df_set_decrement() {
     loop {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { .. } => {
-                vcpu.set_io_result(&[0xBB]).unwrap();
+                vcpu.complete_io_in(&[0xBB]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -112,7 +109,7 @@ fn test_insb_preserves_flags() {
     loop {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { .. } => {
-                vcpu.set_io_result(&[0xCC]).unwrap();
+                vcpu.complete_io_in(&[0xCC]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -139,7 +136,7 @@ fn test_insb_multiple_sequential() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { .. } => {
                 count += 1;
-                vcpu.set_io_result(&[count]).unwrap();
+                vcpu.complete_io_in(&[count]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -174,7 +171,7 @@ fn test_insw_basic() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0x3F8);
                 assert_eq!(size, 2);
-                vcpu.set_io_result(&[0x34, 0x12]).unwrap(); // 0x1234 little-endian
+                vcpu.complete_io_in(&[0x34, 0x12]); // 0x1234 little-endian
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -199,7 +196,7 @@ fn test_insw_df_clear_increment() {
     loop {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { .. } => {
-                vcpu.set_io_result(&[0xAA, 0xBB]).unwrap();
+                vcpu.complete_io_in(&[0xAA, 0xBB]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -223,7 +220,7 @@ fn test_insw_df_set_decrement() {
     loop {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { .. } => {
-                vcpu.set_io_result(&[0xCC, 0xDD]).unwrap();
+                vcpu.complete_io_in(&[0xCC, 0xDD]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -250,7 +247,7 @@ fn test_insw_multiple_sequential() {
             VcpuExit::IoIn { .. } => {
                 count += 1;
                 let val = count * 0x1111;
-                vcpu.set_io_result(&val.to_le_bytes()).unwrap();
+                vcpu.complete_io_in(&val.to_le_bytes());
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -285,7 +282,7 @@ fn test_insd_basic() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0xCFC);
                 assert_eq!(size, 4);
-                vcpu.set_io_result(&[0x78, 0x56, 0x34, 0x12]).unwrap(); // 0x12345678
+                vcpu.complete_io_in(&[0x78, 0x56, 0x34, 0x12]); // 0x12345678
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -310,7 +307,7 @@ fn test_insd_df_clear_increment() {
     loop {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { .. } => {
-                vcpu.set_io_result(&[0xAA, 0xBB, 0xCC, 0xDD]).unwrap();
+                vcpu.complete_io_in(&[0xAA, 0xBB, 0xCC, 0xDD]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -334,7 +331,7 @@ fn test_insd_df_set_decrement() {
     loop {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { .. } => {
-                vcpu.set_io_result(&[0x11, 0x22, 0x33, 0x44]).unwrap();
+                vcpu.complete_io_in(&[0x11, 0x22, 0x33, 0x44]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -361,7 +358,7 @@ fn test_insd_multiple_sequential() {
             VcpuExit::IoIn { .. } => {
                 count += 1;
                 let val = count * 0x11111111;
-                vcpu.set_io_result(&val.to_le_bytes()).unwrap();
+                vcpu.complete_io_in(&val.to_le_bytes());
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -399,7 +396,7 @@ fn test_rep_insb_basic() {
                 assert_eq!(port, 0x60);
                 assert_eq!(size, 1);
                 count += 1;
-                vcpu.set_io_result(&[count]).unwrap();
+                vcpu.complete_io_in(&[count]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -432,7 +429,7 @@ fn test_rep_insb_zero_count() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { .. } => {
                 io_count += 1;
-                vcpu.set_io_result(&[0xFF]).unwrap();
+                vcpu.complete_io_in(&[0xFF]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -460,7 +457,7 @@ fn test_rep_insb_df_set() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { .. } => {
                 count += 1;
-                vcpu.set_io_result(&[count]).unwrap();
+                vcpu.complete_io_in(&[count]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -495,7 +492,7 @@ fn test_rep_insw_basic() {
                 assert_eq!(size, 2);
                 count += 1;
                 let val = count * 0x1000;
-                vcpu.set_io_result(&val.to_le_bytes()).unwrap();
+                vcpu.complete_io_in(&val.to_le_bytes());
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -529,7 +526,7 @@ fn test_rep_insw_zero_count() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { .. } => {
                 io_count += 1;
-                vcpu.set_io_result(&[0, 0]).unwrap();
+                vcpu.complete_io_in(&[0, 0]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -555,7 +552,7 @@ fn test_rep_insw_df_set() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { .. } => {
                 count += 1;
-                vcpu.set_io_result(&[0xAA, 0xBB]).unwrap();
+                vcpu.complete_io_in(&[0xAA, 0xBB]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -590,7 +587,7 @@ fn test_rep_insd_basic() {
                 assert_eq!(size, 4);
                 count += 1;
                 let val = count * 0x10000000;
-                vcpu.set_io_result(&val.to_le_bytes()).unwrap();
+                vcpu.complete_io_in(&val.to_le_bytes());
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -623,7 +620,7 @@ fn test_rep_insd_zero_count() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { .. } => {
                 io_count += 1;
-                vcpu.set_io_result(&[0, 0, 0, 0]).unwrap();
+                vcpu.complete_io_in(&[0, 0, 0, 0]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -649,7 +646,7 @@ fn test_rep_insd_df_set() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { .. } => {
                 count += 1;
-                vcpu.set_io_result(&[0x11, 0x22, 0x33, 0x44]).unwrap();
+                vcpu.complete_io_in(&[0x11, 0x22, 0x33, 0x44]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -681,9 +678,9 @@ fn test_ins_mixed_sizes() {
             VcpuExit::IoIn { size, .. } => {
                 io_ops.push(size);
                 match size {
-                    1 => vcpu.set_io_result(&[0xAA]).unwrap(),
-                    2 => vcpu.set_io_result(&[0xBB, 0xCC]).unwrap(),
-                    4 => vcpu.set_io_result(&[0xDD, 0xEE, 0xFF, 0x11]).unwrap(),
+                    1 => vcpu.complete_io_in(&[0xAA]),
+                    2 => vcpu.complete_io_in(&[0xBB, 0xCC]),
+                    4 => vcpu.complete_io_in(&[0xDD, 0xEE, 0xFF, 0x11]),
                     _ => panic!("Unexpected size"),
                 }
             }
@@ -716,7 +713,7 @@ fn test_rep_insb_single_iteration() {
     loop {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { .. } => {
-                vcpu.set_io_result(&[0x99]).unwrap();
+                vcpu.complete_io_in(&[0x99]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -742,7 +739,7 @@ fn test_ins_preserves_rdx() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, .. } => {
                 assert_eq!(port, 0x80, "Only low 16 bits of DX used");
-                vcpu.set_io_result(&[0x42]).unwrap();
+                vcpu.complete_io_in(&[0x42]);
             }
             VcpuExit::Hlt => break,
             _ => continue,

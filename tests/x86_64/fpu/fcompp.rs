@@ -6,7 +6,7 @@
 //!
 //! Opcode: DE D9 - FCOMPP ; Compare ST(0) with ST(1) and pop twice
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 

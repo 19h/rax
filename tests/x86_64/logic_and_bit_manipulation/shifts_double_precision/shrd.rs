@@ -19,10 +19,7 @@
 // - AF: Undefined for non-zero count
 // - Count is 0: No flags affected
 
-#[path = "../../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 use rax::backend::emulator::x86_64::flags;
 use std::sync::Arc;

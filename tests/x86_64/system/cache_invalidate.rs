@@ -14,10 +14,7 @@
 //!
 //! References: Intel SDM Vol. 2, Cache and TLB management instructions
 
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // ============================================================================

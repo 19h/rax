@@ -15,7 +15,7 @@
 //!
 //! Reference: /Users/int/dev/rax/docs/frndint.txt
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 fn write_f64(mem: &vm_memory::GuestMemoryMmap, addr: u64, val: f64) {
@@ -144,7 +144,8 @@ macro_rules! frndint_special_test {
             write_f64(&mem, 0x2000, $val);
             run_until_hlt(&mut vcpu).unwrap();
             let result = read_f64(&mem, 0x3000);
-            if $expected.is_nan() {
+            let expected_val: f64 = $expected;
+            if expected_val.is_nan() {
                 assert!(result.is_nan());
             } else {
                 assert_eq!(result, $expected);

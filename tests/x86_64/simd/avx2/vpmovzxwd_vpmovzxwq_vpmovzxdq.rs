@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 // VPMOVZXWD/VPMOVZXWQ/VPMOVZXDQ - Zero Extend Packed Words/Dwords (AVX2)
@@ -113,7 +113,7 @@ fn test_vpmovzxwd_ymm5_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0xFF; 16];
+    let data = vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -347,7 +347,7 @@ fn test_vpmovzxdq_ymm5_mem() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0xFF; 16];
+    let data = vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -510,7 +510,7 @@ fn test_vpmovzxwd_mem_zero_words() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0x00; 16];
+    let data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -526,7 +526,7 @@ fn test_vpmovzxwq_mem_zero_words() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0x00; 8];
+    let data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -542,7 +542,7 @@ fn test_vpmovzxdq_mem_zero_dwords() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0x00; 16];
+    let data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -558,7 +558,7 @@ fn test_vpmovzxwd_mem_max_values() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0xFF; 16];
+    let data = vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -574,7 +574,7 @@ fn test_vpmovzxwq_mem_max_values() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0xFF; 8];
+    let data = vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -590,7 +590,7 @@ fn test_vpmovzxdq_mem_max_values() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data = vec![0xFF; 16];
+    let data = vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

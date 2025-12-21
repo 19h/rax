@@ -1,8 +1,6 @@
 use rax::cpu::Registers;
 
-#[path = "../../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm};
+use crate::common::*;
 
 // CALL - Call Procedure
 // Pushes return address (RIP) onto stack and jumps to target
@@ -27,7 +25,7 @@ fn test_call_relative() {
 
     // Return address should be on stack (address after CALL instruction)
     let mut return_addr = [0u8; 8];
-    vm.read_memory(0x0FF8, &mut return_addr).unwrap();
+    vm.read_slice(&mut return_addr, GuestAddress(0x0FF8)).unwrap();
     let addr = u64::from_le_bytes(return_addr);
     // Return address should point to the HLT after CALL (offset 5)
     assert_eq!(addr & 0xFFFF, 5, "Return address is offset 5");

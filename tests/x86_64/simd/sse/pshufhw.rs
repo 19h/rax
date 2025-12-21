@@ -1,4 +1,4 @@
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 
 // PSHUFHW - Shuffle Packed High Words
 //
@@ -136,17 +136,6 @@ fn test_pshufhw_xmm0_xmm1_imm_0xe4() {
     // High: [4, 5, 6, 7] - identity (no change), Low: unchanged
     let code = [
         0xf3, 0x0f, 0x70, 0xc1, 0xe4, // PSHUFHW XMM0, XMM1, 0xE4
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    run_until_hlt(&mut vcpu).unwrap();
-}
-
-#[test]
-fn test_pshufhw_xmm3_xmm4_imm_0xe4() {
-    // PSHUFHW XMM3, XMM4, 0xE4
-    let code = [
-        0xf3, 0x0f, 0x70, 0xdc, 0xe4, // PSHUFHW XMM3, XMM4, 0xE4
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -387,17 +376,6 @@ fn test_pshufhw_xmm1_xmm2_imm_0xe4() {
 }
 
 #[test]
-fn test_pshufhw_xmm3_xmm4_imm_0xe4() {
-    // PSHUFHW XMM3, XMM4, 0xE4
-    let code = [
-        0xf3, 0x0f, 0x70, 0xdc, 0xe4, // PSHUFHW XMM3, XMM4, 0xE4
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    run_until_hlt(&mut vcpu).unwrap();
-}
-
-#[test]
 fn test_pshufhw_xmm5_xmm6_imm_0xe4() {
     // PSHUFHW XMM5, XMM6, 0xE4
     let code = [
@@ -558,7 +536,7 @@ fn test_pshufhw_xmm2_mem_imm_0x00() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -576,7 +554,7 @@ fn test_pshufhw_xmm3_mem_imm_0xff() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xAA; 16], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -594,7 +572,7 @@ fn test_pshufhw_xmm7_mem_imm_0x4e() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x55; 16], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -616,7 +594,7 @@ fn test_pshufhw_xmm0_mem_displacement_imm_0xe4() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x77; 16], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -634,7 +612,7 @@ fn test_pshufhw_xmm1_mem_rbx_imm_0xe4() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x88; 16], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

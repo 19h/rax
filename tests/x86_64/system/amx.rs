@@ -20,10 +20,7 @@
 //!            docs/sttilecfg.txt, docs/tdpbf16ps.txt,
 //!            docs/tdpbssd:tdpbsud:tdpbusd:tdpbuud.txt
 
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // ============================================================================

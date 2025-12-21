@@ -1,7 +1,4 @@
 // Module path for tests run via x86_64.rs
-#[path = "../common/mod.rs"]
-mod common;
-
 use crate::common::{run_until_hlt, setup_vm, read_mem_at_u64, write_mem_at_u64, DATA_ADDR};
 use rax::cpu::Registers;
 
@@ -266,13 +263,13 @@ fn test_movdir64b_pattern_data() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
 
     for i in 0..8 {
-        write_mem_at_u64(&mem, 0x2000 + i * 8, patterns[i]);
+        write_mem_at_u64(&mem, 0x2000 + i * 8, patterns[i as usize]);
     }
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..8 {
-        assert_eq!(read_mem_at_u64(&mem, 0x3000 + i * 8), patterns[i]);
+        assert_eq!(read_mem_at_u64(&mem, 0x3000 + i * 8), patterns[i as usize]);
     }
 }
 
@@ -523,13 +520,13 @@ fn test_movdir64b_unique_values() {
     ];
 
     for i in 0..8 {
-        write_mem_at_u64(&mem, 0x2000 + i * 8, unique_values[i]);
+        write_mem_at_u64(&mem, 0x2000 + i * 8, unique_values[i as usize]);
     }
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..8 {
-        assert_eq!(read_mem_at_u64(&mem, 0x3000 + i * 8), unique_values[i]);
+        assert_eq!(read_mem_at_u64(&mem, 0x3000 + i * 8), unique_values[i as usize]);
     }
 }
 
@@ -570,12 +567,9 @@ fn test_movdir64b_first_last_qword() {
     regs.rbx = 0x2000;
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
 
-    // Special values for first and last
-    write_mem_at_u64(&mem, 0x2000, 0xFIRST_VALUE_MARKER); // Would use actual value
-    write_mem_at_u64(&mem, 0x2038, 0xLAST_VALUE_MARKER);  // Would use actual value
-
     // Use actual marker values
     write_mem_at_u64(&mem, 0x2000, 0xAAAAAAAAAAAAAAAA);
+    write_mem_at_u64(&mem, 0x2038, 0xBBBBBBBBBBBBBBBB);
     for i in 1..7 {
         write_mem_at_u64(&mem, 0x2000 + i * 8, i as u64);
     }
@@ -643,7 +637,7 @@ fn test_movdir64b_prime_numbers() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
 
     for i in 0..8 {
-        write_mem_at_u64(&mem, 0x2000 + i * 8, primes[i] * 0x0101010101010101);
+        write_mem_at_u64(&mem, 0x2000 + i * 8, primes[i as usize] * 0x0101010101010101);
     }
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
@@ -651,7 +645,7 @@ fn test_movdir64b_prime_numbers() {
     for i in 0..8 {
         assert_eq!(
             read_mem_at_u64(&mem, 0x3000 + i * 8),
-            primes[i] * 0x0101010101010101
+            primes[i as usize] * 0x0101010101010101
         );
     }
 }
@@ -726,12 +720,12 @@ fn test_movdir64b_mixed_endianness_patterns() {
     ];
 
     for i in 0..8 {
-        write_mem_at_u64(&mem, 0x2000 + i * 8, patterns[i]);
+        write_mem_at_u64(&mem, 0x2000 + i * 8, patterns[i as usize]);
     }
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..8 {
-        assert_eq!(read_mem_at_u64(&mem, 0x3000 + i * 8), patterns[i]);
+        assert_eq!(read_mem_at_u64(&mem, 0x3000 + i * 8), patterns[i as usize]);
     }
 }

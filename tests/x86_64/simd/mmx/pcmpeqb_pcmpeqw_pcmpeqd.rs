@@ -9,10 +9,7 @@
 //!
 //! Reference: docs/pcmpeqb:pcmpeqw:pcmpeqd.txt
 
-#[path = "../../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 
 fn write_mm_via_mem(mem: &vm_memory::GuestMemoryMmap, addr: u64, value: u64) {
     write_mem_at_u64(mem, addr, value);

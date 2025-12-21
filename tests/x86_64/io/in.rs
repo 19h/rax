@@ -10,10 +10,7 @@
 //!
 //! Reference: docs/in.txt
 
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::{Registers, VcpuExit};
 
 // ============================================================================
@@ -37,7 +34,7 @@ fn test_in_al_imm8_port_0() {
                 assert_eq!(port, 0, "Port should be 0");
                 assert_eq!(size, 1, "Size should be 1 byte");
                 // Simulate reading value 0x42 from port
-                vcpu.set_io_result(&[0x42]).unwrap();
+                vcpu.complete_io_in(&[0x42]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -62,7 +59,7 @@ fn test_in_al_imm8_port_80h() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0x80, "Port should be 0x80");
                 assert_eq!(size, 1, "Size should be 1 byte");
-                vcpu.set_io_result(&[0xAA]).unwrap();
+                vcpu.complete_io_in(&[0xAA]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -86,7 +83,7 @@ fn test_in_al_imm8_port_ff() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0xFF, "Port should be 0xFF");
                 assert_eq!(size, 1, "Size should be 1 byte");
-                vcpu.set_io_result(&[0x55]).unwrap();
+                vcpu.complete_io_in(&[0x55]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -110,7 +107,7 @@ fn test_in_al_imm8_zero_value() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0x20);
                 assert_eq!(size, 1);
-                vcpu.set_io_result(&[0x00]).unwrap();
+                vcpu.complete_io_in(&[0x00]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -133,7 +130,7 @@ fn test_in_al_imm8_all_bits_set() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0x21);
-                vcpu.set_io_result(&[0xFF]).unwrap();
+                vcpu.complete_io_in(&[0xFF]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -159,8 +156,8 @@ fn test_in_al_imm8_multiple_reads() {
             VcpuExit::IoIn { port, size } => {
                 port_reads.push(port);
                 match port {
-                    0x60 => vcpu.set_io_result(&[0x1A]).unwrap(),
-                    0x61 => vcpu.set_io_result(&[0x2B]).unwrap(),
+                    0x60 => vcpu.complete_io_in(&[0x1A]),
+                    0x61 => vcpu.complete_io_in(&[0x2B]),
                     _ => panic!("Unexpected port"),
                 }
             }
@@ -186,7 +183,7 @@ fn test_in_al_imm8_preserves_flags() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, .. } => {
                 assert_eq!(port, 0x10);
-                vcpu.set_io_result(&[0x99]).unwrap();
+                vcpu.complete_io_in(&[0x99]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -215,7 +212,7 @@ fn test_in_ax_imm8_basic() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0x10);
                 assert_eq!(size, 2, "Size should be 2 bytes");
-                vcpu.set_io_result(&[0x34, 0x12]).unwrap(); // 0x1234 little-endian
+                vcpu.complete_io_in(&[0x34, 0x12]); // 0x1234 little-endian
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -240,7 +237,7 @@ fn test_in_ax_imm8_port_0() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0);
                 assert_eq!(size, 2);
-                vcpu.set_io_result(&[0xAB, 0xCD]).unwrap();
+                vcpu.complete_io_in(&[0xAB, 0xCD]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -263,7 +260,7 @@ fn test_in_ax_imm8_port_ff() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0xFF);
                 assert_eq!(size, 2);
-                vcpu.set_io_result(&[0xFF, 0xFF]).unwrap();
+                vcpu.complete_io_in(&[0xFF, 0xFF]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -286,7 +283,7 @@ fn test_in_ax_imm8_zero_value() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, .. } => {
                 assert_eq!(port, 0x3F);
-                vcpu.set_io_result(&[0x00, 0x00]).unwrap();
+                vcpu.complete_io_in(&[0x00, 0x00]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -315,7 +312,7 @@ fn test_in_eax_imm8_basic() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0x40);
                 assert_eq!(size, 4, "Size should be 4 bytes");
-                vcpu.set_io_result(&[0x78, 0x56, 0x34, 0x12]).unwrap(); // 0x12345678
+                vcpu.complete_io_in(&[0x78, 0x56, 0x34, 0x12]); // 0x12345678
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -340,7 +337,7 @@ fn test_in_eax_imm8_port_0() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0);
                 assert_eq!(size, 4);
-                vcpu.set_io_result(&[0xEF, 0xBE, 0xAD, 0xDE]).unwrap();
+                vcpu.complete_io_in(&[0xEF, 0xBE, 0xAD, 0xDE]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -363,7 +360,7 @@ fn test_in_eax_imm8_port_ff() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0xFF);
                 assert_eq!(size, 4);
-                vcpu.set_io_result(&[0x11, 0x22, 0x33, 0x44]).unwrap();
+                vcpu.complete_io_in(&[0x11, 0x22, 0x33, 0x44]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -384,7 +381,7 @@ fn test_in_eax_imm8_all_bits() {
     loop {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, .. } => {
-                vcpu.set_io_result(&[0xFF, 0xFF, 0xFF, 0xFF]).unwrap();
+                vcpu.complete_io_in(&[0xFF, 0xFF, 0xFF, 0xFF]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -414,7 +411,7 @@ fn test_in_al_dx_basic() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0x3F8, "Port should be from DX");
                 assert_eq!(size, 1);
-                vcpu.set_io_result(&[0x41]).unwrap(); // 'A'
+                vcpu.complete_io_in(&[0x41]); // 'A'
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -437,7 +434,7 @@ fn test_in_al_dx_port_0() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0);
-                vcpu.set_io_result(&[0xBB]).unwrap();
+                vcpu.complete_io_in(&[0xBB]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -460,7 +457,7 @@ fn test_in_al_dx_port_ffff() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0xFFFF);
-                vcpu.set_io_result(&[0x88]).unwrap();
+                vcpu.complete_io_in(&[0x88]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -483,7 +480,7 @@ fn test_in_al_dx_high_port() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, .. } => {
                 assert_eq!(port, 0x1234);
-                vcpu.set_io_result(&[0xCC]).unwrap();
+                vcpu.complete_io_in(&[0xCC]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -506,7 +503,7 @@ fn test_in_al_dx_only_uses_dx_low_16bits() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, .. } => {
                 assert_eq!(port, 0x42, "Only low 16 bits of DX used");
-                vcpu.set_io_result(&[0x77]).unwrap();
+                vcpu.complete_io_in(&[0x77]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -536,7 +533,7 @@ fn test_in_ax_dx_basic() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0x2F8);
                 assert_eq!(size, 2);
-                vcpu.set_io_result(&[0xCD, 0xAB]).unwrap();
+                vcpu.complete_io_in(&[0xCD, 0xAB]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -557,7 +554,7 @@ fn test_in_ax_dx_port_0() {
     loop {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, .. } => {
-                vcpu.set_io_result(&[0x11, 0x22]).unwrap();
+                vcpu.complete_io_in(&[0x11, 0x22]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -579,7 +576,7 @@ fn test_in_ax_dx_port_ffff() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0xFFFF);
-                vcpu.set_io_result(&[0xEF, 0xBE]).unwrap();
+                vcpu.complete_io_in(&[0xEF, 0xBE]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -601,7 +598,7 @@ fn test_in_ax_dx_high_port() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, .. } => {
                 assert_eq!(port, 0x8888);
-                vcpu.set_io_result(&[0x34, 0x12]).unwrap();
+                vcpu.complete_io_in(&[0x34, 0x12]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -631,7 +628,7 @@ fn test_in_eax_dx_basic() {
             VcpuExit::IoIn { port, size } => {
                 assert_eq!(port, 0xCF8);
                 assert_eq!(size, 4);
-                vcpu.set_io_result(&[0x11, 0x22, 0x33, 0x44]).unwrap();
+                vcpu.complete_io_in(&[0x11, 0x22, 0x33, 0x44]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -652,7 +649,7 @@ fn test_in_eax_dx_port_0() {
     loop {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, .. } => {
-                vcpu.set_io_result(&[0xAA, 0xBB, 0xCC, 0xDD]).unwrap();
+                vcpu.complete_io_in(&[0xAA, 0xBB, 0xCC, 0xDD]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -674,7 +671,7 @@ fn test_in_eax_dx_port_ffff() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, .. } => {
                 assert_eq!(port, 0xFFFF);
-                vcpu.set_io_result(&[0xFF, 0xFF, 0xFF, 0xFF]).unwrap();
+                vcpu.complete_io_in(&[0xFF, 0xFF, 0xFF, 0xFF]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -696,7 +693,7 @@ fn test_in_eax_dx_high_port() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, .. } => {
                 assert_eq!(port, 0xCFC);
-                vcpu.set_io_result(&[0x78, 0x56, 0x34, 0x12]).unwrap();
+                vcpu.complete_io_in(&[0x78, 0x56, 0x34, 0x12]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -719,7 +716,7 @@ fn test_in_eax_dx_preserves_rdx() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, .. } => {
                 assert_eq!(port, 0x100);
-                vcpu.set_io_result(&[0x00, 0x00, 0x00, 0x00]).unwrap();
+                vcpu.complete_io_in(&[0x00, 0x00, 0x00, 0x00]);
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -753,9 +750,9 @@ fn test_in_sequence_different_sizes() {
             VcpuExit::IoIn { port, size } => {
                 io_count += 1;
                 match (port, size) {
-                    (0x60, 1) => vcpu.set_io_result(&[0xAA]).unwrap(),
-                    (0x64, 2) => vcpu.set_io_result(&[0x34, 0x12]).unwrap(),
-                    (0x40, 4) => vcpu.set_io_result(&[0x78, 0x56, 0x34, 0x12]).unwrap(),
+                    (0x60, 1) => vcpu.complete_io_in(&[0xAA]),
+                    (0x64, 2) => vcpu.complete_io_in(&[0x34, 0x12]),
+                    (0x40, 4) => vcpu.complete_io_in(&[0x78, 0x56, 0x34, 0x12]),
                     _ => panic!("Unexpected I/O"),
                 }
             }
@@ -788,7 +785,7 @@ fn test_in_loop_changing_port() {
         match vcpu.run().unwrap() {
             VcpuExit::IoIn { port, .. } => {
                 ports.push(port);
-                vcpu.set_io_result(&[port as u8]).unwrap();
+                vcpu.complete_io_in(&[port as u8]);
             }
             VcpuExit::Hlt => break,
             _ => continue,

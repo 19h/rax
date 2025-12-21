@@ -25,10 +25,7 @@
 //!
 //! Reference: /Users/int/dev/rax/docs/pshufw.txt
 
-#[path = "../../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 
 // ============================================================================
 // PSHUFW Tests: Identity and Reverse Operations
@@ -486,7 +483,7 @@ fn test_pshufw_sequential_values() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0x0002_0x0004_0x0001_0x0003,
+    assert_eq!(result, 0x0002_0004_0001_0003,
         "Should shuffle to pattern 2,0,3,1");
 }
 
@@ -612,7 +609,7 @@ fn test_pshufw_byte_boundaries() {
 
     let result = read_mem_at_u64(&mem, 0x3000);
     // Words should stay together
-    assert_eq!(result, 0x0708_0506_0304_0x0102,
+    assert_eq!(result, 0x0708_0506_0304_0102,
         "Word boundaries should be preserved");
 }
 

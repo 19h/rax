@@ -1,8 +1,5 @@
 // Module path for tests run via x86_64.rs
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // PUSHAD/POPAD - Push/Pop All General Purpose Registers (32-bit mode)

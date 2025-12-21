@@ -19,7 +19,7 @@
 //!
 //! Reference: /Users/int/dev/rax/docs/f2xm1.txt
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 

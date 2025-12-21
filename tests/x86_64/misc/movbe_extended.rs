@@ -1,8 +1,5 @@
 // Module path for tests run via x86_64.rs
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 
 // MOVBE - Move with Byte Swap
 // Moves data between register and memory with byte order reversal

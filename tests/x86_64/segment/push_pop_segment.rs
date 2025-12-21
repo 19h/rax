@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm, STACK_ADDR};
+use crate::common::*;
 use rax::cpu::Registers;
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress};

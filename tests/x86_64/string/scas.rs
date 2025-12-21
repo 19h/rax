@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{setup_vm_legacy as setup_vm, run_until_hlt_legacy as run_until_hlt, VM, Bytes};
 
 // SCAS/SCASB/SCASW/SCASD/SCASQ - Scan String
 // Compares AL/AX/EAX/RAX with [RDI], sets flags, increments/decrements RDI based on DF

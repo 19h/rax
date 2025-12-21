@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 // VPABSB/VPABSW/VPABSD - Packed Absolute Value (AVX2)
@@ -151,7 +151,7 @@ fn test_vpabsb_ymm2_mem_min_max() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let mut data = vec![0x80u8; 16]; // -128
-    data.extend(vec![0x7F; 16]); // +127
+    data.extend(vec![0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F]); // +127
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

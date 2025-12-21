@@ -1,7 +1,4 @@
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // PEXT - Parallel Bits Extract (BMI2)
@@ -17,7 +14,7 @@ use rax::cpu::Registers;
 fn test_pext_basic_single_bit() {
     // PEXT EAX, EBX, ECX - extract bit 0
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -33,7 +30,7 @@ fn test_pext_basic_single_bit() {
 fn test_pext_extract_from_higher_position() {
     // PEXT EAX, EBX, ECX - extract bit 4 to position 0
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -49,7 +46,7 @@ fn test_pext_extract_from_higher_position() {
 fn test_pext_multiple_bits() {
     // PEXT with multiple bits
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -66,7 +63,7 @@ fn test_pext_multiple_bits() {
 fn test_pext_sparse_extraction() {
     // PEXT with sparse mask
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -83,7 +80,7 @@ fn test_pext_sparse_extraction() {
 fn test_pext_zero_source() {
     // PEXT with zero source
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -99,7 +96,7 @@ fn test_pext_zero_source() {
 fn test_pext_zero_mask() {
     // PEXT with zero mask
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -115,7 +112,7 @@ fn test_pext_zero_mask() {
 fn test_pext_identity() {
     // PEXT with mask = all 1s should be identity
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -131,7 +128,7 @@ fn test_pext_identity() {
 fn test_pext_64bit_basic() {
     // PEXT RAX, RBX, RCX - 64-bit version
     let code = [
-        0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PEXT RAX, RBX, RCX (W1)
+        0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PEXT RAX, RBX, RCX (W1)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -148,7 +145,7 @@ fn test_pext_64bit_basic() {
 fn test_pext_64bit_high_bits() {
     // PEXT with high bits in 64-bit operands
     let code = [
-        0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PEXT RAX, RBX, RCX
+        0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PEXT RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -164,7 +161,7 @@ fn test_pext_64bit_high_bits() {
 fn test_pext_alternating_pattern() {
     // PEXT with alternating pattern
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -180,7 +177,7 @@ fn test_pext_alternating_pattern() {
 fn test_pext_inverse_alternating() {
     // PEXT with inverse alternating pattern
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -196,7 +193,7 @@ fn test_pext_inverse_alternating() {
 fn test_pext_byte_gather() {
     // PEXT to gather bits from across dword
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -212,23 +209,23 @@ fn test_pext_byte_gather() {
 fn test_pext_extended_registers_r8_r9_r10() {
     // PEXT R8D, R9D, R10D
     let code = [
-        0xc4, 0x42, 0x33, 0xf5, 0xc2, // PEXT R8D, R9D, R10D
+        0xc4, 0x42, 0x32, 0xf5, 0xc2, // PEXT R8D, R9D, R10D
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.r9 = 0x01010101;
-    regs.r10 = 0x0F0F0F0F; // mask
+    regs.r9 = 0x0F0F0F0F; // Source with all mask bits set
+    regs.r10 = 0x0F0F0F0F; // mask: 16 bits
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0x0F, "Extended registers should work");
+    assert_eq!(regs.r8 & 0xFFFFFFFF, 0xFFFF, "Extended registers should work");
 }
 
 #[test]
 fn test_pext_r15_r14_r13() {
     // PEXT R15, R14, R13
     let code = [
-        0xc4, 0x42, 0x8b, 0xf5, 0xfd, // PEXT R15, R14, R13
+        0xc4, 0x42, 0x8a, 0xf5, 0xfd, // PEXT R15, R14, R13
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -244,32 +241,32 @@ fn test_pext_r15_r14_r13() {
 fn test_pext_mem32() {
     // PEXT EAX, EBX, [mem]
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PEXT EAX, EBX, [DATA_ADDR]
+        0xc4, 0xe2, 0x62, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PEXT EAX, EBX, [DATA_ADDR]
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rbx = 0x10101010;
+    regs.rbx = 0xF0F0F0F0; // Source has all mask bits set
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
-    write_mem_u32(&mem, 0xF0F0F0F0); // mask from memory
+    write_mem_u32(&mem, 0xF0F0F0F0); // mask from memory (16 bits)
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0F, "Memory operand should work");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFF, "Memory operand should work");
 }
 
 #[test]
 fn test_pext_mem64() {
     // PEXT RAX, RBX, [mem]
     let code = [
-        0xc4, 0xe2, 0xe3, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PEXT RAX, RBX, [DATA_ADDR]
+        0xc4, 0xe2, 0xe2, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PEXT RAX, RBX, [DATA_ADDR]
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rbx = 0x0100_0100_0100_0100;
+    regs.rbx = 0xFF00_FF00_FF00_FF00; // Source has all mask bits set
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
-    write_mem_u64(&mem, 0xFF00_FF00_FF00_FF00); // mask from memory
+    write_mem_u64(&mem, 0xFF00_FF00_FF00_FF00); // mask: 32 bits total
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0F, "64-bit memory operand should work");
+    assert_eq!(regs.rax, 0xFFFFFFFF, "64-bit memory operand should work");
 }
 
 #[test]
@@ -277,7 +274,7 @@ fn test_pext_single_mask_bit_positions() {
     // Test extracting from each bit position
     for pos in 0..32 {
         let code = [
-            0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+            0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -294,7 +291,7 @@ fn test_pext_single_mask_bit_positions() {
 fn test_pext_contiguous_mask() {
     // PEXT with contiguous mask (bitfield extraction)
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -310,7 +307,7 @@ fn test_pext_contiguous_mask() {
 fn test_pext_partial_match() {
     // PEXT where only some mask bits match source bits
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -328,7 +325,7 @@ fn test_pext_power_of_two_mask() {
     // PEXT with power of two masks
     for i in 0..32 {
         let code = [
-            0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+            0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -353,7 +350,7 @@ fn test_pext_64bit_all_positions() {
 
     for (src, mask, expected) in &test_cases {
         let code = [
-            0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PEXT RAX, RBX, RCX
+            0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PEXT RAX, RBX, RCX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -370,7 +367,7 @@ fn test_pext_64bit_all_positions() {
 fn test_pext_nibble_extraction() {
     // PEXT to extract nibbles
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -386,7 +383,7 @@ fn test_pext_nibble_extraction() {
 fn test_pext_preserves_source() {
     // PEXT should not modify source operands
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -403,7 +400,7 @@ fn test_pext_preserves_source() {
 fn test_pext_flags_unaffected() {
     // PEXT should not modify flags
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -422,7 +419,7 @@ fn test_pext_byte_extraction() {
     // Extract specific bytes
     for byte_pos in 0..4 {
         let code = [
-            0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+            0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -439,7 +436,7 @@ fn test_pext_byte_extraction() {
 fn test_pext_morton_code_helper() {
     // PEXT can help with Morton codes (Z-order curves)
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -455,7 +452,7 @@ fn test_pext_morton_code_helper() {
 fn test_pext_color_channel_extraction() {
     // Extract color channel from pixel (practical graphics use)
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -471,7 +468,7 @@ fn test_pext_color_channel_extraction() {
 fn test_pext_bit_counting_helper() {
     // PEXT for gathering specific bits
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -487,7 +484,7 @@ fn test_pext_bit_counting_helper() {
 fn test_pext_signed_interpretation() {
     // PEXT with values that look negative in signed interpretation
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -504,7 +501,7 @@ fn test_pext_consecutive_calls() {
     // Multiple PEXT operations in sequence
     let code = [
         0xc4, 0xe2, 0x73, 0xf5, 0xc1, // PEXT EAX, ECX, ECX
-        0xc4, 0xe2, 0x63, 0xf5, 0xd0, // PEXT EDX, EBX, EAX
+        0xc4, 0xe2, 0x62, 0xf5, 0xd0, // PEXT EDX, EBX, EAX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -522,7 +519,7 @@ fn test_pext_consecutive_calls() {
 fn test_pext_all_bits_from_sparse() {
     // Extract all 1s from sparse pattern
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -538,7 +535,7 @@ fn test_pext_all_bits_from_sparse() {
 fn test_pext_64bit_boundary_crossing() {
     // Test extraction across 32-bit boundary
     let code = [
-        0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PEXT RAX, RBX, RCX
+        0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PEXT RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -554,7 +551,7 @@ fn test_pext_64bit_boundary_crossing() {
 fn test_pext_maximum_gather() {
     // PEXT with maximum bit gathering
     let code = [
-        0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PEXT RAX, RBX, RCX
+        0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PEXT RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -570,7 +567,7 @@ fn test_pext_maximum_gather() {
 fn test_pext_bitboard_chess() {
     // Chess bitboard application - extract pieces from rank
     let code = [
-        0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PEXT RAX, RBX, RCX
+        0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PEXT RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -586,8 +583,8 @@ fn test_pext_bitboard_chess() {
 fn test_pext_pdep_inverse() {
     // PEXT is inverse of PDEP
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
-        0xc4, 0xe2, 0x63, 0xf5, 0xd0, // PEXT EDX, EAX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX (pp=3 = F2)
+        0xc4, 0xe2, 0x7a, 0xf5, 0xd0, // PEXT EDX, EAX, ECX (pp=2 = F3, vvvv=0=EAX)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -604,7 +601,7 @@ fn test_pext_pdep_inverse() {
 fn test_pext_high_mask_low_source() {
     // High bits in mask, extract from low source
     let code = [
-        0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PEXT RAX, RBX, RCX
+        0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PEXT RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -621,7 +618,7 @@ fn test_pext_high_mask_low_source() {
 fn test_pext_extract_high_byte() {
     // Extract highest byte
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -637,7 +634,7 @@ fn test_pext_extract_high_byte() {
 fn test_pext_every_other_bit() {
     // Extract every other bit
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -653,7 +650,7 @@ fn test_pext_every_other_bit() {
 fn test_pext_word_extraction() {
     // Extract specific word (16-bit)
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -669,7 +666,7 @@ fn test_pext_word_extraction() {
 fn test_pext_upper_word() {
     // Extract upper word
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -685,7 +682,7 @@ fn test_pext_upper_word() {
 fn test_pext_bit_permutation() {
     // PEXT for bit permutation applications
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -701,7 +698,7 @@ fn test_pext_bit_permutation() {
 fn test_pext_network_byte_order() {
     // Practical use: extract specific fields from network protocol
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -754,7 +751,7 @@ fn test_pext_all_registers_32bit() {
 fn test_pext_compress_sparse_data() {
     // Compress sparse data structure
     let code = [
-        0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PEXT RAX, RBX, RCX
+        0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PEXT RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -770,7 +767,7 @@ fn test_pext_compress_sparse_data() {
 fn test_pext_interleaved_data() {
     // Extract interleaved data
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();

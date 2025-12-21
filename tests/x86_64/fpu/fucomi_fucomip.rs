@@ -24,7 +24,7 @@
 //!
 //! Reference: /Users/int/dev/rax/docs/fucomi:fucomip:fucomi:fucomip.txt
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 

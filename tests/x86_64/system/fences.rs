@@ -15,10 +15,7 @@
 //!
 //! Reference: docs/lfence.txt, docs/mfence.txt, docs/sfence.txt
 
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // ============================================================================

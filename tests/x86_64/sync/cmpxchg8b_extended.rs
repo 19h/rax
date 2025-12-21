@@ -1,11 +1,8 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 // CMPXCHG8B Extended Tests - Additional comprehensive patterns
 // Complements the basic cmpxchg8b_cmpxchg16b.rs tests
-
-#[path = "../common/mod.rs"]
-mod common;
 
 // ===== SEQUENTIAL OPERATIONS =====
 

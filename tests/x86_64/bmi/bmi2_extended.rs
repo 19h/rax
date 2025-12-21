@@ -1,7 +1,4 @@
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // BMI2 Extended Tests
@@ -12,7 +9,7 @@ use rax::cpu::Registers;
 fn test_pdep_pext_round_trip() {
     // PEXT(PDEP(x, mask), mask) == x (for x that fits in mask bit count)
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x70, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xc4, 0xe2, 0x63, 0xf5, 0xd0, // PEXT EDX, EAX, ECX
         0xf4,
     ];
@@ -30,7 +27,7 @@ fn test_pext_pdep_round_trip() {
     // PDEP(PEXT(x, mask), mask) == (x & mask)
     let code = [
         0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
-        0xc4, 0xe2, 0x62, 0xf5, 0xd0, // PDEP EDX, EAX, ECX
+        0xc4, 0xe2, 0x70, 0xf5, 0xd0, // PDEP EDX, EAX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -47,7 +44,7 @@ fn test_pext_pdep_round_trip() {
 fn test_bzhi_with_count_0() {
     // BZHI with count 0 should zero all bits
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc3, // BZHI EAX, EBX, ECX
+        0xc4, 0xe2, 0x70, 0xf5, 0xc3, // BZHI EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -63,7 +60,7 @@ fn test_bzhi_with_count_0() {
 fn test_bzhi_with_count_32() {
     // BZHI with count 32 should keep all bits (32-bit)
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc3, // BZHI EAX, EBX, ECX
+        0xc4, 0xe2, 0x70, 0xf5, 0xc3, // BZHI EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -79,7 +76,7 @@ fn test_bzhi_with_count_32() {
 fn test_bzhi_with_count_64() {
     // BZHI with count 64 should keep all bits (64-bit)
     let code = [
-        0xc4, 0xe2, 0xe2, 0xf5, 0xc3, // BZHI RAX, RBX, RCX
+        0xc4, 0xe2, 0xf0, 0xf5, 0xc3, // BZHI RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -95,7 +92,7 @@ fn test_bzhi_with_count_64() {
 fn test_bzhi_count_greater_than_operand_size() {
     // BZHI with count > operand size (should wrap mod 256)
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc3, // BZHI EAX, EBX, ECX
+        0xc4, 0xe2, 0x70, 0xf5, 0xc3, // BZHI EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -189,7 +186,7 @@ fn test_pdep_all_combinations_small() {
     for &mask in &masks {
         for &src in &sources {
             let code = [
-                0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+                0xc4, 0xe2, 0x70, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
                 0xf4,
             ];
             let mut regs = Registers::default();
@@ -229,7 +226,7 @@ fn test_bzhi_sequential_counts() {
     // BZHI with sequential counts
     for count in 0..=32 {
         let code = [
-            0xc4, 0xe2, 0x62, 0xf5, 0xc3, // BZHI EAX, EBX, ECX
+            0xc4, 0xe2, 0x70, 0xf5, 0xc3, // BZHI EAX, EBX, ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -365,7 +362,7 @@ fn test_shrx_negative_value() {
 fn test_pdep_pext_complementary_masks() {
     // Using complementary masks with PDEP and PEXT
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x70, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -382,7 +379,7 @@ fn test_bzhi_with_all_bits_set() {
     // BZHI on all 1s with various counts
     for count in [1, 8, 16, 24, 31] {
         let code = [
-            0xc4, 0xe2, 0x62, 0xf5, 0xc3, // BZHI EAX, EBX, ECX
+            0xc4, 0xe2, 0x70, 0xf5, 0xc3, // BZHI EAX, EBX, ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -416,7 +413,7 @@ fn test_extended_register_combinations() {
 fn test_memory_operand_combinations() {
     // PDEP with memory operand
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PDEP EAX, EBX, [mem]
+        0xc4, 0xe2, 0x70, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PDEP EAX, EBX, [mem]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -432,7 +429,7 @@ fn test_memory_operand_combinations() {
 fn test_chained_bmi2_operations() {
     // Chain multiple BMI2 operations
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x70, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xc4, 0xe2, 0x73, 0xf5, 0xc0, // BZHI EAX, EAX, ECX (reuse ECX as count)
         0xf4,
     ];
@@ -471,7 +468,7 @@ fn test_bit_manipulation_patterns() {
 fn test_64bit_boundary_conditions() {
     // Test 64-bit boundary conditions
     let code = [
-        0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
+        0xc4, 0xe2, 0xf0, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -487,7 +484,7 @@ fn test_64bit_boundary_conditions() {
 fn test_performance_critical_patterns() {
     // Common performance-critical bit manipulation patterns
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x70, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xc4, 0xe2, 0x63, 0xf5, 0xd0, // PEXT EDX, EAX, ECX
         0xf4,
     ];

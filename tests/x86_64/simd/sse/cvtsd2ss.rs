@@ -1,4 +1,4 @@
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 
 // CVTSD2SS - Convert Scalar Double Precision Floating-Point Value to Scalar Single Precision
 //

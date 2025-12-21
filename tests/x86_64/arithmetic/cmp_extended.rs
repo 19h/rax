@@ -1,7 +1,4 @@
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // CMP — Compare Two Operands
@@ -434,7 +431,7 @@ fn test_cmp_all_64bit_registers() {
 #[test]
 fn test_cmp_byte_ptr_imm8() {
     let code = [
-        0x80, 0x3D, 0xF7, 0x0F, 0x00, 0x00, 0x42, // CMP BYTE PTR [rip+0x0FF7], 0x42
+        0x80, 0x3D, 0xFA, 0x0F, 0x00, 0x00, 0x42, // CMP BYTE PTR [rip+0x0FF7], 0x42
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -450,7 +447,7 @@ fn test_cmp_byte_ptr_imm8() {
 #[test]
 fn test_cmp_qword_ptr_r64() {
     let code = [
-        0x48, 0x39, 0x1d, 0xF6, 0x0F, 0x00, 0x00, // CMP QWORD PTR [rip+0x0FF6], RBX
+        0x48, 0x39, 0x1d, 0xF9, 0x0F, 0x00, 0x00, // CMP QWORD PTR [rip+0x0FF6], RBX
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -471,7 +468,7 @@ fn test_cmp_qword_ptr_r64() {
 #[test]
 fn test_cmp_r64_from_memory() {
     let code = [
-        0x48, 0x3B, 0x05, 0xF6, 0x0F, 0x00, 0x00, // CMP RAX, QWORD PTR [rip+0x0FF6]
+        0x48, 0x3B, 0x05, 0xF9, 0x0F, 0x00, 0x00, // CMP RAX, QWORD PTR [rip+0x0FF6]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

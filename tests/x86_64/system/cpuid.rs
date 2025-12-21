@@ -1,9 +1,7 @@
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm};
+use crate::common::{run_until_hlt, setup_vm};
 
 // CPUID - CPU Identification
 // Opcode: 0F A2

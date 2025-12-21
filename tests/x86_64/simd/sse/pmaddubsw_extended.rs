@@ -3,7 +3,7 @@ use crate::common::{run_until_hlt, setup_vm};
 // PMADDUBSW Extended Tests - Additional comprehensive coverage
 //
 // Multiply and Add Packed Signed and Unsigned Bytes with Saturation
-Opcode: 66 0F 38 04 /r
+// Opcode: 66 0F 38 04 /r
 
 const ALIGNED_ADDR: u64 = 0x3000;
 

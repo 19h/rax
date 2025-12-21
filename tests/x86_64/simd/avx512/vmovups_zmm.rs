@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
@@ -401,7 +401,7 @@ fn test_vmovups_unaligned8_mem_to_zmm31() {
     full_code.extend_from_slice(&[
         0x62, 0x61, 0x7c, 0x48, 0x10, 0x38, // VMOVUPS ZMM31, [RAX]
         0xf4, // HLT
-    ];
+    ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     mem.write_slice(&[0x44u8; 64], GuestAddress(UNALIGNED_ADDR)).unwrap();

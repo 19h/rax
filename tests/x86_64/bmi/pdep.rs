@@ -1,7 +1,4 @@
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // PDEP - Parallel Bits Deposit (BMI2)
@@ -17,7 +14,7 @@ use rax::cpu::Registers;
 fn test_pdep_basic_single_bit() {
     // PDEP EAX, EBX, ECX - deposit bit 0 to position 0
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -33,7 +30,7 @@ fn test_pdep_basic_single_bit() {
 fn test_pdep_deposit_to_higher_position() {
     // PDEP EAX, EBX, ECX - deposit bit 0 to position 4
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -49,7 +46,7 @@ fn test_pdep_deposit_to_higher_position() {
 fn test_pdep_multiple_bits() {
     // PDEP with multiple bits
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -66,7 +63,7 @@ fn test_pdep_multiple_bits() {
 fn test_pdep_sparse_deposition() {
     // PDEP with sparse mask
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -83,7 +80,7 @@ fn test_pdep_sparse_deposition() {
 fn test_pdep_zero_source() {
     // PDEP with zero source
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -99,7 +96,7 @@ fn test_pdep_zero_source() {
 fn test_pdep_zero_mask() {
     // PDEP with zero mask
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -115,7 +112,7 @@ fn test_pdep_zero_mask() {
 fn test_pdep_identity() {
     // PDEP with mask = all 1s should be identity
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -131,7 +128,7 @@ fn test_pdep_identity() {
 fn test_pdep_64bit_basic() {
     // PDEP RAX, RBX, RCX - 64-bit version
     let code = [
-        0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PDEP RAX, RBX, RCX (W1)
+        0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PDEP RAX, RBX, RCX (W1)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -148,7 +145,7 @@ fn test_pdep_64bit_basic() {
 fn test_pdep_64bit_high_bits() {
     // PDEP with high bits in 64-bit operands
     let code = [
-        0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
+        0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -164,7 +161,7 @@ fn test_pdep_64bit_high_bits() {
 fn test_pdep_alternating_pattern() {
     // PDEP with alternating pattern
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -180,7 +177,7 @@ fn test_pdep_alternating_pattern() {
 fn test_pdep_inverse_alternating() {
     // PDEP with inverse alternating pattern
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -196,7 +193,7 @@ fn test_pdep_inverse_alternating() {
 fn test_pdep_byte_scatter() {
     // PDEP to scatter a byte across word
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -212,12 +209,12 @@ fn test_pdep_byte_scatter() {
 fn test_pdep_extended_registers_r8_r9_r10() {
     // PDEP R8D, R9D, R10D
     let code = [
-        0xc4, 0x42, 0x32, 0xf5, 0xc2, // PDEP R8D, R9D, R10D
+        0xc4, 0x42, 0x33, 0xf5, 0xc2, // PDEP R8D, R9D, R10D
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.r9 = 0b1111;
-    regs.r10 = 0x0F0F0F0F; // mask
+    regs.r9 = 0x1111; // One bit per nibble group
+    regs.r10 = 0x0F0F0F0F; // mask: 4 nibbles, 4 bits each
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -228,7 +225,7 @@ fn test_pdep_extended_registers_r8_r9_r10() {
 fn test_pdep_r15_r14_r13() {
     // PDEP R15, R14, R13
     let code = [
-        0xc4, 0x42, 0x8a, 0xf5, 0xfd, // PDEP R15, R14, R13
+        0xc4, 0x42, 0x8b, 0xf5, 0xfd, // PDEP R15, R14, R13
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -244,13 +241,13 @@ fn test_pdep_r15_r14_r13() {
 fn test_pdep_mem32() {
     // PDEP EAX, EBX, [mem]
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PDEP EAX, EBX, [DATA_ADDR]
+        0xc4, 0xe2, 0x63, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PDEP EAX, EBX, [DATA_ADDR]
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rbx = 0b1111;
+    regs.rbx = 0x1111; // One bit per nibble to spread across mask groups
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
-    write_mem_u32(&mem, 0xF0F0F0F0); // mask from memory
+    write_mem_u32(&mem, 0xF0F0F0F0); // mask from memory - 4 groups of 4 bits
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0x10101010, "Memory operand should work");
@@ -260,13 +257,13 @@ fn test_pdep_mem32() {
 fn test_pdep_mem64() {
     // PDEP RAX, RBX, [mem]
     let code = [
-        0xc4, 0xe2, 0xe2, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PDEP RAX, RBX, [DATA_ADDR]
+        0xc4, 0xe2, 0xe3, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PDEP RAX, RBX, [DATA_ADDR]
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rbx = 0xFF;
+    regs.rbx = 0x01_01_01_01; // One bit per byte group
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
-    write_mem_u64(&mem, 0xFF00_FF00_FF00_FF00); // mask from memory
+    write_mem_u64(&mem, 0xFF00_FF00_FF00_FF00); // mask: 4 groups of 8 bits at bytes 1,3,5,7
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax, 0x0100_0100_0100_0100, "64-bit memory operand should work");
@@ -277,7 +274,7 @@ fn test_pdep_single_mask_bit_positions() {
     // Test depositing to each bit position
     for pos in 0..32 {
         let code = [
-            0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+            0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -294,7 +291,7 @@ fn test_pdep_single_mask_bit_positions() {
 fn test_pdep_contiguous_mask() {
     // PDEP with contiguous mask (bitfield insertion)
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -310,7 +307,7 @@ fn test_pdep_contiguous_mask() {
 fn test_pdep_excess_source_bits() {
     // PDEP with more source bits than mask bits
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -327,7 +324,7 @@ fn test_pdep_power_of_two_mask() {
     // PDEP with power of two masks
     for i in 0..32 {
         let code = [
-            0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+            0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -352,7 +349,7 @@ fn test_pdep_64bit_all_positions() {
 
     for (src, mask, expected) in &test_cases {
         let code = [
-            0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
+            0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -369,7 +366,7 @@ fn test_pdep_64bit_all_positions() {
 fn test_pdep_nibble_extraction() {
     // PDEP to extract and deposit nibbles
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -385,7 +382,7 @@ fn test_pdep_nibble_extraction() {
 fn test_pdep_bit_reversal_helper() {
     // PDEP can help with bit manipulation
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -401,7 +398,7 @@ fn test_pdep_bit_reversal_helper() {
 fn test_pdep_preserves_source() {
     // PDEP should not modify source operands
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -418,7 +415,7 @@ fn test_pdep_preserves_source() {
 fn test_pdep_flags_unaffected() {
     // PDEP should not modify flags
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -436,7 +433,7 @@ fn test_pdep_flags_unaffected() {
 fn test_pdep_sequential_bits() {
     // PDEP with sequential source bits
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -452,7 +449,7 @@ fn test_pdep_sequential_bits() {
 fn test_pdep_maximum_spread() {
     // PDEP with maximum bit spreading
     let code = [
-        0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
+        0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -468,7 +465,7 @@ fn test_pdep_maximum_spread() {
 fn test_pdep_mask_equals_source() {
     // PDEP when mask pattern equals source pattern
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -485,7 +482,7 @@ fn test_pdep_single_byte_masks() {
     // Test depositing to each byte separately
     for byte_pos in 0..4 {
         let code = [
-            0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+            0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -502,16 +499,16 @@ fn test_pdep_single_byte_masks() {
 fn test_pdep_complex_pattern() {
     // PDEP with complex bit pattern
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rbx = 0x00FF00FF; // alternating bytes
-    regs.rcx = 0xFF00FF00; // inverse byte pattern
+    regs.rbx = 0xFFFF; // 16 source bits (all 1s)
+    regs.rcx = 0xFF00FF00; // 16 mask positions (bytes 1 and 3)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // With 16 bits in mask, deposit first 16 bits from source
+    // With 16 bits in mask, deposit first 16 bits from source to bytes 1 and 3
     assert_eq!(regs.rax & 0xFFFFFFFF, 0xFF00FF00, "Complex pattern deposited");
 }
 
@@ -519,12 +516,12 @@ fn test_pdep_complex_pattern() {
 fn test_pdep_bit_packing() {
     // Practical use: pack bits from source to compact form
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rbx = 0b1111; // 4 bits to pack
-    regs.rcx = 0x88888888; // scatter to bit 3 of each nibble
+    regs.rbx = 0xFF; // 8 bits to pack (one per nibble)
+    regs.rcx = 0x88888888; // scatter to bit 3 of each nibble (8 positions)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -535,7 +532,7 @@ fn test_pdep_bit_packing() {
 fn test_pdep_field_insertion() {
     // Use PDEP for bitfield insertion
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -551,7 +548,7 @@ fn test_pdep_field_insertion() {
 fn test_pdep_morton_code_helper() {
     // PDEP can help with Morton codes (Z-order curves)
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -567,7 +564,7 @@ fn test_pdep_morton_code_helper() {
 fn test_pdep_color_channel_scatter() {
     // Scatter color channel bits (practical graphics use)
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -583,7 +580,7 @@ fn test_pdep_color_channel_scatter() {
 fn test_pdep_complement_patterns() {
     // Test complementary mask patterns
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -599,7 +596,7 @@ fn test_pdep_complement_patterns() {
 fn test_pdep_signed_interpretation() {
     // PDEP with values that look negative in signed interpretation
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -616,7 +613,7 @@ fn test_pdep_consecutive_calls() {
     // Multiple PDEP operations in sequence
     let code = [
         0xc4, 0xe2, 0x72, 0xf5, 0xc1, // PDEP EAX, ECX, ECX
-        0xc4, 0xe2, 0x62, 0xf5, 0xd0, // PDEP EDX, EBX, EAX
+        0xc4, 0xe2, 0x63, 0xf5, 0xd0, // PDEP EDX, EBX, EAX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -634,7 +631,7 @@ fn test_pdep_consecutive_calls() {
 fn test_pdep_one_bit_per_byte() {
     // Deposit one bit to each byte
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -650,7 +647,7 @@ fn test_pdep_one_bit_per_byte() {
 fn test_pdep_64bit_boundary_crossing() {
     // Test deposition across 32-bit boundary
     let code = [
-        0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
+        0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -666,7 +663,7 @@ fn test_pdep_64bit_boundary_crossing() {
 fn test_pdep_high_source_low_mask() {
     // High bits in source, low bits in mask
     let code = [
-        0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
+        0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -683,7 +680,7 @@ fn test_pdep_high_source_low_mask() {
 fn test_pdep_bitboard_chess() {
     // Chess bitboard application
     let code = [
-        0xc4, 0xe2, 0xe2, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
+        0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -699,9 +696,9 @@ fn test_pdep_bitboard_chess() {
 fn test_pdep_all_registers_32bit() {
     // Test various register combinations
     let test_cases = [
-        ([0xc4, 0xe2, 0x72, 0xf5, 0xc2], 1, 2, 0xFF, 0xAA), // PDEP EAX, ECX, EDX
-        ([0xc4, 0xe2, 0x5a, 0xf5, 0xe0], 4, 5, 0xFF, 0x55), // PDEP ESP, EDX, EBP
-        ([0xc4, 0xe2, 0x42, 0xf5, 0xf7], 6, 7, 0xFF, 0xFF), // PDEP ESI, EBX, EDI
+        ([0xc4, 0xe2, 0x73, 0xf5, 0xc2], 1, 2, 0xFF, 0xAA), // PDEP EAX, ECX, EDX
+        ([0xc4, 0xe2, 0x5b, 0xf5, 0xe0], 4, 5, 0xFF, 0x55), // PDEP ESP, EDX, EBP
+        ([0xc4, 0xe2, 0x43, 0xf5, 0xf7], 6, 7, 0xFF, 0xFF), // PDEP ESI, EBX, EDI
     ];
 
     for (encoding, dst_idx, src_idx, src_val, mask_val) in test_cases {
@@ -736,12 +733,12 @@ fn test_pdep_all_registers_32bit() {
 fn test_pdep_sparse_random_pattern() {
     // Random sparse pattern test
     let code = [
-        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rbx = 0x12345678;
-    regs.rcx = 0x10204080; // sparse mask
+    regs.rbx = 0xF; // 4 source bits all set
+    regs.rcx = 0x10204080; // sparse mask: bits 7, 14, 21, 28
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
