@@ -410,10 +410,14 @@ pub fn leave(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
 
 /// BOUND (32-bit) or EVEX prefix (64-bit) (0x62)
 pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    // Check if we're in 64-bit mode by looking at EFER.LMA
+    // Check if we're in 64-bit mode by looking at EFER.LMA AND CS.L
+    // EFER.LMA = 1 and CS.L = 1 means 64-bit mode (EVEX)
+    // EFER.LMA = 1 and CS.L = 0 means compatibility mode (BOUND)
+    // EFER.LMA = 0 means legacy/real mode (BOUND)
     let in_long_mode = (vcpu.sregs.efer & 0x400) != 0; // EFER.LMA = bit 10
+    let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
 
-    if in_long_mode {
+    if in_64bit_mode {
         // In 64-bit mode, 0x62 is EVEX prefix (AVX-512)
         let context_bytes: Vec<u8> = ctx.bytes[ctx.cursor..].iter().take(8).cloned().collect();
         return Err(Error::Emulator(format!(
@@ -421,17 +425,187 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
             vcpu.regs.rip, context_bytes
         )));
     } else {
-        // In 32-bit mode, this is BOUND (bounds check)
+        // In 32-bit/compatibility mode, this is BOUND (bounds check)
         let modrm_start = ctx.cursor;
         let modrm = ctx.consume_u8()?;
-        // Skip memory operand (BOUND always uses memory)
-        if modrm >> 6 != 3 {
-            let (_, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
-            ctx.cursor = modrm_start + 1 + extra;
+        let reg = (modrm >> 3) & 7;
+
+        // BOUND requires memory operand (mod != 11)
+        if modrm >> 6 == 3 {
+            return Err(Error::Emulator(format!(
+                "BOUND requires memory operand at RIP={:#x}",
+                vcpu.regs.rip
+            )));
         }
-        // BOUND doesn't do anything if bounds are OK (we assume they are)
+
+        let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+        ctx.cursor = modrm_start + 1 + extra;
+
+        // Determine operand size (16-bit or 32-bit)
+        // CS.D (db flag) determines default: D=0 means 16-bit default, D=1 means 32-bit default
+        let default_16bit = !vcpu.sregs.cs.db;
+        let is_16bit = default_16bit ^ ctx.operand_size_override;
+
+        // Read the index from the register
+        // Read bounds from memory: [addr] = lower, [addr+size] = upper
+        if is_16bit {
+            let index = vcpu.get_reg(reg, 2) as i16;
+            let lower = vcpu.read_mem16(addr)? as i16;
+            let upper = vcpu.read_mem16(addr + 2)? as i16;
+
+            // Check: lower <= index <= upper
+            if index < lower || index > upper {
+                // #BR exception - for now just return error
+                return Err(Error::Emulator(format!(
+                    "BOUND range exceeded: index {} not in [{}, {}] at RIP={:#x}",
+                    index, lower, upper, vcpu.regs.rip
+                )));
+            }
+        } else {
+            let index = vcpu.get_reg(reg, 4) as i32;
+            let lower = vcpu.read_mem32(addr)? as i32;
+            let upper = vcpu.read_mem32(addr + 4)? as i32;
+
+            // Check: lower <= index <= upper
+            if index < lower || index > upper {
+                // #BR exception - for now just return error
+                return Err(Error::Emulator(format!(
+                    "BOUND range exceeded: index {} not in [{}, {}] at RIP={:#x}",
+                    index, lower, upper, vcpu.regs.rip
+                )));
+            }
+        }
+
         vcpu.regs.rip += ctx.cursor as u64;
     }
+    Ok(None)
+}
+
+/// PUSHA/PUSHAD (0x60) - Push all general-purpose registers
+pub fn pusha(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // Check if we're in 64-bit mode - PUSHA/PUSHAD is invalid in 64-bit mode
+    let in_long_mode = (vcpu.sregs.efer & 0x400) != 0; // EFER.LMA = bit 10
+    let cs_l = vcpu.sregs.cs.l; // CS.L indicates 64-bit code segment
+
+    if in_long_mode && cs_l {
+        return Err(Error::Emulator(format!(
+            "PUSHA/PUSHAD invalid in 64-bit mode at RIP={:#x}",
+            vcpu.regs.rip
+        )));
+    }
+
+    // Determine operand size: 0x66 prefix TOGGLES the default operand size
+    // CS.D (db flag) determines default: D=0 means 16-bit default, D=1 means 32-bit default
+    // The 0x66 prefix inverts the default
+    let default_16bit = !vcpu.sregs.cs.db;
+    let is_16bit = default_16bit ^ ctx.operand_size_override;
+
+    // Save original SP/ESP before any pushes
+    let original_sp = vcpu.regs.rsp;
+
+    if is_16bit {
+        // PUSHA - push 16-bit registers: AX, CX, DX, BX, SP, BP, SI, DI
+        let ax = (vcpu.regs.rax & 0xFFFF) as u16;
+        let cx = (vcpu.regs.rcx & 0xFFFF) as u16;
+        let dx = (vcpu.regs.rdx & 0xFFFF) as u16;
+        let bx = (vcpu.regs.rbx & 0xFFFF) as u16;
+        let sp = (original_sp & 0xFFFF) as u16;
+        let bp = (vcpu.regs.rbp & 0xFFFF) as u16;
+        let si = (vcpu.regs.rsi & 0xFFFF) as u16;
+        let di = (vcpu.regs.rdi & 0xFFFF) as u16;
+
+        vcpu.push16(ax)?;
+        vcpu.push16(cx)?;
+        vcpu.push16(dx)?;
+        vcpu.push16(bx)?;
+        vcpu.push16(sp)?;
+        vcpu.push16(bp)?;
+        vcpu.push16(si)?;
+        vcpu.push16(di)?;
+    } else {
+        // PUSHAD - push 32-bit registers: EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
+        let eax = (vcpu.regs.rax & 0xFFFFFFFF) as u32;
+        let ecx = (vcpu.regs.rcx & 0xFFFFFFFF) as u32;
+        let edx = (vcpu.regs.rdx & 0xFFFFFFFF) as u32;
+        let ebx = (vcpu.regs.rbx & 0xFFFFFFFF) as u32;
+        let esp = (original_sp & 0xFFFFFFFF) as u32;
+        let ebp = (vcpu.regs.rbp & 0xFFFFFFFF) as u32;
+        let esi = (vcpu.regs.rsi & 0xFFFFFFFF) as u32;
+        let edi = (vcpu.regs.rdi & 0xFFFFFFFF) as u32;
+
+        vcpu.push32(eax)?;
+        vcpu.push32(ecx)?;
+        vcpu.push32(edx)?;
+        vcpu.push32(ebx)?;
+        vcpu.push32(esp)?;
+        vcpu.push32(ebp)?;
+        vcpu.push32(esi)?;
+        vcpu.push32(edi)?;
+    }
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// POPA/POPAD (0x61) - Pop all general-purpose registers
+pub fn popa(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // Check if we're in 64-bit mode - POPA/POPAD is invalid in 64-bit mode
+    let in_long_mode = (vcpu.sregs.efer & 0x400) != 0; // EFER.LMA = bit 10
+    let cs_l = vcpu.sregs.cs.l; // CS.L indicates 64-bit code segment
+
+    if in_long_mode && cs_l {
+        return Err(Error::Emulator(format!(
+            "POPA/POPAD invalid in 64-bit mode at RIP={:#x}",
+            vcpu.regs.rip
+        )));
+    }
+
+    // Determine operand size: 0x66 prefix TOGGLES the default operand size
+    // CS.D (db flag) determines default: D=0 means 16-bit default, D=1 means 32-bit default
+    let default_16bit = !vcpu.sregs.cs.db;
+    let is_16bit = default_16bit ^ ctx.operand_size_override;
+
+    if is_16bit {
+        // POPA - pop 16-bit registers: DI, SI, BP, skip SP, BX, DX, CX, AX
+        let di = vcpu.pop16()?;
+        let si = vcpu.pop16()?;
+        let bp = vcpu.pop16()?;
+        let _ = vcpu.pop16()?; // Skip SP value on stack
+        let bx = vcpu.pop16()?;
+        let dx = vcpu.pop16()?;
+        let cx = vcpu.pop16()?;
+        let ax = vcpu.pop16()?;
+
+        // Update only the lower 16 bits of registers
+        vcpu.regs.rdi = (vcpu.regs.rdi & !0xFFFF) | (di as u64);
+        vcpu.regs.rsi = (vcpu.regs.rsi & !0xFFFF) | (si as u64);
+        vcpu.regs.rbp = (vcpu.regs.rbp & !0xFFFF) | (bp as u64);
+        vcpu.regs.rbx = (vcpu.regs.rbx & !0xFFFF) | (bx as u64);
+        vcpu.regs.rdx = (vcpu.regs.rdx & !0xFFFF) | (dx as u64);
+        vcpu.regs.rcx = (vcpu.regs.rcx & !0xFFFF) | (cx as u64);
+        vcpu.regs.rax = (vcpu.regs.rax & !0xFFFF) | (ax as u64);
+    } else {
+        // POPAD - pop 32-bit registers: EDI, ESI, EBP, skip ESP, EBX, EDX, ECX, EAX
+        let edi = vcpu.pop32()?;
+        let esi = vcpu.pop32()?;
+        let ebp = vcpu.pop32()?;
+        let _ = vcpu.pop32()?; // Skip ESP value on stack
+        let ebx = vcpu.pop32()?;
+        let edx = vcpu.pop32()?;
+        let ecx = vcpu.pop32()?;
+        let eax = vcpu.pop32()?;
+
+        // Update only the lower 32 bits of registers, preserving upper 32 bits
+        vcpu.regs.rdi = (vcpu.regs.rdi & 0xFFFFFFFF00000000) | (edi as u64);
+        vcpu.regs.rsi = (vcpu.regs.rsi & 0xFFFFFFFF00000000) | (esi as u64);
+        vcpu.regs.rbp = (vcpu.regs.rbp & 0xFFFFFFFF00000000) | (ebp as u64);
+        vcpu.regs.rbx = (vcpu.regs.rbx & 0xFFFFFFFF00000000) | (ebx as u64);
+        vcpu.regs.rdx = (vcpu.regs.rdx & 0xFFFFFFFF00000000) | (edx as u64);
+        vcpu.regs.rcx = (vcpu.regs.rcx & 0xFFFFFFFF00000000) | (ecx as u64);
+        vcpu.regs.rax = (vcpu.regs.rax & 0xFFFFFFFF00000000) | (eax as u64);
+    }
+
+    vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
 

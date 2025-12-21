@@ -300,11 +300,12 @@ fn test_status_word_empty_stack() {
 #[test]
 fn test_status_word_after_fld_fst() {
     // Status word reflects correct state after FLD and FST
+    // Note: Status word stored at 0x3010 to avoid overlapping with f64 at 0x3000-0x3007
     let code = [
         0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
-        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FST qword [0x3000]
+        0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xDF, 0xE0,                                  // FNSTSW AX
-        0x66, 0x89, 0x04, 0x25, 0x02, 0x30, 0x00, 0x00,  // MOV word [0x3002], AX
+        0x66, 0x89, 0x04, 0x25, 0x10, 0x30, 0x00, 0x00,  // MOV word [0x3010], AX
         0xF4,                                        // HLT
     ];
 
@@ -313,7 +314,7 @@ fn test_status_word_after_fld_fst() {
 
     run_until_hlt(&mut vcpu).unwrap();
 
-    let status = read_u16(&mem, 0x3002);
+    let status = read_u16(&mem, 0x3010);
     let stored_value = read_f64(&mem, 0x3000);
     assert_eq!(stored_value, 3.14159, "Value should be stored correctly");
     assert!(status < 0xFFFF, "Status word should be valid");
