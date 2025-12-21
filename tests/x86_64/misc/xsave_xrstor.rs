@@ -182,15 +182,16 @@ fn test_xsave_with_64bit_register_high_bits_ignored() {
 #[test]
 fn test_xrstor_requires_aligned_memory() {
     // XRSTOR requires 64-byte aligned memory address
+    // Use an unaligned address 0x3001 (instead of 0x3000)
     let code = [
         0x31, 0xc0,                    // XOR EAX, EAX
         0x31, 0xd2,                    // XOR EDX, EDX
-        0x0f, 0xae, 0x24, 0x05,        // XRSTOR [RSP] (likely unaligned)
+        0x0f, 0xae, 0x0c, 0x25, 0x01, 0x30, 0x00, 0x00, // FXRSTOR [0x3001] (unaligned)
         0xf4,                          // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let result = run_until_hlt(&mut vcpu);
-    // May fault, which is expected
+    // May fault, which is expected (emulator may tolerate misalignment)
     if result.is_ok() {
         let _regs = result.unwrap();
     }
@@ -436,10 +437,10 @@ fn test_xrstor_with_high_bits_in_edx() {
 fn test_xsave_does_not_modify_flags() {
     // XSAVE should not modify flags
     let code = [
-        0xf9,                          // STC (set carry)
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
         0x31, 0xd2,                    // XOR EDX, EDX
-        0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
+        0xf9,                          // STC (set carry) - after XOR so it's not cleared
+        0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // FXSAVE [0x3000]
         0xf4,                          // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -456,15 +457,15 @@ fn test_xrstor_does_not_modify_flags() {
         // Save
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
         0x31, 0xd2,                    // XOR EDX, EDX
-        0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // XSAVE [0x3000]
+        0x0f, 0xae, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // FXSAVE [0x3000]
 
-        // Set flag
-        0xf9,                          // STC
-
-        // Restore
+        // Prepare for restore (XOR first, then set flag)
         0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 0x01
         0x31, 0xd2,                    // XOR EDX, EDX
-        0x0f, 0xae, 0x24, 0x25, 0x00, 0x30, 0x00, 0x00, // XRSTOR [0x3000]
+        0xf9,                          // STC (after XOR so it's not cleared)
+
+        // Restore
+        0x0f, 0xae, 0x0c, 0x25, 0x00, 0x30, 0x00, 0x00, // FXRSTOR [0x3000]
         0xf4,                          // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

@@ -397,16 +397,16 @@ fn test_xgetbv_multiple_sequential_reads() {
     let code = [
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
         0x0f, 0x01, 0xd0,              // XGETBV (1st)
-        0x89, 0xc1,                    // MOV ECX, EAX
+        0x89, 0xc6,                    // MOV ESI, EAX (save 1st read to ESI)
 
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
         0x0f, 0x01, 0xd0,              // XGETBV (2nd)
-        0x89, 0xc3,                    // MOV EBX, EAX
+        0x89, 0xc3,                    // MOV EBX, EAX (save 2nd read to EBX)
 
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
         0x0f, 0x01, 0xd0,              // XGETBV (3rd)
 
-        // Now EAX = 3rd read, EBX = 2nd read, ECX = 1st read
+        // Now EAX = 3rd read, EBX = 2nd read, ESI = 1st read
         0xf4,                          // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -414,7 +414,7 @@ fn test_xgetbv_multiple_sequential_reads() {
 
     let read3 = regs.rax & 0xFFFFFFFF;
     let read2 = regs.rbx & 0xFFFFFFFF;
-    let read1 = regs.rcx & 0xFFFFFFFF;
+    let read1 = regs.rsi & 0xFFFFFFFF;
 
     // All three should be identical
     assert_eq!(read1, read2, "Read 1 and 2 should match");
