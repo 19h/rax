@@ -906,9 +906,62 @@ impl X86_64Vcpu {
                 }
             }
 
+            // 0F 38 escape - MOVBE and other instructions
+            0x38 => self.execute_0f38(ctx),
+
             _ => Err(Error::Emulator(format!(
                 "unimplemented 0x0F opcode: {:#04x} at RIP={:#x}",
                 opcode2, self.regs.rip
+            ))),
+        }
+    }
+
+    /// Execute 0x0F 0x38 opcodes (3-byte escape)
+    fn execute_0f38(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let opcode3 = ctx.consume_u8()?;
+
+        match opcode3 {
+            // MOVBE r, m16/32/64 (load with byte swap)
+            0xF0 => {
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                if !is_memory {
+                    return Err(Error::Emulator("MOVBE requires memory operand".to_string()));
+                }
+                let size = ctx.op_size;
+                let value = self.read_mem(addr, size)?;
+                // Byte swap based on operand size
+                let swapped = match size {
+                    2 => (value as u16).swap_bytes() as u64,
+                    4 => (value as u32).swap_bytes() as u64,
+                    8 => value.swap_bytes(),
+                    _ => value,
+                };
+                self.set_reg(reg, swapped, size);
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+            // MOVBE m16/32/64, r (store with byte swap)
+            0xF1 => {
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                if !is_memory {
+                    return Err(Error::Emulator("MOVBE requires memory operand".to_string()));
+                }
+                let size = ctx.op_size;
+                let value = self.get_reg(reg, size);
+                // Byte swap based on operand size
+                let swapped = match size {
+                    2 => (value as u16).swap_bytes() as u64,
+                    4 => (value as u32).swap_bytes() as u64,
+                    8 => value.swap_bytes(),
+                    _ => value,
+                };
+                self.write_mem(addr, swapped, size)?;
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+            _ => Err(Error::Emulator(format!(
+                "unimplemented 0x0F 0x38 opcode: {:#04x} at RIP={:#x}",
+                opcode3, self.regs.rip
             ))),
         }
     }
