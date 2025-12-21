@@ -39,7 +39,7 @@ fn test_pushad_basic_saves_all_registers() {
     regs.rdi = 0x77777777;
     regs.rsp = 0x8000; // Stack pointer
 
-    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let (mut vcpu, mem) = setup_vm_compat(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     // Verify stack contains the values (should be decremented after push)
@@ -76,7 +76,7 @@ fn test_pushad_preserves_all_register_values() {
     regs.rbp = 0x12341234;
     regs.rsp = 0x8000;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // All registers should be unchanged
@@ -99,7 +99,7 @@ fn test_pushad_decrements_stack_pointer() {
     let mut regs = Registers::default();
     regs.rsp = 0x8000;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // RSP should be decremented by 32 bytes
@@ -116,7 +116,7 @@ fn test_pushad_saves_original_sp_not_modified_sp() {
     let mut regs = Registers::default();
     regs.rsp = 0x8000;
 
-    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let (mut vcpu, mem) = setup_vm_compat(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     // The original ESP (0x8000) should be on the stack at position [ESP-16]
@@ -142,7 +142,7 @@ fn test_pushad_with_zero_registers() {
     regs.rbp = 0;
     regs.rsp = 0x8000;
 
-    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let (mut vcpu, mem) = setup_vm_compat(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     // All zeros should be saved
@@ -167,7 +167,7 @@ fn test_pushad_with_max_registers() {
     regs.rbp = 0xFFFFFFFF;
     regs.rsp = 0x8000;
 
-    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let (mut vcpu, mem) = setup_vm_compat(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     // Max values should be saved
@@ -187,7 +187,7 @@ fn test_pushad_does_not_modify_flags() {
     regs.rflags = 0x2 | 1; // Reserve bit 1 set, plus CF
     regs.rsp = 0x8000;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Flags should be unchanged
@@ -224,7 +224,7 @@ fn test_popad_restores_registers() {
     regs.rbp = 0x12121212;
     regs.rsp = 0x8000;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Registers should be restored to original values
@@ -248,7 +248,7 @@ fn test_popad_increments_stack_pointer() {
     let mut regs = Registers::default();
     regs.rsp = 0x8000;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // After PUSHAD+POPAD, RSP should be back to original
@@ -268,7 +268,7 @@ fn test_popad_ignores_sp_on_stack() {
     let mut regs = Registers::default();
     regs.rsp = 0x8000;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // ESP should be restored properly despite corruption, incremented correctly
@@ -291,7 +291,7 @@ fn test_pusha_popa_roundtrip() {
     regs.rbx = 0xBBBBBBBB;
     regs.rsp = 0x8000;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // After PUSHAD + modifications + POPAD, original values should be restored
@@ -315,7 +315,7 @@ fn test_pushad_popa_multiple_times() {
     regs.rax = 0x12345678;
     regs.rsp = 0x8000;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // After multiple PUSHAD/POPAD, values should be preserved and RSP restored
@@ -337,7 +337,7 @@ fn test_pushad_popa_with_alternating_modification() {
     regs.rax = 0x11111111;
     regs.rsp = 0x8000;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // EAX should be restored to original value
@@ -359,7 +359,7 @@ fn test_pushad_popa_does_not_affect_flags() {
     regs.rflags = 0x2 | 1; // CF set
     regs.rsp = 0x8000;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Carry flag should still be set
@@ -376,7 +376,7 @@ fn test_pushad_popa_stack_alignment() {
     let mut regs = Registers::default();
     regs.rsp = 0x8000; // 16-byte aligned
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // After PUSHAD, RSP = 0x8000 - 32 = 0x7FE0 (still 16-byte aligned)
@@ -401,7 +401,7 @@ fn test_pushad_with_different_register_patterns() {
     regs.rbp = 0xF00FF00F;
     regs.rsp = 0x8000;
 
-    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let (mut vcpu, mem) = setup_vm_compat(&code, Some(regs));
     let _ = run_until_hlt(&mut vcpu).unwrap();
 
     // Verify each value is on the stack
@@ -437,7 +437,7 @@ fn test_popad_overwrites_current_values() {
     regs.rbx = 0x22222222;
     regs.rsp = 0x8000;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Even though we set EAX to 0x99999999, POPAD should restore 0x11111111
@@ -457,7 +457,7 @@ fn test_pushad_popa_preserves_higher_bits_in_64bit() {
     regs.rax = 0x1111111111111111u64;
     regs.rsp = 0x8000;
 
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
     // The lower 32 bits should be unchanged (PUSHAD/POPAD in 32-bit mode)
@@ -477,7 +477,7 @@ fn test_pushad_does_not_fault_with_various_rsp() {
         let mut regs = Registers::default();
         regs.rsp = *rsp_val;
 
-        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let result_regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(result_regs.rsp, rsp_val - 32, "RSP decremented correctly for RSP={:x}", rsp_val);

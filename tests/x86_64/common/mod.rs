@@ -50,11 +50,58 @@ pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Ar
     sregs.cr0 = 0x00050033; // PE but NOT PG (no paging)
     sregs.cr4 = 0x20; // PAE
     sregs.efer = 0x500; // LMA, LME for long mode
+    // Set CS.L=1 for true 64-bit mode (enables RIP-relative addressing)
+    sregs.cs.l = true;
+    sregs.cs.db = false; // Must be 0 when L=1 for 64-bit mode
     // Initialize GDT and IDT with reasonable defaults for testing
     sregs.gdt.base = 0x10000; // GDT at 64KB
     sregs.gdt.limit = 0x1F;   // 4 descriptors (32 bytes - 1)
     sregs.idt.base = 0x11000; // IDT at 68KB
     sregs.idt.limit = 0xFF;   // 16 entries (256 bytes - 1)
+    vcpu.set_sregs(&sregs).unwrap();
+
+    (vcpu, mem)
+}
+
+/// Create a test VM in compatibility mode (32-bit code within long mode).
+/// Use this for instructions that are only valid in 32-bit mode (BOUND, PUSHA, POPA, etc.)
+/// In compatibility mode: CS.L=0, CS.D determines operand size (D=1 means 32-bit default)
+/// Memory addressing uses absolute [disp32] instead of RIP-relative.
+pub fn setup_vm_compat(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
+    // Create 16MB of guest memory
+    let mem_size = 16 * 1024 * 1024;
+    let regions = vec![(GuestAddress(0), mem_size)];
+    let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&regions).unwrap());
+
+    // Write code at address 0x1000
+    mem.write_slice(code, GuestAddress(CODE_ADDR)).unwrap();
+
+    // Create vcpu
+    let mut vcpu = X86_64Vcpu::new(0, mem.clone());
+
+    // Set up initial registers
+    let has_custom_regs = initial_regs.is_some();
+    let mut regs = initial_regs.unwrap_or_else(Registers::default);
+    regs.rip = CODE_ADDR;
+    if !has_custom_regs {
+        regs.rsp = STACK_ADDR;
+    }
+    regs.rflags |= 0x2;
+    vcpu.set_regs(&regs).unwrap();
+
+    // Set up system registers for compatibility mode
+    let mut sregs = SystemRegisters::default();
+    sregs.cr0 = 0x00050033; // PE but NOT PG (no paging)
+    sregs.cr4 = 0x20; // PAE
+    sregs.efer = 0x500; // LMA, LME for long mode
+    // CS.L=0 for compatibility mode (32-bit code within long mode)
+    sregs.cs.l = false;
+    sregs.cs.db = false; // D=0 means 16-bit default operand size (use 0x66 for 32-bit)
+    // Initialize GDT and IDT
+    sregs.gdt.base = 0x10000;
+    sregs.gdt.limit = 0x1F;
+    sregs.idt.base = 0x11000;
+    sregs.idt.limit = 0xFF;
     vcpu.set_sregs(&sregs).unwrap();
 
     (vcpu, mem)
