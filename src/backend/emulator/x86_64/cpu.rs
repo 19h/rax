@@ -484,12 +484,14 @@ impl X86_64Vcpu {
             0xCD => insn::control::int_imm8(self, ctx),
 
             // Misc
+            0x60 => insn::data::pusha(self, ctx),
+            0x61 => insn::data::popa(self, ctx),
+            0x62 => insn::data::bound_or_evex(self, ctx),
             0xC8 => insn::control::enter(self, ctx),
             0xC9 => insn::data::leave(self, ctx),
             0xD7 => insn::control::xlat(self, ctx),
             0xFE => insn::control::group4(self, ctx),
             0xFF => insn::control::group5(self, ctx),
-            0x62 => insn::data::bound_or_evex(self, ctx),
 
             // String operations (handled with REP prefix check)
             0xA4 => insn::string::movsb(self, ctx),
@@ -1497,6 +1499,28 @@ impl X86_64Vcpu {
         Ok(value)
     }
 
+    pub(super) fn push32(&mut self, value: u32) -> Result<()> {
+        self.regs.rsp = self.regs.rsp.wrapping_sub(4);
+        self.mmu.write_u32(self.regs.rsp, value, &self.sregs)
+    }
+
+    pub(super) fn pop32(&mut self) -> Result<u32> {
+        let value = self.mmu.read_u32(self.regs.rsp, &self.sregs)?;
+        self.regs.rsp = self.regs.rsp.wrapping_add(4);
+        Ok(value)
+    }
+
+    pub(super) fn push16(&mut self, value: u16) -> Result<()> {
+        self.regs.rsp = self.regs.rsp.wrapping_sub(2);
+        self.mmu.write_u16(self.regs.rsp, value, &self.sregs)
+    }
+
+    pub(super) fn pop16(&mut self) -> Result<u16> {
+        let value = self.mmu.read_u16(self.regs.rsp, &self.sregs)?;
+        self.regs.rsp = self.regs.rsp.wrapping_add(2);
+        Ok(value)
+    }
+
     // I/O pending helpers
     pub(super) fn set_io_pending(&mut self, size: u8) {
         self.io_pending = Some(IoPending { size });
@@ -2360,10 +2384,6 @@ impl VCpu for X86_64Vcpu {
                         "hit halt loop at RIP={:#x}", rip
                     )));
                 }
-            }
-
-            if insn_count % 10_000 == 0 {
-                panic!("Circuit breaker, ran for 10_000 instructions");
             }
 
             // Log progress periodically

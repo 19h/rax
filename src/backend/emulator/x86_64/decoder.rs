@@ -104,21 +104,29 @@ impl X86_64Vcpu {
                 addr = (addr as i64).wrapping_add(disp) as u64;
             }
         } else if rm_field == 5 && mod_bits == 0 {
-            // RIP-relative addressing (64-bit mode)
+            // In 64-bit mode (CS.L = 1): RIP-relative addressing [RIP+disp32]
+            // In compatibility/legacy mode (CS.L = 0): absolute disp32 [disp32]
             if bytes.len() < 5 {
                 return Err(Error::Emulator(
-                    "ModR/M: missing disp32 for RIP-relative".to_string(),
+                    "ModR/M: missing disp32 for RIP-relative/disp32".to_string(),
                 ));
             }
             let disp = i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]) as i64;
             extra += 4;
-            // RIP points to the next instruction
-            let rip_after = self.regs.rip as i64
-                + modrm_offset as i64
-                + 1
-                + 4
-                + ctx.rip_relative_offset as i64;
-            addr = rip_after.wrapping_add(disp) as u64;
+
+            if self.sregs.cs.l {
+                // 64-bit mode: RIP-relative addressing
+                // RIP points to the next instruction
+                let rip_after = self.regs.rip as i64
+                    + modrm_offset as i64
+                    + 1
+                    + 4
+                    + ctx.rip_relative_offset as i64;
+                addr = rip_after.wrapping_add(disp) as u64;
+            } else {
+                // Compatibility/legacy mode: absolute [disp32]
+                addr = disp as u64;
+            }
         } else {
             // Regular register indirect
             addr = self.get_reg(rm, 8);
