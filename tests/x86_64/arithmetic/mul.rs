@@ -281,8 +281,8 @@ fn test_mul_rax_overflow() {
 
 #[test]
 fn test_mul_rax_large_product() {
-    // 1000000000000 * 1000000000000 would overflow
-    // Test with smaller values
+    // 2^32 * 2^32 = 2^64 = 0x1_00000000_00000000 as 128-bit
+    // Split into RDX:RAX -> RDX = 1, RAX = 0
     let code = [0x48, 0xf7, 0xe3, 0xf4]; // MUL RBX
     let mut regs = Registers::default();
     regs.rax = 0x0000000100000000; // 2^32
@@ -290,8 +290,8 @@ fn test_mul_rax_large_product() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0000000000000000, "RAX (low = 0)");
-    assert_eq!(regs.rdx, 0x0000000100000000, "RDX (high = 2^64)");
+    assert_eq!(regs.rax, 0x0000000000000000, "RAX (low 64 bits = 0)");
+    assert_eq!(regs.rdx, 0x0000000000000001, "RDX (high 64 bits = 1)");
     assert!(cf_set(regs.rflags), "CF should be set");
 }
 
@@ -357,7 +357,9 @@ fn test_mul_cl_register() {
 
 #[test]
 fn test_mul_dx_16bit() {
-    // MUL DX (16-bit)
+    // MUL DX (16-bit): DX:AX = AX * DX
+    // 1000 * 100 = 100000 = 0x000186A0
+    // DX = 0x0001, AX = 0x86A0
     let code = [0x66, 0xf7, 0xe2, 0xf4]; // MUL DX
     let mut regs = Registers::default();
     regs.rax = 1000;
@@ -365,7 +367,8 @@ fn test_mul_dx_16bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFF, 100000, "1000 * 100 = 100000");
+    let result = ((regs.rdx & 0xFFFF) << 16) | (regs.rax & 0xFFFF);
+    assert_eq!(result, 100000, "1000 * 100 = 100000 (in DX:AX)");
 }
 
 #[test]

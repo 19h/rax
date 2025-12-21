@@ -377,18 +377,21 @@ fn test_cdq_sign_boundary_negative() {
 
 #[test]
 fn test_cdq_clears_upper_bits_rax() {
-    // CDQ should clear upper 32 bits of RAX (32-bit operation zero-extends)
+    // CDQ sign-extends EAX into EDX:EAX, but does NOT modify RAX
+    // CDQ only writes to EDX, RAX remains unchanged
     let code = [
         0x99, // CDQ
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rax = 0xDEADBEEF_12345678;
+    regs.rax = 0xDEADBEEF_12345678; // EAX = 0x12345678 (positive, MSB=0)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x12345678, "Upper 32 bits of RAX should be cleared");
-    assert_eq!(regs.rdx, 0x00000000, "EDX should be 0 (and upper bits cleared)");
+    // RAX is NOT modified by CDQ - only EDX/RDX is written
+    assert_eq!(regs.rax, 0xDEADBEEF_12345678, "RAX should be unchanged");
+    // EDX = 0 because EAX[31] = 0, and writing to EDX clears upper 32 bits of RDX
+    assert_eq!(regs.rdx, 0x00000000, "RDX should be 0 (sign extension of positive EAX)");
 }
 
 #[test]

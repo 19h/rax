@@ -221,6 +221,18 @@ pub fn update_flags_adc(rflags: &mut u64, a: u64, b: u64, cf_in: bool, result: u
     if af { *rflags |= bits::AF; }
 }
 
+/// Update only SF, ZF, and PF flags (used by BCD instructions like DAA, DAS, AAM, AAD).
+pub fn update_szp(rflags: &mut u64, result: u64, size: u8) {
+    let zf = compute_zf(result, size);
+    let sf = compute_sf(result, size);
+    let pf = compute_pf(result);
+
+    *rflags &= !(bits::ZF | bits::SF | bits::PF);
+    if zf { *rflags |= bits::ZF; }
+    if sf { *rflags |= bits::SF; }
+    if pf { *rflags |= bits::PF; }
+}
+
 /// Update flags after SBB (subtract with borrow) operation.
 /// This properly handles the borrow input to compute CF correctly.
 pub fn update_flags_sbb(rflags: &mut u64, a: u64, b: u64, cf_in: bool, result: u64, size: u8) {

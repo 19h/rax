@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{Bytes, run_until_hlt, setup_vm};
 
 // CVTDQ2PS - Convert Packed Doubleword Integers to Packed Single Precision
 // CVTPS2DQ - Convert Packed Single Precision to Packed Signed Doubleword Integers

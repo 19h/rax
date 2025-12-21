@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{Bytes, run_until_hlt, setup_vm};
 
 // CVTDQ2PD - Convert Packed Doubleword Integers to Packed Double Precision
 // CVTPD2DQ - Convert Packed Double Precision to Packed Signed Doubleword Integers

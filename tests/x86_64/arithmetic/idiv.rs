@@ -35,7 +35,7 @@ fn test_idiv_al_positive() {
     // 100 / 10 = 10 remainder 0 (both positive)
     // Need to sign-extend AL into AH: CBW (0x98)
     let code = [
-        0x98,       // CBW (sign-extend AL to AX)
+        0x66, 0x98, // CBW (sign-extend AL to AX) - needs 0x66 in 64-bit mode
         0xf6, 0xfb, // IDIV BL (F6 /7)
         0xf4,       // HLT
     ];
@@ -54,7 +54,7 @@ fn test_idiv_al_negative_dividend() {
     // -100 / 10 = -10 remainder 0
     // -100 in two's complement (i8) = 0x9C
     let code = [
-        0x98,       // CBW
+        0x66, 0x98, // CBW (needs 0x66 in 64-bit mode)
         0xf6, 0xfb, // IDIV BL
         0xf4,
     ];
@@ -72,7 +72,7 @@ fn test_idiv_al_negative_dividend() {
 fn test_idiv_al_negative_divisor() {
     // 100 / -10 = -10 remainder 0
     let code = [
-        0x98,       // CBW
+        0x66, 0x98, // CBW (needs 0x66 in 64-bit mode)
         0xf6, 0xfb, // IDIV BL
         0xf4,
     ];
@@ -90,7 +90,7 @@ fn test_idiv_al_negative_divisor() {
 fn test_idiv_al_both_negative() {
     // -100 / -10 = 10 remainder 0
     let code = [
-        0x98,       // CBW
+        0x66, 0x98, // CBW (needs 0x66 in 64-bit mode)
         0xf6, 0xfb, // IDIV BL
         0xf4,
     ];
@@ -108,7 +108,7 @@ fn test_idiv_al_both_negative() {
 fn test_idiv_al_with_remainder() {
     // 100 / 7 = 14 remainder 2
     let code = [
-        0x98,       // CBW
+        0x66, 0x98, // CBW (needs 0x66 in 64-bit mode)
         0xf6, 0xfb, // IDIV BL
         0xf4,
     ];
@@ -126,7 +126,7 @@ fn test_idiv_al_with_remainder() {
 fn test_idiv_al_negative_with_remainder() {
     // -100 / 7 = -14 remainder -2 (in two's complement, remainder has same sign as dividend)
     let code = [
-        0x98,       // CBW
+        0x66, 0x98, // CBW (needs 0x66 in 64-bit mode)
         0xf6, 0xfb, // IDIV BL
         0xf4,
     ];
@@ -151,7 +151,7 @@ fn test_idiv_ax_positive() {
     // 1000 / 10 = 100 remainder 0
     // Need CWD (0x99) to sign-extend AX into DX
     let code = [
-        0x99,           // CWD (sign-extend AX to DX:AX)
+        0x66, 0x99,     // CWD (sign-extend AX to DX:AX) - needs 0x66 in 64-bit mode
         0x66, 0xf7, 0xfb, // IDIV BX (66 F7 /7)
         0xf4,
     ];
@@ -169,7 +169,7 @@ fn test_idiv_ax_positive() {
 fn test_idiv_ax_negative_dividend() {
     // -1000 / 10 = -100 remainder 0
     let code = [
-        0x99,           // CWD
+        0x66, 0x99,     // CWD (needs 0x66 in 64-bit mode)
         0x66, 0xf7, 0xfb, // IDIV BX
         0xf4,
     ];
@@ -187,7 +187,7 @@ fn test_idiv_ax_negative_dividend() {
 fn test_idiv_ax_with_remainder() {
     // 1000 / 7 = 142 remainder 6
     let code = [
-        0x99,           // CWD
+        0x66, 0x99,     // CWD (needs 0x66 in 64-bit mode)
         0x66, 0xf7, 0xfb, // IDIV BX
         0xf4,
     ];
@@ -439,7 +439,7 @@ fn test_idiv_rax_negative_dividend_remainder() {
 fn test_idiv_cl_register() {
     // IDIV CL (8-bit)
     let code = [
-        0x98,       // CBW
+        0x66, 0x98, // CBW (needs 0x66 in 64-bit mode)
         0xf6, 0xf9, // IDIV CL
         0xf4,
     ];
@@ -478,7 +478,7 @@ fn test_idiv_ecx_32bit() {
 #[test]
 fn test_idiv_r8b() {
     let code = [
-        0x98,       // CBW
+        0x66, 0x98, // CBW (needs 0x66 in 64-bit mode)
         0x41, 0xf6, 0xf8, // IDIV R8B
         0xf4,
     ];
@@ -530,8 +530,8 @@ fn test_idiv_r15() {
 #[test]
 fn test_idiv_byte_ptr_mem() {
     let code = [
-        0x98,       // CBW
-        0xf6, 0x3d, 0xfa, 0x0f, 0x00, 0x00, // IDIV BYTE PTR [rip+0x0FFA]
+        0x66, 0x98, // CBW (needs 0x66 in 64-bit mode)
+        0xf6, 0x3d, 0xf9, 0x0f, 0x00, 0x00, // IDIV BYTE PTR [rip+0x0FF9] - adjusted for longer code
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

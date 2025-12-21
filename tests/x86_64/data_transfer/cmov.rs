@@ -20,11 +20,12 @@ use common::{run_until_hlt, setup_vm};
 #[test]
 fn test_cmovo_eax_ebx_overflow_set() {
     // CMOVO moves if OF=1 (overflow occurred)
+    // Use 32-bit operations for signed overflow detection
     let code = [
-        0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x7f, // MOV RAX, 0x7fffffff (MAX_INT)
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (overflows, sets OF)
-        0x0f, 0x40, 0xc3, // CMOVO EAX, EBX
-        0xf4, // HLT
+        0xb8, 0xff, 0xff, 0xff, 0x7f, // MOV EAX, 0x7FFFFFFF (MAX_INT in 32-bit)
+        0x83, 0xc0, 0x01,             // ADD EAX, 1 (overflows in 32-bit, sets OF)
+        0x0f, 0x40, 0xc3,             // CMOVO EAX, EBX
+        0xf4,                         // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x11111111;
@@ -38,10 +39,10 @@ fn test_cmovo_eax_ebx_overflow_set() {
 fn test_cmovo_eax_ebx_overflow_clear() {
     // CMOVO should not move if OF=0 (no overflow)
     let code = [
-        0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (no overflow)
-        0x0f, 0x40, 0xc3, // CMOVO EAX, EBX
-        0xf4, // HLT
+        0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1
+        0x83, 0xc0, 0x01,             // ADD EAX, 1 (no overflow)
+        0x0f, 0x40, 0xc3,             // CMOVO EAX, EBX
+        0xf4,                         // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x11111111;

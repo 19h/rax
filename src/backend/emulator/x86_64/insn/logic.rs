@@ -380,11 +380,12 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
     let op = (modrm >> 3) & 0x07;
     let rm = (modrm & 0x07) | ctx.rex_b();
 
+    let has_rex = ctx.rex.is_some();
     match op {
         0 | 1 => {
             // TEST r/m8, imm8
             let dst = if modrm >> 6 == 3 {
-                vcpu.get_reg(rm, 1)
+                vcpu.get_reg8(rm, has_rex)
             } else {
                 ctx.rip_relative_offset = 1;
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
@@ -398,8 +399,8 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         2 => {
             // NOT r/m8
             if modrm >> 6 == 3 {
-                let val = vcpu.get_reg(rm, 1);
-                vcpu.set_reg(rm, !val, 1);
+                let val = vcpu.get_reg8(rm, has_rex);
+                vcpu.set_reg8(rm, !val, has_rex);
             } else {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
@@ -410,9 +411,9 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         3 => {
             // NEG r/m8
             if modrm >> 6 == 3 {
-                let val = vcpu.get_reg(rm, 1) as u8;
+                let val = vcpu.get_reg8(rm, has_rex) as u8;
                 let result = (val as i8).wrapping_neg() as u8;
-                vcpu.set_reg(rm, result as u64, 1);
+                vcpu.set_reg8(rm, result as u64, has_rex);
                 flags::update_flags_sub(&mut vcpu.regs.rflags, 0, val as u64, result as u64, 1);
             } else {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
@@ -426,7 +427,7 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         4 => {
             // MUL r/m8 (unsigned)
             let src = if modrm >> 6 == 3 {
-                vcpu.get_reg(rm, 1) as u8
+                vcpu.get_reg8(rm, has_rex) as u8
             } else {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
@@ -441,7 +442,7 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         5 => {
             // IMUL r/m8 (signed, one-operand)
             let src = if modrm >> 6 == 3 {
-                vcpu.get_reg(rm, 1) as u8
+                vcpu.get_reg8(rm, has_rex) as u8
             } else {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
@@ -456,7 +457,7 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         6 => {
             // DIV r/m8 (unsigned)
             let divisor = if modrm >> 6 == 3 {
-                vcpu.get_reg(rm, 1) as u8
+                vcpu.get_reg8(rm, has_rex) as u8
             } else {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
@@ -477,7 +478,7 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         7 => {
             // IDIV r/m8 (signed)
             let divisor = if modrm >> 6 == 3 {
-                vcpu.get_reg(rm, 1) as u8
+                vcpu.get_reg8(rm, has_rex) as u8
             } else {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
