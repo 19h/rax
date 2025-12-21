@@ -1051,13 +1051,64 @@ impl X86_64Vcpu {
                 }
             }
         } else {
-            // Memory operand forms (CLFLUSH, LDMXCSR, STMXCSR, etc.)
+            // Memory operand forms (FXSAVE, FXRSTOR, LDMXCSR, STMXCSR, XSAVE, XRSTOR, CLFLUSH)
+            let modrm_start = ctx.cursor - 1;
+            let (addr, extra) = self.decode_modrm_addr(ctx, modrm_start)?;
+            ctx.cursor = modrm_start + 1 + extra;
+
             match reg_op {
+                0 => {
+                    // FXSAVE - save FPU/SSE state
+                    // Write 512-byte FPU/SSE state to memory
+                    // Minimal implementation: write zeros
+                    for i in 0..64 {
+                        self.write_mem(addr + i * 8, 0u64, 8)?;
+                    }
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                1 => {
+                    // FXRSTOR - restore FPU/SSE state
+                    // Just skip - we don't actually restore FPU state
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                2 => {
+                    // LDMXCSR - load MXCSR register from memory
+                    // Just skip - treat as NOP
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                3 => {
+                    // STMXCSR - store MXCSR register to memory
+                    // Store default MXCSR value (0x1F80)
+                    self.write_mem(addr, 0x1F80u64, 4)?;
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                4 => {
+                    // XSAVE - save extended processor state
+                    // EDX:EAX specifies which components to save
+                    // Write minimal XSAVE area header (64 bytes)
+                    // XSTATE_BV at offset 0 (8 bytes) - saved components
+                    let xcr0 = 0x03u64; // x87 + SSE
+                    self.write_mem(addr + 512, xcr0, 8)?; // XSTATE_BV in header
+                    self.write_mem(addr + 520, 0u64, 8)?; // XCOMP_BV
+                    // Zero rest of legacy region
+                    for i in 0..64 {
+                        self.write_mem(addr + i * 8, 0u64, 8)?;
+                    }
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                5 => {
+                    // XRSTOR - restore extended processor state
+                    // Just skip - we don't actually restore state
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
                 7 => {
                     // CLFLUSH/CLFLUSHOPT - treat as NOP
-                    let modrm_start = ctx.cursor - 1;
-                    let (_, extra) = self.decode_modrm_addr(ctx, modrm_start)?;
-                    ctx.cursor = modrm_start + 1 + extra;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
