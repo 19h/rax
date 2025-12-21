@@ -717,6 +717,17 @@ impl X86_64Vcpu {
             0x01 => self.execute_0f01(ctx),
             0x02 => insn::system::lar(self, ctx),
             0x03 => insn::system::lsl(self, ctx),
+            // INVD/WBINVD - cache invalidation (NOP in emulator)
+            0x08 => {
+                // INVD - Invalidate internal caches
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+            0x09 => {
+                // WBINVD - Write back and invalidate caches
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
             0x20 => insn::system::mov_r_cr(self, ctx),
             0x22 => insn::system::mov_cr_r(self, ctx),
             0x30 => insn::system::wrmsr(self, ctx),
@@ -974,6 +985,26 @@ impl X86_64Vcpu {
         // Check for special instructions with mod=3
         if modrm >> 6 == 3 {
             match modrm {
+                0xD0 => {
+                    // XGETBV (0x0F 0x01 0xD0) - Get extended control register
+                    ctx.consume_u8()?; // consume modrm
+                    // ECX specifies which XCR (only XCR0 is typically supported)
+                    // Returns XCR value in EDX:EAX (zero-extended in 64-bit mode)
+                    // For XCR0, return x87 bit set (bit 0) and SSE bit (bit 1)
+                    let xcr0 = 0x03u64; // x87 + SSE always enabled
+                    // In 64-bit mode, writes to EAX/EDX zero-extend to RAX/RDX
+                    self.regs.rax = xcr0 & 0xFFFFFFFF;
+                    self.regs.rdx = (xcr0 >> 32) & 0xFFFFFFFF;
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                0xD1 => {
+                    // XSETBV (0x0F 0x01 0xD1) - Set extended control register
+                    ctx.consume_u8()?; // consume modrm
+                    // In emulator, just NOP (we ignore the write)
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
                 0xD5 => {
                     // XEND (0x0F 0x01 0xD5) - End transaction
                     ctx.consume_u8()?; // consume modrm

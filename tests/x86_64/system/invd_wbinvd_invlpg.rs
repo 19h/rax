@@ -137,10 +137,11 @@ fn test_wbinvd_preserves_registers() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xAAAAAAAA);
-    assert_eq!(regs.rbx, 0xBBBBBBBB);
-    assert_eq!(regs.rcx, 0xCCCCCCCC);
-    assert_eq!(regs.rdx, 0xDDDDDDDD);
+    // MOV r64, imm32 sign-extends when bit 31 is set
+    assert_eq!(regs.rax, 0xFFFFFFFFAAAAAAAAu64);
+    assert_eq!(regs.rbx, 0xFFFFFFFFBBBBBBBBu64);
+    assert_eq!(regs.rcx, 0xFFFFFFFFCCCCCCCCu64);
+    assert_eq!(regs.rdx, 0xFFFFFFFFDDDDDDDDu64);
 }
 
 #[test]
@@ -270,7 +271,8 @@ fn test_invlpg_preserves_registers() {
 
     assert_eq!(regs.rax, 0x4000);
     assert_eq!(regs.rbx, 0x42424242);
-    assert_eq!(regs.rcx, 0x99999999);
+    // MOV r64, imm32 sign-extends when bit 31 is set
+    assert_eq!(regs.rcx, 0xFFFFFFFF99999999u64);
 }
 
 #[test]
