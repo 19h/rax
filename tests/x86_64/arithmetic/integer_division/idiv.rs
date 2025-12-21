@@ -596,7 +596,8 @@ fn test_idiv_byte_ptr_mem() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u8(&mem, (-7i8) as u8);
 
-    let mut regs = Registers::default();
+    // Get current regs to preserve RIP, then modify
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rax = 50;
     vcpu.set_regs(&regs).unwrap();
 
@@ -615,7 +616,8 @@ fn test_idiv_dword_ptr_mem() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u32(&mem, (-12345i32) as u32);
 
-    let mut regs = Registers::default();
+    // Get current regs to preserve RIP, then modify
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rax = 123456789;
     regs.rdx = 0;
     vcpu.set_regs(&regs).unwrap();
