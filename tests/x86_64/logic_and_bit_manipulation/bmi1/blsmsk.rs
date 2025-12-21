@@ -15,7 +15,7 @@ use rax::cpu::Registers;
 fn test_blsmsk_eax_ebx_bit_0() {
     // BLSMSK EAX, EBX - mask up to bit 0
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -32,7 +32,7 @@ fn test_blsmsk_eax_ebx_bit_0() {
 fn test_blsmsk_eax_ebx_bit_3() {
     // BLSMSK EAX, EBX - mask up to bit 3
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -49,7 +49,7 @@ fn test_blsmsk_eax_ebx_bit_3() {
 fn test_blsmsk_eax_ebx_bit_31() {
     // BLSMSK EAX, EBX - mask up to bit 31
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -65,7 +65,7 @@ fn test_blsmsk_eax_ebx_bit_31() {
 fn test_blsmsk_rax_rbx_bit_0() {
     // BLSMSK RAX, RBX - 64-bit version
     let code = [
-        0xc4, 0xe2, 0xe0, 0xf3, 0xd3, // BLSMSK RAX, RBX (W1)
+        0xc4, 0xe2, 0xf8, 0xf3, 0xd3, // BLSMSK RAX, RBX (W1)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -81,7 +81,7 @@ fn test_blsmsk_rax_rbx_bit_0() {
 fn test_blsmsk_rax_rbx_bit_63() {
     // BLSMSK RAX, RBX - mask up to bit 63
     let code = [
-        0xc4, 0xe2, 0xe0, 0xf3, 0xd3, // BLSMSK RAX, RBX
+        0xc4, 0xe2, 0xf8, 0xf3, 0xd3, // BLSMSK RAX, RBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -97,7 +97,7 @@ fn test_blsmsk_rax_rbx_bit_63() {
 fn test_blsmsk_zero_source() {
     // BLSMSK with zero source
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -114,7 +114,7 @@ fn test_blsmsk_zero_source() {
 fn test_blsmsk_multiple_bits_uses_lowest() {
     // BLSMSK should use only the lowest set bit
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -130,7 +130,7 @@ fn test_blsmsk_multiple_bits_uses_lowest() {
 fn test_blsmsk_all_bits_set() {
     // BLSMSK with all bits set
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -146,7 +146,7 @@ fn test_blsmsk_all_bits_set() {
 fn test_blsmsk_alternating_pattern() {
     // BLSMSK with alternating pattern 1010...1010
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -162,7 +162,7 @@ fn test_blsmsk_alternating_pattern() {
 fn test_blsmsk_alternating_pattern_inverted() {
     // BLSMSK with alternating pattern 0101...0101
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -179,7 +179,7 @@ fn test_blsmsk_single_bit_positions() {
     // Test each individual bit position
     for bit_pos in 0..32 {
         let code = [
-            0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+            0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -229,7 +229,7 @@ fn test_blsmsk_r15() {
 fn test_blsmsk_mem32() {
     // BLSMSK EAX, [mem]
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0x14, 0x25, 0x00, 0x20, 0x00, 0x00, // BLSMSK EAX, [DATA_ADDR]
+        0xc4, 0xe2, 0x78, 0xf3, 0x14, 0x25, 0x00, 0x20, 0x00, 0x00, // BLSMSK EAX, [DATA_ADDR]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -244,7 +244,7 @@ fn test_blsmsk_mem32() {
 fn test_blsmsk_mem64() {
     // BLSMSK RAX, [mem]
     let code = [
-        0xc4, 0xe2, 0xe0, 0xf3, 0x14, 0x25, 0x00, 0x20, 0x00, 0x00, // BLSMSK RAX, [DATA_ADDR]
+        0xc4, 0xe2, 0xf8, 0xf3, 0x14, 0x25, 0x00, 0x20, 0x00, 0x00, // BLSMSK RAX, [DATA_ADDR]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -259,7 +259,7 @@ fn test_blsmsk_mem64() {
 fn test_blsmsk_trailing_zeros() {
     // BLSMSK creates mask for trailing zeros + 1
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -275,7 +275,7 @@ fn test_blsmsk_trailing_zeros() {
 fn test_blsmsk_sparse_pattern() {
     // BLSMSK with sparse bit pattern
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -291,7 +291,7 @@ fn test_blsmsk_sparse_pattern() {
 fn test_blsmsk_preserves_source() {
     // BLSMSK should not modify source operand
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -306,7 +306,7 @@ fn test_blsmsk_preserves_source() {
 fn test_blsmsk_vs_xor_sub1() {
     // BLSMSK is equivalent to src ^ (src - 1)
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
     ];
     let value = 0x12345678u32;
@@ -324,7 +324,7 @@ fn test_blsmsk_power_of_two() {
     // BLSMSK of power of two creates mask with that many bits
     for i in 0..32 {
         let code = [
-            0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+            0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -341,7 +341,7 @@ fn test_blsmsk_power_of_two() {
 fn test_blsmsk_consecutive_bits() {
     // BLSMSK with consecutive bits set
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -357,7 +357,7 @@ fn test_blsmsk_consecutive_bits() {
 fn test_blsmsk_sign_bit() {
     // BLSMSK with sign bit set
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -383,7 +383,7 @@ fn test_blsmsk_creates_bit_masks() {
 
     for (input, expected) in test_cases {
         let code = [
-            0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+            0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -399,7 +399,7 @@ fn test_blsmsk_creates_bit_masks() {
 fn test_blsmsk_high_bits_64() {
     // BLSMSK with high bits in 64-bit operand
     let code = [
-        0xc4, 0xe2, 0xe0, 0xf3, 0xd3, // BLSMSK RAX, RBX
+        0xc4, 0xe2, 0xf8, 0xf3, 0xd3, // BLSMSK RAX, RBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -415,7 +415,7 @@ fn test_blsmsk_high_bits_64() {
 fn test_blsmsk_mixed_high_low() {
     // BLSMSK with both high and low bits, should use lowest
     let code = [
-        0xc4, 0xe2, 0xe0, 0xf3, 0xd3, // BLSMSK RAX, RBX
+        0xc4, 0xe2, 0xf8, 0xf3, 0xd3, // BLSMSK RAX, RBX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -431,7 +431,7 @@ fn test_blsmsk_mixed_high_low() {
 fn test_blsmsk_clear_sf_of() {
     // BLSMSK clears SF and OF flags
     let code = [
-        0xc4, 0xe2, 0x60, 0xf3, 0xd3, // BLSMSK EAX, EBX
+        0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
     ];
     let mut regs = Registers::default();
