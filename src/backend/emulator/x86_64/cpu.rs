@@ -256,6 +256,12 @@ impl X86_64Vcpu {
             0xEE => insn::io::out_dx_al(self, ctx),
             0xEF => insn::io::out_dx_ax(self, ctx),
 
+            // String I/O
+            0x6C => insn::io::insb(self, ctx),  // INSB
+            0x6D => insn::io::insw(self, ctx),  // INSW/INSD
+            0x6E => insn::io::outsb(self, ctx), // OUTSB
+            0x6F => insn::io::outsw(self, ctx), // OUTSW/OUTSD
+
             // Data movement
             0xB0..=0xB7 => insn::data::mov_r8_imm8(self, ctx, opcode),
             0xB8..=0xBF => insn::data::mov_r_imm(self, ctx, opcode),
