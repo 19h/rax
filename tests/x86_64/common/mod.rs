@@ -50,6 +50,11 @@ pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Ar
     sregs.cr0 = 0x00050033; // PE but NOT PG (no paging)
     sregs.cr4 = 0x20; // PAE
     sregs.efer = 0x500; // LMA, LME for long mode
+    // Initialize GDT and IDT with reasonable defaults for testing
+    sregs.gdt.base = 0x10000; // GDT at 64KB
+    sregs.gdt.limit = 0x1F;   // 4 descriptors (32 bytes - 1)
+    sregs.idt.base = 0x11000; // IDT at 68KB
+    sregs.idt.limit = 0xFF;   // 16 entries (256 bytes - 1)
     vcpu.set_sregs(&sregs).unwrap();
 
     (vcpu, mem)
