@@ -111,12 +111,15 @@ fn test_lfence_multiple() {
 #[test]
 fn test_lfence_with_loop() {
     // LFENCE in a loop
+    // MOV at 0x1000, 7 bytes. Loop starts at 0x1007.
+    // LFENCE at 0x1007, 3 bytes. DEC at 0x100A, 3 bytes. JNZ at 0x100D, 2 bytes.
+    // After JNZ, RIP = 0x100F. To jump to 0x1007: offset = 0x1007 - 0x100F = -8 = 0xF8
     let code = [
         0x48, 0xC7, 0xC1, 0x03, 0x00, 0x00, 0x00, // MOV RCX, 3
         // loop:
         0x0F, 0xAE, 0xE8,                         // LFENCE
         0x48, 0xFF, 0xC9,                         // DEC RCX
-        0x75, 0xF9,                               // JNZ loop
+        0x75, 0xF8,                               // JNZ loop (-8)
         0xF4,                                      // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -146,11 +149,12 @@ fn test_mfence_basic() {
 #[test]
 fn test_mfence_preserves_registers() {
     // MFENCE should not modify any registers
+    // Note: MOV r64, imm32 sign-extends, so 0xAAAAAAAA becomes 0xFFFFFFFFAAAAAAAA
     let code = [
-        0x48, 0xC7, 0xC0, 0xAA, 0xAA, 0xAA, 0xAA, // MOV RAX, 0xAAAAAAAA
-        0x48, 0xC7, 0xC3, 0xBB, 0xBB, 0xBB, 0xBB, // MOV RBX, 0xBBBBBBBB
-        0x48, 0xC7, 0xC1, 0xCC, 0xCC, 0xCC, 0xCC, // MOV RCX, 0xCCCCCCCC
-        0x48, 0xC7, 0xC2, 0xDD, 0xDD, 0xDD, 0xDD, // MOV RDX, 0xDDDDDDDD
+        0x48, 0xC7, 0xC0, 0xAA, 0xAA, 0xAA, 0xAA, // MOV RAX, 0xAAAAAAAA (sign-ext)
+        0x48, 0xC7, 0xC3, 0xBB, 0xBB, 0xBB, 0xBB, // MOV RBX, 0xBBBBBBBB (sign-ext)
+        0x48, 0xC7, 0xC1, 0xCC, 0xCC, 0xCC, 0xCC, // MOV RCX, 0xCCCCCCCC (sign-ext)
+        0x48, 0xC7, 0xC2, 0xDD, 0xDD, 0xDD, 0xDD, // MOV RDX, 0xDDDDDDDD (sign-ext)
         0x0F, 0xAE, 0xF0,                         // MFENCE
         0xF4,                                      // HLT
     ];
@@ -158,10 +162,11 @@ fn test_mfence_preserves_registers() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xAAAAAAAA);
-    assert_eq!(regs.rbx, 0xBBBBBBBB);
-    assert_eq!(regs.rcx, 0xCCCCCCCC);
-    assert_eq!(regs.rdx, 0xDDDDDDDD);
+    // These all have bit 31 set, so they are sign-extended to 64 bits
+    assert_eq!(regs.rax, 0xFFFFFFFFAAAAAAAAu64);
+    assert_eq!(regs.rbx, 0xFFFFFFFFBBBBBBBBu64);
+    assert_eq!(regs.rcx, 0xFFFFFFFFCCCCCCCCu64);
+    assert_eq!(regs.rdx, 0xFFFFFFFFDDDDDDDDu64);
 }
 
 #[test]
@@ -250,11 +255,12 @@ fn test_sfence_basic() {
 #[test]
 fn test_sfence_preserves_registers() {
     // SFENCE should not modify any registers
+    // Note: MOV r64, imm32 sign-extends. Only 0x88888888 has bit 31 set.
     let code = [
-        0x48, 0xC7, 0xC0, 0x55, 0x55, 0x55, 0x55, // MOV RAX, 0x55555555
-        0x48, 0xC7, 0xC3, 0x66, 0x66, 0x66, 0x66, // MOV RBX, 0x66666666
-        0x48, 0xC7, 0xC1, 0x77, 0x77, 0x77, 0x77, // MOV RCX, 0x77777777
-        0x48, 0xC7, 0xC2, 0x88, 0x88, 0x88, 0x88, // MOV RDX, 0x88888888
+        0x48, 0xC7, 0xC0, 0x55, 0x55, 0x55, 0x55, // MOV RAX, 0x55555555 (no sign-ext)
+        0x48, 0xC7, 0xC3, 0x66, 0x66, 0x66, 0x66, // MOV RBX, 0x66666666 (no sign-ext)
+        0x48, 0xC7, 0xC1, 0x77, 0x77, 0x77, 0x77, // MOV RCX, 0x77777777 (no sign-ext)
+        0x48, 0xC7, 0xC2, 0x88, 0x88, 0x88, 0x88, // MOV RDX, 0x88888888 (sign-ext)
         0x0F, 0xAE, 0xF8,                         // SFENCE
         0xF4,                                      // HLT
     ];
@@ -265,7 +271,7 @@ fn test_sfence_preserves_registers() {
     assert_eq!(regs.rax, 0x55555555);
     assert_eq!(regs.rbx, 0x66666666);
     assert_eq!(regs.rcx, 0x77777777);
-    assert_eq!(regs.rdx, 0x88888888);
+    assert_eq!(regs.rdx, 0xFFFFFFFF88888888u64); // sign-extended
 }
 
 #[test]

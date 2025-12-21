@@ -89,10 +89,11 @@ fn test_rdmsr_preserves_flags() {
 #[test]
 fn test_rdmsr_preserves_other_registers() {
     // RDMSR should only modify EAX and EDX
+    // Note: MOV r64, imm32 sign-extends. Values with bit 31 set get sign-extended.
     let code = [
         0x48, 0xC7, 0xC3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242
-        0x48, 0xC7, 0xC6, 0xAA, 0xAA, 0xAA, 0xAA, // MOV RSI, 0xAAAAAAAA
-        0x48, 0xC7, 0xC7, 0xBB, 0xBB, 0xBB, 0xBB, // MOV RDI, 0xBBBBBBBB
+        0x48, 0xC7, 0xC6, 0xAA, 0xAA, 0xAA, 0xAA, // MOV RSI, 0xAAAAAAAA (sign-ext)
+        0x48, 0xC7, 0xC7, 0xBB, 0xBB, 0xBB, 0xBB, // MOV RDI, 0xBBBBBBBB (sign-ext)
         0x48, 0xC7, 0xC1, 0x1B, 0x00, 0x00, 0x00, // MOV RCX, 0x1B
         0x0F, 0x32,                               // RDMSR
         0xF4,                                      // HLT
@@ -102,8 +103,8 @@ fn test_rdmsr_preserves_other_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rbx, 0x42424242, "RBX should not be modified");
-    assert_eq!(regs.rsi, 0xAAAAAAAA, "RSI should not be modified");
-    assert_eq!(regs.rdi, 0xBBBBBBBB, "RDI should not be modified");
+    assert_eq!(regs.rsi, 0xFFFFFFFFAAAAAAAAu64, "RSI should not be modified (sign-extended)");
+    assert_eq!(regs.rdi, 0xFFFFFFFFBBBBBBBBu64, "RDI should not be modified (sign-extended)");
 }
 
 // ============================================================================

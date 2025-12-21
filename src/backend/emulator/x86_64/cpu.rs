@@ -974,6 +974,21 @@ impl X86_64Vcpu {
         // Check for special instructions with mod=3
         if modrm >> 6 == 3 {
             match modrm {
+                0xD5 => {
+                    // XEND (0x0F 0x01 0xD5) - End transaction
+                    ctx.consume_u8()?; // consume modrm
+                    // TSX not supported, treat as NOP
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                0xD6 => {
+                    // XTEST (0x0F 0x01 0xD6) - Test if in transactional execution
+                    ctx.consume_u8()?; // consume modrm
+                    // TSX not supported, ZF=1 (not in transaction)
+                    self.regs.rflags |= flags::bits::ZF;
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
                 0xF9 => {
                     // RDTSCP (0x0F 0x01 0xF9)
                     ctx.consume_u8()?; // consume modrm
