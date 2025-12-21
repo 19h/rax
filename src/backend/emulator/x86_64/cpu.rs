@@ -342,7 +342,8 @@ impl X86_64Vcpu {
             0x70..=0x7F => insn::control::jcc_rel8(self, ctx, opcode & 0x0F),
 
             // VEX-encoded instructions (partial support)
-            0xC4 => self.execute_vex(ctx),
+            0xC4 => self.execute_vex3(ctx),
+            0xC5 => self.execute_vex2(ctx),
 
             // I/O
             0xE4 => insn::io::in_al_imm8(self, ctx),
@@ -528,7 +529,34 @@ impl X86_64Vcpu {
         }
     }
 
-    fn execute_vex(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    /// Execute 2-byte VEX-encoded instructions (0xC5 prefix)
+    fn execute_vex2(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        // VEX 2-byte prefix: 0xC5 [R vvvv L pp]
+        // Implied: m-mmmm = 1 (0F escape), X = 1, B = 1, W = 0
+        let vex1 = ctx.consume_u8()?;
+        let opcode = ctx.consume_u8()?;
+
+        let vex_r = (vex1 >> 7) & 1;
+        let vex_l = (vex1 >> 2) & 1;
+        let vex_pp = vex1 & 0x03;
+        let vvvv = ((vex1 >> 3) & 0x0F) ^ 0x0F;
+
+        // 2-byte VEX implies m-mmmm=1 (0F), X=B=1, W=0
+        let m_mmmm: u8 = 1;
+        let vex_w: u8 = 0;
+
+        // Set up REX (R is from VEX, X and B are implied 1 which means REX.X=0, REX.B=0)
+        let rex_r = (vex_r ^ 1) & 1;
+        let rex = 0x40 | (rex_r << 2);
+        ctx.rex = Some(rex);
+        ctx.op_size = 4; // W=0 implies 32-bit operand size
+        ctx.rip_relative_offset = 1;
+
+        self.execute_vex_common(ctx, m_mmmm, vex_pp, vex_l, vex_w, vvvv, opcode)
+    }
+
+    /// Execute 3-byte VEX-encoded instructions (0xC4 prefix)
+    fn execute_vex3(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         // VEX 3-byte prefix (0xC4)
         let vex1 = ctx.consume_u8()?;
         let vex2 = ctx.consume_u8()?;
@@ -557,6 +585,22 @@ impl X86_64Vcpu {
 
         // VEX.vvvv register (inverted in VEX encoding)
         let vvvv = ((vex2 >> 3) & 0x0F) ^ 0x0F;
+
+        self.execute_vex_common(ctx, m_mmmm, vex_pp, vex_l, vex_w, vvvv, opcode)
+    }
+
+    /// Common VEX instruction execution logic
+    fn execute_vex_common(
+        &mut self,
+        ctx: &mut InsnContext,
+        m_mmmm: u8,
+        vex_pp: u8,
+        vex_l: u8,
+        vex_w: u8,
+        vvvv: u8,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
 
         // VEX.LZ.F2.0F3A.W{0,1} F0 /r ib (RORX)
         if m_mmmm == 0x3 && vex_pp == 0x3 && vex_l == 0 && opcode == 0xF0 {
@@ -824,6 +868,378 @@ impl X86_64Vcpu {
             }
         }
 
+        // VEX.0F encoded SSE/AVX instructions (m=1)
+        if m_mmmm == 0x1 {
+            match (vex_pp, opcode) {
+                // VMOVDQA xmm/ymm, xmm/ymm/m (VEX.66.0F 6F /r)
+                (1, 0x6F) => {
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let xmm_dst = reg as usize;
+
+                    if vex_l == 0 {
+                        // 128-bit XMM
+                        if is_memory {
+                            if addr & 0xF != 0 {
+                                return Err(Error::Emulator(format!(
+                                    "VMOVDQA: unaligned memory access at {:#x}",
+                                    addr
+                                )));
+                            }
+                            self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;
+                            self.regs.xmm[xmm_dst][1] = self.read_mem(addr + 8, 8)?;
+                        } else {
+                            let xmm_src = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                        }
+                        // VEX clears upper bits
+                        self.regs.ymm_high[xmm_dst][0] = 0;
+                        self.regs.ymm_high[xmm_dst][1] = 0;
+                    } else {
+                        // 256-bit YMM
+                        if is_memory {
+                            if addr & 0x1F != 0 {
+                                return Err(Error::Emulator(format!(
+                                    "VMOVDQA: unaligned memory access at {:#x}",
+                                    addr
+                                )));
+                            }
+                            self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;
+                            self.regs.xmm[xmm_dst][1] = self.read_mem(addr + 8, 8)?;
+                            self.regs.ymm_high[xmm_dst][0] = self.read_mem(addr + 16, 8)?;
+                            self.regs.ymm_high[xmm_dst][1] = self.read_mem(addr + 24, 8)?;
+                        } else {
+                            let xmm_src = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                            self.regs.ymm_high[xmm_dst][0] = self.regs.ymm_high[xmm_src][0];
+                            self.regs.ymm_high[xmm_dst][1] = self.regs.ymm_high[xmm_src][1];
+                        }
+                    }
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                // VMOVDQU xmm/ymm, xmm/ymm/m (VEX.F3.0F 6F /r)
+                (2, 0x6F) => {
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let xmm_dst = reg as usize;
+
+                    if vex_l == 0 {
+                        // 128-bit XMM
+                        if is_memory {
+                            self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;
+                            self.regs.xmm[xmm_dst][1] = self.read_mem(addr + 8, 8)?;
+                        } else {
+                            let xmm_src = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                        }
+                        self.regs.ymm_high[xmm_dst][0] = 0;
+                        self.regs.ymm_high[xmm_dst][1] = 0;
+                    } else {
+                        // 256-bit YMM
+                        if is_memory {
+                            self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;
+                            self.regs.xmm[xmm_dst][1] = self.read_mem(addr + 8, 8)?;
+                            self.regs.ymm_high[xmm_dst][0] = self.read_mem(addr + 16, 8)?;
+                            self.regs.ymm_high[xmm_dst][1] = self.read_mem(addr + 24, 8)?;
+                        } else {
+                            let xmm_src = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                            self.regs.ymm_high[xmm_dst][0] = self.regs.ymm_high[xmm_src][0];
+                            self.regs.ymm_high[xmm_dst][1] = self.regs.ymm_high[xmm_src][1];
+                        }
+                    }
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                // VMOVDQA xmm/ymm/m, xmm/ymm (VEX.66.0F 7F /r) - store
+                (1, 0x7F) => {
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let xmm_src = reg as usize;
+
+                    if vex_l == 0 {
+                        // 128-bit XMM
+                        if is_memory {
+                            if addr & 0xF != 0 {
+                                return Err(Error::Emulator(format!(
+                                    "VMOVDQA: unaligned memory access at {:#x}",
+                                    addr
+                                )));
+                            }
+                            self.write_mem(addr, self.regs.xmm[xmm_src][0], 8)?;
+                            self.write_mem(addr + 8, self.regs.xmm[xmm_src][1], 8)?;
+                        } else {
+                            let xmm_dst = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                            self.regs.ymm_high[xmm_dst][0] = 0;
+                            self.regs.ymm_high[xmm_dst][1] = 0;
+                        }
+                    } else {
+                        // 256-bit YMM
+                        if is_memory {
+                            if addr & 0x1F != 0 {
+                                return Err(Error::Emulator(format!(
+                                    "VMOVDQA: unaligned memory access at {:#x}",
+                                    addr
+                                )));
+                            }
+                            self.write_mem(addr, self.regs.xmm[xmm_src][0], 8)?;
+                            self.write_mem(addr + 8, self.regs.xmm[xmm_src][1], 8)?;
+                            self.write_mem(addr + 16, self.regs.ymm_high[xmm_src][0], 8)?;
+                            self.write_mem(addr + 24, self.regs.ymm_high[xmm_src][1], 8)?;
+                        } else {
+                            let xmm_dst = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                            self.regs.ymm_high[xmm_dst][0] = self.regs.ymm_high[xmm_src][0];
+                            self.regs.ymm_high[xmm_dst][1] = self.regs.ymm_high[xmm_src][1];
+                        }
+                    }
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                // VMOVDQU xmm/ymm/m, xmm/ymm (VEX.F3.0F 7F /r) - store
+                (2, 0x7F) => {
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let xmm_src = reg as usize;
+
+                    if vex_l == 0 {
+                        // 128-bit XMM
+                        if is_memory {
+                            self.write_mem(addr, self.regs.xmm[xmm_src][0], 8)?;
+                            self.write_mem(addr + 8, self.regs.xmm[xmm_src][1], 8)?;
+                        } else {
+                            let xmm_dst = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                            self.regs.ymm_high[xmm_dst][0] = 0;
+                            self.regs.ymm_high[xmm_dst][1] = 0;
+                        }
+                    } else {
+                        // 256-bit YMM
+                        if is_memory {
+                            self.write_mem(addr, self.regs.xmm[xmm_src][0], 8)?;
+                            self.write_mem(addr + 8, self.regs.xmm[xmm_src][1], 8)?;
+                            self.write_mem(addr + 16, self.regs.ymm_high[xmm_src][0], 8)?;
+                            self.write_mem(addr + 24, self.regs.ymm_high[xmm_src][1], 8)?;
+                        } else {
+                            let xmm_dst = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                            self.regs.ymm_high[xmm_dst][0] = self.regs.ymm_high[xmm_src][0];
+                            self.regs.ymm_high[xmm_dst][1] = self.regs.ymm_high[xmm_src][1];
+                        }
+                    }
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+
+                // VEX arithmetic: VADDPS/PD (0x58), VMULPS/PD (0x59), VSUBPS/PD (0x5C), VDIVPS/PD (0x5E)
+                // VSQRTPS/PD (0x51), VMINPS/PD (0x5D), VMAXPS/PD (0x5F)
+                // pp=0: PS (packed single), pp=1: PD (packed double)
+                // pp=2: SS (scalar single), pp=3: SD (scalar double)
+                (_, 0x51) | (_, 0x58) | (_, 0x59) | (_, 0x5C) | (_, 0x5D) | (_, 0x5E) | (_, 0x5F) => {
+                    return self.execute_vex_arith(ctx, vex_pp, vex_l, vvvv, opcode);
+                }
+
+                // VEX logical: VANDPS/PD (0x54), VANDNPS/PD (0x55), VORPS/PD (0x56), VXORPS/PD (0x57)
+                (_, 0x54) | (_, 0x55) | (_, 0x56) | (_, 0x57) => {
+                    return self.execute_vex_logical(ctx, vex_pp, vex_l, vvvv, opcode);
+                }
+
+                // VEX unpack: VUNPCKLPS/PD (0x14), VUNPCKHPS/PD (0x15)
+                (_, 0x14) | (_, 0x15) => {
+                    return self.execute_vex_unpack(ctx, vex_pp, vex_l, vvvv, opcode);
+                }
+
+                // VEX move: VMOVAPS/VMOVUPS (0x28/0x29/0x10/0x11)
+                (0, 0x10) | (0, 0x28) => {
+                    // VMOVUPS (0x10) or VMOVAPS (0x28) load
+                    let aligned = opcode == 0x28;
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let xmm_dst = reg as usize;
+
+                    if vex_l == 0 {
+                        if is_memory {
+                            if aligned && addr & 0xF != 0 {
+                                return Err(Error::Emulator(format!(
+                                    "VMOVAPS: unaligned memory access at {:#x}", addr
+                                )));
+                            }
+                            self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;
+                            self.regs.xmm[xmm_dst][1] = self.read_mem(addr + 8, 8)?;
+                        } else {
+                            let xmm_src = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                        }
+                        self.regs.ymm_high[xmm_dst][0] = 0;
+                        self.regs.ymm_high[xmm_dst][1] = 0;
+                    } else {
+                        if is_memory {
+                            if aligned && addr & 0x1F != 0 {
+                                return Err(Error::Emulator(format!(
+                                    "VMOVAPS: unaligned memory access at {:#x}", addr
+                                )));
+                            }
+                            self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;
+                            self.regs.xmm[xmm_dst][1] = self.read_mem(addr + 8, 8)?;
+                            self.regs.ymm_high[xmm_dst][0] = self.read_mem(addr + 16, 8)?;
+                            self.regs.ymm_high[xmm_dst][1] = self.read_mem(addr + 24, 8)?;
+                        } else {
+                            let xmm_src = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                            self.regs.ymm_high[xmm_dst][0] = self.regs.ymm_high[xmm_src][0];
+                            self.regs.ymm_high[xmm_dst][1] = self.regs.ymm_high[xmm_src][1];
+                        }
+                    }
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                (0, 0x11) | (0, 0x29) => {
+                    // VMOVUPS (0x11) or VMOVAPS (0x29) store
+                    let aligned = opcode == 0x29;
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let xmm_src = reg as usize;
+
+                    if vex_l == 0 {
+                        if is_memory {
+                            if aligned && addr & 0xF != 0 {
+                                return Err(Error::Emulator(format!(
+                                    "VMOVAPS: unaligned memory access at {:#x}", addr
+                                )));
+                            }
+                            self.write_mem(addr, self.regs.xmm[xmm_src][0], 8)?;
+                            self.write_mem(addr + 8, self.regs.xmm[xmm_src][1], 8)?;
+                        } else {
+                            let xmm_dst = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                            self.regs.ymm_high[xmm_dst][0] = 0;
+                            self.regs.ymm_high[xmm_dst][1] = 0;
+                        }
+                    } else {
+                        if is_memory {
+                            if aligned && addr & 0x1F != 0 {
+                                return Err(Error::Emulator(format!(
+                                    "VMOVAPS: unaligned memory access at {:#x}", addr
+                                )));
+                            }
+                            self.write_mem(addr, self.regs.xmm[xmm_src][0], 8)?;
+                            self.write_mem(addr + 8, self.regs.xmm[xmm_src][1], 8)?;
+                            self.write_mem(addr + 16, self.regs.ymm_high[xmm_src][0], 8)?;
+                            self.write_mem(addr + 24, self.regs.ymm_high[xmm_src][1], 8)?;
+                        } else {
+                            let xmm_dst = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                            self.regs.ymm_high[xmm_dst][0] = self.regs.ymm_high[xmm_src][0];
+                            self.regs.ymm_high[xmm_dst][1] = self.regs.ymm_high[xmm_src][1];
+                        }
+                    }
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                // VMOVAPD/VMOVUPD (pp=1, 66 prefix)
+                (1, 0x10) | (1, 0x28) => {
+                    let aligned = opcode == 0x28;
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let xmm_dst = reg as usize;
+
+                    if vex_l == 0 {
+                        if is_memory {
+                            if aligned && addr & 0xF != 0 {
+                                return Err(Error::Emulator(format!(
+                                    "VMOVAPD: unaligned memory access at {:#x}", addr
+                                )));
+                            }
+                            self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;
+                            self.regs.xmm[xmm_dst][1] = self.read_mem(addr + 8, 8)?;
+                        } else {
+                            let xmm_src = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                        }
+                        self.regs.ymm_high[xmm_dst][0] = 0;
+                        self.regs.ymm_high[xmm_dst][1] = 0;
+                    } else {
+                        if is_memory {
+                            if aligned && addr & 0x1F != 0 {
+                                return Err(Error::Emulator(format!(
+                                    "VMOVAPD: unaligned memory access at {:#x}", addr
+                                )));
+                            }
+                            self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;
+                            self.regs.xmm[xmm_dst][1] = self.read_mem(addr + 8, 8)?;
+                            self.regs.ymm_high[xmm_dst][0] = self.read_mem(addr + 16, 8)?;
+                            self.regs.ymm_high[xmm_dst][1] = self.read_mem(addr + 24, 8)?;
+                        } else {
+                            let xmm_src = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                            self.regs.ymm_high[xmm_dst][0] = self.regs.ymm_high[xmm_src][0];
+                            self.regs.ymm_high[xmm_dst][1] = self.regs.ymm_high[xmm_src][1];
+                        }
+                    }
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+                (1, 0x11) | (1, 0x29) => {
+                    let aligned = opcode == 0x29;
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let xmm_src = reg as usize;
+
+                    if vex_l == 0 {
+                        if is_memory {
+                            if aligned && addr & 0xF != 0 {
+                                return Err(Error::Emulator(format!(
+                                    "VMOVAPD: unaligned memory access at {:#x}", addr
+                                )));
+                            }
+                            self.write_mem(addr, self.regs.xmm[xmm_src][0], 8)?;
+                            self.write_mem(addr + 8, self.regs.xmm[xmm_src][1], 8)?;
+                        } else {
+                            let xmm_dst = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                            self.regs.ymm_high[xmm_dst][0] = 0;
+                            self.regs.ymm_high[xmm_dst][1] = 0;
+                        }
+                    } else {
+                        if is_memory {
+                            if aligned && addr & 0x1F != 0 {
+                                return Err(Error::Emulator(format!(
+                                    "VMOVAPD: unaligned memory access at {:#x}", addr
+                                )));
+                            }
+                            self.write_mem(addr, self.regs.xmm[xmm_src][0], 8)?;
+                            self.write_mem(addr + 8, self.regs.xmm[xmm_src][1], 8)?;
+                            self.write_mem(addr + 16, self.regs.ymm_high[xmm_src][0], 8)?;
+                            self.write_mem(addr + 24, self.regs.ymm_high[xmm_src][1], 8)?;
+                        } else {
+                            let xmm_dst = rm as usize;
+                            self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                            self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                            self.regs.ymm_high[xmm_dst][0] = self.regs.ymm_high[xmm_src][0];
+                            self.regs.ymm_high[xmm_dst][1] = self.regs.ymm_high[xmm_src][1];
+                        }
+                    }
+                    self.regs.rip += ctx.cursor as u64;
+                    return Ok(None);
+                }
+
+                // VPSHUFD/VPSHUFHW/VPSHUFLW (0x70)
+                (_, 0x70) => {
+                    return self.execute_vex_shuffle(ctx, vex_pp, vex_l);
+                }
+                _ => {}
+            }
+        }
+
         Err(Error::Emulator(format!(
             "unimplemented VEX instruction m={:#x} pp={} l={} opcode={:#x}",
             m_mmmm, vex_pp, vex_l, opcode
@@ -914,6 +1330,218 @@ impl X86_64Vcpu {
             // NOP variants
             0x1E => insn::system::endbr(self, ctx),
             0x1F => insn::system::nop_rm(self, ctx),
+
+            // MOVUPS/MOVUPD (0x10/0x11 unaligned), MOVAPS/MOVAPD (0x28/0x29 aligned)
+            0x10 => {
+                // NP 0F 10: MOVUPS xmm, xmm/m128 (unaligned)
+                // 66 0F 10: MOVUPD xmm, xmm/m128 (unaligned)
+                // F3 0F 10: MOVSS xmm, xmm/m32
+                // F2 0F 10: MOVSD xmm, xmm/m64
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                let xmm_dst = reg as usize;
+
+                if ctx.rep_prefix == Some(0xF3) {
+                    // MOVSS - move scalar single
+                    let value = if is_memory {
+                        self.read_mem(addr, 4)?
+                    } else {
+                        self.regs.xmm[rm as usize][0] & 0xFFFFFFFF
+                    };
+                    if is_memory {
+                        self.regs.xmm[xmm_dst][0] = value;
+                        self.regs.xmm[xmm_dst][1] = 0;
+                    } else {
+                        // Reg-to-reg: merge low 32 bits, keep rest
+                        self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | value;
+                    }
+                } else if ctx.rep_prefix == Some(0xF2) {
+                    // MOVSD - move scalar double
+                    let value = if is_memory {
+                        self.read_mem(addr, 8)?
+                    } else {
+                        self.regs.xmm[rm as usize][0]
+                    };
+                    if is_memory {
+                        self.regs.xmm[xmm_dst][0] = value;
+                        self.regs.xmm[xmm_dst][1] = 0;
+                    } else {
+                        self.regs.xmm[xmm_dst][0] = value;
+                    }
+                } else {
+                    // MOVUPS/MOVUPD - move packed (unaligned OK)
+                    if is_memory {
+                        self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;
+                        self.regs.xmm[xmm_dst][1] = self.read_mem(addr + 8, 8)?;
+                    } else {
+                        let xmm_src = rm as usize;
+                        self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                        self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                    }
+                }
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+            0x11 => {
+                // NP 0F 11: MOVUPS xmm/m128, xmm (unaligned store)
+                // 66 0F 11: MOVUPD xmm/m128, xmm (unaligned store)
+                // F3 0F 11: MOVSS xmm/m32, xmm
+                // F2 0F 11: MOVSD xmm/m64, xmm
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                let xmm_src = reg as usize;
+
+                if ctx.rep_prefix == Some(0xF3) {
+                    // MOVSS store
+                    let value = self.regs.xmm[xmm_src][0] & 0xFFFFFFFF;
+                    if is_memory {
+                        self.write_mem(addr, value, 4)?;
+                    } else {
+                        let xmm_dst = rm as usize;
+                        self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | value;
+                    }
+                } else if ctx.rep_prefix == Some(0xF2) {
+                    // MOVSD store
+                    let value = self.regs.xmm[xmm_src][0];
+                    if is_memory {
+                        self.write_mem(addr, value, 8)?;
+                    } else {
+                        let xmm_dst = rm as usize;
+                        self.regs.xmm[xmm_dst][0] = value;
+                    }
+                } else {
+                    // MOVUPS/MOVUPD store
+                    if is_memory {
+                        self.write_mem(addr, self.regs.xmm[xmm_src][0], 8)?;
+                        self.write_mem(addr + 8, self.regs.xmm[xmm_src][1], 8)?;
+                    } else {
+                        let xmm_dst = rm as usize;
+                        self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                        self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                    }
+                }
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+            0x28 => {
+                // NP 0F 28: MOVAPS xmm, xmm/m128
+                // 66 0F 28: MOVAPD xmm, xmm/m128
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                let xmm_dst = reg as usize;
+
+                if is_memory {
+                    if addr & 0xF != 0 {
+                        return Err(Error::Emulator(format!(
+                            "MOVAPS/MOVAPD: unaligned memory access at {:#x}",
+                            addr
+                        )));
+                    }
+                    self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;
+                    self.regs.xmm[xmm_dst][1] = self.read_mem(addr + 8, 8)?;
+                } else {
+                    let xmm_src = rm as usize;
+                    self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                    self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                }
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+            0x29 => {
+                // NP 0F 29: MOVAPS xmm/m128, xmm
+                // 66 0F 29: MOVAPD xmm/m128, xmm
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                let xmm_src = reg as usize;
+
+                if is_memory {
+                    if addr & 0xF != 0 {
+                        return Err(Error::Emulator(format!(
+                            "MOVAPS/MOVAPD: unaligned memory access at {:#x}",
+                            addr
+                        )));
+                    }
+                    self.write_mem(addr, self.regs.xmm[xmm_src][0], 8)?;
+                    self.write_mem(addr + 8, self.regs.xmm[xmm_src][1], 8)?;
+                } else {
+                    let xmm_dst = rm as usize;
+                    self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src][0];
+                    self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src][1];
+                }
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+
+            // SSE logical operations
+            0x54 => {
+                // NP 0F 54: ANDPS xmm, xmm/m128
+                // 66 0F 54: ANDPD xmm, xmm/m128
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                let xmm_dst = reg as usize;
+                let (src_lo, src_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                self.regs.xmm[xmm_dst][0] &= src_lo;
+                self.regs.xmm[xmm_dst][1] &= src_hi;
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+            0x55 => {
+                // NP 0F 55: ANDNPS xmm, xmm/m128
+                // 66 0F 55: ANDNPD xmm, xmm/m128
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                let xmm_dst = reg as usize;
+                let (src_lo, src_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                self.regs.xmm[xmm_dst][0] = (!self.regs.xmm[xmm_dst][0]) & src_lo;
+                self.regs.xmm[xmm_dst][1] = (!self.regs.xmm[xmm_dst][1]) & src_hi;
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+            0x56 => {
+                // NP 0F 56: ORPS xmm, xmm/m128
+                // 66 0F 56: ORPD xmm, xmm/m128
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                let xmm_dst = reg as usize;
+                let (src_lo, src_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                self.regs.xmm[xmm_dst][0] |= src_lo;
+                self.regs.xmm[xmm_dst][1] |= src_hi;
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+            0x57 => {
+                // NP 0F 57: XORPS xmm, xmm/m128
+                // 66 0F 57: XORPD xmm, xmm/m128
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                let xmm_dst = reg as usize;
+                let (src_lo, src_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                self.regs.xmm[xmm_dst][0] ^= src_lo;
+                self.regs.xmm[xmm_dst][1] ^= src_hi;
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+
+            // SSE arithmetic
+            0x51 => self.execute_sse_sqrt(ctx),
+            0x58 => self.execute_sse_add(ctx),
+            0x59 => self.execute_sse_mul(ctx),
+            0x5C => self.execute_sse_sub(ctx),
+            0x5D => self.execute_sse_min(ctx),
+            0x5E => self.execute_sse_div(ctx),
+            0x5F => self.execute_sse_max(ctx),
+
+            // SSE unpack
+            0x14 => self.execute_sse_unpcklps(ctx),
+            0x15 => self.execute_sse_unpckhps(ctx),
 
             // MOVD/MOVQ
             0x6E => {
@@ -1057,6 +1685,9 @@ impl X86_64Vcpu {
                 }
             }
 
+            // PSHUFD/PSHUFHW/PSHUFLW (0x70)
+            0x70 => self.execute_pshufd(ctx),
+
             // MOVDQA/MOVDQU/MOVQ store (0x7F)
             0x7F => {
                 if ctx.rep_prefix == Some(0xF3) {
@@ -1076,6 +1707,803 @@ impl X86_64Vcpu {
                 opcode2, self.regs.rip
             ))),
         }
+    }
+
+    /// SSE packed single/double add (0x58)
+    fn execute_sse_add(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+
+        if ctx.rep_prefix == Some(0xF3) {
+            // ADDSS - scalar single
+            let src = if is_memory {
+                f32::from_bits(self.read_mem(addr, 4)? as u32)
+            } else {
+                f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
+            };
+            let dst = f32::from_bits(self.regs.xmm[xmm_dst][0] as u32);
+            let result = dst + src;
+            self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | result.to_bits() as u64;
+        } else if ctx.rep_prefix == Some(0xF2) {
+            // ADDSD - scalar double
+            let src = if is_memory {
+                f64::from_bits(self.read_mem(addr, 8)?)
+            } else {
+                f64::from_bits(self.regs.xmm[rm as usize][0])
+            };
+            let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
+            self.regs.xmm[xmm_dst][0] = (dst + src).to_bits();
+        } else if ctx.operand_size_override {
+            // ADDPD - packed double (2 x f64)
+            let (src_lo, src_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            let d0 = f64::from_bits(self.regs.xmm[xmm_dst][0]) + f64::from_bits(src_lo);
+            let d1 = f64::from_bits(self.regs.xmm[xmm_dst][1]) + f64::from_bits(src_hi);
+            self.regs.xmm[xmm_dst][0] = d0.to_bits();
+            self.regs.xmm[xmm_dst][1] = d1.to_bits();
+        } else {
+            // ADDPS - packed single (4 x f32)
+            let (src_lo, src_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            let dst_lo = self.regs.xmm[xmm_dst][0];
+            let dst_hi = self.regs.xmm[xmm_dst][1];
+            let r0 = f32::from_bits(dst_lo as u32) + f32::from_bits(src_lo as u32);
+            let r1 = f32::from_bits((dst_lo >> 32) as u32) + f32::from_bits((src_lo >> 32) as u32);
+            let r2 = f32::from_bits(dst_hi as u32) + f32::from_bits(src_hi as u32);
+            let r3 = f32::from_bits((dst_hi >> 32) as u32) + f32::from_bits((src_hi >> 32) as u32);
+            self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
+            self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
+        }
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SSE packed single/double subtract (0x5C)
+    fn execute_sse_sub(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+
+        if ctx.rep_prefix == Some(0xF3) {
+            let src = if is_memory { f32::from_bits(self.read_mem(addr, 4)? as u32) } else { f32::from_bits(self.regs.xmm[rm as usize][0] as u32) };
+            let dst = f32::from_bits(self.regs.xmm[xmm_dst][0] as u32);
+            self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | (dst - src).to_bits() as u64;
+        } else if ctx.rep_prefix == Some(0xF2) {
+            let src = if is_memory { f64::from_bits(self.read_mem(addr, 8)?) } else { f64::from_bits(self.regs.xmm[rm as usize][0]) };
+            let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
+            self.regs.xmm[xmm_dst][0] = (dst - src).to_bits();
+        } else if ctx.operand_size_override {
+            let (src_lo, src_hi) = if is_memory { (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?) } else { (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]) };
+            self.regs.xmm[xmm_dst][0] = (f64::from_bits(self.regs.xmm[xmm_dst][0]) - f64::from_bits(src_lo)).to_bits();
+            self.regs.xmm[xmm_dst][1] = (f64::from_bits(self.regs.xmm[xmm_dst][1]) - f64::from_bits(src_hi)).to_bits();
+        } else {
+            let (src_lo, src_hi) = if is_memory { (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?) } else { (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]) };
+            let (dst_lo, dst_hi) = (self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]);
+            let r0 = f32::from_bits(dst_lo as u32) - f32::from_bits(src_lo as u32);
+            let r1 = f32::from_bits((dst_lo >> 32) as u32) - f32::from_bits((src_lo >> 32) as u32);
+            let r2 = f32::from_bits(dst_hi as u32) - f32::from_bits(src_hi as u32);
+            let r3 = f32::from_bits((dst_hi >> 32) as u32) - f32::from_bits((src_hi >> 32) as u32);
+            self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
+            self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
+        }
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SSE packed single/double multiply (0x59)
+    fn execute_sse_mul(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+
+        if ctx.rep_prefix == Some(0xF3) {
+            let src = if is_memory { f32::from_bits(self.read_mem(addr, 4)? as u32) } else { f32::from_bits(self.regs.xmm[rm as usize][0] as u32) };
+            let dst = f32::from_bits(self.regs.xmm[xmm_dst][0] as u32);
+            self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | (dst * src).to_bits() as u64;
+        } else if ctx.rep_prefix == Some(0xF2) {
+            let src = if is_memory { f64::from_bits(self.read_mem(addr, 8)?) } else { f64::from_bits(self.regs.xmm[rm as usize][0]) };
+            let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
+            self.regs.xmm[xmm_dst][0] = (dst * src).to_bits();
+        } else if ctx.operand_size_override {
+            let (src_lo, src_hi) = if is_memory { (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?) } else { (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]) };
+            self.regs.xmm[xmm_dst][0] = (f64::from_bits(self.regs.xmm[xmm_dst][0]) * f64::from_bits(src_lo)).to_bits();
+            self.regs.xmm[xmm_dst][1] = (f64::from_bits(self.regs.xmm[xmm_dst][1]) * f64::from_bits(src_hi)).to_bits();
+        } else {
+            let (src_lo, src_hi) = if is_memory { (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?) } else { (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]) };
+            let (dst_lo, dst_hi) = (self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]);
+            let r0 = f32::from_bits(dst_lo as u32) * f32::from_bits(src_lo as u32);
+            let r1 = f32::from_bits((dst_lo >> 32) as u32) * f32::from_bits((src_lo >> 32) as u32);
+            let r2 = f32::from_bits(dst_hi as u32) * f32::from_bits(src_hi as u32);
+            let r3 = f32::from_bits((dst_hi >> 32) as u32) * f32::from_bits((src_hi >> 32) as u32);
+            self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
+            self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
+        }
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SSE packed single/double divide (0x5E)
+    fn execute_sse_div(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+
+        if ctx.rep_prefix == Some(0xF3) {
+            let src = if is_memory { f32::from_bits(self.read_mem(addr, 4)? as u32) } else { f32::from_bits(self.regs.xmm[rm as usize][0] as u32) };
+            let dst = f32::from_bits(self.regs.xmm[xmm_dst][0] as u32);
+            self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | (dst / src).to_bits() as u64;
+        } else if ctx.rep_prefix == Some(0xF2) {
+            let src = if is_memory { f64::from_bits(self.read_mem(addr, 8)?) } else { f64::from_bits(self.regs.xmm[rm as usize][0]) };
+            let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
+            self.regs.xmm[xmm_dst][0] = (dst / src).to_bits();
+        } else if ctx.operand_size_override {
+            let (src_lo, src_hi) = if is_memory { (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?) } else { (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]) };
+            self.regs.xmm[xmm_dst][0] = (f64::from_bits(self.regs.xmm[xmm_dst][0]) / f64::from_bits(src_lo)).to_bits();
+            self.regs.xmm[xmm_dst][1] = (f64::from_bits(self.regs.xmm[xmm_dst][1]) / f64::from_bits(src_hi)).to_bits();
+        } else {
+            let (src_lo, src_hi) = if is_memory { (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?) } else { (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]) };
+            let (dst_lo, dst_hi) = (self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]);
+            let r0 = f32::from_bits(dst_lo as u32) / f32::from_bits(src_lo as u32);
+            let r1 = f32::from_bits((dst_lo >> 32) as u32) / f32::from_bits((src_lo >> 32) as u32);
+            let r2 = f32::from_bits(dst_hi as u32) / f32::from_bits(src_hi as u32);
+            let r3 = f32::from_bits((dst_hi >> 32) as u32) / f32::from_bits((src_hi >> 32) as u32);
+            self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
+            self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
+        }
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SSE packed single/double sqrt (0x51)
+    fn execute_sse_sqrt(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+
+        if ctx.rep_prefix == Some(0xF3) {
+            let src = if is_memory { f32::from_bits(self.read_mem(addr, 4)? as u32) } else { f32::from_bits(self.regs.xmm[rm as usize][0] as u32) };
+            self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | src.sqrt().to_bits() as u64;
+        } else if ctx.rep_prefix == Some(0xF2) {
+            let src = if is_memory { f64::from_bits(self.read_mem(addr, 8)?) } else { f64::from_bits(self.regs.xmm[rm as usize][0]) };
+            self.regs.xmm[xmm_dst][0] = src.sqrt().to_bits();
+        } else if ctx.operand_size_override {
+            let (src_lo, src_hi) = if is_memory { (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?) } else { (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]) };
+            self.regs.xmm[xmm_dst][0] = f64::from_bits(src_lo).sqrt().to_bits();
+            self.regs.xmm[xmm_dst][1] = f64::from_bits(src_hi).sqrt().to_bits();
+        } else {
+            let (src_lo, src_hi) = if is_memory { (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?) } else { (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]) };
+            let r0 = f32::from_bits(src_lo as u32).sqrt();
+            let r1 = f32::from_bits((src_lo >> 32) as u32).sqrt();
+            let r2 = f32::from_bits(src_hi as u32).sqrt();
+            let r3 = f32::from_bits((src_hi >> 32) as u32).sqrt();
+            self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
+            self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
+        }
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SSE packed single/double min (0x5D)
+    fn execute_sse_min(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+
+        if ctx.rep_prefix == Some(0xF3) {
+            let src = if is_memory { f32::from_bits(self.read_mem(addr, 4)? as u32) } else { f32::from_bits(self.regs.xmm[rm as usize][0] as u32) };
+            let dst = f32::from_bits(self.regs.xmm[xmm_dst][0] as u32);
+            self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | dst.min(src).to_bits() as u64;
+        } else if ctx.rep_prefix == Some(0xF2) {
+            let src = if is_memory { f64::from_bits(self.read_mem(addr, 8)?) } else { f64::from_bits(self.regs.xmm[rm as usize][0]) };
+            let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
+            self.regs.xmm[xmm_dst][0] = dst.min(src).to_bits();
+        } else if ctx.operand_size_override {
+            let (src_lo, src_hi) = if is_memory { (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?) } else { (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]) };
+            self.regs.xmm[xmm_dst][0] = f64::from_bits(self.regs.xmm[xmm_dst][0]).min(f64::from_bits(src_lo)).to_bits();
+            self.regs.xmm[xmm_dst][1] = f64::from_bits(self.regs.xmm[xmm_dst][1]).min(f64::from_bits(src_hi)).to_bits();
+        } else {
+            let (src_lo, src_hi) = if is_memory { (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?) } else { (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]) };
+            let (dst_lo, dst_hi) = (self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]);
+            let r0 = f32::from_bits(dst_lo as u32).min(f32::from_bits(src_lo as u32));
+            let r1 = f32::from_bits((dst_lo >> 32) as u32).min(f32::from_bits((src_lo >> 32) as u32));
+            let r2 = f32::from_bits(dst_hi as u32).min(f32::from_bits(src_hi as u32));
+            let r3 = f32::from_bits((dst_hi >> 32) as u32).min(f32::from_bits((src_hi >> 32) as u32));
+            self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
+            self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
+        }
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SSE packed single/double max (0x5F)
+    fn execute_sse_max(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+
+        if ctx.rep_prefix == Some(0xF3) {
+            let src = if is_memory { f32::from_bits(self.read_mem(addr, 4)? as u32) } else { f32::from_bits(self.regs.xmm[rm as usize][0] as u32) };
+            let dst = f32::from_bits(self.regs.xmm[xmm_dst][0] as u32);
+            self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | dst.max(src).to_bits() as u64;
+        } else if ctx.rep_prefix == Some(0xF2) {
+            let src = if is_memory { f64::from_bits(self.read_mem(addr, 8)?) } else { f64::from_bits(self.regs.xmm[rm as usize][0]) };
+            let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
+            self.regs.xmm[xmm_dst][0] = dst.max(src).to_bits();
+        } else if ctx.operand_size_override {
+            let (src_lo, src_hi) = if is_memory { (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?) } else { (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]) };
+            self.regs.xmm[xmm_dst][0] = f64::from_bits(self.regs.xmm[xmm_dst][0]).max(f64::from_bits(src_lo)).to_bits();
+            self.regs.xmm[xmm_dst][1] = f64::from_bits(self.regs.xmm[xmm_dst][1]).max(f64::from_bits(src_hi)).to_bits();
+        } else {
+            let (src_lo, src_hi) = if is_memory { (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?) } else { (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]) };
+            let (dst_lo, dst_hi) = (self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]);
+            let r0 = f32::from_bits(dst_lo as u32).max(f32::from_bits(src_lo as u32));
+            let r1 = f32::from_bits((dst_lo >> 32) as u32).max(f32::from_bits((src_lo >> 32) as u32));
+            let r2 = f32::from_bits(dst_hi as u32).max(f32::from_bits(src_hi as u32));
+            let r3 = f32::from_bits((dst_hi >> 32) as u32).max(f32::from_bits((src_hi >> 32) as u32));
+            self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
+            self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
+        }
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SSE UNPCKLPS/UNPCKLPD (0x14) - unpack and interleave low
+    fn execute_sse_unpcklps(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+        let (src_lo, _src_hi) = if is_memory {
+            (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+        } else {
+            (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+        };
+        let dst_lo = self.regs.xmm[xmm_dst][0];
+
+        if ctx.operand_size_override {
+            // UNPCKLPD - interleave low doubles
+            // dst[63:0] = dst[63:0], dst[127:64] = src[63:0]
+            self.regs.xmm[xmm_dst][1] = src_lo;
+        } else {
+            // UNPCKLPS - interleave low singles
+            // dst[31:0] = dst[31:0], dst[63:32] = src[31:0]
+            // dst[95:64] = dst[63:32], dst[127:96] = src[63:32]
+            let d0 = dst_lo as u32;
+            let d1 = (dst_lo >> 32) as u32;
+            let s0 = src_lo as u32;
+            let s1 = (src_lo >> 32) as u32;
+            self.regs.xmm[xmm_dst][0] = d0 as u64 | ((s0 as u64) << 32);
+            self.regs.xmm[xmm_dst][1] = d1 as u64 | ((s1 as u64) << 32);
+        }
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SSE UNPCKHPS/UNPCKHPD (0x15) - unpack and interleave high
+    fn execute_sse_unpckhps(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+        let (_src_lo, src_hi) = if is_memory {
+            (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+        } else {
+            (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+        };
+        let dst_hi = self.regs.xmm[xmm_dst][1];
+
+        if ctx.operand_size_override {
+            // UNPCKHPD - interleave high doubles
+            // dst[63:0] = dst[127:64], dst[127:64] = src[127:64]
+            self.regs.xmm[xmm_dst][0] = dst_hi;
+            self.regs.xmm[xmm_dst][1] = src_hi;
+        } else {
+            // UNPCKHPS - interleave high singles
+            // dst[31:0] = dst[95:64], dst[63:32] = src[95:64]
+            // dst[95:64] = dst[127:96], dst[127:96] = src[127:96]
+            let d2 = dst_hi as u32;
+            let d3 = (dst_hi >> 32) as u32;
+            let s2 = src_hi as u32;
+            let s3 = (src_hi >> 32) as u32;
+            self.regs.xmm[xmm_dst][0] = d2 as u64 | ((s2 as u64) << 32);
+            self.regs.xmm[xmm_dst][1] = d3 as u64 | ((s3 as u64) << 32);
+        }
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VEX-encoded arithmetic: VADDPS/PD/SS/SD, VSUBPS/PD, VMULPS/PD, VDIVPS/PD, VSQRTPS/PD, VMINPS/PD, VMAXPS/PD
+    fn execute_vex_arith(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_pp: u8,
+        vex_l: u8,
+        vvvv: u8,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+        let xmm_src1 = vvvv as usize;
+
+        // Determine operation type based on opcode
+        let op: fn(f32, f32) -> f32 = match opcode {
+            0x58 => |a, b| a + b,  // ADD
+            0x59 => |a, b| a * b,  // MUL
+            0x5C => |a, b| a - b,  // SUB
+            0x5D => |a, b| a.min(b), // MIN
+            0x5E => |a, b| a / b,  // DIV
+            0x5F => |a, b| a.max(b), // MAX
+            0x51 => |_a, b| b.sqrt(), // SQRT (unary, uses only src2)
+            _ => unreachable!(),
+        };
+        let op_d: fn(f64, f64) -> f64 = match opcode {
+            0x58 => |a, b| a + b,
+            0x59 => |a, b| a * b,
+            0x5C => |a, b| a - b,
+            0x5D => |a, b| a.min(b),
+            0x5E => |a, b| a / b,
+            0x5F => |a, b| a.max(b),
+            0x51 => |_a, b| b.sqrt(),
+            _ => unreachable!(),
+        };
+
+        match vex_pp {
+            0 => {
+                // VEX.0F (NP) - packed single (PS)
+                let (src2_lo, src2_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                let src1_lo = self.regs.xmm[xmm_src1][0];
+                let src1_hi = self.regs.xmm[xmm_src1][1];
+
+                // Process 4 floats in low 128 bits
+                let r0 = op(f32::from_bits(src1_lo as u32), f32::from_bits(src2_lo as u32));
+                let r1 = op(f32::from_bits((src1_lo >> 32) as u32), f32::from_bits((src2_lo >> 32) as u32));
+                let r2 = op(f32::from_bits(src1_hi as u32), f32::from_bits(src2_hi as u32));
+                let r3 = op(f32::from_bits((src1_hi >> 32) as u32), f32::from_bits((src2_hi >> 32) as u32));
+                self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
+                self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
+
+                if vex_l == 1 {
+                    // YMM - process high 128 bits too
+                    let (src2_hi2, src2_hi3) = if is_memory {
+                        (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
+                    } else {
+                        (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                    };
+                    let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
+                    let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
+                    let r4 = op(f32::from_bits(src1_hi2 as u32), f32::from_bits(src2_hi2 as u32));
+                    let r5 = op(f32::from_bits((src1_hi2 >> 32) as u32), f32::from_bits((src2_hi2 >> 32) as u32));
+                    let r6 = op(f32::from_bits(src1_hi3 as u32), f32::from_bits(src2_hi3 as u32));
+                    let r7 = op(f32::from_bits((src1_hi3 >> 32) as u32), f32::from_bits((src2_hi3 >> 32) as u32));
+                    self.regs.ymm_high[xmm_dst][0] = r4.to_bits() as u64 | ((r5.to_bits() as u64) << 32);
+                    self.regs.ymm_high[xmm_dst][1] = r6.to_bits() as u64 | ((r7.to_bits() as u64) << 32);
+                } else {
+                    // VEX.128 clears upper bits
+                    self.regs.ymm_high[xmm_dst][0] = 0;
+                    self.regs.ymm_high[xmm_dst][1] = 0;
+                }
+            }
+            1 => {
+                // VEX.66.0F - packed double (PD)
+                let (src2_lo, src2_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                let src1_lo = self.regs.xmm[xmm_src1][0];
+                let src1_hi = self.regs.xmm[xmm_src1][1];
+
+                let r0 = op_d(f64::from_bits(src1_lo), f64::from_bits(src2_lo));
+                let r1 = op_d(f64::from_bits(src1_hi), f64::from_bits(src2_hi));
+                self.regs.xmm[xmm_dst][0] = r0.to_bits();
+                self.regs.xmm[xmm_dst][1] = r1.to_bits();
+
+                if vex_l == 1 {
+                    let (src2_hi2, src2_hi3) = if is_memory {
+                        (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
+                    } else {
+                        (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                    };
+                    let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
+                    let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
+                    let r2 = op_d(f64::from_bits(src1_hi2), f64::from_bits(src2_hi2));
+                    let r3 = op_d(f64::from_bits(src1_hi3), f64::from_bits(src2_hi3));
+                    self.regs.ymm_high[xmm_dst][0] = r2.to_bits();
+                    self.regs.ymm_high[xmm_dst][1] = r3.to_bits();
+                } else {
+                    self.regs.ymm_high[xmm_dst][0] = 0;
+                    self.regs.ymm_high[xmm_dst][1] = 0;
+                }
+            }
+            2 => {
+                // VEX.F3.0F - scalar single (SS)
+                let src2 = if is_memory {
+                    f32::from_bits(self.read_mem(addr, 4)? as u32)
+                } else {
+                    f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
+                };
+                let src1 = f32::from_bits(self.regs.xmm[xmm_src1][0] as u32);
+                let result = op(src1, src2);
+                // Copy src1 to dst, then overwrite low 32 bits
+                self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_src1][0] & !0xFFFFFFFF) | result.to_bits() as u64;
+                self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src1][1];
+                self.regs.ymm_high[xmm_dst][0] = 0;
+                self.regs.ymm_high[xmm_dst][1] = 0;
+            }
+            3 => {
+                // VEX.F2.0F - scalar double (SD)
+                let src2 = if is_memory {
+                    f64::from_bits(self.read_mem(addr, 8)?)
+                } else {
+                    f64::from_bits(self.regs.xmm[rm as usize][0])
+                };
+                let src1 = f64::from_bits(self.regs.xmm[xmm_src1][0]);
+                let result = op_d(src1, src2);
+                self.regs.xmm[xmm_dst][0] = result.to_bits();
+                self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src1][1];
+                self.regs.ymm_high[xmm_dst][0] = 0;
+                self.regs.ymm_high[xmm_dst][1] = 0;
+            }
+            _ => unreachable!(),
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VEX-encoded logical: VANDPS/PD, VANDNPS/PD, VORPS/PD, VXORPS/PD
+    fn execute_vex_logical(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_pp: u8,
+        vex_l: u8,
+        vvvv: u8,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+        let xmm_src1 = vvvv as usize;
+
+        // Logical ops are the same for PS and PD (bitwise on 128/256 bits)
+        let op: fn(u64, u64) -> u64 = match opcode {
+            0x54 => |a, b| a & b,      // AND
+            0x55 => |a, b| (!a) & b,   // ANDN
+            0x56 => |a, b| a | b,      // OR
+            0x57 => |a, b| a ^ b,      // XOR
+            _ => unreachable!(),
+        };
+
+        let (src2_lo, src2_hi) = if is_memory {
+            (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+        } else {
+            (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+        };
+        let src1_lo = self.regs.xmm[xmm_src1][0];
+        let src1_hi = self.regs.xmm[xmm_src1][1];
+
+        self.regs.xmm[xmm_dst][0] = op(src1_lo, src2_lo);
+        self.regs.xmm[xmm_dst][1] = op(src1_hi, src2_hi);
+
+        if vex_l == 1 {
+            let (src2_hi2, src2_hi3) = if is_memory {
+                (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
+            } else {
+                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+            };
+            let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
+            let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
+            self.regs.ymm_high[xmm_dst][0] = op(src1_hi2, src2_hi2);
+            self.regs.ymm_high[xmm_dst][1] = op(src1_hi3, src2_hi3);
+        } else {
+            self.regs.ymm_high[xmm_dst][0] = 0;
+            self.regs.ymm_high[xmm_dst][1] = 0;
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VEX-encoded unpack: VUNPCKLPS/PD, VUNPCKHPS/PD
+    fn execute_vex_unpack(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_pp: u8,
+        vex_l: u8,
+        vvvv: u8,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+        let xmm_src1 = vvvv as usize;
+
+        let (src2_lo, src2_hi) = if is_memory {
+            (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+        } else {
+            (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+        };
+        let src1_lo = self.regs.xmm[xmm_src1][0];
+        let src1_hi = self.regs.xmm[xmm_src1][1];
+
+        let is_high = opcode == 0x15;
+        let is_pd = vex_pp == 1; // 66 prefix = PD
+
+        if is_pd {
+            // Double precision - interleave 64-bit elements
+            if is_high {
+                // VUNPCKHPD: dst[0]=src1[1], dst[1]=src2[1]
+                self.regs.xmm[xmm_dst][0] = src1_hi;
+                self.regs.xmm[xmm_dst][1] = src2_hi;
+            } else {
+                // VUNPCKLPD: dst[0]=src1[0], dst[1]=src2[0]
+                self.regs.xmm[xmm_dst][0] = src1_lo;
+                self.regs.xmm[xmm_dst][1] = src2_lo;
+            }
+
+            if vex_l == 1 {
+                let (src2_hi2, src2_hi3) = if is_memory {
+                    (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
+                } else {
+                    (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                };
+                let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
+                let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
+
+                if is_high {
+                    self.regs.ymm_high[xmm_dst][0] = src1_hi3;
+                    self.regs.ymm_high[xmm_dst][1] = src2_hi3;
+                } else {
+                    self.regs.ymm_high[xmm_dst][0] = src1_hi2;
+                    self.regs.ymm_high[xmm_dst][1] = src2_hi2;
+                }
+            } else {
+                self.regs.ymm_high[xmm_dst][0] = 0;
+                self.regs.ymm_high[xmm_dst][1] = 0;
+            }
+        } else {
+            // Single precision - interleave 32-bit elements
+            if is_high {
+                // VUNPCKHPS: interleave high singles
+                let d2 = src1_hi as u32;
+                let d3 = (src1_hi >> 32) as u32;
+                let s2 = src2_hi as u32;
+                let s3 = (src2_hi >> 32) as u32;
+                self.regs.xmm[xmm_dst][0] = d2 as u64 | ((s2 as u64) << 32);
+                self.regs.xmm[xmm_dst][1] = d3 as u64 | ((s3 as u64) << 32);
+            } else {
+                // VUNPCKLPS: interleave low singles
+                let d0 = src1_lo as u32;
+                let d1 = (src1_lo >> 32) as u32;
+                let s0 = src2_lo as u32;
+                let s1 = (src2_lo >> 32) as u32;
+                self.regs.xmm[xmm_dst][0] = d0 as u64 | ((s0 as u64) << 32);
+                self.regs.xmm[xmm_dst][1] = d1 as u64 | ((s1 as u64) << 32);
+            }
+
+            if vex_l == 1 {
+                let (src2_hi2, src2_hi3) = if is_memory {
+                    (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
+                } else {
+                    (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                };
+                let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
+                let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
+
+                if is_high {
+                    let d6 = src1_hi3 as u32;
+                    let d7 = (src1_hi3 >> 32) as u32;
+                    let s6 = src2_hi3 as u32;
+                    let s7 = (src2_hi3 >> 32) as u32;
+                    self.regs.ymm_high[xmm_dst][0] = d6 as u64 | ((s6 as u64) << 32);
+                    self.regs.ymm_high[xmm_dst][1] = d7 as u64 | ((s7 as u64) << 32);
+                } else {
+                    let d4 = src1_hi2 as u32;
+                    let d5 = (src1_hi2 >> 32) as u32;
+                    let s4 = src2_hi2 as u32;
+                    let s5 = (src2_hi2 >> 32) as u32;
+                    self.regs.ymm_high[xmm_dst][0] = d4 as u64 | ((s4 as u64) << 32);
+                    self.regs.ymm_high[xmm_dst][1] = d5 as u64 | ((s5 as u64) << 32);
+                }
+            } else {
+                self.regs.ymm_high[xmm_dst][0] = 0;
+                self.regs.ymm_high[xmm_dst][1] = 0;
+            }
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SSE PSHUFD/PSHUFHW/PSHUFLW (0x0F 0x70)
+    fn execute_pshufd(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let xmm_dst = reg as usize;
+
+        if ctx.rep_prefix == Some(0xF3) {
+            // PSHUFHW: shuffle high words, preserve low qword
+            // F3 0F 70 /r ib
+            let (src_lo, src_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            // Low qword unchanged
+            self.regs.xmm[xmm_dst][0] = src_lo;
+            // High qword: shuffle the 4 words in src_hi
+            let w0 = (src_hi >> (((imm8 >> 0) & 3) * 16)) as u16;
+            let w1 = (src_hi >> (((imm8 >> 2) & 3) * 16)) as u16;
+            let w2 = (src_hi >> (((imm8 >> 4) & 3) * 16)) as u16;
+            let w3 = (src_hi >> (((imm8 >> 6) & 3) * 16)) as u16;
+            self.regs.xmm[xmm_dst][1] = (w0 as u64) | ((w1 as u64) << 16) | ((w2 as u64) << 32) | ((w3 as u64) << 48);
+        } else if ctx.rep_prefix == Some(0xF2) {
+            // PSHUFLW: shuffle low words, preserve high qword
+            // F2 0F 70 /r ib
+            let (src_lo, src_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            // Low qword: shuffle the 4 words in src_lo
+            let w0 = (src_lo >> (((imm8 >> 0) & 3) * 16)) as u16;
+            let w1 = (src_lo >> (((imm8 >> 2) & 3) * 16)) as u16;
+            let w2 = (src_lo >> (((imm8 >> 4) & 3) * 16)) as u16;
+            let w3 = (src_lo >> (((imm8 >> 6) & 3) * 16)) as u16;
+            self.regs.xmm[xmm_dst][0] = (w0 as u64) | ((w1 as u64) << 16) | ((w2 as u64) << 32) | ((w3 as u64) << 48);
+            // High qword unchanged
+            self.regs.xmm[xmm_dst][1] = src_hi;
+        } else if ctx.operand_size_override {
+            // PSHUFD: shuffle all 4 dwords
+            // 66 0F 70 /r ib
+            let (src_lo, src_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            // Combine into 4 dwords for easier indexing
+            let dwords: [u32; 4] = [
+                src_lo as u32,
+                (src_lo >> 32) as u32,
+                src_hi as u32,
+                (src_hi >> 32) as u32,
+            ];
+            let d0 = dwords[((imm8 >> 0) & 3) as usize];
+            let d1 = dwords[((imm8 >> 2) & 3) as usize];
+            let d2 = dwords[((imm8 >> 4) & 3) as usize];
+            let d3 = dwords[((imm8 >> 6) & 3) as usize];
+            self.regs.xmm[xmm_dst][0] = (d0 as u64) | ((d1 as u64) << 32);
+            self.regs.xmm[xmm_dst][1] = (d2 as u64) | ((d3 as u64) << 32);
+        } else {
+            // PSHUFW: shuffle MMX words (NP 0F 70) - not commonly used in 64-bit
+            return Err(Error::Emulator("PSHUFW (MMX) not implemented".to_string()));
+        }
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VEX-encoded shuffle: VPSHUFD/VPSHUFHW/VPSHUFLW
+    fn execute_vex_shuffle(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_pp: u8,
+        vex_l: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let xmm_dst = reg as usize;
+
+        match vex_pp {
+            1 => {
+                // VPSHUFD: 66 prefix - shuffle dwords
+                let (src_lo, src_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                let dwords: [u32; 4] = [
+                    src_lo as u32,
+                    (src_lo >> 32) as u32,
+                    src_hi as u32,
+                    (src_hi >> 32) as u32,
+                ];
+                let d0 = dwords[((imm8 >> 0) & 3) as usize];
+                let d1 = dwords[((imm8 >> 2) & 3) as usize];
+                let d2 = dwords[((imm8 >> 4) & 3) as usize];
+                let d3 = dwords[((imm8 >> 6) & 3) as usize];
+                self.regs.xmm[xmm_dst][0] = (d0 as u64) | ((d1 as u64) << 32);
+                self.regs.xmm[xmm_dst][1] = (d2 as u64) | ((d3 as u64) << 32);
+
+                if vex_l == 1 {
+                    // YMM: process high 128-bit lane independently
+                    let (src2_lo, src2_hi) = if is_memory {
+                        (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
+                    } else {
+                        (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                    };
+                    let dwords2: [u32; 4] = [
+                        src2_lo as u32,
+                        (src2_lo >> 32) as u32,
+                        src2_hi as u32,
+                        (src2_hi >> 32) as u32,
+                    ];
+                    let d4 = dwords2[((imm8 >> 0) & 3) as usize];
+                    let d5 = dwords2[((imm8 >> 2) & 3) as usize];
+                    let d6 = dwords2[((imm8 >> 4) & 3) as usize];
+                    let d7 = dwords2[((imm8 >> 6) & 3) as usize];
+                    self.regs.ymm_high[xmm_dst][0] = (d4 as u64) | ((d5 as u64) << 32);
+                    self.regs.ymm_high[xmm_dst][1] = (d6 as u64) | ((d7 as u64) << 32);
+                } else {
+                    self.regs.ymm_high[xmm_dst][0] = 0;
+                    self.regs.ymm_high[xmm_dst][1] = 0;
+                }
+            }
+            2 => {
+                // VPSHUFHW: F3 prefix - shuffle high words
+                let (src_lo, src_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                self.regs.xmm[xmm_dst][0] = src_lo;
+                let w0 = (src_hi >> (((imm8 >> 0) & 3) * 16)) as u16;
+                let w1 = (src_hi >> (((imm8 >> 2) & 3) * 16)) as u16;
+                let w2 = (src_hi >> (((imm8 >> 4) & 3) * 16)) as u16;
+                let w3 = (src_hi >> (((imm8 >> 6) & 3) * 16)) as u16;
+                self.regs.xmm[xmm_dst][1] = (w0 as u64) | ((w1 as u64) << 16) | ((w2 as u64) << 32) | ((w3 as u64) << 48);
+
+                if vex_l == 1 {
+                    let (src2_lo, src2_hi) = if is_memory {
+                        (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
+                    } else {
+                        (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                    };
+                    self.regs.ymm_high[xmm_dst][0] = src2_lo;
+                    let w4 = (src2_hi >> (((imm8 >> 0) & 3) * 16)) as u16;
+                    let w5 = (src2_hi >> (((imm8 >> 2) & 3) * 16)) as u16;
+                    let w6 = (src2_hi >> (((imm8 >> 4) & 3) * 16)) as u16;
+                    let w7 = (src2_hi >> (((imm8 >> 6) & 3) * 16)) as u16;
+                    self.regs.ymm_high[xmm_dst][1] = (w4 as u64) | ((w5 as u64) << 16) | ((w6 as u64) << 32) | ((w7 as u64) << 48);
+                } else {
+                    self.regs.ymm_high[xmm_dst][0] = 0;
+                    self.regs.ymm_high[xmm_dst][1] = 0;
+                }
+            }
+            3 => {
+                // VPSHUFLW: F2 prefix - shuffle low words
+                let (src_lo, src_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                let w0 = (src_lo >> (((imm8 >> 0) & 3) * 16)) as u16;
+                let w1 = (src_lo >> (((imm8 >> 2) & 3) * 16)) as u16;
+                let w2 = (src_lo >> (((imm8 >> 4) & 3) * 16)) as u16;
+                let w3 = (src_lo >> (((imm8 >> 6) & 3) * 16)) as u16;
+                self.regs.xmm[xmm_dst][0] = (w0 as u64) | ((w1 as u64) << 16) | ((w2 as u64) << 32) | ((w3 as u64) << 48);
+                self.regs.xmm[xmm_dst][1] = src_hi;
+
+                if vex_l == 1 {
+                    let (src2_lo, src2_hi) = if is_memory {
+                        (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
+                    } else {
+                        (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                    };
+                    let w4 = (src2_lo >> (((imm8 >> 0) & 3) * 16)) as u16;
+                    let w5 = (src2_lo >> (((imm8 >> 2) & 3) * 16)) as u16;
+                    let w6 = (src2_lo >> (((imm8 >> 4) & 3) * 16)) as u16;
+                    let w7 = (src2_lo >> (((imm8 >> 6) & 3) * 16)) as u16;
+                    self.regs.ymm_high[xmm_dst][0] = (w4 as u64) | ((w5 as u64) << 16) | ((w6 as u64) << 32) | ((w7 as u64) << 48);
+                    self.regs.ymm_high[xmm_dst][1] = src2_hi;
+                } else {
+                    self.regs.ymm_high[xmm_dst][0] = 0;
+                    self.regs.ymm_high[xmm_dst][1] = 0;
+                }
+            }
+            _ => {
+                return Err(Error::Emulator(format!("unimplemented VEX shuffle pp={}", vex_pp)));
+            }
+        }
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
     }
 
     /// Execute 0x0F 0x38 opcodes (3-byte escape)
