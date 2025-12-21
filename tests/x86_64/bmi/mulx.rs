@@ -561,9 +561,9 @@ fn test_mulx_32bit_prime_numbers() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // 104729 * 104743 = 10971043847
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 10971043847 & 0xFFFFFFFF, "EBX should contain low bits");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 10971043847u64 >> 32, "EAX should contain high bits");
+    // 104729 * 104743 = 10969629647
+    assert_eq!(regs.rbx & 0xFFFFFFFF, 10969629647u64 & 0xFFFFFFFF, "EBX should contain low bits");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 10969629647u64 >> 32, "EAX should contain high bits");
 }
 
 #[test]
