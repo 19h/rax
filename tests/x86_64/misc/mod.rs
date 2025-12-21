@@ -24,3 +24,5 @@ mod movdiri_extended;
 mod prefetchw_prefetchwt1;
 mod rdrand_extended;
 mod rdseed_extended;
+mod tpause_umonitor_umwait;
+mod legacy_instructions;

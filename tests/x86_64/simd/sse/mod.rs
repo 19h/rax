@@ -139,6 +139,7 @@ mod dpps;
 mod dppd;
 mod mpsadbw;
 mod pmulld;
+mod pmullq;
 mod ptest;
 mod pextrb_pextrd_pextrq;
 mod pextrw;
