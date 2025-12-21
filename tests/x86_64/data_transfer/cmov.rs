@@ -896,9 +896,10 @@ fn test_cmove_r10_r11_64bit() {
 #[test]
 fn test_cmove_preserves_flags() {
     // CMOVE should not modify flags
+    // Note: ADD -1, 1 = 0 with carry (CF=1, ZF=1)
     let code = [
         0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, // MOV RAX, -1
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (sets ZF, clears CF)
+        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (sets ZF and CF - wraps to 0 with carry)
         0x0f, 0x44, 0xc3, // CMOVE EAX, EBX
         0xf4, // HLT
     ];
@@ -908,7 +909,7 @@ fn test_cmove_preserves_flags() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert!(regs.rflags & 0x40 != 0, "ZF should still be set");
-    assert!(regs.rflags & 0x01 == 0, "CF should still be clear");
+    assert!(regs.rflags & 0x01 != 0, "CF should still be set (from wrap-around)");
 }
 
 // ============================================================================
@@ -917,12 +918,13 @@ fn test_cmove_preserves_flags() {
 
 #[test]
 fn test_cmovl_unsigned_min() {
-    // Unsigned min: result = (a < b) ? a : b
+    // Min pattern: if RAX >= RBX, replace RAX with RBX (the smaller value)
+    // Uses CMOVGE (move if greater or equal, signed) which works for positive values
     let code = [
         0x48, 0xc7, 0xc0, 0x14, 0x00, 0x00, 0x00, // MOV RAX, 20
         0x48, 0xc7, 0xc3, 0x0a, 0x00, 0x00, 0x00, // MOV RBX, 10
-        0x48, 0x39, 0xd8, // CMP RAX, RBX (20 >= 10)
-        0x48, 0x0f, 0x4c, 0xc3, // CMOVL RAX, RBX
+        0x48, 0x39, 0xd8, // CMP RAX, RBX (20 - 10 = 10, positive, so SF=0, OF=0 => SF==OF => GE)
+        0x48, 0x0f, 0x4d, 0xc3, // CMOVGE RAX, RBX (move if SF==OF)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -933,12 +935,12 @@ fn test_cmovl_unsigned_min() {
 
 #[test]
 fn test_cmovg_unsigned_max() {
-    // Unsigned max: result = (a > b) ? a : b
+    // Unsigned max: result = (a < b) ? b : a - use CMOVL to move larger value
     let code = [
         0x48, 0xc7, 0xc0, 0x14, 0x00, 0x00, 0x00, // MOV RAX, 20
         0x48, 0xc7, 0xc3, 0x0a, 0x00, 0x00, 0x00, // MOV RBX, 10
-        0x48, 0x39, 0xd8, // CMP RAX, RBX
-        0x48, 0x0f, 0x4f, 0xc3, // CMOVG RAX, RBX
+        0x48, 0x39, 0xd8, // CMP RAX, RBX (20 - 10 = 10, positive)
+        0x48, 0x0f, 0x4c, 0xc3, // CMOVL RAX, RBX (if RAX < RBX, move RBX to RAX - not taken)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -949,12 +951,12 @@ fn test_cmovg_unsigned_max() {
 
 #[test]
 fn test_cmovl_signed_min() {
-    // Signed min with negative numbers
+    // Signed min with negative numbers: if RAX > RBX, move RBX to RAX
     let code = [
         0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, // MOV RAX, -1
         0x48, 0xc7, 0xc3, 0xfe, 0xff, 0xff, 0xff, // MOV RBX, -2
-        0x48, 0x39, 0xd8, // CMP RAX, RBX
-        0x48, 0x0f, 0x4c, 0xc3, // CMOVL RAX, RBX
+        0x48, 0x39, 0xd8, // CMP RAX, RBX (-1 - (-2) = 1, positive, no overflow)
+        0x48, 0x0f, 0x4f, 0xc3, // CMOVG RAX, RBX (if RAX > RBX, move - ZF=0 AND SF==OF)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -1065,7 +1067,7 @@ fn test_cmove_32bit_zeros_upper_64() {
 fn test_cmove_16bit_preserves_upper() {
     // 16-bit CMOVE should preserve upper 48 bits
     let code = [
-        0x48, 0x31, 0xc0, // XOR RAX, RAX (sets ZF)
+        0x48, 0x31, 0xc9, // XOR RCX, RCX (sets ZF without touching RAX)
         0x66, 0x0f, 0x44, 0xc3, // CMOVE AX, BX
         0xf4, // HLT
     ];
@@ -1138,9 +1140,9 @@ fn test_cmove_chain() {
     // Chain multiple conditional moves with flag changes
     let code = [
         0x48, 0x31, 0xc0, // XOR RAX, RAX (sets ZF)
-        0x0f, 0x44, 0xc3, // CMOVE EAX, EBX (should move)
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (clears ZF)
-        0x0f, 0x44, 0xd1, // CMOVE EDX, ECX (should not move)
+        0x0f, 0x44, 0xc3, // CMOVE EAX, EBX (should move, RAX = 0x22222222)
+        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (clears ZF, RAX = 0x22222223)
+        0x0f, 0x44, 0xd1, // CMOVE EDX, ECX (should not move, ZF=0)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -1150,7 +1152,7 @@ fn test_cmove_chain() {
     regs.rcx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000001, "EAX should be 0x22222222 after move, then +1");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x22222223, "EAX should be 0x22222222 after move, then +1");
     assert_eq!(regs.rdx & 0xFFFFFFFF, 0x33333333, "EDX should not change");
 }
 
