@@ -958,7 +958,7 @@ fn test_setg_r11b() {
 fn test_sete_preserves_upper_bits() {
     // SETcc only modifies the target byte
     let code = [
-        0x31, 0xc0, // XOR EAX, EAX (sets ZF)
+        0x31, 0xc9, // XOR ECX, ECX (sets ZF without touching RAX)
         0x0f, 0x94, 0xc0, // SETE AL
         0xf4, // HLT
     ];

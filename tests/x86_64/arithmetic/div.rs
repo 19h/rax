@@ -284,18 +284,20 @@ fn test_div_rax_with_remainder() {
 
 #[test]
 fn test_div_rax_rdx_nonzero() {
-    // (RDX:RAX) = 0x0000000100000000 = 2^32
-    // 2^32 / 1000 = 4294967 remainder 296
+    // (RDX:RAX) = 0x0000000000000001:0x0000000000000000 = 2^64
+    // 2^64 / 0x100000001 = 0xFFFFFFFF remainder 1
+    // Verification: (2^32 - 1) * (2^32 + 1) = 2^64 - 1, so quotient is 2^32 - 1, remainder 1
     let code = [0x48, 0xf7, 0xf3, 0xf4]; // DIV RBX
     let mut regs = Registers::default();
     regs.rax = 0x0000000000000000;
-    regs.rdx = 0x0000000100000000;
-    regs.rbx = 1000;
+    regs.rdx = 0x0000000000000001;  // RDX:RAX = 2^64
+    regs.rbx = 0x100000001;  // Divisor = 2^32 + 1 = 4294967297
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 4294967, "RAX (quotient)");
-    assert_eq!(regs.rdx, 296, "RDX (remainder)");
+    // 2^64 / (2^32 + 1) = 4294967295 remainder 1
+    assert_eq!(regs.rax, 0xFFFFFFFF, "RAX (quotient)");
+    assert_eq!(regs.rdx, 1, "RDX (remainder)");
 }
 
 #[test]
@@ -345,18 +347,20 @@ fn test_div_cl_register() {
 }
 
 #[test]
-fn test_div_dx_16bit() {
-    // DIV DX (16-bit) - ModRM 11_110_010 = 0xF2
-    let code = [0x66, 0xf7, 0xf2, 0xf4]; // DIV DX
+fn test_div_cx_16bit() {
+    // DIV CX (16-bit) - ModRM 11_110_001 = 0xF1
+    // Cannot use DX as divisor since DX is part of the dividend (DX:AX)
+    let code = [0x66, 0xf7, 0xf1, 0xf4]; // DIV CX
     let mut regs = Registers::default();
-    regs.rax = 10000;
-    regs.rdx = 0;  // Clear high part
-    regs.rdx |= 100;  // DX = 100 (this overwrites the 0 set above)
+    regs.rax = 10000;  // AX = 10000
+    regs.rdx = 0;      // DX = 0 (high part of dividend)
+    regs.rcx = 100;    // CX = 100 (divisor)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // This test might not be correct because setting rdx to 100 affects the high part
-    // Let's use a different approach - clear it properly
+    // DX:AX = 0:10000 = 10000, divided by 100 = quotient 100, remainder 0
+    assert_eq!(regs.rax & 0xFFFF, 100, "AX (quotient)");
+    assert_eq!(regs.rdx & 0xFFFF, 0, "DX (remainder)");
 }
 
 #[test]
@@ -521,18 +525,17 @@ fn test_div_power_of_two() {
 #[test]
 fn test_div_result_in_upper() {
     // Large dividend in upper register
-    // (EDX:EAX) = (0x0000000F, 0xFFFFFFFF) = 0x0FFFFFFFFF
-    // 0x0FFFFFFFFF / 0x100000000 = 15 remainder 0xFFFFFFFF
+    // (EDX:EAX) = (0x00000002, 0x00000000) = 0x200000000 = 2^33
+    // 2^33 / 0x80000000 = 4 remainder 0
     let code = [0xf7, 0xf3, 0xf4]; // DIV EBX
     let mut regs = Registers::default();
-    regs.rax = 0xFFFFFFFF;
-    regs.rdx = 0x0000000F;
-    regs.rbx = 0x100000000;  // This is a 33-bit number, will be truncated to 32-bit
-    // Actually, DIV works with r/m32, so rbx will be treated as 32-bit
-    // Let's use a different test
+    regs.rax = 0x00000000;
+    regs.rdx = 0x00000002;  // EDX:EAX = 2 * 2^32 = 2^33
+    regs.rbx = 0x80000000;  // Divisor = 2^31
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // With EDX=15 and EAX=max, and divisor wraps to 0
-    // This might cause issues, so we should test more carefully
+    // 2^33 / 2^31 = 4 remainder 0
+    assert_eq!(regs.rax & 0xFFFFFFFF, 4, "EAX (quotient)");
+    assert_eq!(regs.rdx & 0xFFFFFFFF, 0, "EDX (remainder)");
 }
