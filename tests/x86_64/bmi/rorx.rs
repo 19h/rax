@@ -458,6 +458,7 @@ fn test_rorx_64bit_alternating_pattern() {
 #[test]
 fn test_rorx_32bit_single_bit() {
     // RORX with single bit set
+    // Rotate right: bit 8 moves to bit 0 when rotating by 8
     let code = [
         0xc4, 0xe3, 0x7b, 0xf0, 0xc3, 0x08, // RORX EAX, EBX, 8
         0xf4,
@@ -467,7 +468,8 @@ fn test_rorx_32bit_single_bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x01000000, "Single bit rotates correctly");
+    // 0x100 >> 8 = 0x1 (bit 8 rotates to bit 0)
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000001, "Single bit rotates correctly");
 }
 
 #[test]
@@ -643,15 +645,16 @@ fn test_rorx_multiple_rotations() {
 #[test]
 fn test_rorx_32bit_various_counts() {
     // Test multiple rotation counts in sequence
+    // ror32(0x12345678, n) = (0x12345678 >> n) | (0x12345678 << (32-n))
     let counts_and_results = vec![
         (0, 0x12345678),
         (1, 0x091A2B3C),
         (2, 0x048D159E),
         (3, 0x02468ACF),
         (5, 0xC091A2B3),
-        (7, 0x2468ACF1),
+        (7, 0xF02468AC),
         (12, 0x67812345),
-        (20, 0x34567812),
+        (20, 0x45678123),
         (28, 0x23456781),
     ];
 
