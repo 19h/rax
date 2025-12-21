@@ -610,7 +610,8 @@ fn test_mul_byte_ptr_mem() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u8(&mem, 15);
 
-    let mut regs = Registers::default();
+    // Get current regs to preserve RIP, then modify
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rax = 20; // AL = 20
     vcpu.set_regs(&regs).unwrap();
 
@@ -629,7 +630,8 @@ fn test_mul_word_ptr_mem() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u16(&mem, 100);
 
-    let mut regs = Registers::default();
+    // Get current regs to preserve RIP, then modify
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rax = 1000;
     vcpu.set_regs(&regs).unwrap();
 
@@ -648,7 +650,8 @@ fn test_mul_dword_ptr_mem() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u32(&mem, 5000);
 
-    let mut regs = Registers::default();
+    // Get current regs to preserve RIP, then modify
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rax = 10000;
     vcpu.set_regs(&regs).unwrap();
 
@@ -667,7 +670,8 @@ fn test_mul_qword_ptr_mem() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u64(&mem, 987654321);
 
-    let mut regs = Registers::default();
+    // Get current regs to preserve RIP, then modify only RAX
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rax = 123456789;
     vcpu.set_regs(&regs).unwrap();
 

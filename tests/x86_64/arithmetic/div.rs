@@ -432,7 +432,8 @@ fn test_div_byte_ptr_mem() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u8(&mem, 10);
 
-    let mut regs = Registers::default();
+    // Get current regs to preserve RIP, then modify
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rax = 100;
     vcpu.set_regs(&regs).unwrap();
 
@@ -451,7 +452,8 @@ fn test_div_dword_ptr_mem() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u32(&mem, 1000);
 
-    let mut regs = Registers::default();
+    // Get current regs to preserve RIP, then modify
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rax = 1000000;
     regs.rdx = 0;
     vcpu.set_regs(&regs).unwrap();
@@ -471,7 +473,8 @@ fn test_div_qword_ptr_mem() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u64(&mem, 1000000);
 
-    let mut regs = Registers::default();
+    // Get current regs to preserve RIP, then modify
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rax = 1000000000000;
     regs.rdx = 0;
     vcpu.set_regs(&regs).unwrap();
