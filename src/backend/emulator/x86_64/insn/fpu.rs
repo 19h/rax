@@ -14,7 +14,7 @@ pub fn escape_d8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
 
     if is_memory {
         // Memory operand - float32
-        let addr = vcpu.decode_modrm_addr(ctx, modrm)?;
+        let addr = vcpu.decode_fpu_modrm_addr(ctx, modrm)?;
         let val = vcpu.read_f32(addr)?;
         match reg {
             0 => { // FADD m32
@@ -84,7 +84,7 @@ pub fn escape_d9(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     let is_memory = (modrm >> 6) != 3;
 
     if is_memory {
-        let addr = vcpu.decode_modrm_addr(ctx, modrm)?;
+        let addr = vcpu.decode_fpu_modrm_addr(ctx, modrm)?;
         match reg {
             0 => { // FLD m32
                 let val = vcpu.read_f32(addr)?;
@@ -254,7 +254,7 @@ pub fn escape_da(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     let is_memory = (modrm >> 6) != 3;
 
     if is_memory {
-        let addr = vcpu.decode_modrm_addr(ctx, modrm)?;
+        let addr = vcpu.decode_fpu_modrm_addr(ctx, modrm)?;
         let val = vcpu.read_mem32(addr)? as i32 as f64;
         let st0 = vcpu.fpu.get_st(0);
         match reg {
@@ -301,7 +301,7 @@ pub fn escape_db(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     let is_memory = (modrm >> 6) != 3;
 
     if is_memory {
-        let addr = vcpu.decode_modrm_addr(ctx, modrm)?;
+        let addr = vcpu.decode_fpu_modrm_addr(ctx, modrm)?;
         match reg {
             0 => { // FILD m32int
                 let val = vcpu.read_mem32(addr)? as i32 as f64;
@@ -399,7 +399,7 @@ pub fn escape_dc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     let is_memory = (modrm >> 6) != 3;
 
     if is_memory {
-        let addr = vcpu.decode_modrm_addr(ctx, modrm)?;
+        let addr = vcpu.decode_fpu_modrm_addr(ctx, modrm)?;
         let val = vcpu.read_f64(addr)?;
         let st0 = vcpu.fpu.get_st(0);
         match reg {
@@ -448,7 +448,7 @@ pub fn escape_dd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     let is_memory = (modrm >> 6) != 3;
 
     if is_memory {
-        let addr = vcpu.decode_modrm_addr(ctx, modrm)?;
+        let addr = vcpu.decode_fpu_modrm_addr(ctx, modrm)?;
         match reg {
             0 => { // FLD m64
                 let val = vcpu.read_f64(addr)?;
@@ -529,7 +529,7 @@ pub fn escape_de(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
 
     if is_memory {
         // Integer operations with m16int
-        let addr = vcpu.decode_modrm_addr(ctx, modrm)?;
+        let addr = vcpu.decode_fpu_modrm_addr(ctx, modrm)?;
         let val = vcpu.read_mem16(addr)? as i16 as f64;
         let st0 = vcpu.fpu.get_st(0);
         match reg {
@@ -601,7 +601,7 @@ pub fn escape_df(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     let is_memory = (modrm >> 6) != 3;
 
     if is_memory {
-        let addr = vcpu.decode_modrm_addr(ctx, modrm)?;
+        let addr = vcpu.decode_fpu_modrm_addr(ctx, modrm)?;
         match reg {
             0 => { // FILD m16int
                 let val = vcpu.read_mem16(addr)? as i16 as f64;
@@ -879,32 +879,36 @@ fn f64_to_bcd(val: f64) -> [u8; 10] {
 
 /// FLDENV - load FPU environment
 fn fldenv(vcpu: &mut X86_64Vcpu, addr: u64) -> Result<()> {
-    // 32-bit protected mode format (28 bytes)
+    // Format (28 bytes):
+    // 0-1: FCW, 2-3: FSW, 4-5: FTW, 6-7: FIP, 8-9: FCS, 10-11: FDP, 12-13: FDS
+    // 14-27: reserved
     vcpu.fpu.control_word = vcpu.read_mem16(addr)?;
-    vcpu.fpu.status_word = vcpu.read_mem16(addr + 4)?;
-    vcpu.fpu.tag_word = vcpu.read_mem16(addr + 8)?;
-    vcpu.fpu.instr_ptr = vcpu.read_mem32(addr + 12)? as u64;
-    vcpu.fpu.last_opcode = vcpu.read_mem16(addr + 18)?;
-    vcpu.fpu.data_ptr = vcpu.read_mem32(addr + 20)? as u64;
+    vcpu.fpu.status_word = vcpu.read_mem16(addr + 2)?;
+    vcpu.fpu.tag_word = vcpu.read_mem16(addr + 4)?;
+    vcpu.fpu.instr_ptr = vcpu.read_mem16(addr + 6)? as u64;
+    // FCS at offset 8 (code segment, ignored in 64-bit mode)
+    vcpu.fpu.data_ptr = vcpu.read_mem16(addr + 10)? as u64;
+    // FDS at offset 12 (data segment, ignored in 64-bit mode)
     vcpu.fpu.top = ((vcpu.fpu.status_word >> 11) & 7) as u8;
     Ok(())
 }
 
 /// FNSTENV - store FPU environment
 fn fnstenv(vcpu: &mut X86_64Vcpu, addr: u64) -> Result<()> {
-    // 32-bit protected mode format (28 bytes)
+    // Format (28 bytes):
+    // 0-1: FCW, 2-3: FSW, 4-5: FTW, 6-7: FIP, 8-9: FCS, 10-11: FDP, 12-13: FDS
+    // 14-27: reserved
     vcpu.write_mem16(addr, vcpu.fpu.control_word)?;
-    vcpu.write_mem16(addr + 2, 0)?; // padding
-    vcpu.write_mem16(addr + 4, vcpu.fpu.status_word)?;
-    vcpu.write_mem16(addr + 6, 0)?; // padding
-    vcpu.write_mem16(addr + 8, vcpu.fpu.tag_word)?;
-    vcpu.write_mem16(addr + 10, 0)?; // padding
-    vcpu.write_mem32(addr + 12, vcpu.fpu.instr_ptr as u32)?;
-    vcpu.write_mem16(addr + 16, (vcpu.fpu.last_opcode & 0x7FF) as u16)?;
-    vcpu.write_mem16(addr + 18, 0)?; // padding
-    vcpu.write_mem32(addr + 20, vcpu.fpu.data_ptr as u32)?;
-    vcpu.write_mem16(addr + 24, 0)?; // padding
-    vcpu.write_mem16(addr + 26, 0)?; // padding
+    vcpu.write_mem16(addr + 2, vcpu.fpu.status_word)?;
+    vcpu.write_mem16(addr + 4, vcpu.fpu.tag_word)?;
+    vcpu.write_mem16(addr + 6, vcpu.fpu.instr_ptr as u16)?;
+    vcpu.write_mem16(addr + 8, 0)?; // FCS (code segment)
+    vcpu.write_mem16(addr + 10, vcpu.fpu.data_ptr as u16)?;
+    vcpu.write_mem16(addr + 12, 0)?; // FDS (data segment)
+    // Remaining 14 bytes are reserved/unused
+    for i in 0..7 {
+        vcpu.write_mem16(addr + 14 + i * 2, 0)?;
+    }
     Ok(())
 }
 
@@ -913,8 +917,8 @@ fn frstor(vcpu: &mut X86_64Vcpu, addr: u64) -> Result<()> {
     // Load environment first
     fldenv(vcpu, addr)?;
     // Load registers (28 bytes env + 8 * 10 bytes regs = 108 bytes)
-    for i in 0..8 {
-        let bytes = vcpu.read_bytes(addr + 28 + i * 10, 10)?;
+    for i in 0usize..8 {
+        let bytes = vcpu.read_bytes(addr + 28 + (i as u64) * 10, 10)?;
         vcpu.fpu.st[i] = f80_to_f64(&bytes);
     }
     Ok(())
@@ -925,11 +929,20 @@ fn fnsave(vcpu: &mut X86_64Vcpu, addr: u64) -> Result<()> {
     // Store environment first
     fnstenv(vcpu, addr)?;
     // Store registers (28 bytes env + 8 * 10 bytes regs = 108 bytes)
-    for i in 0..8 {
+    for i in 0usize..8 {
         let bytes = f64_to_f80(vcpu.fpu.st[i]);
         vcpu.write_bytes(addr + 28 + i as u64 * 10, &bytes)?;
     }
     // Reinitialize FPU
     vcpu.fpu.init();
     Ok(())
+}
+
+// Public wrappers for FXSAVE/FXRSTOR in cpu.rs
+pub fn f80_to_f64_pub(bytes: &[u8]) -> f64 {
+    f80_to_f64(bytes)
+}
+
+pub fn f64_to_f80_pub(val: f64) -> [u8; 10] {
+    f64_to_f80(val)
 }

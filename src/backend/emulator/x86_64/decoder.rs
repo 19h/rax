@@ -216,4 +216,83 @@ impl X86_64Vcpu {
             Ok(())
         }
     }
+
+    /// Decode ModR/M address when modrm byte has already been consumed.
+    /// Used by FPU instructions where the modrm byte determines the operation.
+    /// This reads any SIB/displacement bytes from ctx and updates cursor.
+    pub(super) fn decode_fpu_modrm_addr(
+        &self,
+        ctx: &mut InsnContext,
+        modrm: u8,
+    ) -> Result<u64> {
+        let mod_bits = modrm >> 6;
+        let rm_field = modrm & 0x07;
+        let rm = rm_field | ctx.rex_b();
+
+        if mod_bits == 3 {
+            return Err(Error::Emulator(
+                "ModR/M: mod=3 is register, not memory".to_string(),
+            ));
+        }
+
+        let mut addr: u64;
+
+        if rm_field == 4 {
+            // SIB byte follows
+            let sib = ctx.consume_u8()?;
+            let scale = 1u64 << (sib >> 6);
+            let index = ((sib >> 3) & 0x07) | (ctx.rex.map_or(0, |r| (r & 0x02) << 2));
+            let base_reg = (sib & 0x07) | ctx.rex_b();
+
+            // Calculate base
+            addr = if base_reg == 5 && mod_bits == 0 {
+                // No base, disp32 follows
+                let disp = ctx.consume_u32()? as i32 as i64;
+                disp as u64
+            } else {
+                self.get_reg(base_reg, 8)
+            };
+
+            // Add scaled index (index=4 means no index)
+            if index != 4 {
+                addr = addr.wrapping_add(self.get_reg(index, 8).wrapping_mul(scale));
+            }
+
+            // Handle displacement for mod != 0
+            match mod_bits {
+                1 => {
+                    let disp = ctx.consume_u8()? as i8 as i64;
+                    addr = (addr as i64).wrapping_add(disp) as u64;
+                }
+                2 => {
+                    let disp = ctx.consume_u32()? as i32 as i64;
+                    addr = (addr as i64).wrapping_add(disp) as u64;
+                }
+                _ => {}
+            }
+        } else if rm_field == 5 && mod_bits == 0 {
+            // RIP-relative addressing (64-bit mode)
+            let disp = ctx.consume_u32()? as i32 as i64;
+            let rip_after = self.regs.rip as i64 + ctx.cursor as i64;
+            addr = rip_after.wrapping_add(disp) as u64;
+        } else {
+            // Regular register indirect
+            addr = self.get_reg(rm, 8);
+
+            // Handle displacement
+            match mod_bits {
+                1 => {
+                    let disp = ctx.consume_u8()? as i8 as i64;
+                    addr = (addr as i64).wrapping_add(disp) as u64;
+                }
+                2 => {
+                    let disp = ctx.consume_u32()? as i32 as i64;
+                    addr = (addr as i64).wrapping_add(disp) as u64;
+                }
+                _ => {}
+            }
+        }
+
+        Ok(addr)
+    }
 }
