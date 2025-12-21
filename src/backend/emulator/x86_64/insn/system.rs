@@ -165,6 +165,14 @@ pub fn rdmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     let ecx = vcpu.regs.rcx as u32;
 
     let value = match ecx {
+        0x10 => {
+            // TSC - Time Stamp Counter (return a non-zero simulated value)
+            use std::time::{SystemTime, UNIX_EPOCH};
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map(|d| d.as_nanos() as u64)
+                .unwrap_or(1_000_000)
+        }
         0xC0000080 => vcpu.sregs.efer, // EFER
         0xC0000100 => vcpu.sregs.fs.base, // FS.base
         0xC0000101 => vcpu.sregs.gs.base, // GS.base
