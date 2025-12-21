@@ -507,7 +507,7 @@ fn test_sequential_fldenv() {
     // Multiple sequential FLDENV operations
     let code = [
         0xD9, 0x24, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLDENV [0x2000]
-        0xD9, 0x24, 0x25, 0x00, 0x22, 0x00, 0x00,  // FLDENV [0x2022]
+        0xD9, 0x24, 0x25, 0x22, 0x20, 0x00, 0x00,  // FLDENV [0x2022]
         0xD9, 0x3C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FNSTCW [0x3000]
         0xF4,                                        // HLT
     ];
@@ -528,37 +528,36 @@ fn test_sequential_fldenv() {
 
 #[test]
 fn test_fnstenv_fldenv_complete_flow() {
-    // Complete environment save/restore workflow
+    // Test that FLDENV correctly restores the FPU environment (control word)
+    // Note: FLDENV only restores environment, NOT register values
     let code = [
-        // Load and use FPU
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000]
+        // Set up a custom control word (truncate toward zero = 0x0F7F)
+        0xD9, 0x2C, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLDCW [0x2000]
+        // Load a value
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008]
         // Save environment
         0xD9, 0x34, 0x25, 0x00, 0x30, 0x00, 0x00,  // FNSTENV [0x3000]
-        // Initialize FPU
+        // Initialize FPU (resets control word to 0x037F)
         0xDB, 0xE3,                                  // FNINIT
-        // Do some other work
-        0xDD, 0x04, 0x25, 0x10, 0x20, 0x00, 0x00,  // FLD qword [0x2010]
-        0xDD, 0x1C, 0x25, 0x18, 0x20, 0x00, 0x00,  // FSTP qword [0x2018]
+        // Store control word after FNINIT (should be 0x037F)
+        0xD9, 0x3C, 0x25, 0x00, 0x40, 0x00, 0x00,  // FNSTCW [0x4000]
         // Restore saved environment
         0xD9, 0x24, 0x25, 0x00, 0x30, 0x00, 0x00,  // FLDENV [0x3000]
-        // Use restored state
-        0xDD, 0x1C, 0x25, 0x20, 0x40, 0x00, 0x00,  // FSTP qword [0x4020]
-        0xDD, 0x1C, 0x25, 0x28, 0x40, 0x00, 0x00,  // FSTP qword [0x4028]
+        // Store control word after FLDENV (should be 0x0F7F again)
+        0xD9, 0x3C, 0x25, 0x02, 0x40, 0x00, 0x00,  // FNSTCW [0x4002]
         0xF4,                                        // HLT
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 1.5);
-    write_f64(&mem, 0x2008, 2.5);
-    write_f64(&mem, 0x2010, 99.0);
+    write_u16(&mem, 0x2000, 0x0F7F); // Custom control word (truncate toward zero)
+    write_f64(&mem, 0x2008, 1.5);
 
     run_until_hlt(&mut vcpu).unwrap();
 
-    let v1 = read_f64(&mem, 0x4020);
-    let v2 = read_f64(&mem, 0x4028);
-    assert_eq!(v1, 2.5, "Second saved value should be 2.5");
-    assert_eq!(v2, 1.5, "First saved value should be 1.5");
+    let cw_after_fninit = read_u16(&mem, 0x4000);
+    let cw_after_fldenv = read_u16(&mem, 0x4002);
+    assert_eq!(cw_after_fninit, 0x037F, "Control word after FNINIT should be default");
+    assert_eq!(cw_after_fldenv, 0x0F7F, "FLDENV should restore saved control word");
 }
 
 #[test]
