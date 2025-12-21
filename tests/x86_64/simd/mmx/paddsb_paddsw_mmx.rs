@@ -14,10 +14,7 @@
 //!
 //! Reference: /Users/int/dev/rax/docs/paddsb:paddsw.txt
 
-#[path = "../../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 
 fn write_mm_via_mem(mem: &vm_memory::GuestMemoryMmap, addr: u64, value: u64) {
     write_mem_at_u64(mem, addr, value);
@@ -197,7 +194,7 @@ fn test_paddsw_basic() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     // 100+100=200, 200+200=400, 300+300=600, 400+400=800
-    write_mm_via_mem(&mem, 0x2000, 0x019001900100 0064);
+    write_mm_via_mem(&mem, 0x2000, 0x0190019001000064);
     write_mm_via_mem(&mem, 0x2008, 0x0190012C00C80064);
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -422,7 +419,7 @@ fn test_paddsb_mm_m64() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x02040608 0A0C0E10, "PADDSB: memory operand");
+    assert_eq!(result, 0x020406080A0C0E10, "PADDSB: memory operand");
 }
 
 #[test]
@@ -506,7 +503,7 @@ fn test_paddsb_alternating_pattern() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     // Alternating positive and negative
-    write_mm_via_mem(&mem, 0x2000, 0x0AF60A F60AF60AF6);
+    write_mm_via_mem(&mem, 0x2000, 0x0AF60AF60AF60AF6);
     write_mm_via_mem(&mem, 0x2008, 0xF60AF60AF60AF60A);
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -601,7 +598,7 @@ fn test_paddsb_all_mm_registers() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x02040608 0A0C0E10, "PADDSB: MM5 and MM6");
+    assert_eq!(result, 0x020406080A0C0E10, "PADDSB: MM5 and MM6");
 }
 
 #[test]

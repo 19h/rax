@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
@@ -354,7 +354,13 @@ fn test_vdpps_xmm8_xmm9_mem_ff() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 16] = [0x00, 0x00, 0x80, 0x3f; 4]; // All 1.0, dot product = 4.0
+    // All 1.0f32 (0x3f800000) repeated 4 times, dot product = 4.0
+    let test_data: [u8; 16] = [
+        0x00, 0x00, 0x80, 0x3f,
+        0x00, 0x00, 0x80, 0x3f,
+        0x00, 0x00, 0x80, 0x3f,
+        0x00, 0x00, 0x80, 0x3f,
+    ];
     mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -516,7 +522,13 @@ fn test_vdpps_ymm8_ymm9_mem_f1() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let test_data: [u8; 32] = [0x00, 0x00, 0x80, 0x3f; 8]; // All 1.0
+    // All 1.0f32 (0x3f800000) repeated 8 times
+    let test_data: [u8; 32] = [
+        0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f,
+        0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f,
+        0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f,
+        0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f,
+    ];
     mem.write_slice(&test_data, GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();

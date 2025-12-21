@@ -1,8 +1,5 @@
 // Module path for tests run via x86_64.rs
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // LAHF/SAHF - Load/Store AH from/to Flags (Comprehensive Extended Tests)
@@ -265,7 +262,7 @@ fn test_lahf_individual_flags() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let ah = ((regs.rax >> 8) & 0xFF) as u8;
-        assert_eq!(ah, flags | 0x02, "LAHF failed for {}", description);
+        assert_eq!(ah, (flags | 0x02) as u8, "LAHF failed for {}", description);
     }
 }
 

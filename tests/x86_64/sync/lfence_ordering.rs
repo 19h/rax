@@ -1,11 +1,8 @@
-use crate::common::{run_until_hlt, setup_vm, read_mem_u64, write_mem_u64};
+use crate::common::*;
 
 // LFENCE Tests - Load Fence for ordering loads
 // LFENCE: 0F AE E8
 // Serializes all load operations before the fence with loads after the fence
-
-#[path = "../common/mod.rs"]
-mod common;
 
 #[test]
 fn test_lfence_basic() {
@@ -217,7 +214,7 @@ fn test_lfence_cache_timing_mitigation() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     use vm_memory::{Bytes, GuestAddress};
     mem.write_slice(&0x10u64.to_le_bytes(), GuestAddress(0x2000)).unwrap();
-    mem.write_slice(&0xSECu64.to_le_bytes(), GuestAddress(0x2018)).unwrap();
+    mem.write_slice(&0x5EC5EC5EC5EC5ECu64.to_le_bytes(), GuestAddress(0x2018)).unwrap(); // "secret" placeholder
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
     // LFENCE ensures secret-dependent load doesn't happen speculatively

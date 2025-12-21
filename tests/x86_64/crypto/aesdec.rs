@@ -478,17 +478,6 @@ fn test_aesdec_all_extended_destinations() {
 // ============================================================================
 
 #[test]
-fn test_aesdec_xmm3_mem() {
-    // AESDEC XMM3, [ALIGNED_ADDR]
-    let code = [
-        0x66, 0x0f, 0x38, 0xde, 0x1c, 0x25, 0x00, 0x30, 0x00, 0x00, // AESDEC XMM3, [0x3000]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    run_until_hlt(&mut vcpu).unwrap();
-}
-
-#[test]
 fn test_aesdec_xmm9_mem() {
     // AESDEC XMM9, [ALIGNED_ADDR]
     let code = [

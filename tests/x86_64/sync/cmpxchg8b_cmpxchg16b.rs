@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 
 // CMPXCHG8B/CMPXCHG16B - Compare and Exchange 8/16 Bytes
 // Opcode: 0F C7 /1 (CMPXCHG8B), REX.W + 0F C7 /1 (CMPXCHG16B)
@@ -12,9 +12,6 @@ use crate::common::{run_until_hlt, setup_vm};
 //   Compares RDX:RAX with 128-bit memory operand
 //   If equal: ZF=1, RCX:RBX -> memory
 //   If not equal: ZF=0, memory -> RDX:RAX
-
-#[path = "../common/mod.rs"]
-mod common;
 
 // ===== CMPXCHG8B SUCCESS TESTS =====
 

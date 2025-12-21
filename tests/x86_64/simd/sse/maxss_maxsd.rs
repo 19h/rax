@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 // MAXSS - Return Maximum Scalar Single Precision Floating-Point Value

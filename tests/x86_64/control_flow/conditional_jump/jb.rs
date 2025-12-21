@@ -1,8 +1,6 @@
 use rax::cpu::Registers;
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm};
+use crate::common::{run_until_hlt, setup_vm};
 
 // JB/JNAE/JC - Jump if Below / Jump if Not Above or Equal / Jump if Carry
 // Jumps to target if CF = 1 (unsigned comparison)

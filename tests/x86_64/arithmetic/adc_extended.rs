@@ -1,7 +1,4 @@
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // ADC — Add with Carry
@@ -418,7 +415,7 @@ fn test_adc_extended_r64_registers() {
 fn test_adc_byte_ptr_imm8() {
     // ADC BYTE PTR [mem], 0x10 with CF=1
     let code = [
-        0x80, 0x15, 0xF7, 0x0F, 0x00, 0x00, 0x10, // ADC BYTE PTR [rip+0x0FF7], 0x10
+        0x80, 0x15, 0xFA, 0x0F, 0x00, 0x00, 0x10, // ADC BYTE PTR [rip+0x0FF7], 0x10
         0xf4,                                      // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -457,7 +454,7 @@ fn test_adc_word_ptr_imm16() {
 fn test_adc_dword_ptr_r32() {
     // ADC DWORD PTR [mem], EBX with CF=1
     let code = [
-        0x11, 0x1d, 0xF7, 0x0F, 0x00, 0x00, // ADC DWORD PTR [rip+0x0FF7], EBX
+        0x11, 0x1d, 0xFA, 0x0F, 0x00, 0x00, // ADC DWORD PTR [rip+0x0FFA], EBX (target: 0x2000)
         0xf4,                               // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -477,7 +474,7 @@ fn test_adc_dword_ptr_r32() {
 fn test_adc_qword_ptr_r64() {
     // ADC QWORD PTR [mem], RBX with CF=1
     let code = [
-        0x48, 0x11, 0x1d, 0xF6, 0x0F, 0x00, 0x00, // ADC QWORD PTR [rip+0x0FF6], RBX
+        0x48, 0x11, 0x1d, 0xF9, 0x0F, 0x00, 0x00, // ADC QWORD PTR [rip+0x0FF9], RBX (target: 0x2000)
         0xf4,                                      // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -497,7 +494,7 @@ fn test_adc_qword_ptr_r64() {
 fn test_adc_r64_from_memory() {
     // ADC RAX, QWORD PTR [mem] with CF=1
     let code = [
-        0x48, 0x13, 0x05, 0xF6, 0x0F, 0x00, 0x00, // ADC RAX, QWORD PTR [rip+0x0FF6]
+        0x48, 0x13, 0x05, 0xF9, 0x0F, 0x00, 0x00, // ADC RAX, QWORD PTR [rip+0x0FF6]
         0xf4,                                      // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

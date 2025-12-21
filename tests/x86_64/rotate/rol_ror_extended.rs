@@ -485,6 +485,6 @@ fn test_rol_power_of_two() {
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected = ((value << 3) | (value >> 5)) & 0xFF;
-        assert_eq!(regs.rax & 0xFF, expected, "ROL power of 2 value 0x{:02X}", value);
+        assert_eq!(regs.rax & 0xFF, expected as u64, "ROL power of 2 value 0x{:02X}", value);
     }
 }

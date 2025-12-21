@@ -1,4 +1,4 @@
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 
 // PMULLD - Multiply Packed Signed Dword Integers and Store Low Result
 //
@@ -208,7 +208,7 @@ fn test_pmulld_xmm4_mem_zeros() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: [u8; 16] = [0x00; 16]; // All zeros
+    let data: [u8; 16] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]; // All zeros
     mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

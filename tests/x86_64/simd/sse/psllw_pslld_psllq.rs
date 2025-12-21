@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 // PSLLW/PSLLD/PSLLQ - Shift Packed Data Left Logical (SSE2)
@@ -132,7 +132,7 @@ fn test_psllw_imm8_sixteen_bits_zero_out() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -149,7 +149,7 @@ fn test_psllw_imm8_overflow() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -172,7 +172,7 @@ fn test_psllw_xmm_count_zero() {
     let data = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
                 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0x00; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -349,7 +349,7 @@ fn test_pslld_imm8_thirtytwo_bits_zero_out() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -365,7 +365,7 @@ fn test_pslld_imm8_overflow() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -387,7 +387,7 @@ fn test_pslld_xmm_count_zero() {
     let data = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
                 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0x00; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -582,7 +582,7 @@ fn test_psllq_imm8_sixtyfour_bits_zero_out() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -598,7 +598,7 @@ fn test_psllq_imm8_overflow() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -620,7 +620,7 @@ fn test_psllq_xmm_count_zero() {
     let data = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
                 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
-    mem.write_slice(&[0x00; 16], GuestAddress(ALIGNED_ADDR2)).unwrap();
+    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], GuestAddress(ALIGNED_ADDR2)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

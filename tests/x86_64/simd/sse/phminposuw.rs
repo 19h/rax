@@ -1,4 +1,4 @@
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 
 // PHMINPOSUW - Packed Horizontal Word Minimum
 //
@@ -179,7 +179,7 @@ fn test_phminposuw_xmm2_mem_all_max() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // All max values: 0xFFFF (min = 0xFFFF at index 0)
-    let data: [u8; 16] = [0xFF; 16];
+    let data: [u8; 16] = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
     mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -229,7 +229,7 @@ fn test_phminposuw_mem_displacement() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x01; 16], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

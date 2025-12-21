@@ -7,7 +7,7 @@
 //! Opcode: DE /0 - FIADD m16int
 //! Opcode: DA /0 - FIADD m32int
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 

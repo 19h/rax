@@ -1,9 +1,7 @@
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm};
+use crate::common::*;
 
 // ENTER/LEAVE - Stack Frame Setup/Teardown
 // ENTER: Create stack frame with local space allocation

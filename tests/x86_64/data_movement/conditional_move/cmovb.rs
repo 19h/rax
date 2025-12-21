@@ -1,8 +1,6 @@
 use rax::cpu::Registers;
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm};
+use crate::common::{run_until_hlt, setup_vm};
 
 // CMOVB/CMOVC/CMOVNAE - Conditional Move if Below/Carry/Not Above or Equal
 // Moves source to destination if CF=1 (unsigned comparison < or carry set)

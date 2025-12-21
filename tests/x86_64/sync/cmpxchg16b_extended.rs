@@ -1,12 +1,9 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
 // CMPXCHG16B Extended Tests - Comprehensive 128-bit atomic compare-exchange patterns
 // Note: CMPXCHG16B requires 16-byte aligned memory and CMPXCHG16B CPU feature
-
-#[path = "../common/mod.rs"]
-mod common;
 
 // CMPXCHG16B: REX.W + 0F C7 /1
 // Compares RDX:RAX with 128-bit memory

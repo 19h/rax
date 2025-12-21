@@ -1,7 +1,4 @@
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // POPCNT - Return the Count of Number of Bits Set to 1

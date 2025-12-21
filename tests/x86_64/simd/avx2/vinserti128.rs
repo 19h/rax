@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 // VINSERTI128 - Insert 128-bit Integer Lane (AVX2)
@@ -222,7 +222,7 @@ fn test_vinserti128_ymm2_ymm3_mem_lower() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = vec![0xFF; 16];
+    let data: Vec<u8> = vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -238,7 +238,7 @@ fn test_vinserti128_ymm4_ymm5_mem_lower() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = vec![0xAA; 16];
+    let data: Vec<u8> = vec![0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -274,7 +274,7 @@ fn test_vinserti128_ymm3_ymm4_mem_upper() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = vec![0x55; 16];
+    let data: Vec<u8> = vec![0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -290,7 +290,7 @@ fn test_vinserti128_ymm6_ymm7_mem_upper() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = vec![0xCC; 16];
+    let data: Vec<u8> = vec![0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -326,7 +326,7 @@ fn test_vinserti128_ymm15_ymm0_mem_upper() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = vec![0xFF; 16];
+    let data: Vec<u8> = vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -456,7 +456,7 @@ fn test_vinserti128_mem_unaligned_lower() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00; 17], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -471,7 +471,7 @@ fn test_vinserti128_mem_unaligned_upper() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 17], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

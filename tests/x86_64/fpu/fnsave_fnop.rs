@@ -13,7 +13,7 @@
 //!
 //! Reference: /Users/int/dev/rax/docs/fnsave.txt, /Users/int/dev/rax/docs/fnop.txt
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 fn write_u16(mem: &vm_memory::GuestMemoryMmap, addr: u64, val: u16) {

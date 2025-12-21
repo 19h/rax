@@ -18,10 +18,7 @@
 //!
 //! Reference: /Users/int/dev/rax/docs/movq.txt
 
-#[path = "../../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 
 // ============================================================================
 // MOVQ Tests: Register to Register

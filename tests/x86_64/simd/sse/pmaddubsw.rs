@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 
 // PMADDUBSW - Multiply and Add Packed Signed and Unsigned Bytes
 //
@@ -197,7 +197,7 @@ fn test_pmaddubsw_xmm2_mem_saturate() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // Values that will saturate: 255 * 127 + 255 * 127 = 64770 > 32767
-    let data: [u8; 16] = [0x7F; 16];
+    let data: [u8; 16] = [0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F];
     mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -247,7 +247,7 @@ fn test_pmaddubsw_mem_displacement() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x01; 16], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

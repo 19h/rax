@@ -12,10 +12,7 @@
 //! References: docs/xsavec.txt, docs/xsaveopt.txt, docs/xsaves.txt,
 //!            docs/xrstor.txt, docs/xrstors.txt
 
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // ============================================================================

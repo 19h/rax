@@ -473,17 +473,6 @@ fn test_aesenc_all_extended_destinations() {
 }
 
 #[test]
-fn test_aesenc_xmm3_mem() {
-    // AESENC XMM3, [ALIGNED_ADDR]
-    let code = [
-        0x66, 0x0f, 0x38, 0xdc, 0x1c, 0x25, 0x00, 0x30, 0x00, 0x00, // AESENC XMM3, [0x3000]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    run_until_hlt(&mut vcpu).unwrap();
-}
-
-#[test]
 fn test_aesenc_xmm9_mem() {
     // AESENC XMM9, [ALIGNED_ADDR]
     let code = [

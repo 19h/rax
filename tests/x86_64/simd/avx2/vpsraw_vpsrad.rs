@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 // VPSRAW/VPSRAD - Packed Shift Right Arithmetic (AVX2)
@@ -399,7 +399,7 @@ fn test_vpsrad_mem_large_shift_count() {
     full_code.extend_from_slice(&[
         0xc5, 0xf5, 0xe2, 0x00, // VPSRAD YMM0, YMM1, [RAX]
         0xf4, // HLT
-    ];
+    ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     // Shift count > 32 should fill with sign bit

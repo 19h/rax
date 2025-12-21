@@ -1,4 +1,4 @@
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 
 // CVTSS2SI - Convert Scalar Single Precision to Signed Integer
 // Opcode: F3 0F 2D /r    CVTSS2SI r32, xmm1/m32

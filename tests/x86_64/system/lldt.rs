@@ -1,8 +1,6 @@
 use rax::cpu::Registers;
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm, write_mem_at_u16, DATA_ADDR};
+use crate::common::{run_until_hlt, setup_vm, write_mem_at_u16, DATA_ADDR};
 
 // LLDT - Load Local Descriptor Table Register
 // Opcode: 0F 00 /2

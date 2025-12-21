@@ -1,8 +1,6 @@
 use rax::cpu::Registers;
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm};
+use crate::common::{run_until_hlt, setup_vm};
 
 // JP/JPE - Jump if Parity / Jump if Parity Even
 // Jumps to target if PF = 1 (even number of 1 bits in low byte)

@@ -16,9 +16,6 @@ use rax::cpu::Registers;
 // These instructions enable efficient multi-precision arithmetic by
 // using two independent carry chains (CF and OF)
 
-#[path = "../common/mod.rs"]
-mod common;
-
 // ===== ADCX BASIC 32-BIT TESTS =====
 
 #[test]

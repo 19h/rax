@@ -1,8 +1,6 @@
 use rax::cpu::Registers;
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm, cf_set, of_set, sf_set, zf_set, af_set, pf_set};
+use crate::common::{run_until_hlt, setup_vm, cf_set, of_set, sf_set, zf_set, af_set, pf_set};
 
 // RDSEED - Read Random SEED
 // Opcode: 0F C7 /7

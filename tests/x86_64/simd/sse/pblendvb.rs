@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 
 // PBLENDVB - Variable Blend Packed Bytes
 //
@@ -174,7 +174,7 @@ fn test_pblendvb_xmm2_mem_mask_all_ones() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: [u8; 16] = [0xFF; 16];
+    let data: [u8; 16] = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
     mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -211,7 +211,7 @@ fn test_pblendvb_xmm4_mem_mask_low_half() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: [u8; 16] = [0xAA; 16];
+    let data: [u8; 16] = [0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA];
     mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -229,7 +229,7 @@ fn test_pblendvb_xmm5_mem_mask_high_half() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: [u8; 16] = [0x55; 16];
+    let data: [u8; 16] = [0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55];
     mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -356,7 +356,7 @@ fn test_pblendvb_mem_displacement() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xCC; 16], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

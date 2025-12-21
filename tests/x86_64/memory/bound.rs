@@ -1,9 +1,7 @@
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm_compat};
+use crate::common::*;
 
 // BOUND - Check Array Index Against Bounds
 // Opcode: 62 /r

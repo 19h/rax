@@ -14,10 +14,7 @@
 // Flags:
 // - None affected (unlike ROR which sets CF and OF)
 
-#[path = "../../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::{Registers, VCpu};
 use rax::backend::emulator::x86_64::flags;
 

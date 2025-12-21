@@ -1,4 +1,4 @@
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 
 // PHADDW/PHADDD - Packed Horizontal Add
 //
@@ -570,7 +570,7 @@ fn test_phaddw_mem_displacement() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x01, 0x00; 8], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -588,6 +588,6 @@ fn test_phaddd_mem_displacement() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x01, 0x00, 0x00, 0x00; 4], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }

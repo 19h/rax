@@ -12,10 +12,7 @@
 //!
 //! References: docs/gf2p8mulb.txt, docs/gf2p8affineqb.txt, docs/gf2p8affineinvqb.txt
 
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::Registers;
 
 // ============================================================================

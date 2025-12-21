@@ -1,10 +1,7 @@
-use crate::common::{run_until_hlt, setup_vm, read_mem_u8, read_mem_u16, read_mem_u32, read_mem_u64, write_mem_u8, write_mem_u16, write_mem_u32, write_mem_u64};
+use crate::common::*;
 
 // CMPXCHG Extended Tests - Comprehensive patterns for atomic compare-and-exchange
 // This extends the basic CMPXCHG tests with more complex scenarios
-
-#[path = "../common/mod.rs"]
-mod common;
 
 // ===== MEMORY OPERAND TESTS =====
 

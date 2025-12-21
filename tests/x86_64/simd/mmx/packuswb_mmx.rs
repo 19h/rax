@@ -11,7 +11,7 @@
 //!
 //! Reference: docs/packuswb.txt
 
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::GuestMemoryMmap;
 
 // Helper to write 64-bit value to memory
@@ -296,7 +296,7 @@ fn test_packuswb_alternating_saturation() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // 00FF->FF, FFFF->00, 0001->01, 7FFF->FF, 0000->00, FFFF->00, 7FFF->FF, 0001->01
-    assert_eq!(result, 0x01FF000000FF0100FF, "PACKUSWB: alternating saturation");
+    assert_eq!(result, 0x01FF000000FF0100, "PACKUSWB: alternating saturation");
 }
 
 #[test]

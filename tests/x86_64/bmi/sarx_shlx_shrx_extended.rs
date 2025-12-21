@@ -1,6 +1,3 @@
-#[path = "../common/mod.rs"]
-mod common;
-
 use crate::common::{run_until_hlt, setup_vm};
 use rax::cpu::Registers;
 

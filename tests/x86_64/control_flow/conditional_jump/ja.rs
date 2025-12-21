@@ -1,8 +1,6 @@
 use rax::cpu::Registers;
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm};
+use crate::common::{run_until_hlt, setup_vm};
 
 // JA/JNBE - Jump if Above / Jump if Not Below or Equal
 // Jumps to target if CF = 0 AND ZF = 0 (unsigned comparison)

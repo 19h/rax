@@ -8,7 +8,7 @@
 //! - FDIVP: DE F8+i - Divide and pop
 //! - FDIVRP: DE F0+i - Reverse divide and pop
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 

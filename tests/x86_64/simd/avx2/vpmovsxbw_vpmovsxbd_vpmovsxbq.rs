@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 // VPMOVSXBW/VPMOVSXBD/VPMOVSXBQ - Packed Move with Sign Extend from Byte (AVX2)
@@ -564,7 +564,6 @@ fn test_vpmovsxbq_mem_pattern() {
     full_code.extend_from_slice(&[
         0xc4, 0xe2, 0x7d, 0x22, 0x00, // VPMOVSXBQ YMM0, [RAX]
         0xf4, // HLT
-    ];
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);

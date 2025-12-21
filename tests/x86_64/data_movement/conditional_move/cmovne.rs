@@ -1,8 +1,6 @@
 use rax::cpu::Registers;
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm};
+use crate::common::{run_until_hlt, setup_vm};
 
 // CMOVNE/CMOVNZ - Conditional Move if Not Equal/Not Zero
 // Moves source to destination if ZF=0

@@ -29,9 +29,7 @@ use rax::cpu::Registers;
 use rax::backend::emulator::x86_64::flags;
 use std::sync::Arc;
 
-#[path = "../../common/mod.rs"]
-mod common;
-use common::*;
+use crate::common::*;
 
 // ============================================================================
 // 8-bit SAR tests

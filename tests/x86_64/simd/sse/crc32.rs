@@ -1,4 +1,4 @@
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 
 // CRC32 - Accumulate CRC32 Value
 //
@@ -524,7 +524,7 @@ fn test_crc32_mem_sib() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: [u8; 12] = [0; 12];
+    let data: [u8; 12] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     mem.write_slice(&data, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     let actual_data: [u8; 4] = [0xaa, 0xbb, 0xcc, 0xdd];
     mem.write_slice(&actual_data, vm_memory::GuestAddress(ALIGNED_ADDR + 8)).unwrap();

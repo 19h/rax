@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 use vm_memory::{Bytes, GuestAddress};
 
 // VEXTRACTI128 - Extract 128-bit Integer Lane (AVX2)
@@ -205,7 +205,7 @@ fn test_vextracti128_mem_ymm1_lower() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -220,7 +220,7 @@ fn test_vextracti128_mem_ymm2_lower() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -235,7 +235,7 @@ fn test_vextracti128_mem_ymm3_lower() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xAA; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -254,7 +254,7 @@ fn test_vextracti128_mem_ymm1_upper() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -269,7 +269,7 @@ fn test_vextracti128_mem_ymm4_upper() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x55; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -284,7 +284,7 @@ fn test_vextracti128_mem_ymm7_upper() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xCC; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -300,10 +300,10 @@ fn test_vextracti128_mem_ymm8_lower() {
     full_code.extend_from_slice(&[
         0xc4, 0x63, 0x7d, 0x39, 0x00, 0x00, // VEXTRACTI128 [RAX], YMM8, 0
         0xf4, // HLT
-    ];
+    ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -318,7 +318,7 @@ fn test_vextracti128_mem_ymm15_upper() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 16], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -447,7 +447,7 @@ fn test_vextracti128_mem_unaligned_lower() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x00; 17], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -462,7 +462,7 @@ fn test_vextracti128_mem_unaligned_upper() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0xFF; 17], GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

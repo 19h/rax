@@ -10,10 +10,7 @@
 //!
 //! Reference: docs/outs:outsb:outsw:outsd.txt
 
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::{Registers, VcpuExit};
 use rax::backend::emulator::x86_64::flags;
 
@@ -39,9 +36,9 @@ fn test_outsb_basic() {
     let mut captured_value = None;
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { port, size, data } => {
+            VcpuExit::IoOut { port, data } => {
                 assert_eq!(port, 0x60);
-                assert_eq!(size, 1);
+                assert_eq!(data.len(), 1);
                 captured_value = Some(data[0]);
             }
             VcpuExit::Hlt => break,
@@ -179,9 +176,9 @@ fn test_outsw_basic() {
     let mut captured_value = None;
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { port, size, data } => {
+            VcpuExit::IoOut { port, data } => {
                 assert_eq!(port, 0x3F8);
-                assert_eq!(size, 2);
+                assert_eq!(data.len(), 2);
                 captured_value = Some(u16::from_le_bytes([data[0], data[1]]));
             }
             VcpuExit::Hlt => break,
@@ -293,9 +290,9 @@ fn test_outsd_basic() {
     let mut captured_value = None;
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { port, size, data } => {
+            VcpuExit::IoOut { port, data } => {
                 assert_eq!(port, 0xCFC);
-                assert_eq!(size, 4);
+                assert_eq!(data.len(), 4);
                 captured_value = Some(u32::from_le_bytes([data[0], data[1], data[2], data[3]]));
             }
             VcpuExit::Hlt => break,
@@ -411,9 +408,9 @@ fn test_rep_outsb_basic() {
     let mut values = vec![];
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { port, size, data } => {
+            VcpuExit::IoOut { port, data } => {
                 assert_eq!(port, 0x60);
-                assert_eq!(size, 1);
+                assert_eq!(data.len(), 1);
                 values.push(data[0]);
             }
             VcpuExit::Hlt => break,
@@ -510,8 +507,8 @@ fn test_rep_outsw_basic() {
     let mut values = vec![];
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { size, data, .. } => {
-                assert_eq!(size, 2);
+            VcpuExit::IoOut { data, .. } => {
+                assert_eq!(data.len(), 2);
                 values.push(u16::from_le_bytes([data[0], data[1]]));
             }
             VcpuExit::Hlt => break,
@@ -606,8 +603,8 @@ fn test_rep_outsd_basic() {
     let mut values = vec![];
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { size, data, .. } => {
-                assert_eq!(size, 4);
+            VcpuExit::IoOut { data, .. } => {
+                assert_eq!(data.len(), 4);
                 values.push(u32::from_le_bytes([data[0], data[1], data[2], data[3]]));
             }
             VcpuExit::Hlt => break,
@@ -699,8 +696,8 @@ fn test_outs_mixed_sizes() {
     let mut io_ops = vec![];
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { size, data, .. } => {
-                io_ops.push((size, data.clone()));
+            VcpuExit::IoOut { data, .. } => {
+                io_ops.push((data.len(), data.clone()));
             }
             VcpuExit::Hlt => break,
             _ => continue,
@@ -817,8 +814,8 @@ fn test_rep_outsd_large_transfer() {
     let mut count = 0;
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { size, .. } => {
-                assert_eq!(size, 4);
+            VcpuExit::IoOut { data, .. } => {
+                assert_eq!(data.len(), 4);
                 count += 1;
             }
             VcpuExit::Hlt => break,

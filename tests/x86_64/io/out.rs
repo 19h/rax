@@ -10,10 +10,7 @@
 //!
 //! Reference: docs/out.txt
 
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 use rax::cpu::{Registers, VcpuExit};
 
 // ============================================================================
@@ -33,9 +30,9 @@ fn test_out_imm8_al_port_0() {
     let mut captured_value = None;
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { port, size, data } => {
+            VcpuExit::IoOut { port, data } => {
                 assert_eq!(port, 0, "Port should be 0");
-                assert_eq!(size, 1, "Size should be 1 byte");
+                assert_eq!(data.len(), 1, "Size should be 1 byte");
                 assert_eq!(data.len(), 1);
                 captured_value = Some(data[0]);
             }
@@ -58,9 +55,9 @@ fn test_out_imm8_al_port_80h() {
     let mut captured_value = None;
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { port, size, data } => {
+            VcpuExit::IoOut { port, data } => {
                 assert_eq!(port, 0x80);
-                assert_eq!(size, 1);
+                assert_eq!(data.len(), 1);
                 captured_value = Some(data[0]);
             }
             VcpuExit::Hlt => break,
@@ -82,7 +79,7 @@ fn test_out_imm8_al_port_ff() {
     let mut captured_value = None;
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { port, size, data } => {
+            VcpuExit::IoOut { port, data } => {
                 assert_eq!(port, 0xFF);
                 captured_value = Some(data[0]);
             }
@@ -222,9 +219,9 @@ fn test_out_imm8_ax_basic() {
     let mut captured_value = None;
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { port, size, data } => {
+            VcpuExit::IoOut { port, data } => {
                 assert_eq!(port, 0x10);
-                assert_eq!(size, 2, "Size should be 2 bytes");
+                assert_eq!(data.len(), 2, "Size should be 2 bytes");
                 assert_eq!(data.len(), 2);
                 captured_value = Some(u16::from_le_bytes([data[0], data[1]]));
             }
@@ -247,9 +244,9 @@ fn test_out_imm8_ax_port_0() {
     let mut captured_value = None;
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { port, size, data } => {
+            VcpuExit::IoOut { port, data } => {
                 assert_eq!(port, 0);
-                assert_eq!(size, 2);
+                assert_eq!(data.len(), 2);
                 captured_value = Some(u16::from_le_bytes([data[0], data[1]]));
             }
             VcpuExit::Hlt => break,
@@ -343,9 +340,9 @@ fn test_out_imm8_eax_basic() {
     let mut captured_value = None;
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { port, size, data } => {
+            VcpuExit::IoOut { port, data } => {
                 assert_eq!(port, 0x40);
-                assert_eq!(size, 4, "Size should be 4 bytes");
+                assert_eq!(data.len(), 4, "Size should be 4 bytes");
                 assert_eq!(data.len(), 4);
                 captured_value = Some(u32::from_le_bytes([data[0], data[1], data[2], data[3]]));
             }
@@ -464,9 +461,9 @@ fn test_out_dx_al_basic() {
     let mut captured = None;
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { port, size, data } => {
+            VcpuExit::IoOut { port, data } => {
                 assert_eq!(port, 0x3F8, "Port should be from DX");
-                assert_eq!(size, 1);
+                assert_eq!(data.len(), 1);
                 captured = Some((port, data[0]));
             }
             VcpuExit::Hlt => break,
@@ -586,9 +583,9 @@ fn test_out_dx_ax_basic() {
     let mut captured = None;
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { port, size, data } => {
+            VcpuExit::IoOut { port, data } => {
                 assert_eq!(port, 0x2F8);
-                assert_eq!(size, 2);
+                assert_eq!(data.len(), 2);
                 let value = u16::from_le_bytes([data[0], data[1]]);
                 captured = Some((port, value));
             }
@@ -686,9 +683,9 @@ fn test_out_dx_eax_basic() {
     let mut captured = None;
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { port, size, data } => {
+            VcpuExit::IoOut { port, data } => {
                 assert_eq!(port, 0xCF8);
-                assert_eq!(size, 4);
+                assert_eq!(data.len(), 4);
                 let value = u32::from_le_bytes([data[0], data[1], data[2], data[3]]);
                 captured = Some((port, value));
             }
@@ -813,8 +810,8 @@ fn test_out_sequence_different_sizes() {
     let mut io_ops = vec![];
     loop {
         match vcpu.run().unwrap() {
-            VcpuExit::IoOut { port, size, data } => {
-                io_ops.push((port, size, data.clone()));
+            VcpuExit::IoOut { port, data } => {
+                io_ops.push((port, data.len(), data.clone()));
             }
             VcpuExit::Hlt => break,
             _ => continue,

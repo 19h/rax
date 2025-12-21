@@ -13,10 +13,7 @@
 //!
 //! Reference: docs/psubb:psubw:psubd.txt
 
-#[path = "../../common/mod.rs"]
-mod common;
-
-use common::*;
+use crate::common::*;
 
 fn write_mm_via_mem(mem: &vm_memory::GuestMemoryMmap, addr: u64, value: u64) {
     write_mem_at_u64(mem, addr, value);
@@ -253,13 +250,13 @@ fn test_psubw_mm_m64() {
 
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    write_mm_via_mem(&mem, 0x2000, 0xFFFF8000400020000);
-    write_mm_via_mem(&mem, 0x2008, 0x00011000100010000);
+    write_mm_via_mem(&mem, 0x2000, 0xFFFF800040002000);
+    write_mm_via_mem(&mem, 0x2008, 0x0001100010001000);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0xFFFE70003000100000, "PSUBW: memory operand");
+    assert_eq!(result, 0xFFFE700030001000, "PSUBW: memory operand");
 }
 
 #[test]
@@ -295,7 +292,7 @@ fn test_psubw_signed_values() {
 
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    write_mm_via_mem(&mem, 0x2000, 0x7FFF8000000180000);
+    write_mm_via_mem(&mem, 0x2000, 0x7FFF800000018000);
     write_mm_via_mem(&mem, 0x2008, 0x0001FFFF00018000);
 
     run_until_hlt(&mut vcpu).unwrap();

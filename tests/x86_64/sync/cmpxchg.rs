@@ -1,9 +1,7 @@
 use rax::cpu::Registers;
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::run_until_hlt;
-use common::setup_vm;
+use crate::common::run_until_hlt;
+use crate::common::setup_vm;
 
 // CMPXCHG - Compare and Exchange (atomic compare-and-swap)
 // Opcode: 0F B0 (8-bit), 0F B1 (16/32/64-bit)

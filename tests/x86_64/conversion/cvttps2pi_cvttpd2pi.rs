@@ -1,8 +1,6 @@
 use rax::cpu::Registers;
 
-#[path = "../common/mod.rs"]
-mod common;
-use common::{run_until_hlt, setup_vm};
+use crate::common::{run_until_hlt, setup_vm};
 
 // CVTTPS2PI — Convert With Truncation Packed Single Precision FP to Packed Dword Integers
 // CVTTPD2PI — Convert With Truncation Packed Double Precision FP to Packed Dword Integers

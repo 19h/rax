@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::*;
 
 // PSHUFB - Packed Shuffle Bytes
 //
@@ -416,12 +416,12 @@ fn test_pshufb_xmm2_mem_all_zeros() {
     full_code.extend_from_slice(&[
         0x66, 0x0f, 0x38, 0x00, 0x10, // PSHUFB XMM2, [RAX]
         0xf4, // HLT
-    ];
+    ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     // Write all 0x80 (high bit set for zeros)
-    mem.write_slice(&[0x80; 16], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -442,7 +442,7 @@ fn test_pshufb_xmm3_mem_broadcast_byte0() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
 
     // All zeros (broadcast byte 0)
-    mem.write_slice(&[0x00; 16], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
 
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -488,7 +488,7 @@ fn test_pshufb_xmm0_mem_displacement() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x77; 16], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -506,7 +506,7 @@ fn test_pshufb_xmm1_mem_rbx() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x88; 16], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 

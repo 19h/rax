@@ -1,4 +1,4 @@
-use crate::common::{Bytes, run_until_hlt, setup_vm};
+use crate::common::*;
 
 // PMULHRSW - Packed Multiply High With Round and Scale
 //
@@ -248,10 +248,10 @@ fn test_pmulhrsw_mem_displacement() {
     full_code.extend_from_slice(&[
         0x66, 0x0f, 0x38, 0x0b, 0x40, 0x10, // PMULHRSW XMM0, [RAX+0x10]
         0xf4, // HLT
-    ];
+    ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    mem.write_slice(&[0x01; 16], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&[0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01], vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
