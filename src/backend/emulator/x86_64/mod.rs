@@ -2,6 +2,7 @@
 
 mod cpu;
 mod decoder;
+mod dispatch;
 pub mod flags;
 mod mmu;
 
