@@ -8,5 +8,6 @@ pub mod fpu;
 pub mod io;
 pub mod logic;
 pub mod shift;
+pub mod simd;
 pub mod string;
 pub mod system;
