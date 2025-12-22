@@ -347,6 +347,17 @@ impl X86_64Vcpu {
             }
         }
 
+        // VEX.0F38 SIMD instructions (m=2) - variable shifts (supports L=0/1)
+        if m_mmmm == 0x2 && vex_pp == 1 {
+            match opcode {
+                // VPSRLVD/VPSRLVQ (0x45), VPSRAVD (0x46), VPSLLVD/VPSLLVQ (0x47)
+                0x45 | 0x46 | 0x47 => {
+                    return self.execute_vex_variable_shift(ctx, vex_l, vvvv, vex_w, opcode);
+                }
+                _ => {}
+            }
+        }
+
         // VEX.0F encoded SSE/AVX instructions (m=1)
         if m_mmmm == 0x1 {
             match (vex_pp, opcode) {
@@ -725,6 +736,16 @@ impl X86_64Vcpu {
                 // VPSLLW/VPSRAW/VPSRLW (0x71), VPSLLD/VPSRAD/VPSRLD (0x72), VPSLLQ/VPSRLQ/VPSLLDQ/VPSRLDQ (0x73)
                 (1, 0x71) | (1, 0x72) | (1, 0x73) => {
                     return self.execute_vex_packed_shift_imm(ctx, vex_l, vvvv, opcode);
+                }
+
+                // VEX packed integer shift by XMM count
+                // VPSRLW (0xD1), VPSRLD (0xD2), VPSRLQ (0xD3) - right logical
+                // VPSRAW (0xE1), VPSRAD (0xE2) - right arithmetic
+                // VPSLLW (0xF1), VPSLLD (0xF2), VPSLLQ (0xF3) - left logical
+                (1, 0xD1) | (1, 0xD2) | (1, 0xD3) |
+                (1, 0xE1) | (1, 0xE2) |
+                (1, 0xF1) | (1, 0xF2) | (1, 0xF3) => {
+                    return self.execute_vex_packed_shift_xmm(ctx, vex_l, vvvv, opcode);
                 }
 
                 _ => {}
@@ -1762,6 +1783,302 @@ impl X86_64Vcpu {
             let shift_bits = (shift - 8) * 8;
             let new_hi = lo << shift_bits;
             (0, new_hi)
+        }
+    }
+
+    /// VEX packed integer shift by XMM count
+    /// VPSRLW/D/Q, VPSRAW/D, VPSLLW/D/Q
+    fn execute_vex_packed_shift_xmm(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+        let xmm_src = vvvv as usize;
+
+        // Get shift count from xmm/m128 (only low 64 bits used)
+        let count = if is_memory {
+            self.read_mem(addr, 8)?
+        } else {
+            self.regs.xmm[rm as usize][0]
+        };
+
+        // Get source data to be shifted
+        let src_lo = self.regs.xmm[xmm_src][0];
+        let src_hi = self.regs.xmm[xmm_src][1];
+
+        // Apply shift based on opcode
+        match opcode {
+            // VPSRLW: logical right shift words
+            0xD1 => {
+                let shift = count.min(16) as u32;
+                self.regs.xmm[xmm_dst][0] = self.shift_words_right(src_lo, shift, false);
+                self.regs.xmm[xmm_dst][1] = self.shift_words_right(src_hi, shift, false);
+            }
+            // VPSRLD: logical right shift dwords
+            0xD2 => {
+                let shift = count.min(32) as u32;
+                self.regs.xmm[xmm_dst][0] = self.shift_dwords_right(src_lo, shift, false);
+                self.regs.xmm[xmm_dst][1] = self.shift_dwords_right(src_hi, shift, false);
+            }
+            // VPSRLQ: logical right shift qwords
+            0xD3 => {
+                let shift = count.min(64) as u32;
+                self.regs.xmm[xmm_dst][0] = if shift >= 64 { 0 } else { src_lo >> shift };
+                self.regs.xmm[xmm_dst][1] = if shift >= 64 { 0 } else { src_hi >> shift };
+            }
+            // VPSRAW: arithmetic right shift words
+            0xE1 => {
+                let shift = count.min(16) as u32;
+                self.regs.xmm[xmm_dst][0] = self.shift_words_right(src_lo, shift, true);
+                self.regs.xmm[xmm_dst][1] = self.shift_words_right(src_hi, shift, true);
+            }
+            // VPSRAD: arithmetic right shift dwords
+            0xE2 => {
+                let shift = count.min(32) as u32;
+                self.regs.xmm[xmm_dst][0] = self.shift_dwords_right(src_lo, shift, true);
+                self.regs.xmm[xmm_dst][1] = self.shift_dwords_right(src_hi, shift, true);
+            }
+            // VPSLLW: logical left shift words
+            0xF1 => {
+                let shift = count.min(16) as u32;
+                self.regs.xmm[xmm_dst][0] = self.shift_words_left(src_lo, shift);
+                self.regs.xmm[xmm_dst][1] = self.shift_words_left(src_hi, shift);
+            }
+            // VPSLLD: logical left shift dwords
+            0xF2 => {
+                let shift = count.min(32) as u32;
+                self.regs.xmm[xmm_dst][0] = self.shift_dwords_left(src_lo, shift);
+                self.regs.xmm[xmm_dst][1] = self.shift_dwords_left(src_hi, shift);
+            }
+            // VPSLLQ: logical left shift qwords
+            0xF3 => {
+                let shift = count.min(64) as u32;
+                self.regs.xmm[xmm_dst][0] = if shift >= 64 { 0 } else { src_lo << shift };
+                self.regs.xmm[xmm_dst][1] = if shift >= 64 { 0 } else { src_hi << shift };
+            }
+            _ => unreachable!(),
+        }
+
+        // Handle YMM (256-bit) if vex_l == 1
+        if vex_l == 1 {
+            let src_hi2 = self.regs.ymm_high[xmm_src][0];
+            let src_hi3 = self.regs.ymm_high[xmm_src][1];
+
+            match opcode {
+                0xD1 => {
+                    let shift = count.min(16) as u32;
+                    self.regs.ymm_high[xmm_dst][0] = self.shift_words_right(src_hi2, shift, false);
+                    self.regs.ymm_high[xmm_dst][1] = self.shift_words_right(src_hi3, shift, false);
+                }
+                0xD2 => {
+                    let shift = count.min(32) as u32;
+                    self.regs.ymm_high[xmm_dst][0] = self.shift_dwords_right(src_hi2, shift, false);
+                    self.regs.ymm_high[xmm_dst][1] = self.shift_dwords_right(src_hi3, shift, false);
+                }
+                0xD3 => {
+                    let shift = count.min(64) as u32;
+                    self.regs.ymm_high[xmm_dst][0] = if shift >= 64 { 0 } else { src_hi2 >> shift };
+                    self.regs.ymm_high[xmm_dst][1] = if shift >= 64 { 0 } else { src_hi3 >> shift };
+                }
+                0xE1 => {
+                    let shift = count.min(16) as u32;
+                    self.regs.ymm_high[xmm_dst][0] = self.shift_words_right(src_hi2, shift, true);
+                    self.regs.ymm_high[xmm_dst][1] = self.shift_words_right(src_hi3, shift, true);
+                }
+                0xE2 => {
+                    let shift = count.min(32) as u32;
+                    self.regs.ymm_high[xmm_dst][0] = self.shift_dwords_right(src_hi2, shift, true);
+                    self.regs.ymm_high[xmm_dst][1] = self.shift_dwords_right(src_hi3, shift, true);
+                }
+                0xF1 => {
+                    let shift = count.min(16) as u32;
+                    self.regs.ymm_high[xmm_dst][0] = self.shift_words_left(src_hi2, shift);
+                    self.regs.ymm_high[xmm_dst][1] = self.shift_words_left(src_hi3, shift);
+                }
+                0xF2 => {
+                    let shift = count.min(32) as u32;
+                    self.regs.ymm_high[xmm_dst][0] = self.shift_dwords_left(src_hi2, shift);
+                    self.regs.ymm_high[xmm_dst][1] = self.shift_dwords_left(src_hi3, shift);
+                }
+                0xF3 => {
+                    let shift = count.min(64) as u32;
+                    self.regs.ymm_high[xmm_dst][0] = if shift >= 64 { 0 } else { src_hi2 << shift };
+                    self.regs.ymm_high[xmm_dst][1] = if shift >= 64 { 0 } else { src_hi3 << shift };
+                }
+                _ => {}
+            }
+        } else {
+            // VEX.128 clears upper bits
+            self.regs.ymm_high[xmm_dst][0] = 0;
+            self.regs.ymm_high[xmm_dst][1] = 0;
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VEX variable shift instructions (per-element shift counts)
+    /// VPSRLVD/Q, VPSRAVD, VPSLLVD/Q
+    fn execute_vex_variable_shift(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+        vex_w: u8,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+        let xmm_src = vvvv as usize;
+
+        // Get shift counts from xmm/m128 or ymm/m256
+        let (count_lo, count_hi) = if is_memory {
+            (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+        } else {
+            (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+        };
+
+        // Get source data
+        let src_lo = self.regs.xmm[xmm_src][0];
+        let src_hi = self.regs.xmm[xmm_src][1];
+
+        if vex_w == 0 {
+            // Dword operations
+            match opcode {
+                0x45 => {
+                    // VPSRLVD: variable right logical shift dwords
+                    self.regs.xmm[xmm_dst][0] = self.variable_shift_dwords(src_lo, count_lo, false, false);
+                    self.regs.xmm[xmm_dst][1] = self.variable_shift_dwords(src_hi, count_hi, false, false);
+                }
+                0x46 => {
+                    // VPSRAVD: variable right arithmetic shift dwords
+                    self.regs.xmm[xmm_dst][0] = self.variable_shift_dwords(src_lo, count_lo, false, true);
+                    self.regs.xmm[xmm_dst][1] = self.variable_shift_dwords(src_hi, count_hi, false, true);
+                }
+                0x47 => {
+                    // VPSLLVD: variable left shift dwords
+                    self.regs.xmm[xmm_dst][0] = self.variable_shift_dwords(src_lo, count_lo, true, false);
+                    self.regs.xmm[xmm_dst][1] = self.variable_shift_dwords(src_hi, count_hi, true, false);
+                }
+                _ => unreachable!(),
+            }
+        } else {
+            // Qword operations
+            match opcode {
+                0x45 => {
+                    // VPSRLVQ: variable right logical shift qwords
+                    self.regs.xmm[xmm_dst][0] = self.variable_shift_qword(src_lo, count_lo, false);
+                    self.regs.xmm[xmm_dst][1] = self.variable_shift_qword(src_hi, count_hi, false);
+                }
+                0x47 => {
+                    // VPSLLVQ: variable left shift qwords
+                    self.regs.xmm[xmm_dst][0] = self.variable_shift_qword(src_lo, count_lo, true);
+                    self.regs.xmm[xmm_dst][1] = self.variable_shift_qword(src_hi, count_hi, true);
+                }
+                _ => {
+                    return Err(Error::Emulator(format!(
+                        "VPSRAVQ (W1 opcode 0x46) not supported in VEX (AVX2)"
+                    )));
+                }
+            }
+        }
+
+        // Handle YMM (256-bit)
+        if vex_l == 1 {
+            let (count_hi2, count_hi3) = if is_memory {
+                (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
+            } else {
+                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+            };
+            let src_hi2 = self.regs.ymm_high[xmm_src][0];
+            let src_hi3 = self.regs.ymm_high[xmm_src][1];
+
+            if vex_w == 0 {
+                match opcode {
+                    0x45 => {
+                        self.regs.ymm_high[xmm_dst][0] = self.variable_shift_dwords(src_hi2, count_hi2, false, false);
+                        self.regs.ymm_high[xmm_dst][1] = self.variable_shift_dwords(src_hi3, count_hi3, false, false);
+                    }
+                    0x46 => {
+                        self.regs.ymm_high[xmm_dst][0] = self.variable_shift_dwords(src_hi2, count_hi2, false, true);
+                        self.regs.ymm_high[xmm_dst][1] = self.variable_shift_dwords(src_hi3, count_hi3, false, true);
+                    }
+                    0x47 => {
+                        self.regs.ymm_high[xmm_dst][0] = self.variable_shift_dwords(src_hi2, count_hi2, true, false);
+                        self.regs.ymm_high[xmm_dst][1] = self.variable_shift_dwords(src_hi3, count_hi3, true, false);
+                    }
+                    _ => {}
+                }
+            } else {
+                match opcode {
+                    0x45 => {
+                        self.regs.ymm_high[xmm_dst][0] = self.variable_shift_qword(src_hi2, count_hi2, false);
+                        self.regs.ymm_high[xmm_dst][1] = self.variable_shift_qword(src_hi3, count_hi3, false);
+                    }
+                    0x47 => {
+                        self.regs.ymm_high[xmm_dst][0] = self.variable_shift_qword(src_hi2, count_hi2, true);
+                        self.regs.ymm_high[xmm_dst][1] = self.variable_shift_qword(src_hi3, count_hi3, true);
+                    }
+                    _ => {}
+                }
+            }
+        } else {
+            // VEX.128 clears upper bits
+            self.regs.ymm_high[xmm_dst][0] = 0;
+            self.regs.ymm_high[xmm_dst][1] = 0;
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    // Helper: variable shift two packed dwords
+    // val = two dwords, counts = corresponding shift counts
+    // left = true for left shift, arith = true for arithmetic right shift
+    fn variable_shift_dwords(&self, val: u64, counts: u64, left: bool, arith: bool) -> u64 {
+        let d0 = val as u32;
+        let d1 = (val >> 32) as u32;
+        let c0 = (counts as u32).min(32);
+        let c1 = ((counts >> 32) as u32).min(32);
+
+        let r0 = if left {
+            if c0 >= 32 { 0 } else { d0 << c0 }
+        } else if arith {
+            if c0 >= 32 {
+                if (d0 as i32) < 0 { 0xFFFFFFFF } else { 0 }
+            } else {
+                ((d0 as i32) >> c0) as u32
+            }
+        } else {
+            if c0 >= 32 { 0 } else { d0 >> c0 }
+        };
+
+        let r1 = if left {
+            if c1 >= 32 { 0 } else { d1 << c1 }
+        } else if arith {
+            if c1 >= 32 {
+                if (d1 as i32) < 0 { 0xFFFFFFFF } else { 0 }
+            } else {
+                ((d1 as i32) >> c1) as u32
+            }
+        } else {
+            if c1 >= 32 { 0 } else { d1 >> c1 }
+        };
+
+        (r0 as u64) | ((r1 as u64) << 32)
+    }
+
+    // Helper: variable shift a qword
+    fn variable_shift_qword(&self, val: u64, count: u64, left: bool) -> u64 {
+        let c = count.min(64) as u32;
+        if left {
+            if c >= 64 { 0 } else { val << c }
+        } else {
+            if c >= 64 { 0 } else { val >> c }
         }
     }
 }
