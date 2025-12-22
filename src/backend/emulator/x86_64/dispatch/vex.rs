@@ -720,6 +720,32 @@ impl X86_64Vcpu {
                 (_, 0xC2) => {
                     return self.execute_vex_cmp(ctx, vex_pp, vex_l, vvvv);
                 }
+
+                // VEX packed integer shift by immediate (Group 12/13/14)
+                // VPSLLW/VPSRAW/VPSRLW (0x71), VPSLLD/VPSRAD/VPSRLD (0x72), VPSLLQ/VPSRLQ/VPSLLDQ/VPSRLDQ (0x73)
+                (1, 0x71) | (1, 0x72) | (1, 0x73) => {
+                    return self.execute_vex_packed_shift_imm(ctx, vex_l, vvvv, opcode);
+                }
+
+                _ => {}
+            }
+        }
+
+        // VEX.0F3A encoded instructions (m_mmmm=3)
+        if m_mmmm == 0x3 && vex_pp == 1 {
+            match opcode {
+                // VINSERTF128 ymm1, ymm2, xmm3/m128, imm8 (VEX.66.0F3A.W0 18 /r ib)
+                0x18 => {
+                    return self.execute_vinsertf128(ctx, vex_l, vvvv);
+                }
+                // VEXTRACTF128 xmm1/m128, ymm2, imm8 (VEX.66.0F3A.W0 19 /r ib)
+                0x19 => {
+                    return self.execute_vextractf128(ctx, vex_l);
+                }
+                // VPERM2F128 ymm1, ymm2, ymm3/m256, imm8 (VEX.66.0F3A.W0 06 /r ib)
+                0x06 => {
+                    return self.execute_vperm2f128(ctx, vex_l, vvvv);
+                }
                 _ => {}
             }
         }
@@ -1275,5 +1301,467 @@ impl X86_64Vcpu {
         }
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
+    }
+
+    /// VINSERTF128 ymm1, ymm2, xmm3/m128, imm8
+    /// Insert 128-bit lane from xmm/m128 into ymm
+    fn execute_vinsertf128(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let xmm_dst = reg as usize;
+        let xmm_src1 = vvvv as usize;
+
+        // Read 128-bit source from xmm or memory
+        let (insert_lo, insert_hi) = if is_memory {
+            (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+        } else {
+            (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+        };
+
+        // Copy src1 to dst first
+        self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src1][0];
+        self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src1][1];
+        self.regs.ymm_high[xmm_dst][0] = self.regs.ymm_high[xmm_src1][0];
+        self.regs.ymm_high[xmm_dst][1] = self.regs.ymm_high[xmm_src1][1];
+
+        // Insert into selected lane based on imm8[0]
+        if (imm8 & 1) == 0 {
+            // Insert into low 128 bits
+            self.regs.xmm[xmm_dst][0] = insert_lo;
+            self.regs.xmm[xmm_dst][1] = insert_hi;
+        } else {
+            // Insert into high 128 bits
+            self.regs.ymm_high[xmm_dst][0] = insert_lo;
+            self.regs.ymm_high[xmm_dst][1] = insert_hi;
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VEXTRACTF128 xmm1/m128, ymm2, imm8
+    /// Extract 128-bit lane from ymm to xmm/m128
+    fn execute_vextractf128(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let xmm_src = reg as usize;
+
+        // Select lane based on imm8[0]
+        let (extract_lo, extract_hi) = if (imm8 & 1) == 0 {
+            // Extract low 128 bits
+            (self.regs.xmm[xmm_src][0], self.regs.xmm[xmm_src][1])
+        } else {
+            // Extract high 128 bits
+            (self.regs.ymm_high[xmm_src][0], self.regs.ymm_high[xmm_src][1])
+        };
+
+        if is_memory {
+            self.write_mem(addr, extract_lo, 8)?;
+            self.write_mem(addr + 8, extract_hi, 8)?;
+        } else {
+            let xmm_dst = rm as usize;
+            self.regs.xmm[xmm_dst][0] = extract_lo;
+            self.regs.xmm[xmm_dst][1] = extract_hi;
+            // VEX clears upper bits
+            self.regs.ymm_high[xmm_dst][0] = 0;
+            self.regs.ymm_high[xmm_dst][1] = 0;
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VPERM2F128 ymm1, ymm2, ymm3/m256, imm8
+    /// Permute 128-bit lanes from two 256-bit sources
+    fn execute_vperm2f128(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let xmm_dst = reg as usize;
+        let xmm_src1 = vvvv as usize;
+
+        // Get all 4 source lanes (2 from src1, 2 from src2)
+        let src1_lo = (self.regs.xmm[xmm_src1][0], self.regs.xmm[xmm_src1][1]);
+        let src1_hi = (self.regs.ymm_high[xmm_src1][0], self.regs.ymm_high[xmm_src1][1]);
+        let (src2_lo, src2_hi) = if is_memory {
+            (
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?),
+                (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?),
+            )
+        } else {
+            (
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]),
+                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1]),
+            )
+        };
+
+        // Select result low 128 bits based on imm8[1:0]
+        let result_lo = if (imm8 & 0x08) != 0 {
+            // Zero this lane
+            (0u64, 0u64)
+        } else {
+            match imm8 & 0x03 {
+                0 => src1_lo,
+                1 => src1_hi,
+                2 => src2_lo,
+                3 => src2_hi,
+                _ => unreachable!(),
+            }
+        };
+
+        // Select result high 128 bits based on imm8[5:4]
+        let result_hi = if (imm8 & 0x80) != 0 {
+            // Zero this lane
+            (0u64, 0u64)
+        } else {
+            match (imm8 >> 4) & 0x03 {
+                0 => src1_lo,
+                1 => src1_hi,
+                2 => src2_lo,
+                3 => src2_hi,
+                _ => unreachable!(),
+            }
+        };
+
+        self.regs.xmm[xmm_dst][0] = result_lo.0;
+        self.regs.xmm[xmm_dst][1] = result_lo.1;
+        self.regs.ymm_high[xmm_dst][0] = result_hi.0;
+        self.regs.ymm_high[xmm_dst][1] = result_hi.1;
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VEX packed integer shift by immediate (Group 12/13/14)
+    fn execute_vex_packed_shift_imm(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let modrm = ctx.peek_u8()?;
+        let reg_op = (modrm >> 3) & 0x07;
+        let (_, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+
+        let xmm_dst = vvvv as usize;
+        let xmm_src = rm as usize;
+
+        // Get source values
+        let (src_lo, src_hi) = if is_memory {
+            (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+        } else {
+            (self.regs.xmm[xmm_src][0], self.regs.xmm[xmm_src][1])
+        };
+
+        match opcode {
+            0x71 => {
+                // VPSRLW/VPSRAW/VPSLLW - word shifts
+                match reg_op {
+                    2 => {
+                        // VPSRLW: logical right shift words
+                        let shift = imm8 as u32;
+                        self.regs.xmm[xmm_dst][0] = self.shift_words_right(src_lo, shift, false);
+                        self.regs.xmm[xmm_dst][1] = self.shift_words_right(src_hi, shift, false);
+                    }
+                    4 => {
+                        // VPSRAW: arithmetic right shift words
+                        let shift = imm8 as u32;
+                        self.regs.xmm[xmm_dst][0] = self.shift_words_right(src_lo, shift, true);
+                        self.regs.xmm[xmm_dst][1] = self.shift_words_right(src_hi, shift, true);
+                    }
+                    6 => {
+                        // VPSLLW: logical left shift words
+                        let shift = imm8 as u32;
+                        self.regs.xmm[xmm_dst][0] = self.shift_words_left(src_lo, shift);
+                        self.regs.xmm[xmm_dst][1] = self.shift_words_left(src_hi, shift);
+                    }
+                    _ => {
+                        return Err(Error::Emulator(format!(
+                            "unimplemented VEX.0F 71 /{} at RIP={:#x}",
+                            reg_op, self.regs.rip
+                        )));
+                    }
+                }
+            }
+            0x72 => {
+                // VPSRLD/VPSRAD/VPSLLD - dword shifts
+                match reg_op {
+                    2 => {
+                        // VPSRLD: logical right shift dwords
+                        let shift = imm8 as u32;
+                        self.regs.xmm[xmm_dst][0] = self.shift_dwords_right(src_lo, shift, false);
+                        self.regs.xmm[xmm_dst][1] = self.shift_dwords_right(src_hi, shift, false);
+                    }
+                    4 => {
+                        // VPSRAD: arithmetic right shift dwords
+                        let shift = imm8 as u32;
+                        self.regs.xmm[xmm_dst][0] = self.shift_dwords_right(src_lo, shift, true);
+                        self.regs.xmm[xmm_dst][1] = self.shift_dwords_right(src_hi, shift, true);
+                    }
+                    6 => {
+                        // VPSLLD: logical left shift dwords
+                        let shift = imm8 as u32;
+                        self.regs.xmm[xmm_dst][0] = self.shift_dwords_left(src_lo, shift);
+                        self.regs.xmm[xmm_dst][1] = self.shift_dwords_left(src_hi, shift);
+                    }
+                    _ => {
+                        return Err(Error::Emulator(format!(
+                            "unimplemented VEX.0F 72 /{} at RIP={:#x}",
+                            reg_op, self.regs.rip
+                        )));
+                    }
+                }
+            }
+            0x73 => {
+                // VPSRLQ/VPSRLDQ/VPSLLQ/VPSLLDQ - qword/dqword shifts
+                match reg_op {
+                    2 => {
+                        // VPSRLQ: logical right shift qwords
+                        let shift = imm8 as u32;
+                        self.regs.xmm[xmm_dst][0] = if shift >= 64 { 0 } else { src_lo >> shift };
+                        self.regs.xmm[xmm_dst][1] = if shift >= 64 { 0 } else { src_hi >> shift };
+                    }
+                    3 => {
+                        // VPSRLDQ: byte shift right (within each 128-bit lane)
+                        let shift = (imm8 as usize).min(16);
+                        let (new_lo, new_hi) = self.byte_shift_right_128(src_lo, src_hi, shift);
+                        self.regs.xmm[xmm_dst][0] = new_lo;
+                        self.regs.xmm[xmm_dst][1] = new_hi;
+                    }
+                    6 => {
+                        // VPSLLQ: logical left shift qwords
+                        let shift = imm8 as u32;
+                        self.regs.xmm[xmm_dst][0] = if shift >= 64 { 0 } else { src_lo << shift };
+                        self.regs.xmm[xmm_dst][1] = if shift >= 64 { 0 } else { src_hi << shift };
+                    }
+                    7 => {
+                        // VPSLLDQ: byte shift left (within each 128-bit lane)
+                        let shift = (imm8 as usize).min(16);
+                        let (new_lo, new_hi) = self.byte_shift_left_128(src_lo, src_hi, shift);
+                        self.regs.xmm[xmm_dst][0] = new_lo;
+                        self.regs.xmm[xmm_dst][1] = new_hi;
+                    }
+                    _ => {
+                        return Err(Error::Emulator(format!(
+                            "unimplemented VEX.0F 73 /{} at RIP={:#x}",
+                            reg_op, self.regs.rip
+                        )));
+                    }
+                }
+            }
+            _ => unreachable!(),
+        }
+
+        // Handle YMM (256-bit) if vex_l == 1
+        if vex_l == 1 {
+            let (src_hi2, src_hi3) = if is_memory {
+                (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
+            } else {
+                (self.regs.ymm_high[xmm_src][0], self.regs.ymm_high[xmm_src][1])
+            };
+
+            match opcode {
+                0x71 => {
+                    match reg_op {
+                        2 => {
+                            let shift = imm8 as u32;
+                            self.regs.ymm_high[xmm_dst][0] = self.shift_words_right(src_hi2, shift, false);
+                            self.regs.ymm_high[xmm_dst][1] = self.shift_words_right(src_hi3, shift, false);
+                        }
+                        4 => {
+                            let shift = imm8 as u32;
+                            self.regs.ymm_high[xmm_dst][0] = self.shift_words_right(src_hi2, shift, true);
+                            self.regs.ymm_high[xmm_dst][1] = self.shift_words_right(src_hi3, shift, true);
+                        }
+                        6 => {
+                            let shift = imm8 as u32;
+                            self.regs.ymm_high[xmm_dst][0] = self.shift_words_left(src_hi2, shift);
+                            self.regs.ymm_high[xmm_dst][1] = self.shift_words_left(src_hi3, shift);
+                        }
+                        _ => {}
+                    }
+                }
+                0x72 => {
+                    match reg_op {
+                        2 => {
+                            let shift = imm8 as u32;
+                            self.regs.ymm_high[xmm_dst][0] = self.shift_dwords_right(src_hi2, shift, false);
+                            self.regs.ymm_high[xmm_dst][1] = self.shift_dwords_right(src_hi3, shift, false);
+                        }
+                        4 => {
+                            let shift = imm8 as u32;
+                            self.regs.ymm_high[xmm_dst][0] = self.shift_dwords_right(src_hi2, shift, true);
+                            self.regs.ymm_high[xmm_dst][1] = self.shift_dwords_right(src_hi3, shift, true);
+                        }
+                        6 => {
+                            let shift = imm8 as u32;
+                            self.regs.ymm_high[xmm_dst][0] = self.shift_dwords_left(src_hi2, shift);
+                            self.regs.ymm_high[xmm_dst][1] = self.shift_dwords_left(src_hi3, shift);
+                        }
+                        _ => {}
+                    }
+                }
+                0x73 => {
+                    match reg_op {
+                        2 => {
+                            let shift = imm8 as u32;
+                            self.regs.ymm_high[xmm_dst][0] = if shift >= 64 { 0 } else { src_hi2 >> shift };
+                            self.regs.ymm_high[xmm_dst][1] = if shift >= 64 { 0 } else { src_hi3 >> shift };
+                        }
+                        3 => {
+                            let shift = (imm8 as usize).min(16);
+                            let (new_lo, new_hi) = self.byte_shift_right_128(src_hi2, src_hi3, shift);
+                            self.regs.ymm_high[xmm_dst][0] = new_lo;
+                            self.regs.ymm_high[xmm_dst][1] = new_hi;
+                        }
+                        6 => {
+                            let shift = imm8 as u32;
+                            self.regs.ymm_high[xmm_dst][0] = if shift >= 64 { 0 } else { src_hi2 << shift };
+                            self.regs.ymm_high[xmm_dst][1] = if shift >= 64 { 0 } else { src_hi3 << shift };
+                        }
+                        7 => {
+                            let shift = (imm8 as usize).min(16);
+                            let (new_lo, new_hi) = self.byte_shift_left_128(src_hi2, src_hi3, shift);
+                            self.regs.ymm_high[xmm_dst][0] = new_lo;
+                            self.regs.ymm_high[xmm_dst][1] = new_hi;
+                        }
+                        _ => {}
+                    }
+                }
+                _ => {}
+            }
+        } else {
+            // VEX.128 clears upper bits
+            self.regs.ymm_high[xmm_dst][0] = 0;
+            self.regs.ymm_high[xmm_dst][1] = 0;
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    // Helper: shift packed words left
+    fn shift_words_left(&self, val: u64, shift: u32) -> u64 {
+        if shift >= 16 {
+            return 0;
+        }
+        let w0 = ((val as u16) << shift) as u64;
+        let w1 = (((val >> 16) as u16) << shift) as u64;
+        let w2 = (((val >> 32) as u16) << shift) as u64;
+        let w3 = (((val >> 48) as u16) << shift) as u64;
+        w0 | (w1 << 16) | (w2 << 32) | (w3 << 48)
+    }
+
+    // Helper: shift packed words right (logical or arithmetic)
+    fn shift_words_right(&self, val: u64, shift: u32, arith: bool) -> u64 {
+        if shift >= 16 {
+            return if arith {
+                let sign0 = if (val as i16) < 0 { 0xFFFFu64 } else { 0 };
+                let sign1 = if ((val >> 16) as i16) < 0 { 0xFFFFu64 } else { 0 };
+                let sign2 = if ((val >> 32) as i16) < 0 { 0xFFFFu64 } else { 0 };
+                let sign3 = if ((val >> 48) as i16) < 0 { 0xFFFFu64 } else { 0 };
+                sign0 | (sign1 << 16) | (sign2 << 32) | (sign3 << 48)
+            } else {
+                0
+            };
+        }
+        if arith {
+            let w0 = (((val as i16) >> shift) as u16) as u64;
+            let w1 = ((((val >> 16) as i16) >> shift) as u16) as u64;
+            let w2 = ((((val >> 32) as i16) >> shift) as u16) as u64;
+            let w3 = ((((val >> 48) as i16) >> shift) as u16) as u64;
+            w0 | (w1 << 16) | (w2 << 32) | (w3 << 48)
+        } else {
+            let w0 = ((val as u16) >> shift) as u64;
+            let w1 = (((val >> 16) as u16) >> shift) as u64;
+            let w2 = (((val >> 32) as u16) >> shift) as u64;
+            let w3 = (((val >> 48) as u16) >> shift) as u64;
+            w0 | (w1 << 16) | (w2 << 32) | (w3 << 48)
+        }
+    }
+
+    // Helper: shift packed dwords left
+    fn shift_dwords_left(&self, val: u64, shift: u32) -> u64 {
+        if shift >= 32 {
+            return 0;
+        }
+        let d0 = ((val as u32) << shift) as u64;
+        let d1 = (((val >> 32) as u32) << shift) as u64;
+        d0 | (d1 << 32)
+    }
+
+    // Helper: shift packed dwords right (logical or arithmetic)
+    fn shift_dwords_right(&self, val: u64, shift: u32, arith: bool) -> u64 {
+        if shift >= 32 {
+            return if arith {
+                let sign0 = if (val as i32) < 0 { 0xFFFFFFFFu64 } else { 0 };
+                let sign1 = if ((val >> 32) as i32) < 0 { 0xFFFFFFFFu64 } else { 0 };
+                sign0 | (sign1 << 32)
+            } else {
+                0
+            };
+        }
+        if arith {
+            let d0 = (((val as i32) >> shift) as u32) as u64;
+            let d1 = ((((val >> 32) as i32) >> shift) as u32) as u64;
+            d0 | (d1 << 32)
+        } else {
+            let d0 = ((val as u32) >> shift) as u64;
+            let d1 = (((val >> 32) as u32) >> shift) as u64;
+            d0 | (d1 << 32)
+        }
+    }
+
+    // Helper: byte shift right within 128-bit value
+    fn byte_shift_right_128(&self, lo: u64, hi: u64, shift: usize) -> (u64, u64) {
+        if shift >= 16 {
+            return (0, 0);
+        }
+        let shift_bits = shift * 8;
+        if shift == 0 {
+            (lo, hi)
+        } else if shift < 8 {
+            let new_lo = (lo >> shift_bits) | (hi << (64 - shift_bits));
+            let new_hi = hi >> shift_bits;
+            (new_lo, new_hi)
+        } else {
+            let shift_bits = (shift - 8) * 8;
+            let new_lo = hi >> shift_bits;
+            (new_lo, 0)
+        }
+    }
+
+    // Helper: byte shift left within 128-bit value
+    fn byte_shift_left_128(&self, lo: u64, hi: u64, shift: usize) -> (u64, u64) {
+        if shift >= 16 {
+            return (0, 0);
+        }
+        let shift_bits = shift * 8;
+        if shift == 0 {
+            (lo, hi)
+        } else if shift < 8 {
+            let new_hi = (hi << shift_bits) | (lo >> (64 - shift_bits));
+            let new_lo = lo << shift_bits;
+            (new_lo, new_hi)
+        } else {
+            let shift_bits = (shift - 8) * 8;
+            let new_hi = lo << shift_bits;
+            (0, new_hi)
+        }
     }
 }
