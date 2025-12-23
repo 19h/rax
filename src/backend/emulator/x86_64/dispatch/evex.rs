@@ -75,6 +75,8 @@ impl X86_64Vcpu {
             0x5C => self.execute_evex_fp_arith(ctx, |a, b| a - b),
             // VDIVPS/VDIVPD (0x5E)
             0x5E => self.execute_evex_fp_arith(ctx, |a, b| a / b),
+            // VXORPS/VXORPD (0x57)
+            0x57 => self.execute_evex_bitwise_xor(ctx),
             _ => Err(Error::Emulator(format!(
                 "Unimplemented EVEX.0F opcode {:#04x} at RIP={:#x}",
                 opcode, self.regs.rip
@@ -230,6 +232,62 @@ impl X86_64Vcpu {
             let r = op(a, b);
             let bytes = r.to_le_bytes();
             result[i*4..i*4+4].copy_from_slice(&bytes);
+        }
+
+        // Store result
+        self.set_zmm_data(zmm_dst, &result[..vl], vl);
+
+        // Zero upper bits if not 512-bit (for ZMM0-15)
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// EVEX bitwise XOR (VXORPS, VXORPD)
+    fn execute_evex_bitwise_xor(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        // Destination register (5 bits)
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        // Source1 from vvvv (inverted)
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        // Vector length from L'L
+        let vl = match evex.ll {
+            0 => 16,  // 128-bit
+            1 => 32,  // 256-bit
+            2 => 64,  // 512-bit
+            _ => 64,
+        };
+
+        // Load source2
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        // Get source1
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+
+        // Perform bitwise XOR
+        let mut result = [0u8; 64];
+        for i in 0..vl {
+            result[i] = src1[i] ^ src2[i];
         }
 
         // Store result
