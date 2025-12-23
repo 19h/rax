@@ -103,6 +103,74 @@ pub fn das(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
     Ok(None)
 }
 
+/// AAA - ASCII Adjust After Addition (0x37)
+/// Adjusts AL and AH after unpacked BCD addition
+pub fn aaa(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let al = (vcpu.regs.rax & 0xFF) as u8;
+    let ah = ((vcpu.regs.rax >> 8) & 0xFF) as u8;
+    let af = (vcpu.regs.rflags & flags::bits::AF) != 0;
+
+    let (new_al, new_ah, cf, af_new) = if (al & 0x0F) > 9 || af {
+        // AL low nibble > 9 or AF set: adjust
+        ((al.wrapping_add(6)) & 0x0F, ah.wrapping_add(1), true, true)
+    } else {
+        // No adjustment needed
+        (al & 0x0F, ah, false, false)
+    };
+
+    // Update AX (only low nibble of AL kept, AH adjusted)
+    vcpu.regs.rax = (vcpu.regs.rax & !0xFFFF) | ((new_ah as u64) << 8) | (new_al as u64);
+
+    // Update CF and AF
+    if cf {
+        vcpu.regs.rflags |= flags::bits::CF;
+    } else {
+        vcpu.regs.rflags &= !flags::bits::CF;
+    }
+    if af_new {
+        vcpu.regs.rflags |= flags::bits::AF;
+    } else {
+        vcpu.regs.rflags &= !flags::bits::AF;
+    }
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// AAS - ASCII Adjust After Subtraction (0x3F)
+/// Adjusts AL and AH after unpacked BCD subtraction
+pub fn aas(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let al = (vcpu.regs.rax & 0xFF) as u8;
+    let ah = ((vcpu.regs.rax >> 8) & 0xFF) as u8;
+    let af = (vcpu.regs.rflags & flags::bits::AF) != 0;
+
+    let (new_al, new_ah, cf, af_new) = if (al & 0x0F) > 9 || af {
+        // AL low nibble > 9 or AF set: adjust
+        ((al.wrapping_sub(6)) & 0x0F, ah.wrapping_sub(1), true, true)
+    } else {
+        // No adjustment needed
+        (al & 0x0F, ah, false, false)
+    };
+
+    // Update AX (only low nibble of AL kept, AH adjusted)
+    vcpu.regs.rax = (vcpu.regs.rax & !0xFFFF) | ((new_ah as u64) << 8) | (new_al as u64);
+
+    // Update CF and AF
+    if cf {
+        vcpu.regs.rflags |= flags::bits::CF;
+    } else {
+        vcpu.regs.rflags &= !flags::bits::CF;
+    }
+    if af_new {
+        vcpu.regs.rflags |= flags::bits::AF;
+    } else {
+        vcpu.regs.rflags &= !flags::bits::AF;
+    }
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
 /// AAM - ASCII Adjust AX after Multiply (0xD4 imm8)
 /// AH = AL / imm8, AL = AL % imm8
 pub fn aam(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {

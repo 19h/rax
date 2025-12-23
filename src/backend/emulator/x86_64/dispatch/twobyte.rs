@@ -438,6 +438,9 @@ impl X86_64Vcpu {
             // 0F 38 escape - MOVBE and other instructions
             0x38 => self.execute_0f38(ctx),
 
+            // 0F 3A escape - PEXTR*, PINSR*, ROUND*, etc.
+            0x3A => self.execute_0f3a(ctx),
+
             // MOVDQA/MOVDQU/MOVQ load (0x6F)
             0x6F => {
                 if ctx.rep_prefix == Some(0xF3) {
@@ -532,6 +535,34 @@ impl X86_64Vcpu {
         }
     }
 
+    /// Execute 0x0F 0x3A opcodes (3-byte escape for SSE4.1/4.2 and misc)
+    pub(in crate::backend::emulator::x86_64) fn execute_0f3a(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        let opcode3 = ctx.consume_u8()?;
+
+        match opcode3 {
+            // ROUNDPS/ROUNDPD/ROUNDSS/ROUNDSD (0x08-0x0B)
+            // BLENDPS/BLENDPD (0x0C-0x0D)
+            // PBLENDW (0x0E)
+            // PALIGNR (0x0F)
+            // PEXTRB/PEXTRW/PEXTRD/PEXTRQ (0x14-0x16)
+            // EXTRACTPS (0x17)
+            // PINSRB/PINSRW/PINSRD/PINSRQ (0x20-0x22)
+            // INSERTPS (0x21)
+            // DPPS/DPPD (0x40-0x41)
+            // MPSADBW (0x42)
+            // PCLMULQDQ (0x44)
+            // PCMPESTRI/PCMPESTRM (0x60-0x61)
+            // PCMPISTRI/PCMPISTRM (0x62-0x63)
+            _ => Err(Error::Emulator(format!(
+                "unimplemented 0x0F 0x3A opcode: {:#04x} at RIP={:#x}",
+                opcode3, self.regs.rip
+            ))),
+        }
+    }
+
     /// Execute 0x0F 0x01 opcodes (Group 7 + special instructions)
     pub(in crate::backend::emulator::x86_64) fn execute_0f01(
         &mut self,
@@ -543,6 +574,22 @@ impl X86_64Vcpu {
         // Check for special instructions with mod=3
         if modrm >> 6 == 3 {
             match modrm {
+                0xC8 => {
+                    // MONITOR (0x0F 0x01 0xC8) - Set up address range monitoring
+                    ctx.consume_u8()?; // consume modrm
+                    // MONITOR sets up an address range for monitoring using RAX/EAX
+                    // For emulation, treat as NOP - no actual hardware monitoring
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                0xC9 => {
+                    // MWAIT (0x0F 0x01 0xC9) - Monitor wait
+                    ctx.consume_u8()?; // consume modrm
+                    // MWAIT hints processor to enter optimized state while waiting
+                    // For emulation, treat as NOP - no power management
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
                 0xD0 => {
                     // XGETBV (0x0F 0x01 0xD0) - Get extended control register
                     ctx.consume_u8()?; // consume modrm
@@ -575,6 +622,17 @@ impl X86_64Vcpu {
                     ctx.consume_u8()?; // consume modrm
                                        // TSX not supported, ZF=1 (not in transaction)
                     self.regs.rflags |= flags::bits::ZF;
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                0xF8 => {
+                    // SWAPGS (0x0F 0x01 0xF8) - Swap GS base with IA32_KERNEL_GS_BASE
+                    ctx.consume_u8()?; // consume modrm
+                    // Exchange GS.base with IA32_KERNEL_GS_BASE MSR (0xC0000102)
+                    let gs_base = self.sregs.gs.base;
+                    let kernel_gs_base = self.kernel_gs_base;
+                    self.sregs.gs.base = kernel_gs_base;
+                    self.kernel_gs_base = gs_base;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
@@ -1221,8 +1279,22 @@ impl X86_64Vcpu {
             self.regs.xmm[xmm_dst][0] = (d0 as u64) | ((d1 as u64) << 32);
             self.regs.xmm[xmm_dst][1] = (d2 as u64) | ((d3 as u64) << 32);
         } else {
-            // PSHUFW: shuffle MMX words (NP 0F 70) - not commonly used in 64-bit
-            return Err(Error::Emulator("PSHUFW (MMX) not implemented".to_string()));
+            // PSHUFW: shuffle MMX words (NP 0F 70)
+            // mm1, mm2/m64, imm8 - shuffle 4 words in 64-bit MMX register
+            let mm_dst = reg as usize & 0x7;
+            let mm_src = rm as usize & 0x7;
+            let src = if is_memory {
+                self.read_mem(addr, 8)?
+            } else {
+                self.regs.mm[mm_src]
+            };
+            // Shuffle 4 16-bit words based on imm8
+            let w0 = (src >> (((imm8 >> 0) & 3) * 16)) as u16;
+            let w1 = (src >> (((imm8 >> 2) & 3) * 16)) as u16;
+            let w2 = (src >> (((imm8 >> 4) & 3) * 16)) as u16;
+            let w3 = (src >> (((imm8 >> 6) & 3) * 16)) as u16;
+            self.regs.mm[mm_dst] =
+                (w0 as u64) | ((w1 as u64) << 16) | ((w2 as u64) << 32) | ((w3 as u64) << 48);
         }
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
