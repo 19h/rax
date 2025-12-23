@@ -207,6 +207,130 @@ pub fn xorps(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
 }
 
 // =============================================================================
+// Packed Integer Subtract (PSUB* family)
+// =============================================================================
+
+/// PSUB* packed integer subtract (SSE2, 66 0F xx)
+pub fn psub_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return Err(Error::Emulator(format!(
+            "PSUB* requires 66 prefix at RIP={:#x}",
+            vcpu.regs.rip
+        )));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    let (res_lo, res_hi) = match opcode {
+        0xD8 => (sub_u8_saturate(dst_lo, src_lo), sub_u8_saturate(dst_hi, src_hi)), // PSUBUSB
+        0xD9 => (sub_u16_saturate(dst_lo, src_lo), sub_u16_saturate(dst_hi, src_hi)), // PSUBUSW
+        0xE8 => (sub_i8_saturate(dst_lo, src_lo), sub_i8_saturate(dst_hi, src_hi)), // PSUBSB
+        0xE9 => (sub_i16_saturate(dst_lo, src_lo), sub_i16_saturate(dst_hi, src_hi)), // PSUBSW
+        0xF8 => (sub_u8_wrap(dst_lo, src_lo), sub_u8_wrap(dst_hi, src_hi)), // PSUBB
+        0xF9 => (sub_u16_wrap(dst_lo, src_lo), sub_u16_wrap(dst_hi, src_hi)), // PSUBW
+        0xFA => (sub_u32_wrap(dst_lo, src_lo), sub_u32_wrap(dst_hi, src_hi)), // PSUBD
+        0xFB => (dst_lo.wrapping_sub(src_lo), dst_hi.wrapping_sub(src_hi)), // PSUBQ
+        _ => {
+            return Err(Error::Emulator(format!(
+                "unimplemented PSUB opcode {:#x} at RIP={:#x}",
+                opcode, vcpu.regs.rip
+            )))
+        }
+    };
+
+    vcpu.regs.xmm[xmm_dst][0] = res_lo;
+    vcpu.regs.xmm[xmm_dst][1] = res_hi;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn sub_u8_wrap(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..8 {
+        let va = ((a >> (i * 8)) & 0xFF) as u8;
+        let vb = ((b >> (i * 8)) & 0xFF) as u8;
+        let diff = va.wrapping_sub(vb);
+        result |= (diff as u64) << (i * 8);
+    }
+    result
+}
+
+fn sub_u16_wrap(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..4 {
+        let va = ((a >> (i * 16)) & 0xFFFF) as u16;
+        let vb = ((b >> (i * 16)) & 0xFFFF) as u16;
+        let diff = va.wrapping_sub(vb);
+        result |= (diff as u64) << (i * 16);
+    }
+    result
+}
+
+fn sub_u32_wrap(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..2 {
+        let va = ((a >> (i * 32)) & 0xFFFF_FFFF) as u32;
+        let vb = ((b >> (i * 32)) & 0xFFFF_FFFF) as u32;
+        let diff = va.wrapping_sub(vb);
+        result |= (diff as u64) << (i * 32);
+    }
+    result
+}
+
+fn sub_u8_saturate(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..8 {
+        let va = ((a >> (i * 8)) & 0xFF) as u8;
+        let vb = ((b >> (i * 8)) & 0xFF) as u8;
+        let diff = va.saturating_sub(vb);
+        result |= (diff as u64) << (i * 8);
+    }
+    result
+}
+
+fn sub_u16_saturate(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..4 {
+        let va = ((a >> (i * 16)) & 0xFFFF) as u16;
+        let vb = ((b >> (i * 16)) & 0xFFFF) as u16;
+        let diff = va.saturating_sub(vb);
+        result |= (diff as u64) << (i * 16);
+    }
+    result
+}
+
+fn sub_i8_saturate(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..8 {
+        let va = ((a >> (i * 8)) & 0xFF) as i8;
+        let vb = ((b >> (i * 8)) & 0xFF) as i8;
+        let diff = va.saturating_sub(vb) as u8;
+        result |= (diff as u64) << (i * 8);
+    }
+    result
+}
+
+fn sub_i16_saturate(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..4 {
+        let va = ((a >> (i * 16)) & 0xFFFF) as i16;
+        let vb = ((b >> (i * 16)) & 0xFFFF) as i16;
+        let diff = va.saturating_sub(vb) as u16;
+        result |= (diff as u64) << (i * 16);
+    }
+    result
+}
+
+// =============================================================================
 // MOVLPS/MOVHPS - Move Low/High Packed Single-Precision
 // =============================================================================
 

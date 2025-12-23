@@ -125,6 +125,10 @@ impl X86_64Vcpu {
             // SSE unpack
             0x14 => self.execute_sse_unpcklps(ctx),
             0x15 => self.execute_sse_unpckhps(ctx),
+            // SSE2/MMX integer unpack
+            0x60 | 0x61 | 0x62 | 0x68 | 0x69 | 0x6A | 0x6C | 0x6D => {
+                self.execute_punpck(ctx, opcode2)
+            }
 
             // MOVD/MOVQ
             0x6E => {
@@ -158,6 +162,10 @@ impl X86_64Vcpu {
                         self.regs.rip
                     )))
                 }
+            }
+            // Packed integer subtract (SSE2)
+            0xD8 | 0xD9 | 0xE8 | 0xE9 | 0xF8 | 0xF9 | 0xFA | 0xFB => {
+                insn::simd::psub_packed(self, ctx, opcode2)
             }
 
             // SSE/SSE2 Conversion Instructions
