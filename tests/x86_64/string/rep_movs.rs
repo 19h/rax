@@ -776,10 +776,11 @@ fn test_rep_movs_different_sizes_use_different_increments() {
 
 #[test]
 fn test_rep_movsb_memory_boundary() {
-    // Test copying near page boundary
+    // Test copying across page boundary - source spans 0x5FF0-0x600F
+    // Use addresses that don't overlap with code at 0x1000
     let code = [
-        0x48, 0xc7, 0xc6, 0xF0, 0x0F, 0x00, 0x00, // MOV RSI, 0x0FF0
-        0x48, 0xc7, 0xc7, 0x00, 0x20, 0x00, 0x00, // MOV RDI, 0x2000
+        0x48, 0xc7, 0xc6, 0xF0, 0x5F, 0x00, 0x00, // MOV RSI, 0x5FF0
+        0x48, 0xc7, 0xc7, 0x00, 0x70, 0x00, 0x00, // MOV RDI, 0x7000
         0x48, 0xc7, 0xc1, 0x20, 0x00, 0x00, 0x00, // MOV RCX, 32
         0xfc, // CLD
         0xf3, 0xa4, // REP MOVSB
@@ -787,16 +788,16 @@ fn test_rep_movsb_memory_boundary() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    // Fill source spanning 0x1000 boundary
+    // Fill source spanning 0x6000 boundary (0x5FF0 to 0x600F)
     for i in 0..32 {
-        write_mem_at_u8(&mem, 0x0FF0 + i, i as u8);
+        write_mem_at_u8(&mem, 0x5FF0 + i, i as u8);
     }
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Verify all data copied correctly
     for i in 0..32 {
-        assert_eq!(read_mem_at_u8(&mem, 0x2000 + i), i as u8);
+        assert_eq!(read_mem_at_u8(&mem, 0x7000 + i), i as u8);
     }
 
     assert_eq!(regs.rcx, 0);
@@ -1088,9 +1089,11 @@ fn test_rep_movsd_odd_alignment() {
 
 #[test]
 fn test_rep_movsb_page_crossing() {
+    // Test copying across page boundary - source spans 0x4FFE-0x5001
+    // Use addresses that don't overlap with code at 0x1000
     let code = [
-        0x48, 0xc7, 0xc6, 0xFE, 0x0F, 0x00, 0x00, // MOV RSI, 0x0FFE
-        0x48, 0xc7, 0xc7, 0x00, 0x20, 0x00, 0x00, // MOV RDI, 0x2000
+        0x48, 0xc7, 0xc6, 0xFE, 0x4F, 0x00, 0x00, // MOV RSI, 0x4FFE
+        0x48, 0xc7, 0xc7, 0x00, 0x60, 0x00, 0x00, // MOV RDI, 0x6000
         0x48, 0xc7, 0xc1, 0x04, 0x00, 0x00, 0x00, // MOV RCX, 4 (crosses page)
         0xfc, // CLD
         0xf3, 0xa4, // REP MOVSB
@@ -1098,11 +1101,11 @@ fn test_rep_movsb_page_crossing() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     for i in 0..4 {
-        write_mem_at_u8(&mem, 0x0FFE + i, 0x10 + i as u8);
+        write_mem_at_u8(&mem, 0x4FFE + i, 0x10 + i as u8);
     }
     let regs = run_until_hlt(&mut vcpu).unwrap();
     for i in 0..4 {
-        assert_eq!(read_mem_at_u8(&mem, 0x2000 + i), 0x10 + i as u8);
+        assert_eq!(read_mem_at_u8(&mem, 0x6000 + i), 0x10 + i as u8);
     }
     assert_eq!(regs.rcx, 0);
 }

@@ -16,6 +16,9 @@ pub fn wrmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         0xC0000082 => vcpu.sregs.lstar = value,      // LSTAR
         0xC0000083 => vcpu.sregs.cstar = value,      // CSTAR
         0xC0000084 => vcpu.sregs.fmask = value,      // FMASK
+        0x174 => vcpu.sregs.sysenter_cs = value,     // IA32_SYSENTER_CS
+        0x175 => vcpu.sregs.sysenter_esp = value,    // IA32_SYSENTER_ESP
+        0x176 => vcpu.sregs.sysenter_eip = value,    // IA32_SYSENTER_EIP
         0xC0000100 => vcpu.sregs.fs.base = value,    // FS.base
         0xC0000101 => vcpu.sregs.gs.base = value,    // GS.base
         0xC0000102 => vcpu.kernel_gs_base = value,   // KernelGSbase
@@ -43,6 +46,9 @@ pub fn rdmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         0xC0000082 => vcpu.sregs.lstar,       // LSTAR
         0xC0000083 => vcpu.sregs.cstar,       // CSTAR
         0xC0000084 => vcpu.sregs.fmask,       // FMASK
+        0x174 => vcpu.sregs.sysenter_cs,      // IA32_SYSENTER_CS
+        0x175 => vcpu.sregs.sysenter_esp,     // IA32_SYSENTER_ESP
+        0x176 => vcpu.sregs.sysenter_eip,     // IA32_SYSENTER_EIP
         0xC0000100 => vcpu.sregs.fs.base,     // FS.base
         0xC0000101 => vcpu.sregs.gs.base,     // GS.base
         0xC0000102 => vcpu.kernel_gs_base,    // KernelGSbase

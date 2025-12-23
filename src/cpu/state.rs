@@ -90,6 +90,12 @@ pub struct SystemRegisters {
     pub cstar: u64,
     /// IA32_FMASK MSR (0xC0000084)
     pub fmask: u64,
+    /// IA32_SYSENTER_CS MSR (0x174)
+    pub sysenter_cs: u64,
+    /// IA32_SYSENTER_ESP MSR (0x175)
+    pub sysenter_esp: u64,
+    /// IA32_SYSENTER_EIP MSR (0x176)
+    pub sysenter_eip: u64,
     /// Debug registers DR0-DR3: breakpoint linear addresses
     pub dr0: u64,
     pub dr1: u64,

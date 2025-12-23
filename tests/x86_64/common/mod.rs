@@ -66,6 +66,7 @@ pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Ar
     // Set CS.L=1 for true 64-bit mode (enables RIP-relative addressing)
     sregs.cs.l = true;
     sregs.cs.db = false; // Must be 0 when L=1 for 64-bit mode
+    sregs.cs.selector = 0x8;
     // Initialize GDT and IDT with reasonable defaults for testing
     sregs.gdt.base = 0x10000; // GDT at 64KB
     sregs.gdt.limit = 0x1F;   // 4 descriptors (32 bytes - 1)
@@ -113,6 +114,7 @@ pub fn setup_vm_compat(code: &[u8], initial_regs: Option<Registers>) -> (X86_64V
     // CS.L=0 for compatibility mode (32-bit code within long mode)
     sregs.cs.l = false;
     sregs.cs.db = false; // D=0 means 16-bit default operand size (use 0x66 for 32-bit)
+    sregs.cs.selector = 0x8;
     // Initialize GDT and IDT
     sregs.gdt.base = 0x10000;
     sregs.gdt.limit = 0x1F;

@@ -717,7 +717,9 @@ fn test_repe_scasq_incremental_values() {
     }
     write_mem_at_u64(&mem, 0x4028, 1);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 5);
+    // After 5 matching 0s, the 6th value (1) doesn't match
+    // RCX is decremented after each iteration, so: 10 - 6 = 4
+    assert_eq!(regs.rcx, 4);
 }
 
 #[test]
@@ -736,7 +738,9 @@ fn test_repe_scasb_alternating_pattern() {
         write_mem_at_u8(&mem, 0x4000 + i + 1, 0x55);
     }
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 15);
+    // First byte matches (0xAA), second (0x55) doesn't
+    // RCX decremented after each: 16 - 2 = 14
+    assert_eq!(regs.rcx, 14);
 }
 
 #[test]
@@ -772,7 +776,8 @@ fn test_repe_scasd_powers_of_two_scan() {
     }
     write_mem_at_u32(&mem, 0x4028, 0x02000000);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 6);
+    // 10 values match, 11th doesn't. RCX: 16 - 11 = 5
+    assert_eq!(regs.rcx, 5);
 }
 
 #[test]
@@ -791,7 +796,8 @@ fn test_repe_scasq_null_terminated_array() {
     }
     write_mem_at_u64(&mem, 0x4080, 0);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 16);
+    // 16 values match (-1), 17th (0) doesn't. RCX: 32 - 17 = 15
+    assert_eq!(regs.rcx, 15);
 }
 
 #[test]
@@ -865,7 +871,8 @@ fn test_repe_scasq_sparse_nulls() {
     write_mem_at_u64(&mem, 0x4000, 0);
     write_mem_at_u64(&mem, 0x4008, 1);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 15);
+    // First value matches (0), second (1) doesn't. RCX: 16 - 2 = 14
+    assert_eq!(regs.rcx, 14);
 }
 
 #[test]

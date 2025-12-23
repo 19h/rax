@@ -1,9 +1,10 @@
 //! Jump instructions: JMP, Jcc.
 
 use crate::cpu::VcpuExit;
-use crate::error::Result;
+use crate::error::{Error, Result};
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
+use super::call::validate_far_selector;
 
 /// JMP rel8 (0xEB)
 pub fn jmp_rel8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
@@ -50,20 +51,28 @@ pub fn jcc_rel32(
 }
 
 /// JMP FAR ptr16:16/ptr16:32 (0xEA)
-/// Far jump with immediate pointer - loads segment:offset from instruction
-/// Note: This opcode is invalid in 64-bit mode but we emulate it for compatibility.
-/// Uses inverted operand size: 16-bit default, 66h prefix gives 32-bit.
+/// Far jump with immediate pointer - loads segment:offset from instruction.
+/// Note: This opcode is invalid in 64-bit mode, but we emulate it for compatibility.
 pub fn jmp_far_ptr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    // 0xEA is a legacy instruction - use inverted operand size logic:
-    // - Without 66h prefix (op_size=4 in 64-bit mode): use 16-bit offset
-    // - With 66h prefix (op_size=2 in 64-bit mode): use 32-bit offset
-    // This matches compatibility mode behavior (CS.D=0)
-    let offset = if ctx.operand_size_override {
-        ctx.consume_u32()? as u64
-    } else {
-        ctx.consume_u16()? as u64
+    let offset = match ctx.op_size {
+        2 => ctx.consume_u16()? as u64,
+        4 => ctx.consume_u32()? as u64,
+        _ => {
+            return Err(Error::Emulator(format!(
+                "JMP FAR ptr16:16/ptr16:32 invalid operand size: {}",
+                ctx.op_size
+            )));
+        }
     };
     let selector = ctx.consume_u16()?;
+    validate_far_selector(vcpu, selector)?;
+    let old_cpl = vcpu.sregs.cs.selector & 0x3;
+    let new_cpl = selector & 0x3;
+    if new_cpl != old_cpl {
+        return Err(Error::Emulator(
+            "JMP FAR privilege change not supported".to_string(),
+        ));
+    }
 
     // Load CS:IP (simplified - just set the registers)
     // Full implementation would validate segment descriptor
@@ -73,11 +82,8 @@ pub fn jmp_far_ptr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
 }
 
 /// JMP FAR m16:16/m16:32/m16:64 (0xFF /5)
-/// Far jump with memory indirect - loads segment:offset from memory
-/// Uses inverted operand size for legacy compatibility:
-/// - Without prefix: 16-bit offset
-/// - With 66h prefix: 32-bit offset
-/// - With REX.W: 64-bit offset
+/// Far jump with memory indirect - loads segment:offset from memory.
+/// Offset size follows the operand-size attribute (16/32 in non-64-bit, 16/32/64 in 64-bit).
 pub fn jmp_far_mem(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let modrm_start = ctx.cursor;
     let _modrm = ctx.consume_u8()?;
@@ -86,19 +92,19 @@ pub fn jmp_far_mem(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
     let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
     ctx.cursor = modrm_start + 1 + extra;
 
-    // Determine offset size using inverted logic (like legacy 16-bit mode)
-    // REX.W → 64-bit, 66h → 32-bit, default → 16-bit
-    let offset_size: u8 = if ctx.rex_w() {
-        8
-    } else if ctx.operand_size_override {
-        4
-    } else {
-        2
-    };
+    let offset_size = ctx.op_size;
 
     // Read offset and selector from memory
     let offset = vcpu.read_mem(addr, offset_size)?;
     let selector = vcpu.mmu.read_u16(addr + offset_size as u64, &vcpu.sregs)?;
+    validate_far_selector(vcpu, selector)?;
+    let old_cpl = vcpu.sregs.cs.selector & 0x3;
+    let new_cpl = selector & 0x3;
+    if new_cpl != old_cpl {
+        return Err(Error::Emulator(
+            "JMP FAR privilege change not supported".to_string(),
+        ));
+    }
 
     // Load CS:IP
     vcpu.set_sreg(1, selector); // CS is segment register index 1
