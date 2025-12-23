@@ -7,6 +7,7 @@ use super::super::super::super::aes;
 use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::super::flags;
 use super::super::super::super::insn;
+use super::super::super::super::sha;
 
 impl X86_64Vcpu {
     pub(in crate::backend::emulator::x86_64) fn execute_0f38(
@@ -170,6 +171,118 @@ impl X86_64Vcpu {
                 let state_lo = self.regs.xmm[xmm_dst][0];
                 let state_hi = self.regs.xmm[xmm_dst][1];
                 let (result_lo, result_hi) = aes::aesdeclast(state_lo, state_hi, key_lo, key_hi);
+                self.regs.xmm[xmm_dst][0] = result_lo;
+                self.regs.xmm[xmm_dst][1] = result_hi;
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+
+            // ===== SHA-NI Instructions (0xC8-0xCD) =====
+
+            // SHA1NEXTE - Calculate SHA1 state variable E after four rounds (0xC8)
+            0xC8 => {
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                let xmm_dst = reg as usize;
+                let (src2_lo, src2_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                let src1_lo = self.regs.xmm[xmm_dst][0];
+                let src1_hi = self.regs.xmm[xmm_dst][1];
+                let (result_lo, result_hi) = sha::sha1nexte(src1_lo, src1_hi, src2_lo, src2_hi);
+                self.regs.xmm[xmm_dst][0] = result_lo;
+                self.regs.xmm[xmm_dst][1] = result_hi;
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+
+            // SHA1MSG1 - SHA1 message schedule update 1 (0xC9)
+            0xC9 => {
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                let xmm_dst = reg as usize;
+                let (src2_lo, src2_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                let src1_lo = self.regs.xmm[xmm_dst][0];
+                let src1_hi = self.regs.xmm[xmm_dst][1];
+                let (result_lo, result_hi) = sha::sha1msg1(src1_lo, src1_hi, src2_lo, src2_hi);
+                self.regs.xmm[xmm_dst][0] = result_lo;
+                self.regs.xmm[xmm_dst][1] = result_hi;
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+
+            // SHA1MSG2 - SHA1 message schedule update 2 (0xCA)
+            0xCA => {
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                let xmm_dst = reg as usize;
+                let (src2_lo, src2_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                let src1_lo = self.regs.xmm[xmm_dst][0];
+                let src1_hi = self.regs.xmm[xmm_dst][1];
+                let (result_lo, result_hi) = sha::sha1msg2(src1_lo, src1_hi, src2_lo, src2_hi);
+                self.regs.xmm[xmm_dst][0] = result_lo;
+                self.regs.xmm[xmm_dst][1] = result_hi;
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+
+            // SHA256RNDS2 - Perform two rounds of SHA256 (0xCB)
+            // Uses XMM0 implicitly as the third operand
+            0xCB => {
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                let xmm_dst = reg as usize;
+                let (src2_lo, src2_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                let src1_lo = self.regs.xmm[xmm_dst][0];
+                let src1_hi = self.regs.xmm[xmm_dst][1];
+                let xmm0_lo = self.regs.xmm[0][0]; // Implicit XMM0 operand
+                let (result_lo, result_hi) = sha::sha256rnds2(src1_lo, src1_hi, src2_lo, src2_hi, xmm0_lo);
+                self.regs.xmm[xmm_dst][0] = result_lo;
+                self.regs.xmm[xmm_dst][1] = result_hi;
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+
+            // SHA256MSG1 - SHA256 message schedule update 1 (0xCC)
+            0xCC => {
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                let xmm_dst = reg as usize;
+                let (src2_lo, src2_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                let src1_lo = self.regs.xmm[xmm_dst][0];
+                let src1_hi = self.regs.xmm[xmm_dst][1];
+                let (result_lo, result_hi) = sha::sha256msg1(src1_lo, src1_hi, src2_lo, src2_hi);
+                self.regs.xmm[xmm_dst][0] = result_lo;
+                self.regs.xmm[xmm_dst][1] = result_hi;
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+
+            // SHA256MSG2 - SHA256 message schedule update 2 (0xCD)
+            0xCD => {
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                let xmm_dst = reg as usize;
+                let (src2_lo, src2_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                let src1_lo = self.regs.xmm[xmm_dst][0];
+                let src1_hi = self.regs.xmm[xmm_dst][1];
+                let (result_lo, result_hi) = sha::sha256msg2(src1_lo, src1_hi, src2_lo, src2_hi);
                 self.regs.xmm[xmm_dst][0] = result_lo;
                 self.regs.xmm[xmm_dst][1] = result_hi;
                 self.regs.rip += ctx.cursor as u64;
