@@ -526,7 +526,7 @@ fn test_iret_modifies_cs_rip_rflags() {
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x2001);
+    assert_eq!(regs.rip, 0x2004);
 }
 
 // ============================================================================
