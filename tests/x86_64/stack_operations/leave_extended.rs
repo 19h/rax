@@ -23,17 +23,18 @@ fn test_leave_basic() {
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
-    regs.rsp = 0x0FF8; // Stack pointer below frame pointer
-    regs.rbp = 0x1000; // Frame pointer
+    // Use addresses that don't conflict with CODE_ADDR (0x1000)
+    regs.rsp = 0x2FF8; // Stack pointer below frame pointer
+    regs.rbp = 0x3000; // Frame pointer
     let (mut vcpu, vm) = setup_vm(&code, Some(regs));
 
-    // Set up saved RBP value on stack
-    write_mem_at_u64(&vm, 0x1000, 0x2000);
+    // Set up saved RBP value on stack at RBP address
+    write_mem_at_u64(&vm, 0x3000, 0x4000);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rsp, 0x1008, "RSP = old RBP + 8");
-    assert_eq!(regs.rbp, 0x2000, "RBP restored from stack");
+    assert_eq!(regs.rsp, 0x3008, "RSP = old RBP + 8");
+    assert_eq!(regs.rbp, 0x4000, "RBP restored from stack");
 }
 
 #[test]
@@ -279,17 +280,18 @@ fn test_leave_standalone() {
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
-    regs.rsp = 0x0FF8;
-    regs.rbp = 0x1000;
+    // Use addresses that don't conflict with CODE_ADDR (0x1000)
+    regs.rsp = 0x2FF8;
+    regs.rbp = 0x3000;
     let (mut vcpu, vm) = setup_vm(&code, Some(regs));
 
     // Set up expected saved RBP
-    write_mem_at_u64(&vm, 0x1000, 0x2000);
+    write_mem_at_u64(&vm, 0x3000, 0x4000);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rsp, 0x1008, "RSP = RBP + 8");
-    assert_eq!(regs.rbp, 0x2000, "RBP from stack");
+    assert_eq!(regs.rsp, 0x3008, "RSP = RBP + 8");
+    assert_eq!(regs.rbp, 0x4000, "RBP from stack");
 }
 
 #[test]
@@ -508,16 +510,17 @@ fn test_leave_rbp_equals_rsp() {
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
-    regs.rsp = 0x1000;
-    regs.rbp = 0x1000; // RBP == RSP
+    // Use addresses that don't conflict with CODE_ADDR (0x1000)
+    regs.rsp = 0x3000;
+    regs.rbp = 0x3000; // RBP == RSP
     let (mut vcpu, vm) = setup_vm(&code, Some(regs));
 
-    write_mem_at_u64(&vm, 0x1000, 0x2000);
+    write_mem_at_u64(&vm, 0x3000, 0x4000);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rsp, 0x1008, "RSP incremented");
-    assert_eq!(regs.rbp, 0x2000, "RBP loaded from stack");
+    assert_eq!(regs.rsp, 0x3008, "RSP incremented");
+    assert_eq!(regs.rbp, 0x4000, "RBP loaded from stack");
 }
 
 #[test]

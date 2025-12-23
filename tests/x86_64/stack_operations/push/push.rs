@@ -42,7 +42,8 @@ fn test_push_rbx() {
 
     let mut stack_val = [0u8; 8];
     vm.read_slice(&mut stack_val, GuestAddress(0x1FF8)).unwrap();
-    assert_eq!(u64::from_le_bytes(stack_val), 0xDDCCBBAA, "RBX value on stack");
+    // MOV r64, imm32 sign-extends: 0xDDCCBBAA (bit 31 set) -> 0xFFFFFFFFDDCCBBAA
+    assert_eq!(u64::from_le_bytes(stack_val), 0xFFFFFFFFDDCCBBAA, "RBX value on stack");
 }
 
 #[test]
