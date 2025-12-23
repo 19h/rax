@@ -5,7 +5,7 @@ use rax::cpu::Registers;
 // Extracts the lowest set bit from the source operand and sets that bit in the destination.
 // All other bits in the destination are cleared.
 // This is equivalent to: dest = src & -src
-// Sets ZF if source is zero, sets CF if source is zero, clears SF and OF.
+// Sets ZF if result is zero, sets CF if source is non-zero, clears OF.
 //
 // Opcodes:
 // VEX.NDD.LZ.0F38.W0 F3 /3   BLSI r32, r/m32   - Extract lowest set bit (32-bit)
@@ -25,7 +25,7 @@ fn test_blsi_eax_ebx_bit_0() {
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_0001, "EAX should contain isolated bit 0");
     assert!(!zf_set(regs.rflags), "ZF should be clear (source is non-zero)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (source is non-zero)");
+    assert!(cf_set(regs.rflags), "CF should be set (source is non-zero)");
 }
 
 #[test]
@@ -90,7 +90,7 @@ fn test_blsi_zero_source() {
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should be zero");
     assert!(zf_set(regs.rflags), "ZF should be set (source is zero)");
-    assert!(cf_set(regs.rflags), "CF should be set (source is zero)");
+    assert!(!cf_set(regs.rflags), "CF should be clear (source is zero)");
 }
 
 #[test]

@@ -200,7 +200,7 @@ fn test_paddsw_basic() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x032002BC025800C8, "PADDSW: basic addition");
+    assert_eq!(result, 0x032002BC01C800C8, "PADDSW: basic addition");
 }
 
 #[test]

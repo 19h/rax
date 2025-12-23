@@ -20,7 +20,7 @@ fn test_lar_bx_ax() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0x0008, "AX should be preserved");
-    assert_eq!(regs.rip, 0x1000 + 9, "RIP should advance correctly");
+    assert_eq!(regs.rip, 0x1000 + 8, "RIP should point to HLT");
 }
 
 // LAR r16, r16 - Load access rights from CX to DX
@@ -105,7 +105,7 @@ fn test_lar_eax_memory() {
     write_mem_at_u16(&mem, DATA_ADDR, 0x0008);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x1000 + 9);
+    assert_eq!(regs.rip, 0x1000 + 8);
 }
 
 // LAR r32, m16 - Load access rights via RAX

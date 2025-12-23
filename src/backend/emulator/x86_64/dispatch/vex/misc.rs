@@ -284,6 +284,127 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_maskmov_fp(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        if !is_memory {
+            return Err(Error::Emulator("VMASKMOV requires memory operand".to_string()));
+        }
+        let mask_reg = vvvv as usize;
+        let is_ps = opcode == 0x2C || opcode == 0x2E;
+        let is_load = opcode == 0x2C || opcode == 0x2D;
+
+        if is_ps {
+            let count = if vex_l == 1 { 8 } else { 4 };
+            let mut mask = [0u32; 8];
+            let mask_lo = self.regs.xmm[mask_reg][0];
+            let mask_hi = self.regs.xmm[mask_reg][1];
+            mask[0] = mask_lo as u32;
+            mask[1] = (mask_lo >> 32) as u32;
+            mask[2] = mask_hi as u32;
+            mask[3] = (mask_hi >> 32) as u32;
+            if vex_l == 1 {
+                let mask_hi2 = self.regs.ymm_high[mask_reg][0];
+                let mask_hi3 = self.regs.ymm_high[mask_reg][1];
+                mask[4] = mask_hi2 as u32;
+                mask[5] = (mask_hi2 >> 32) as u32;
+                mask[6] = mask_hi3 as u32;
+                mask[7] = (mask_hi3 >> 32) as u32;
+            }
+
+            if is_load {
+                let mut dst = [0u32; 8];
+                for i in 0..count {
+                    if (mask[i] & 0x8000_0000) != 0 {
+                        dst[i] = self.read_mem(addr + (i * 4) as u64, 4)? as u32;
+                    }
+                }
+                let xmm_dst = reg as usize;
+                self.regs.xmm[xmm_dst][0] = (dst[0] as u64) | ((dst[1] as u64) << 32);
+                self.regs.xmm[xmm_dst][1] = (dst[2] as u64) | ((dst[3] as u64) << 32);
+                if vex_l == 1 {
+                    self.regs.ymm_high[xmm_dst][0] = (dst[4] as u64) | ((dst[5] as u64) << 32);
+                    self.regs.ymm_high[xmm_dst][1] = (dst[6] as u64) | ((dst[7] as u64) << 32);
+                } else {
+                    self.regs.ymm_high[xmm_dst][0] = 0;
+                    self.regs.ymm_high[xmm_dst][1] = 0;
+                }
+            } else {
+                let xmm_src = reg as usize;
+                let mut src = [0u32; 8];
+                let lo = self.regs.xmm[xmm_src][0];
+                let hi = self.regs.xmm[xmm_src][1];
+                src[0] = lo as u32;
+                src[1] = (lo >> 32) as u32;
+                src[2] = hi as u32;
+                src[3] = (hi >> 32) as u32;
+                if vex_l == 1 {
+                    let hi2 = self.regs.ymm_high[xmm_src][0];
+                    let hi3 = self.regs.ymm_high[xmm_src][1];
+                    src[4] = hi2 as u32;
+                    src[5] = (hi2 >> 32) as u32;
+                    src[6] = hi3 as u32;
+                    src[7] = (hi3 >> 32) as u32;
+                }
+                for i in 0..count {
+                    if (mask[i] & 0x8000_0000) != 0 {
+                        self.write_mem(addr + (i * 4) as u64, src[i] as u64, 4)?;
+                    }
+                }
+            }
+        } else {
+            let count = if vex_l == 1 { 4 } else { 2 };
+            let mut mask = [0u64; 4];
+            mask[0] = self.regs.xmm[mask_reg][0];
+            mask[1] = self.regs.xmm[mask_reg][1];
+            if vex_l == 1 {
+                mask[2] = self.regs.ymm_high[mask_reg][0];
+                mask[3] = self.regs.ymm_high[mask_reg][1];
+            }
+
+            if is_load {
+                let mut dst = [0u64; 4];
+                for i in 0..count {
+                    if (mask[i] >> 63) != 0 {
+                        dst[i] = self.read_mem(addr + (i * 8) as u64, 8)?;
+                    }
+                }
+                let xmm_dst = reg as usize;
+                self.regs.xmm[xmm_dst][0] = dst[0];
+                self.regs.xmm[xmm_dst][1] = dst[1];
+                if vex_l == 1 {
+                    self.regs.ymm_high[xmm_dst][0] = dst[2];
+                    self.regs.ymm_high[xmm_dst][1] = dst[3];
+                } else {
+                    self.regs.ymm_high[xmm_dst][0] = 0;
+                    self.regs.ymm_high[xmm_dst][1] = 0;
+                }
+            } else {
+                let xmm_src = reg as usize;
+                let mut src = [0u64; 4];
+                src[0] = self.regs.xmm[xmm_src][0];
+                src[1] = self.regs.xmm[xmm_src][1];
+                if vex_l == 1 {
+                    src[2] = self.regs.ymm_high[xmm_src][0];
+                    src[3] = self.regs.ymm_high[xmm_src][1];
+                }
+                for i in 0..count {
+                    if (mask[i] >> 63) != 0 {
+                        self.write_mem(addr + (i * 8) as u64, src[i], 8)?;
+                    }
+                }
+            }
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
     /// VEX reciprocal square root: VRSQRTPS, VRSQRTSS
     pub(in crate::backend::emulator::x86_64) fn execute_vex_rsqrt(
         &mut self,

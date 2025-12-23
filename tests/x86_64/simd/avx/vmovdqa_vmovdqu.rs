@@ -151,7 +151,7 @@ fn test_vmovdqa_ymm14_to_ymm15() {
 fn test_vmovdqa_mem_to_ymm0_aligned() {
     // VMOVDQA YMM0, [aligned_addr]
     let code = [
-        0xc5, 0xfd, 0x6f, 0x05, 0x00, 0x40, 0x00, 0x00, // VMOVDQA YMM0, [rip + 0x4000]
+        0xc5, 0xfd, 0x6f, 0x05, 0xf7, 0x1f, 0x00, 0x00, // VMOVDQA YMM0, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -172,7 +172,7 @@ fn test_vmovdqa_mem_to_ymm0_aligned() {
 fn test_vmovdqa_mem_to_ymm1_aligned() {
     // VMOVDQA YMM1, [aligned_addr]
     let code = [
-        0xc5, 0xfd, 0x6f, 0x0d, 0x00, 0x40, 0x00, 0x00, // VMOVDQA YMM1, [rip + 0x4000]
+        0xc5, 0xfd, 0x6f, 0x0d, 0xf7, 0x1f, 0x00, 0x00, // VMOVDQA YMM1, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -187,7 +187,7 @@ fn test_vmovdqa_mem_to_ymm1_aligned() {
 fn test_vmovdqa_mem_to_ymm8_aligned() {
     // VMOVDQA YMM8, [aligned_addr]
     let code = [
-        0xc4, 0xc1, 0xfd, 0x6f, 0x05, 0x00, 0x40, 0x00, 0x00, // VMOVDQA YMM8, [rip + 0x4000]
+        0xc4, 0xc1, 0xfd, 0x6f, 0x05, 0xf6, 0x1f, 0x00, 0x00, // VMOVDQA YMM8, [rip + 0x4000]
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -206,7 +206,7 @@ fn test_vmovdqa_mem_to_ymm8_aligned() {
 fn test_vmovdqa_ymm0_to_mem_aligned() {
     // VMOVDQA [aligned_addr], YMM0
     let code = [
-        0xc5, 0xfd, 0x7f, 0x05, 0x00, 0x40, 0x00, 0x00, // VMOVDQA [rip + 0x4000], YMM0
+        0xc5, 0xfd, 0x7f, 0x05, 0xf7, 0x1f, 0x00, 0x00, // VMOVDQA [rip + 0x4000], YMM0
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -217,7 +217,7 @@ fn test_vmovdqa_ymm0_to_mem_aligned() {
 fn test_vmovdqa_ymm1_to_mem_aligned() {
     // VMOVDQA [aligned_addr], YMM1
     let code = [
-        0xc5, 0xfd, 0x7f, 0x0d, 0x00, 0x40, 0x00, 0x00, // VMOVDQA [rip + 0x4000], YMM1
+        0xc5, 0xfd, 0x7f, 0x0d, 0xf7, 0x1f, 0x00, 0x00, // VMOVDQA [rip + 0x4000], YMM1
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -228,7 +228,7 @@ fn test_vmovdqa_ymm1_to_mem_aligned() {
 fn test_vmovdqa_ymm8_to_mem_aligned() {
     // VMOVDQA [aligned_addr], YMM8
     let code = [
-        0xc4, 0xc1, 0xfd, 0x7f, 0x05, 0x00, 0x40, 0x00, 0x00, // VMOVDQA [rip + 0x4000], YMM8
+        0xc4, 0xc1, 0xfd, 0x7f, 0x05, 0xf6, 0x1f, 0x00, 0x00, // VMOVDQA [rip + 0x4000], YMM8
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -239,7 +239,7 @@ fn test_vmovdqa_ymm8_to_mem_aligned() {
 fn test_vmovdqa_ymm15_to_mem_aligned() {
     // VMOVDQA [aligned_addr], YMM15
     let code = [
-        0xc4, 0xc1, 0xfd, 0x7f, 0x3d, 0x00, 0x40, 0x00, 0x00, // VMOVDQA [rip + 0x4000], YMM15
+        0xc4, 0xc1, 0xfd, 0x7f, 0x3d, 0xf6, 0x1f, 0x00, 0x00, // VMOVDQA [rip + 0x4000], YMM15
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

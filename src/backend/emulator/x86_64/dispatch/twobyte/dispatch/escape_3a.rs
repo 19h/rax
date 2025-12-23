@@ -691,10 +691,10 @@ impl X86_64Vcpu {
                 let dst_lo = self.regs.xmm[xmm_dst][0];
                 let dst_hi = self.regs.xmm[xmm_dst][1];
 
-                // imm8[2] selects source block (0 = bytes 0-10, 1 = bytes 4-14)
-                // imm8[1:0] selects destination block offset
-                let src_offset = if imm8 & 0x04 != 0 { 4 } else { 0 };
-                let dst_offset = ((imm8 & 0x03) * 4) as usize;
+                // imm8[1:0] selects source block offset (0, 4, 8, or 12 bytes)
+                // imm8[2] selects destination block offset (0 or 4 bytes)
+                let src_offset = ((imm8 & 0x03) * 4) as usize;
+                let dst_offset = if imm8 & 0x04 != 0 { 4 } else { 0 };
 
                 // Get source bytes (need 4 consecutive bytes starting at src_offset)
                 let get_src_byte = |idx: usize| -> u8 {
@@ -1104,11 +1104,17 @@ impl X86_64Vcpu {
         }
 
         // Apply polarity
+        // Use u32 for the mask to avoid overflow when num_elements = 16
+        let mask = if num_elements == 16 { 0xFFFFu16 } else { ((1u16 << num_elements) - 1) };
         let int_res2 = match polarity {
             0 => int_res1,                                                    // Positive
-            1 => !int_res1 & ((1 << num_elements) - 1),                       // Negative
+            1 => !int_res1 & mask,                                            // Negative
             2 => int_res1,                                                    // Masked positive
-            3 => int_res1 ^ ((1u16 << valid2) - 1) & ((1 << num_elements) - 1), // Masked negative
+            3 => {
+                // Masked negative: XOR with valid mask
+                let valid_mask = if valid2 == 16 { 0xFFFFu16 } else if valid2 == 0 { 0 } else { (1u16 << valid2) - 1 };
+                (int_res1 ^ valid_mask) & mask
+            }
             _ => int_res1,
         };
 

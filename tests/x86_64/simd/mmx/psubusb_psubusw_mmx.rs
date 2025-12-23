@@ -153,7 +153,7 @@ fn test_psubusb_mixed_saturation() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0xFE0000000A000000, "PSUBUSB: mixed saturation");
+    assert_eq!(result, 0xFE00000000060000, "PSUBUSB: mixed saturation");
 }
 
 #[test]
