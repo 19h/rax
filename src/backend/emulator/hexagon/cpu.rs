@@ -3,8 +3,10 @@ use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
 use super::decode::{
-    decode, AddrMode, CmpKind, DecodedInsn, MemSign, MemWidth, ShiftKind,
+    decode, decode_duplex, isa_supports_insn, AddrMode, CmpKind, CombineOperand, DecodedInsn,
+    DecodedSub, ExtendKind, MemSign, MemWidth, PredCond, ShiftKind,
 };
+use super::opcode::Opcode;
 use crate::config::{Endianness, HexagonIsa};
 use crate::cpu::{CpuState, HexagonRegisters, VCpu, VcpuExit};
 use crate::error::{Error, Result};
@@ -24,13 +26,45 @@ struct BranchTarget {
     is_call: bool,
 }
 
+struct PacketState {
+    packet_pc: u32,
+    pc: u32,
+    immext: Option<u32>,
+    new_r: [Option<u32>; 32],
+    new_p: [Option<bool>; 4],
+    branch: Option<BranchTarget>,
+    inst_index: usize,
+    first_parse: Option<u32>,
+    second_parse: Option<u32>,
+    pending_subinsn: Option<DecodedSub>,
+    pending_end: bool,
+}
+
+impl PacketState {
+    fn new(pc: u32) -> Self {
+        PacketState {
+            packet_pc: pc,
+            pc,
+            immext: None,
+            new_r: [None; 32],
+            new_p: [None; 4],
+            branch: None,
+            inst_index: 0,
+            first_parse: None,
+            second_parse: None,
+            pending_subinsn: None,
+            pending_end: false,
+        }
+    }
+}
+
 pub struct HexagonVcpu {
     id: u32,
     regs: HexagonRegisters,
     mem: Arc<GuestMemoryMmap>,
     halted: bool,
     pending_mmio: Option<MmioPending>,
-    immext: Option<u32>,
+    pending_packet: Option<PacketState>,
     _isa: HexagonIsa,
     endian: Endianness,
 }
@@ -43,7 +77,7 @@ impl HexagonVcpu {
             mem,
             halted: false,
             pending_mmio: None,
-            immext: None,
+            pending_packet: None,
             _isa: isa,
             endian,
         }
@@ -79,6 +113,17 @@ impl HexagonVcpu {
         })
     }
 
+    fn read_u64(&self, addr: u32) -> Result<u64> {
+        let mut buf = [0u8; 8];
+        self.mem
+            .read_slice(&mut buf, GuestAddress(addr as u64))
+            .map_err(Error::from)?;
+        Ok(match self.endian {
+            Endianness::Little => u64::from_le_bytes(buf),
+            Endianness::Big => u64::from_be_bytes(buf),
+        })
+    }
+
     fn write_u8(&self, addr: u32, value: u8) -> Result<()> {
         self.mem
             .write_slice(&[value], GuestAddress(addr as u64))
@@ -108,8 +153,34 @@ impl HexagonVcpu {
         Ok(())
     }
 
+    fn write_u64(&self, addr: u32, value: u64) -> Result<()> {
+        let bytes = match self.endian {
+            Endianness::Little => value.to_le_bytes(),
+            Endianness::Big => value.to_be_bytes(),
+        };
+        self.mem
+            .write_slice(&bytes, GuestAddress(addr as u64))
+            .map_err(Error::from)?;
+        Ok(())
+    }
+
     fn fetch_word(&self, pc: u32) -> Result<u32> {
         self.read_u32(pc)
+    }
+
+    fn ensure_isa_supports(
+        &self,
+        word: u32,
+        insn: &DecodedInsn,
+        opcode: Option<Opcode>,
+    ) -> Result<()> {
+        if isa_supports_insn(self._isa, insn, opcode) {
+            return Ok(());
+        }
+        Err(Error::Emulator(format!(
+            "hexagon instruction 0x{word:08x} not supported by ISA {:?}",
+            self._isa
+        )))
     }
 
     fn is_mmio(addr: u32) -> bool {
@@ -168,154 +239,246 @@ impl HexagonVcpu {
         }
     }
 
-    fn step_packet(&mut self) -> Result<Option<VcpuExit>> {
-        let packet_pc = self.regs.pc();
-        let mut pc = packet_pc;
-        self.immext = None;
+    fn eval_pred(&self, cond: PredCond, new_p: &[Option<bool>; 4]) -> bool {
+        let val = if cond.pred_new {
+            new_p[cond.pred as usize].unwrap_or(self.regs.p[cond.pred as usize])
+        } else {
+            self.regs.p[cond.pred as usize]
+        };
+        if cond.sense {
+            val
+        } else {
+            !val
+        }
+    }
 
-        let mut new_r = [None; 32];
-        let mut new_p = [None; 4];
-        let mut branch: Option<BranchTarget> = None;
-        let mut inst_index = 0usize;
-        let mut first_parse: Option<u32> = None;
-        let mut second_parse: Option<u32> = None;
+    fn read_reg_with_new(&self, reg: u8, new_r: &[Option<u32>; 32]) -> u32 {
+        new_r[reg as usize].unwrap_or(self.regs.r[reg as usize])
+    }
 
-        loop {
-            let word = self.fetch_word(pc)?;
-            let parse = (word >> 14) & 0x3;
-            if parse == 0 {
+    fn set_branch(&self, branch: &mut Option<BranchTarget>, target: u32, is_call: bool) -> Result<()> {
+        if branch.is_some() {
+            return Err(Error::Emulator("multiple branches in packet".to_string()));
+        }
+        *branch = Some(BranchTarget { target, is_call });
+        Ok(())
+    }
+
+    fn execute_insn(
+        &mut self,
+        insn: DecodedInsn,
+        packet_pc: u32,
+        new_r: &mut [Option<u32>; 32],
+        new_p: &mut [Option<bool>; 4],
+        branch: &mut Option<BranchTarget>,
+    ) -> Result<Option<VcpuExit>> {
+        match insn {
+            DecodedInsn::ImmExt { .. } => {
                 return Err(Error::Emulator(
-                    "duplex instruction encoding not supported".to_string(),
+                    "unexpected immext in execute".to_string(),
                 ));
             }
-
-            if inst_index == 0 {
-                first_parse = Some(parse);
-            } else if inst_index == 1 {
-                second_parse = Some(parse);
+            DecodedInsn::Add { dst, src1, src2 } => {
+                let val = self.regs.r[src1 as usize].wrapping_add(self.regs.r[src2 as usize]);
+                new_r[dst as usize] = Some(val);
             }
-
-            let decoded = decode(word, self.immext);
-            self.immext = None;
-
-            match decoded.insn {
-                DecodedInsn::ImmExt { value } => {
-                    self.immext = Some(value);
-                    pc = pc.wrapping_add(4);
-                    inst_index += 1;
-                    if parse == 0x3 {
-                        self.commit_packet(&new_r, &new_p);
-                        self.set_pc(pc);
+            DecodedInsn::Sub { dst, src1, src2 } => {
+                let val = self.regs.r[src1 as usize].wrapping_sub(self.regs.r[src2 as usize]);
+                new_r[dst as usize] = Some(val);
+            }
+            DecodedInsn::And { dst, src1, src2 } => {
+                new_r[dst as usize] =
+                    Some(self.regs.r[src1 as usize] & self.regs.r[src2 as usize]);
+            }
+            DecodedInsn::AndImm { dst, src, imm } => {
+                new_r[dst as usize] = Some(self.regs.r[src as usize] & imm);
+            }
+            DecodedInsn::Or { dst, src1, src2 } => {
+                new_r[dst as usize] =
+                    Some(self.regs.r[src1 as usize] | self.regs.r[src2 as usize]);
+            }
+            DecodedInsn::Xor { dst, src1, src2 } => {
+                new_r[dst as usize] =
+                    Some(self.regs.r[src1 as usize] ^ self.regs.r[src2 as usize]);
+            }
+            DecodedInsn::AddImm { dst, src, imm } => {
+                let val = self.regs.r[src as usize].wrapping_add(imm as u32);
+                new_r[dst as usize] = Some(val);
+            }
+            DecodedInsn::Mov { dst, src } => {
+                new_r[dst as usize] = Some(self.regs.r[src as usize]);
+            }
+            DecodedInsn::MovImm { dst, imm } => {
+                new_r[dst as usize] = Some(imm as u32);
+            }
+            DecodedInsn::ClearCond { dst, pred } => {
+                if self.eval_pred(pred, new_p) {
+                    new_r[dst as usize] = Some(0);
+                }
+            }
+            DecodedInsn::Extend { dst, src, kind } => {
+                let val = self.regs.r[src as usize];
+                let result = match kind {
+                    ExtendKind::Sxt8 => (val as i8 as i32) as u32,
+                    ExtendKind::Sxt16 => (val as i16 as i32) as u32,
+                    ExtendKind::Zxt8 => (val & 0xff) as u32,
+                    ExtendKind::Zxt16 => (val & 0xffff) as u32,
+                };
+                new_r[dst as usize] = Some(result);
+            }
+            DecodedInsn::Combine { dst, high, low } => {
+                let odd = dst.wrapping_add(1);
+                if odd >= 32 {
+                    return Err(Error::Emulator(
+                        "invalid register pair for combine".to_string(),
+                    ));
+                }
+                let low_val = match low {
+                    CombineOperand::Reg(reg) => self.regs.r[reg as usize],
+                    CombineOperand::Imm(val) => val,
+                };
+                let high_val = match high {
+                    CombineOperand::Reg(reg) => self.regs.r[reg as usize],
+                    CombineOperand::Imm(val) => val,
+                };
+                new_r[dst as usize] = Some(low_val);
+                new_r[odd as usize] = Some(high_val);
+            }
+            DecodedInsn::Load {
+                dst,
+                addr,
+                width,
+                sign,
+                pred,
+            } => {
+                if let Some(cond) = pred {
+                    if !self.eval_pred(cond, new_p) {
                         return Ok(None);
                     }
-                    continue;
                 }
-                DecodedInsn::Add { dst, src1, src2 } => {
-                    let val = self.regs.r[src1 as usize]
-                        .wrapping_add(self.regs.r[src2 as usize]);
-                    new_r[dst as usize] = Some(val);
+
+                let (addr, update) = match addr {
+                    AddrMode::Offset { base, offset } => {
+                        let base_val = self.regs.r[base as usize];
+                        (base_val.wrapping_add(offset as u32), None)
+                    }
+                    AddrMode::PostIncImm { base, offset } => {
+                        let base_val = self.regs.r[base as usize];
+                        let new_base = base_val.wrapping_add(offset as u32);
+                        (base_val, Some((base, new_base)))
+                    }
+                    AddrMode::GpOffset { offset } => {
+                        let gp = self.regs.control(11);
+                        (gp.wrapping_add(offset as u32), None)
+                    }
+                    AddrMode::Abs { addr } => (addr, None),
+                };
+
+                if let Some((reg, value)) = update {
+                    new_r[reg as usize] = Some(value);
                 }
-                DecodedInsn::Sub { dst, src1, src2 } => {
-                    let val = self.regs.r[src1 as usize]
-                        .wrapping_sub(self.regs.r[src2 as usize]);
-                    new_r[dst as usize] = Some(val);
-                }
-                DecodedInsn::And { dst, src1, src2 } => {
-                    new_r[dst as usize] =
-                        Some(self.regs.r[src1 as usize] & self.regs.r[src2 as usize]);
-                }
-                DecodedInsn::Or { dst, src1, src2 } => {
-                    new_r[dst as usize] =
-                        Some(self.regs.r[src1 as usize] | self.regs.r[src2 as usize]);
-                }
-                DecodedInsn::Xor { dst, src1, src2 } => {
-                    new_r[dst as usize] =
-                        Some(self.regs.r[src1 as usize] ^ self.regs.r[src2 as usize]);
-                }
-                DecodedInsn::AddImm { dst, src, imm } => {
-                    let val = self.regs.r[src as usize].wrapping_add(imm as u32);
-                    new_r[dst as usize] = Some(val);
-                }
-                DecodedInsn::Mov { dst, src } => {
-                    new_r[dst as usize] = Some(self.regs.r[src as usize]);
-                }
-                DecodedInsn::MovImm { dst, imm } => {
-                    new_r[dst as usize] = Some(imm as u32);
-                }
-                DecodedInsn::Load {
-                    dst,
-                    addr,
-                    width,
-                    sign,
-                } => {
-                    let (addr, update) = match addr {
-                        AddrMode::Offset { base, offset } => {
-                            let base_val = self.regs.r[base as usize];
-                            (base_val.wrapping_add(offset as u32), None)
+
+                if Self::is_mmio(addr) {
+                    let size = match width {
+                        MemWidth::Byte => 1,
+                        MemWidth::Half => 2,
+                        MemWidth::Word => 4,
+                        MemWidth::Double => {
+                            return Err(Error::Emulator(
+                                "doubleword mmio load not supported".to_string(),
+                            ))
                         }
-                        AddrMode::PostIncImm { base, offset } => {
-                            let base_val = self.regs.r[base as usize];
-                            let new_base = base_val.wrapping_add(offset as u32);
-                            (base_val, Some((base, new_base)))
-                        }
-                        AddrMode::GpOffset { offset } => {
-                            let gp = self.regs.control(11);
-                            (gp.wrapping_add(offset as u32), None)
-                        }
-                        AddrMode::Abs { addr } => (addr, None),
                     };
+                    let signed = matches!(sign, MemSign::Signed) && size < 4;
+                    self.pending_mmio = Some(MmioPending { dst, size, signed });
+                    return Ok(Some(VcpuExit::MmioRead {
+                        addr: addr as u64,
+                        size,
+                    }));
+                }
 
-                    if let Some((reg, value)) = update {
-                        new_r[reg as usize] = Some(value);
+                if width == MemWidth::Double {
+                    let even = dst & !1;
+                    let odd = even.wrapping_add(1);
+                    if odd >= 32 {
+                        return Err(Error::Emulator(
+                            "invalid register pair for doubleword load".to_string(),
+                        ));
                     }
-
-                    if Self::is_mmio(addr) {
-                        let size = match width {
-                            MemWidth::Byte => 1,
-                            MemWidth::Half => 2,
-                            MemWidth::Word => 4,
-                            MemWidth::Double => {
-                                return Err(Error::Emulator(
-                                    "doubleword mmio load not supported".to_string(),
-                                ))
-                            }
-                        };
-                        let signed = matches!(sign, MemSign::Signed) && size < 4;
-                        self.pending_mmio = Some(MmioPending { dst, size, signed });
-                        self.commit_packet(&new_r, &new_p);
-                        self.set_pc(pc.wrapping_add(4));
-                        return Ok(Some(VcpuExit::MmioRead {
-                            addr: addr as u64,
-                            size,
-                        }));
-                    }
-
+                    let val = self.read_u64(addr)?;
+                    new_r[even as usize] = Some(val as u32);
+                    new_r[odd as usize] = Some((val >> 32) as u32);
+                } else {
                     let val = self.load_mem(addr, width, sign)?;
                     new_r[dst as usize] = Some(val);
                 }
-                DecodedInsn::Store { src, addr, width } => {
-                    let (addr, update) = match addr {
-                        AddrMode::Offset { base, offset } => {
-                            let base_val = self.regs.r[base as usize];
-                            (base_val.wrapping_add(offset as u32), None)
-                        }
-                        AddrMode::PostIncImm { base, offset } => {
-                            let base_val = self.regs.r[base as usize];
-                            let new_base = base_val.wrapping_add(offset as u32);
-                            (base_val, Some((base, new_base)))
-                        }
-                        AddrMode::GpOffset { offset } => {
-                            let gp = self.regs.control(11);
-                            (gp.wrapping_add(offset as u32), None)
-                        }
-                        AddrMode::Abs { addr } => (addr, None),
+            }
+            DecodedInsn::Store {
+                src,
+                addr,
+                width,
+                pred,
+                src_new,
+            } => {
+                if let Some(cond) = pred {
+                    if !self.eval_pred(cond, new_p) {
+                        return Ok(None);
+                    }
+                }
+
+                let (addr, update) = match addr {
+                    AddrMode::Offset { base, offset } => {
+                        let base_val = self.regs.r[base as usize];
+                        (base_val.wrapping_add(offset as u32), None)
+                    }
+                    AddrMode::PostIncImm { base, offset } => {
+                        let base_val = self.regs.r[base as usize];
+                        let new_base = base_val.wrapping_add(offset as u32);
+                        (base_val, Some((base, new_base)))
+                    }
+                    AddrMode::GpOffset { offset } => {
+                        let gp = self.regs.control(11);
+                        (gp.wrapping_add(offset as u32), None)
+                    }
+                    AddrMode::Abs { addr } => (addr, None),
+                };
+
+                if let Some((reg, value)) = update {
+                    new_r[reg as usize] = Some(value);
+                }
+
+                if width == MemWidth::Double {
+                    let even = src & !1;
+                    let odd = even.wrapping_add(1);
+                    if odd >= 32 {
+                        return Err(Error::Emulator(
+                            "invalid register pair for doubleword store".to_string(),
+                        ));
+                    }
+                    if Self::is_mmio(addr) {
+                        return Err(Error::Emulator(
+                            "doubleword mmio store not supported".to_string(),
+                        ));
+                    }
+                    let even_val = if src_new {
+                        self.read_reg_with_new(even, new_r)
+                    } else {
+                        self.regs.r[even as usize]
+                    };
+                    let odd_val = if src_new {
+                        self.read_reg_with_new(odd, new_r)
+                    } else {
+                        self.regs.r[odd as usize]
+                    };
+                    let combined = ((odd_val as u64) << 32) | even_val as u64;
+                    self.write_u64(addr, combined)?;
+                } else {
+                    let val = if src_new {
+                        self.read_reg_with_new(src, new_r)
+                    } else {
+                        self.regs.r[src as usize]
                     };
 
-                    if let Some((reg, value)) = update {
-                        new_r[reg as usize] = Some(value);
-                    }
-
-                    let val = self.regs.r[src as usize];
                     if Self::is_mmio(addr) {
                         let data = match width {
                             MemWidth::Byte => vec![val as u8],
@@ -333,8 +496,6 @@ impl HexagonVcpu {
                                 ))
                             }
                         };
-                        self.commit_packet(&new_r, &new_p);
-                        self.set_pc(pc.wrapping_add(4));
                         return Ok(Some(VcpuExit::MmioWrite {
                             addr: addr as u64,
                             data,
@@ -342,240 +503,313 @@ impl HexagonVcpu {
                     }
                     self.store_mem(addr, width, val)?;
                 }
-                DecodedInsn::Jump { offset } => {
-                    let target = packet_pc.wrapping_add(offset as u32) & !0x3;
-                    if branch.is_some() {
-                        return Err(Error::Emulator(
-                            "multiple branches in packet".to_string(),
-                        ));
+            }
+            DecodedInsn::StoreImm {
+                value,
+                addr,
+                width,
+                pred,
+            } => {
+                if let Some(cond) = pred {
+                    if !self.eval_pred(cond, new_p) {
+                        return Ok(None);
                     }
-                    branch = Some(BranchTarget {
-                        target,
-                        is_call: false,
-                    });
                 }
-                DecodedInsn::JumpCond {
-                    offset,
+                let addr = match addr {
+                    AddrMode::Offset { base, offset } => {
+                        let base_val = self.regs.r[base as usize];
+                        base_val.wrapping_add(offset as u32)
+                    }
+                    AddrMode::GpOffset { offset } => {
+                        let gp = self.regs.control(11);
+                        gp.wrapping_add(offset as u32)
+                    }
+                    AddrMode::PostIncImm { .. } => {
+                        return Err(Error::Emulator(
+                            "post-increment store immediate not supported".to_string(),
+                        ))
+                    }
+                    AddrMode::Abs { addr } => addr,
+                };
+
+                if Self::is_mmio(addr) {
+                    let data = match width {
+                        MemWidth::Byte => vec![value as u8],
+                        MemWidth::Half => match self.endian {
+                            Endianness::Little => (value as u16).to_le_bytes().to_vec(),
+                            Endianness::Big => (value as u16).to_be_bytes().to_vec(),
+                        },
+                        MemWidth::Word => match self.endian {
+                            Endianness::Little => value.to_le_bytes().to_vec(),
+                            Endianness::Big => value.to_be_bytes().to_vec(),
+                        },
+                        MemWidth::Double => {
+                            return Err(Error::Emulator(
+                                "doubleword mmio store immediate not supported".to_string(),
+                            ))
+                        }
+                    };
+                    return Ok(Some(VcpuExit::MmioWrite {
+                        addr: addr as u64,
+                        data,
+                    }));
+                }
+                self.store_mem(addr, width, value)?;
+            }
+            DecodedInsn::AllocFrame { base, size } => {
+                let sp = self.regs.r[base as usize];
+                let ea = sp.wrapping_sub(8);
+                let fp = self.regs.r[30];
+                let lr = self.regs.r[31];
+                let value = ((lr as u64) << 32) | fp as u64;
+                self.write_u64(ea, value)?;
+                let new_sp = ea.wrapping_sub(size);
+                new_r[base as usize] = Some(new_sp);
+                new_r[30] = Some(ea);
+            }
+            DecodedInsn::DeallocFrame {
+                base,
+                dst,
+                update_lr_fp,
+            } => {
+                let addr = self.regs.r[base as usize];
+                let value = self.read_u64(addr)?;
+                let fp = (value & 0xffff_ffff) as u32;
+                let lr = (value >> 32) as u32;
+                if let Some(dst) = dst {
+                    let idx = dst as usize;
+                    if idx < 32 {
+                        new_r[idx] = Some(fp);
+                    }
+                    if idx + 1 < 32 {
+                        new_r[idx + 1] = Some(lr);
+                    }
+                }
+                if update_lr_fp {
+                    new_r[30] = Some(fp);
+                    new_r[31] = Some(lr);
+                }
+                new_r[base as usize] = Some(addr.wrapping_add(8));
+            }
+            DecodedInsn::DeallocReturn {
+                base,
+                dst,
+                pred,
+                update_lr_fp,
+            } => {
+                if let Some(cond) = pred {
+                    if !self.eval_pred(cond, new_p) {
+                        return Ok(None);
+                    }
+                }
+                let addr = self.regs.r[base as usize];
+                let value = self.read_u64(addr)?;
+                let fp = (value & 0xffff_ffff) as u32;
+                let lr = (value >> 32) as u32;
+                if let Some(dst) = dst {
+                    let idx = dst as usize;
+                    if idx < 32 {
+                        new_r[idx] = Some(fp);
+                    }
+                    if idx + 1 < 32 {
+                        new_r[idx + 1] = Some(lr);
+                    }
+                }
+                if update_lr_fp {
+                    new_r[30] = Some(fp);
+                    new_r[31] = Some(lr);
+                }
+                new_r[base as usize] = Some(addr.wrapping_add(8));
+                self.set_branch(branch, lr & !0x3, false)?;
+            }
+            DecodedInsn::Jump { offset } => {
+                let target = packet_pc.wrapping_add(offset as u32) & !0x3;
+                self.set_branch(branch, target, false)?;
+            }
+            DecodedInsn::JumpCond {
+                offset,
+                pred,
+                sense,
+                pred_new,
+            } => {
+                let cond = PredCond {
                     pred,
                     sense,
                     pred_new,
-                } => {
-                    let pred_val = if pred_new {
-                        new_p[pred as usize].unwrap_or(self.regs.p[pred as usize])
-                    } else {
-                        self.regs.p[pred as usize]
-                    };
-                    let take = if sense { pred_val } else { !pred_val };
-                    if take {
-                        let target = packet_pc.wrapping_add(offset as u32) & !0x3;
-                        if branch.is_some() {
-                            return Err(Error::Emulator(
-                                "multiple branches in packet".to_string(),
-                            ));
-                        }
-                        branch = Some(BranchTarget {
-                            target,
-                            is_call: false,
-                        });
-                    }
+                };
+                if self.eval_pred(cond, new_p) {
+                    let target = packet_pc.wrapping_add(offset as u32) & !0x3;
+                    self.set_branch(branch, target, false)?;
                 }
-                DecodedInsn::JumpReg { src } => {
-                    let target = self.regs.r[src as usize] & !0x3;
-                    if branch.is_some() {
-                        return Err(Error::Emulator(
-                            "multiple branches in packet".to_string(),
-                        ));
-                    }
-                    branch = Some(BranchTarget {
-                        target,
-                        is_call: false,
-                    });
-                }
-                DecodedInsn::JumpRegCond {
-                    src,
+            }
+            DecodedInsn::JumpReg { src } => {
+                let target = self.regs.r[src as usize] & !0x3;
+                self.set_branch(branch, target, false)?;
+            }
+            DecodedInsn::JumpRegCond {
+                src,
+                pred,
+                sense,
+                pred_new,
+            } => {
+                let cond = PredCond {
                     pred,
                     sense,
                     pred_new,
-                } => {
-                    let pred_val = if pred_new {
-                        new_p[pred as usize].unwrap_or(self.regs.p[pred as usize])
-                    } else {
-                        self.regs.p[pred as usize]
-                    };
-                    let take = if sense { pred_val } else { !pred_val };
-                    if take {
-                        let target = self.regs.r[src as usize] & !0x3;
-                        if branch.is_some() {
-                            return Err(Error::Emulator(
-                                "multiple branches in packet".to_string(),
-                            ));
-                        }
-                        branch = Some(BranchTarget {
-                            target,
-                            is_call: false,
-                        });
-                    }
-                }
-                DecodedInsn::Call { offset } => {
-                    let target = packet_pc.wrapping_add(offset as u32) & !0x3;
-                    if branch.is_some() {
-                        return Err(Error::Emulator(
-                            "multiple branches in packet".to_string(),
-                        ));
-                    }
-                    branch = Some(BranchTarget {
-                        target,
-                        is_call: true,
-                    });
-                }
-                DecodedInsn::CallReg { src } => {
+                };
+                if self.eval_pred(cond, new_p) {
                     let target = self.regs.r[src as usize] & !0x3;
-                    if branch.is_some() {
-                        return Err(Error::Emulator(
-                            "multiple branches in packet".to_string(),
-                        ));
-                    }
-                    branch = Some(BranchTarget {
-                        target,
-                        is_call: true,
-                    });
+                    self.set_branch(branch, target, false)?;
                 }
-                DecodedInsn::Cmp {
-                    pred,
-                    src1,
-                    src2,
-                    kind,
-                } => {
-                    let a = self.regs.r[src1 as usize];
-                    let b = self.regs.r[src2 as usize];
-                    let result = match kind {
+            }
+            DecodedInsn::Call { offset } => {
+                let target = packet_pc.wrapping_add(offset as u32) & !0x3;
+                self.set_branch(branch, target, true)?;
+            }
+            DecodedInsn::CallReg { src } => {
+                let target = self.regs.r[src as usize] & !0x3;
+                self.set_branch(branch, target, true)?;
+            }
+            DecodedInsn::Cmp {
+                pred,
+                src1,
+                src2,
+                kind,
+            } => {
+                let a = self.regs.r[src1 as usize];
+                let b = self.regs.r[src2 as usize];
+                let result = match kind {
+                    CmpKind::Eq => a == b,
+                    CmpKind::Gt => (a as i32) > (b as i32),
+                    CmpKind::Gtu => a > b,
+                    CmpKind::Ne => a != b,
+                    CmpKind::Lte => (a as i32) <= (b as i32),
+                    CmpKind::Lteu => a <= b,
+                };
+                new_p[pred as usize] = Some(result);
+            }
+            DecodedInsn::CmpImm {
+                pred,
+                src,
+                imm,
+                kind,
+                unsigned,
+            } => {
+                let a = self.regs.r[src as usize];
+                let result = if unsigned {
+                    let b = imm as u32;
+                    match kind {
                         CmpKind::Eq => a == b,
                         CmpKind::Gt => (a as i32) > (b as i32),
                         CmpKind::Gtu => a > b,
                         CmpKind::Ne => a != b,
                         CmpKind::Lte => (a as i32) <= (b as i32),
                         CmpKind::Lteu => a <= b,
-                    };
-                    new_p[pred as usize] = Some(result);
-                }
-                DecodedInsn::CmpImm {
-                    pred,
-                    src,
-                    imm,
-                    kind,
-                    unsigned,
-                } => {
-                    let a = self.regs.r[src as usize];
-                    let result = if unsigned {
-                        let b = imm as u32;
-                        match kind {
-                            CmpKind::Eq => a == b,
-                            CmpKind::Gt => (a as i32) > (b as i32),
-                            CmpKind::Gtu => a > b,
-                            CmpKind::Ne => a != b,
-                            CmpKind::Lte => (a as i32) <= (b as i32),
-                            CmpKind::Lteu => a <= b,
-                        }
-                    } else {
-                        let b = imm as i32;
-                        match kind {
-                            CmpKind::Eq => (a as i32) == b,
-                            CmpKind::Gt => (a as i32) > b,
-                            CmpKind::Gtu => a > b as u32,
-                            CmpKind::Ne => (a as i32) != b,
-                            CmpKind::Lte => (a as i32) <= b,
-                            CmpKind::Lteu => a <= b as u32,
-                        }
-                    };
-                    new_p[pred as usize] = Some(result);
-                }
-                DecodedInsn::Mul { dst, src1, src2 } => {
-                    let val = self.regs.r[src1 as usize].wrapping_mul(self.regs.r[src2 as usize]);
-                    new_r[dst as usize] = Some(val);
-                }
-                DecodedInsn::ShiftImm {
-                    dst,
-                    src,
-                    kind,
-                    amount,
-                } => {
-                    let val = self.regs.r[src as usize];
-                    let shamt = (amount & 0x1f) as u32;
-                    let result = match kind {
-                        ShiftKind::Lsl => val.wrapping_shl(shamt),
-                        ShiftKind::Lsr => val.wrapping_shr(shamt),
-                        ShiftKind::Asr => ((val as i32) >> shamt) as u32,
-                    };
-                    new_r[dst as usize] = Some(result);
-                }
-                DecodedInsn::ShiftReg {
-                    dst,
-                    src,
-                    amt,
-                    kind,
-                } => {
-                    let val = self.regs.r[src as usize];
-                    let shamt = (self.regs.r[amt as usize] & 0x1f) as u32;
-                    let result = match kind {
-                        ShiftKind::Lsl => val.wrapping_shl(shamt),
-                        ShiftKind::Lsr => val.wrapping_shr(shamt),
-                        ShiftKind::Asr => ((val as i32) >> shamt) as u32,
-                    };
-                    new_r[dst as usize] = Some(result);
-                }
-                DecodedInsn::TfrCrR { dst, src } => {
-                    new_r[dst as usize] = Some(self.regs.control(src as usize));
-                }
-                DecodedInsn::TfrRrCr { dst, src } => {
-                    let val = self.regs.r[src as usize];
-                    self.regs.set_control(dst as usize, val);
-                }
-                DecodedInsn::LoopStartReg {
-                    loop_id,
-                    start_offset,
-                    count_reg,
-                } => {
-                    let count = self.regs.r[count_reg as usize];
-                    if loop_id == 0 {
-                        self.regs.c[0] = packet_pc.wrapping_add(start_offset as u32) & !0x3;
-                        self.regs.c[1] = count;
-                    } else {
-                        self.regs.c[2] = packet_pc.wrapping_add(start_offset as u32) & !0x3;
-                        self.regs.c[3] = count;
                     }
-                }
-                DecodedInsn::LoopStartImm {
-                    loop_id,
-                    start_offset,
-                    count,
-                } => {
-                    if loop_id == 0 {
-                        self.regs.c[0] = packet_pc.wrapping_add(start_offset as u32) & !0x3;
-                        self.regs.c[1] = count;
-                    } else {
-                        self.regs.c[2] = packet_pc.wrapping_add(start_offset as u32) & !0x3;
-                        self.regs.c[3] = count;
+                } else {
+                    let b = imm as i32;
+                    match kind {
+                        CmpKind::Eq => (a as i32) == b,
+                        CmpKind::Gt => (a as i32) > b,
+                        CmpKind::Gtu => a > b as u32,
+                        CmpKind::Ne => (a as i32) != b,
+                        CmpKind::Lte => (a as i32) <= b,
+                        CmpKind::Lteu => a <= b as u32,
                     }
-                }
-                DecodedInsn::Trap0 => {
-                    self.commit_packet(&new_r, &new_p);
-                    self.set_pc(pc.wrapping_add(4));
-                    return Ok(Some(VcpuExit::Shutdown));
-                }
-                DecodedInsn::Unknown(word) => {
-                    return Err(Error::Emulator(format!(
-                        "unknown hexagon instruction 0x{word:08x} at pc=0x{pc:08x}"
-                    )));
+                };
+                new_p[pred as usize] = Some(result);
+            }
+            DecodedInsn::Mul { dst, src1, src2 } => {
+                let val = self.regs.r[src1 as usize].wrapping_mul(self.regs.r[src2 as usize]);
+                new_r[dst as usize] = Some(val);
+            }
+            DecodedInsn::ShiftImm {
+                dst,
+                src,
+                kind,
+                amount,
+            } => {
+                let val = self.regs.r[src as usize];
+                let shamt = (amount & 0x1f) as u32;
+                let result = match kind {
+                    ShiftKind::Lsl => val.wrapping_shl(shamt),
+                    ShiftKind::Lsr => val.wrapping_shr(shamt),
+                    ShiftKind::Asr => ((val as i32) >> shamt) as u32,
+                };
+                new_r[dst as usize] = Some(result);
+            }
+            DecodedInsn::ShiftReg {
+                dst,
+                src,
+                amt,
+                kind,
+            } => {
+                let val = self.regs.r[src as usize];
+                let shamt = (self.regs.r[amt as usize] & 0x1f) as u32;
+                let result = match kind {
+                    ShiftKind::Lsl => val.wrapping_shl(shamt),
+                    ShiftKind::Lsr => val.wrapping_shr(shamt),
+                    ShiftKind::Asr => ((val as i32) >> shamt) as u32,
+                };
+                new_r[dst as usize] = Some(result);
+            }
+            DecodedInsn::TfrCrR { dst, src } => {
+                new_r[dst as usize] = Some(self.regs.control(src as usize));
+            }
+            DecodedInsn::TfrRrCr { dst, src } => {
+                let val = self.regs.r[src as usize];
+                self.regs.set_control(dst as usize, val);
+            }
+            DecodedInsn::LoopStartReg {
+                loop_id,
+                start_offset,
+                count_reg,
+            } => {
+                let count = self.regs.r[count_reg as usize];
+                if loop_id == 0 {
+                    self.regs.c[0] = packet_pc.wrapping_add(start_offset as u32) & !0x3;
+                    self.regs.c[1] = count;
+                } else {
+                    self.regs.c[2] = packet_pc.wrapping_add(start_offset as u32) & !0x3;
+                    self.regs.c[3] = count;
                 }
             }
-
-            pc = pc.wrapping_add(4);
-            inst_index += 1;
-            if parse == 0x3 {
-                break;
+            DecodedInsn::LoopStartImm {
+                loop_id,
+                start_offset,
+                count,
+            } => {
+                if loop_id == 0 {
+                    self.regs.c[0] = packet_pc.wrapping_add(start_offset as u32) & !0x3;
+                    self.regs.c[1] = count;
+                } else {
+                    self.regs.c[2] = packet_pc.wrapping_add(start_offset as u32) & !0x3;
+                    self.regs.c[3] = count;
+                }
+            }
+            DecodedInsn::Trap0 => {
+                return Ok(Some(VcpuExit::Shutdown));
+            }
+            DecodedInsn::Unknown(word) => {
+                return Err(Error::Emulator(format!(
+                    "unknown hexagon instruction 0x{word:08x}"
+                )));
             }
         }
 
+        Ok(None)
+    }
+
+    fn finish_packet(
+        &mut self,
+        pc: u32,
+        packet_pc: u32,
+        new_r: [Option<u32>; 32],
+        new_p: [Option<bool>; 4],
+        branch: Option<BranchTarget>,
+        first_parse: Option<u32>,
+        second_parse: Option<u32>,
+    ) {
         self.commit_packet(&new_r, &new_p);
         let packet_end = pc;
 
@@ -602,7 +836,286 @@ impl HexagonVcpu {
         } else {
             self.set_pc(packet_end);
         }
+    }
 
+    fn save_packet_state(
+        &mut self,
+        packet_pc: u32,
+        pc: u32,
+        immext: Option<u32>,
+        new_r: [Option<u32>; 32],
+        new_p: [Option<bool>; 4],
+        branch: Option<BranchTarget>,
+        inst_index: usize,
+        first_parse: Option<u32>,
+        second_parse: Option<u32>,
+        pending_subinsn: Option<DecodedSub>,
+        pending_end: bool,
+    ) {
+        self.pending_packet = Some(PacketState {
+            packet_pc,
+            pc,
+            immext,
+            new_r,
+            new_p,
+            branch,
+            inst_index,
+            first_parse,
+            second_parse,
+            pending_subinsn,
+            pending_end,
+        });
+        self.set_pc(pc);
+    }
+
+    fn step_packet(&mut self) -> Result<Option<VcpuExit>> {
+        let mut state = self
+            .pending_packet
+            .take()
+            .unwrap_or_else(|| PacketState::new(self.regs.pc()));
+
+        let mut pc = state.pc;
+        let packet_pc = state.packet_pc;
+        let mut immext = state.immext;
+        let mut new_r = state.new_r;
+        let mut new_p = state.new_p;
+        let mut branch = state.branch;
+        let mut inst_index = state.inst_index;
+        let mut first_parse = state.first_parse;
+        let mut second_parse = state.second_parse;
+        let mut pending_subinsn = state.pending_subinsn;
+        let mut pending_end = state.pending_end;
+
+        loop {
+            if let Some(sub) = pending_subinsn.take() {
+                if let Some(exit) = self.execute_insn(
+                    sub.insn,
+                    packet_pc,
+                    &mut new_r,
+                    &mut new_p,
+                    &mut branch,
+                )?
+                {
+                    if matches!(exit, VcpuExit::Shutdown) {
+                        self.finish_packet(
+                            pc,
+                            packet_pc,
+                            new_r,
+                            new_p,
+                            branch,
+                            first_parse,
+                            second_parse,
+                        );
+                        return Ok(Some(exit));
+                    }
+
+                    self.save_packet_state(
+                        packet_pc,
+                        pc,
+                        immext,
+                        new_r,
+                        new_p,
+                        branch,
+                        inst_index,
+                        first_parse,
+                        second_parse,
+                        None,
+                        pending_end,
+                    );
+                    return Ok(Some(exit));
+                }
+
+                if pending_end {
+                    self.finish_packet(
+                        pc,
+                        packet_pc,
+                        new_r,
+                        new_p,
+                        branch,
+                        first_parse,
+                        second_parse,
+                    );
+                    return Ok(None);
+                }
+
+                continue;
+            }
+
+            let word = self.fetch_word(pc)?;
+            let parse = (word >> 14) & 0x3;
+
+            if inst_index == 0 {
+                first_parse = Some(parse);
+            } else if inst_index == 1 {
+                second_parse = Some(parse);
+            }
+            inst_index += 1;
+
+            if parse == 0 {
+                let (slot1, slot0) = decode_duplex(word, self._isa).ok_or_else(|| {
+                    Error::Emulator(format!(
+                        "unknown duplex instruction 0x{word:08x} at pc=0x{pc:08x}"
+                    ))
+                })?;
+                self.ensure_isa_supports(word, &slot1.insn, slot1.opcode)?;
+                self.ensure_isa_supports(word, &slot0.insn, slot0.opcode)?;
+
+                if let Some(exit) = self.execute_insn(
+                    slot1.insn,
+                    packet_pc,
+                    &mut new_r,
+                    &mut new_p,
+                    &mut branch,
+                )? {
+                    if matches!(exit, VcpuExit::Shutdown) {
+                        self.finish_packet(
+                            pc.wrapping_add(4),
+                            packet_pc,
+                            new_r,
+                            new_p,
+                            branch,
+                            first_parse,
+                            second_parse,
+                        );
+                        return Ok(Some(exit));
+                    }
+
+                    pc = pc.wrapping_add(4);
+                    pending_end = true;
+                    pending_subinsn = Some(slot0);
+                    self.save_packet_state(
+                        packet_pc,
+                        pc,
+                        immext,
+                        new_r,
+                        new_p,
+                        branch,
+                        inst_index,
+                        first_parse,
+                        second_parse,
+                        pending_subinsn,
+                        pending_end,
+                    );
+                    return Ok(Some(exit));
+                }
+
+                if let Some(exit) = self.execute_insn(
+                    slot0.insn,
+                    packet_pc,
+                    &mut new_r,
+                    &mut new_p,
+                    &mut branch,
+                )? {
+                    if matches!(exit, VcpuExit::Shutdown) {
+                        self.finish_packet(
+                            pc.wrapping_add(4),
+                            packet_pc,
+                            new_r,
+                            new_p,
+                            branch,
+                            first_parse,
+                            second_parse,
+                        );
+                        return Ok(Some(exit));
+                    }
+
+                    pc = pc.wrapping_add(4);
+                    pending_end = true;
+                    self.save_packet_state(
+                        packet_pc,
+                        pc,
+                        immext,
+                        new_r,
+                        new_p,
+                        branch,
+                        inst_index,
+                        first_parse,
+                        second_parse,
+                        None,
+                        pending_end,
+                    );
+                    return Ok(Some(exit));
+                }
+
+                pc = pc.wrapping_add(4);
+                pending_end = true;
+                break;
+            }
+
+            let decoded = decode(word, immext, self._isa);
+            immext = None;
+            self.ensure_isa_supports(word, &decoded.insn, decoded.opcode)?;
+
+            match decoded.insn {
+                DecodedInsn::ImmExt { value } => {
+                    immext = Some(value);
+                    pc = pc.wrapping_add(4);
+                    if parse == 0x3 {
+                        self.finish_packet(
+                            pc,
+                            packet_pc,
+                            new_r,
+                            new_p,
+                            branch,
+                            first_parse,
+                            second_parse,
+                        );
+                        return Ok(None);
+                    }
+                    continue;
+                }
+                insn => {
+                    if let Some(exit) =
+                        self.execute_insn(insn, packet_pc, &mut new_r, &mut new_p, &mut branch)?
+                    {
+                        if matches!(exit, VcpuExit::Shutdown) {
+                            self.finish_packet(
+                                pc.wrapping_add(4),
+                                packet_pc,
+                                new_r,
+                                new_p,
+                                branch,
+                                first_parse,
+                                second_parse,
+                            );
+                            return Ok(Some(exit));
+                        }
+
+                        pc = pc.wrapping_add(4);
+                        pending_end = parse == 0x3;
+                        self.save_packet_state(
+                            packet_pc,
+                            pc,
+                            immext,
+                            new_r,
+                            new_p,
+                            branch,
+                            inst_index,
+                            first_parse,
+                            second_parse,
+                            None,
+                            pending_end,
+                        );
+                        return Ok(Some(exit));
+                    }
+                }
+            }
+
+            pc = pc.wrapping_add(4);
+            if parse == 0x3 {
+                break;
+            }
+        }
+
+        self.finish_packet(
+            pc,
+            packet_pc,
+            new_r,
+            new_p,
+            branch,
+            first_parse,
+            second_parse,
+        );
         Ok(None)
     }
 }
@@ -676,7 +1189,12 @@ impl VCpu for HexagonVcpu {
                 },
                 _ => return,
             };
-            self.regs.r[pending.dst as usize] = val;
+
+            if let Some(packet) = self.pending_packet.as_mut() {
+                packet.new_r[pending.dst as usize] = Some(val);
+            } else {
+                self.regs.r[pending.dst as usize] = val;
+            }
         }
     }
 
