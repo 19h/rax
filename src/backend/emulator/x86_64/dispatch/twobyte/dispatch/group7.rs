@@ -330,6 +330,11 @@ impl X86_64Vcpu {
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
+                6 => {
+                    // CLWB - treat as NOP
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
                 7 => {
                     // CLFLUSH/CLFLUSHOPT - treat as NOP
                     self.regs.rip += ctx.cursor as u64;

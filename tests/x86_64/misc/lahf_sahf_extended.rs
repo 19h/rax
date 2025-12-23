@@ -200,8 +200,7 @@ fn test_sahf_basic() {
 #[test]
 fn test_sahf_set_carry() {
     let code = [
-        0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 0x01 (CF bit set in AL)
-        0x9e, // SAHF (loads from AH, which is 0)
+        0x9e, // SAHF (loads from AH)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -411,8 +410,8 @@ fn test_sahf_multiple_times() {
 fn test_lahf_sahf_complex_flags() {
     let code = [
         // Set complex flag state
-        0x48, 0xc7, 0xc0, 0x7f, 0x00, 0x00, 0x00, // MOV RAX, 0x7F
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (sets PF, AF; may set ZF, clears SF)
+        0x48, 0xc7, 0xc0, 0x5f, 0x00, 0x00, 0x00, // MOV RAX, 0x5F
+        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (sets PF and AF)
         0x9f, // LAHF
         0x48, 0x89, 0xc3, // MOV RBX, RAX (save AH)
         // Clear flags

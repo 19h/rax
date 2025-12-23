@@ -733,11 +733,11 @@ fn test_cldemote_loop_pattern() {
 fn test_cldemote_all_extended_registers() {
     // Test CLDEMOTE with all extended registers R8-R15
     for reg_offset in 0..8 {
-        let modrm = reg_offset;
-        let code = [
-            0x41, 0x0f, 0x1c, modrm, // CLDEMOTE [r8-r15]
-            0xf4,
-        ];
+        let code = match reg_offset {
+            4 => vec![0x41, 0x0f, 0x1c, 0x04, 0x24, 0xf4], // CLDEMOTE [r12] (SIB required)
+            5 => vec![0x41, 0x0f, 0x1c, 0x45, 0x00, 0xf4], // CLDEMOTE [r13+0] (disp8 required)
+            _ => vec![0x41, 0x0f, 0x1c, reg_offset, 0xf4], // CLDEMOTE [r8-r15]
+        };
         let mut regs = Registers::default();
         let addr = 0x8000 + (reg_offset as u64 * 0x100);
         match reg_offset {

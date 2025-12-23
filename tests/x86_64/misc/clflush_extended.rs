@@ -138,11 +138,11 @@ fn test_clflush_complex_sib_with_displacement() {
 fn test_clflush_with_r8_r15_bases() {
     // Test CLFLUSH with extended registers R8-R15 as base
     for reg_offset in 0..8 {
-        let modrm = 0x38 | reg_offset;
-        let code = [
-            0x41, 0x0f, 0xae, modrm, // CLFLUSH [r8-r15]
-            0xf4,
-        ];
+        let code = match reg_offset {
+            4 => vec![0x41, 0x0f, 0xae, 0x3c, 0x24, 0xf4], // CLFLUSH [r12] (SIB required)
+            5 => vec![0x41, 0x0f, 0xae, 0x7d, 0x00, 0xf4], // CLFLUSH [r13+0] (disp8 required)
+            _ => vec![0x41, 0x0f, 0xae, 0x38 | reg_offset, 0xf4], // CLFLUSH [r8-r15]
+        };
         let mut regs = Registers::default();
         let addr = 0x8000 + (reg_offset as u64 * 0x100);
         match reg_offset {
@@ -547,7 +547,7 @@ fn test_clflush_preserves_all_gpr() {
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rax = 0x1111111111111111;
+    regs.rax = 0x2000;
     regs.rbx = 0x2222222222222222;
     regs.rcx = 0x3333333333333333;
     regs.rdx = 0x4444444444444444;
@@ -564,11 +564,11 @@ fn test_clflush_preserves_all_gpr() {
     regs.r15 = 0xFFFFFFFFFFFFFFFF;
 
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
-    write_mem_at_u8(&mem, 0x1111111111111111, 0xFF);
+    write_mem_at_u8(&mem, 0x2000, 0xFF);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x1111111111111111);
+    assert_eq!(regs.rax, 0x2000);
     assert_eq!(regs.rbx, 0x2222222222222222);
     assert_eq!(regs.rcx, 0x3333333333333333);
     assert_eq!(regs.rdx, 0x4444444444444444);

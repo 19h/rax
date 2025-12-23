@@ -1,6 +1,7 @@
 //! System instructions: CPUID, RDMSR, WRMSR, LGDT, LIDT, CLI, STI, etc.
 
 mod control_regs;
+mod cache;
 mod cpuid;
 mod descriptor;
 mod fence;
@@ -13,6 +14,7 @@ mod timing;
 
 // Re-export all instruction functions
 pub use control_regs::*;
+pub use cache::*;
 pub use cpuid::*;
 pub use descriptor::*;
 pub use fence::*;

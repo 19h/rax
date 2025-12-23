@@ -19,7 +19,7 @@ fn test_aam_basic_base_10() {
         0xD4, 0x0A,       // AAM (AH = 15 / 10 = 1, AL = 15 % 10 = 5)
         0xF4,             // HLT
     ];
-    let mut cpu = create_test_cpu(code);
+    let mut cpu = create_test_cpu_compat(code);
 
     run_test(&mut cpu);
 
@@ -35,7 +35,7 @@ fn test_aam_value_99() {
         0xD4, 0x0A,       // AAM
         0xF4,             // HLT
     ];
-    let mut cpu = create_test_cpu(code);
+    let mut cpu = create_test_cpu_compat(code);
 
     run_test(&mut cpu);
 
@@ -51,7 +51,7 @@ fn test_aam_base_8_octal() {
         0xD4, 0x08,       // AAM 8 (AH = 63 / 8 = 7, AL = 63 % 8 = 7)
         0xF4,             // HLT
     ];
-    let mut cpu = create_test_cpu(code);
+    let mut cpu = create_test_cpu_compat(code);
 
     run_test(&mut cpu);
 
@@ -67,7 +67,7 @@ fn test_aam_base_16_hex() {
         0xD4, 0x10,       // AAM 16 (AH = 255 / 16 = 15, AL = 255 % 16 = 15)
         0xF4,             // HLT
     ];
-    let mut cpu = create_test_cpu(code);
+    let mut cpu = create_test_cpu_compat(code);
 
     run_test(&mut cpu);
 
@@ -83,7 +83,7 @@ fn test_aam_base_2_binary() {
         0xD4, 0x02,       // AAM 2 (AH = 5 / 2 = 2, AL = 5 % 2 = 1)
         0xF4,             // HLT
     ];
-    let mut cpu = create_test_cpu(code);
+    let mut cpu = create_test_cpu_compat(code);
 
     run_test(&mut cpu);
 
@@ -104,7 +104,7 @@ fn test_aad_basic_base_10() {
         0xD5, 0x0A,       // AAD (AL = 3 * 10 + 5 = 35, AH = 0)
         0xF4,             // HLT
     ];
-    let mut cpu = create_test_cpu(code);
+    let mut cpu = create_test_cpu_compat(code);
 
     run_test(&mut cpu);
 
@@ -121,7 +121,7 @@ fn test_aad_max_bcd() {
         0xD5, 0x0A,       // AAD
         0xF4,             // HLT
     ];
-    let mut cpu = create_test_cpu(code);
+    let mut cpu = create_test_cpu_compat(code);
 
     run_test(&mut cpu);
 
@@ -138,7 +138,7 @@ fn test_aad_base_8_octal() {
         0xD5, 0x08,       // AAD 8 (AL = 6 * 8 + 7 = 55)
         0xF4,             // HLT
     ];
-    let mut cpu = create_test_cpu(code);
+    let mut cpu = create_test_cpu_compat(code);
 
     run_test(&mut cpu);
 
@@ -155,7 +155,7 @@ fn test_aad_base_16_hex() {
         0xD5, 0x10,       // AAD 16 (AL = 10 * 16 + 15 = 175)
         0xF4,             // HLT
     ];
-    let mut cpu = create_test_cpu(code);
+    let mut cpu = create_test_cpu_compat(code);
 
     run_test(&mut cpu);
 
@@ -172,7 +172,7 @@ fn test_aam_aad_roundtrip() {
         0xD5, 0x0A,       // AAD (AL=66)
         0xF4,             // HLT
     ];
-    let mut cpu = create_test_cpu(code);
+    let mut cpu = create_test_cpu_compat(code);
 
     run_test(&mut cpu);
 
@@ -188,7 +188,7 @@ fn test_aam_aad_custom_base_roundtrip() {
         0xD5, 0x07,       // AAD 7 (AL=55)
         0xF4,             // HLT
     ];
-    let mut cpu = create_test_cpu(code);
+    let mut cpu = create_test_cpu_compat(code);
 
     run_test(&mut cpu);
 
