@@ -17,7 +17,7 @@ fn test_far_call_immediate_16_16_basic() {
         0xf4, // HLT (should not execute immediately)
         // Target code at 0x2000
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     // Write HLT at target address 0x2000
     let target_code = [0xf4]; // HLT
@@ -25,7 +25,7 @@ fn test_far_call_immediate_16_16_basic() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Should have performed far call
-    assert_eq!(regs.rip, 0x2000);
+    assert_eq!(regs.rip, 0x2001);
 }
 
 #[test]
@@ -35,13 +35,13 @@ fn test_far_call_immediate_16_32_basic() {
         0x66, 0x9a, 0x00, 0x30, 0x00, 0x00, 0x08, 0x00, // CALL 0x0008:0x00003000
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [0xf4];
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x3000);
+    assert_eq!(regs.rip, 0x3001);
 }
 
 #[test]
@@ -52,7 +52,7 @@ fn test_far_call_saves_return_address() {
         0x9a, 0x00, 0x20, 0x08, 0x00, // CALL 0x0008:0x2000
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     // At target, check stack and return
     let target_code = [
@@ -63,7 +63,7 @@ fn test_far_call_saves_return_address() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 1);
-    assert_eq!(regs.rip, 0x2000);
+    assert_eq!(regs.rip, 0x2001);
 }
 
 // ============================================================================

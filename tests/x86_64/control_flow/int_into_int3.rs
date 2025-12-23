@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{run_until_hlt, setup_vm, setup_vm_compat};
 use rax::cpu::Registers;
 
 // Comprehensive tests for INT, INTO, INT3 instructions (software interrupts)
@@ -253,31 +253,33 @@ fn test_int_stack_alignment() {
 #[test]
 fn test_into_overflow_flag_clear() {
     // INTO when OF=0 should not interrupt
+    // INTO is only valid in 32-bit/compatibility mode
     let code = [
-        0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (no overflow, OF=0)
+        0x66, 0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1
+        0x66, 0x83, 0xc0, 0x01, // ADD EAX, 1 (no overflow, OF=0)
         0xce, // INTO (should not trigger)
-        0x48, 0xc7, 0xc3, 0x42, 0x00, 0x00, 0x00, // MOV RBX, 0x42
+        0x66, 0xbb, 0x42, 0x00, 0x00, 0x00, // MOV EBX, 0x42
         0xf4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 2);
-    assert_eq!(regs.rbx, 0x42); // Execution continued
+    assert_eq!(regs.rax & 0xFFFFFFFF, 2);
+    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x42); // Execution continued
 }
 
 #[test]
 fn test_into_overflow_flag_set() {
     // INTO when OF=1 should trigger interrupt 4
+    // INTO is only valid in 32-bit/compatibility mode
     let code = [
-        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0x7f, // MOV RAX, 0x7FFFFFFF (max positive)
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (overflow, OF=1)
+        0x66, 0xb8, 0xff, 0xff, 0xff, 0x7f, // MOV EAX, 0x7FFFFFFF (max positive 32-bit)
+        0x66, 0x83, 0xc0, 0x01, // ADD EAX, 1 (overflow, OF=1)
         0xce, // INTO (should trigger INT 4)
-        0x48, 0xc7, 0xc3, 0x99, 0x00, 0x00, 0x00, // MOV RBX, 0x99
+        0x66, 0xbb, 0x99, 0x00, 0x00, 0x00, // MOV EBX, 0x99
         0xf4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Behavior depends on interrupt handler
@@ -286,47 +288,50 @@ fn test_into_overflow_flag_set() {
 
 #[test]
 fn test_into_after_addition_no_overflow() {
+    // INTO is only valid in 32-bit/compatibility mode
     let code = [
-        0xb8, 0x10, 0x00, 0x00, 0x00, // MOV EAX, 16
-        0x83, 0xc0, 0x10, // ADD EAX, 16 (no overflow)
+        0x66, 0xb8, 0x10, 0x00, 0x00, 0x00, // MOV EAX, 16
+        0x66, 0x83, 0xc0, 0x10, // ADD EAX, 16 (no overflow)
         0xce, // INTO
-        0x48, 0xc7, 0xc1, 0xaa, 0x00, 0x00, 0x00, // MOV RCX, 0xAA
+        0x66, 0xb9, 0xaa, 0x00, 0x00, 0x00, // MOV ECX, 0xAA
         0xf4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFFFFFFFF, 32);
-    assert_eq!(regs.rcx, 0xaa);
+    assert_eq!(regs.rcx & 0xFFFFFFFF, 0xaa);
 }
 
 #[test]
 fn test_into_after_subtraction_no_overflow() {
+    // INTO is only valid in 32-bit/compatibility mode
     let code = [
-        0xb8, 0x20, 0x00, 0x00, 0x00, // MOV EAX, 32
-        0x83, 0xe8, 0x10, // SUB EAX, 16 (no overflow)
+        0x66, 0xb8, 0x20, 0x00, 0x00, 0x00, // MOV EAX, 32
+        0x66, 0x83, 0xe8, 0x10, // SUB EAX, 16 (no overflow)
         0xce, // INTO
-        0x48, 0xc7, 0xc2, 0xbb, 0x00, 0x00, 0x00, // MOV RDX, 0xBB
+        0x66, 0xba, 0xbb, 0x00, 0x00, 0x00, // MOV EDX, 0xBB
         0xf4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFFFFFFFF, 16);
-    assert_eq!(regs.rdx, 0xbb);
+    assert_eq!(regs.rdx & 0xFFFFFFFF, 0xbb);
 }
 
 #[test]
 fn test_into_after_signed_overflow() {
     // Signed overflow: adding two large positive numbers
+    // INTO is only valid in 32-bit/compatibility mode
     let code = [
-        0xb8, 0x00, 0x00, 0x00, 0x40, // MOV EAX, 0x40000000
-        0x05, 0x00, 0x00, 0x00, 0x40, // ADD EAX, 0x40000000 (overflow in signed)
+        0x66, 0xb8, 0x00, 0x00, 0x00, 0x40, // MOV EAX, 0x40000000
+        0x66, 0x05, 0x00, 0x00, 0x00, 0x40, // ADD EAX, 0x40000000 (overflow in signed)
         0xce, // INTO
-        0x48, 0xc7, 0xc3, 0xcc, 0x00, 0x00, 0x00, // MOV RBX, 0xCC
+        0x66, 0xbb, 0xcc, 0x00, 0x00, 0x00, // MOV EBX, 0xCC
         0xf4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // May trigger interrupt 4 if OF set
@@ -335,14 +340,15 @@ fn test_into_after_signed_overflow() {
 #[test]
 fn test_into_after_multiplication_overflow() {
     // Multiplication that causes overflow
+    // INTO is only valid in 32-bit/compatibility mode
     let code = [
-        0xb8, 0x00, 0x00, 0x00, 0x80, // MOV EAX, 0x80000000
-        0xf7, 0xe8, // IMUL EAX (EAX * EAX, likely overflow)
+        0x66, 0xb8, 0x00, 0x00, 0x00, 0x80, // MOV EAX, 0x80000000
+        0x66, 0xf7, 0xe8, // IMUL EAX (EAX * EAX, likely overflow)
         0xce, // INTO
-        0x48, 0xc7, 0xc3, 0xdd, 0x00, 0x00, 0x00, // MOV RBX, 0xDD
+        0x66, 0xbb, 0xdd, 0x00, 0x00, 0x00, // MOV EBX, 0xDD
         0xf4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Behavior depends on OF flag state
@@ -596,7 +602,7 @@ fn test_int_same_vector_repeated() {
 
 #[test]
 fn test_into_invalid_in_64bit_mode() {
-    // INTO is invalid in 64-bit mode
+    // INTO is invalid in 64-bit mode - should generate #UD
     let code = [
         0xce, // INTO (invalid in 64-bit)
         0x48, 0xc7, 0xc0, 0xff, 0x00, 0x00, 0x00, // MOV RAX, 0xFF
@@ -604,9 +610,11 @@ fn test_into_invalid_in_64bit_mode() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    // Should either fault or skip
-    assert_eq!(regs.rax, 0xff);
+    // INTO in 64-bit mode should return an error
+    let result = run_until_hlt(&mut vcpu);
+    assert!(result.is_err());
+    let err_msg = result.unwrap_err().to_string();
+    assert!(err_msg.contains("INTO") && err_msg.contains("64-bit"));
 }
 
 // ============================================================================
