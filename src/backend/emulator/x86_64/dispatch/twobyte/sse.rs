@@ -920,6 +920,698 @@ impl X86_64Vcpu {
             _ => false,
         }
     }
+
+    /// MOVNTPS/MOVNTPD - Store packed with non-temporal hint (0x0F 0x2B)
+    pub(in crate::backend::emulator::x86_64) fn execute_movnt_store(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        if !is_memory {
+            return Err(Error::Emulator("MOVNTPS/MOVNTPD requires memory destination".to_string()));
+        }
+        let xmm_src = reg as usize;
+        // Non-temporal hint is ignored in emulator - just store normally
+        self.write_mem(addr, self.regs.xmm[xmm_src][0], 8)?;
+        self.write_mem(addr + 8, self.regs.xmm[xmm_src][1], 8)?;
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// COMISS/COMISD - Compare scalar and set EFLAGS (0x0F 0x2F)
+    pub(in crate::backend::emulator::x86_64) fn execute_comiss(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+
+        // Clear OF, SF, AF flags; set ZF, PF, CF based on comparison
+        self.regs.rflags &= !(flags::bits::OF | flags::bits::SF | flags::bits::AF);
+
+        if ctx.operand_size_override {
+            // COMISD - compare scalar double
+            let src = if is_memory {
+                f64::from_bits(self.read_mem(addr, 8)?)
+            } else {
+                f64::from_bits(self.regs.xmm[rm as usize][0])
+            };
+            let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
+
+            if dst.is_nan() || src.is_nan() {
+                // Unordered: ZF=1, PF=1, CF=1
+                self.regs.rflags |= flags::bits::ZF | flags::bits::PF | flags::bits::CF;
+            } else if dst > src {
+                // Greater: ZF=0, PF=0, CF=0
+                self.regs.rflags &= !(flags::bits::ZF | flags::bits::PF | flags::bits::CF);
+            } else if dst < src {
+                // Less: ZF=0, PF=0, CF=1
+                self.regs.rflags &= !(flags::bits::ZF | flags::bits::PF);
+                self.regs.rflags |= flags::bits::CF;
+            } else {
+                // Equal: ZF=1, PF=0, CF=0
+                self.regs.rflags &= !(flags::bits::PF | flags::bits::CF);
+                self.regs.rflags |= flags::bits::ZF;
+            }
+        } else {
+            // COMISS - compare scalar single
+            let src = if is_memory {
+                f32::from_bits(self.read_mem(addr, 4)? as u32)
+            } else {
+                f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
+            };
+            let dst = f32::from_bits(self.regs.xmm[xmm_dst][0] as u32);
+
+            if dst.is_nan() || src.is_nan() {
+                self.regs.rflags |= flags::bits::ZF | flags::bits::PF | flags::bits::CF;
+            } else if dst > src {
+                self.regs.rflags &= !(flags::bits::ZF | flags::bits::PF | flags::bits::CF);
+            } else if dst < src {
+                self.regs.rflags &= !(flags::bits::ZF | flags::bits::PF);
+                self.regs.rflags |= flags::bits::CF;
+            } else {
+                self.regs.rflags &= !(flags::bits::PF | flags::bits::CF);
+                self.regs.rflags |= flags::bits::ZF;
+            }
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// MOVMSKPS/MOVMSKPD - Extract sign bits (0x0F 0x50)
+    pub(in crate::backend::emulator::x86_64) fn execute_movmsk(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, _addr, _) = self.decode_modrm(ctx)?;
+        if is_memory {
+            return Err(Error::Emulator("MOVMSKPS/MOVMSKPD requires register source".to_string()));
+        }
+        let xmm_src = rm as usize;
+
+        let result = if ctx.operand_size_override {
+            // MOVMSKPD - extract from 2 doubles
+            let b0 = ((self.regs.xmm[xmm_src][0] >> 63) & 1) as u32;
+            let b1 = ((self.regs.xmm[xmm_src][1] >> 63) & 1) as u32;
+            b0 | (b1 << 1)
+        } else {
+            // MOVMSKPS - extract from 4 singles
+            let lo = self.regs.xmm[xmm_src][0];
+            let hi = self.regs.xmm[xmm_src][1];
+            let b0 = ((lo >> 31) & 1) as u32;
+            let b1 = ((lo >> 63) & 1) as u32;
+            let b2 = ((hi >> 31) & 1) as u32;
+            let b3 = ((hi >> 63) & 1) as u32;
+            b0 | (b1 << 1) | (b2 << 2) | (b3 << 3)
+        };
+
+        // Store in GPR (zero-extend to 32 or 64 bits)
+        let dest_size = if ctx.rex_w() { 8 } else { 4 };
+        self.set_reg(reg, result as u64, dest_size);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SHUFPS/SHUFPD - Shuffle packed (0x0F 0xC6)
+    pub(in crate::backend::emulator::x86_64) fn execute_shufps(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let xmm_dst = reg as usize;
+
+        if ctx.operand_size_override {
+            // SHUFPD - shuffle 2 doubles
+            // dst[63:0] = select from dst based on imm8[0]
+            // dst[127:64] = select from src based on imm8[1]
+            let (src_lo, src_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            let dst_lo = self.regs.xmm[xmm_dst][0];
+            let dst_hi = self.regs.xmm[xmm_dst][1];
+
+            let r0 = if (imm8 & 1) == 0 { dst_lo } else { dst_hi };
+            let r1 = if (imm8 & 2) == 0 { src_lo } else { src_hi };
+            self.regs.xmm[xmm_dst][0] = r0;
+            self.regs.xmm[xmm_dst][1] = r1;
+        } else {
+            // SHUFPS - shuffle 4 singles
+            // dst[31:0] = dst[(imm8[1:0])*32 +31 : (imm8[1:0])*32]
+            // dst[63:32] = dst[(imm8[3:2])*32 +31 : (imm8[3:2])*32]
+            // dst[95:64] = src[(imm8[5:4])*32 +31 : (imm8[5:4])*32]
+            // dst[127:96] = src[(imm8[7:6])*32 +31 : (imm8[7:6])*32]
+            let (src_lo, src_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            let dst_lo = self.regs.xmm[xmm_dst][0];
+            let dst_hi = self.regs.xmm[xmm_dst][1];
+
+            // Combine into arrays for easier indexing
+            let dst_dwords: [u32; 4] = [
+                dst_lo as u32,
+                (dst_lo >> 32) as u32,
+                dst_hi as u32,
+                (dst_hi >> 32) as u32,
+            ];
+            let src_dwords: [u32; 4] = [
+                src_lo as u32,
+                (src_lo >> 32) as u32,
+                src_hi as u32,
+                (src_hi >> 32) as u32,
+            ];
+
+            let r0 = dst_dwords[((imm8 >> 0) & 3) as usize];
+            let r1 = dst_dwords[((imm8 >> 2) & 3) as usize];
+            let r2 = src_dwords[((imm8 >> 4) & 3) as usize];
+            let r3 = src_dwords[((imm8 >> 6) & 3) as usize];
+
+            self.regs.xmm[xmm_dst][0] = (r0 as u64) | ((r1 as u64) << 32);
+            self.regs.xmm[xmm_dst][1] = (r2 as u64) | ((r3 as u64) << 32);
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// HADDPS/HADDPD - Horizontal add (0x0F 0x7C)
+    pub(in crate::backend::emulator::x86_64) fn execute_hadd(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+
+        if ctx.operand_size_override {
+            // HADDPD (66 0F 7C) - horizontal add packed double
+            // dst[63:0] = dst[63:0] + dst[127:64]
+            // dst[127:64] = src[63:0] + src[127:64]
+            let (src_lo, src_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            let dst_lo = self.regs.xmm[xmm_dst][0];
+            let dst_hi = self.regs.xmm[xmm_dst][1];
+
+            let r0 = f64::from_bits(dst_lo) + f64::from_bits(dst_hi);
+            let r1 = f64::from_bits(src_lo) + f64::from_bits(src_hi);
+            self.regs.xmm[xmm_dst][0] = r0.to_bits();
+            self.regs.xmm[xmm_dst][1] = r1.to_bits();
+        } else if ctx.rep_prefix == Some(0xF2) {
+            // HADDPS (F2 0F 7C) - horizontal add packed single
+            // dst[31:0] = dst[31:0] + dst[63:32]
+            // dst[63:32] = dst[95:64] + dst[127:96]
+            // dst[95:64] = src[31:0] + src[63:32]
+            // dst[127:96] = src[95:64] + src[127:96]
+            let (src_lo, src_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            let dst_lo = self.regs.xmm[xmm_dst][0];
+            let dst_hi = self.regs.xmm[xmm_dst][1];
+
+            let d0 = f32::from_bits(dst_lo as u32);
+            let d1 = f32::from_bits((dst_lo >> 32) as u32);
+            let d2 = f32::from_bits(dst_hi as u32);
+            let d3 = f32::from_bits((dst_hi >> 32) as u32);
+            let s0 = f32::from_bits(src_lo as u32);
+            let s1 = f32::from_bits((src_lo >> 32) as u32);
+            let s2 = f32::from_bits(src_hi as u32);
+            let s3 = f32::from_bits((src_hi >> 32) as u32);
+
+            let r0 = (d0 + d1).to_bits();
+            let r1 = (d2 + d3).to_bits();
+            let r2 = (s0 + s1).to_bits();
+            let r3 = (s2 + s3).to_bits();
+
+            self.regs.xmm[xmm_dst][0] = (r0 as u64) | ((r1 as u64) << 32);
+            self.regs.xmm[xmm_dst][1] = (r2 as u64) | ((r3 as u64) << 32);
+        } else {
+            return Err(Error::Emulator(format!(
+                "unimplemented 0x0F 0x7C opcode variant at RIP={:#x}",
+                self.regs.rip
+            )));
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// HSUBPS/HSUBPD - Horizontal subtract (0x0F 0x7D)
+    pub(in crate::backend::emulator::x86_64) fn execute_hsub(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+
+        if ctx.operand_size_override {
+            // HSUBPD (66 0F 7D) - horizontal subtract packed double
+            let (src_lo, src_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            let dst_lo = self.regs.xmm[xmm_dst][0];
+            let dst_hi = self.regs.xmm[xmm_dst][1];
+
+            let r0 = f64::from_bits(dst_lo) - f64::from_bits(dst_hi);
+            let r1 = f64::from_bits(src_lo) - f64::from_bits(src_hi);
+            self.regs.xmm[xmm_dst][0] = r0.to_bits();
+            self.regs.xmm[xmm_dst][1] = r1.to_bits();
+        } else if ctx.rep_prefix == Some(0xF2) {
+            // HSUBPS (F2 0F 7D) - horizontal subtract packed single
+            let (src_lo, src_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            let dst_lo = self.regs.xmm[xmm_dst][0];
+            let dst_hi = self.regs.xmm[xmm_dst][1];
+
+            let d0 = f32::from_bits(dst_lo as u32);
+            let d1 = f32::from_bits((dst_lo >> 32) as u32);
+            let d2 = f32::from_bits(dst_hi as u32);
+            let d3 = f32::from_bits((dst_hi >> 32) as u32);
+            let s0 = f32::from_bits(src_lo as u32);
+            let s1 = f32::from_bits((src_lo >> 32) as u32);
+            let s2 = f32::from_bits(src_hi as u32);
+            let s3 = f32::from_bits((src_hi >> 32) as u32);
+
+            let r0 = (d0 - d1).to_bits();
+            let r1 = (d2 - d3).to_bits();
+            let r2 = (s0 - s1).to_bits();
+            let r3 = (s2 - s3).to_bits();
+
+            self.regs.xmm[xmm_dst][0] = (r0 as u64) | ((r1 as u64) << 32);
+            self.regs.xmm[xmm_dst][1] = (r2 as u64) | ((r3 as u64) << 32);
+        } else {
+            return Err(Error::Emulator(format!(
+                "unimplemented 0x0F 0x7D opcode variant at RIP={:#x}",
+                self.regs.rip
+            )));
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+    /// SSE2/MMX shift immediate group 12 (0x0F 0x71)
+    /// PSRLW/PSRAW/PSLLW xmm, imm8
+    pub(in crate::backend::emulator::x86_64) fn execute_shift_imm_group12(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        let modrm = ctx.consume_u8()?;
+        let reg = (modrm >> 3) & 0x07; // operation type
+        let rm = modrm & 0x07;
+        let imm8 = ctx.consume_u8()?;
+
+        if ctx.operand_size_override {
+            let xmm = rm as usize;
+            let shift = imm8 as u32;
+
+            match reg {
+                2 => {
+                    // PSRLW - shift right logical words
+                    if shift >= 16 {
+                        self.regs.xmm[xmm][0] = 0;
+                        self.regs.xmm[xmm][1] = 0;
+                    } else {
+                        self.regs.xmm[xmm][0] = shift_right_words(self.regs.xmm[xmm][0], shift);
+                        self.regs.xmm[xmm][1] = shift_right_words(self.regs.xmm[xmm][1], shift);
+                    }
+                }
+                4 => {
+                    // PSRAW - shift right arithmetic words
+                    self.regs.xmm[xmm][0] = shift_right_arith_words(self.regs.xmm[xmm][0], shift);
+                    self.regs.xmm[xmm][1] = shift_right_arith_words(self.regs.xmm[xmm][1], shift);
+                }
+                6 => {
+                    // PSLLW - shift left logical words
+                    if shift >= 16 {
+                        self.regs.xmm[xmm][0] = 0;
+                        self.regs.xmm[xmm][1] = 0;
+                    } else {
+                        self.regs.xmm[xmm][0] = shift_left_words(self.regs.xmm[xmm][0], shift);
+                        self.regs.xmm[xmm][1] = shift_left_words(self.regs.xmm[xmm][1], shift);
+                    }
+                }
+                _ => {
+                    return Err(Error::Emulator(format!(
+                        "unimplemented 0x0F 0x71 /r{} at RIP={:#x}",
+                        reg, self.regs.rip
+                    )));
+                }
+            }
+        } else {
+            // MMX version
+            let mm = (rm & 0x7) as usize;
+            let shift = imm8 as u32;
+            match reg {
+                2 => {
+                    if shift >= 16 {
+                        self.regs.mm[mm] = 0;
+                    } else {
+                        self.regs.mm[mm] = shift_right_words(self.regs.mm[mm], shift);
+                    }
+                }
+                4 => {
+                    self.regs.mm[mm] = shift_right_arith_words(self.regs.mm[mm], shift);
+                }
+                6 => {
+                    if shift >= 16 {
+                        self.regs.mm[mm] = 0;
+                    } else {
+                        self.regs.mm[mm] = shift_left_words(self.regs.mm[mm], shift);
+                    }
+                }
+                _ => {
+                    return Err(Error::Emulator(format!(
+                        "unimplemented MMX 0x0F 0x71 /r{} at RIP={:#x}",
+                        reg, self.regs.rip
+                    )));
+                }
+            }
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SSE2/MMX shift immediate group 13 (0x0F 0x72)
+    /// PSRLD/PSRAD/PSLLD xmm, imm8
+    pub(in crate::backend::emulator::x86_64) fn execute_shift_imm_group13(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        let modrm = ctx.consume_u8()?;
+        let reg = (modrm >> 3) & 0x07;
+        let rm = modrm & 0x07;
+        let imm8 = ctx.consume_u8()?;
+
+        if ctx.operand_size_override {
+            let xmm = rm as usize;
+            let shift = imm8 as u32;
+
+            match reg {
+                2 => {
+                    // PSRLD
+                    if shift >= 32 {
+                        self.regs.xmm[xmm][0] = 0;
+                        self.regs.xmm[xmm][1] = 0;
+                    } else {
+                        self.regs.xmm[xmm][0] = shift_right_dwords(self.regs.xmm[xmm][0], shift);
+                        self.regs.xmm[xmm][1] = shift_right_dwords(self.regs.xmm[xmm][1], shift);
+                    }
+                }
+                4 => {
+                    // PSRAD
+                    self.regs.xmm[xmm][0] = shift_right_arith_dwords(self.regs.xmm[xmm][0], shift);
+                    self.regs.xmm[xmm][1] = shift_right_arith_dwords(self.regs.xmm[xmm][1], shift);
+                }
+                6 => {
+                    // PSLLD
+                    if shift >= 32 {
+                        self.regs.xmm[xmm][0] = 0;
+                        self.regs.xmm[xmm][1] = 0;
+                    } else {
+                        self.regs.xmm[xmm][0] = shift_left_dwords(self.regs.xmm[xmm][0], shift);
+                        self.regs.xmm[xmm][1] = shift_left_dwords(self.regs.xmm[xmm][1], shift);
+                    }
+                }
+                _ => {
+                    return Err(Error::Emulator(format!(
+                        "unimplemented 0x0F 0x72 /r{} at RIP={:#x}",
+                        reg, self.regs.rip
+                    )));
+                }
+            }
+        } else {
+            // MMX version
+            let mm = (rm & 0x7) as usize;
+            let shift = imm8 as u32;
+            match reg {
+                2 => {
+                    if shift >= 32 {
+                        self.regs.mm[mm] = 0;
+                    } else {
+                        self.regs.mm[mm] = shift_right_dwords(self.regs.mm[mm], shift);
+                    }
+                }
+                4 => {
+                    self.regs.mm[mm] = shift_right_arith_dwords(self.regs.mm[mm], shift);
+                }
+                6 => {
+                    if shift >= 32 {
+                        self.regs.mm[mm] = 0;
+                    } else {
+                        self.regs.mm[mm] = shift_left_dwords(self.regs.mm[mm], shift);
+                    }
+                }
+                _ => {
+                    return Err(Error::Emulator(format!(
+                        "unimplemented MMX 0x0F 0x72 /r{} at RIP={:#x}",
+                        reg, self.regs.rip
+                    )));
+                }
+            }
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SSE2 shift immediate group 14 (0x0F 0x73)
+    /// PSRLQ/PSRLDQ/PSLLQ/PSLLDQ xmm, imm8
+    pub(in crate::backend::emulator::x86_64) fn execute_shift_imm_group14(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        let modrm = ctx.consume_u8()?;
+        let reg = (modrm >> 3) & 0x07;
+        let rm = modrm & 0x07;
+        let imm8 = ctx.consume_u8()?;
+
+        if ctx.operand_size_override {
+            let xmm = rm as usize;
+            let shift = imm8 as u32;
+
+            match reg {
+                2 => {
+                    // PSRLQ
+                    if shift >= 64 {
+                        self.regs.xmm[xmm][0] = 0;
+                        self.regs.xmm[xmm][1] = 0;
+                    } else {
+                        self.regs.xmm[xmm][0] >>= shift;
+                        self.regs.xmm[xmm][1] >>= shift;
+                    }
+                }
+                3 => {
+                    // PSRLDQ - shift right bytes (whole 128-bit value)
+                    let shift_bytes = (imm8 as usize).min(16);
+                    let lo = self.regs.xmm[xmm][0];
+                    let hi = self.regs.xmm[xmm][1];
+                    if shift_bytes >= 16 {
+                        self.regs.xmm[xmm][0] = 0;
+                        self.regs.xmm[xmm][1] = 0;
+                    } else if shift_bytes >= 8 {
+                        self.regs.xmm[xmm][0] = hi >> ((shift_bytes - 8) * 8);
+                        self.regs.xmm[xmm][1] = 0;
+                    } else {
+                        let shift_bits = shift_bytes * 8;
+                        self.regs.xmm[xmm][0] = (lo >> shift_bits) | (hi << (64 - shift_bits));
+                        self.regs.xmm[xmm][1] = hi >> shift_bits;
+                    }
+                }
+                6 => {
+                    // PSLLQ
+                    if shift >= 64 {
+                        self.regs.xmm[xmm][0] = 0;
+                        self.regs.xmm[xmm][1] = 0;
+                    } else {
+                        self.regs.xmm[xmm][0] <<= shift;
+                        self.regs.xmm[xmm][1] <<= shift;
+                    }
+                }
+                7 => {
+                    // PSLLDQ - shift left bytes (whole 128-bit value)
+                    let shift_bytes = (imm8 as usize).min(16);
+                    let lo = self.regs.xmm[xmm][0];
+                    let hi = self.regs.xmm[xmm][1];
+                    if shift_bytes >= 16 {
+                        self.regs.xmm[xmm][0] = 0;
+                        self.regs.xmm[xmm][1] = 0;
+                    } else if shift_bytes >= 8 {
+                        self.regs.xmm[xmm][1] = lo << ((shift_bytes - 8) * 8);
+                        self.regs.xmm[xmm][0] = 0;
+                    } else {
+                        let shift_bits = shift_bytes * 8;
+                        self.regs.xmm[xmm][1] = (hi << shift_bits) | (lo >> (64 - shift_bits));
+                        self.regs.xmm[xmm][0] = lo << shift_bits;
+                    }
+                }
+                _ => {
+                    return Err(Error::Emulator(format!(
+                        "unimplemented 0x0F 0x73 /r{} at RIP={:#x}",
+                        reg, self.regs.rip
+                    )));
+                }
+            }
+        } else {
+            // MMX version (only PSRLQ/PSLLQ)
+            let mm = (rm & 0x7) as usize;
+            let shift = imm8 as u32;
+            match reg {
+                2 => {
+                    if shift >= 64 {
+                        self.regs.mm[mm] = 0;
+                    } else {
+                        self.regs.mm[mm] >>= shift;
+                    }
+                }
+                6 => {
+                    if shift >= 64 {
+                        self.regs.mm[mm] = 0;
+                    } else {
+                        self.regs.mm[mm] <<= shift;
+                    }
+                }
+                _ => {
+                    return Err(Error::Emulator(format!(
+                        "unimplemented MMX 0x0F 0x73 /r{} at RIP={:#x}",
+                        reg, self.regs.rip
+                    )));
+                }
+            }
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// ADDSUBPS/ADDSUBPD (0x0F 0xD0) - SSE3
+    pub(in crate::backend::emulator::x86_64) fn execute_addsubps(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+
+        if ctx.operand_size_override {
+            // ADDSUBPD (66 0F D0) - alternating sub/add on doubles
+            // dst[63:0] = dst[63:0] - src[63:0]
+            // dst[127:64] = dst[127:64] + src[127:64]
+            let (src_lo, src_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            let dst_lo = self.regs.xmm[xmm_dst][0];
+            let dst_hi = self.regs.xmm[xmm_dst][1];
+
+            let r0 = f64::from_bits(dst_lo) - f64::from_bits(src_lo);
+            let r1 = f64::from_bits(dst_hi) + f64::from_bits(src_hi);
+            self.regs.xmm[xmm_dst][0] = r0.to_bits();
+            self.regs.xmm[xmm_dst][1] = r1.to_bits();
+        } else if ctx.rep_prefix == Some(0xF2) {
+            // ADDSUBPS (F2 0F D0) - alternating sub/add on singles
+            // dst[31:0] = dst[31:0] - src[31:0]
+            // dst[63:32] = dst[63:32] + src[63:32]
+            // dst[95:64] = dst[95:64] - src[95:64]
+            // dst[127:96] = dst[127:96] + src[127:96]
+            let (src_lo, src_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            let dst_lo = self.regs.xmm[xmm_dst][0];
+            let dst_hi = self.regs.xmm[xmm_dst][1];
+
+            let d0 = f32::from_bits(dst_lo as u32);
+            let d1 = f32::from_bits((dst_lo >> 32) as u32);
+            let d2 = f32::from_bits(dst_hi as u32);
+            let d3 = f32::from_bits((dst_hi >> 32) as u32);
+            let s0 = f32::from_bits(src_lo as u32);
+            let s1 = f32::from_bits((src_lo >> 32) as u32);
+            let s2 = f32::from_bits(src_hi as u32);
+            let s3 = f32::from_bits((src_hi >> 32) as u32);
+
+            let r0 = (d0 - s0).to_bits();
+            let r1 = (d1 + s1).to_bits();
+            let r2 = (d2 - s2).to_bits();
+            let r3 = (d3 + s3).to_bits();
+
+            self.regs.xmm[xmm_dst][0] = (r0 as u64) | ((r1 as u64) << 32);
+            self.regs.xmm[xmm_dst][1] = (r2 as u64) | ((r3 as u64) << 32);
+        } else {
+            return Err(Error::Emulator(format!(
+                "unimplemented 0x0F 0xD0 opcode variant at RIP={:#x}",
+                self.regs.rip
+            )));
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+}
+
+// Shift helper functions
+fn shift_right_words(v: u64, shift: u32) -> u64 {
+    let mut result = 0u64;
+    for i in 0..4 {
+        let w = ((v >> (i * 16)) & 0xFFFF) as u16;
+        let shifted = w >> shift;
+        result |= (shifted as u64) << (i * 16);
+    }
+    result
+}
+
+fn shift_left_words(v: u64, shift: u32) -> u64 {
+    let mut result = 0u64;
+    for i in 0..4 {
+        let w = ((v >> (i * 16)) & 0xFFFF) as u16;
+        let shifted = w << shift;
+        result |= (shifted as u64) << (i * 16);
+    }
+    result
+}
+
+fn shift_right_arith_words(v: u64, shift: u32) -> u64 {
+    let mut result = 0u64;
+    let shift = shift.min(15);
+    for i in 0..4 {
+        let w = ((v >> (i * 16)) & 0xFFFF) as i16;
+        let shifted = (w >> shift) as u16;
+        result |= (shifted as u64) << (i * 16);
+    }
+    result
+}
+
+fn shift_right_dwords(v: u64, shift: u32) -> u64 {
+    let d0 = (v as u32) >> shift;
+    let d1 = ((v >> 32) as u32) >> shift;
+    (d0 as u64) | ((d1 as u64) << 32)
+}
+
+fn shift_left_dwords(v: u64, shift: u32) -> u64 {
+    let d0 = (v as u32) << shift;
+    let d1 = ((v >> 32) as u32) << shift;
+    (d0 as u64) | ((d1 as u64) << 32)
+}
+
+fn shift_right_arith_dwords(v: u64, shift: u32) -> u64 {
+    let shift = shift.min(31);
+    let d0 = ((v as u32) as i32 >> shift) as u32;
+    let d1 = (((v >> 32) as u32) as i32 >> shift) as u32;
+    (d0 as u64) | ((d1 as u64) << 32)
 }
 
 fn unpack_low_bytes(a: u64, b: u64) -> u64 {

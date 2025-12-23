@@ -56,9 +56,9 @@ impl X86_64Vcpu {
             let shift = i * elem_bits;
             let val = (v >> shift) & mask;
             let abs_val = match elem_bits {
-                8 => (val as i8).abs() as u8 as u64,
-                16 => (val as i16).abs() as u16 as u64,
-                32 => (val as i32).abs() as u32 as u64,
+                8 => (val as i8).wrapping_abs() as u8 as u64,
+                16 => (val as i16).wrapping_abs() as u16 as u64,
+                32 => (val as i32).wrapping_abs() as u32 as u64,
                 _ => val,
             };
             result |= (abs_val & mask) << shift;

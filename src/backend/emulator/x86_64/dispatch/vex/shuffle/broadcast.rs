@@ -26,7 +26,12 @@ impl X86_64Vcpu {
         let val = if is_memory {
             self.read_mem(addr, elem_size)?
         } else {
-            self.regs.xmm[rm as usize][0] & ((1u64 << (elem_size * 8)) - 1)
+            let src = self.regs.xmm[rm as usize][0];
+            if elem_size == 8 {
+                src
+            } else {
+                src & ((1u64 << (elem_size * 8)) - 1)
+            }
         };
 
         let broadcast = match elem_size {

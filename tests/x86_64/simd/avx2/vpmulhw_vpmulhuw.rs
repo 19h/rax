@@ -143,7 +143,7 @@ fn test_vpmulhw_ymm6_ymm7_mem_sequential() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = (0..16).flat_map(|i| (i as u16 * 0x4000).to_le_bytes()).collect();
+    let data: Vec<u8> = (0..16).flat_map(|i| (i as u16).wrapping_mul(0x4000).to_le_bytes()).collect();
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
@@ -345,7 +345,7 @@ fn test_vpmulhuw_ymm6_ymm7_mem_sequential() {
     ]);
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
-    let data: Vec<u8> = (0..16).flat_map(|i| (i as u16 * 0x4000).to_le_bytes()).collect();
+    let data: Vec<u8> = (0..16).flat_map(|i| (i as u16).wrapping_mul(0x4000).to_le_bytes()).collect();
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
