@@ -5,7 +5,7 @@ use rax::cpu::Registers;
 // Counts the number of trailing zero bits in the source operand.
 // If the source is zero, the result is the operand size in bits.
 // Sets CF if source is zero, clears CF otherwise.
-// Sets ZF if source is zero, clears ZF otherwise.
+// Sets ZF if result is zero, clears ZF otherwise.
 //
 // Opcodes:
 // F3 0F BC /r           TZCNT r16, r/m16   - Count trailing zeros (16-bit)
@@ -26,7 +26,7 @@ fn test_tzcnt_bit_0() {
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0, "0 trailing zeros");
     assert!(!cf_set(regs.rflags), "CF should be clear (source is non-zero)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (source is non-zero)");
+    assert!(zf_set(regs.rflags), "ZF should be set (result is zero)");
 }
 
 #[test]
@@ -75,7 +75,7 @@ fn test_tzcnt_zero_source_32bit() {
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 32, "32 trailing zeros for zero source");
     assert!(cf_set(regs.rflags), "CF should be set (source is zero)");
-    assert!(zf_set(regs.rflags), "ZF should be set (source is zero)");
+    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
 }
 
 #[test]
@@ -124,7 +124,7 @@ fn test_tzcnt_zero_source_64bit() {
 
     assert_eq!(regs.rax, 64, "64 trailing zeros for zero source");
     assert!(cf_set(regs.rflags), "CF should be set");
-    assert!(zf_set(regs.rflags), "ZF should be set");
+    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
 }
 
 #[test]
@@ -594,7 +594,7 @@ fn test_tzcnt_16bit_zero() {
 
     assert_eq!(regs.rax & 0xFFFF, 16, "16 trailing zeros for zero (16-bit)");
     assert!(cf_set(regs.rflags), "CF should be set");
-    assert!(zf_set(regs.rflags), "ZF should be set");
+    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
 }
 
 #[test]

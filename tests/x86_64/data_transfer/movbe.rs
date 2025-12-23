@@ -18,9 +18,9 @@ use rax::cpu::Registers;
 
 #[test]
 fn test_movbe_r16_m16_basic() {
-    // MOVBE AX, [DATA_ADDR] - load 16-bit with byte swap
+    // MOVBE AX, [DATA_ADDR] - load 16-bit with byte swap (requires 66H prefix)
     let code = [
-        0x0f, 0x38, 0xf0, 0x04, 0x25, // MOVBE AX, [DATA_ADDR]
+        0x66, 0x0f, 0x38, 0xf0, 0x04, 0x25, // 66H prefix + MOVBE AX, [DATA_ADDR]
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -38,9 +38,9 @@ fn test_movbe_r16_m16_basic() {
 
 #[test]
 fn test_movbe_r16_m16_all_zeros() {
-    // MOVBE AX, [DATA_ADDR] - with zeros
+    // MOVBE AX, [DATA_ADDR] - with zeros (requires 66H prefix)
     let code = [
-        0x0f, 0x38, 0xf0, 0x04, 0x25,
+        0x66, 0x0f, 0x38, 0xf0, 0x04, 0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -56,9 +56,9 @@ fn test_movbe_r16_m16_all_zeros() {
 
 #[test]
 fn test_movbe_r16_m16_all_ones() {
-    // MOVBE AX, [DATA_ADDR] - with all ones
+    // MOVBE AX, [DATA_ADDR] - with all ones (requires 66H prefix)
     let code = [
-        0x0f, 0x38, 0xf0, 0x04, 0x25,
+        0x66, 0x0f, 0x38, 0xf0, 0x04, 0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -74,9 +74,9 @@ fn test_movbe_r16_m16_all_ones() {
 
 #[test]
 fn test_movbe_r16_m16_pattern() {
-    // MOVBE AX, [DATA_ADDR] - with pattern
+    // MOVBE AX, [DATA_ADDR] - with pattern (requires 66H prefix)
     let code = [
-        0x0f, 0x38, 0xf0, 0x04, 0x25,
+        0x66, 0x0f, 0x38, 0xf0, 0x04, 0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -92,9 +92,9 @@ fn test_movbe_r16_m16_pattern() {
 
 #[test]
 fn test_movbe_m16_r16_basic() {
-    // MOVBE [DATA_ADDR], AX - store 16-bit with byte swap
+    // MOVBE [DATA_ADDR], AX - store 16-bit with byte swap (requires 66H prefix)
     let code = [
-        0x0f, 0x38, 0xf1, 0x04, 0x25,
+        0x66, 0x0f, 0x38, 0xf1, 0x04, 0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,
@@ -111,9 +111,9 @@ fn test_movbe_m16_r16_basic() {
 
 #[test]
 fn test_movbe_m16_r16_pattern() {
-    // MOVBE [DATA_ADDR], AX - store pattern
+    // MOVBE [DATA_ADDR], AX - store pattern (requires 66H prefix)
     let code = [
-        0x0f, 0x38, 0xf1, 0x04, 0x25,
+        0x66, 0x0f, 0x38, 0xf1, 0x04, 0x25,
         (DATA_ADDR & 0xFF) as u8,
         ((DATA_ADDR >> 8) & 0xFF) as u8,
         ((DATA_ADDR >> 16) & 0xFF) as u8,

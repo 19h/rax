@@ -56,9 +56,9 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
         let p2 = ctx.consume_u8()?;
 
         // Validate EVEX format:
-        // P0: bit 2 must be 0 (distinguishes from BOUND)
+        // P0: bit 3 must be 0 (distinguishes from BOUND)
         // P1: bit 2 must be 1
-        if (p0 & 0x04) != 0 || (p1 & 0x04) == 0 {
+        if (p0 & 0x08) != 0 || (p1 & 0x04) == 0 {
             return Err(Error::Emulator(format!(
                 "Invalid EVEX prefix at RIP={:#x}: P0={:#x} P1={:#x}",
                 vcpu.regs.rip, p0, p1
@@ -70,7 +70,7 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
         let x = (p0 & 0x40) != 0;      // X bit (inverted)
         let b = (p0 & 0x20) != 0;      // B bit (inverted)
         let r_prime = (p0 & 0x10) != 0; // R' bit (inverted)
-        let mm = p0 & 0x03;            // mm field (opcode map)
+        let mm = p0 & 0x07;            // mm field (opcode map)
 
         // Decode P1: W v v v v 1 p p
         let w = (p1 & 0x80) != 0;      // W bit
