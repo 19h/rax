@@ -429,7 +429,7 @@ fn test_blsmsk_mixed_high_low() {
 
 #[test]
 fn test_blsmsk_clear_sf_of() {
-    // BLSMSK clears SF and OF flags
+    // BLSMSK clears OF and updates SF based on result
     let code = [
         0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,

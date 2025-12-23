@@ -294,9 +294,15 @@ fn test_pext_inverse_of_pdep() {
     let (mut vcpu, _) = setup_vm(&code_pext, Some(regs));
     let regs_pext = run_until_hlt(&mut vcpu).unwrap();
 
-    // Should get back the masked bits compacted
-    let expected = (value & mask).count_ones();
-    assert_eq!((regs_pext.rax & 0xFFFFFFFF).count_ones(), expected, "PEXT(PDEP(x, mask), mask) should preserve bit count");
+    // Should get back the low bits of the original source that were deposited
+    let mask_bits = mask & 0xFFFF_FFFF;
+    let bit_count = mask_bits.count_ones();
+    let expected = if bit_count == 64 {
+        value
+    } else {
+        value & ((1u64 << bit_count) - 1)
+    };
+    assert_eq!(regs_pext.rax & 0xFFFFFFFF, expected, "PEXT(PDEP(x, mask), mask) should recover deposited bits");
 }
 
 #[test]
@@ -351,8 +357,8 @@ fn test_pext_64bit_high_positions() {
 fn test_pext_pattern_extraction() {
     // Extract specific patterns
     let test_cases = vec![
-        (0x11111111, 0x11111111, 0x0000000F),  // extract every 8th bit
-        (0x33333333, 0x33333333, 0x000000FF),  // extract every 4th-5th bits
+        (0x11111111, 0x11111111, 0x000000FF),  // extract every 4th bit
+        (0x33333333, 0x33333333, 0x0000FFFF),  // extract two bits per nibble
         (0x0F0F0F0F, 0x0F0F0F0F, 0x0000FFFF),  // extract nibbles
     ];
 

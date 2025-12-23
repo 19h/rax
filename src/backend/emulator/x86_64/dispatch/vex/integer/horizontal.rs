@@ -422,4 +422,144 @@ impl X86_64Vcpu {
         result
     }
 
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_phminposuw(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vvvv != 0 {
+            return Err(Error::Emulator("VPHMINPOSUW requires VEX.vvvv=1111b".to_string()));
+        }
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+        let (src_lo, src_hi) = if is_memory {
+            (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+        } else {
+            (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+        };
+
+        let words = [
+            (src_lo & 0xFFFF) as u16,
+            ((src_lo >> 16) & 0xFFFF) as u16,
+            ((src_lo >> 32) & 0xFFFF) as u16,
+            ((src_lo >> 48) & 0xFFFF) as u16,
+            (src_hi & 0xFFFF) as u16,
+            ((src_hi >> 16) & 0xFFFF) as u16,
+            ((src_hi >> 32) & 0xFFFF) as u16,
+            ((src_hi >> 48) & 0xFFFF) as u16,
+        ];
+
+        let mut min_val = words[0];
+        let mut min_idx = 0u16;
+        for i in 1..8 {
+            if words[i] < min_val {
+                min_val = words[i];
+                min_idx = i as u16;
+            }
+        }
+
+        self.regs.xmm[xmm_dst][0] = (min_val as u64) | ((min_idx as u64) << 16);
+        self.regs.xmm[xmm_dst][1] = 0;
+        self.regs.ymm_high[xmm_dst][0] = 0;
+        self.regs.ymm_high[xmm_dst][1] = 0;
+
+        if vex_l == 1 {
+            return Err(Error::Emulator("VPHMINPOSUW does not support VEX.256".to_string()));
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_mpsadbw(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let xmm_dst = reg as usize;
+        let xmm_src1 = vvvv as usize;
+
+        let (src2_lo, src2_hi, src2_hi2, src2_hi3) = if is_memory {
+            (
+                self.read_mem(addr, 8)?,
+                self.read_mem(addr + 8, 8)?,
+                if vex_l == 1 { self.read_mem(addr + 16, 8)? } else { 0 },
+                if vex_l == 1 { self.read_mem(addr + 24, 8)? } else { 0 },
+            )
+        } else {
+            (
+                self.regs.xmm[rm as usize][0],
+                self.regs.xmm[rm as usize][1],
+                if vex_l == 1 { self.regs.ymm_high[rm as usize][0] } else { 0 },
+                if vex_l == 1 { self.regs.ymm_high[rm as usize][1] } else { 0 },
+            )
+        };
+
+        let src1_lo = self.regs.xmm[xmm_src1][0];
+        let src1_hi = self.regs.xmm[xmm_src1][1];
+
+        let (dst_lo, dst_hi) = self.mpsadbw_lane(src1_lo, src1_hi, src2_lo, src2_hi, imm8 & 0x07, imm8 & 0x03);
+        self.regs.xmm[xmm_dst][0] = dst_lo;
+        self.regs.xmm[xmm_dst][1] = dst_hi;
+
+        if vex_l == 1 {
+            let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
+            let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
+            let (dst_hi2, dst_hi3) = self.mpsadbw_lane(src1_hi2, src1_hi3, src2_hi2, src2_hi3, imm8 & 0x07, (imm8 >> 3) & 0x03);
+            self.regs.ymm_high[xmm_dst][0] = dst_hi2;
+            self.regs.ymm_high[xmm_dst][1] = dst_hi3;
+        } else {
+            self.regs.ymm_high[xmm_dst][0] = 0;
+            self.regs.ymm_high[xmm_dst][1] = 0;
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    fn mpsadbw_lane(
+        &self,
+        s1_lo: u64,
+        s1_hi: u64,
+        s2_lo: u64,
+        s2_hi: u64,
+        blk1_sel: u8,
+        blk2_sel: u8,
+    ) -> (u64, u64) {
+        let mut src1 = [0u8; 16];
+        let mut src2 = [0u8; 16];
+        src1[0..8].copy_from_slice(&s1_lo.to_le_bytes());
+        src1[8..16].copy_from_slice(&s1_hi.to_le_bytes());
+        src2[0..8].copy_from_slice(&s2_lo.to_le_bytes());
+        src2[8..16].copy_from_slice(&s2_hi.to_le_bytes());
+
+        let blk1_offset = ((blk1_sel >> 2) & 1) as usize * 4;
+        let blk2_offset = (blk2_sel & 0x3) as usize * 4;
+
+        let mut results = [0u16; 8];
+        for i in 0..8 {
+            let mut sum = 0u16;
+            for k in 0..4 {
+                let a = src1[blk1_offset + i + k] as i16;
+                let b = src2[blk2_offset + k] as i16;
+                sum = sum.wrapping_add((a - b).abs() as u16);
+            }
+            results[i] = sum;
+        }
+
+        let mut lo = 0u64;
+        let mut hi = 0u64;
+        for i in 0..4 {
+            lo |= (results[i] as u64) << (i * 16);
+        }
+        for i in 0..4 {
+            hi |= (results[i + 4] as u64) << (i * 16);
+        }
+        (lo, hi)
+    }
+
 }
