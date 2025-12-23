@@ -207,6 +207,29 @@ pub fn xorps(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
 }
 
 // =============================================================================
+// Prefetch Hints (PREFETCHNTA/PREFETCHT0/PREFETCHT1/PREFETCHT2)
+// =============================================================================
+
+/// PREFETCHh m8 (0F 18 /0-3) - cache prefetch hints, treated as NOP in emulator
+pub fn prefetchh(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let modrm_start = ctx.cursor;
+    let modrm = ctx.consume_u8()?;
+    let hint = (modrm >> 3) & 0x07;
+
+    if hint > 3 {
+        return Err(Error::Emulator(format!(
+            "unimplemented PREFETCHh hint /{} at RIP={:#x}",
+            hint, vcpu.regs.rip
+        )));
+    }
+
+    let (_, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+    ctx.cursor = modrm_start + 1 + extra;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+// =============================================================================
 // Packed Integer Subtract (PSUB* family)
 // =============================================================================
 

@@ -97,6 +97,9 @@ impl X86_64Vcpu {
             0x1E => insn::system::endbr(self, ctx),
             0x1F => insn::system::nop_rm(self, ctx),
 
+            // Prefetch hints
+            0x18 => insn::simd::prefetchh(self, ctx),
+
             // MOVUPS/MOVUPD (0x10/0x11 unaligned), MOVAPS/MOVAPD (0x28/0x29 aligned)
             0x10 => insn::simd::movups_load(self, ctx),
             0x11 => insn::simd::movups_store(self, ctx),
@@ -167,6 +170,12 @@ impl X86_64Vcpu {
             0xD8 | 0xD9 | 0xE8 | 0xE9 | 0xF8 | 0xF9 | 0xFA | 0xFB => {
                 insn::simd::psub_packed(self, ctx, opcode2)
             }
+
+            // Packed integer multiply (SSE2/MMX)
+            0xD5 => insn::simd::pmullw(self, ctx),  // PMULLW
+            0xE4 => insn::simd::pmulhuw(self, ctx), // PMULHUW
+            0xE5 => insn::simd::pmulhw(self, ctx),  // PMULHW
+            0xF4 => insn::simd::pmuludq(self, ctx), // PMULUDQ
 
             // SSE/SSE2 Conversion Instructions
             0x5A => {
