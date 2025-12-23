@@ -18,6 +18,107 @@ pub fn push_r64(
     Ok(None)
 }
 
+fn segment_op_size(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
+    let in_long_mode = (vcpu.sregs.efer & 0x400) != 0;
+    let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
+
+    if in_64bit_mode {
+        if ctx.operand_size_override {
+            2
+        } else {
+            8
+        }
+    } else {
+        let default_16bit = !vcpu.sregs.cs.db;
+        let is_16bit = default_16bit ^ ctx.operand_size_override;
+        if is_16bit { 2 } else { 4 }
+    }
+}
+
+fn segment_invalid_in_64bit(sreg: u8) -> bool {
+    matches!(sreg, 0 | 1 | 2 | 3)
+}
+
+fn segment_name(sreg: u8) -> &'static str {
+    match sreg {
+        0 => "ES",
+        1 => "CS",
+        2 => "SS",
+        3 => "DS",
+        4 => "FS",
+        5 => "GS",
+        _ => "UNKNOWN",
+    }
+}
+
+/// PUSH Sreg (ES/CS/SS/DS/FS/GS)
+pub fn push_sreg(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    sreg: u8,
+) -> Result<Option<VcpuExit>> {
+    let in_long_mode = (vcpu.sregs.efer & 0x400) != 0;
+    let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
+
+    if in_64bit_mode && segment_invalid_in_64bit(sreg) {
+        return Err(Error::Emulator(format!(
+            "PUSH {} invalid in 64-bit mode at RIP={:#x}",
+            segment_name(sreg),
+            vcpu.regs.rip
+        )));
+    }
+
+    let op_size = segment_op_size(vcpu, ctx);
+    let value = vcpu.get_sreg(sreg) as u64;
+    match op_size {
+        2 => vcpu.push16(value as u16)?,
+        4 => vcpu.push32(value as u32)?,
+        8 => vcpu.push64(value)?,
+        _ => {
+            return Err(Error::Emulator(format!(
+                "invalid PUSH Sreg size: {}",
+                op_size
+            )))
+        }
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// POP Sreg (ES/SS/DS/FS/GS)
+pub fn pop_sreg(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    sreg: u8,
+) -> Result<Option<VcpuExit>> {
+    let in_long_mode = (vcpu.sregs.efer & 0x400) != 0;
+    let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
+
+    if in_64bit_mode && segment_invalid_in_64bit(sreg) {
+        return Err(Error::Emulator(format!(
+            "POP {} invalid in 64-bit mode at RIP={:#x}",
+            segment_name(sreg),
+            vcpu.regs.rip
+        )));
+    }
+
+    let op_size = segment_op_size(vcpu, ctx);
+    let value = match op_size {
+        2 => vcpu.pop16()? as u64,
+        4 => vcpu.pop32()? as u64,
+        8 => vcpu.pop64()?,
+        _ => {
+            return Err(Error::Emulator(format!(
+                "invalid POP Sreg size: {}",
+                op_size
+            )))
+        }
+    };
+    vcpu.set_sreg(sreg, (value & 0xFFFF) as u16);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
 /// PUSH imm8 (0x6A)
 pub fn push_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let imm = ctx.consume_u8()? as i8 as i64 as u64;

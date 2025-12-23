@@ -28,7 +28,7 @@ fn test_sgdt_basic() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Verify instruction completed
-    assert_eq!(regs.rip, 0x1000 + 8, "RIP should point to HLT");
+    assert_eq!(regs.rip, 0x1000 + 9, "RIP should point past HLT");
 
     // Memory should now contain GDTR data
     let limit = read_mem_at_u16(&mem, DATA_ADDR);
@@ -54,7 +54,7 @@ fn test_sidt_basic() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rip, 0x1000 + 8, "RIP should point to HLT");
+    assert_eq!(regs.rip, 0x1000 + 9, "RIP should point past HLT");
 
     let limit = read_mem_at_u16(&mem, DATA_ADDR);
     let base = read_mem_at_u64(&mem, DATA_ADDR + 2);

@@ -18,7 +18,7 @@ fn test_str_ax() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // TR value depends on VM initialization
-    assert_eq!(regs.rip, 0x1000 + 3, "RIP should point to HLT");
+    assert_eq!(regs.rip, 0x1000 + 4, "RIP should point past HLT");
 }
 
 // STR r16 - Store TR to BX
@@ -270,7 +270,7 @@ fn test_str_memory() {
     write_mem_at_u16(&mem, DATA_ADDR, 0xFFFF);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x1000 + 8);
+    assert_eq!(regs.rip, 0x1000 + 9);
 
     let tr = read_mem_at_u16(&mem, DATA_ADDR);
     assert!(tr <= 0xFFFF);
