@@ -34,10 +34,13 @@ impl X86_64Vcpu {
                 Ok(None)
             }
             0x20 => insn::system::mov_r_cr(self, ctx),
+            0x21 => insn::system::mov_r_dr(self, ctx),
             0x22 => insn::system::mov_cr_r(self, ctx),
+            0x23 => insn::system::mov_dr_r(self, ctx),
             0x30 => insn::system::wrmsr(self, ctx),
             0x31 => insn::system::rdtsc(self, ctx),
             0x32 => insn::system::rdmsr(self, ctx),
+            0x33 => insn::system::rdpmc(self, ctx),
             0xA2 => insn::system::cpuid(self, ctx),
             0xAE => self.execute_0fae(ctx),
 
@@ -162,7 +165,13 @@ impl X86_64Vcpu {
                 }
             }
             0xD6 => {
-                if ctx.operand_size_override {
+                if ctx.rep_prefix == Some(0xF3) {
+                    // F3 0F D6: MOVQ2DQ xmm, mm - move mm to low qword of xmm
+                    insn::simd::movq2dq(self, ctx)
+                } else if ctx.rep_prefix == Some(0xF2) {
+                    // F2 0F D6: MOVDQ2Q mm, xmm - move low qword of xmm to mm
+                    insn::simd::movdq2q(self, ctx)
+                } else if ctx.operand_size_override {
                     // 66 0F D6: MOVQ xmm2/m64, xmm1
                     insn::simd::movq_xmm_m64_xmm(self, ctx)
                 } else {
@@ -199,10 +208,15 @@ impl X86_64Vcpu {
             0x64 => insn::simd::pcmpgtb(self, ctx),
             0x65 => insn::simd::pcmpgtw(self, ctx),
             0x66 => insn::simd::pcmpgtd(self, ctx),
-            // MOVNTQ - non-temporal store MMX
-            0xE7 => insn::simd::movntq(self, ctx),
-            // MOVNTDQ - non-temporal store XMM
-            0xE5 if ctx.operand_size_override => self.execute_movnt_store(ctx),
+            // MOVNTQ - non-temporal store MMX (0F E7)
+            // MOVNTDQ - non-temporal store XMM (66 0F E7)
+            0xE7 => {
+                if ctx.operand_size_override {
+                    self.execute_movnt_store(ctx)
+                } else {
+                    insn::simd::movntq(self, ctx)
+                }
+            }
             // Packed integer min/max (SSE2)
             0xDA => insn::simd::pminub(self, ctx),
             0xDE => insn::simd::pmaxub(self, ctx),
@@ -375,6 +389,52 @@ impl X86_64Vcpu {
 
             // PEXTRW (0xC5)
             0xC5 => self.execute_pextrw(ctx),
+
+            // MOVNTI - non-temporal store (0xC3)
+            0xC3 => insn::simd::movnti(self, ctx),
+
+            // PSADBW - sum of absolute differences (0xF6)
+            0xF6 => insn::simd::psadbw(self, ctx),
+
+            // MASKMOVDQU/MASKMOVQ (0xF7)
+            0xF7 => insn::simd::maskmovdqu(self, ctx),
+
+            // LDDQU (F2 0F F0)
+            0xF0 if ctx.rep_prefix == Some(0xF2) => insn::simd::lddqu(self, ctx),
+
+            // PAVGB/PAVGW - packed average (0xE0/0xE3)
+            0xE0 => insn::simd::pavgb(self, ctx),
+            0xE3 => insn::simd::pavgw(self, ctx),
+
+            // PACKSSWB/PACKSSDW - pack with saturation (0x63/0x6B)
+            0x63 => insn::simd::packsswb(self, ctx),
+            0x6B => insn::simd::packssdw(self, ctx),
+
+            // PACKUSWB - pack unsigned with saturation (0x67)
+            0x67 => insn::simd::packuswb(self, ctx),
+
+            // Packed integer shift by XMM count
+            // PSRLW/PSRLD/PSRLQ xmm, xmm/m128 (66 0F D1/D2/D3)
+            0xD1 => insn::simd::packed_shift_xmm_count(self, ctx, opcode2),
+            0xD2 => insn::simd::packed_shift_xmm_count(self, ctx, opcode2),
+            0xD3 => insn::simd::packed_shift_xmm_count(self, ctx, opcode2),
+            // PSRAW/PSRAD xmm, xmm/m128 (66 0F E1/E2)
+            0xE1 => insn::simd::packed_shift_xmm_count(self, ctx, opcode2),
+            0xE2 => insn::simd::packed_shift_xmm_count(self, ctx, opcode2),
+            // PSLLW/PSLLD/PSLLQ xmm, xmm/m128 (66 0F F1/F2/F3)
+            0xF1 => insn::simd::packed_shift_xmm_count(self, ctx, opcode2),
+            0xF2 if ctx.rep_prefix.is_none() => {
+                insn::simd::packed_shift_xmm_count(self, ctx, opcode2)
+            }
+            0xF3 if ctx.rep_prefix.is_none() => {
+                insn::simd::packed_shift_xmm_count(self, ctx, opcode2)
+            }
+
+            // EMMS - Empty MMX State (0F 77)
+            0x77 => insn::simd::emms(self, ctx),
+
+            // 0F C7 - Group 9: CMPXCHG8B/16B, RDRAND, RDSEED, etc.
+            0xC7 => self.execute_group9(ctx),
 
             _ => Err(Error::Emulator(format!(
                 "unimplemented 0x0F opcode: {:#04x} at RIP={:#x}",

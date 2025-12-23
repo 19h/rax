@@ -97,7 +97,7 @@ fn test_pmaxsw_mixed_signs() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x7FFFFFFFFFF00020, "PMAXSW: mixed signs");
+    assert_eq!(result, 0x7FFFFFFF00100020, "PMAXSW: mixed signs");
 }
 
 #[test]

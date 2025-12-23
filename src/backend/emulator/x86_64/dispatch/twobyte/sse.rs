@@ -1425,6 +1425,8 @@ impl X86_64Vcpu {
                     } else if shift_bytes >= 8 {
                         self.regs.xmm[xmm][0] = hi >> ((shift_bytes - 8) * 8);
                         self.regs.xmm[xmm][1] = 0;
+                    } else if shift_bytes == 0 {
+                        // No shift, keep values unchanged
                     } else {
                         let shift_bits = shift_bytes * 8;
                         self.regs.xmm[xmm][0] = (lo >> shift_bits) | (hi << (64 - shift_bits));
@@ -1452,6 +1454,8 @@ impl X86_64Vcpu {
                     } else if shift_bytes >= 8 {
                         self.regs.xmm[xmm][1] = lo << ((shift_bytes - 8) * 8);
                         self.regs.xmm[xmm][0] = 0;
+                    } else if shift_bytes == 0 {
+                        // No shift, keep values unchanged
                     } else {
                         let shift_bits = shift_bytes * 8;
                         self.regs.xmm[xmm][1] = (hi << shift_bits) | (lo >> (64 - shift_bits));
@@ -1556,6 +1560,231 @@ impl X86_64Vcpu {
                 "unimplemented 0x0F 0xD0 opcode variant at RIP={:#x}",
                 self.regs.rip
             )));
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// Execute Group 9 instructions (0F C7)
+    /// /1 = CMPXCHG8B/16B, /6 = RDRAND, /7 = RDSEED (or RDPID with F3 prefix)
+    pub(in crate::backend::emulator::x86_64) fn execute_group9(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        let modrm = ctx.peek_u8()?;
+        let reg = (modrm >> 3) & 0x7;
+
+        match reg {
+            6 => {
+                // RDRAND - Read random number
+                self.execute_rdrand(ctx)
+            }
+            7 => {
+                // F3 0F C7 /7 = RDPID, 0F C7 /7 = RDSEED
+                if ctx.rep_prefix == Some(0xF3) {
+                    self.execute_rdpid(ctx)
+                } else {
+                    self.execute_rdseed(ctx)
+                }
+            }
+            1 => {
+                // CMPXCHG8B/CMPXCHG16B - Compare and exchange
+                self.execute_cmpxchg8b_16b(ctx)
+            }
+            _ => Err(Error::Emulator(format!(
+                "unimplemented 0x0F 0xC7 /{} at RIP={:#x}",
+                reg, self.regs.rip
+            ))),
+        }
+    }
+
+    /// RDRAND - Read random number
+    fn execute_rdrand(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (_, rm, is_memory, _, _) = self.decode_modrm(ctx)?;
+
+        if is_memory {
+            return Err(Error::Emulator(
+                "RDRAND requires register operand".to_string(),
+            ));
+        }
+
+        // Determine operand size
+        let size = if ctx.rex_w() {
+            8
+        } else if ctx.operand_size_override {
+            2
+        } else {
+            4
+        };
+
+        // Generate pseudo-random number for emulation
+        // Using RDTSC-like approach with system time
+        let random_value: u64 = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos() as u64)
+            .unwrap_or(0x12345678DEADBEEF)
+            .wrapping_mul(0x5851F42D4C957F2D)
+            .wrapping_add(self.regs.rip);
+
+        // Write to destination register
+        match size {
+            2 => {
+                let val = (random_value & 0xFFFF) as u16;
+                self.set_reg(rm, val as u64, 2);
+            }
+            4 => {
+                let val = (random_value & 0xFFFFFFFF) as u32;
+                self.set_reg(rm, val as u64, 4);
+            }
+            8 => {
+                self.set_reg(rm, random_value, 8);
+            }
+            _ => unreachable!(),
+        }
+
+        // Set CF=1 (success), clear OF, SF, ZF, AF, PF
+        self.regs.rflags &= !(flags::bits::CF
+            | flags::bits::OF
+            | flags::bits::SF
+            | flags::bits::ZF
+            | flags::bits::AF
+            | flags::bits::PF);
+        self.regs.rflags |= flags::bits::CF;
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// RDSEED - Read random seed
+    fn execute_rdseed(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (_, rm, is_memory, _, _) = self.decode_modrm(ctx)?;
+
+        if is_memory {
+            return Err(Error::Emulator(
+                "RDSEED requires register operand".to_string(),
+            ));
+        }
+
+        // Determine operand size
+        let size = if ctx.rex_w() {
+            8
+        } else if ctx.operand_size_override {
+            2
+        } else {
+            4
+        };
+
+        // Generate pseudo-random seed for emulation
+        // Using RDTSC-like approach with system time
+        let random_value: u64 = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos() as u64)
+            .unwrap_or(0xDEADBEEF12345678)
+            .wrapping_mul(0x2545F4914F6CDD1D)
+            .wrapping_add(self.regs.rip);
+
+        // Write to destination register
+        match size {
+            2 => {
+                let val = (random_value & 0xFFFF) as u16;
+                self.set_reg(rm, val as u64, 2);
+            }
+            4 => {
+                let val = (random_value & 0xFFFFFFFF) as u32;
+                self.set_reg(rm, val as u64, 4);
+            }
+            8 => {
+                self.set_reg(rm, random_value, 8);
+            }
+            _ => unreachable!(),
+        }
+
+        // Set CF=1 (success), clear OF, SF, ZF, AF, PF
+        self.regs.rflags &= !(flags::bits::CF
+            | flags::bits::OF
+            | flags::bits::SF
+            | flags::bits::ZF
+            | flags::bits::AF
+            | flags::bits::PF);
+        self.regs.rflags |= flags::bits::CF;
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// RDPID - Read Processor ID (F3 0F C7 /7)
+    /// Reads IA32_TSC_AUX MSR into destination register.
+    /// Does not modify flags.
+    fn execute_rdpid(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (_, rm, is_memory, _, _) = self.decode_modrm(ctx)?;
+
+        if is_memory {
+            return Err(Error::Emulator(
+                "RDPID requires register operand".to_string(),
+            ));
+        }
+
+        // RDPID reads IA32_TSC_AUX MSR which contains the processor ID
+        // In an emulator, we return a constant processor ID (0)
+        // This is the same value that RDTSCP stores in ECX
+        let tsc_aux: u64 = 0; // Processor ID = 0
+
+        // RDPID always uses 32-bit operand size (writes to r32, zeros upper 32 bits)
+        // unless REX.W is present, then it uses 64-bit
+        let size = if ctx.rex_w() { 8 } else { 4 };
+        self.set_reg(rm, tsc_aux, size);
+
+        // RDPID does NOT modify flags
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// CMPXCHG8B/CMPXCHG16B - Compare and exchange bytes
+    fn execute_cmpxchg8b_16b(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (_, _, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        if !is_memory {
+            return Err(Error::Emulator(
+                "CMPXCHG8B/16B requires memory operand".to_string(),
+            ));
+        }
+
+        if ctx.rex_w() {
+            // CMPXCHG16B - Compare EDX:EAX with m128, if equal set m128 to ECX:EBX
+            let mem_lo = self.read_mem(addr, 8)?;
+            let mem_hi = self.read_mem(addr + 8, 8)?;
+            let cmp_lo = self.regs.rax;
+            let cmp_hi = self.regs.rdx;
+
+            if mem_lo == cmp_lo && mem_hi == cmp_hi {
+                // Equal - set ZF, store RCX:RBX to memory
+                self.write_mem(addr, self.regs.rbx, 8)?;
+                self.write_mem(addr + 8, self.regs.rcx, 8)?;
+                self.regs.rflags |= flags::bits::ZF;
+            } else {
+                // Not equal - clear ZF, load memory to RDX:RAX
+                self.regs.rax = mem_lo;
+                self.regs.rdx = mem_hi;
+                self.regs.rflags &= !flags::bits::ZF;
+            }
+        } else {
+            // CMPXCHG8B - Compare EDX:EAX with m64, if equal set m64 to ECX:EBX
+            let mem_val = self.read_mem(addr, 8)?;
+            let cmp_val = ((self.regs.rdx & 0xFFFFFFFF) << 32) | (self.regs.rax & 0xFFFFFFFF);
+
+            if mem_val == cmp_val {
+                // Equal - set ZF, store ECX:EBX to memory
+                let store_val =
+                    ((self.regs.rcx & 0xFFFFFFFF) << 32) | (self.regs.rbx & 0xFFFFFFFF);
+                self.write_mem(addr, store_val, 8)?;
+                self.regs.rflags |= flags::bits::ZF;
+            } else {
+                // Not equal - clear ZF, load memory to EDX:EAX
+                self.regs.rax = mem_val & 0xFFFFFFFF;
+                self.regs.rdx = mem_val >> 32;
+                self.regs.rflags &= !flags::bits::ZF;
+            }
         }
 
         self.regs.rip += ctx.cursor as u64;

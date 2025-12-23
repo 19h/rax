@@ -530,7 +530,7 @@ fn test_pxor_sequential() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2018);
-    assert_eq!(result, 0x0000FFFFFF00FFFF, "PXOR: sequential");
+    assert_eq!(result, 0x0000FFFF0000FFFF, "PXOR: sequential");
 }
 
 // ============================================================================

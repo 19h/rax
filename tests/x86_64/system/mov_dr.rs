@@ -402,8 +402,8 @@ fn test_read_all_debug_registers() {
 #[test]
 fn test_dr_preserves_other_registers() {
     let code = [
-        0x48, 0xc7, 0xc6, 0x42, 0x42, 0x42, 0x42, // MOV RSI, 0x42424242
-        0x48, 0xc7, 0xc7, 0xaa, 0xaa, 0xaa, 0xaa, // MOV RDI, 0xaaaaaaaa
+        0x48, 0xc7, 0xc6, 0x42, 0x42, 0x42, 0x42, // MOV RSI, 0x42424242 (sign-extends to 0x42424242)
+        0x48, 0xc7, 0xc7, 0x2a, 0x2a, 0x2a, 0x2a, // MOV RDI, 0x2a2a2a2a (sign-extends to 0x2a2a2a2a)
         0x0f, 0x21, 0xc0, // MOV RAX, DR0
         0x0f, 0x23, 0xc0, // MOV DR0, RAX
         0xf4, // HLT
@@ -411,8 +411,9 @@ fn test_dr_preserves_other_registers() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
+    // MOV r64, imm32 sign-extends, so use values with bit 31 clear
     assert_eq!(regs.rsi, 0x42424242, "RSI should be preserved");
-    assert_eq!(regs.rdi, 0xaaaaaaaa, "RDI should be preserved");
+    assert_eq!(regs.rdi, 0x2a2a2a2a, "RDI should be preserved");
 }
 
 // Test DR with R8-R15
@@ -498,7 +499,7 @@ fn test_dr7_to_r15() {
 fn test_r8_to_dr0() {
     let code = [
         0x49, 0xc7, 0xc0, 0x88, 0x77, 0x00, 0x00, // MOV R8, 0x7788
-        0x4c, 0x0f, 0x23, 0xc0, // MOV DR0, R8
+        0x49, 0x0f, 0x23, 0xc0, // MOV DR0, R8 (REX.B=1 to extend rm to R8)
         0x0f, 0x21, 0xc0, // MOV RAX, DR0
         0xf4, // HLT
     ];
@@ -559,12 +560,12 @@ fn test_multiple_dr_writes() {
 #[test]
 fn test_dr_operations_in_loop() {
     let code = [
-        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0
-        // loop:
-        0x0f, 0x21, 0xc0, // MOV RAX, DR0
-        0x48, 0x83, 0xc1, 0x01, // ADD RCX, 1
-        0x48, 0x83, 0xf9, 0x03, // CMP RCX, 3
-        0x75, 0xf5, // JNZ loop
+        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0 (7 bytes)
+        // loop: (offset 0x1007)
+        0x0f, 0x21, 0xc0, // MOV RAX, DR0 (3 bytes)
+        0x48, 0x83, 0xc1, 0x01, // ADD RCX, 1 (4 bytes)
+        0x48, 0x83, 0xf9, 0x03, // CMP RCX, 3 (4 bytes)
+        0x75, 0xf3, // JNZ loop (rel8 = -13, jumps from 0x1014 to 0x1007)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

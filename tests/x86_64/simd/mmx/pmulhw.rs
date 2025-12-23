@@ -168,7 +168,7 @@ fn test_pmulhw_by_one() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x0000000000000000, "PMULHW: multiply by 1 gives 0 high bits");
+    assert_eq!(result, 0x00000000FFFFFFFF, "PMULHW: multiply by 1 preserves sign in high bits");
 }
 
 #[test]
@@ -482,5 +482,5 @@ fn test_pmulhw_boundary_values() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x40003FFF00004000, "PMULHW: boundary values");
+    assert_eq!(result, 0x40003FFFFFFFC000, "PMULHW: boundary values");
 }

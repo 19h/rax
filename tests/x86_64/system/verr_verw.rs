@@ -24,7 +24,7 @@ fn test_verr_ax() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0x0008, "AX should be preserved");
-    assert_eq!(regs.rip, 0x1000 + 8, "RIP should advance correctly");
+    assert_eq!(regs.rip, 0x1000 + 7, "RIP should point to HLT");
 }
 
 // VERW r16 - Verify BX for writing
@@ -221,7 +221,7 @@ fn test_verr_memory() {
     write_mem_at_u16(&mem, DATA_ADDR, 0x0008);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x1000 + 9);
+    assert_eq!(regs.rip, 0x1000 + 8);
 }
 
 // VERW m16 - Verify from memory
@@ -236,7 +236,7 @@ fn test_verw_memory() {
     write_mem_at_u16(&mem, DATA_ADDR, 0x0010);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x1000 + 9);
+    assert_eq!(regs.rip, 0x1000 + 8);
 }
 
 // VERR m16 - Via RAX

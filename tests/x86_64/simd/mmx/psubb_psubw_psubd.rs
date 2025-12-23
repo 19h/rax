@@ -104,7 +104,7 @@ fn test_psubb_mm_m64() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0xF070301FF070301F - 0x0F0F0F0F0F0F0F0F, "PSUBB: memory operand");
+    assert_eq!(result, 0xF0703010F0703010, "PSUBB: memory operand");
 }
 
 #[test]
@@ -127,7 +127,7 @@ fn test_psubb_signed_values() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // Each byte: 7F-01=7E, 80-01=7F, 01-FE=03, 01-01=00, etc
-    assert_eq!(result, 0x7E7F03008203837F, "PSUBB: signed values");
+    assert_eq!(result, 0x7E7F03008200037F, "PSUBB: signed values");
 }
 
 #[test]
@@ -209,7 +209,7 @@ fn test_psubw_mm_mm_basic() {
 
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    write_mm_via_mem(&mem, 0x2000, 0x000A0009000800007);
+    write_mm_via_mem(&mem, 0x2000, 0x000A000900080007);
     write_mm_via_mem(&mem, 0x2008, 0x0001000100010001);
 
     run_until_hlt(&mut vcpu).unwrap();
@@ -646,5 +646,5 @@ fn test_unsigned_signed_interoperability() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x7F3EE008F8E4C181, "PSUBB: unsigned/signed");
+    assert_eq!(result, 0x7F3E1C08F8E4C281, "PSUBB: unsigned/signed");
 }

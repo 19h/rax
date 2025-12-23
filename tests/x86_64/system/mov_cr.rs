@@ -418,7 +418,7 @@ fn test_cr8_different_values() {
 fn test_cr0_preserves_other_registers() {
     let code = [
         0x48, 0xc7, 0xc6, 0x42, 0x42, 0x42, 0x42, // MOV RSI, 0x42424242
-        0x48, 0xc7, 0xc7, 0xaa, 0xaa, 0xaa, 0xaa, // MOV RDI, 0xaaaaaaaa
+        0x48, 0xc7, 0xc7, 0x2a, 0x2a, 0x2a, 0x2a, // MOV RDI, 0x2a2a2a2a (bit 31 clear to avoid sign-extension)
         0x0f, 0x20, 0xc0, // MOV RAX, CR0
         0x0f, 0x22, 0xc0, // MOV CR0, RAX
         0xf4, // HLT
@@ -427,7 +427,7 @@ fn test_cr0_preserves_other_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rsi, 0x42424242, "RSI should be preserved");
-    assert_eq!(regs.rdi, 0xaaaaaaaa, "RDI should be preserved");
+    assert_eq!(regs.rdi, 0x2a2a2a2a, "RDI should be preserved");
 }
 
 // Test multiple CR reads in sequence
@@ -451,7 +451,7 @@ fn test_multiple_cr_reads() {
 #[test]
 fn test_cr0_to_r8() {
     let code = [
-        0x4c, 0x0f, 0x20, 0xc0, // MOV R8, CR0 (REX.W + REX.B)
+        0x49, 0x0f, 0x20, 0xc0, // MOV R8, CR0 (REX.W + REX.B extends rm field)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -464,7 +464,7 @@ fn test_cr0_to_r8() {
 #[test]
 fn test_cr0_to_r15() {
     let code = [
-        0x4c, 0x0f, 0x20, 0xc7, // MOV R15, CR0
+        0x49, 0x0f, 0x20, 0xc7, // MOV R15, CR0 (REX.B extends rm field)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -477,7 +477,7 @@ fn test_cr0_to_r15() {
 #[test]
 fn test_cr3_to_r8() {
     let code = [
-        0x4c, 0x0f, 0x20, 0xd8, // MOV R8, CR3
+        0x49, 0x0f, 0x20, 0xd8, // MOV R8, CR3 (REX.B extends rm field)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -490,7 +490,7 @@ fn test_cr3_to_r8() {
 #[test]
 fn test_cr4_to_r9() {
     let code = [
-        0x4c, 0x0f, 0x20, 0xe1, // MOV R9, CR4
+        0x49, 0x0f, 0x20, 0xe1, // MOV R9, CR4 (REX.B extends rm field)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -503,8 +503,8 @@ fn test_cr4_to_r9() {
 #[test]
 fn test_r8_to_cr0() {
     let code = [
-        0x4c, 0x0f, 0x20, 0xc0, // MOV R8, CR0
-        0x4c, 0x0f, 0x22, 0xc0, // MOV CR0, R8
+        0x49, 0x0f, 0x20, 0xc0, // MOV R8, CR0 (REX.B extends rm field)
+        0x49, 0x0f, 0x22, 0xc0, // MOV CR0, R8 (REX.B extends rm field)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -609,12 +609,12 @@ fn test_cr8_priority_level_15() {
 #[test]
 fn test_cr_operations_in_loop() {
     let code = [
-        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0
-        // loop:
-        0x0f, 0x20, 0xc0, // MOV RAX, CR0
-        0x48, 0x83, 0xc1, 0x01, // ADD RCX, 1
-        0x48, 0x83, 0xf9, 0x03, // CMP RCX, 3
-        0x75, 0xf5, // JNZ loop
+        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0 (offset 0, 7 bytes)
+        // loop: (offset 7)
+        0x0f, 0x20, 0xc0, // MOV RAX, CR0 (offset 7, 3 bytes)
+        0x48, 0x83, 0xc1, 0x01, // ADD RCX, 1 (offset 10, 4 bytes)
+        0x48, 0x83, 0xf9, 0x03, // CMP RCX, 3 (offset 14, 4 bytes)
+        0x75, 0xf3, // JNZ loop (offset 18, disp = 7 - 20 = -13 = 0xf3)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

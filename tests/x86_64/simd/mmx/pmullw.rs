@@ -103,13 +103,13 @@ fn test_pmullw_signed_negative() {
     // Negative * Positive = Negative
     // -1 (0xFFFF) * 2 = -2 (0xFFFE)
     // -2 (0xFFFE) * 3 = -6 (0xFFFA)
-    write_mm_via_mem(&mem, 0x2000, 0xFFFEFFFFFFFFFFE);
+    write_mm_via_mem(&mem, 0x2000, 0xFFFEFFFFFFFFFFFE);
     write_mm_via_mem(&mem, 0x2008, 0x0003000200030002);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0xFFFAFFFEFFFAFFFE, "PMULLW: negative values");
+    assert_eq!(result, 0xFFFAFFFEFFFDFFFC, "PMULLW: negative values");
 }
 
 #[test]
@@ -416,7 +416,7 @@ fn test_pmullw_by_negative_one() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // Negation: 1*-1=-1, 2*-1=-2, 3*-1=-3, 4*-1=-4
-    assert_eq!(result, 0xFFFCFFFDFFFEFFFF, "PMULLW: multiply by -1");
+    assert_eq!(result, 0xFFFFFFFEFFFDFFFC, "PMULLW: multiply by -1");
 }
 
 #[test]

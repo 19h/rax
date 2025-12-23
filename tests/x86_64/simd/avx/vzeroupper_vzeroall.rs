@@ -242,7 +242,7 @@ fn test_vzeroupper_after_unpack() {
 fn test_vzeroupper_after_hadd() {
     // VHADDPS followed by VZEROUPPER
     let code = [
-        0xc5, 0xf6, 0x7c, 0xc2, // VHADDPS YMM0, YMM1, YMM2
+        0xc5, 0xf7, 0x7c, 0xc2, // VHADDPS YMM0, YMM1, YMM2
         0xc5, 0xf8, 0x77, // VZEROUPPER
         0xf4, // HLT
     ];
@@ -254,7 +254,7 @@ fn test_vzeroupper_after_hadd() {
 fn test_vzeroupper_after_hsub() {
     // VHSUBPS followed by VZEROUPPER
     let code = [
-        0xc5, 0xf6, 0x7d, 0xc2, // VHSUBPS YMM0, YMM1, YMM2
+        0xc5, 0xf7, 0x7d, 0xc2, // VHSUBPS YMM0, YMM1, YMM2
         0xc5, 0xf8, 0x77, // VZEROUPPER
         0xf4, // HLT
     ];

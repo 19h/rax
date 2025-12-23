@@ -5,7 +5,7 @@ use rax::cpu::Registers;
 // Counts the number of leading zero bits in the source operand.
 // If the source is zero, the result is the operand size in bits.
 // Sets CF if source is zero, clears CF otherwise.
-// Sets ZF if source is zero, clears ZF otherwise.
+// Sets ZF if result is zero, clears ZF otherwise.
 //
 // Opcodes:
 // F3 0F BD /r           LZCNT r16, r/m16   - Count leading zeros (16-bit)
@@ -75,7 +75,7 @@ fn test_lzcnt_zero_source_32bit() {
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 32, "32 leading zeros for zero source");
     assert!(cf_set(regs.rflags), "CF should be set (source is zero)");
-    assert!(zf_set(regs.rflags), "ZF should be set (source is zero)");
+    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
 }
 
 #[test]
@@ -124,7 +124,7 @@ fn test_lzcnt_zero_source_64bit() {
 
     assert_eq!(regs.rax, 64, "64 leading zeros for zero source");
     assert!(cf_set(regs.rflags), "CF should be set");
-    assert!(zf_set(regs.rflags), "ZF should be set");
+    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
 }
 
 #[test]
@@ -497,7 +497,7 @@ fn test_lzcnt_16bit_zero() {
 
     assert_eq!(regs.rax & 0xFFFF, 16, "16 leading zeros for zero (16-bit)");
     assert!(cf_set(regs.rflags), "CF should be set");
-    assert!(zf_set(regs.rflags), "ZF should be set");
+    assert!(!zf_set(regs.rflags), "ZF should be clear (result is non-zero)");
 }
 
 #[test]

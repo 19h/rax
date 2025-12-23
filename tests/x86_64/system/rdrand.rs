@@ -437,17 +437,17 @@ fn test_rdrand_clears_all_flags() {
 #[test]
 fn test_rdrand_preserves_other_registers() {
     let code = [
-        0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242
-        0x48, 0xc7, 0xc1, 0x99, 0x99, 0x99, 0x99, // MOV RCX, 0x99999999
+        0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242 (sign-extends to 0x42424242)
+        0x48, 0xc7, 0xc1, 0x19, 0x19, 0x19, 0x19, // MOV RCX, 0x19191919 (sign-extends to 0x19191919)
         0x48, 0x0f, 0xc7, 0xf0, // RDRAND RAX
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // RBX and RCX should be unchanged
+    // RBX and RCX should be unchanged (MOV r64, imm32 sign-extends, so use values with bit 31 clear)
     assert_eq!(regs.rbx, 0x42424242, "RBX should not be affected");
-    assert_eq!(regs.rcx, 0x99999999, "RCX should not be affected");
+    assert_eq!(regs.rcx, 0x19191919, "RCX should not be affected");
 }
 
 // Test RDRAND 16-bit doesn't affect upper bits

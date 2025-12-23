@@ -104,9 +104,9 @@ fn test_rdpmc_preserves_flags() {
 #[test]
 fn test_rdpmc_preserves_other_registers() {
     let code = [
-        0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242
-        0x48, 0xc7, 0xc6, 0xaa, 0xaa, 0xaa, 0xaa, // MOV RSI, 0xaaaaaaaa
-        0x48, 0xc7, 0xc7, 0x99, 0x99, 0x99, 0x99, // MOV RDI, 0x99999999
+        0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242 (bit 31 clear, no sign-ext)
+        0x48, 0xc7, 0xc6, 0x2a, 0x2a, 0x2a, 0x2a, // MOV RSI, 0x2a2a2a2a (bit 31 clear, no sign-ext)
+        0x48, 0xc7, 0xc7, 0x19, 0x19, 0x19, 0x19, // MOV RDI, 0x19191919 (bit 31 clear, no sign-ext)
         0x48, 0x31, 0xc9, // XOR RCX, RCX
         0x0f, 0x33, // RDPMC
         0xf4, // HLT
@@ -115,9 +115,10 @@ fn test_rdpmc_preserves_other_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // RBX, RSI, RDI should be unchanged (only RCX was used for counter selection)
+    // MOV r64, imm32 sign-extends, so we use values with bit 31 clear
     assert_eq!(regs.rbx, 0x42424242, "RBX should not be affected");
-    assert_eq!(regs.rsi, 0xaaaaaaaa, "RSI should not be affected");
-    assert_eq!(regs.rdi, 0x99999999, "RDI should not be affected");
+    assert_eq!(regs.rsi, 0x2a2a2a2a, "RSI should not be affected");
+    assert_eq!(regs.rdi, 0x19191919, "RDI should not be affected");
 }
 
 // Test RDPMC clears upper 32 bits of RAX and RDX
@@ -241,16 +242,16 @@ fn test_rdpmc_fixed_function_counter() {
 #[test]
 fn test_rdpmc_with_all_flags_set() {
     let code = [
+        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0 (doesn't affect flags)
         0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
         0x48, 0x83, 0xe8, 0x02, // SUB RAX, 2 (sets CF, SF)
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
+        0x0f, 0x33, // RDPMC (should preserve flags)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // Flags from SUB should be preserved
+    // Flags from SUB should be preserved by RDPMC
     assert!(regs.rflags & 0x01 != 0, "CF should be preserved");
     assert!(regs.rflags & 0x80 != 0, "SF should be preserved");
 }
@@ -296,7 +297,7 @@ fn test_rdpmc_with_push_pop() {
 #[test]
 fn test_rdpmc_rbx_preservation() {
     let code = [
-        0x48, 0xc7, 0xc3, 0xef, 0xbe, 0xad, 0xde, // MOV RBX, 0xdeadbeef
+        0x48, 0xc7, 0xc3, 0xef, 0xbe, 0x2d, 0x1e, // MOV RBX, 0x1e2dbeef (bit 31 clear, no sign-ext)
         0x48, 0x31, 0xc9, // XOR RCX, RCX
         0x0f, 0x33, // RDPMC #1
         0x0f, 0x33, // RDPMC #2
@@ -306,7 +307,7 @@ fn test_rdpmc_rbx_preservation() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx, 0xdeadbeef, "RBX should be preserved");
+    assert_eq!(regs.rbx, 0x1e2dbeef, "RBX should be preserved");
 }
 
 // Test RDPMC with conditional jumps
@@ -384,16 +385,16 @@ fn test_rdpmc_carry_flag() {
 #[test]
 fn test_rdpmc_sign_flag() {
     let code = [
+        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0 (doesn't affect flags)
         0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, // MOV RAX, -1
         0x48, 0x85, 0xc0, // TEST RAX, RAX (sets SF)
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
+        0x0f, 0x33, // RDPMC (should preserve flags)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // SF should still be set
+    // SF should still be set (RDPMC preserves flags)
     assert!(regs.rflags & 0x80 != 0, "SF should be preserved");
 }
 
@@ -420,13 +421,13 @@ fn test_rdpmc_execution_speed() {
 #[test]
 fn test_rdpmc_counter_loop() {
     let code = [
-        0x48, 0x31, 0xc9, // XOR RCX, RCX (counter = 0)
-        // loop:
-        0x0f, 0x33, // RDPMC
-        0x48, 0x83, 0xc1, 0x01, // ADD RCX, 1
-        0x48, 0x83, 0xf9, 0x04, // CMP RCX, 4
-        0x75, 0xf5, // JNZ loop
-        0xf4, // HLT
+        0x48, 0x31, 0xc9, // XOR RCX, RCX (counter = 0) - 3 bytes (0x1000)
+        // loop: (0x1003)
+        0x0f, 0x33, // RDPMC - 2 bytes (0x1003)
+        0x48, 0x83, 0xc1, 0x01, // ADD RCX, 1 - 4 bytes (0x1005)
+        0x48, 0x83, 0xf9, 0x04, // CMP RCX, 4 - 4 bytes (0x1009)
+        0x75, 0xf4, // JNZ loop (rel8 = -12, from 0x100F to 0x1003) - 2 bytes (0x100D)
+        0xf4, // HLT - 1 byte (0x100F)
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -459,8 +460,8 @@ fn test_rdpmc_different_counters_sequence() {
 #[test]
 fn test_rdpmc_preserves_extended_registers() {
     let code = [
-        0x49, 0xc7, 0xc0, 0x11, 0x11, 0x11, 0x11, // MOV R8, 0x11111111
-        0x49, 0xc7, 0xc7, 0xff, 0xff, 0xff, 0xff, // MOV R15, 0xffffffff
+        0x49, 0xc7, 0xc0, 0x11, 0x11, 0x11, 0x11, // MOV R8, 0x11111111 (bit 31 clear)
+        0x49, 0xc7, 0xc7, 0x0f, 0x0f, 0x0f, 0x0f, // MOV R15, 0x0f0f0f0f (bit 31 clear)
         0x48, 0x31, 0xc9, // XOR RCX, RCX
         0x0f, 0x33, // RDPMC
         0xf4, // HLT
@@ -469,7 +470,7 @@ fn test_rdpmc_preserves_extended_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.r8, 0x11111111, "R8 should be preserved");
-    assert_eq!(regs.r15, 0xffffffff, "R15 should be preserved");
+    assert_eq!(regs.r15, 0x0f0f0f0f, "R15 should be preserved");
 }
 
 // Test RDPMC result format (EDX:EAX)

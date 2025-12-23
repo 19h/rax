@@ -16,6 +16,8 @@ use crate::backend::kvm::KvmVm;
 use crate::config::VmConfig;
 use crate::cpu::{CpuState, DescriptorTable, Registers, Segment, SystemRegisters, X86_64CpuState};
 use crate::devices::bus::{IoBus, IoRange, MmioBus};
+use crate::devices::debug::DebugPort;
+use crate::devices::map::{X86_DEBUG_PORT_BASE, X86_DEBUG_PORT_LEN};
 use crate::devices::pci::{PciStub, PCI_CONFIG_ADDRESS};
 use crate::devices::rtc::{RtcStub, RTC_ADDRESS};
 use crate::error::{Error, Result};
@@ -256,6 +258,12 @@ impl X86_64Arch {
             cr4: X86_CR4_PAE,
             cr8: 0,
             efer: EFER_LME | EFER_LMA,
+            dr0: 0,
+            dr1: 0,
+            dr2: 0,
+            dr3: 0,
+            dr6: 0xFFFF0FF0, // Default value after reset
+            dr7: 0x00000400, // Default value after reset
         }
     }
 
@@ -390,6 +398,14 @@ impl Arch for X86_64Arch {
                 len: 2,
             },
             Box::new(RtcStub::new()),
+        )?;
+
+        io_bus.register(
+            IoRange {
+                base: X86_DEBUG_PORT_BASE,
+                len: X86_DEBUG_PORT_LEN,
+            },
+            Box::new(DebugPort::new()),
         )?;
 
         Ok(())
