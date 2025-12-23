@@ -10,12 +10,12 @@ use linux_loader::loader::{load_cmdline, BzImage, KernelLoader, KernelLoaderResu
 use tracing::{debug, info};
 use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestMemoryMmap};
 
-use crate::arch::{Arch, BootInfo};
+use crate::arch::{Arch, BootInfo, X86_64BootInfo};
 #[cfg(all(feature = "kvm", target_os = "linux"))]
 use crate::backend::kvm::KvmVm;
 use crate::config::VmConfig;
-use crate::cpu::{CpuState, DescriptorTable, Registers, Segment, SystemRegisters};
-use crate::devices::bus::{IoBus, IoRange};
+use crate::cpu::{CpuState, DescriptorTable, Registers, Segment, SystemRegisters, X86_64CpuState};
+use crate::devices::bus::{IoBus, IoRange, MmioBus};
 use crate::devices::pci::{PciStub, PCI_CONFIG_ADDRESS};
 use crate::devices::rtc::{RtcStub, RTC_ADDRESS};
 use crate::error::{Error, Result};
@@ -168,7 +168,7 @@ impl X86_64Arch {
     }
 
     /// Build initial system registers for 64-bit long mode boot.
-    fn build_sregs(_boot: &BootInfo) -> SystemRegisters {
+    fn build_sregs() -> SystemRegisters {
         // 64-bit code segment (L=1, D=0 for long mode)
         let cs = Segment {
             base: 0,
@@ -373,7 +373,7 @@ impl Arch for X86_64Arch {
         "x86_64"
     }
 
-    fn setup_devices(&self, io_bus: &mut IoBus) -> Result<()> {
+    fn setup_devices(&self, io_bus: &mut IoBus, _mmio_bus: &mut MmioBus) -> Result<()> {
         // PCI configuration space (stub - returns no devices)
         io_bus.register(
             IoRange {
@@ -393,6 +393,10 @@ impl Arch for X86_64Arch {
         )?;
 
         Ok(())
+    }
+
+    fn serial_irq(&self) -> Option<u32> {
+        Some(4)
     }
 
     fn load_kernel(&self, mem: &GuestMemoryMmap, config: &VmConfig) -> Result<BootInfo> {
@@ -545,16 +549,19 @@ impl Arch for X86_64Arch {
             "kernel entry points"
         );
 
-        Ok(BootInfo {
+        Ok(BootInfo::X86_64(X86_64BootInfo {
             entry_point: entry_point_64,
             boot_params_addr: GuestAddress(BOOT_PARAMS_ADDR),
             tss_addr,
             identity_map_addr,
-        })
+        }))
     }
 
     #[cfg(all(feature = "kvm", target_os = "linux"))]
     fn init_vm(&self, vm: &KvmVm, boot: &BootInfo) -> Result<()> {
+        let boot = boot.as_x86_64().ok_or_else(|| {
+            Error::InvalidConfig("expected x86_64 boot info".to_string())
+        })?;
         vm.create_irq_chip()?;
         vm.create_pit2()?;
         vm.set_tss_address(boot.tss_addr)?;
@@ -563,6 +570,9 @@ impl Arch for X86_64Arch {
     }
 
     fn initial_cpu_state(&self, mem: &GuestMemoryMmap, boot: &BootInfo) -> Result<CpuState> {
+        let boot = boot.as_x86_64().ok_or_else(|| {
+            Error::InvalidConfig("expected x86_64 boot info".to_string())
+        })?;
         // Setup page tables and GDT in guest memory
         Self::setup_page_tables(mem)?;
         Self::write_gdt(mem)?;
@@ -579,9 +589,9 @@ impl Arch for X86_64Arch {
             ..Default::default()
         };
 
-        let sregs = Self::build_sregs(boot);
+        let sregs = Self::build_sregs();
 
-        Ok(CpuState { regs, sregs })
+        Ok(CpuState::X86_64(X86_64CpuState { regs, sregs }))
     }
 }
 

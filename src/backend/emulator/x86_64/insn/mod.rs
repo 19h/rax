@@ -2,6 +2,7 @@
 
 pub mod arith;
 pub mod bit;
+pub mod bmi;
 pub mod control;
 pub mod data;
 pub mod fpu;

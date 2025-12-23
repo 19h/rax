@@ -12,7 +12,7 @@ use super::decoder::Decoder;
 use super::flags;
 use super::insn;
 use super::mmu::Mmu;
-use crate::cpu::{Registers, SystemRegisters, VCpu, VcpuExit};
+use crate::cpu::{CpuState, Registers, SystemRegisters, VCpu, VcpuExit, X86_64CpuState};
 use crate::error::{Error, Result};
 
 /// Maximum instruction length for x86_64.
@@ -1406,21 +1406,24 @@ impl VCpu for X86_64Vcpu {
         }
     }
 
-    fn get_regs(&self) -> Result<Registers> {
-        Ok(self.regs.clone())
+    fn get_state(&self) -> Result<CpuState> {
+        Ok(CpuState::X86_64(X86_64CpuState {
+            regs: self.regs.clone(),
+            sregs: self.sregs.clone(),
+        }))
     }
 
-    fn set_regs(&mut self, regs: &Registers) -> Result<()> {
-        self.regs = regs.clone();
-        Ok(())
-    }
-
-    fn get_sregs(&self) -> Result<SystemRegisters> {
-        Ok(self.sregs.clone())
-    }
-
-    fn set_sregs(&mut self, sregs: &SystemRegisters) -> Result<()> {
-        self.sregs = sregs.clone();
+    fn set_state(&mut self, state: &CpuState) -> Result<()> {
+        let state = match state {
+            CpuState::X86_64(state) => state,
+            _ => {
+                return Err(Error::Emulator(
+                    "expected x86_64 state for x86_64 vCPU".to_string(),
+                ))
+            }
+        };
+        self.regs = state.regs.clone();
+        self.sregs = state.sregs.clone();
         Ok(())
     }
 
