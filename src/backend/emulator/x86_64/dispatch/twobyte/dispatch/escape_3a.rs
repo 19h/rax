@@ -356,7 +356,8 @@ impl X86_64Vcpu {
                     self.write_mem(addr, byte as u64, 1)?;
                 } else {
                     // Zero-extend to 32/64 bit register
-                    self.set_reg(rm, byte as u64, ctx.op_size);
+                    let dest_size = if ctx.rex_w() { 8 } else { 4 };
+                    self.set_reg(rm, byte as u64, dest_size);
                 }
                 self.regs.rip += ctx.cursor as u64;
                 Ok(None)
@@ -381,7 +382,8 @@ impl X86_64Vcpu {
                 if is_memory {
                     self.write_mem(addr, word as u64, 2)?;
                 } else {
-                    self.set_reg(rm, word as u64, ctx.op_size);
+                    let dest_size = if ctx.rex_w() { 8 } else { 4 };
+                    self.set_reg(rm, word as u64, dest_size);
                 }
                 self.regs.rip += ctx.cursor as u64;
                 Ok(None)

@@ -32,6 +32,57 @@ pub fn mov_r_imm(
     Ok(None)
 }
 
+/// MOV AL, moffs8 (0xA0) - Load byte from absolute address
+pub fn mov_al_moffs(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // In 64-bit mode with REX.W, address is 64-bit, otherwise determined by address size
+    let addr = if ctx.rex_w() || !ctx.address_size_override {
+        ctx.consume_u64()?
+    } else {
+        ctx.consume_u32()? as u64
+    };
+    let value = vcpu.mmu.read_u8(addr, &vcpu.sregs)?;
+    vcpu.regs.rax = (vcpu.regs.rax & !0xFF) | (value as u64);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// MOV rAX, moffs (0xA1) - Load word/dword/qword from absolute address
+pub fn mov_rax_moffs(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let addr = if ctx.rex_w() || !ctx.address_size_override {
+        ctx.consume_u64()?
+    } else {
+        ctx.consume_u32()? as u64
+    };
+    let value = vcpu.read_mem(addr, ctx.op_size)?;
+    vcpu.set_reg(0, value, ctx.op_size);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// MOV moffs8, AL (0xA2) - Store byte to absolute address
+pub fn mov_moffs_al(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let addr = if ctx.rex_w() || !ctx.address_size_override {
+        ctx.consume_u64()?
+    } else {
+        ctx.consume_u32()? as u64
+    };
+    vcpu.mmu.write_u8(addr, vcpu.regs.rax as u8, &vcpu.sregs)?;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// MOV moffs, rAX (0xA3) - Store word/dword/qword to absolute address
+pub fn mov_moffs_rax(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let addr = if ctx.rex_w() || !ctx.address_size_override {
+        ctx.consume_u64()?
+    } else {
+        ctx.consume_u32()? as u64
+    };
+    vcpu.write_mem(addr, vcpu.get_reg(0, ctx.op_size), ctx.op_size)?;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
 /// MOV r/m8, r8 (0x88)
 pub fn mov_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
@@ -179,6 +230,14 @@ pub fn mov_rm_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
     } else {
         imm
     };
+
+    // Tolerate MOV r64, imm64 encoded with C7 /0 when the upper dword is sign-extension.
+    if op_size == 8 && (modrm >> 6) == 3 && ctx.cursor + 4 <= ctx.bytes.len() {
+        let sign = if (imm as i64) < 0 { 0xFF } else { 0x00 };
+        if ctx.bytes[ctx.cursor..ctx.cursor + 4].iter().all(|b| *b == sign) {
+            ctx.cursor += 4;
+        }
+    }
 
     if is_memory {
         vcpu.write_mem(addr, imm, op_size)?;

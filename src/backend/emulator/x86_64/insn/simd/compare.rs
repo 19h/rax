@@ -4,6 +4,7 @@ use crate::cpu::VcpuExit;
 use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
+use super::super::super::flags;
 
 // =============================================================================
 // Helper functions for float comparison predicates
@@ -201,6 +202,51 @@ pub fn cmpps(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         vcpu.regs.xmm[xmm_dst][0] = r0 as u64 | ((r1 as u64) << 32);
         vcpu.regs.xmm[xmm_dst][1] = r2 as u64 | ((r3 as u64) << 32);
     }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// UCOMISS/UCOMISD - Unordered Compare Scalar FP and set EFLAGS (0x0F 0x2E)
+pub fn ucomiss_ucomisd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+
+    let (unordered, greater, less) = if ctx.operand_size_override {
+        let a = f64::from_bits(vcpu.regs.xmm[xmm_dst][0]);
+        let b = if is_memory {
+            f64::from_bits(vcpu.read_mem(addr, 8)?)
+        } else {
+            f64::from_bits(vcpu.regs.xmm[rm as usize][0])
+        };
+        (a.is_nan() || b.is_nan(), a > b, a < b)
+    } else {
+        let a = f32::from_bits(vcpu.regs.xmm[xmm_dst][0] as u32);
+        let b = if is_memory {
+            f32::from_bits(vcpu.read_mem(addr, 4)? as u32)
+        } else {
+            f32::from_bits(vcpu.regs.xmm[rm as usize][0] as u32)
+        };
+        (a.is_nan() || b.is_nan(), a > b, a < b)
+    };
+
+    let clear_mask = flags::bits::ZF
+        | flags::bits::PF
+        | flags::bits::CF
+        | flags::bits::OF
+        | flags::bits::AF
+        | flags::bits::SF;
+    vcpu.regs.rflags &= !clear_mask;
+
+    if unordered {
+        vcpu.regs.rflags |= flags::bits::ZF | flags::bits::PF | flags::bits::CF;
+    } else if greater {
+        // ZF=PF=CF=0
+    } else if less {
+        vcpu.regs.rflags |= flags::bits::CF;
+    } else {
+        vcpu.regs.rflags |= flags::bits::ZF;
+    }
+
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
