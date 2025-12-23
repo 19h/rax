@@ -143,13 +143,15 @@ pub fn mov_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 
 /// MOV r/m, Sreg (0x8C)
 pub fn mov_rm_sreg(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = ctx.op_size;
     let (sreg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let value = vcpu.get_sreg(sreg);
 
     if is_memory {
         vcpu.mmu.write_u16(addr, value, &vcpu.sregs)?;
     } else {
-        vcpu.set_reg(rm, value as u64, 2);
+        let reg_size = if op_size == 8 { 8 } else if op_size == 4 { 4 } else { 2 };
+        vcpu.set_reg(rm, value as u64, reg_size);
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
