@@ -314,8 +314,8 @@ fn test_daa_af_set_causes_upper_adjust() {
     let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // 0x99 + 0x06 = 0x9F, then 0x9F + 0x60 = 0xFF
-    assert_eq!(regs.rax & 0xFF, 0xFF, "AL should be 0xFF");
+    // 0x99 + 0x06 = 0x9F; upper adjust only applies when old AL > 0x99 or CF=1
+    assert_eq!(regs.rax & 0xFF, 0x9F, "AL should be 0x9F");
     assert!(!cf_set(regs.rflags), "CF should be clear");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -464,8 +464,8 @@ fn test_daa_boundary_90() {
     let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0xF0, "AL should be 0xF0 (0x90 + 0x60)");
-    assert!(cf_set(regs.rflags), "CF should be set");
+    assert_eq!(regs.rax & 0xFF, 0x90, "AL should remain 0x90");
+    assert!(!cf_set(regs.rflags), "CF should be clear");
 }
 
 #[test]

@@ -9,11 +9,7 @@ use super::super::super::flags;
 fn add_with_carry_unsigned(dest: u64, src: u64, carry_in: bool, op_size: u8) -> (u64, bool) {
     let bits = (op_size as u32) * 8;
     let full_sum = (dest as u128) + (src as u128) + if carry_in { 1 } else { 0 };
-    let mask = if bits == 64 {
-        u128::MAX
-    } else {
-        (1u128 << bits) - 1
-    };
+    let mask = (1u128 << bits) - 1;
     let result = (full_sum & mask) as u64;
     let carry_out = full_sum > mask;
     (result, carry_out)

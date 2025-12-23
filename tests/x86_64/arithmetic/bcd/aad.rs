@@ -433,14 +433,14 @@ fn test_aad_flags_nonzero_result() {
 
 #[test]
 fn test_aad_parity_flag_even() {
-    // AX = 0x0103, result AL = 13 (even parity)
+    // AX = 0x0102, result AL = 12 (even parity)
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
-    regs.rax = 0x0103;
+    regs.rax = 0x0102;
     let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 13, "AL should be 13");
+    assert_eq!(regs.rax & 0xFF, 12, "AL should be 12");
     assert!(pf_set(regs.rflags), "PF should be set for even parity");
 }
 
