@@ -98,6 +98,7 @@ impl X86_64Vcpu {
             0x1F => insn::system::nop_rm(self, ctx),
 
             // Prefetch hints
+            0x0D => insn::simd::prefetchw(self, ctx),
             0x18 => insn::simd::prefetchh(self, ctx),
 
             // MOVUPS/MOVUPD (0x10/0x11 unaligned), MOVAPS/MOVAPD (0x28/0x29 aligned)

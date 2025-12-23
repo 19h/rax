@@ -229,6 +229,25 @@ pub fn prefetchh(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     Ok(None)
 }
 
+/// PREFETCHW/PREFETCHWT1 m8 (0F 0D /1-2) - prefetch with intent to write, treated as NOP
+pub fn prefetchw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let modrm_start = ctx.cursor;
+    let modrm = ctx.consume_u8()?;
+    let hint = (modrm >> 3) & 0x07;
+
+    if hint != 1 && hint != 2 {
+        return Err(Error::Emulator(format!(
+            "unimplemented PREFETCHW hint /{} at RIP={:#x}",
+            hint, vcpu.regs.rip
+        )));
+    }
+
+    let (_, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+    ctx.cursor = modrm_start + 1 + extra;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
 // =============================================================================
 // Packed Integer Subtract (PSUB* family)
 // =============================================================================
