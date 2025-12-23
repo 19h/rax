@@ -5,7 +5,7 @@ use rax::cpu::Registers;
 // Extracts the lowest set bit from the source operand and sets that bit in the destination.
 // All other bits in the destination are cleared.
 // This is equivalent to: dest = src & -src
-// Sets ZF if source is zero, sets CF if source is zero, clears SF and OF.
+// ZF is set if the result is zero, CF is set if source is non-zero, SF is updated based on result, OF is cleared.
 //
 // Opcodes:
 // VEX.NDD.LZ.0F38.W0 F3 /3   BLSI r32, r/m32   - Extract lowest set bit
@@ -25,7 +25,7 @@ fn test_blsi_eax_ebx_bit_0() {
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_0001, "EAX should contain isolated bit 0");
     assert!(!zf_set(regs.rflags), "ZF should be clear (source is non-zero)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (source is non-zero)");
+    assert!(cf_set(regs.rflags), "CF should be set (source is non-zero)");
 }
 
 #[test]
@@ -90,7 +90,7 @@ fn test_blsi_zero_source() {
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0, "EAX should be zero");
     assert!(zf_set(regs.rflags), "ZF should be set (source is zero)");
-    assert!(cf_set(regs.rflags), "CF should be set (source is zero)");
+    assert!(!cf_set(regs.rflags), "CF should be clear (source is zero)");
 }
 
 #[test]
@@ -179,7 +179,7 @@ fn test_blsi_single_bit_positions() {
 fn test_blsi_with_extended_registers() {
     // BLSI R8D, R9D
     let code = [
-        0xc4, 0x42, 0x78, 0xf3, 0xd9, // BLSI R8D, R9D
+        0xc4, 0xc2, 0x38, 0xf3, 0xd9, // BLSI R8D, R9D
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -195,7 +195,7 @@ fn test_blsi_with_extended_registers() {
 fn test_blsi_r15() {
     // BLSI R15, R15
     let code = [
-        0xc4, 0x42, 0x80, 0xf3, 0xdf, // BLSI R15, R15
+        0xc4, 0xc2, 0x80, 0xf3, 0xdf, // BLSI R15, R15
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -426,6 +426,6 @@ fn test_blsi_clear_sf_of() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert!(!sf_set(regs.rflags), "SF should be clear");
+    assert!(sf_set(regs.rflags), "SF should reflect sign of result");
     assert!(!of_set(regs.rflags), "OF should be clear");
 }
