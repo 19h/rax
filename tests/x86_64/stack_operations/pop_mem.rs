@@ -196,7 +196,8 @@ fn test_pop_mem_sib_base_index() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let val = read_mem_at_u64(&vm, DATA_ADDR + 0x100);
-    assert_eq!(val, 0x88, "Value popped to [RAX+RBX]");
+    // PUSH imm8 sign-extends: 0x88 (bit 7 set) -> 0xFFFFFFFFFFFFFF88
+    assert_eq!(val, 0xFFFFFFFFFFFFFF88, "Value popped to [RAX+RBX]");
 }
 
 #[test]
@@ -408,11 +409,14 @@ fn test_pop_mem_preserves_flags() {
 
 #[test]
 fn test_pop_mem_to_stack() {
+    // This test pops a value to the same stack location it was pushed from.
+    // After PUSH 0x42, RSP=0x0FF8, [0x0FF8]=0x42
+    // After MOV RAX, RSP, RAX=0x0FF8
+    // After POP [RAX], reads from [RSP=0x0FF8]=0x42, writes to [RAX=0x0FF8]=0x42
     let code = [
         0x6a, 0x42, // PUSH 0x42
         0x48, 0x89, 0xe0, // MOV RAX, RSP
-        0x48, 0x83, 0xec, 0x08, // SUB RSP, 8 (make space)
-        0x8f, 0x00, // POP [RAX] (pop to stack area)
+        0x8f, 0x00, // POP [RAX] (pop to stack area where RAX points)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -562,7 +566,8 @@ fn test_pop_mem_high_address() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let val = read_mem_at_u64(&vm, 0x100000);
-    assert_eq!(val, 0xEF, "Value popped to high address");
+    // PUSH imm8 sign-extends: 0xEF (bit 7 set) -> 0xFFFFFFFFFFFFFFEF
+    assert_eq!(val, 0xFFFFFFFFFFFFFFEF, "Value popped to high address");
 }
 
 #[test]
@@ -683,5 +688,6 @@ fn test_pop_mem_overwrite_existing() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let val = read_mem_at_u64(&vm, DATA_ADDR);
-    assert_eq!(val, 0x99, "Old value overwritten");
+    // PUSH imm8 sign-extends: 0x99 (bit 7 set) -> 0xFFFFFFFFFFFFFF99
+    assert_eq!(val, 0xFFFFFFFFFFFFFF99, "Old value overwritten");
 }
