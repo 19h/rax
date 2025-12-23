@@ -149,8 +149,9 @@ fn test_xchg_rax_rcx_short_encoding() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xBBBBBBBB, "RAX should be 0xBBBBBBBB");
-    assert_eq!(regs.rcx, 0xAAAAAAAA, "RCX should be 0xAAAAAAAA");
+    // MOV r64, imm32 sign-extends, so 0xBBBBBBBB becomes 0xFFFFFFFFBBBBBBBB
+    assert_eq!(regs.rax, 0xFFFFFFFFBBBBBBBBu64, "RAX should be 0xFFFFFFFFBBBBBBBB");
+    assert_eq!(regs.rcx, 0xFFFFFFFFAAAAAAAAu64, "RCX should be 0xFFFFFFFFAAAAAAAA");
 }
 
 // ===== CHAIN EXCHANGES =====
@@ -288,8 +289,9 @@ fn test_xchg_r14_r15() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r14, 0xBBBBBBBB, "R14 should be 0xBBBBBBBB");
-    assert_eq!(regs.r15, 0xAAAAAAAA, "R15 should be 0xAAAAAAAA");
+    // MOV r64, imm32 sign-extends, so 0xBBBBBBBB becomes 0xFFFFFFFFBBBBBBBB
+    assert_eq!(regs.r14, 0xFFFFFFFFBBBBBBBBu64, "R14 should be 0xFFFFFFFFBBBBBBBB");
+    assert_eq!(regs.r15, 0xFFFFFFFFAAAAAAAAu64, "R15 should be 0xFFFFFFFFAAAAAAAA");
 }
 
 // ===== PRACTICAL PATTERNS =====

@@ -11,18 +11,21 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     static CPUID_COUNT: AtomicU64 = AtomicU64::new(0);
 
     let leaf = vcpu.regs.rax as u32;
-    let _subleaf = vcpu.regs.rcx as u32;
+    let subleaf = vcpu.regs.rcx as u32;
 
     let count = CPUID_COUNT.fetch_add(1, Ordering::Relaxed) + 1;
     // Always log CPUID 0x80000001 (GBPAGES detection) and first 100 of others
     if leaf == 0x80000001 || count <= 100 {
-        eprintln!("[CPUID] leaf={:#x} subleaf={:#x} at RIP={:#x} (call #{})", leaf, _subleaf, vcpu.regs.rip, count);
+        eprintln!(
+            "[CPUID] leaf={:#x} subleaf={:#x} at RIP={:#x} (call #{})",
+            leaf, subleaf, vcpu.regs.rip, count
+        );
     }
 
     let (eax, ebx, ecx, edx) = match leaf {
         0 => {
             // Return max leaf and vendor string "RaxEmulato"
-            (0x01, 0x45786152, 0x6f74616c, 0x756d456d)
+            (0x07, 0x45786152, 0x6f74616c, 0x756d456d)
         }
         1 => {
             // Processor signature and features
@@ -40,6 +43,16 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             // Format: each byte is a descriptor. 0 = null descriptor
             // Return a simple valid response
             (0x01, 0, 0, 0) // AL=1 = single iteration required
+        }
+        7 => {
+            // Extended feature flags (subleaf 0)
+            if subleaf == 0 {
+                let ebx = 1u32 << 20; // SMAP
+                let edx = 1u32 << 14; // SERIALIZE
+                (0, ebx, 0, edx)
+            } else {
+                (0, 0, 0, 0)
+            }
         }
         0x80000000 => {
             // Extended CPUID Information - max extended leaf

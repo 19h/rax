@@ -126,6 +126,8 @@ pub struct X86_64Vcpu {
     trace_enabled: bool,
     /// IA32_KERNEL_GS_BASE MSR (0xC0000102) for SWAPGS
     pub(super) kernel_gs_base: u64,
+    /// Protection Key Rights Register (PKRU).
+    pub(super) pkru: u32,
 }
 
 /// Pending I/O operation.
@@ -248,6 +250,7 @@ impl X86_64Vcpu {
             io_pending: None,
             trace_enabled: std::env::var("RAX_TRACE").is_ok(),
             kernel_gs_base: 0,
+            pkru: 0,
         }
     }
 

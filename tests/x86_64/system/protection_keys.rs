@@ -42,7 +42,7 @@ fn test_rdpkru_preserves_registers() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rbx, 0x42424242, "RBX should not be modified");
-    assert_eq!(regs.rsi, 0xAAAAAAAA, "RSI should not be modified");
+    assert_eq!(regs.rsi, 0xFFFF_FFFF_AAAA_AAAA, "RSI should not be modified");
 }
 
 #[test]

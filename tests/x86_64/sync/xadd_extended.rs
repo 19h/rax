@@ -269,13 +269,14 @@ fn test_xadd_parity_flag_patterns() {
     let code = [
         0x48, 0xc7, 0xc3, 0x02, 0x00, 0x00, 0x00, // MOV RBX, 2 (0b00000010)
         0x48, 0xc7, 0xc1, 0x01, 0x00, 0x00, 0x00, // MOV RCX, 1 (0b00000001)
-        0x0f, 0xc1, 0xcb,                         // XADD EBX, ECX (result 3 = 0b00000011, odd parity)
+        0x0f, 0xc1, 0xcb,                         // XADD EBX, ECX (result 3 = 0b00000011)
         0xf4,                                     // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rbx & 0xFFFFFFFF, 3, "EBX should be 3");
-    assert_eq!(regs.rflags & 0x04, 0, "PF should be clear (odd parity)");
+    // 3 = 0b11 has 2 set bits = even parity, so PF = 1
+    assert_eq!(regs.rflags & 0x04, 0x04, "PF should be set (even parity)");
 }
 
 #[test]
@@ -404,15 +405,16 @@ fn test_xadd_r8_r9_registers() {
 #[test]
 fn test_xadd_r12_r13_registers() {
     let code = [
-        0x49, 0xc7, 0xc4, 0xaa, 0xaa, 0xaa, 0xaa, // MOV R12, 0xAAAAAAAA
+        0x49, 0xc7, 0xc4, 0xaa, 0xaa, 0xaa, 0xaa, // MOV R12, 0xAAAAAAAA (sign-extends to 0xFFFFFFFFAAAAAAAA)
         0x49, 0xc7, 0xc5, 0x55, 0x55, 0x55, 0x55, // MOV R13, 0x55555555
-        0x4d, 0x0f, 0xc1, 0xec,                   // XADD R12D, R13D
+        0x4d, 0x0f, 0xc1, 0xec,                   // XADD R12, R13 (64-bit due to REX.W)
         0xf4,                                     // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r12, 0xFFFFFFFF, "R12 should be 0xFFFFFFFF");
-    assert_eq!(regs.r13, 0xAAAAAAAA, "R13 should be 0xAAAAAAAA");
+    // Sum = 0xFFFFFFFFAAAAAAAA + 0x55555555 = 0xFFFFFFFFFFFFFFFF
+    assert_eq!(regs.r12, 0xFFFFFFFFFFFFFFFFu64, "R12 should be 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(regs.r13, 0xFFFFFFFFAAAAAAAAu64, "R13 should be old R12");
 }
 
 #[test]

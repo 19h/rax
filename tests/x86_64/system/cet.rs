@@ -516,8 +516,9 @@ fn test_clac_preserves_registers() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xAAAAAAAA, "RAX should not be modified");
-    assert_eq!(regs.rbx, 0xBBBBBBBB, "RBX should not be modified");
+    // MOV r64, imm32 sign-extends, so 0xAAAAAAAA becomes 0xFFFFFFFFAAAAAAAA
+    assert_eq!(regs.rax, 0xFFFFFFFFAAAAAAAAu64, "RAX should not be modified");
+    assert_eq!(regs.rbx, 0xFFFFFFFFBBBBBBBBu64, "RBX should not be modified");
 }
 
 #[test]
@@ -531,8 +532,9 @@ fn test_stac_preserves_registers() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0xCCCCCCCC, "RCX should not be modified");
-    assert_eq!(regs.rdx, 0xDDDDDDDD, "RDX should not be modified");
+    // MOV r64, imm32 sign-extends, so 0xCCCCCCCC becomes 0xFFFFFFFFCCCCCCCC
+    assert_eq!(regs.rcx, 0xFFFFFFFFCCCCCCCCu64, "RCX should not be modified");
+    assert_eq!(regs.rdx, 0xFFFFFFFFDDDDDDDDu64, "RDX should not be modified");
 }
 
 #[test]

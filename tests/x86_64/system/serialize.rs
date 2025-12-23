@@ -162,7 +162,7 @@ fn test_serialize_after_arithmetic() {
 fn test_serialize_preserves_extended_registers() {
     let code = [
         0x49, 0xc7, 0xc0, 0x11, 0x11, 0x11, 0x11, // MOV R8, 0x11111111
-        0x49, 0xc7, 0xc7, 0xff, 0xff, 0xff, 0xff, // MOV R15, 0xffffffff
+        0x49, 0xc7, 0xc7, 0xff, 0xff, 0xff, 0xff, // MOV R15, 0xffffffff (sign-extended)
         0x0f, 0x01, 0xe8, // SERIALIZE
         0xf4, // HLT
     ];
@@ -170,7 +170,7 @@ fn test_serialize_preserves_extended_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.r8, 0x11111111, "R8 should be preserved");
-    assert_eq!(regs.r15, 0xffffffff, "R15 should be preserved");
+    assert_eq!(regs.r15, 0xffff_ffff_ffff_ffff, "R15 should be preserved");
 }
 
 // Test SERIALIZE preserves stack pointer
