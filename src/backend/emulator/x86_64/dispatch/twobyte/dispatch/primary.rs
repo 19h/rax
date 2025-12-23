@@ -9,6 +9,7 @@ use super::super::super::super::flags;
 use super::super::super::super::insn;
 
 impl X86_64Vcpu {
+    #[inline(always)]
     pub(in crate::backend::emulator::x86_64) fn execute_0f(
         &mut self,
         ctx: &mut InsnContext,
