@@ -9,6 +9,7 @@ use super::super::super::super::flags;
 use super::super::super::super::insn;
 
 impl X86_64Vcpu {
+   #[inline(always)]
     pub(in crate::backend::emulator::x86_64) fn execute_0f01(
         &mut self,
         ctx: &mut InsnContext,
@@ -143,6 +144,7 @@ impl X86_64Vcpu {
     }
 
     /// Execute 0x0F 0xAE opcodes (Group 15 - fences, CLFLUSH, etc.)
+    #[inline(always)]
     pub(in crate::backend::emulator::x86_64) fn execute_0fae(
         &mut self,
         ctx: &mut InsnContext,

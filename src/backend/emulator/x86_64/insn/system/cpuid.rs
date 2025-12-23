@@ -7,20 +7,8 @@ use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
 /// CPUID (0x0F 0xA2)
 pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    use std::sync::atomic::{AtomicU64, Ordering};
-    static CPUID_COUNT: AtomicU64 = AtomicU64::new(0);
-
     let leaf = vcpu.regs.rax as u32;
     let subleaf = vcpu.regs.rcx as u32;
-
-    let count = CPUID_COUNT.fetch_add(1, Ordering::Relaxed) + 1;
-    // Always log CPUID 0x80000001 (GBPAGES detection) and first 100 of others
-    if leaf == 0x80000001 || count <= 100 {
-        eprintln!(
-            "[CPUID] leaf={:#x} subleaf={:#x} at RIP={:#x} (call #{})",
-            leaf, subleaf, vcpu.regs.rip, count
-        );
-    }
 
     let (eax, ebx, ecx, edx) = match leaf {
         0 => {
@@ -65,8 +53,6 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             let features_edx = (1u32 << 29)  // LM (Long Mode)
                              | (1u32 << 26)  // PDPE1GB (1GB huge pages in PDPTE)
                              | (1u32 << 20); // NX (No Execute)
-            eprintln!("[CPUID] 0x80000001: Returning GBPAGES={}, LM={}, NX={} (EDX={:#x})",
-                (features_edx >> 26) & 1, (features_edx >> 29) & 1, (features_edx >> 20) & 1, features_edx);
             (signature, 0, 0, features_edx)
         }
         // Brand string: "Rax Emulator" padded to 48 bytes (3 leaves x 16 bytes)

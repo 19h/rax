@@ -127,7 +127,7 @@ pub fn setup_vm_compat(code: &[u8], initial_regs: Option<Registers>) -> (X86_64V
 
 /// Run the VM until HLT and return final register state
 pub fn run_until_hlt(vcpu: &mut X86_64Vcpu) -> Result<Registers> {
-    const MAX_ITERATIONS: u64 = 10_000; // Limit iterations to prevent hangs
+    const MAX_ITERATIONS: u64 = 10_000; // Limit instructions to prevent hangs
     let mut iterations = 0;
     loop {
         iterations += 1;
@@ -136,15 +136,17 @@ pub fn run_until_hlt(vcpu: &mut X86_64Vcpu) -> Result<Registers> {
                 "exceeded {} iterations at RIP={:#x}", MAX_ITERATIONS, vcpu.get_regs()?.rip
             )));
         }
-        match vcpu.run()? {
-            VcpuExit::Hlt => break,
-            VcpuExit::IoIn { size, .. } => {
+        // Use step() directly so we count individual instructions, not run() calls
+        match vcpu.step()? {
+            Some(VcpuExit::Hlt) => break,
+            Some(VcpuExit::IoIn { size, .. }) => {
                 // Complete I/O with zeros (simulated I/O)
                 let data = vec![0u8; size as usize];
                 vcpu.complete_io_in(&data);
             }
-            VcpuExit::IoOut { .. } => continue,
-            _ => continue,
+            Some(VcpuExit::IoOut { .. }) => continue,
+            Some(_) => continue,
+            None => continue, // Instruction executed normally, continue
         }
     }
     vcpu.get_regs()

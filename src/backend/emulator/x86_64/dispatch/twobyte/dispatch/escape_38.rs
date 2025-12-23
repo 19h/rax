@@ -10,6 +10,7 @@ use super::super::super::super::insn;
 use super::super::super::super::sha;
 
 impl X86_64Vcpu {
+    #[inline(always)]
     pub(in crate::backend::emulator::x86_64) fn execute_0f38(
         &mut self,
         ctx: &mut InsnContext,

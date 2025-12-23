@@ -326,7 +326,7 @@ impl X86_64Vcpu {
         self.regs.ymm_high[reg][1] = (values[6] as u64) | ((values[7] as u64) << 32);
     }
 
-    fn read_dwords_256(&self, addr: u64) -> Result<[u32; 8]> {
+    fn read_dwords_256(&mut self, addr: u64) -> Result<[u32; 8]> {
         let mut out = [0u32; 8];
         for i in 0..8 {
             out[i] = self.read_mem(addr + (i * 4) as u64, 4)? as u32;
@@ -350,7 +350,7 @@ impl X86_64Vcpu {
         self.regs.ymm_high[reg][1] = values[3];
     }
 
-    fn read_qwords_256(&self, addr: u64) -> Result<[u64; 4]> {
+    fn read_qwords_256(&mut self, addr: u64) -> Result<[u64; 4]> {
         let mut out = [0u64; 4];
         for i in 0..4 {
             out[i] = self.read_mem(addr + (i * 8) as u64, 8)?;

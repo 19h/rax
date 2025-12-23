@@ -234,7 +234,7 @@ pub fn mov_rm_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
     };
 
     // Tolerate MOV r64, imm64 encoded with C7 /0 when the upper dword is sign-extension.
-    if op_size == 8 && (modrm >> 6) == 3 && ctx.cursor + 4 <= ctx.bytes.len() {
+    if op_size == 8 && (modrm >> 6) == 3 && ctx.cursor + 4 <= ctx.bytes_len {
         let sign = if (imm as i64) < 0 { 0xFF } else { 0x00 };
         if ctx.bytes[ctx.cursor..ctx.cursor + 4].iter().all(|b| *b == sign) {
             ctx.cursor += 4;

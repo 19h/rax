@@ -205,13 +205,6 @@ impl Vmm {
                     vcpu.complete_io_in(&data);
                 }
                 VcpuExit::IoOut { port, data } => {
-                    use std::sync::atomic::{AtomicU64, Ordering};
-                    static IO_COUNT: AtomicU64 = AtomicU64::new(0);
-                    let count = IO_COUNT.fetch_add(1, Ordering::Relaxed) + 1;
-                    if count <= 30 {
-                        eprintln!("[IO] OUT port={:#x} data={:02x?}", port, data);
-                    }
-
                     debug!(port = port, size = data.len(), "PIO write");
                     let is_serial = port >= SERIAL_BASE && port < SERIAL_BASE + 8;
                     if is_serial {

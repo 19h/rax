@@ -6,10 +6,47 @@ use crate::error::{Error, Result};
 pub struct Decoder;
 
 impl Decoder {
+    /// Check if byte is a legacy prefix or REX prefix.
+    #[inline(always)]
+    fn is_prefix(b: u8) -> bool {
+        matches!(
+            b,
+            0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65  // segment overrides
+            | 0x66 | 0x67  // operand/address size
+            | 0xF0 | 0xF2 | 0xF3  // LOCK, REP
+            | 0x40..=0x4F  // REX
+        )
+    }
+
     /// Decode instruction prefixes and return context.
-    pub fn decode_prefixes(bytes: Vec<u8>) -> Result<InsnContext> {
+    /// Takes a fixed-size array and length to avoid allocation.
+    #[inline]
+    pub fn decode_prefixes(bytes: [u8; super::cpu::MAX_INSN_LEN], bytes_len: usize) -> Result<InsnContext> {
+        if bytes_len == 0 {
+            return Err(Error::Emulator("instruction too short".to_string()));
+        }
+
+        // Fast path: most instructions have no prefixes
+        let first = bytes[0];
+        if !Self::is_prefix(first) {
+            return Ok(InsnContext {
+                bytes,
+                bytes_len,
+                cursor: 0,
+                rex: None,
+                operand_size_override: false,
+                address_size_override: false,
+                rep_prefix: None,
+                op_size: 4,
+                rip_relative_offset: 0,
+                evex: None,
+            });
+        }
+
+        // Slow path: has at least one prefix
         let mut ctx = InsnContext {
             bytes,
+            bytes_len,
             cursor: 0,
             rex: None,
             operand_size_override: false,
@@ -21,7 +58,7 @@ impl Decoder {
         };
 
         loop {
-            if ctx.cursor >= ctx.bytes.len() {
+            if ctx.cursor >= ctx.bytes_len {
                 return Err(Error::Emulator("instruction too short".to_string()));
             }
             let b = ctx.bytes[ctx.cursor];
@@ -44,6 +81,7 @@ impl Decoder {
 impl X86_64Vcpu {
     /// Decode ModR/M byte to get effective address.
     /// Returns (address, bytes_consumed_after_modrm).
+    #[inline]
     pub(super) fn decode_modrm_addr(
         &self,
         ctx: &InsnContext,
@@ -167,6 +205,7 @@ impl X86_64Vcpu {
 
     /// Decode ModR/M and return (reg, rm, is_memory, address_if_memory, extra_bytes).
     /// This is a convenience function that handles both register and memory operands.
+    #[inline]
     pub(super) fn decode_modrm(
         &self,
         ctx: &mut InsnContext,
@@ -190,7 +229,7 @@ impl X86_64Vcpu {
 
     /// Read operand from ModR/M - handles both register and memory.
     #[allow(dead_code)]
-    pub(super) fn read_rm(&self, ctx: &mut InsnContext, size: u8) -> Result<(u64, bool, u64)> {
+    pub(super) fn read_rm(&mut self, ctx: &mut InsnContext, size: u8) -> Result<(u64, bool, u64)> {
         let modrm_start = ctx.cursor;
         let modrm = ctx.consume_u8()?;
         let rm = (modrm & 0x07) | ctx.rex_b();
