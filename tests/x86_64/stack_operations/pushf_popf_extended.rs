@@ -93,8 +93,9 @@ fn test_pushfq_with_sign_set() {
 #[test]
 fn test_pushfq_multiple_flags() {
     let code = [
+        // XOR clears CF, so do XOR first to set ZF, then STC to set CF
+        0x48, 0x31, 0xc0, // XOR RAX, RAX (sets ZF, PF, clears CF/OF)
         0xf9, // STC (set carry)
-        0x48, 0x31, 0xc0, // XOR RAX, RAX (sets ZF, PF)
         0x48, 0x9c, // PUSHFQ
         0xf4, // HLT
     ];
@@ -229,8 +230,9 @@ fn test_popfq_restore_sign() {
 #[test]
 fn test_popfq_restore_all_flags() {
     let code = [
-        0xf9, // STC
-        0x48, 0x31, 0xc0, // XOR RAX, RAX (sets ZF, PF)
+        // XOR clears CF, so do XOR first to set ZF, then STC to set CF
+        0x48, 0x31, 0xc0, // XOR RAX, RAX (sets ZF, PF, clears CF)
+        0xf9, // STC (set CF after XOR)
         0x48, 0x9c, // PUSHFQ
         0xf8, // CLC
         0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
@@ -463,8 +465,10 @@ fn test_pushfq_popfq_preserves_reserved_bits() {
 #[test]
 fn test_pushfq_with_overflow() {
     let code = [
-        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0x7f, // MOV RAX, 0x7FFFFFFF
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (sets OF)
+        // Use 32-bit operand size to trigger signed overflow
+        // 0x7FFFFFFF + 1 = 0x80000000 (positive + positive = negative in 32-bit)
+        0xb8, 0xff, 0xff, 0xff, 0x7f, // MOV EAX, 0x7FFFFFFF (32-bit, zero-extends)
+        0x83, 0xc0, 0x01, // ADD EAX, 1 (32-bit add, sets OF)
         0x48, 0x9c, // PUSHFQ
         0xf4, // HLT
     ];
@@ -482,8 +486,9 @@ fn test_pushfq_with_overflow() {
 #[test]
 fn test_popfq_restore_overflow() {
     let code = [
-        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0x7f, // MOV RAX, 0x7FFFFFFF
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (sets OF)
+        // Use 32-bit operand size to trigger signed overflow
+        0xb8, 0xff, 0xff, 0xff, 0x7f, // MOV EAX, 0x7FFFFFFF (32-bit)
+        0x83, 0xc0, 0x01, // ADD EAX, 1 (32-bit add, sets OF)
         0x48, 0x9c, // PUSHFQ
         0x48, 0x31, 0xc0, // XOR RAX, RAX (clears OF)
         0x48, 0x9d, // POPFQ

@@ -71,14 +71,15 @@ fn test_pop_all_gp_registers() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // Due to reverse order POP, values get swapped
-    assert_eq!(regs.rbp, 0x1111111111111111, "RBP gets RAX");
-    assert_eq!(regs.rdi, 0x2222222222222222, "RDI gets RBX");
-    assert_eq!(regs.rsi, 0x3333333333333333, "RSI gets RCX");
-    assert_eq!(regs.rdx, 0x4444444444444444, "RDX gets RDX");
-    assert_eq!(regs.rcx, 0x5555555555555555, "RCX gets RSI");
-    assert_eq!(regs.rbx, 0x6666666666666666, "RBX gets RDI");
-    assert_eq!(regs.rax, 0x7777777777777777, "RAX gets RBP");
+    // Push in order RAX,RBX,RCX,RDX,RSI,RDI,RBP, pop in reverse RBP,RDI,RSI,RDX,RCX,RBX,RAX
+    // Each register gets its own original value restored
+    assert_eq!(regs.rbp, 0x7777777777777777, "RBP restored");
+    assert_eq!(regs.rdi, 0x6666666666666666, "RDI restored");
+    assert_eq!(regs.rsi, 0x5555555555555555, "RSI restored");
+    assert_eq!(regs.rdx, 0x4444444444444444, "RDX restored");
+    assert_eq!(regs.rcx, 0x3333333333333333, "RCX restored");
+    assert_eq!(regs.rbx, 0x2222222222222222, "RBX restored");
+    assert_eq!(regs.rax, 0x1111111111111111, "RAX restored");
     assert_eq!(regs.rsp, 0x1000, "RSP restored");
 }
 

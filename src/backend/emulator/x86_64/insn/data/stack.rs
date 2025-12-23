@@ -49,9 +49,18 @@ pub fn pop_r64(
 
 /// POP r/m64 (0x8F /0)
 pub fn pop_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let op_size = ctx.op_size;
+    // In 64-bit mode, PUSH/POP default to 64-bit operand size (not 32-bit like most instructions)
+    // The 0x66 prefix changes to 16-bit; there is no 32-bit PUSH/POP in 64-bit mode
+    let op_size = if ctx.operand_size_override { 2 } else { 8 };
+
     let (_reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let value = vcpu.pop64()?;
+
+    // Pop value based on operand size
+    let value = if op_size == 2 {
+        vcpu.pop16()? as u64
+    } else {
+        vcpu.pop64()?
+    };
 
     if is_memory {
         vcpu.write_mem(addr, value, op_size)?;
