@@ -347,7 +347,12 @@ fn test_sar_esi_with_carry() {
 
 #[test]
 fn test_sar_edi_to_zero_positive() {
-    let code = [0xc1, 0xff, 0x20, 0xf4]; // SAR EDI, 32
+    // Note: SAR EDI, 32 would mask to 0 (no shift), so we use 31 + 1
+    let code = [
+        0xc1, 0xff, 0x1f, // SAR EDI, 31
+        0xd1, 0xff,       // SAR EDI, 1
+        0xf4,
+    ];
     let mut regs = Registers::default();
     regs.rdi = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -359,7 +364,12 @@ fn test_sar_edi_to_zero_positive() {
 
 #[test]
 fn test_sar_edi_to_ff_negative() {
-    let code = [0xc1, 0xff, 0x20, 0xf4]; // SAR EDI, 32
+    // Note: SAR EDI, 32 would mask to 0 (no shift), so we use 31 + 1
+    let code = [
+        0xc1, 0xff, 0x1f, // SAR EDI, 31
+        0xd1, 0xff,       // SAR EDI, 1
+        0xf4,
+    ];
     let mut regs = Registers::default();
     regs.rdi = 0x92345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -443,12 +453,19 @@ fn test_sar_rsi_with_carry() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rsi, 0x000000000000009A, "RSI: >> 32");
+    // 0x000000009ABCDEF0 >> 32 = 0x0000000000000000 (positive, high bits are 0)
+    assert_eq!(regs.rsi, 0x0000000000000000, "RSI: >> 32");
+    assert!(zf_set(regs.rflags), "ZF set");
 }
 
 #[test]
 fn test_sar_rdi_to_zero_positive() {
-    let code = [0x48, 0xc1, 0xff, 0x40, 0xf4]; // SAR RDI, 64
+    // Note: SAR RDI, 64 would mask to 0 (no shift), so we use 63 + 1
+    let code = [
+        0x48, 0xc1, 0xff, 0x3f, // SAR RDI, 63
+        0x48, 0xd1, 0xff,       // SAR RDI, 1
+        0xf4,
+    ];
     let mut regs = Registers::default();
     regs.rdi = 0x123456789ABCDEF0;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -460,7 +477,12 @@ fn test_sar_rdi_to_zero_positive() {
 
 #[test]
 fn test_sar_rdi_to_ff_negative() {
-    let code = [0x48, 0xc1, 0xff, 0x40, 0xf4]; // SAR RDI, 64
+    // Note: SAR RDI, 64 would mask to 0 (no shift), so we use 63 + 1
+    let code = [
+        0x48, 0xc1, 0xff, 0x3f, // SAR RDI, 63
+        0x48, 0xd1, 0xff,       // SAR RDI, 1
+        0xf4,
+    ];
     let mut regs = Registers::default();
     regs.rdi = 0x923456789ABCDEF0;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));

@@ -20,6 +20,9 @@ pub const STACK_ADDR: u64 = 0x8000;
 /// Standard data address for memory operand tests
 pub const DATA_ADDR: u64 = 0x2000;
 
+/// Default SYSCALL handler address for tests
+pub const SYSCALL_HANDLER_ADDR: u64 = 0x12000;
+
 /// Create a test VM with the given code and initial register state.
 pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
     // Create 16MB of guest memory
@@ -29,6 +32,14 @@ pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Ar
 
     // Write code at address 0x1000
     mem.write_slice(code, GuestAddress(CODE_ADDR)).unwrap();
+    // Install a minimal SYSCALL handler that immediately SYSRET's.
+    let syscall_handler = [0x48, 0x0f, 0x07, 0xf4]; // REX.W SYSRET; HLT fallback
+    mem.write_slice(&syscall_handler, GuestAddress(SYSCALL_HANDLER_ADDR))
+        .unwrap();
+    // Install a minimal SYSCALL handler that immediately SYSRET's.
+    let syscall_handler = [0x48, 0x0f, 0x07, 0xf4]; // REX.W SYSRET; HLT fallback
+    mem.write_slice(&syscall_handler, GuestAddress(SYSCALL_HANDLER_ADDR))
+        .unwrap();
 
     // Create vcpu
     let mut vcpu = X86_64Vcpu::new(0, mem.clone());
@@ -49,7 +60,11 @@ pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Ar
     let mut sregs = SystemRegisters::default();
     sregs.cr0 = 0x00050033; // PE but NOT PG (no paging)
     sregs.cr4 = 0x20; // PAE
-    sregs.efer = 0x500; // LMA, LME for long mode
+    sregs.efer = 0x501; // SCE, LMA, LME for long mode
+    sregs.star = 0;
+    sregs.lstar = SYSCALL_HANDLER_ADDR;
+    sregs.cstar = 0;
+    sregs.fmask = 0;
     // Set CS.L=1 for true 64-bit mode (enables RIP-relative addressing)
     sregs.cs.l = true;
     sregs.cs.db = false; // Must be 0 when L=1 for 64-bit mode
@@ -93,7 +108,11 @@ pub fn setup_vm_compat(code: &[u8], initial_regs: Option<Registers>) -> (X86_64V
     let mut sregs = SystemRegisters::default();
     sregs.cr0 = 0x00050033; // PE but NOT PG (no paging)
     sregs.cr4 = 0x20; // PAE
-    sregs.efer = 0x500; // LMA, LME for long mode
+    sregs.efer = 0x501; // SCE, LMA, LME for long mode
+    sregs.star = 0;
+    sregs.lstar = SYSCALL_HANDLER_ADDR;
+    sregs.cstar = 0;
+    sregs.fmask = 0;
     // CS.L=0 for compatibility mode (32-bit code within long mode)
     sregs.cs.l = false;
     sregs.cs.db = false; // D=0 means 16-bit default operand size (use 0x66 for 32-bit)
