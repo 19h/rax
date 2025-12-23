@@ -3,7 +3,8 @@ use std::io::{self, Read, Write};
 use std::sync::mpsc::{self, Receiver, TryRecvError};
 use std::thread;
 
-use crate::devices::bus::IoDevice;
+use crate::devices::bus::{IoDevice, MmioDevice};
+use std::sync::{Arc, Mutex};
 
 const DATA_REG: u16 = 0;
 const IER_REG: u16 = 1;
@@ -38,7 +39,8 @@ enum CpqFilterState {
 }
 
 pub struct Serial16550 {
-    base: u16,
+    base_port: Option<u16>,
+    base_mmio: Option<u64>,
     regs: [u8; 8],
     dlab: bool,
     divisor: u16,
@@ -53,7 +55,8 @@ pub struct Serial16550 {
 impl Serial16550 {
     pub fn new(base: u16) -> Self {
         Serial16550 {
-            base,
+            base_port: Some(base),
+            base_mmio: None,
             regs: [0u8; 8],
             dlab: false,
             divisor: 0,
@@ -64,6 +67,26 @@ impl Serial16550 {
             cpr_state: CprFilterState::Normal,
             cpq_state: CpqFilterState::Normal,
         }
+    }
+
+    pub fn new_mmio(base: u64) -> Self {
+        Serial16550 {
+            base_port: None,
+            base_mmio: Some(base),
+            regs: [0u8; 8],
+            dlab: false,
+            divisor: 0,
+            thre_pending: false,
+            rda_pending: false,
+            input_buffer: VecDeque::new(),
+            input_rx: None,
+            cpr_state: CprFilterState::Normal,
+            cpq_state: CpqFilterState::Normal,
+        }
+    }
+
+    pub fn set_mmio_base(&mut self, base: u64) {
+        self.base_mmio = Some(base);
     }
 
     /// Filter cursor position query (ESC[6n) on output
@@ -207,12 +230,26 @@ impl Serial16550 {
     }
 
     fn port_offset(&self, port: u16) -> Option<u16> {
-        if port < self.base {
+        let base = self.base_port?;
+        if port < base {
             return None;
         }
-        let offset = port - self.base;
+        let offset = port - base;
         if offset < self.regs.len() as u16 {
             Some(offset)
+        } else {
+            None
+        }
+    }
+
+    fn mmio_offset(&self, addr: u64) -> Option<u16> {
+        let base = self.base_mmio?;
+        if addr < base {
+            return None;
+        }
+        let offset = addr - base;
+        if offset < self.regs.len() as u64 {
+            Some(offset as u16)
         } else {
             None
         }
@@ -308,6 +345,34 @@ impl Serial16550 {
             _ => 0,
         }
     }
+
+    fn read_mmio(&mut self, addr: u64, data: &mut [u8]) {
+        if let Some(offset) = self.mmio_offset(addr) {
+            for (idx, byte) in data.iter_mut().enumerate() {
+                let reg = offset.saturating_add(idx as u16);
+                if reg < self.regs.len() as u16 {
+                    *byte = self.read_reg(reg);
+                } else {
+                    *byte = 0;
+                }
+            }
+        } else {
+            for byte in data {
+                *byte = 0;
+            }
+        }
+    }
+
+    fn write_mmio(&mut self, addr: u64, data: &[u8]) {
+        if let Some(offset) = self.mmio_offset(addr) {
+            for (idx, byte) in data.iter().enumerate() {
+                let reg = offset.saturating_add(idx as u16);
+                if reg < self.regs.len() as u16 {
+                    self.write_reg(reg, *byte);
+                }
+            }
+        }
+    }
 }
 
 impl IoDevice for Serial16550 {
@@ -324,18 +389,57 @@ impl IoDevice for Serial16550 {
     }
 }
 
+impl MmioDevice for Serial16550 {
+    fn read(&mut self, addr: u64, data: &mut [u8]) {
+        self.read_mmio(addr, data);
+    }
+
+    fn write(&mut self, addr: u64, data: &[u8]) {
+        self.write_mmio(addr, data);
+    }
+}
+
+pub struct SerialMmioDevice {
+    inner: Arc<Mutex<Serial16550>>,
+}
+
+impl SerialMmioDevice {
+    pub fn new(inner: Arc<Mutex<Serial16550>>) -> Self {
+        SerialMmioDevice { inner }
+    }
+}
+
+impl MmioDevice for SerialMmioDevice {
+    fn read(&mut self, addr: u64, data: &mut [u8]) {
+        if let Ok(mut serial) = self.inner.lock() {
+            serial.read_mmio(addr, data);
+        } else {
+            for byte in data {
+                *byte = 0;
+            }
+        }
+    }
+
+    fn write(&mut self, addr: u64, data: &[u8]) {
+        if let Ok(mut serial) = self.inner.lock() {
+            serial.write_mmio(addr, data);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::devices::bus::IoDevice;
 
     #[test]
     fn serial_tracks_dlab_and_divisor() {
         let mut serial = Serial16550::new(0x3f8);
-        serial.write(0x3fb, 0x80);
-        serial.write(0x3f8, 0x34);
-        serial.write(0x3f9, 0x12);
+        IoDevice::write(&mut serial, 0x3fb, 0x80);
+        IoDevice::write(&mut serial, 0x3f8, 0x34);
+        IoDevice::write(&mut serial, 0x3f9, 0x12);
         assert_eq!(serial.divisor, 0x1234);
-        serial.write(0x3fb, 0x00);
+        IoDevice::write(&mut serial, 0x3fb, 0x00);
         assert!(!serial.dlab);
     }
 }

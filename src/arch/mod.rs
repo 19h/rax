@@ -3,6 +3,8 @@
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub mod x86_64;
 
+pub mod hexagon;
+
 #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
 pub mod x86_64 {
     use vm_memory::GuestMemoryMmap;
@@ -10,7 +12,7 @@ pub mod x86_64 {
     use super::{Arch, BootInfo};
     use crate::config::VmConfig;
     use crate::cpu::CpuState;
-    use crate::devices::bus::IoBus;
+    use crate::devices::bus::{IoBus, MmioBus};
     use crate::error::{Error, Result};
 
     pub struct X86_64Arch;
@@ -32,7 +34,7 @@ pub mod x86_64 {
             "x86_64"
         }
 
-        fn setup_devices(&self, _io_bus: &mut IoBus) -> Result<()> {
+        fn setup_devices(&self, _io_bus: &mut IoBus, _mmio_bus: &mut MmioBus) -> Result<()> {
             Self::unsupported()
         }
 
@@ -61,19 +63,51 @@ use vm_memory::{GuestAddress, GuestMemoryMmap};
 use crate::backend::kvm::KvmVm;
 use crate::config::{ArchKind, VmConfig};
 use crate::cpu::CpuState;
-use crate::devices::bus::IoBus;
+use crate::devices::bus::{IoBus, MmioBus};
 use crate::error::Result;
 
-/// Boot information returned after kernel loading.
-pub struct BootInfo {
-    /// Kernel entry point address.
+/// Boot information for x86_64 kernel loading.
+pub struct X86_64BootInfo {
     pub entry_point: u64,
-    /// Address of boot_params structure.
     pub boot_params_addr: GuestAddress,
-    /// TSS address for KVM.
     pub tss_addr: u64,
-    /// Identity map address for KVM.
     pub identity_map_addr: u64,
+}
+
+/// Boot information for Hexagon bare-metal loading.
+pub struct HexagonBootInfo {
+    pub entry_point: u64,
+    pub load_addr: u64,
+    pub image_size: u64,
+}
+
+/// Boot information returned after image loading.
+pub enum BootInfo {
+    X86_64(X86_64BootInfo),
+    Hexagon(HexagonBootInfo),
+}
+
+impl BootInfo {
+    pub fn entry_point(&self) -> u64 {
+        match self {
+            BootInfo::X86_64(info) => info.entry_point,
+            BootInfo::Hexagon(info) => info.entry_point,
+        }
+    }
+
+    pub fn as_x86_64(&self) -> Option<&X86_64BootInfo> {
+        match self {
+            BootInfo::X86_64(info) => Some(info),
+            _ => None,
+        }
+    }
+
+    pub fn as_hexagon(&self) -> Option<&HexagonBootInfo> {
+        match self {
+            BootInfo::Hexagon(info) => Some(info),
+            _ => None,
+        }
+    }
 }
 
 /// Architecture abstraction trait.
@@ -82,7 +116,17 @@ pub trait Arch: Send + Sync {
     fn name(&self) -> &'static str;
 
     /// Setup architecture-specific I/O devices.
-    fn setup_devices(&self, io_bus: &mut IoBus) -> Result<()>;
+    fn setup_devices(&self, io_bus: &mut IoBus, mmio_bus: &mut MmioBus) -> Result<()>;
+
+    /// Optional MMIO base for the serial device.
+    fn serial_mmio_base(&self) -> Option<u64> {
+        None
+    }
+
+    /// Optional IRQ line for the serial device.
+    fn serial_irq(&self) -> Option<u32> {
+        None
+    }
 
     /// Load kernel and prepare boot environment.
     fn load_kernel(&self, mem: &GuestMemoryMmap, config: &VmConfig) -> Result<BootInfo>;
@@ -102,5 +146,6 @@ pub trait Arch: Send + Sync {
 pub fn from_kind(kind: ArchKind) -> Box<dyn Arch> {
     match kind {
         ArchKind::X86_64 => Box::new(x86_64::X86_64Arch::new()),
+        ArchKind::Hexagon => Box::new(hexagon::HexagonArch::new()),
     }
 }

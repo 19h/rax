@@ -19,6 +19,8 @@ pub enum Error {
     InvalidConfig(String),
     #[error("Device port range overlaps existing device: base=0x{base:x}, len=0x{len:x}")]
     DeviceOverlap { base: u16, len: u16 },
+    #[error("Device MMIO range overlaps existing device: base=0x{base:x}, len=0x{len:x}")]
+    MmioOverlap { base: u64, len: u64 },
     #[error("No device mapped for port=0x{port:x}, size={size}")]
     DeviceNotFound { port: u16, size: u8 },
     #[error("Kernel load error: {0}")]

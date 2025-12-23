@@ -12,11 +12,9 @@ use std::sync::Arc;
 
 use vm_memory::GuestMemoryMmap;
 
-use crate::config::BackendKind;
+use crate::config::{ArchKind, BackendKind, VmConfig};
 use crate::cpu::VCpu;
-#[cfg(not(all(feature = "kvm", target_os = "linux")))]
-use crate::error::Error;
-use crate::error::Result;
+use crate::error::{Error, Result};
 
 /// Abstract VM interface.
 ///
@@ -44,14 +42,25 @@ pub trait Backend: Send + Sync {
 }
 
 /// Create a backend based on configuration.
-pub fn create(kind: BackendKind) -> Result<Box<dyn Backend>> {
-    match kind {
+pub fn create(config: &VmConfig) -> Result<Box<dyn Backend>> {
+    match config.backend {
         #[cfg(all(feature = "kvm", target_os = "linux"))]
-        BackendKind::Kvm => Ok(Box::new(kvm::KvmBackend::new()?)),
+        BackendKind::Kvm => {
+            if config.arch != ArchKind::X86_64 {
+                return Err(Error::InvalidConfig(
+                    "KVM backend only supports x86_64".to_string(),
+                ));
+            }
+            Ok(Box::new(kvm::KvmBackend::new()?))
+        }
         #[cfg(not(all(feature = "kvm", target_os = "linux")))]
         BackendKind::Kvm => Err(Error::InvalidConfig(
             "KVM backend not available (requires Linux with --features kvm)".to_string(),
         )),
-        BackendKind::Emulator => Ok(Box::new(emulator::EmulatorBackend::new())),
+        BackendKind::Emulator => Ok(Box::new(emulator::EmulatorBackend::new(
+            config.arch,
+            config.hexagon_isa,
+            config.hexagon_endian,
+        ))),
     }
 }
