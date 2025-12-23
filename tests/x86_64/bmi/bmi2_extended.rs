@@ -9,8 +9,8 @@ use rax::cpu::Registers;
 fn test_pdep_pext_round_trip() {
     // PEXT(PDEP(x, mask), mask) == x (for x that fits in mask bit count)
     let code = [
-        0xc4, 0xe2, 0x70, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
-        0xc4, 0xe2, 0x63, 0xf5, 0xd0, // PEXT EDX, EAX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x7a, 0xf5, 0xd0, // PEXT EDX, EAX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -26,8 +26,8 @@ fn test_pdep_pext_round_trip() {
 fn test_pext_pdep_round_trip() {
     // PDEP(PEXT(x, mask), mask) == (x & mask)
     let code = [
-        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
-        0xc4, 0xe2, 0x70, 0xf5, 0xd0, // PDEP EDX, EAX, ECX
+        0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+        0xc4, 0xe2, 0x7b, 0xf5, 0xd0, // PDEP EDX, EAX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -120,8 +120,8 @@ fn test_mulx_high_bits() {
     let result = 0xFFFFFFFFu64 * 0xFFFFFFFFu64;
     let high = (result >> 32) as u32;
     let low = result as u32;
-    assert_eq!(regs.rbx & 0xFFFFFFFF, high as u64, "High 32 bits");
-    assert_eq!(regs.rax & 0xFFFFFFFF, low as u64, "Low 32 bits");
+    assert_eq!(regs.rax & 0xFFFFFFFF, high as u64, "High 32 bits");
+    assert_eq!(regs.rbx & 0xFFFFFFFF, low as u64, "Low 32 bits");
 }
 
 #[test]
@@ -138,8 +138,8 @@ fn test_mulx_64bit_overflow() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Result is 128-bit
-    assert_eq!(regs.rbx, 0xFFFFFFFFFFFFFFFE, "High 64 bits");
-    assert_eq!(regs.rax, 0x0000000000000001, "Low 64 bits");
+    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFE, "High 64 bits");
+    assert_eq!(regs.rbx, 0x0000000000000001, "Low 64 bits");
 }
 
 #[test]
@@ -164,8 +164,8 @@ fn test_rorx_all_positions_32bit() {
 fn test_sarx_shlx_shrx_composition() {
     // Test that SHLX followed by SHRX gives identity for appropriate values
     let code = [
-        0xc4, 0xe2, 0x69, 0xf7, 0xc3, // SHLX EAX, EBX, ECX
-        0xc4, 0xe2, 0x69, 0xf7, 0xd0, // SHRX EDX, EAX, ECX
+        0xc4, 0xe2, 0x71, 0xf7, 0xc3, // SHLX EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf7, 0xd0, // SHRX EDX, EAX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -186,7 +186,7 @@ fn test_pdep_all_combinations_small() {
     for &mask in &masks {
         for &src in &sources {
             let code = [
-                0xc4, 0xe2, 0x70, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+                0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
                 0xf4,
             ];
             let mut regs = Registers::default();
@@ -208,7 +208,7 @@ fn test_pext_all_combinations_small() {
     for &mask in &masks {
         for &src in &sources {
             let code = [
-                0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+                0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
                 0xf4,
             ];
             let mut regs = Registers::default();
@@ -248,7 +248,7 @@ fn test_bzhi_sequential_counts() {
 fn test_shift_instructions_preserve_flags() {
     // SARX, SHLX, SHRX should not modify flags
     let code = [
-        0xc4, 0xe2, 0x69, 0xf7, 0xc3, // SHLX EAX, EBX, ECX
+        0xc4, 0xe2, 0x71, 0xf7, 0xc3, // SHLX EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -275,8 +275,8 @@ fn test_mulx_zero_multiplicand() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0, "High = 0");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "Low = 0");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "High = 0");
+    assert_eq!(regs.rbx & 0xFFFFFFFF, 0, "Low = 0");
 }
 
 #[test]
@@ -292,8 +292,8 @@ fn test_mulx_one_multiplicand() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx & 0xFFFFFFFF, 0, "High = 0");
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "Low = operand");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0, "High = 0");
+    assert_eq!(regs.rbx & 0xFFFFFFFF, 0x12345678, "Low = operand");
 }
 
 #[test]
@@ -330,7 +330,7 @@ fn test_rorx_full_rotation_32() {
 fn test_sarx_negative_value() {
     // SARX with negative value (arithmetic shift preserves sign)
     let code = [
-        0xc4, 0xe2, 0x69, 0xf7, 0xc3, // SARX EAX, EBX, ECX
+        0xc4, 0xe2, 0x72, 0xf7, 0xc3, // SARX EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -346,7 +346,7 @@ fn test_sarx_negative_value() {
 fn test_shrx_negative_value() {
     // SHRX with negative value (logical shift doesn't preserve sign)
     let code = [
-        0xc4, 0xe2, 0x69, 0xf7, 0xc3, // SHRX EAX, EBX, ECX
+        0xc4, 0xe2, 0x73, 0xf7, 0xc3, // SHRX EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -362,7 +362,7 @@ fn test_shrx_negative_value() {
 fn test_pdep_pext_complementary_masks() {
     // Using complementary masks with PDEP and PEXT
     let code = [
-        0xc4, 0xe2, 0x70, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -397,7 +397,7 @@ fn test_bzhi_with_all_bits_set() {
 fn test_extended_register_combinations() {
     // Test various extended register combinations
     let code = [
-        0xc4, 0x42, 0x33, 0xf5, 0xc2, // PEXT R8D, R9D, R10D
+        0xc4, 0x42, 0x32, 0xf5, 0xc2, // PEXT R8D, R9D, R10D
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -413,7 +413,7 @@ fn test_extended_register_combinations() {
 fn test_memory_operand_combinations() {
     // PDEP with memory operand
     let code = [
-        0xc4, 0xe2, 0x70, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PDEP EAX, EBX, [mem]
+        0xc4, 0xe2, 0x63, 0xf5, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // PDEP EAX, EBX, [mem]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -429,8 +429,8 @@ fn test_memory_operand_combinations() {
 fn test_chained_bmi2_operations() {
     // Chain multiple BMI2 operations
     let code = [
-        0xc4, 0xe2, 0x70, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
-        0xc4, 0xe2, 0x73, 0xf5, 0xc0, // BZHI EAX, EAX, ECX (reuse ECX as count)
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x70, 0xf5, 0xc0, // BZHI EAX, EAX, ECX (reuse ECX as count)
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -452,7 +452,7 @@ fn test_bit_manipulation_patterns() {
 
     for (src, mask) in &patterns {
         let code = [
-            0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
+            0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
             0xf4,
         ];
         let mut regs = Registers::default();
@@ -468,7 +468,7 @@ fn test_bit_manipulation_patterns() {
 fn test_64bit_boundary_conditions() {
     // Test 64-bit boundary conditions
     let code = [
-        0xc4, 0xe2, 0xf0, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
+        0xc4, 0xe2, 0xe3, 0xf5, 0xc1, // PDEP RAX, RBX, RCX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -484,8 +484,8 @@ fn test_64bit_boundary_conditions() {
 fn test_performance_critical_patterns() {
     // Common performance-critical bit manipulation patterns
     let code = [
-        0xc4, 0xe2, 0x70, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
-        0xc4, 0xe2, 0x63, 0xf5, 0xd0, // PEXT EDX, EAX, ECX
+        0xc4, 0xe2, 0x63, 0xf5, 0xc1, // PDEP EAX, EBX, ECX
+        0xc4, 0xe2, 0x7a, 0xf5, 0xd0, // PEXT EDX, EAX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();

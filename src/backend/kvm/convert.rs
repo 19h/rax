@@ -132,6 +132,13 @@ pub fn sregs_from_kvm(kvm: &kvm_sregs) -> SystemRegisters {
         cr4: kvm.cr4,
         cr8: kvm.cr8,
         efer: kvm.efer,
+        // Debug registers (not part of kvm_sregs, initialized to defaults)
+        dr0: 0,
+        dr1: 0,
+        dr2: 0,
+        dr3: 0,
+        dr6: 0xFFFF0FF0, // Default value after reset
+        dr7: 0x00000400, // Default value after reset
     }
 }
 

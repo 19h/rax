@@ -26,7 +26,7 @@ fn test_lzcnt_bit_31() {
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0, "0 leading zeros");
     assert!(!cf_set(regs.rflags), "CF should be clear (source is non-zero)");
-    assert!(!zf_set(regs.rflags), "ZF should be clear (source is non-zero)");
+    assert!(zf_set(regs.rflags), "ZF should be set (result is zero)");
 }
 
 #[test]
