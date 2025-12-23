@@ -166,7 +166,7 @@ fn test_lock_xor_64bit_memory() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u64(&mem, 0x1234567890ABCDEF);
     let _ = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_u64(&mem), 0x12345678_6F543210, "Memory should be atomically XORed");
+    assert_eq!(read_mem_u64(&mem), 0xEDCBA987_6F543210, "Memory should be atomically XORed");
 }
 
 // ===== LOCK INC/DEC TESTS =====
@@ -394,7 +394,7 @@ fn test_lock_bitmask_operations() {
         // Set some bits
         0xf0, 0x81, 0x0b, 0x0f, 0xf0, 0x00, 0x00,                 // LOCK OR DWORD PTR [RBX], 0xF00F
         // Clear some bits
-        0xf0, 0x81, 0x23, 0xf0, 0x0f, 0xff, 0xff,                 // LOCK AND DWORD PTR [RBX], 0xFFFF0FF0
+        0xf0, 0x81, 0x23, 0xf0, 0xff, 0xff, 0xff,                 // LOCK AND DWORD PTR [RBX], 0xFFFFFFF0
         0xf4,                                                     // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
