@@ -429,13 +429,14 @@ fn test_popfq_from_prepared_stack() {
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
-    regs.rsp = 0x1000;
+    // Use 0x3000 to avoid conflict with CODE_ADDR (0x1000)
+    regs.rsp = 0x3000;
     let (mut vcpu, vm) = setup_vm(&code, Some(regs));
 
     // Prepare flags on stack with CF set
     let flags_with_cf = 0x0001u64;
     let flags_bytes = flags_with_cf.to_le_bytes();
-    vm.write_slice(&flags_bytes, vm_memory::GuestAddress(0x1000)).unwrap();
+    vm.write_slice(&flags_bytes, vm_memory::GuestAddress(0x3000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert!(cf_set(regs.rflags), "CF should be set from stack");
@@ -541,10 +542,12 @@ fn test_popfq_restore_direction_flag() {
 fn test_pushfq_popfq_with_all_status_flags() {
     let code = [
         // Set up complex flag state
+        // Use 32-bit ADD to set OF (64-bit won't overflow with 0x7FFFFFFF+1)
+        0xb8, 0xff, 0xff, 0xff, 0x7f, // MOV EAX, 0x7FFFFFFF
+        0x83, 0xc0, 0x01, // ADD EAX, 1 (sets OF, clears CF)
+        // Now set CF and DF (STC/STD only modify their specific flags)
         0xf9, // STC
         0xfd, // STD
-        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0x7f, // MOV RAX, 0x7FFFFFFF
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (sets OF, clears SF)
         0x48, 0x9c, // PUSHFQ
         // Clear all flags
         0xf8, // CLC
