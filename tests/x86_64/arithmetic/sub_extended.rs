@@ -347,7 +347,7 @@ fn test_sub_all_64bit_registers() {
 #[test]
 fn test_sub_byte_ptr_imm8() {
     let code = [
-        0x80, 0x2D, 0xFA, 0x0F, 0x00, 0x00, 0x10, // SUB BYTE PTR [rip+0x0FF7], 0x10
+        0x80, 0x2D, 0xF9, 0x0F, 0x00, 0x00, 0x10, // SUB BYTE PTR [rip+0x0FF9], 0x10
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -367,7 +367,7 @@ fn test_sub_qword_ptr_r64() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u64(&mem, 0x3000000000000000);
-    let mut regs = Registers::default();
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rbx = 0x1000000000000000;
     vcpu.set_regs(&regs).unwrap();
 
@@ -385,7 +385,7 @@ fn test_sub_r64_from_memory() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u64(&mem, 0x1000000000000000);
-    let mut regs = Registers::default();
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rax = 0x3000000000000000;
     vcpu.set_regs(&regs).unwrap();
 

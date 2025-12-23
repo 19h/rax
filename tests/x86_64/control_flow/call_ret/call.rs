@@ -27,8 +27,8 @@ fn test_call_relative() {
     let mut return_addr = [0u8; 8];
     vm.read_slice(&mut return_addr, GuestAddress(0x0FF8)).unwrap();
     let addr = u64::from_le_bytes(return_addr);
-    // Return address should point to the HLT after CALL (offset 5)
-    assert_eq!(addr & 0xFFFF, 5, "Return address is offset 5");
+    // Return address should point to the HLT after CALL
+    assert_eq!(addr, CODE_ADDR + 5, "Return address is after CALL");
 }
 
 // CALL and RET combination
@@ -56,10 +56,10 @@ fn test_call_ret_basic() {
 #[test]
 fn test_nested_call() {
     let code = [
-        0xe8, 0x08, 0x00, 0x00, 0x00, // CALL func1 (offset 13)
+        0xe8, 0x04, 0x00, 0x00, 0x00, // CALL func1 (offset 9)
         0xf4, // HLT (main return)
         0x00, 0x00, 0x00, // padding
-        // offset 13 - func1:
+        // offset 9 - func1:
         0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1
         0xe8, 0x04, 0x00, 0x00, 0x00, // CALL func2
         0xc3, // RET from func1
@@ -151,7 +151,7 @@ fn test_call_with_stack_parameters() {
 fn test_call_forward() {
     let code = [
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0
-        0xe8, 0x08, 0x00, 0x00, 0x00, // CALL +8 (forward)
+        0xe8, 0x04, 0x00, 0x00, 0x00, // CALL +4 (forward)
         0xf4, // HLT
         0x00, 0x00, 0x00, // padding
         // target:
@@ -174,7 +174,7 @@ fn test_call_backward() {
         0x48, 0x83, 0xf8, 0x00, // CMP RAX, 0
         0x74, 0x09, // JE +9 (exit)
         0x48, 0x83, 0xe8, 0x01, // DEC RAX
-        0xe8, 0xf4, 0xff, 0xff, 0xff, // CALL -12 (recursive)
+        0xe8, 0xf1, 0xff, 0xff, 0xff, // CALL -15 (recursive)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -206,8 +206,8 @@ fn test_call_zero_offset() {
 fn test_multiple_sequential_calls() {
     let code = [
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0
-        0xe8, 0x0c, 0x00, 0x00, 0x00, // CALL func1
-        0xe8, 0x10, 0x00, 0x00, 0x00, // CALL func2
+        0xe8, 0x09, 0x00, 0x00, 0x00, // CALL func1
+        0xe8, 0x0c, 0x00, 0x00, 0x00, // CALL func2
         0xf4, // HLT
         0x00, 0x00, 0x00, // padding
         // func1:
@@ -251,7 +251,7 @@ fn test_call_preserves_flags() {
 fn test_call_chain() {
     let code = [
         0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
-        0xe8, 0x08, 0x00, 0x00, 0x00, // CALL func_a
+        0xe8, 0x04, 0x00, 0x00, 0x00, // CALL func_a
         0xf4, // HLT
         0x00, 0x00, 0x00, // padding
         // func_a:
@@ -302,7 +302,7 @@ fn test_call_return_address_correct() {
     let code = [
         0x48, 0x31, 0xc0, // XOR RAX, RAX
         0xe8, 0x04, 0x00, 0x00, 0x00, // CALL function
-        0xf4, // HLT (offset 10)
+        0xf4, // HLT (offset 8)
         0x00, 0x00, 0x00, // padding
         // function:
         0x48, 0x8b, 0x04, 0x24, // MOV RAX, [RSP] (get return address)
@@ -313,8 +313,8 @@ fn test_call_return_address_correct() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // Return address should point to HLT instruction at offset 10
-    assert_eq!(regs.rax & 0xFFFF, 10, "Return address correct");
+    // Return address should point to HLT instruction
+    assert_eq!(regs.rax, CODE_ADDR + 8, "Return address correct");
 }
 
 // Practical use case: factorial function (iterative)

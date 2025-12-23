@@ -216,8 +216,8 @@ fn test_sbb_r16_imm8_sign_extended() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // 0x1000 - 0xFFFF - 0 = 0x0001
-    assert_eq!(regs.rax & 0xFFFF, 0x0001, "AX should be 0x0001");
+    // 0x1000 - 0xFFFF - 0 = 0x1001
+    assert_eq!(regs.rax & 0xFFFF, 0x1001, "AX should be 0x1001");
 }
 
 #[test]
@@ -415,13 +415,13 @@ fn test_sbb_extended_r64_registers() {
 fn test_sbb_byte_ptr_imm8() {
     // SBB BYTE PTR [mem], 0x10 with CF=1
     let code = [
-        0x80, 0x1D, 0xFA, 0x0F, 0x00, 0x00, 0x10, // SBB BYTE PTR [rip+0x0FF7], 0x10
+        0x80, 0x1D, 0xF9, 0x0F, 0x00, 0x00, 0x10, // SBB BYTE PTR [rip+0x0FF9], 0x10
         0xf4,                                      // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u8(&mem, 0x30);
-    let mut regs = Registers::default();
-    regs.rflags = 0x01; // Set CF
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rflags |= 0x01; // Set CF
     vcpu.set_regs(&regs).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -435,13 +435,13 @@ fn test_sbb_byte_ptr_imm8() {
 fn test_sbb_word_ptr_imm16() {
     // SBB WORD PTR [mem], 0x1000 with CF=1
     let code = [
-        0x66, 0x81, 0x1D, 0xF5, 0x0F, 0x00, 0x00, 0x00, 0x10, // SBB WORD PTR [rip+0x0FF5], 0x1000
+        0x66, 0x81, 0x1D, 0xF7, 0x0F, 0x00, 0x00, 0x00, 0x10, // SBB WORD PTR [rip+0x0FF7], 0x1000
         0xf4,                                                  // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u16(&mem, 0x2000);
-    let mut regs = Registers::default();
-    regs.rflags = 0x01; // Set CF
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rflags |= 0x01; // Set CF
     vcpu.set_regs(&regs).unwrap();
 
     let _ = run_until_hlt(&mut vcpu).unwrap();
@@ -459,9 +459,9 @@ fn test_sbb_dword_ptr_r32() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u32(&mem, 0x80000000);
-    let mut regs = Registers::default();
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rbx = 0x40000000;
-    regs.rflags = 0x01; // Set CF
+    regs.rflags |= 0x01; // Set CF
     vcpu.set_regs(&regs).unwrap();
 
     let _ = run_until_hlt(&mut vcpu).unwrap();
@@ -479,9 +479,9 @@ fn test_sbb_qword_ptr_r64() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u64(&mem, 0x3000000000000000);
-    let mut regs = Registers::default();
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rbx = 0x1000000000000000;
-    regs.rflags = 0x01; // Set CF
+    regs.rflags |= 0x01; // Set CF
     vcpu.set_regs(&regs).unwrap();
 
     let _ = run_until_hlt(&mut vcpu).unwrap();
@@ -499,9 +499,9 @@ fn test_sbb_r64_from_memory() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u64(&mem, 0x1000000000000000);
-    let mut regs = Registers::default();
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rax = 0x2000000000000000;
-    regs.rflags = 0x01; // Set CF
+    regs.rflags |= 0x01; // Set CF
     vcpu.set_regs(&regs).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -545,14 +545,15 @@ fn test_sbb_sign_flag() {
 #[test]
 fn test_sbb_overflow_flag() {
     // SBB causing signed overflow
-    let code = [0x1C, 0xFF, 0xf4]; // SBB AL, 0xFF
+    let code = [0x1C, 0x80, 0xf4]; // SBB AL, 0x80
     let mut regs = Registers::default();
-    regs.rax = 0x80; // Min negative i8
+    regs.rax = 0x7F; // Max positive i8
     regs.rflags = 0x01; // Set CF
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // 0x80 - 0xFF - 1 = overflow
+    // 0x7F - 0x80 - 1 = 0xFE (overflow from positive to negative)
+    assert_eq!(regs.rax & 0xFF, 0xFE, "AL should be 0xFE");
     assert!(of_set(regs.rflags), "OF should be set");
 }
 

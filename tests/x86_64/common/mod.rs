@@ -475,13 +475,13 @@ impl VM {
 
     /// Execute one instruction (step)
     pub fn step(mut self) -> Self {
-        match self.vcpu.run().unwrap() {
-            VcpuExit::IoIn { size, .. } => {
+        match self.vcpu.step().unwrap() {
+            Some(VcpuExit::IoIn { size, .. }) => {
                 let data = vec![0u8; size as usize];
                 self.vcpu.complete_io_in(&data);
             }
-            VcpuExit::IoOut { .. } => {}
-            _ => {}
+            Some(VcpuExit::IoOut { .. }) => {}
+            Some(_) | None => {}
         }
         self.executed_instructions += 1;
         self.refresh();
@@ -506,18 +506,20 @@ pub fn run_until_hlt_legacy(mut vm: VM) -> VM {
         if iterations > MAX_ITERATIONS {
             panic!("exceeded {} iterations at RIP={:#x}", MAX_ITERATIONS, vm.vcpu.get_regs().unwrap().rip);
         }
-        match vm.vcpu.run().unwrap() {
-            VcpuExit::Hlt => break,
-            VcpuExit::IoIn { size, .. } => {
+        match vm.vcpu.step().unwrap() {
+            Some(VcpuExit::Hlt) => {
+                vm.executed_instructions += 1;
+                break;
+            }
+            Some(VcpuExit::IoIn { size, .. }) => {
                 let data = vec![0u8; size as usize];
                 vm.vcpu.complete_io_in(&data);
             }
-            VcpuExit::IoOut { .. } => continue,
-            _ => continue,
+            Some(VcpuExit::IoOut { .. }) => {}
+            Some(_) | None => {}
         }
         vm.executed_instructions += 1;
     }
-    vm.executed_instructions += 1; // Count the HLT
     vm.refresh();
     vm
 }
