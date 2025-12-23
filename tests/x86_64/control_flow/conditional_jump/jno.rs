@@ -126,7 +126,7 @@ fn test_jno_max_forward_offset() {
         0x48, 0x83, 0xc0, 0x03, // ADD RAX, 3
         0x71, 0x7f, // JNO +127
     ];
-    code.resize(11 + 127, 0x90); // NOP padding
+    code.resize(13 + 127, 0x90); // NOP padding
     code.push(0xf4); // HLT
 
     let (mut vcpu, _) = setup_vm(&code, None);
