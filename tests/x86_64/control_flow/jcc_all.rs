@@ -554,15 +554,18 @@ fn test_jnz_short_taken() {
 
 #[test]
 fn test_jo_short_taken() {
+    // Must use 64-bit max signed value for 64-bit overflow with REX.W ADD
     let code = [
-        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0x7f, // MOV RAX, 0x7FFFFFFF (max positive 32-bit)
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (overflow to negative)
-        0x70, 0x02, // JO +2 (should jump)
-        0xf4, 0xf4, // HLT, HLT (should not execute)
-        0xf4, // HLT (target)
+        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, // MOV RAX, 0x7FFFFFFFFFFFFFFF
+        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (64-bit overflow, sets OF=1)
+        0x70, 0x07, // JO +7 (should jump over the MOV RCX, 0)
+        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0 (should not execute)
+        0x48, 0xc7, 0xc1, 0xaa, 0x00, 0x00, 0x00, // MOV RCX, 0xaa (jump target)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
-    let _ = run_until_hlt(&mut vcpu).unwrap();
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0xaa); // Verify jump was taken
 }
 
 #[test]
@@ -599,10 +602,12 @@ fn test_jno_short_taken() {
 
 #[test]
 fn test_jno_short_not_taken() {
+    // Must use 64-bit max signed value (0x7FFFFFFFFFFFFFFF) for 64-bit overflow
+    // 0x7FFFFFFF only causes 32-bit overflow, but with REX.W the ADD is 64-bit
     let code = [
-        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0x7f, // MOV RAX, 0x7FFFFFFF
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (overflow)
-        0x71, 0x05, // JNO +5 (should not jump)
+        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, // MOV RAX, 0x7FFFFFFFFFFFFFFF
+        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (64-bit overflow, sets OF=1)
+        0x71, 0x05, // JNO +5 (should not jump because OF=1)
         0x48, 0xc7, 0xc1, 0xee, 0x00, 0x00, 0x00, // MOV RCX, 0xee
         0xf4, // HLT
     ];
@@ -911,15 +916,18 @@ fn test_jne_near_taken() {
 
 #[test]
 fn test_jo_near_taken() {
+    // Must use 64-bit max signed value for 64-bit overflow with REX.W ADD
     let code = [
-        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0x7f, // MOV RAX, 0x7FFFFFFF
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (overflow)
-        0x0f, 0x80, 0x02, 0x00, 0x00, 0x00, // JO +2 (near)
-        0xf4, 0xf4, // HLT, HLT (should not execute)
-        0xf4, // HLT (target)
+        0x48, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, // MOV RAX, 0x7FFFFFFFFFFFFFFF
+        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (64-bit overflow, sets OF=1)
+        0x0f, 0x80, 0x07, 0x00, 0x00, 0x00, // JO +7 (near, should jump over MOV RCX, 0)
+        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0 (should not execute)
+        0x48, 0xc7, 0xc1, 0xbb, 0x00, 0x00, 0x00, // MOV RCX, 0xbb (jump target)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
-    let _ = run_until_hlt(&mut vcpu).unwrap();
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0xbb); // Verify jump was taken
 }
 
 #[test]
