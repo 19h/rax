@@ -302,11 +302,11 @@ fn test_bswap_64bit_symmetric() {
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rax = 0x0102030304030201;
+    regs.rax = 0x0102030404030201;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0x0102030304030201, "Symmetric pattern should equal itself when swapped");
+    assert_eq!(regs.rax, 0x0102030404030201, "Symmetric pattern should equal itself when swapped");
 }
 
 #[test]

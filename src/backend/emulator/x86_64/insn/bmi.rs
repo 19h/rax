@@ -83,15 +83,9 @@ pub fn blsi_blsmsk_blsr(
     } else {
         (result >> 31) & 1
     };
-    // ZF based on result for BLSI/BLSR, based on src for BLSMSK
+    // ZF based on result for BLSI/BLSR, cleared for BLSMSK
     let zf = match reg_op {
-        2 => {
-            if src == 0 {
-                1
-            } else {
-                0
-            }
-        } // BLSMSK: ZF = (src == 0)
+        2 => 0, // BLSMSK: ZF = 0
         _ => {
             if result == 0 {
                 1
@@ -100,22 +94,29 @@ pub fn blsi_blsmsk_blsr(
             }
         } // BLSI/BLSR: ZF = (result == 0)
     };
-    // CF: BLSMSK sets CF if src != 0, BLSI/BLSR set CF if src == 0
+    // CF varies by instruction
     let cf = match reg_op {
         2 => {
+            if src == 0 {
+                1
+            } else {
+                0
+            }
+        } // BLSMSK: CF = (src == 0)
+        3 => {
             if src != 0 {
                 1
             } else {
                 0
             }
-        } // BLSMSK: CF = (src != 0)
+        } // BLSI: CF = (src != 0)
         _ => {
             if src == 0 {
                 1
             } else {
                 0
             }
-        } // BLSI/BLSR: CF = (src == 0)
+        } // BLSR: CF = (src == 0)
     };
     vcpu.regs.rflags &=
         !(flags::bits::SF | flags::bits::ZF | flags::bits::OF | flags::bits::CF);

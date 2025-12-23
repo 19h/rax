@@ -259,6 +259,62 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
+    /// SSE reciprocal square root (0x52)
+    pub(in crate::backend::emulator::x86_64) fn execute_sse_rsqrt(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+
+        if ctx.rep_prefix == Some(0xF3) {
+            let src = if is_memory {
+                f32::from_bits(self.read_mem(addr, 4)? as u32)
+            } else {
+                f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
+            };
+            let result = (1.0f32 / src.sqrt()).to_bits() as u64;
+            self.regs.xmm[xmm_dst][0] =
+                (self.regs.xmm[xmm_dst][0] & !0xFFFF_FFFF) | result;
+        } else {
+            let (src_lo, src_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            self.regs.xmm[xmm_dst][0] = rsqrt_packed_f32(src_lo);
+            self.regs.xmm[xmm_dst][1] = rsqrt_packed_f32(src_hi);
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SSE reciprocal (0x53)
+    pub(in crate::backend::emulator::x86_64) fn execute_sse_rcp(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+
+        if ctx.rep_prefix == Some(0xF3) {
+            let src = if is_memory {
+                f32::from_bits(self.read_mem(addr, 4)? as u32)
+            } else {
+                f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
+            };
+            let result = (1.0f32 / src).to_bits() as u64;
+            self.regs.xmm[xmm_dst][0] =
+                (self.regs.xmm[xmm_dst][0] & !0xFFFF_FFFF) | result;
+        } else {
+            let (src_lo, src_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            self.regs.xmm[xmm_dst][0] = rcp_packed_f32(src_lo);
+            self.regs.xmm[xmm_dst][1] = rcp_packed_f32(src_hi);
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
     /// SSE packed single/double min (0x5D)
     pub(in crate::backend::emulator::x86_64) fn execute_sse_min(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -904,4 +960,20 @@ fn unpack_high_words(a: u64, b: u64) -> u64 {
     let a3 = (a >> 48) & 0xFFFF;
     let b3 = (b >> 48) & 0xFFFF;
     a2 | (b2 << 16) | (a3 << 32) | (b3 << 48)
+}
+
+fn rcp_packed_f32(v: u64) -> u64 {
+    let f0 = f32::from_bits(v as u32);
+    let f1 = f32::from_bits((v >> 32) as u32);
+    let r0 = (1.0f32 / f0).to_bits() as u64;
+    let r1 = (1.0f32 / f1).to_bits() as u64;
+    r0 | (r1 << 32)
+}
+
+fn rsqrt_packed_f32(v: u64) -> u64 {
+    let f0 = f32::from_bits(v as u32);
+    let f1 = f32::from_bits((v >> 32) as u32);
+    let r0 = (1.0f32 / f0.sqrt()).to_bits() as u64;
+    let r1 = (1.0f32 / f1.sqrt()).to_bits() as u64;
+    r0 | (r1 << 32)
 }
