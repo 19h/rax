@@ -259,9 +259,17 @@ fn test_cmpxchg8b_preserves_upper_bits() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // Upper 32 bits should be zeroed by 32-bit operations
-    assert_eq!(regs.rax >> 32, 0, "Upper 32 bits of RAX should be zeroed");
-    assert_eq!(regs.rdx >> 32, 0, "Upper 32 bits of RDX should be zeroed");
+    // CMPXCHG8B only uses EDX:EAX for comparison; on success it preserves full RAX/RDX.
+    assert_eq!(
+        regs.rax,
+        0xFFFFFFFF11111111,
+        "RAX should preserve upper bits on success"
+    );
+    assert_eq!(
+        regs.rdx,
+        0xEEEEEEEE22222222,
+        "RDX should preserve upper bits on success"
+    );
 }
 
 // ===== CMPXCHG16B SUCCESS TESTS =====
