@@ -4,7 +4,7 @@ use crate::cpu::VcpuExit;
 use crate::error::{Error, Result};
 
 use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
-use super::super::super::flags;
+use crate::backend::emulator::x86_64::flags;
 
 impl X86_64Vcpu {
     pub(in crate::backend::emulator::x86_64) fn execute_vex_pcmpgt(
@@ -322,7 +322,7 @@ impl X86_64Vcpu {
     }
 
     // Helper: compare signed bytes for greater-than
-    fn cmp_gt_bytes(&self, a: u64, b: u64) -> u64 {
+    pub(crate) fn cmp_gt_bytes(&self, a: u64, b: u64) -> u64 {
         let mut result = 0u64;
         for i in 0..8 {
             let va = ((a >> (i * 8)) & 0xFF) as i8;
@@ -335,7 +335,7 @@ impl X86_64Vcpu {
     }
 
     // Helper: compare signed words for greater-than
-    fn cmp_gt_words(&self, a: u64, b: u64) -> u64 {
+    pub(crate) fn cmp_gt_words(&self, a: u64, b: u64) -> u64 {
         let mut result = 0u64;
         for i in 0..4 {
             let va = ((a >> (i * 16)) & 0xFFFF) as i16;
@@ -348,7 +348,7 @@ impl X86_64Vcpu {
     }
 
     // Helper: compare signed dwords for greater-than
-    fn cmp_gt_dwords(&self, a: u64, b: u64) -> u64 {
+    pub(crate) fn cmp_gt_dwords(&self, a: u64, b: u64) -> u64 {
         let a0 = a as i32;
         let a1 = (a >> 32) as i32;
         let b0 = b as i32;

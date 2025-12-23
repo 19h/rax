@@ -107,4 +107,155 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_permd(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vex_l == 0 {
+            return Err(Error::Emulator("VPERMD requires VEX.L=1".to_string()));
+        }
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+        let xmm_idx = vvvv as usize;
+
+        let src2_dwords = if is_memory {
+            self.read_dwords_256(addr)?
+        } else {
+            self.read_dwords_ymm(rm as usize)
+        };
+        let idx_dwords = self.read_dwords_ymm(xmm_idx);
+
+        let mut result = [0u32; 8];
+        for i in 0..8 {
+            let sel = (idx_dwords[i] & 0x7) as usize;
+            result[i] = src2_dwords[sel];
+        }
+        self.write_dwords_ymm(xmm_dst, &result);
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_permps(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vex_l == 0 {
+            return Err(Error::Emulator("VPERMPS requires VEX.L=1".to_string()));
+        }
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+        let xmm_idx = vvvv as usize;
+
+        let src2_dwords = if is_memory {
+            self.read_dwords_256(addr)?
+        } else {
+            self.read_dwords_ymm(rm as usize)
+        };
+        let idx_dwords = self.read_dwords_ymm(xmm_idx);
+
+        let mut result = [0u32; 8];
+        for i in 0..8 {
+            let sel = (idx_dwords[i] & 0x7) as usize;
+            result[i] = src2_dwords[sel];
+        }
+        self.write_dwords_ymm(xmm_dst, &result);
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_permqd_imm(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vvvv != 0 {
+            return Err(Error::Emulator("VPERMQ/VPERMPD requires VEX.vvvv=1111b".to_string()));
+        }
+        if vex_l == 0 {
+            return Err(Error::Emulator("VPERMQ/VPERMPD requires VEX.L=1".to_string()));
+        }
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let xmm_dst = reg as usize;
+
+        let src_qwords = if is_memory {
+            self.read_qwords_256(addr)?
+        } else {
+            self.read_qwords_ymm(rm as usize)
+        };
+
+        let mut result = [0u64; 4];
+        for i in 0..4 {
+            let sel = ((imm8 >> (i * 2)) & 0x3) as usize;
+            result[i] = src_qwords[sel];
+        }
+        self.write_qwords_ymm(xmm_dst, &result);
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    fn read_dwords_ymm(&self, reg: usize) -> [u32; 8] {
+        let lo0 = self.regs.xmm[reg][0];
+        let lo1 = self.regs.xmm[reg][1];
+        let hi0 = self.regs.ymm_high[reg][0];
+        let hi1 = self.regs.ymm_high[reg][1];
+        [
+            lo0 as u32,
+            (lo0 >> 32) as u32,
+            lo1 as u32,
+            (lo1 >> 32) as u32,
+            hi0 as u32,
+            (hi0 >> 32) as u32,
+            hi1 as u32,
+            (hi1 >> 32) as u32,
+        ]
+    }
+
+    fn write_dwords_ymm(&mut self, reg: usize, values: &[u32; 8]) {
+        self.regs.xmm[reg][0] = (values[0] as u64) | ((values[1] as u64) << 32);
+        self.regs.xmm[reg][1] = (values[2] as u64) | ((values[3] as u64) << 32);
+        self.regs.ymm_high[reg][0] = (values[4] as u64) | ((values[5] as u64) << 32);
+        self.regs.ymm_high[reg][1] = (values[6] as u64) | ((values[7] as u64) << 32);
+    }
+
+    fn read_dwords_256(&self, addr: u64) -> Result<[u32; 8]> {
+        let mut out = [0u32; 8];
+        for i in 0..8 {
+            out[i] = self.read_mem(addr + (i * 4) as u64, 4)? as u32;
+        }
+        Ok(out)
+    }
+
+    fn read_qwords_ymm(&self, reg: usize) -> [u64; 4] {
+        [
+            self.regs.xmm[reg][0],
+            self.regs.xmm[reg][1],
+            self.regs.ymm_high[reg][0],
+            self.regs.ymm_high[reg][1],
+        ]
+    }
+
+    fn write_qwords_ymm(&mut self, reg: usize, values: &[u64; 4]) {
+        self.regs.xmm[reg][0] = values[0];
+        self.regs.xmm[reg][1] = values[1];
+        self.regs.ymm_high[reg][0] = values[2];
+        self.regs.ymm_high[reg][1] = values[3];
+    }
+
+    fn read_qwords_256(&self, addr: u64) -> Result<[u64; 4]> {
+        let mut out = [0u64; 4];
+        for i in 0..4 {
+            out[i] = self.read_mem(addr + (i * 8) as u64, 8)?;
+        }
+        Ok(out)
+    }
+
 }

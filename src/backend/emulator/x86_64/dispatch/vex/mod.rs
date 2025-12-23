@@ -123,6 +123,89 @@ impl X86_64Vcpu {
 
         // VEX.0F encoded SSE/AVX instructions (m=1)
         if m_mmmm == 0x1 {
+            // AVX-512 opmask (KMOV) instructions - VEX.L0.0F
+            if vex_l == 0 {
+                match (vex_pp, vex_w, opcode) {
+                    // KMOVW k1, k2/m16 - VEX.L0.0F.W0 90 /r
+                    (0, 0, 0x90) => return self.execute_kmov_load(ctx, 16),
+                    // KMOVB k1, k2/m8 - VEX.L0.66.0F.W0 90 /r
+                    (1, 0, 0x90) => return self.execute_kmov_load(ctx, 8),
+                    // KMOVD k1, k2/m32 - VEX.L0.66.0F.W1 90 /r
+                    (1, 1, 0x90) => return self.execute_kmov_load(ctx, 32),
+                    // KMOVD k1, k2/m32 - VEX.L0.F2.0F.W0 90 /r (alternate encoding)
+                    (3, 0, 0x90) => return self.execute_kmov_load(ctx, 32),
+                    // KMOVQ k1, k2/m64 - VEX.L0.F2.0F.W1 90 /r
+                    (3, 1, 0x90) => return self.execute_kmov_load(ctx, 64),
+
+                    // KMOVW m16, k1 - VEX.L0.0F.W0 91 /r
+                    (0, 0, 0x91) => return self.execute_kmov_store(ctx, 16),
+                    // KMOVB m8, k1 - VEX.L0.66.0F.W0 91 /r
+                    (1, 0, 0x91) => return self.execute_kmov_store(ctx, 8),
+                    // KMOVD m32, k1 - VEX.L0.66.0F.W1 91 /r
+                    (1, 1, 0x91) => return self.execute_kmov_store(ctx, 32),
+                    // KMOVD m32, k1 - VEX.L0.F2.0F.W0 91 /r
+                    (3, 0, 0x91) => return self.execute_kmov_store(ctx, 32),
+                    // KMOVQ m64, k1 - VEX.L0.F2.0F.W1 91 /r
+                    (3, 1, 0x91) => return self.execute_kmov_store(ctx, 64),
+
+                    // KMOVW k1, r32 - VEX.L0.0F.W0 92 /r
+                    (0, 0, 0x92) => return self.execute_kmov_from_gpr(ctx, 16),
+                    // KMOVB k1, r32 - VEX.L0.66.0F.W0 92 /r
+                    (1, 0, 0x92) => return self.execute_kmov_from_gpr(ctx, 8),
+                    // KMOVD k1, r32 - VEX.L0.F2.0F.W0 92 /r
+                    (3, 0, 0x92) => return self.execute_kmov_from_gpr(ctx, 32),
+                    // KMOVQ k1, r64 - VEX.L0.F2.0F.W1 92 /r
+                    (3, 1, 0x92) => return self.execute_kmov_from_gpr(ctx, 64),
+
+                    // KMOVW r32, k1 - VEX.L0.0F.W0 93 /r
+                    (0, 0, 0x93) => return self.execute_kmov_to_gpr(ctx, 16),
+                    // KMOVB r32, k1 - VEX.L0.66.0F.W0 93 /r
+                    (1, 0, 0x93) => return self.execute_kmov_to_gpr(ctx, 8),
+                    // KMOVD r32, k1 - VEX.L0.F2.0F.W0 93 /r
+                    (3, 0, 0x93) => return self.execute_kmov_to_gpr(ctx, 32),
+                    // KMOVQ r64, k1 - VEX.L0.F2.0F.W1 93 /r
+                    (3, 1, 0x93) => return self.execute_kmov_to_gpr(ctx, 64),
+
+                    _ => {}
+                }
+            }
+
+            // AVX-512 opmask logical instructions - VEX.L1.0F
+            if vex_l == 1 {
+                // Determine mask size from pp and W:
+                // pp=0, W=0: 16-bit (W suffix)
+                // pp=0, W=1: 64-bit (Q suffix)
+                // pp=1, W=0: 8-bit (B suffix)
+                // pp=1, W=1: 32-bit (D suffix)
+                let mask_bits = match (vex_pp, vex_w) {
+                    (0, 0) => 16,
+                    (0, 1) => 64,
+                    (1, 0) => 8,
+                    (1, 1) => 32,
+                    _ => 0, // pp=2 or pp=3 not used for these ops
+                };
+
+                if mask_bits > 0 {
+                    match opcode {
+                        // KAND* - bitwise AND
+                        0x41 => return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a & b),
+                        // KANDN* - bitwise AND NOT
+                        0x42 => return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| !a & b),
+                        // KNOT* - bitwise NOT (unary, vvvv should be 1111)
+                        0x44 => return self.execute_kmask_unaryop(ctx, mask_bits, |a| !a),
+                        // KOR* - bitwise OR
+                        0x45 => return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a | b),
+                        // KXNOR* - bitwise XNOR
+                        0x46 => return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| !(a ^ b)),
+                        // KXOR* - bitwise XOR
+                        0x47 => return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a ^ b),
+                        // KADD* - add (wrapping)
+                        0x4A => return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a.wrapping_add(b)),
+                        _ => {}
+                    }
+                }
+            }
+
             match (vex_pp, opcode) {
                 // VMOVDQA load - VEX.66.0F 6F /r
                 (1, 0x6F) => return insn::simd::vmovdqa_load(self, ctx, vex_l),

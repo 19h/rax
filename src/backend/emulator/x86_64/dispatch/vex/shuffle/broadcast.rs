@@ -64,4 +64,30 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_broadcast_i128(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vex_l == 0 {
+            return Err(Error::Emulator("VBROADCASTI128 requires VEX.L=1".to_string()));
+        }
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+
+        let (src_lo, src_hi) = if is_memory {
+            (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+        } else {
+            (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+        };
+
+        self.regs.xmm[xmm_dst][0] = src_lo;
+        self.regs.xmm[xmm_dst][1] = src_hi;
+        self.regs.ymm_high[xmm_dst][0] = src_lo;
+        self.regs.ymm_high[xmm_dst][1] = src_hi;
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
 }
