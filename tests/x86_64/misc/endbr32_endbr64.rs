@@ -250,7 +250,7 @@ fn test_endbr64_preserves_extended_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.r8, 0x11111111, "R8 should be preserved");
-    assert_eq!(regs.r15, 0xffffffff, "R15 should be preserved");
+    assert_eq!(regs.r15, 0xffffffffffffffff, "R15 should be preserved");
 }
 
 // Test ENDBR32 preserves R8-R15
@@ -266,7 +266,7 @@ fn test_endbr32_preserves_extended_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.r8, 0x11111111, "R8 should be preserved");
-    assert_eq!(regs.r15, 0xffffffff, "R15 should be preserved");
+    assert_eq!(regs.r15, 0xffffffffffffffff, "R15 should be preserved");
 }
 
 // Test ENDBR64 preserves stack pointer

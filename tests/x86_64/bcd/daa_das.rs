@@ -15,7 +15,7 @@ fn test_daa_no_adjustment() {
         0x27,             // DAA (no adjustment)
         0xF4,             // HLT
     ];
-    let mut cpu = create_test_cpu(code);
+    let mut cpu = create_test_cpu_compat(code);
 
     run_test(&mut cpu);
 
@@ -31,7 +31,7 @@ fn test_daa_low_nibble_adjustment() {
         0x27,             // DAA
         0xF4,             // HLT
     ];
-    let mut cpu = create_test_cpu(code);
+    let mut cpu = create_test_cpu_compat(code);
 
     run_test(&mut cpu);
 
@@ -51,7 +51,7 @@ fn test_das_no_adjustment() {
         0x2F,             // DAS
         0xF4,             // HLT
     ];
-    let mut cpu = create_test_cpu(code);
+    let mut cpu = create_test_cpu_compat(code);
 
     run_test(&mut cpu);
 

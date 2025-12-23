@@ -254,17 +254,17 @@ fn test_wait_followed_by_conditional_jump() {
 fn test_wait_with_flags() {
     // Verify WAIT doesn't affect flags
     let code = vec![
-        0x48, 0xc7, 0xc0, 0xFF, 0x00, 0x00, 0x00, // MOV RAX, 0xFF
-        0x48, 0x83, 0xc0, 0x01,                    // ADD RAX, 1 (sets flags)
+        0xb8, 0xff, 0xff, 0xff, 0x7f,              // MOV EAX, 0x7FFFFFFF
+        0x83, 0xc0, 0x01,                          // ADD EAX, 1 (sets OF)
         0x9b,                                      // WAIT (shouldn't affect flags)
         0x70, 0x05,                                // JO +5 (jump if overflow)
-        0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0 (executed if no overflow)
+        0xb8, 0x00, 0x00, 0x00, 0x00,              // MOV EAX, 0 (executed if no overflow)
         0xf4,                                      // HLT
     ];
 
     let (mut vcpu, _mem) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x100, "Flags preserved after WAIT");
+    assert_eq!(regs.rax, 0x80000000, "Flags preserved after WAIT");
 }
 
 #[test]

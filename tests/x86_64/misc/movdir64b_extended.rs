@@ -76,16 +76,15 @@ fn test_movdir64b_different_registers() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
 
     for i in 0..8 {
-        write_mem_at_u64(&mem, 0x2000 + i * 8, 0xBBBBBBBBBBBBBBBB * (i as u64 + 1));
+        let value = 0xBBBBBBBBBBBBBBBBu64.wrapping_mul(i as u64 + 1);
+        write_mem_at_u64(&mem, 0x2000 + i * 8, value);
     }
 
     let _regs = run_until_hlt(&mut vcpu).unwrap();
 
     for i in 0..8 {
-        assert_eq!(
-            read_mem_at_u64(&mem, 0x5000 + i * 8),
-            0xBBBBBBBBBBBBBBBB * (i as u64 + 1)
-        );
+        let value = 0xBBBBBBBBBBBBBBBBu64.wrapping_mul(i as u64 + 1);
+        assert_eq!(read_mem_at_u64(&mem, 0x5000 + i * 8), value);
     }
 }
 

@@ -55,7 +55,7 @@ fn test_jp_forward() {
     let code = [
         0x48, 0xc7, 0xc0, 0x0f, 0x00, 0x00, 0x00, // MOV RAX, 0x0F (0b00001111, 4 bits set, even parity)
         0x48, 0x85, 0xc0, // TEST RAX, RAX (PF=1)
-        0x7a, 0x08, // JP +8
+        0x7a, 0x07, // JP +7
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0 (skipped)
         0xf4, // HLT (target)
     ];
@@ -73,14 +73,14 @@ fn test_jp_backward() {
         // loop (offset 7):
         0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1
         0x7a, 0x02, // JP +2 (exit when even parity)
-        0xeb, 0xf7, // JMP -9 (loop)
+        0xeb, 0xf8, // JMP -8 (loop)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // RAX should be even-parity value
-    assert_eq!(regs.rax & 0xFF, 2, "RAX low byte is 2 (even parity)");
+    assert_eq!(regs.rax & 0xFF, 3, "RAX low byte is 3 (even parity)");
 }
 
 // JP preserves all registers
@@ -169,7 +169,7 @@ fn test_jp_parity_detection() {
     let code = [
         0x48, 0xc7, 0xc0, 0x0f, 0x00, 0x00, 0x00, // MOV RAX, 0x0F (even parity)
         0x48, 0x85, 0xc0, // TEST RAX, RAX
-        0x7a, 0x08, // JP +8 (even parity)
+        0x7a, 0x09, // JP +9 (even parity)
         // odd parity:
         0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0
         0xeb, 0x07, // JMP +7 (exit)
@@ -386,7 +386,7 @@ fn test_jp_parity_check() {
     let code = [
         0x48, 0xc7, 0xc0, 0xaa, 0x00, 0x00, 0x00, // MOV RAX, 0xAA (0b10101010, 4 bits, even parity)
         0x48, 0x85, 0xc0, // TEST RAX, RAX
-        0x7a, 0x08, // JP +8 (even parity)
+        0x7a, 0x09, // JP +9 (even parity)
         // odd parity:
         0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0
         0xeb, 0x07, // JMP +7 (exit)

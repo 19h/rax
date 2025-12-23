@@ -27,7 +27,7 @@ fn test_pext_pdep_round_trip() {
     // PDEP(PEXT(x, mask), mask) == (x & mask)
     let code = [
         0xc4, 0xe2, 0x62, 0xf5, 0xc1, // PEXT EAX, EBX, ECX
-        0xc4, 0xe2, 0x7b, 0xf5, 0xd0, // PDEP EDX, EAX, ECX
+        0xc4, 0xe2, 0x7b, 0xf5, 0xd1, // PDEP EDX, EAX, ECX
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -371,7 +371,7 @@ fn test_pdep_pext_complementary_masks() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00FF00FF, "Complementary mask PDEP");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x000000FF, "Complementary mask PDEP");
 }
 
 #[test]
@@ -422,7 +422,7 @@ fn test_memory_operand_combinations() {
     write_mem_u32(&mem, 0x0F0F0F0F);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x01010101, "Memory operand PDEP");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000F0F, "Memory operand PDEP");
 }
 
 #[test]

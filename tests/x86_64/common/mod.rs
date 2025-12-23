@@ -295,6 +295,12 @@ impl TestCpu {
         Self { vcpu, mem, regs }
     }
 
+    pub fn new_compat(code: &[u8]) -> Self {
+        let (vcpu, mem) = setup_vm_compat(code, None);
+        let regs = vcpu.get_regs().unwrap();
+        Self { vcpu, mem, regs }
+    }
+
     pub fn set_rax(&mut self, value: u64) {
         self.regs.rax = value;
         self.vcpu.set_regs(&self.regs).unwrap();
@@ -372,6 +378,11 @@ impl TestCpu {
 /// This is a convenience wrapper for tests that prefer the TestCpu API.
 pub fn create_test_cpu(code: &[u8]) -> TestCpu {
     TestCpu::new(code)
+}
+
+/// Create a test CPU in compatibility mode for instructions invalid in 64-bit mode.
+pub fn create_test_cpu_compat(code: &[u8]) -> TestCpu {
+    TestCpu::new_compat(code)
 }
 
 /// Run the test CPU until HLT.
