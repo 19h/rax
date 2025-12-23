@@ -136,7 +136,7 @@ fn test_jo_max_forward_offset() {
         0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1
         0x70, 0x7f, // JO +127
     ];
-    code.resize(14 + 127, 0x90); // NOP padding
+    code.resize(16 + 127, 0x90); // NOP padding
     code.push(0xf4); // HLT
 
     let (mut vcpu, _) = setup_vm(&code, None);

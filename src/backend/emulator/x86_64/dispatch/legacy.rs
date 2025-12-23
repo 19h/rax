@@ -203,6 +203,7 @@ impl X86_64Vcpu {
             // Interrupts
             0xCC => insn::control::int3(self, ctx),
             0xCD => insn::control::int_imm8(self, ctx),
+            0xCE => insn::control::into(self, ctx),
 
             // Misc
             0x60 => insn::data::pusha(self, ctx),
