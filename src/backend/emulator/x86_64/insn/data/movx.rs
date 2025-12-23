@@ -29,12 +29,14 @@ pub fn movsxd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
 /// MOVZX r, r/m8 (0x0F 0xB6)
 pub fn movzx_r_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
 
     let value = if is_memory {
         vcpu.mmu.read_u8(addr, &vcpu.sregs)? as u64
     } else {
-        vcpu.get_reg(rm, 1) & 0xFF
+        // Use get_reg8 to properly handle high-byte registers (AH, BH, CH, DH)
+        vcpu.get_reg8(rm, has_rex)
     };
     vcpu.set_reg(reg, value, op_size);
     vcpu.regs.rip += ctx.cursor as u64;
@@ -59,12 +61,14 @@ pub fn movzx_r_rm16(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
 /// MOVSX r, r/m8 (0x0F 0xBE)
 pub fn movsx_r_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
 
     let value = if is_memory {
         vcpu.mmu.read_u8(addr, &vcpu.sregs)?
     } else {
-        vcpu.get_reg(rm, 1) as u8
+        // Use get_reg8 to properly handle high-byte registers (AH, BH, CH, DH)
+        vcpu.get_reg8(rm, has_rex) as u8
     };
     // Sign-extend
     let extended = value as i8 as i64 as u64;

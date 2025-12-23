@@ -1022,7 +1022,7 @@ mod x86_64_simd_avx512_vaddps_zmm;
 #[path = "x86_64/simd/avx512/valign_vprol_vpror_vpternlog.rs"]
 mod x86_64_simd_avx512_valign_vprol_vpror_vpternlog;
 #[path = "x86_64/simd/avx512/vcompress_vexpand.rs"]
-mod x86_64_simd_avx512_vcompress_vexpand;
+mod simd_avx512_compress_expand;
 #[path = "x86_64/simd/avx512/vdbpsadbw_vplzcnt_vpshld.rs"]
 mod x86_64_simd_avx512_vdbpsadbw_vplzcnt_vpshld;
 #[path = "x86_64/simd/avx512/vdivps_zmm.rs"]

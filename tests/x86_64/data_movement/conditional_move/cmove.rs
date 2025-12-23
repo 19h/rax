@@ -120,13 +120,13 @@ fn test_cmove_rax_r10_zf_set() {
     assert_eq!(regs.rax, 0x3333333333333333, "RAX should be moved from R10 when ZF=1");
 }
 
-// Test that flags are preserved
+// Test that flags are preserved (CMOV doesn't modify flags)
 #[test]
 fn test_cmove_preserves_flags() {
     let code = [
-        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, // MOV RAX, -1
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (sets ZF, clears CF)
-        0x0f, 0x44, 0xc3, // CMOVE EAX, EBX
+        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, // MOV RAX, -1 (0xFFFFFFFFFFFFFFFF)
+        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (sets ZF=1, CF=1 due to wrap-around)
+        0x0f, 0x44, 0xc3, // CMOVE EAX, EBX (ZF=1, so move happens)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -134,8 +134,9 @@ fn test_cmove_preserves_flags() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
+    // CMOV doesn't modify flags
     assert!(regs.rflags & 0x40 != 0, "ZF should still be set");
-    assert!(regs.rflags & 0x01 == 0, "CF should still be clear");
+    assert!(regs.rflags & 0x01 != 0, "CF should be set (wraparound from -1+1)");
 }
 
 // Test different register combinations
@@ -206,15 +207,15 @@ fn test_cmove_eax_ebx_zeros_upper_32() {
 #[test]
 fn test_cmove_chain() {
     let code = [
-        0x48, 0x31, 0xc0, // XOR RAX, RAX (sets ZF)
-        0x0f, 0x44, 0xc3, // CMOVE EAX, EBX (should move)
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (clears ZF)
-        0x0f, 0x44, 0xd1, // CMOVE EDX, ECX (should not move)
+        0x48, 0x31, 0xc0, // XOR RAX, RAX (sets ZF, RAX=0)
+        0x0f, 0x44, 0xc3, // CMOVE EAX, EBX (ZF=1, so move: EAX = EBX = 0)
+        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (RAX=1, clears ZF)
+        0x0f, 0x44, 0xd1, // CMOVE EDX, ECX (ZF=0, no move)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x11111111;
-    regs.rbx = 0x22222222;
+    regs.rbx = 0x00000000; // Source for first CMOVE is 0
     regs.rdx = 0x33333333;
     regs.rcx = 0x44444444;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -278,14 +279,17 @@ fn test_cmove_all_gp_registers() {
 // Test edge case: source and destination are the same register
 #[test]
 fn test_cmove_same_register() {
+    // XOR RAX, RAX sets RAX to 0 and sets ZF=1
+    // CMOVE EAX, EAX: move EAX to EAX (EAX is 0 after XOR)
+    // The 32-bit operation zeros upper bits
     let code = [
-        0x48, 0x31, 0xc0, // XOR RAX, RAX (sets ZF)
-        0x0f, 0x44, 0xc0, // CMOVE EAX, EAX
+        0x48, 0x31, 0xc0, // XOR RAX, RAX (sets ZF, RAX=0)
+        0x0f, 0x44, 0xc0, // CMOVE EAX, EAX (EAX=0 stays 0)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
     regs.rax = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x0000000012345678, "RAX upper bits should be zeroed even for same-reg move");
+    assert_eq!(regs.rax, 0x0000000000000000, "RAX should be 0 (XOR then CMOVE same reg)");
 }

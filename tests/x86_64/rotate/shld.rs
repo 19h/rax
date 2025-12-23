@@ -146,13 +146,16 @@ fn test_shld_eax_ebx_cl() {
 
 #[test]
 fn test_shld_eax_carry_flag() {
+    // CF receives the LAST bit shifted out (bit SIZE-COUNT = bit 28)
+    // 0x80000000 has only bit 31 set, so bit 28 = 0, therefore CF = 0
+    // Use 0xF0000000 to have bit 28 set (which becomes the last bit shifted out)
     let code = [0x0f, 0xa4, 0xd8, 0x04, 0xf4]; // SHLD EAX, EBX, 4
     let mut regs = Registers::default();
-    regs.rax = 0x80000000; // MSB set
+    regs.rax = 0xF0000000; // Upper nibble set, bit 28 = 1
     regs.rbx = 0x00000000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert!(cf_set(regs.rflags), "CF: MSB was shifted out");
+    assert!(cf_set(regs.rflags), "CF: bit 28 (last bit shifted out) was 1");
 }
 
 #[test]
@@ -169,13 +172,14 @@ fn test_shld_eax_1bit() {
 
 #[test]
 fn test_shld_eax_full_replacement() {
+    // SHLD EAX, EBX, 32: count is masked to 32 & 31 = 0, so no shift occurs
     let code = [0x0f, 0xa4, 0xd8, 0x20, 0xf4]; // SHLD EAX, EBX, 32
     let mut regs = Registers::default();
     regs.rax = 0x12345678;
     regs.rbx = 0xABCDEF01;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xABCDEF01, "EAX: completely replaced by EBX");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX: count masked to 0, no shift");
 }
 
 #[test]
@@ -311,13 +315,14 @@ fn test_shld_rax_32bits() {
 
 #[test]
 fn test_shld_rax_full_replacement() {
+    // SHLD RAX, RBX, 64: count is masked to 64 & 63 = 0, so no shift occurs
     let code = [0x48, 0x0f, 0xa4, 0xd8, 0x40, 0xf4]; // SHLD RAX, RBX, 64
     let mut regs = Registers::default();
     regs.rax = 0x123456789ABCDEF0;
     regs.rbx = 0xFEDCBA9876543210;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFEDCBA9876543210, "RAX: completely replaced");
+    assert_eq!(regs.rax, 0x123456789ABCDEF0, "RAX: count masked to 0, no shift");
 }
 
 #[test]
@@ -506,10 +511,12 @@ fn test_shld_sf_flag() {
 
 #[test]
 fn test_shld_zf_flag() {
-    let code = [0x0f, 0xa4, 0xd8, 0x20, 0xf4]; // SHLD EAX, EBX, 32
+    // SHLD by 16: upper 16 bits of EAX shift out, lower 16 bits shift up
+    // With EAX = 0x00000000 and EBX = 0x00000000, result is 0
+    let code = [0x0f, 0xa4, 0xd8, 0x10, 0xf4]; // SHLD EAX, EBX, 16
     let mut regs = Registers::default();
-    regs.rax = 0x12345678;
-    regs.rbx = 0x00000000;
+    regs.rax = 0x00000000; // All zeros
+    regs.rbx = 0x00000000; // All zeros
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert!(zf_set(regs.rflags), "ZF: result is zero");
@@ -556,11 +563,13 @@ fn test_shld_all_ones() {
 
 #[test]
 fn test_shld_alternating_bits() {
+    // SHLD EAX, EBX, 1: shifts EAX left by 1, brings in bit 31 of EBX (0) at LSB
+    // 0xAAAAAAAA << 1 = 0x55555554 (MSB shifted out), LSB = 0 from EBX[31]
     let code = [0x0f, 0xa4, 0xd8, 0x01, 0xf4]; // SHLD EAX, EBX, 1
     let mut regs = Registers::default();
     regs.rax = 0xAAAAAAAA;
     regs.rbx = 0x55555555;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x55555555, "Alternating bits shift");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x55555554, "Alternating bits shift");
 }

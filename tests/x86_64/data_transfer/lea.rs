@@ -153,13 +153,13 @@ fn test_lea_preserves_flags() {
 fn test_lea_no_memory_access() {
     // LEA computes address but doesn't access memory
     let code = [
-        0x48, 0xc7, 0xc3, 0x00, 0xff, 0xff, 0xff, // MOV RBX, invalid address
+        0xbb, 0xff, 0xff, 0xff, 0xff, // MOV EBX, 0xFFFFFFFF (zero-extends)
         0x48, 0x8d, 0x43, 0x10, // LEA RAX, [RBX+16] (no fault)
         0xf4, // HLT
     ];
     let vm = setup_vm(&code);
     let vm = run_until_hlt(vm);
-    assert_eq!(vm.rax, 0xFFFFFFFF + 16); // Address computed, no access
+    assert_eq!(vm.rax, 0xFFFFFFFFu64 + 16); // Address computed, no access
 }
 
 #[test]

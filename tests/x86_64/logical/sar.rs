@@ -583,7 +583,7 @@ fn test_sar_r15_imm8_negative() {
 #[test]
 fn test_sar_byte_ptr_1_negative() {
     let code = [
-        0xd0, 0x3d, 0xf9, 0x0f, 0x00, 0x00, // SAR BYTE PTR [rip+0x0FF9], 1
+        0xd0, 0x3d, 0xfa, 0x0f, 0x00, 0x00, // SAR BYTE PTR [rip+0x0FFA], 1
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -598,7 +598,7 @@ fn test_sar_byte_ptr_1_negative() {
 #[test]
 fn test_sar_dword_ptr_imm8_positive() {
     let code = [
-        0xc1, 0x3d, 0xf7, 0x0f, 0x00, 0x00, 0x08, // SAR DWORD PTR [rip+0x0FF7], 8
+        0xc1, 0x3d, 0xf9, 0x0f, 0x00, 0x00, 0x08, // SAR DWORD PTR [rip+0x0FF9], 8
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -613,7 +613,7 @@ fn test_sar_dword_ptr_imm8_positive() {
 #[test]
 fn test_sar_dword_ptr_imm8_negative() {
     let code = [
-        0xc1, 0x3d, 0xf7, 0x0f, 0x00, 0x00, 0x08, // SAR DWORD PTR [rip+0x0FF7], 8
+        0xc1, 0x3d, 0xf9, 0x0f, 0x00, 0x00, 0x08, // SAR DWORD PTR [rip+0x0FF9], 8
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -628,7 +628,7 @@ fn test_sar_dword_ptr_imm8_negative() {
 #[test]
 fn test_sar_qword_ptr_imm8_positive() {
     let code = [
-        0x48, 0xc1, 0x3d, 0xf6, 0x0f, 0x00, 0x00, 0x10, // SAR QWORD PTR [rip+0x0FF6], 16
+        0x48, 0xc1, 0x3d, 0xf8, 0x0f, 0x00, 0x00, 0x10, // SAR QWORD PTR [rip+0x0FF8], 16
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -643,7 +643,7 @@ fn test_sar_qword_ptr_imm8_positive() {
 #[test]
 fn test_sar_qword_ptr_imm8_negative() {
     let code = [
-        0x48, 0xc1, 0x3d, 0xf6, 0x0f, 0x00, 0x00, 0x10, // SAR QWORD PTR [rip+0x0FF6], 16
+        0x48, 0xc1, 0x3d, 0xf8, 0x0f, 0x00, 0x00, 0x10, // SAR QWORD PTR [rip+0x0FF8], 16
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

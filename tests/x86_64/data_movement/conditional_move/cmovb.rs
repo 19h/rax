@@ -235,12 +235,12 @@ fn test_cmovb_zeros_upper_32() {
 }
 
 // Test practical use case: min of two unsigned values
+// For min(a,b): if a > b, move b to a (use CMOVA)
 #[test]
 fn test_cmovb_practical_min() {
-    // min = (a < b) ? a : b
     let code = [
         0x48, 0x39, 0xd8, // CMP RAX, RBX
-        0x48, 0x0f, 0x42, 0xc3, // CMOVB RAX, RBX (if A < B, keep A, else take B)
+        0x48, 0x0f, 0x47, 0xc3, // CMOVA RAX, RBX (if RAX > RBX, move RBX to RAX)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -248,6 +248,7 @@ fn test_cmovb_practical_min() {
     regs.rbx = 100;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
+    // 50 < 100, so no move (RAX stays 50)
     assert_eq!(regs.rax, 50, "RAX should remain 50 (min of 50 and 100)");
 }
 
@@ -255,7 +256,7 @@ fn test_cmovb_practical_min() {
 fn test_cmovb_practical_min_swap() {
     let code = [
         0x48, 0x39, 0xd8, // CMP RAX, RBX
-        0x48, 0x0f, 0x42, 0xc3, // CMOVB RAX, RBX
+        0x48, 0x0f, 0x47, 0xc3, // CMOVA RAX, RBX (if RAX > RBX, move RBX to RAX)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -263,6 +264,7 @@ fn test_cmovb_practical_min_swap() {
     regs.rbx = 50;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
+    // 100 > 50, so move RBX to RAX
     assert_eq!(regs.rax, 50, "RAX should be 50 (min of 100 and 50)");
 }
 
@@ -387,7 +389,8 @@ fn test_cmovb_after_test() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x11111111, "EAX should not be moved (TEST clears CF)");
+    // CF=0, so no move. RAX stays at 0xFF from the MOV instruction
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x000000FF, "EAX should be 0xFF (CF=0, no move)");
 }
 
 // Test chaining operations

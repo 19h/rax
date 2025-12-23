@@ -383,8 +383,9 @@ fn test_movzx_sib_addressing() {
 #[test]
 fn test_movzx_rip_relative() {
     // MOVZX with RIP-relative addressing
+    // RIP after the instruction points to offset 8 (HLT), so displacement of 1 reads offset 9 (data)
     let code = [
-        0x48, 0x0f, 0xb6, 0x05, 0x00, 0x00, 0x00, 0x00, // MOVZX RAX, BYTE PTR [RIP+0]
+        0x48, 0x0f, 0xb6, 0x05, 0x01, 0x00, 0x00, 0x00, // MOVZX RAX, BYTE PTR [RIP+1]
         0xf4,
         0x80, // Data: 128
     ];

@@ -243,7 +243,7 @@ fn test_lea_32bit_zeros_upper() {
 // Test with extended registers
 #[test]
 fn test_lea_r8_r9() {
-    let code = [0x4d, 0x8d, 0x04, 0x59, 0xf4]; // LEA R8, [R9 + R11*2]
+    let code = [0x4f, 0x8d, 0x04, 0x59, 0xf4]; // LEA R8, [R9 + R11*2]
     let mut regs = Registers::default();
     regs.r9 = 0x1000;
     regs.r11 = 0x0100;

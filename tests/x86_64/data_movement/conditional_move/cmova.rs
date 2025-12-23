@@ -223,12 +223,12 @@ fn test_cmova_zeros_upper_32() {
 }
 
 // Test practical use case: max of two unsigned values
+// For max(a,b): if a < b, move b to a (use CMOVB)
 #[test]
 fn test_cmova_practical_max() {
-    // max = (a > b) ? a : b
     let code = [
         0x48, 0x39, 0xd8, // CMP RAX, RBX
-        0x48, 0x0f, 0x47, 0xc3, // CMOVA RAX, RBX (if A > B, keep A, else take B)
+        0x48, 0x0f, 0x42, 0xc3, // CMOVB RAX, RBX (if RAX < RBX, move RBX to RAX)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -236,6 +236,7 @@ fn test_cmova_practical_max() {
     regs.rbx = 50;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
+    // 100 > 50, so no move (RAX stays 100)
     assert_eq!(regs.rax, 100, "RAX should remain 100 (max of 100 and 50)");
 }
 
@@ -243,7 +244,7 @@ fn test_cmova_practical_max() {
 fn test_cmova_practical_max_swap() {
     let code = [
         0x48, 0x39, 0xd8, // CMP RAX, RBX
-        0x48, 0x0f, 0x47, 0xc3, // CMOVA RAX, RBX
+        0x48, 0x0f, 0x42, 0xc3, // CMOVB RAX, RBX (if RAX < RBX, move RBX to RAX)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -251,6 +252,7 @@ fn test_cmova_practical_max_swap() {
     regs.rbx = 100;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
+    // 50 < 100, so move RBX to RAX
     assert_eq!(regs.rax, 100, "RAX should be 100 (max of 50 and 100)");
 }
 

@@ -104,6 +104,168 @@ fn set_ymm_zero_upper(vcpu: &mut X86_64Vcpu, reg: u8, val: [u64; 4]) {
     }
 }
 
+fn evex_vl_bytes(ll: u8) -> usize {
+    match ll {
+        0 => 16,
+        1 => 32,
+        2 => 64,
+        _ => 16,
+    }
+}
+
+fn evex_mask(vcpu: &X86_64Vcpu, aaa: u8, num_elems: usize) -> u64 {
+    let full_mask = if num_elems == 64 {
+        u64::MAX
+    } else {
+        (1u64 << num_elems) - 1
+    };
+    if aaa == 0 {
+        full_mask
+    } else {
+        vcpu.regs.k[aaa as usize] & full_mask
+    }
+}
+
+fn read_reg_bytes(vcpu: &X86_64Vcpu, reg: u8, vl_bytes: usize) -> [u8; 64] {
+    let mut data = [0u8; 64];
+    match vl_bytes {
+        16 => {
+            let vals = get_xmm(vcpu, reg);
+            for i in 0..2 {
+                let start = i * 8;
+                data[start..start + 8].copy_from_slice(&vals[i].to_le_bytes());
+            }
+        }
+        32 => {
+            let vals = get_ymm(vcpu, reg);
+            for i in 0..4 {
+                let start = i * 8;
+                data[start..start + 8].copy_from_slice(&vals[i].to_le_bytes());
+            }
+        }
+        64 => {
+            let vals = get_zmm(vcpu, reg);
+            for i in 0..8 {
+                let start = i * 8;
+                data[start..start + 8].copy_from_slice(&vals[i].to_le_bytes());
+            }
+        }
+        _ => {}
+    }
+    data
+}
+
+fn write_reg_bytes(vcpu: &mut X86_64Vcpu, reg: u8, vl_bytes: usize, data: &[u8; 64]) {
+    match vl_bytes {
+        16 => {
+            let mut vals = [0u64; 2];
+            for i in 0..2 {
+                let start = i * 8;
+                vals[i] = u64::from_le_bytes([
+                    data[start],
+                    data[start + 1],
+                    data[start + 2],
+                    data[start + 3],
+                    data[start + 4],
+                    data[start + 5],
+                    data[start + 6],
+                    data[start + 7],
+                ]);
+            }
+            set_xmm_zero_upper(vcpu, reg, vals);
+        }
+        32 => {
+            let mut vals = [0u64; 4];
+            for i in 0..4 {
+                let start = i * 8;
+                vals[i] = u64::from_le_bytes([
+                    data[start],
+                    data[start + 1],
+                    data[start + 2],
+                    data[start + 3],
+                    data[start + 4],
+                    data[start + 5],
+                    data[start + 6],
+                    data[start + 7],
+                ]);
+            }
+            set_ymm_zero_upper(vcpu, reg, vals);
+        }
+        64 => {
+            let mut vals = [0u64; 8];
+            for i in 0..8 {
+                let start = i * 8;
+                vals[i] = u64::from_le_bytes([
+                    data[start],
+                    data[start + 1],
+                    data[start + 2],
+                    data[start + 3],
+                    data[start + 4],
+                    data[start + 5],
+                    data[start + 6],
+                    data[start + 7],
+                ]);
+            }
+            set_zmm(vcpu, reg, vals);
+        }
+        _ => {}
+    }
+}
+
+fn load_mem_bytes(
+    vcpu: &X86_64Vcpu,
+    addr: u64,
+    elem_size: usize,
+    num_elems: usize,
+) -> Result<[u8; 64]> {
+    let mut data = [0u8; 64];
+    for i in 0..num_elems {
+        let value = vcpu.read_mem(addr + (i * elem_size) as u64, elem_size as u8)?;
+        let start = i * elem_size;
+        if elem_size == 4 {
+            let bytes = (value as u32).to_le_bytes();
+            data[start..start + elem_size].copy_from_slice(&bytes);
+        } else {
+            let bytes = value.to_le_bytes();
+            data[start..start + elem_size].copy_from_slice(&bytes);
+        }
+    }
+    Ok(data)
+}
+
+fn store_mem_bytes(
+    vcpu: &mut X86_64Vcpu,
+    addr: u64,
+    elem_size: usize,
+    num_elems: usize,
+    data: &[u8; 64],
+) -> Result<()> {
+    for i in 0..num_elems {
+        let start = i * elem_size;
+        let value = if elem_size == 4 {
+            u32::from_le_bytes([
+                data[start],
+                data[start + 1],
+                data[start + 2],
+                data[start + 3],
+            ]) as u64
+        } else {
+            u64::from_le_bytes([
+                data[start],
+                data[start + 1],
+                data[start + 2],
+                data[start + 3],
+                data[start + 4],
+                data[start + 5],
+                data[start + 6],
+                data[start + 7],
+            ])
+        };
+        vcpu.write_mem(addr + (i * elem_size) as u64, value, elem_size as u8)?;
+    }
+    Ok(())
+}
+
 /// VPMULLQ - Multiply Packed Signed Quadword Integers and Store Low Result
 /// EVEX.128/256/512.66.0F38.W1 40 /r
 ///
@@ -285,6 +447,131 @@ pub fn vpmulld_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
         512 => set_zmm(vcpu, dest, result),
         _ => {}
     }
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+pub fn vcompress_evex(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    elem_size: usize,
+    name: &str,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx.evex.ok_or_else(|| {
+        Error::Emulator(format!("{} requires EVEX prefix", name))
+    })?;
+
+    if evex.vvvv != 0xF {
+        return Err(Error::Emulator(format!(
+            "{} requires EVEX.vvvv=1111b",
+            name
+        )));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+
+    let src = (reg & 0x07) | if evex.r { 0 } else { 8 } | if evex.r_prime { 0 } else { 16 };
+    let dest = (rm & 0x07) | if evex.b { 0 } else { 8 } | if evex.x { 0 } else { 16 };
+
+    let vl_bytes = evex_vl_bytes(evex.ll);
+    if elem_size == 0 || vl_bytes % elem_size != 0 {
+        return Err(Error::Emulator(format!("{} invalid element size", name)));
+    }
+    let num_elems = vl_bytes / elem_size;
+    let mask = evex_mask(vcpu, evex.aaa, num_elems);
+
+    let src_bytes = read_reg_bytes(vcpu, src, vl_bytes);
+    let mut out_bytes = [0u8; 64];
+    let mut out_count = 0usize;
+
+    for j in 0..num_elems {
+        if (mask >> j) & 1 != 0 {
+            let src_start = j * elem_size;
+            let dst_start = out_count * elem_size;
+            out_bytes[dst_start..dst_start + elem_size]
+                .copy_from_slice(&src_bytes[src_start..src_start + elem_size]);
+            out_count += 1;
+        }
+    }
+
+    if is_memory {
+        if evex.z {
+            return Err(Error::Emulator(format!(
+                "{} memory destination does not allow EVEX.z",
+                name
+            )));
+        }
+        store_mem_bytes(vcpu, addr, elem_size, out_count, &out_bytes)?;
+    } else {
+        let compressed_len = out_count * elem_size;
+        if !evex.z && compressed_len < vl_bytes {
+            let dest_bytes = read_reg_bytes(vcpu, dest, vl_bytes);
+            out_bytes[compressed_len..vl_bytes]
+                .copy_from_slice(&dest_bytes[compressed_len..vl_bytes]);
+        }
+        write_reg_bytes(vcpu, dest, vl_bytes, &out_bytes);
+    }
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+pub fn vexpand_evex(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    elem_size: usize,
+    name: &str,
+) -> Result<Option<VcpuExit>> {
+    let evex = ctx.evex.ok_or_else(|| {
+        Error::Emulator(format!("{} requires EVEX prefix", name))
+    })?;
+
+    if evex.vvvv != 0xF {
+        return Err(Error::Emulator(format!(
+            "{} requires EVEX.vvvv=1111b",
+            name
+        )));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+
+    let dest = (reg & 0x07) | if evex.r { 0 } else { 8 } | if evex.r_prime { 0 } else { 16 };
+    let src = (rm & 0x07) | if evex.b { 0 } else { 8 } | if evex.x { 0 } else { 16 };
+
+    let vl_bytes = evex_vl_bytes(evex.ll);
+    if elem_size == 0 || vl_bytes % elem_size != 0 {
+        return Err(Error::Emulator(format!("{} invalid element size", name)));
+    }
+    let num_elems = vl_bytes / elem_size;
+    let mask = evex_mask(vcpu, evex.aaa, num_elems);
+
+    let src_bytes = if is_memory {
+        load_mem_bytes(vcpu, addr, elem_size, num_elems)?
+    } else {
+        read_reg_bytes(vcpu, src, vl_bytes)
+    };
+
+    let mut out_bytes = if evex.z {
+        [0u8; 64]
+    } else {
+        read_reg_bytes(vcpu, dest, vl_bytes)
+    };
+
+    let mut src_index = 0usize;
+    for j in 0..num_elems {
+        let dst_start = j * elem_size;
+        if (mask >> j) & 1 != 0 {
+            let src_start = src_index * elem_size;
+            out_bytes[dst_start..dst_start + elem_size]
+                .copy_from_slice(&src_bytes[src_start..src_start + elem_size]);
+            src_index += 1;
+        } else if evex.z {
+            out_bytes[dst_start..dst_start + elem_size].fill(0);
+        }
+    }
+
+    write_reg_bytes(vcpu, dest, vl_bytes, &out_bytes);
 
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
