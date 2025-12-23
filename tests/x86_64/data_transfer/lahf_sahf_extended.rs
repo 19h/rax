@@ -26,13 +26,13 @@ fn test_lahf_basic() {
     ];
     let mut regs = Registers::default();
     // Set some flags: CF=1, PF=1, AF=0, ZF=0, SF=1
-    regs.rflags = 0x85; // 10000101 = SF, PF, CF set, bit 1 always 1
+    regs.rflags = 0x87; // 10000111 = SF, PF, CF set, bit 1 always 1
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // AH should contain SF:ZF:0:AF:0:PF:1:CF
     let ah = ((regs.rax >> 8) & 0xFF) as u8;
-    assert_eq!(ah, 0x85, "AH should contain flags: SF=1, ZF=0, AF=0, PF=1, CF=1");
+    assert_eq!(ah, 0x87, "AH should contain flags: SF=1, ZF=0, AF=0, PF=1, CF=1");
 }
 
 #[test]
@@ -157,7 +157,7 @@ fn test_lahf_preserves_rax_lower_byte() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x12345678ABCDEF42; // AL = 0x42
-    regs.rflags = 0x85;
+    regs.rflags = 0x87;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
@@ -288,7 +288,7 @@ fn test_sahf_individual_flags() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rflags & 0xD5, ah_value as u64 | 0x02, "SAHF failed for {}", description);
+        assert_eq!(regs.rflags & 0xD5, ah_value as u64, "SAHF failed for {}", description);
     }
 }
 
@@ -400,7 +400,7 @@ fn test_lahf_preserves_upper_rax() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFFFFFF00FF, 0x123456789ABCD000, "Upper and lower bytes preserved");
+    assert_eq!(regs.rax & 0xFFFFFFFFFFFF00FF, 0x123456789ABC0000, "Upper and lower bytes preserved");
 }
 
 #[test]
@@ -415,7 +415,7 @@ fn test_lahf_sahf_compatibility() {
         0xf4,
     ];
     let mut regs = Registers::default();
-    regs.rflags = 0x85;
+    regs.rflags = 0x87;
     let expected = regs.rflags & 0xD5;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();

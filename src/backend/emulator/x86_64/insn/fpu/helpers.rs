@@ -44,7 +44,7 @@ pub fn set_fcomi_flags(vcpu: &mut X86_64Vcpu, a: f64, b: f64) {
         (true, false, false)
     };
 
-    vcpu.regs.rflags &= !0x45; // Clear ZF, PF, CF
+    vcpu.regs.rflags &= !0x8D5; // Clear OF, SF, ZF, AF, PF, CF
     if zf { vcpu.regs.rflags |= 0x40; }
     if pf { vcpu.regs.rflags |= 0x04; }
     if cf { vcpu.regs.rflags |= 0x01; }
@@ -80,12 +80,35 @@ pub fn fxam(vcpu: &mut X86_64Vcpu) {
 pub fn fpu_round(cw: u16, val: f64) -> f64 {
     let rc = (cw >> 10) & 3;
     match rc {
-        0 => val.round(), // Round to nearest
+        0 => round_nearest_even(val), // Round to nearest, ties to even
         1 => val.floor(), // Round down (toward -infinity)
         2 => val.ceil(),  // Round up (toward +infinity)
         3 => val.trunc(), // Truncate (toward zero)
         _ => unreachable!(),
     }
+}
+
+pub fn round_nearest_even(val: f64) -> f64 {
+    if !val.is_finite() {
+        return val;
+    }
+
+    let int_part = val.trunc();
+    let frac = val - int_part;
+
+    if frac.abs() == 0.5 {
+        let int_even = (int_part as i64) & 1 == 0;
+        if int_even {
+            return int_part;
+        }
+        return if val.is_sign_negative() {
+            int_part - 1.0
+        } else {
+            int_part + 1.0
+        };
+    }
+
+    val.round()
 }
 
 /// Decode f64 to mantissa, exponent, sign
@@ -117,7 +140,7 @@ pub fn f80_to_f64(bytes: &[u8]) -> f64 {
         return if sign { -0.0 } else { 0.0 };
     }
     if exponent == 0x7FFF {
-        if mantissa == 0 {
+        if mantissa & 0x7FFF_FFFF_FFFF_FFFF == 0 {
             return if sign { f64::NEG_INFINITY } else { f64::INFINITY };
         } else {
             return f64::NAN;
@@ -182,10 +205,14 @@ pub fn f64_to_f80(val: f64) -> [u8; 10] {
 pub fn bcd_to_f64(bytes: &[u8]) -> f64 {
     let sign = (bytes[9] & 0x80) != 0;
     let mut val = 0i64;
+    let mut multiplier = 1i64;
     for i in 0..9 {
         let lo = (bytes[i] & 0x0F) as i64;
         let hi = ((bytes[i] >> 4) & 0x0F) as i64;
-        val = val * 100 + hi * 10 + lo;
+        val += lo * multiplier;
+        multiplier *= 10;
+        val += hi * multiplier;
+        multiplier *= 10;
     }
     if sign { -(val as f64) } else { val as f64 }
 }
@@ -193,7 +220,7 @@ pub fn bcd_to_f64(bytes: &[u8]) -> f64 {
 /// Convert f64 to BCD
 pub fn f64_to_bcd(val: f64) -> [u8; 10] {
     let mut bytes = [0u8; 10];
-    let sign = val < 0.0;
+    let sign = val.is_sign_negative();
     let mut n = val.abs() as u64;
 
     for i in 0..9 {

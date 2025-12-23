@@ -156,7 +156,8 @@ fn test_fadd_m64fp_small_values() {
     write_f64(&mem, DATA_ADDR + 8, 2.0e-15);
 
     run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_f64(&mem, 0x3000), 3.0e-15);
+    let result = read_f64(&mem, 0x3000);
+    assert!((result - 3.0e-15).abs() < 1e-30);
 }
 
 #[test]

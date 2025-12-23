@@ -247,7 +247,7 @@ impl X86_64Vcpu {
                     self.write_mem32(addr + 28, 0xFFFF)?;
                     // ST0-ST7 at offset 32 (16 bytes each)
                     for i in 0..8 {
-                        let bytes = insn::fpu::f64_to_f80_pub(self.fpu.st[i]);
+                        let bytes = insn::fpu::f64_to_f80_pub(self.fpu.get_st(i as u8));
                         self.write_bytes(addr + 32 + (i as u64) * 16, &bytes)?;
                     }
                     // XMM0-XMM15 at offset 160 (16 bytes each)
@@ -285,7 +285,7 @@ impl X86_64Vcpu {
                     // ST0-ST7 at offset 32
                     for i in 0..8 {
                         let bytes = self.read_bytes(addr + 32 + (i as u64) * 16, 10)?;
-                        self.fpu.st[i] = insn::fpu::f80_to_f64_pub(&bytes);
+                        self.fpu.set_st(i as u8, insn::fpu::f80_to_f64_pub(&bytes));
                     }
                     // XMM0-XMM15 at offset 160
                     for i in 0..16 {

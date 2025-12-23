@@ -42,7 +42,7 @@ pub fn escape_df(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 vcpu.fpu.push(val);
             }
             6 => { // FBSTP m80bcd
-                let val = vcpu.fpu.pop();
+                let val = fpu_round(vcpu.fpu.control_word, vcpu.fpu.pop());
                 let bytes = f64_to_bcd(val);
                 vcpu.write_bytes(addr, &bytes)?;
             }

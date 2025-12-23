@@ -318,8 +318,8 @@ fn test_fptan_very_small_angle() {
     let tangent = read_f64(&mem, 0x3008);
 
     assert!((one_value - 1.0).abs() < 1e-15, "FPTAN should push 1.0");
-    // For very small angles, tan(x) ≈ x
-    assert!((tangent - 0.001).abs() < 1e-15, "tan(0.001) ≈ 0.001");
+    let expected = (0.001_f64).tan();
+    assert!((tangent - expected).abs() < 1e-15, "tan(0.001) should match Rust tan");
 }
 
 // ============================================================================

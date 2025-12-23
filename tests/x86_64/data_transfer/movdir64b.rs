@@ -477,7 +477,7 @@ fn test_movdir64b_ascii_data() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
 
     // Write ASCII string (64 characters)
-    let test_string = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!";
+    let test_string = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!?";
     for i in 0..64 {
         write_mem_at_u8(&mem, SRC_ADDR + i, test_string[i as usize]);
     }

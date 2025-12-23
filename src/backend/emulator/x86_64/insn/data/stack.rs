@@ -12,13 +12,41 @@ pub fn push_r64(
     opcode: u8,
 ) -> Result<Option<VcpuExit>> {
     let reg = (opcode - 0x50) | ctx.rex_b();
-    let value = vcpu.get_reg(reg, 8);
-    vcpu.push64(value)?;
+    let op_size = stack_op_size(vcpu, ctx);
+    let value = vcpu.get_reg(reg, op_size);
+    match op_size {
+        2 => vcpu.push16(value as u16)?,
+        4 => vcpu.push32(value as u32)?,
+        8 => vcpu.push64(value)?,
+        _ => {
+            return Err(Error::Emulator(format!(
+                "invalid PUSH r op size: {}",
+                op_size
+            )))
+        }
+    }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
 
 fn segment_op_size(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
+    let in_long_mode = (vcpu.sregs.efer & 0x400) != 0;
+    let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
+
+    if in_64bit_mode {
+        if ctx.operand_size_override {
+            2
+        } else {
+            8
+        }
+    } else {
+        let default_16bit = !vcpu.sregs.cs.db;
+        let is_16bit = default_16bit ^ ctx.operand_size_override;
+        if is_16bit { 2 } else { 4 }
+    }
+}
+
+fn stack_op_size(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
     let in_long_mode = (vcpu.sregs.efer & 0x400) != 0;
     let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
 
@@ -121,16 +149,42 @@ pub fn pop_sreg(
 
 /// PUSH imm8 (0x6A)
 pub fn push_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = stack_op_size(vcpu, ctx);
     let imm = ctx.consume_u8()? as i8 as i64 as u64;
-    vcpu.push64(imm)?;
+    match op_size {
+        2 => vcpu.push16(imm as u16)?,
+        4 => vcpu.push32(imm as u32)?,
+        8 => vcpu.push64(imm)?,
+        _ => {
+            return Err(Error::Emulator(format!(
+                "invalid PUSH imm8 op size: {}",
+                op_size
+            )))
+        }
+    }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
 
 /// PUSH imm32 (0x68)
 pub fn push_imm32(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let imm = ctx.consume_u32()? as i32 as i64 as u64;
-    vcpu.push64(imm)?;
+    let op_size = stack_op_size(vcpu, ctx);
+    let imm = if op_size == 2 {
+        ctx.consume_u16()? as i16 as i64 as u64
+    } else {
+        ctx.consume_u32()? as i32 as i64 as u64
+    };
+    match op_size {
+        2 => vcpu.push16(imm as u16)?,
+        4 => vcpu.push32(imm as u32)?,
+        8 => vcpu.push64(imm)?,
+        _ => {
+            return Err(Error::Emulator(format!(
+                "invalid PUSH imm32 op size: {}",
+                op_size
+            )))
+        }
+    }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -142,25 +196,40 @@ pub fn pop_r64(
     opcode: u8,
 ) -> Result<Option<VcpuExit>> {
     let reg = (opcode - 0x58) | ctx.rex_b();
-    let value = vcpu.pop64()?;
-    vcpu.set_reg(reg, value, 8);
+    let op_size = stack_op_size(vcpu, ctx);
+    let value = match op_size {
+        2 => vcpu.pop16()? as u64,
+        4 => vcpu.pop32()? as u64,
+        8 => vcpu.pop64()?,
+        _ => {
+            return Err(Error::Emulator(format!(
+                "invalid POP r op size: {}",
+                op_size
+            )))
+        }
+    };
+    vcpu.set_reg(reg, value, op_size);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
 
 /// POP r/m64 (0x8F /0)
 pub fn pop_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    // In 64-bit mode, PUSH/POP default to 64-bit operand size (not 32-bit like most instructions)
-    // The 0x66 prefix changes to 16-bit; there is no 32-bit PUSH/POP in 64-bit mode
-    let op_size = if ctx.operand_size_override { 2 } else { 8 };
+    let op_size = stack_op_size(vcpu, ctx);
 
     let (_reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
 
     // Pop value based on operand size
-    let value = if op_size == 2 {
-        vcpu.pop16()? as u64
-    } else {
-        vcpu.pop64()?
+    let value = match op_size {
+        2 => vcpu.pop16()? as u64,
+        4 => vcpu.pop32()? as u64,
+        8 => vcpu.pop64()?,
+        _ => {
+            return Err(Error::Emulator(format!(
+                "invalid POP r/m op size: {}",
+                op_size
+            )))
+        }
     };
 
     if is_memory {

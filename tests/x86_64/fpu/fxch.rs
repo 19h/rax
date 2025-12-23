@@ -343,10 +343,10 @@ fn test_fxch_with_fadd() {
 fn test_fxch_sqrt_pattern() {
     // Example from docs: FXCH ST(3); FSQRT; FXCH ST(3)
     let code = [
-        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] ; value to keep
+        0xDD, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00,  // FLD qword [0x2000] ; 16.0 (to sqrt)
         0xDD, 0x04, 0x25, 0x08, 0x20, 0x00, 0x00,  // FLD qword [0x2008] ; value to keep
         0xDD, 0x04, 0x25, 0x10, 0x20, 0x00, 0x00,  // FLD qword [0x2010] ; value to keep
-        0xDD, 0x04, 0x25, 0x18, 0x20, 0x00, 0x00,  // FLD qword [0x2018] ; 16.0 (to sqrt)
+        0xDD, 0x04, 0x25, 0x18, 0x20, 0x00, 0x00,  // FLD qword [0x2018] ; value to keep
         0xD9, 0xCB,                                  // FXCH ST(3) ; bring 16.0 to top
         0xD9, 0xFA,                                  // FSQRT
         0xD9, 0xCB,                                  // FXCH ST(3) ; put result back
@@ -358,10 +358,10 @@ fn test_fxch_sqrt_pattern() {
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 1.0);
-    write_f64(&mem, 0x2008, 2.0);
-    write_f64(&mem, 0x2010, 3.0);
-    write_f64(&mem, 0x2018, 16.0);
+    write_f64(&mem, 0x2000, 16.0);
+    write_f64(&mem, 0x2008, 1.0);
+    write_f64(&mem, 0x2010, 2.0);
+    write_f64(&mem, 0x2018, 3.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
@@ -567,7 +567,7 @@ fn test_fxch_alternating_exchanges() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 1.0, "After alternating FXCH");
+    assert_eq!(result, 3.0, "After alternating FXCH");
 }
 
 #[test]
