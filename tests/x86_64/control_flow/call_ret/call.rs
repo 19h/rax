@@ -190,7 +190,7 @@ fn test_call_backward() {
 fn test_call_zero_offset() {
     let code = [
         0xe8, 0x00, 0x00, 0x00, 0x00, // CALL +0 (next instruction)
-        0xc3, // RET (immediately return)
+        0x58, // POP RAX (pop return address)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -198,6 +198,7 @@ fn test_call_zero_offset() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
+    assert_eq!(regs.rax, CODE_ADDR + 5, "Return address is after CALL");
     assert_eq!(regs.rsp, 0x1000, "Stack balanced");
 }
 

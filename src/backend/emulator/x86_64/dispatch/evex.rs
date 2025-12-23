@@ -9,6 +9,8 @@
 //! - 1: 0F (two-byte opcode)
 //! - 2: 0F 38 (three-byte opcode)
 //! - 3: 0F 3A (three-byte opcode with immediate)
+//! - 5: MAP5 (AVX-512 FP16)
+//! - 6: MAP6 (AVX-512 FP16)
 
 use crate::cpu::VcpuExit;
 use crate::error::{Error, Result};
@@ -30,6 +32,7 @@ impl X86_64Vcpu {
             1 => self.execute_evex_0f(ctx, opcode),
             2 => self.execute_evex_0f38(ctx, opcode),
             3 => self.execute_evex_0f3a(ctx, opcode),
+            5 => self.execute_evex_map5(ctx, opcode),
             _ => Err(Error::Emulator(format!(
                 "Invalid EVEX mm field {} at RIP={:#x}",
                 mm, self.regs.rip
@@ -442,5 +445,183 @@ impl X86_64Vcpu {
             "Unimplemented EVEX.0F3A opcode {:#04x} at RIP={:#x}",
             opcode, self.regs.rip
         )))
+    }
+
+    /// EVEX MAP5 opcode map (mm=5) - AVX-512 FP16 instructions
+    fn execute_evex_map5(
+        &mut self,
+        ctx: &mut InsnContext,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.ok_or_else(|| {
+            Error::Emulator("EVEX context missing".to_string())
+        })?;
+
+        // MAP5 instructions are FP16 (half-precision) arithmetic
+        // pp=0 (NP), W=0 for packed FP16
+        match opcode {
+            // VADDPH (0x58)
+            0x58 if evex.pp == 0 => self.execute_evex_fp16_arith(ctx, |a, b| a + b),
+            // VMULPH (0x59)
+            0x59 if evex.pp == 0 => self.execute_evex_fp16_arith(ctx, |a, b| a * b),
+            // VSUBPH (0x5C)
+            0x5C if evex.pp == 0 => self.execute_evex_fp16_arith(ctx, |a, b| a - b),
+            // VDIVPH (0x5E)
+            0x5E if evex.pp == 0 => self.execute_evex_fp16_arith(ctx, |a, b| a / b),
+            _ => Err(Error::Emulator(format!(
+                "Unimplemented EVEX.MAP5 opcode {:#04x} (pp={}) at RIP={:#x}",
+                opcode, evex.pp, self.regs.rip
+            ))),
+        }
+    }
+
+    /// EVEX FP16 (half-precision) arithmetic (VADDPH, VSUBPH, VMULPH, VDIVPH)
+    fn execute_evex_fp16_arith<F>(
+        &mut self,
+        ctx: &mut InsnContext,
+        op: F,
+    ) -> Result<Option<VcpuExit>>
+    where
+        F: Fn(f32, f32) -> f32,
+    {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        // Destination register (5 bits)
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        // Source1 from vvvv (inverted)
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        // Vector length from L'L
+        let vl = match evex.ll {
+            0 => 16,  // 128-bit (8 FP16 values)
+            1 => 32,  // 256-bit (16 FP16 values)
+            2 => 64,  // 512-bit (32 FP16 values)
+            _ => 64,
+        };
+
+        // Number of FP16 elements (2 bytes each)
+        let num_elems = vl / 2;
+
+        // Load source2
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        // Get source1
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+
+        // Perform operation on each FP16 element
+        let mut result = [0u8; 64];
+        for i in 0..num_elems {
+            // Convert FP16 to f32, perform operation, convert back to FP16
+            let a_fp16 = u16::from_le_bytes([src1[i*2], src1[i*2+1]]);
+            let b_fp16 = u16::from_le_bytes([src2[i*2], src2[i*2+1]]);
+            let a = fp16_to_f32(a_fp16);
+            let b = fp16_to_f32(b_fp16);
+            let r = op(a, b);
+            let r_fp16 = f32_to_fp16(r);
+            let bytes = r_fp16.to_le_bytes();
+            result[i*2..i*2+2].copy_from_slice(&bytes);
+        }
+
+        // Store result
+        self.set_zmm_data(zmm_dst, &result[..vl], vl);
+
+        // Zero upper bits if not 512-bit (for ZMM0-15)
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+}
+
+/// Convert IEEE 754 half-precision (FP16) to single-precision (f32)
+fn fp16_to_f32(h: u16) -> f32 {
+    let sign = ((h >> 15) & 1) as u32;
+    let exp = ((h >> 10) & 0x1F) as u32;
+    let mant = (h & 0x3FF) as u32;
+
+    let f32_bits = if exp == 0 {
+        if mant == 0 {
+            // Zero (preserve sign)
+            sign << 31
+        } else {
+            // Denormalized number - normalize it
+            let mut m = mant;
+            let mut e = 0i32;
+            while (m & 0x400) == 0 {
+                m <<= 1;
+                e += 1;
+            }
+            m &= 0x3FF; // Remove implicit bit
+            let new_exp = (127 - 15 - e) as u32;
+            (sign << 31) | (new_exp << 23) | (m << 13)
+        }
+    } else if exp == 0x1F {
+        // Infinity or NaN
+        (sign << 31) | (0xFF << 23) | (mant << 13)
+    } else {
+        // Normalized number
+        // FP16 exponent bias is 15, f32 is 127
+        let new_exp = exp + 127 - 15;
+        (sign << 31) | (new_exp << 23) | (mant << 13)
+    };
+
+    f32::from_bits(f32_bits)
+}
+
+/// Convert single-precision (f32) to IEEE 754 half-precision (FP16)
+fn f32_to_fp16(f: f32) -> u16 {
+    let bits = f.to_bits();
+    let sign = ((bits >> 31) & 1) as u16;
+    let exp = ((bits >> 23) & 0xFF) as i32;
+    let mant = (bits & 0x7FFFFF) as u32;
+
+    if exp == 0xFF {
+        // Infinity or NaN
+        if mant == 0 {
+            // Infinity
+            (sign << 15) | (0x1F << 10)
+        } else {
+            // NaN - preserve some mantissa bits
+            (sign << 15) | (0x1F << 10) | ((mant >> 13) as u16 & 0x3FF).max(1)
+        }
+    } else if exp == 0 {
+        // Zero or denormalized f32 (becomes zero in FP16)
+        sign << 15
+    } else {
+        // Normalized number
+        let new_exp = exp - 127 + 15;
+        if new_exp >= 0x1F {
+            // Overflow - return infinity
+            (sign << 15) | (0x1F << 10)
+        } else if new_exp <= 0 {
+            // Underflow - return zero or denormalized
+            if new_exp < -10 {
+                // Too small, return zero
+                sign << 15
+            } else {
+                // Denormalized
+                let shift = 1 - new_exp;
+                let m = (0x800000 | mant) >> (13 + shift);
+                (sign << 15) | (m as u16 & 0x3FF)
+            }
+        } else {
+            // Normal case
+            let new_mant = (mant >> 13) as u16;
+            (sign << 15) | ((new_exp as u16) << 10) | (new_mant & 0x3FF)
+        }
     }
 }

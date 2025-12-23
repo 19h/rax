@@ -12,7 +12,7 @@ use crate::common::{setup_vm_legacy as setup_vm, run_until_hlt_legacy as run_unt
 fn test_ret_basic() {
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x20, 0x00, 0x00, // MOV RSP, 0x2000
-        0xe8, 0x01, 0x00, 0x00, 0x00, // CALL function
+        0xe8, 0x04, 0x00, 0x00, 0x00, // CALL function
         // return point:
         0xf4, // HLT
         // function:
@@ -28,7 +28,7 @@ fn test_ret_basic() {
 fn test_ret_pops_stack() {
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x20, 0x00, 0x00, // MOV RSP, 0x2000
-        0xe8, 0x01, 0x00, 0x00, 0x00, // CALL function
+        0xe8, 0x04, 0x00, 0x00, 0x00, // CALL function
         // return point:
         0x48, 0x89, 0xe3, // MOV RBX, RSP (save SP after return)
         0xf4, // HLT
@@ -44,7 +44,7 @@ fn test_ret_pops_stack() {
 fn test_ret_increments_rsp_by_8() {
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x20, 0x00, 0x00, // MOV RSP, 0x2000
-        0xe8, 0x01, 0x00, 0x00, 0x00, // CALL function
+        0xe8, 0x04, 0x00, 0x00, 0x00, // CALL function
         // return point:
         0xf4, // HLT
         // function:
@@ -62,18 +62,18 @@ fn test_ret_uses_address_from_stack() {
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x20, 0x00, 0x00, // MOV RSP, 0x2000
         // Manually push return address
-        0x48, 0xb8, 0x11, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0x1011
+        0x48, 0xb8, 0x14, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0x1014
         0x50, // PUSH RAX
-        0xc3, // RET (will jump to 0x1011)
+        0xc3, // RET (will jump to 0x1014)
         0xf4, // HLT (should not execute)
-        // target at 0x1011:
+        // target at 0x1014:
         0x48, 0xc7, 0xc1, 0x99, 0x00, 0x00, 0x00, // MOV RCX, 0x99
         0xf4, // HLT
     ];
     let vm = setup_vm(&code);
     let vm = run_until_hlt(vm);
     assert_eq!(vm.rcx, 0x99);
-    assert_eq!(vm.rip, 0x1011 + 7);
+    assert_eq!(vm.rip, 0x1014 + 8);
 }
 
 #[test]
@@ -133,7 +133,7 @@ fn test_ret_preserves_flags() {
     ];
     let vm = setup_vm(&code);
     let vm = run_until_hlt(vm);
-    assert_eq!(vm.rip, CODE_ADDR + 26);
+    assert_eq!(vm.rip, CODE_ADDR + 27);
 }
 
 #[test]
