@@ -642,11 +642,11 @@ fn test_clwb_loop_pattern() {
 fn test_clwb_all_extended_registers() {
     // Test CLWB with all extended registers R8-R15
     for reg_offset in 0..8 {
-        let modrm = 0x30 | reg_offset;
-        let code = [
-            0x66, 0x41, 0x0f, 0xae, modrm, // CLWB [r8-r15]
-            0xf4,
-        ];
+        let code = match reg_offset {
+            4 => vec![0x66, 0x41, 0x0f, 0xae, 0x34, 0x24, 0xf4], // CLWB [r12] (SIB required)
+            5 => vec![0x66, 0x41, 0x0f, 0xae, 0x75, 0x00, 0xf4], // CLWB [r13+0] (disp8 required)
+            _ => vec![0x66, 0x41, 0x0f, 0xae, 0x30 | reg_offset, 0xf4], // CLWB [r8-r15]
+        };
         let mut regs = Registers::default();
         let addr = 0x8000 + (reg_offset as u64 * 0x100);
         match reg_offset {

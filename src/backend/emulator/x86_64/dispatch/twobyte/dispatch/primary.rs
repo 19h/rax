@@ -103,6 +103,7 @@ impl X86_64Vcpu {
             0xAD => insn::shift::shrd_cl(self, ctx),
 
             // NOP variants
+            0x1C => insn::system::cldemote(self, ctx),
             0x1E => insn::system::endbr(self, ctx),
             0x1F => insn::system::nop_rm(self, ctx),
 
