@@ -69,19 +69,19 @@ fn test_rdtsc_preserves_flags() {
 #[test]
 fn test_rdtsc_preserves_other_registers() {
     let code = [
-        0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242
-        0x48, 0xc7, 0xc1, 0x99, 0x99, 0x99, 0x99, // MOV RCX, 0x99999999
-        0x48, 0xc7, 0xc6, 0xaa, 0xaa, 0xaa, 0xaa, // MOV RSI, 0xaaaaaaaa
+        0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242 (sign-extended)
+        0x48, 0xc7, 0xc1, 0x99, 0x99, 0x99, 0x99, // MOV RCX, 0x99999999 (sign-extended to 0xFFFFFFFF99999999)
+        0x48, 0xc7, 0xc6, 0xaa, 0xaa, 0xaa, 0xaa, // MOV RSI, 0xaaaaaaaa (sign-extended to 0xFFFFFFFFaaaaaaaa)
         0x0f, 0x31, // RDTSC
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // RBX, RCX, RSI should be unchanged
+    // RBX, RCX, RSI should be unchanged (MOV r64, imm32 sign-extends the immediate)
     assert_eq!(regs.rbx, 0x42424242, "RBX should not be affected");
-    assert_eq!(regs.rcx, 0x99999999, "RCX should not be affected");
-    assert_eq!(regs.rsi, 0xaaaaaaaa, "RSI should not be affected");
+    assert_eq!(regs.rcx, 0xFFFFFFFF_99999999u64 as u64, "RCX should not be affected");
+    assert_eq!(regs.rsi, 0xFFFFFFFF_AAAAAAAAu64 as u64, "RSI should not be affected");
 }
 
 // Test multiple sequential RDTSC calls
@@ -244,12 +244,12 @@ fn test_rdtsc_with_mov_sequence() {
 #[test]
 fn test_rdtsc_in_loop() {
     let code = [
-        0x48, 0xc7, 0xc3, 0x03, 0x00, 0x00, 0x00, // MOV RBX, 3 (loop counter)
-        // loop:
-        0x0f, 0x31, // RDTSC
-        0x48, 0x83, 0xeb, 0x01, // SUB RBX, 1
-        0x75, 0xf9, // JNZ loop (back 7 bytes)
-        0xf4, // HLT
+        0x48, 0xc7, 0xc3, 0x03, 0x00, 0x00, 0x00, // MOV RBX, 3 (loop counter) [offset 0-6]
+        // loop: [offset 7]
+        0x0f, 0x31, // RDTSC [offset 7-8]
+        0x48, 0x83, 0xeb, 0x01, // SUB RBX, 1 [offset 9-12]
+        0x75, 0xf8, // JNZ loop (back 8 bytes: 15-8=7) [offset 13-14]
+        0xf4, // HLT [offset 15]
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -372,7 +372,7 @@ fn test_rdtsc_high_values() {
 #[test]
 fn test_rdtsc_rbx_preservation() {
     let code = [
-        0x48, 0xc7, 0xc3, 0xef, 0xbe, 0xad, 0xde, // MOV RBX, 0xdeadbeef
+        0x48, 0xc7, 0xc3, 0xef, 0xbe, 0xad, 0xde, // MOV RBX, 0xdeadbeef (sign-extended to 0xFFFFFFFFdeadbeef)
         0x0f, 0x31, // RDTSC #1
         0x0f, 0x31, // RDTSC #2
         0x0f, 0x31, // RDTSC #3
@@ -381,7 +381,8 @@ fn test_rdtsc_rbx_preservation() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rbx, 0xdeadbeef, "RBX should be preserved");
+    // MOV r64, imm32 sign-extends the immediate
+    assert_eq!(regs.rbx, 0xFFFFFFFF_DEADBEEFu64, "RBX should be preserved");
 }
 
 // Test RDTSC with conditional jumps
