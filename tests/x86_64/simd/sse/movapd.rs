@@ -503,12 +503,17 @@ fn test_movapd_base_displacement() {
 #[test]
 fn test_movapd_rip_relative() {
     // MOVAPD XMM0, [RIP + displacement]
+    // Code is at 0x1000. After the 8-byte MOVAPD instruction, RIP = 0x1008.
+    // We need to reach an aligned address. 0x3000 is aligned.
+    // displacement = 0x3000 - 0x1008 = 0x1FF8
     let code = [
-        0x66, 0x0f, 0x28, 0x05, 0x00, 0x00, 0x00, 0x00, // MOVAPD XMM0, [RIP+0]
+        0x66, 0x0f, 0x28, 0x05, 0xF8, 0x1F, 0x00, 0x00, // MOVAPD XMM0, [RIP+0x1FF8] -> addr 0x3000
         0xf4, // HLT
     ];
 
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    // Write test data at the aligned address
+    mem.write_slice(&[0xBB; 16], GuestAddress(0x3000)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
 
@@ -607,9 +612,10 @@ fn test_movapd_chain_move() {
 // ============================================================================
 
 #[test]
-fn test_movapd_at_0x1000_aligned() {
-    // Test at 0x1000 (16-byte aligned)
-    const TEST_ADDR: u64 = 0x1000;
+fn test_movapd_at_0x5000_aligned() {
+    // Test at 0x5000 (16-byte aligned)
+    // Note: 0x1000 is CODE_ADDR where test code is loaded, so we use 0x5000 instead
+    const TEST_ADDR: u64 = 0x5000;
     let code = [
         0x48, 0xb8, // MOV RAX, imm64
     ];
