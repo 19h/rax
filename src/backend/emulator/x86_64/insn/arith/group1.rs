@@ -42,24 +42,18 @@ pub fn group1_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<O
         }
         2 => {
             // ADC
-            let cf = if vcpu.regs.rflags & flags::bits::CF != 0 {
-                1u8
-            } else {
-                0
-            };
-            let r = (dst as u8).wrapping_add(imm as u8).wrapping_add(cf) as u64;
-            flags::update_flags_add(&mut vcpu.regs.rflags, dst, imm.wrapping_add(cf as u64), r, 1);
+            let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
+            let cf_val = if cf_in { 1u8 } else { 0 };
+            let r = (dst as u8).wrapping_add(imm as u8).wrapping_add(cf_val) as u64;
+            flags::update_flags_adc(&mut vcpu.regs.rflags, dst, imm, cf_in, r, 1);
             (r, true)
         }
         3 => {
             // SBB
-            let cf = if vcpu.regs.rflags & flags::bits::CF != 0 {
-                1u8
-            } else {
-                0
-            };
-            let r = (dst as u8).wrapping_sub(imm as u8).wrapping_sub(cf) as u64;
-            flags::update_flags_sub(&mut vcpu.regs.rflags, dst, imm.wrapping_add(cf as u64), r, 1);
+            let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
+            let cf_val = if cf_in { 1u8 } else { 0 };
+            let r = (dst as u8).wrapping_sub(imm as u8).wrapping_sub(cf_val) as u64;
+            flags::update_flags_sbb(&mut vcpu.regs.rflags, dst, imm, cf_in, r, 1);
             (r, true)
         }
         4 => {
@@ -226,24 +220,18 @@ pub fn group1_rm_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Op
         }
         2 => {
             // ADC
-            let cf = if vcpu.regs.rflags & flags::bits::CF != 0 {
-                1u64
-            } else {
-                0
-            };
-            let r = dst.wrapping_add(imm).wrapping_add(cf);
-            flags::update_flags_add(&mut vcpu.regs.rflags, dst, imm.wrapping_add(cf), r, op_size);
+            let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
+            let cf_val = if cf_in { 1u64 } else { 0 };
+            let r = dst.wrapping_add(imm).wrapping_add(cf_val);
+            flags::update_flags_adc(&mut vcpu.regs.rflags, dst, imm, cf_in, r, op_size);
             (r, true)
         }
         3 => {
             // SBB
-            let cf = if vcpu.regs.rflags & flags::bits::CF != 0 {
-                1u64
-            } else {
-                0
-            };
-            let r = dst.wrapping_sub(imm).wrapping_sub(cf);
-            flags::update_flags_sub(&mut vcpu.regs.rflags, dst, imm.wrapping_add(cf), r, op_size);
+            let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
+            let cf_val = if cf_in { 1u64 } else { 0 };
+            let r = dst.wrapping_sub(imm).wrapping_sub(cf_val);
+            flags::update_flags_sbb(&mut vcpu.regs.rflags, dst, imm, cf_in, r, op_size);
             (r, true)
         }
         4 => {

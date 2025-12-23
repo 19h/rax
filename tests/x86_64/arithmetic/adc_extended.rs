@@ -415,13 +415,13 @@ fn test_adc_extended_r64_registers() {
 fn test_adc_byte_ptr_imm8() {
     // ADC BYTE PTR [mem], 0x10 with CF=1
     let code = [
-        0x80, 0x15, 0xFA, 0x0F, 0x00, 0x00, 0x10, // ADC BYTE PTR [rip+0x0FF7], 0x10
+        0x80, 0x15, 0xF9, 0x0F, 0x00, 0x00, 0x10, // ADC BYTE PTR [rip+0x0FF9], 0x10
         0xf4,                                      // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u8(&mem, 0x20);
-    let mut regs = Registers::default();
-    regs.rflags = 0x01; // Set CF
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rflags |= 0x01; // Set CF
     vcpu.set_regs(&regs).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -435,13 +435,13 @@ fn test_adc_byte_ptr_imm8() {
 fn test_adc_word_ptr_imm16() {
     // ADC WORD PTR [mem], 0x1000 with CF=1
     let code = [
-        0x66, 0x81, 0x15, 0xF5, 0x0F, 0x00, 0x00, 0x00, 0x10, // ADC WORD PTR [rip+0x0FF5], 0x1000
+        0x66, 0x81, 0x15, 0xF7, 0x0F, 0x00, 0x00, 0x00, 0x10, // ADC WORD PTR [rip+0x0FF7], 0x1000
         0xf4,                                                  // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u16(&mem, 0x2000);
-    let mut regs = Registers::default();
-    regs.rflags = 0x01; // Set CF
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rflags |= 0x01; // Set CF
     vcpu.set_regs(&regs).unwrap();
 
     let _ = run_until_hlt(&mut vcpu).unwrap();
@@ -478,9 +478,9 @@ fn test_adc_qword_ptr_r64() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u64(&mem, 0x1000000000000000);
-    let mut regs = Registers::default();
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rbx = 0x2000000000000000;
-    regs.rflags = 0x01; // Set CF
+    regs.rflags |= 0x01; // Set CF
     vcpu.set_regs(&regs).unwrap();
 
     let _ = run_until_hlt(&mut vcpu).unwrap();
@@ -498,9 +498,9 @@ fn test_adc_r64_from_memory() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u64(&mem, 0x0FFFFFFFFFFFFFFF);
-    let mut regs = Registers::default();
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rax = 0x1000000000000000;
-    regs.rflags = 0x01; // Set CF
+    regs.rflags |= 0x01; // Set CF
     vcpu.set_regs(&regs).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();

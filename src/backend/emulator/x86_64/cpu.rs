@@ -379,7 +379,7 @@ impl X86_64Vcpu {
     }
 
     /// Execute a single instruction.
-    fn step(&mut self) -> Result<Option<VcpuExit>> {
+    pub fn step(&mut self) -> Result<Option<VcpuExit>> {
         // Update global RIP tracker for debugging
         CURRENT_RIP.store(self.regs.rip, Ordering::Relaxed);
 
