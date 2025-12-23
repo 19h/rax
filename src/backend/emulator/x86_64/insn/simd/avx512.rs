@@ -213,7 +213,7 @@ fn write_reg_bytes(vcpu: &mut X86_64Vcpu, reg: u8, vl_bytes: usize, data: &[u8; 
 }
 
 fn load_mem_bytes(
-    vcpu: &X86_64Vcpu,
+    vcpu: &mut X86_64Vcpu,
     addr: u64,
     elem_size: usize,
     num_elems: usize,
