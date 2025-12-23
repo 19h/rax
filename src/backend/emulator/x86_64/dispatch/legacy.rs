@@ -25,8 +25,11 @@ impl X86_64Vcpu {
             }
 
             // HLT - halt and exit to caller
-            // Note: RIP not advanced - some tests verify exact jump targets via RIP after HLT
-            0xF4 => Ok(Some(VcpuExit::Hlt)),
+            0xF4 => {
+                self.regs.rip += ctx.cursor as u64;
+                self.halted = true;
+                Ok(Some(VcpuExit::Hlt))
+            }
 
             // Two-byte opcode (0x0F prefix)
             0x0F => self.execute_0f(ctx),

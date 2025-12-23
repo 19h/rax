@@ -431,7 +431,7 @@ fn test_add_all_64bit_gp_registers() {
 #[test]
 fn test_add_byte_ptr_imm8() {
     let code = [
-        0x80, 0x05, 0xF8, 0x0F, 0x00, 0x00, 0x10, // ADD BYTE PTR [rip+0x0FF8], 0x10
+        0x80, 0x05, 0xF9, 0x0F, 0x00, 0x00, 0x10, // ADD BYTE PTR [rip+0x0FF9], 0x10
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -451,7 +451,7 @@ fn test_add_word_ptr_r16() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u16(&mem, 0x1000);
-    let mut regs = Registers::default();
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rbx = 0x2000;
     vcpu.set_regs(&regs).unwrap();
 
@@ -469,7 +469,7 @@ fn test_add_dword_ptr_r32() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u32(&mem, 0x10000000);
-    let mut regs = Registers::default();
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rbx = 0x20000000;
     vcpu.set_regs(&regs).unwrap();
 
@@ -487,7 +487,7 @@ fn test_add_qword_ptr_r64() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u64(&mem, 0x1000000000000000);
-    let mut regs = Registers::default();
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rbx = 0x2000000000000000;
     vcpu.set_regs(&regs).unwrap();
 
@@ -505,7 +505,7 @@ fn test_add_r64_from_memory() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u64(&mem, 0x2000000000000000);
-    let mut regs = Registers::default();
+    let mut regs = vcpu.get_regs().unwrap();
     regs.rax = 0x1000000000000000;
     vcpu.set_regs(&regs).unwrap();
 
