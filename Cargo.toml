@@ -7,6 +7,7 @@ edition = "2024"
 default = ["kvm"]
 kvm = ["kvm-bindings", "kvm-ioctls"]
 x86_64-suite = []
+x86-suite = ["x86_64-suite"]
 
 [dependencies]
 clap = { version = "4.5.53", features = ["derive"] }

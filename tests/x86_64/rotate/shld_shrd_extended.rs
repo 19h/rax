@@ -29,6 +29,9 @@ fn test_shld_all_counts_16bit() {
         if *count == 0 {
             assert_eq!(regs.rax & 0xFFFF, 0xAAAA, "SHLD AX by 0");
         } else if *count == 16 {
+            // For 16-bit, count is masked to 5 bits: 16 & 0x1F = 16
+            // Since count (16) == operand size (16), result is undefined per spec
+            // Implementation treats 16 as valid shift, shifting out all original bits
             assert_eq!(regs.rax & 0xFFFF, 0x5555, "SHLD AX by 16 (full replacement)");
         }
     }
@@ -47,6 +50,9 @@ fn test_shrd_all_counts_16bit() {
         if *count == 0 {
             assert_eq!(regs.rax & 0xFFFF, 0xAAAA, "SHRD AX by 0");
         } else if *count == 16 {
+            // For 16-bit, count is masked to 5 bits: 16 & 0x1F = 16
+            // Since count (16) == operand size (16), result is undefined per spec
+            // Implementation treats 16 as valid shift, shifting out all original bits
             assert_eq!(regs.rax & 0xFFFF, 0x5555, "SHRD AX by 16 (full replacement)");
         }
     }
@@ -65,7 +71,8 @@ fn test_shld_all_counts_32bit() {
         if *count == 0 {
             assert_eq!(regs.rax & 0xFFFFFFFF, 0xAAAAAAAA, "SHLD EAX by 0");
         } else if *count == 32 {
-            assert_eq!(regs.rax & 0xFFFFFFFF, 0x55555555, "SHLD EAX by 32 (full replacement)");
+            // Count is masked: 32 MOD 32 = 0, so no shift occurs
+            assert_eq!(regs.rax & 0xFFFFFFFF, 0xAAAAAAAA, "SHLD EAX by 32 (count masked to 0)");
         }
     }
 }
@@ -83,7 +90,8 @@ fn test_shrd_all_counts_32bit() {
         if *count == 0 {
             assert_eq!(regs.rax & 0xFFFFFFFF, 0xAAAAAAAA, "SHRD EAX by 0");
         } else if *count == 32 {
-            assert_eq!(regs.rax & 0xFFFFFFFF, 0x55555555, "SHRD EAX by 32 (full replacement)");
+            // Count is masked: 32 MOD 32 = 0, so no shift occurs
+            assert_eq!(regs.rax & 0xFFFFFFFF, 0xAAAAAAAA, "SHRD EAX by 32 (count masked to 0)");
         }
     }
 }
@@ -101,7 +109,8 @@ fn test_shld_all_counts_64bit() {
         if *count == 0 {
             assert_eq!(regs.rax, 0xAAAAAAAAAAAAAAAA, "SHLD RAX by 0");
         } else if *count == 64 {
-            assert_eq!(regs.rax, 0x5555555555555555, "SHLD RAX by 64 (full replacement)");
+            // Count is masked: 64 MOD 64 = 0, so no shift occurs
+            assert_eq!(regs.rax, 0xAAAAAAAAAAAAAAAA, "SHLD RAX by 64 (count masked to 0)");
         }
     }
 }
@@ -119,7 +128,8 @@ fn test_shrd_all_counts_64bit() {
         if *count == 0 {
             assert_eq!(regs.rax, 0xAAAAAAAAAAAAAAAA, "SHRD RAX by 0");
         } else if *count == 64 {
-            assert_eq!(regs.rax, 0x5555555555555555, "SHRD RAX by 64 (full replacement)");
+            // Count is masked: 64 MOD 64 = 0, so no shift occurs
+            assert_eq!(regs.rax, 0xAAAAAAAAAAAAAAAA, "SHRD RAX by 64 (count masked to 0)");
         }
     }
 }
@@ -406,9 +416,10 @@ fn test_shrd_sf_zf_flags() {
 
 #[test]
 fn test_shld_zero_result() {
-    let code = [0x0f, 0xa4, 0xd8, 0x20, 0xf4]; // SHLD EAX, EBX, 32
+    // Both operands are zero, so result is always zero regardless of shift count
+    let code = [0x0f, 0xa4, 0xd8, 0x10, 0xf4]; // SHLD EAX, EBX, 16
     let mut regs = Registers::default();
-    regs.rax = 0x12345678;
+    regs.rax = 0x00000000;
     regs.rbx = 0x00000000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -419,9 +430,10 @@ fn test_shld_zero_result() {
 
 #[test]
 fn test_shrd_zero_result() {
-    let code = [0x0f, 0xac, 0xd8, 0x20, 0xf4]; // SHRD EAX, EBX, 32
+    // Both operands are zero, so result is always zero regardless of shift count
+    let code = [0x0f, 0xac, 0xd8, 0x10, 0xf4]; // SHRD EAX, EBX, 16
     let mut regs = Registers::default();
-    regs.rax = 0x12345678;
+    regs.rax = 0x00000000;
     regs.rbx = 0x00000000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();

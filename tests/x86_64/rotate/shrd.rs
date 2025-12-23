@@ -123,13 +123,15 @@ fn test_shrd_ax_zero_count() {
 
 #[test]
 fn test_shrd_eax_ebx_imm8() {
+    // SHRD shifts right, low bits of source fill high bits of dest
+    // EAX >> 4 = 0x01234567, EBX low 4 bits (0x1) fill high 4 bits
     let code = [0x0f, 0xac, 0xd8, 0x04, 0xf4]; // SHRD EAX, EBX, 4
     let mut regs = Registers::default();
     regs.rax = 0x12345678;
     regs.rbx = 0xABCDEF01;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x81234567, "EAX: 0x12345678 SHRD 4 from 0xABCDEF01");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x11234567, "EAX: 0x12345678 SHRD 4 from 0xABCDEF01");
 }
 
 #[test]
@@ -169,13 +171,14 @@ fn test_shrd_eax_1bit() {
 
 #[test]
 fn test_shrd_eax_full_replacement() {
+    // SHRD EAX, EBX, 32: count is masked to 32 & 31 = 0, so no shift occurs
     let code = [0x0f, 0xac, 0xd8, 0x20, 0xf4]; // SHRD EAX, EBX, 32
     let mut regs = Registers::default();
     regs.rax = 0x12345678;
     regs.rbx = 0xABCDEF01;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xABCDEF01, "EAX: completely replaced by EBX");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX: count masked to 0, no shift");
 }
 
 #[test]
@@ -311,24 +314,26 @@ fn test_shrd_rax_32bits() {
 
 #[test]
 fn test_shrd_rax_full_replacement() {
+    // SHRD RAX, RBX, 64: count is masked to 64 & 63 = 0, so no shift occurs
     let code = [0x48, 0x0f, 0xac, 0xd8, 0x40, 0xf4]; // SHRD RAX, RBX, 64
     let mut regs = Registers::default();
     regs.rax = 0x123456789ABCDEF0;
     regs.rbx = 0xFEDCBA9876543210;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFEDCBA9876543210, "RAX: completely replaced");
+    assert_eq!(regs.rax, 0x123456789ABCDEF0, "RAX: count masked to 0, no shift");
 }
 
 #[test]
 fn test_shrd_rcx_rdx_imm8() {
+    // RCX >> 12 = 0x0001111111111111, RDX low 12 bits (0x222) fill high 12 bits
     let code = [0x48, 0x0f, 0xac, 0xd1, 0x0C, 0xf4]; // SHRD RCX, RDX, 12
     let mut regs = Registers::default();
     regs.rcx = 0x1111111111111111;
     regs.rdx = 0x2222222222222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0x2222111111111111, "RCX: SHRD 12");
+    assert_eq!(regs.rcx, 0x2221111111111111, "RCX: SHRD 12");
 }
 
 #[test]
@@ -506,9 +511,10 @@ fn test_shrd_sf_flag() {
 
 #[test]
 fn test_shrd_zf_flag() {
-    let code = [0x0f, 0xac, 0xd8, 0x20, 0xf4]; // SHRD EAX, EBX, 32
+    // Both operands are zero, so result is always zero regardless of shift count
+    let code = [0x0f, 0xac, 0xd8, 0x10, 0xf4]; // SHRD EAX, EBX, 16
     let mut regs = Registers::default();
-    regs.rax = 0x12345678;
+    regs.rax = 0x00000000;
     regs.rbx = 0x00000000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -533,6 +539,8 @@ fn test_shrd_pf_flag() {
 #[test]
 fn test_shrd_masked_count_32bit() {
     // Count should be masked to 5 bits for 32-bit operands
+    // 36 & 0x1F = 4, so same as SHRD by 4
+    // EAX >> 4 = 0x01234567, EBX low 4 bits (0x1) fill high 4 bits
     let code = [0x0f, 0xac, 0xd8, 0x24, 0xf4]; // SHRD EAX, EBX, 36
     let mut regs = Registers::default();
     regs.rax = 0x12345678;
@@ -540,7 +548,7 @@ fn test_shrd_masked_count_32bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // 36 & 0x1F = 4
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x81234567, "Count masked to 4");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x11234567, "Count masked to 4");
 }
 
 #[test]
@@ -556,11 +564,13 @@ fn test_shrd_all_ones() {
 
 #[test]
 fn test_shrd_alternating_bits() {
+    // SHRD by 1: EAX >> 1 = 0x55555555, EBX LSB (1) fills MSB
+    // Result = 0x80000000 | 0x55555555 = 0xD5555555
     let code = [0x0f, 0xac, 0xd8, 0x01, 0xf4]; // SHRD EAX, EBX, 1
     let mut regs = Registers::default();
     regs.rax = 0xAAAAAAAA;
     regs.rbx = 0x55555555;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xAA555555, "Alternating bits shift");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0xD5555555, "Alternating bits shift");
 }

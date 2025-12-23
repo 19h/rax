@@ -485,6 +485,38 @@ impl X86_64Vcpu {
                     insn::simd::vpmulld_evex(self, ctx)
                 }
             }
+            // VEXPANDPS/VEXPANDPD (0x88)
+            0x88 if evex.pp == 1 => {
+                if evex.w {
+                    insn::simd::vexpand_evex(self, ctx, 8, "VEXPANDPD")
+                } else {
+                    insn::simd::vexpand_evex(self, ctx, 4, "VEXPANDPS")
+                }
+            }
+            // VPEXPANDD/VPEXPANDQ (0x89)
+            0x89 if evex.pp == 1 => {
+                if evex.w {
+                    insn::simd::vexpand_evex(self, ctx, 8, "VPEXPANDQ")
+                } else {
+                    insn::simd::vexpand_evex(self, ctx, 4, "VPEXPANDD")
+                }
+            }
+            // VCOMPRESSPS/VCOMPRESSPD (0x8A)
+            0x8A if evex.pp == 1 => {
+                if evex.w {
+                    insn::simd::vcompress_evex(self, ctx, 8, "VCOMPRESSPD")
+                } else {
+                    insn::simd::vcompress_evex(self, ctx, 4, "VCOMPRESSPS")
+                }
+            }
+            // VPCOMPRESSD/VPCOMPRESSQ (0x8B)
+            0x8B if evex.pp == 1 => {
+                if evex.w {
+                    insn::simd::vcompress_evex(self, ctx, 8, "VPCOMPRESSQ")
+                } else {
+                    insn::simd::vcompress_evex(self, ctx, 4, "VPCOMPRESSD")
+                }
+            }
 
             _ => Err(Error::Emulator(format!(
                 "Unimplemented EVEX.0F38 opcode {:#04x} (W={}) at RIP={:#x}",
