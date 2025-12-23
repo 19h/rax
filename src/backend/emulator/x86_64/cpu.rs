@@ -124,6 +124,8 @@ pub struct X86_64Vcpu {
     pub(super) halted: bool,
     io_pending: Option<IoPending>,
     trace_enabled: bool,
+    /// IA32_KERNEL_GS_BASE MSR (0xC0000102) for SWAPGS
+    pub(super) kernel_gs_base: u64,
 }
 
 /// Pending I/O operation.
@@ -245,6 +247,7 @@ impl X86_64Vcpu {
             halted: false,
             io_pending: None,
             trace_enabled: std::env::var("RAX_TRACE").is_ok(),
+            kernel_gs_base: 0,
         }
     }
 

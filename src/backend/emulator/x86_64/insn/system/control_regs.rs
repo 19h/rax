@@ -6,6 +6,8 @@ use crate::error::{Error, Result};
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
 /// Group 7 - SGDT, SIDT, LGDT, LIDT, SMSW, LMSW, INVLPG, etc. (0x0F 0x01)
+/// Note: Register-form (mod=11) instructions like MONITOR, MWAIT, SWAPGS are
+/// handled in twobyte.rs dispatch before reaching this function.
 pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
@@ -15,9 +17,10 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         // SGDT m16&64 - Store Global Descriptor Table
         0 => {
             if modrm >> 6 == 3 {
-                return Err(Error::Emulator(
-                    "SGDT: requires memory operand".to_string(),
-                ));
+                return Err(Error::Emulator(format!(
+                    "unhandled 0F 01 modrm={:#04x} at RIP={:#x}",
+                    modrm, vcpu.regs.rip
+                )));
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
@@ -29,9 +32,10 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         // SIDT m16&64 - Store Interrupt Descriptor Table
         1 => {
             if modrm >> 6 == 3 {
-                return Err(Error::Emulator(
-                    "SIDT: requires memory operand".to_string(),
-                ));
+                return Err(Error::Emulator(format!(
+                    "unhandled 0F 01 modrm={:#04x} at RIP={:#x}",
+                    modrm, vcpu.regs.rip
+                )));
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
@@ -43,9 +47,10 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         // LGDT m16&64
         2 => {
             if modrm >> 6 == 3 {
-                return Err(Error::Emulator(
-                    "LGDT: requires memory operand".to_string(),
-                ));
+                return Err(Error::Emulator(format!(
+                    "unhandled 0F 01 modrm={:#04x} at RIP={:#x}",
+                    modrm, vcpu.regs.rip
+                )));
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
@@ -59,9 +64,10 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         // LIDT m16&64
         3 => {
             if modrm >> 6 == 3 {
-                return Err(Error::Emulator(
-                    "LIDT: requires memory operand".to_string(),
-                ));
+                return Err(Error::Emulator(format!(
+                    "unhandled 0F 01 modrm={:#04x} at RIP={:#x}",
+                    modrm, vcpu.regs.rip
+                )));
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
@@ -104,12 +110,14 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             vcpu.sregs.cr0 = (vcpu.sregs.cr0 & !mask) | ((msw as u64) & mask);
             vcpu.regs.rip += ctx.cursor as u64;
         }
-        // INVLPG m
+        // INVLPG m (reg_op=7 with memory operand)
+        // Note: SWAPGS (F8) and RDTSCP (F9) are handled in twobyte.rs
         7 => {
             if modrm >> 6 == 3 {
-                return Err(Error::Emulator(
-                    "INVLPG: requires memory operand".to_string(),
-                ));
+                return Err(Error::Emulator(format!(
+                    "unhandled 0F 01 modrm={:#04x} at RIP={:#x}",
+                    modrm, vcpu.regs.rip
+                )));
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
