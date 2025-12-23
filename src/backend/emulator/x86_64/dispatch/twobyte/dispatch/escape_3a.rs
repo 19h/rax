@@ -7,6 +7,7 @@ use super::super::super::super::aes;
 use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::super::flags;
 use super::super::super::super::insn;
+use super::super::super::super::sha;
 
 impl X86_64Vcpu {
     pub(in crate::backend::emulator::x86_64) fn execute_0f3a(
@@ -883,6 +884,25 @@ impl X86_64Vcpu {
                 let result =
                     self.pcmpxstrx(dst_lo, dst_hi, src_lo, src_hi, len1, len2, imm8, false)?;
                 self.regs.rcx = result as u64;
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+
+            // SHA1RNDS4 - Perform Four Rounds of SHA1 Operation (0xCC)
+            0xCC => {
+                let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                let imm8 = ctx.consume_u8()?;
+                let xmm_dst = reg as usize;
+                let (src2_lo, src2_hi) = if is_memory {
+                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+                } else {
+                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                };
+                let src1_lo = self.regs.xmm[xmm_dst][0];
+                let src1_hi = self.regs.xmm[xmm_dst][1];
+                let (result_lo, result_hi) = sha::sha1rnds4(src1_lo, src1_hi, src2_lo, src2_hi, imm8);
+                self.regs.xmm[xmm_dst][0] = result_lo;
+                self.regs.xmm[xmm_dst][1] = result_hi;
                 self.regs.rip += ctx.cursor as u64;
                 Ok(None)
             }
