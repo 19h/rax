@@ -258,9 +258,10 @@ fn test_cmovg_practical_signed_max() {
 
 #[test]
 fn test_cmovg_practical_signed_max_with_negative() {
+    // max = (a < b) ? b : a - use CMOVL to move b to a if a < b
     let code = [
         0x48, 0x39, 0xd8, // CMP RAX, RBX
-        0x48, 0x0f, 0x4f, 0xc3, // CMOVG RAX, RBX
+        0x48, 0x0f, 0x4c, 0xc3, // CMOVL RAX, RBX (move RBX to RAX if RAX < RBX)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -268,6 +269,7 @@ fn test_cmovg_practical_signed_max_with_negative() {
     regs.rbx = 0xFFFFFFFFFFFFFFF5; // -11
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
+    // -16 < -11, so RAX gets RBX (-11)
     assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFF5, "RAX should be -11 (max of -16 and -11)");
 }
 
