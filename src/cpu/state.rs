@@ -22,9 +22,19 @@ pub struct Registers {
     pub rip: u64,
     pub rflags: u64,
     /// XMM registers (128-bit each, stored as [low, high])
+    /// XMM0-XMM15: bits 127:0 of ZMM0-ZMM15
     pub xmm: [[u64; 2]; 16],
-    /// YMM upper 128-bits (bits 255:128 of YMM registers)
+    /// YMM upper 128-bits (bits 255:128 of YMM/ZMM registers 0-15)
     pub ymm_high: [[u64; 2]; 16],
+    /// ZMM upper 256-bits (bits 511:256 of ZMM registers 0-15)
+    /// Stored as [bits 319:256, bits 383:320, bits 447:384, bits 511:448]
+    pub zmm_high: [[u64; 4]; 16],
+    /// ZMM16-ZMM31 (full 512-bit registers, AVX-512 extended)
+    /// Stored as [bits 63:0, bits 127:64, bits 191:128, bits 255:192,
+    ///            bits 319:256, bits 383:320, bits 447:384, bits 511:448]
+    pub zmm_ext: [[u64; 8]; 16],
+    /// Opmask registers k0-k7 (64-bit each for AVX-512)
+    pub k: [u64; 8],
     /// MMX registers (64-bit each, aliased to low 64 bits of x87 FPU stack)
     pub mm: [u64; 8],
 }
