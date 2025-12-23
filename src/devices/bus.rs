@@ -5,6 +5,11 @@ pub trait IoDevice: Send {
     fn write(&mut self, port: u16, value: u8);
 }
 
+pub trait MmioDevice: Send {
+    fn read(&mut self, addr: u64, data: &mut [u8]);
+    fn write(&mut self, addr: u64, data: &[u8]);
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct IoRange {
     pub base: u16,
@@ -77,6 +82,140 @@ impl IoBus {
             // Silently ignore writes to unhandled ports
         }
         Ok(())
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct MmioRange {
+    pub base: u64,
+    pub len: u64,
+}
+
+impl MmioRange {
+    pub fn contains(&self, addr: u64) -> bool {
+        addr >= self.base && addr < self.base.saturating_add(self.len)
+    }
+
+    pub fn overlaps(&self, other: &MmioRange) -> bool {
+        let end = self.base.saturating_add(self.len);
+        let other_end = other.base.saturating_add(other.len);
+        self.base < other_end && other.base < end
+    }
+}
+
+pub struct MmioBus {
+    devices: Vec<(MmioRange, Box<dyn MmioDevice>)>,
+}
+
+impl MmioBus {
+    pub fn new() -> Self {
+        MmioBus {
+            devices: Vec::new(),
+        }
+    }
+
+    pub fn register(&mut self, range: MmioRange, dev: Box<dyn MmioDevice>) -> Result<()> {
+        for (existing_range, _) in &self.devices {
+            if existing_range.overlaps(&range) {
+                return Err(Error::MmioOverlap {
+                    base: range.base,
+                    len: range.len,
+                });
+            }
+        }
+        self.devices.push((range, dev));
+        Ok(())
+    }
+
+    pub fn read(&mut self, addr: u64, data: &mut [u8]) -> Result<()> {
+        for (index, byte) in data.iter_mut().enumerate() {
+            let current_addr = addr.saturating_add(index as u64);
+            if let Some(dev_index) = self
+                .devices
+                .iter()
+                .position(|(range, _)| range.contains(current_addr))
+            {
+                let device = &mut self.devices[dev_index].1;
+                let mut tmp = [0u8; 1];
+                device.read(current_addr, &mut tmp);
+                *byte = tmp[0];
+            } else {
+                *byte = 0xff;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn write(&mut self, addr: u64, data: &[u8]) -> Result<()> {
+        for (index, byte) in data.iter().enumerate() {
+            let current_addr = addr.saturating_add(index as u64);
+            if let Some(dev_index) = self
+                .devices
+                .iter()
+                .position(|(range, _)| range.contains(current_addr))
+            {
+                let device = &mut self.devices[dev_index].1;
+                device.write(current_addr, &[*byte]);
+            }
+        }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod mmio_tests {
+    use super::*;
+
+    struct DummyMmio {
+        last: u8,
+    }
+
+    impl MmioDevice for DummyMmio {
+        fn read(&mut self, _addr: u64, data: &mut [u8]) {
+            if let Some(first) = data.first_mut() {
+                *first = self.last;
+            }
+        }
+
+        fn write(&mut self, _addr: u64, data: &[u8]) {
+            if let Some(first) = data.first() {
+                self.last = *first;
+            }
+        }
+    }
+
+    #[test]
+    fn mmio_register_rejects_overlap() {
+        let mut bus = MmioBus::new();
+        bus.register(
+            MmioRange { base: 0x1000, len: 0x10 },
+            Box::new(DummyMmio { last: 0 }),
+        )
+        .unwrap();
+        let err = bus
+            .register(
+                MmioRange { base: 0x1008, len: 0x10 },
+                Box::new(DummyMmio { last: 0 }),
+            )
+            .unwrap_err();
+        match err {
+            Error::MmioOverlap { .. } => {}
+            _ => panic!("unexpected error"),
+        }
+    }
+
+    #[test]
+    fn mmio_read_write_dispatches() {
+        let mut bus = MmioBus::new();
+        bus.register(
+            MmioRange { base: 0x2000, len: 1 },
+            Box::new(DummyMmio { last: 0 }),
+        )
+        .unwrap();
+        bus.write(0x2000, &[0xaa]).unwrap();
+        let mut data = [0u8; 1];
+        bus.read(0x2000, &mut data).unwrap();
+        assert_eq!(data[0], 0xaa);
     }
 }
 

@@ -74,9 +74,110 @@ pub struct SystemRegisters {
     pub efer: u64,
 }
 
-/// Complete CPU state snapshot.
+/// Complete x86_64 CPU state snapshot.
 #[derive(Clone, Debug, Default)]
-pub struct CpuState {
+pub struct X86_64CpuState {
     pub regs: Registers,
     pub sregs: SystemRegisters,
+}
+
+/// Hexagon general and control registers.
+#[derive(Clone, Debug)]
+pub struct HexagonRegisters {
+    pub r: [u32; 32],
+    pub p: [bool; 4],
+    pub c: [u32; 32],
+}
+
+impl Default for HexagonRegisters {
+    fn default() -> Self {
+        HexagonRegisters {
+            r: [0u32; 32],
+            p: [false; 4],
+            c: [0u32; 32],
+        }
+    }
+}
+
+impl HexagonRegisters {
+    pub fn pc(&self) -> u32 {
+        self.c[9]
+    }
+
+    pub fn set_pc(&mut self, pc: u32) {
+        self.c[9] = pc;
+    }
+
+    pub fn usr(&self) -> u32 {
+        self.c[8]
+    }
+
+    pub fn set_usr(&mut self, value: u32) {
+        self.c[8] = value;
+    }
+
+    pub fn predicate(&self, index: usize) -> bool {
+        self.p[index]
+    }
+
+    pub fn set_predicate(&mut self, index: usize, value: bool) {
+        self.p[index] = value;
+        self.c[4] = self.pack_predicates();
+    }
+
+    pub fn control(&self, index: usize) -> u32 {
+        if index == 4 {
+            self.pack_predicates()
+        } else {
+            self.c[index]
+        }
+    }
+
+    pub fn set_control(&mut self, index: usize, value: u32) {
+        if index == 4 {
+            self.unpack_predicates(value);
+        } else {
+            self.c[index] = value;
+        }
+    }
+
+    fn pack_predicates(&self) -> u32 {
+        let mut value = 0u32;
+        for (idx, bit) in self.p.iter().enumerate() {
+            if *bit {
+                value |= 1u32 << idx;
+            }
+        }
+        value
+    }
+
+    fn unpack_predicates(&mut self, value: u32) {
+        for idx in 0..self.p.len() {
+            self.p[idx] = (value >> idx) & 1 != 0;
+        }
+        self.c[4] = value & 0xF;
+    }
+}
+
+/// Complete Hexagon CPU state snapshot.
+#[derive(Clone, Debug, Default)]
+pub struct HexagonCpuState {
+    pub regs: HexagonRegisters,
+}
+
+/// Architecture-specific CPU state snapshot.
+#[derive(Clone, Debug)]
+pub enum CpuState {
+    X86_64(X86_64CpuState),
+    Hexagon(HexagonCpuState),
+}
+
+impl CpuState {
+    pub fn x86_64(regs: Registers, sregs: SystemRegisters) -> Self {
+        CpuState::X86_64(X86_64CpuState { regs, sregs })
+    }
+
+    pub fn hexagon(regs: HexagonRegisters) -> Self {
+        CpuState::Hexagon(HexagonCpuState { regs })
+    }
 }

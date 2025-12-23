@@ -17,6 +17,7 @@ toml = "0.9.10"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 vm-memory = { version = "0.17.1", features = ["backend-mmap"] }
+goblin = "0.8.2"
 
 # KVM support (Linux only)
 [target.'cfg(target_os = "linux")'.dependencies]
