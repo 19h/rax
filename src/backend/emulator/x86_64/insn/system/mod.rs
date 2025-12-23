@@ -8,6 +8,7 @@ mod flags;
 mod msr;
 mod nop;
 mod stack_flags;
+mod syscall;
 mod timing;
 
 // Re-export all instruction functions
@@ -19,4 +20,5 @@ pub use flags::*;
 pub use msr::*;
 pub use nop::*;
 pub use stack_flags::*;
+pub use syscall::*;
 pub use timing::*;

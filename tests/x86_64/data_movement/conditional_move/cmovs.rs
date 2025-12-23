@@ -75,12 +75,12 @@ fn test_cmovs_after_sub_positive() {
     assert_eq!(regs.rdx & 0xFFFFFFFF, 0x33333333, "EDX should not be moved (positive result)");
 }
 
-// Test 16-bit operand
+// Test 16-bit operand - use 64-bit negative value to set SF
 #[test]
 fn test_cmovs_ax_bx() {
     let code = [
-        0x48, 0xc7, 0xc0, 0x00, 0x80, 0x00, 0x00, // MOV RAX, 0x8000
-        0x48, 0x85, 0xc0, // TEST RAX, RAX
+        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, // MOV RAX, -1 (0xFFFFFFFFFFFFFFFF)
+        0x48, 0x85, 0xc0, // TEST RAX, RAX (sets SF=1 for negative 64-bit)
         0x66, 0x0f, 0x48, 0xc3, // CMOVS AX, BX
         0xf4, // HLT
     ];
@@ -89,7 +89,7 @@ fn test_cmovs_ax_bx() {
     regs.rbx = 0x2222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    // Note: 0x8000 is positive in 64-bit but would be negative in 16-bit signed
+    // SF=1 from TEST, so CMOVS moves BX to AX
     assert_eq!(regs.rax & 0xFFFF, 0x2222, "AX should be moved");
 }
 
@@ -110,12 +110,12 @@ fn test_cmovs_rax_rbx() {
     assert_eq!(regs.rax, 0x2222222222222222, "RAX should be moved");
 }
 
-// Test with extended registers
+// Test with extended registers - use 64-bit negative value to set SF
 #[test]
 fn test_cmovs_r8d_r9d() {
     let code = [
-        0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x80, // MOV RAX, 0x80000000
-        0x48, 0x85, 0xc0, // TEST RAX, RAX
+        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, // MOV RAX, -1 (negative in 64-bit)
+        0x48, 0x85, 0xc0, // TEST RAX, RAX (sets SF=1)
         0x45, 0x0f, 0x48, 0xc1, // CMOVS R8D, R9D
         0xf4, // HLT
     ];
@@ -124,8 +124,8 @@ fn test_cmovs_r8d_r9d() {
     regs.r9 = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    // 0x80000000 is positive in 64-bit
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0x11111111, "R8D should not be moved");
+    // SF=1 from TEST, so CMOVS moves R9D to R8D
+    assert_eq!(regs.r8 & 0xFFFFFFFF, 0x22222222, "R8D should be moved when SF=1");
 }
 
 // Test with zero (SF=0)
@@ -197,12 +197,13 @@ fn test_cmovs_practical_error_check() {
 }
 
 // Test different register combinations
+// Test CMOVS with positive 64-bit value (SF=0, no move)
 #[test]
 fn test_cmovs_esi_edi() {
+    // Note: MOV RAX, imm32 sign-extends, so use a small positive value
     let code = [
-        0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x80, // MOV RAX, 0x80000000
-        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0
-        0x48, 0x29, 0xc8, // SUB RAX, RCX (0x80000000 - 0, high bit set in 64-bit perspective positive)
+        0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1 (positive, SF will be 0)
+        0x48, 0x85, 0xc0, // TEST RAX, RAX (SF=0 because bit 63 is 0)
         0x0f, 0x48, 0xf7, // CMOVS ESI, EDI
         0xf4, // HLT
     ];
@@ -211,8 +212,8 @@ fn test_cmovs_esi_edi() {
     regs.rdi = 0x66666666;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    // 0x80000000 in 64-bit context is positive
-    assert_eq!(regs.rsi & 0xFFFFFFFF, 0x55555555, "ESI should not be moved");
+    // 1 is positive (bit 63 = 0), so SF=0
+    assert_eq!(regs.rsi & 0xFFFFFFFF, 0x55555555, "ESI should not be moved when SF=0");
 }
 
 // CMOVNS - Conditional Move if Not Sign (SF=0)

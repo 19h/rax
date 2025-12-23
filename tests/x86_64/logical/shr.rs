@@ -432,7 +432,7 @@ fn test_shr_r15_imm8() {
 #[test]
 fn test_shr_byte_ptr_1() {
     let code = [
-        0xd0, 0x2d, 0xf9, 0x0f, 0x00, 0x00, // SHR BYTE PTR [rip+0x0FF9], 1
+        0xd0, 0x2d, 0xfa, 0x0f, 0x00, 0x00, // SHR BYTE PTR [rip+0x0FFA], 1
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -447,7 +447,7 @@ fn test_shr_byte_ptr_1() {
 #[test]
 fn test_shr_dword_ptr_imm8() {
     let code = [
-        0xc1, 0x2d, 0xf7, 0x0f, 0x00, 0x00, 0x08, // SHR DWORD PTR [rip+0x0FF7], 8
+        0xc1, 0x2d, 0xf9, 0x0f, 0x00, 0x00, 0x08, // SHR DWORD PTR [rip+0x0FF9], 8
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -462,7 +462,7 @@ fn test_shr_dword_ptr_imm8() {
 #[test]
 fn test_shr_qword_ptr_imm8() {
     let code = [
-        0x48, 0xc1, 0x2d, 0xf6, 0x0f, 0x00, 0x00, 0x10, // SHR QWORD PTR [rip+0x0FF6], 16
+        0x48, 0xc1, 0x2d, 0xf8, 0x0f, 0x00, 0x00, 0x10, // SHR QWORD PTR [rip+0x0FF8], 16
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

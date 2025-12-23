@@ -63,7 +63,8 @@ fn test_ror_al_1_with_lsb() {
 
     assert_eq!(regs.rax & 0xFF, 0xC0, "AL: 0x81 ROR 1 = 0xC0 (LSB rotates to MSB)");
     assert!(cf_set(regs.rflags), "CF: receives LSB (was 1)");
-    assert!(of_set(regs.rflags), "OF: MSB XOR (MSB-1) = 1 XOR 1 = 0, wait no... 1 XOR 0 = 1");
+    // OF = XOR of two most-significant bits of result: 0xC0 = 1100_0000, MSB=1, MSB-1=1, so 1 XOR 1 = 0
+    assert!(!of_set(regs.rflags), "OF: MSB XOR (MSB-1) = 1 XOR 1 = 0");
 }
 
 #[test]

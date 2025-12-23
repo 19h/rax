@@ -251,7 +251,7 @@ fn test_rcr_ax_cl() {
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x4123, "AX: 0x1234 RCR 4 (CF=0)");
+    assert_eq!(regs.rax & 0xFFFF, 0x8123, "AX: 0x1234 RCR 4 (CF=0)");
 }
 
 #[test]
@@ -262,7 +262,7 @@ fn test_rcr_ax_imm8() {
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFF, 0x3412, "AX: 0x1234 RCR 8 (CF=0)");
+    assert_eq!(regs.rax & 0xFFFF, 0x6812, "AX: 0x1234 RCR 8 (CF=0)");
 }
 
 #[test]
@@ -295,7 +295,7 @@ fn test_rcr_cx() {
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx & 0xFFFF, 0xDABC, "CX: 0xABCD RCR 4 (CF=0)");
+    assert_eq!(regs.rcx & 0xFFFF, 0xAABC, "CX: 0xABCD RCR 4 (CF=0)");
 }
 
 #[test]
@@ -345,7 +345,7 @@ fn test_rcr_eax_cl() {
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x78123456, "EAX: RCR 8 (CF=0)");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0xF0123456, "EAX: RCR 8 (CF=0)");
 }
 
 #[test]
@@ -356,18 +356,20 @@ fn test_rcr_eax_imm8() {
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x56781234, "EAX: RCR 16 (CF=0)");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0xACF01234, "EAX: RCR 16 (CF=0)");
 }
 
 #[test]
 fn test_rcr_eax_full_rotation() {
+    // RCR by 33: count is masked to 5 bits (33 & 31 = 1), so this is RCR by 1
     let code = [0xc1, 0xd8, 0x21, 0xf4]; // RCR EAX, 33
     let mut regs = Registers::default();
     regs.rax = 0x12345678;
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x12345678, "EAX: full 33-bit rotation");
+    // 33 & 31 = 1, so effective count is 1
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x091A2B3C, "EAX: RCR 33 (masked to 1)");
 }
 
 #[test]
@@ -390,7 +392,7 @@ fn test_rcr_ecx() {
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx & 0xFFFFFFFF, 0x1ABCDEF0, "ECX: RCR 4 (CF=0)");
+    assert_eq!(regs.rcx & 0xFFFFFFFF, 0x2ABCDEF0, "ECX: RCR 4 (CF=0)");
 }
 
 #[test]
@@ -424,7 +426,7 @@ fn test_rcr_edi() {
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdi & 0xFFFFFFFF, 0x67812345, "EDI: RCR 12 (CF=0)");
+    assert_eq!(regs.rdi & 0xFFFFFFFF, 0xCF012345, "EDI: RCR 12 (CF=0)");
 }
 
 // ============================================================================
@@ -462,7 +464,7 @@ fn test_rcr_rax_cl() {
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xF0123456789ABCDE, "RAX: RCR 8 (CF=0)");
+    assert_eq!(regs.rax, 0xE0123456789ABCDE, "RAX: RCR 8 (CF=0)");
 }
 
 #[test]
@@ -473,7 +475,7 @@ fn test_rcr_rax_imm8() {
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xDEF0123456789ABC, "RAX: RCR 16 (CF=0)");
+    assert_eq!(regs.rax, 0xBDE0123456789ABC, "RAX: RCR 16 (CF=0)");
 }
 
 #[test]
@@ -484,7 +486,7 @@ fn test_rcr_rax_32bits() {
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x9ABCDEF012345678, "RAX: RCR 32 (CF=0)");
+    assert_eq!(regs.rax, 0x3579BDE012345678, "RAX: RCR 32 (CF=0)");
 }
 
 #[test]
@@ -507,7 +509,7 @@ fn test_rcr_rcx() {
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, 0x9ABCDEF012345678, "RCX: RCR 4 (CF=0)");
+    assert_eq!(regs.rcx, 0x2ABCDEF012345678, "RCX: RCR 4 (CF=0)");
 }
 
 #[test]
@@ -541,7 +543,7 @@ fn test_rcr_rdi() {
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdi, 0xEF0123456789ABCD, "RDI: RCR 12 (CF=0)");
+    assert_eq!(regs.rdi, 0xDE0123456789ABCD, "RDI: RCR 12 (CF=0)");
 }
 
 #[test]
@@ -564,7 +566,7 @@ fn test_rcr_r9_cl() {
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r9, 0xCDEF0123456789AB, "R9: RCR 16 (CF=0)");
+    assert_eq!(regs.r9, 0x9BDE0123456789AB, "R9: RCR 16 (CF=0)");
 }
 
 #[test]
@@ -575,7 +577,7 @@ fn test_rcr_r10_imm8() {
     regs.rflags = 0x2; // CF clear
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.r10, 0xF0123456789ABCDE, "R10: RCR 8 (CF=0)");
+    assert_eq!(regs.r10, 0xE0123456789ABCDE, "R10: RCR 8 (CF=0)");
 }
 
 #[test]
@@ -630,7 +632,7 @@ fn test_rcr_mem16() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     write_mem_u16(&mem, 0x1234);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_u16(&mem), 0x4123, "Memory: 0x1234 RCR 4 (CF=0)");
+    assert_eq!(read_mem_u16(&mem), 0x8123, "Memory: 0x1234 RCR 4 (CF=0)");
 }
 
 #[test]
@@ -650,7 +652,7 @@ fn test_rcr_mem32() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     write_mem_u32(&mem, 0x12345678);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_u32(&mem), 0x78123456, "Memory: 0x12345678 RCR 8 (CF=0)");
+    assert_eq!(read_mem_u32(&mem), 0xF0123456, "Memory: 0x12345678 RCR 8 (CF=0)");
 }
 
 #[test]
@@ -670,5 +672,5 @@ fn test_rcr_mem64() {
     let (mut vcpu, mem) = setup_vm(&code, Some(regs));
     write_mem_u64(&mem, 0x123456789ABCDEF0);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_mem_u64(&mem), 0xDEF0123456789ABC, "Memory: RCR 16 (CF=0)");
+    assert_eq!(read_mem_u64(&mem), 0xBDE0123456789ABC, "Memory: RCR 16 (CF=0)");
 }
