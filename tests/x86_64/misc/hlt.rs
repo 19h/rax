@@ -187,6 +187,7 @@ fn test_hlt_after_stack_operations() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x42;
+    regs.rsp = STACK_ADDR; // Must set RSP when passing custom regs
     let initial_rsp = STACK_ADDR;
 
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
