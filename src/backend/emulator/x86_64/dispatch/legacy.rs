@@ -44,6 +44,7 @@ impl X86_64Vcpu {
             0xC2 => insn::control::ret_imm16(self, ctx),
             0xCA => insn::control::retf_imm16(self, ctx),
             0xCB => insn::control::retf(self, ctx),
+            0xCF => insn::control::iret(self, ctx),
             0x70..=0x7F => insn::control::jcc_rel8(self, ctx, opcode & 0x0F),
 
             // VEX-encoded instructions (partial support)

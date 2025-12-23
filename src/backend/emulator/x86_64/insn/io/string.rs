@@ -132,71 +132,96 @@ fn dec_rep_count(vcpu: &mut X86_64Vcpu, addr_size: u8) -> u64 {
 
 /// OUTSB (0x6E) - Output byte from DS:[RSI] to port DX
 pub fn outsb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let port = vcpu.regs.rdx as u16;
-    let df = (vcpu.regs.rflags & 0x400) != 0;
-    let mut data = Vec::new();
+    outs_common(vcpu, ctx, 1)
+}
 
-    // Handle REP prefix
-    if ctx.rep_prefix == Some(0xF3) || ctx.rep_prefix == Some(0xF2) {
-        let count = vcpu.regs.rcx;
-        for _ in 0..count {
-            let byte = vcpu.read_mem(vcpu.regs.rsi, 1)? as u8;
-            data.push(byte);
-            if df {
-                vcpu.regs.rsi = vcpu.regs.rsi.wrapping_sub(1);
-            } else {
-                vcpu.regs.rsi = vcpu.regs.rsi.wrapping_add(1);
-            }
-        }
-        vcpu.regs.rcx = 0;
-    } else {
-        let byte = vcpu.read_mem(vcpu.regs.rsi, 1)? as u8;
-        data.push(byte);
-        if df {
-            vcpu.regs.rsi = vcpu.regs.rsi.wrapping_sub(1);
-        } else {
-            vcpu.regs.rsi = vcpu.regs.rsi.wrapping_add(1);
-        }
+fn outs_common(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    size: u8,
+) -> Result<Option<VcpuExit>> {
+    let port = vcpu.regs.rdx as u16;
+    let df = (vcpu.regs.rflags & flags::bits::DF) != 0;
+    let rep = matches!(ctx.rep_prefix, Some(0xF3) | Some(0xF2));
+    let addr_size = addr_size_bytes(vcpu, ctx);
+
+    // Check REP count - if zero, skip the operation
+    if rep && rep_count(vcpu, addr_size) == 0 {
+        vcpu.regs.rip += ctx.cursor as u64;
+        return Ok(None);
     }
 
-    vcpu.regs.rip += ctx.cursor as u64;
+    // Read data from memory at DS:RSI
+    let addr = si_addr(vcpu, addr_size);
+    let val = vcpu.read_mem(addr, size)?;
+    let mut data = Vec::with_capacity(size as usize);
+    for i in 0..size {
+        data.push((val >> (i * 8)) as u8);
+    }
+
+    // Update RSI
+    update_si(vcpu, addr_size, size, df);
+
+    // Handle REP prefix
+    if rep {
+        let remaining = dec_rep_count(vcpu, addr_size);
+        if remaining == 0 {
+            vcpu.regs.rip += ctx.cursor as u64;
+        }
+        // RIP stays the same if remaining > 0 (will re-execute)
+    } else {
+        vcpu.regs.rip += ctx.cursor as u64;
+    }
+
     Ok(Some(VcpuExit::IoOut { port, data }))
+}
+
+fn si_addr(vcpu: &X86_64Vcpu, addr_size: u8) -> u64 {
+    match addr_size {
+        2 => vcpu.regs.rsi & 0xFFFF,
+        4 => vcpu.regs.rsi & 0xFFFF_FFFF,
+        _ => vcpu.regs.rsi,
+    }
+}
+
+fn update_si(vcpu: &mut X86_64Vcpu, addr_size: u8, size: u8, df: bool) {
+    match addr_size {
+        2 => {
+            let si = vcpu.regs.rsi as u16;
+            let delta = size as u16;
+            let si = if df {
+                si.wrapping_sub(delta)
+            } else {
+                si.wrapping_add(delta)
+            };
+            vcpu.regs.rsi = (vcpu.regs.rsi & !0xFFFF) | si as u64;
+        }
+        4 => {
+            let esi = vcpu.regs.rsi as u32;
+            let delta = size as u32;
+            let esi = if df {
+                esi.wrapping_sub(delta)
+            } else {
+                esi.wrapping_add(delta)
+            };
+            vcpu.regs.rsi = esi as u64;
+        }
+        _ => {
+            let delta = size as u64;
+            if df {
+                vcpu.regs.rsi = vcpu.regs.rsi.wrapping_sub(delta);
+            } else {
+                vcpu.regs.rsi = vcpu.regs.rsi.wrapping_add(delta);
+            }
+        }
+    }
 }
 
 /// OUTSW/OUTSD (0x6F) - Output word/dword from DS:[RSI] to port DX
 pub fn outsw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let port = vcpu.regs.rdx as u16;
+    // Determine operand size: 0x66 prefix toggles between word (2) and dword (4)
+    // In 64-bit mode default is 32-bit, in 32-bit mode default is also 32-bit
+    // 0x66 prefix makes it 16-bit
     let size: u8 = if ctx.operand_size_override { 2 } else { 4 };
-    let df = (vcpu.regs.rflags & 0x400) != 0;
-    let mut data = Vec::new();
-
-    // Handle REP prefix
-    if ctx.rep_prefix == Some(0xF3) || ctx.rep_prefix == Some(0xF2) {
-        let count = vcpu.regs.rcx;
-        for _ in 0..count {
-            let val = vcpu.read_mem(vcpu.regs.rsi, size)?;
-            for i in 0..size {
-                data.push((val >> (i * 8)) as u8);
-            }
-            if df {
-                vcpu.regs.rsi = vcpu.regs.rsi.wrapping_sub(size as u64);
-            } else {
-                vcpu.regs.rsi = vcpu.regs.rsi.wrapping_add(size as u64);
-            }
-        }
-        vcpu.regs.rcx = 0;
-    } else {
-        let val = vcpu.read_mem(vcpu.regs.rsi, size)?;
-        for i in 0..size {
-            data.push((val >> (i * 8)) as u8);
-        }
-        if df {
-            vcpu.regs.rsi = vcpu.regs.rsi.wrapping_sub(size as u64);
-        } else {
-            vcpu.regs.rsi = vcpu.regs.rsi.wrapping_add(size as u64);
-        }
-    }
-
-    vcpu.regs.rip += ctx.cursor as u64;
-    Ok(Some(VcpuExit::IoOut { port, data }))
+    outs_common(vcpu, ctx, size)
 }
