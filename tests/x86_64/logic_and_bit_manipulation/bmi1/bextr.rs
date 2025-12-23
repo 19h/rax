@@ -221,8 +221,8 @@ fn test_bextr_mem32() {
     write_mem_u32(&mem, 0xAABBCCDD);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // Extract bits 8-15: 0xBB
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xBB, "EAX should contain extracted bits from memory");
+    // Extract bits 8-15: 0xCC
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0xCC, "EAX should contain extracted bits from memory");
 }
 
 #[test]
