@@ -146,13 +146,16 @@ fn test_xadd_rax_r10() {
     let code = [
         0x48, 0xc7, 0xc0, 0x2c, 0x01, 0x00, 0x00, // MOV RAX, 300
         0x49, 0xc7, 0xc2, 0x58, 0x02, 0x00, 0x00, // MOV R10, 600
-        0x49, 0x0f, 0xc1, 0xc2, // XADD RAX, R10
+        0x49, 0x0f, 0xc1, 0xc2, // XADD R10, RAX (ModRM: rm=R10, reg=RAX)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 900, "RAX should be 300 + 600 = 900");
-    assert_eq!(regs.r10, 300, "R10 should have old RAX value");
+    // XADD r/m, r: DEST = DEST + SRC, SRC = old DEST
+    // R10 = R10 + RAX = 600 + 300 = 900
+    // RAX = old R10 = 600
+    assert_eq!(regs.r10, 900, "R10 should be 300 + 600 = 900");
+    assert_eq!(regs.rax, 600, "RAX should have old R10 value");
 }
 
 // Test with zero

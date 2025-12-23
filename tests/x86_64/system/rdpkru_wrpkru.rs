@@ -131,8 +131,8 @@ fn test_wrpkru_preserves_flags() {
 
         // Write PKRU
         0x48, 0xC7, 0xC0, 0xAA, 0xAA, 0xAA, 0xAA, // MOV RAX, 0xAAAAAAAA
-        0x48, 0x31, 0xC9,                         // XOR RCX, RCX
-        0x48, 0x31, 0xD2,                         // XOR RDX, RDX
+        0xB9, 0x00, 0x00, 0x00, 0x00,             // MOV ECX, 0
+        0xBA, 0x00, 0x00, 0x00, 0x00,             // MOV EDX, 0
         0x0F, 0x01, 0xEF,                         // WRPKRU
 
         // Check flags
@@ -206,7 +206,7 @@ fn test_rdpkru_clears_upper_bits() {
         0x48, 0xC7, 0xC2, 0xFF, 0xFF, 0xFF, 0xFF, // MOV RDX, -1
 
         // Read PKRU
-        0x48, 0x31, 0xC9,       // XOR RCX, RCX
+        0xB9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
         0x0F, 0x01, 0xEE,       // RDPKRU
 
         0xF4,                   // HLT
@@ -233,7 +233,7 @@ fn test_rdpkru_preserves_flags() {
         0x5B,                   // POP RBX
 
         // Read PKRU
-        0x48, 0x31, 0xC9,       // XOR RCX, RCX
+        0xB9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
         0x0F, 0x01, 0xEE,       // RDPKRU
 
         // Check flags
@@ -457,7 +457,7 @@ fn test_wrpkru_rdpkru_stress() {
 
     // Perform 10 write/read cycles with different values
     for i in 0..10 {
-        let value = (i * 0x11111111) as u32;
+        let value = (i as u32) * 0x1111_1111;
 
         // Write
         code.extend_from_slice(&[0x48, 0xC7, 0xC0]);

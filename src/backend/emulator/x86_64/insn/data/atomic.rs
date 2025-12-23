@@ -45,8 +45,15 @@ pub fn xadd_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     } else {
         let dst = vcpu.get_reg(rm, op_size);
         let sum = dst.wrapping_add(src);
-        vcpu.set_reg(rm, sum, op_size);
-        vcpu.set_reg(reg, dst, op_size);
+        // XADD: TEMP = SRC + DEST; SRC = DEST; DEST = TEMP
+        // When reg == rm (same register), both SRC and DEST refer to the same register
+        // so the result is just DEST = DEST + SRC = 2 * reg (SRC = DEST is a no-op)
+        if reg == rm {
+            vcpu.set_reg(rm, sum, op_size);
+        } else {
+            vcpu.set_reg(rm, sum, op_size);
+            vcpu.set_reg(reg, dst, op_size);
+        }
         flags::update_flags_add(&mut vcpu.regs.rflags, dst, src, sum, op_size);
     }
     vcpu.regs.rip += ctx.cursor as u64;

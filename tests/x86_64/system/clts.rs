@@ -82,7 +82,7 @@ fn test_clts_in_loop() {
         0x0f, 0x06, // CLTS
         0x48, 0x83, 0xc1, 0x01, // ADD RCX, 1
         0x48, 0x83, 0xf9, 0x05, // CMP RCX, 5
-        0x75, 0xf5, // JNZ loop
+        0x75, 0xf4, // JNZ loop
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -146,16 +146,16 @@ fn test_clts_with_cr0_read() {
 #[test]
 fn test_clts_preserves_extended_registers() {
     let code = [
-        0x49, 0xc7, 0xc0, 0xaa, 0xaa, 0xaa, 0xaa, // MOV R8, 0xaaaaaaaa
-        0x49, 0xc7, 0xc7, 0xbb, 0xbb, 0xbb, 0xbb, // MOV R15, 0xbbbbbbbb
+        0x49, 0xc7, 0xc0, 0xaa, 0xaa, 0xaa, 0xaa, // MOV R8, 0xaaaaaaaa (sign-extended)
+        0x49, 0xc7, 0xc7, 0xbb, 0xbb, 0xbb, 0xbb, // MOV R15, 0xbbbbbbbb (sign-extended)
         0x0f, 0x06, // CLTS
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r8, 0xaaaaaaaa, "R8 should be preserved");
-    assert_eq!(regs.r15, 0xbbbbbbbb, "R15 should be preserved");
+    assert_eq!(regs.r8, 0xffff_ffff_aaaa_aaaa, "R8 should be preserved");
+    assert_eq!(regs.r15, 0xffff_ffff_bbbb_bbbb, "R15 should be preserved");
 }
 
 // Test CLTS with arithmetic operations

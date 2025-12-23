@@ -70,6 +70,55 @@ impl X86_64Vcpu {
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
+                0xCA => {
+                    // CLAC (0x0F 0x01 0xCA) - Clear AC flag
+                    ctx.consume_u8()?; // consume modrm
+                    self.regs.rflags &= !flags::bits::AC;
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                0xCB => {
+                    // STAC (0x0F 0x01 0xCB) - Set AC flag
+                    ctx.consume_u8()?; // consume modrm
+                    self.regs.rflags |= flags::bits::AC;
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                0xE8 => {
+                    // SERIALIZE (0x0F 0x01 0xE8) - Serialize instruction execution
+                    ctx.consume_u8()?; // consume modrm
+                    // Serializing instruction - no architectural state changes in emulation.
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                0xEA if ctx.rep_prefix == Some(0xF3) => {
+                    // SAVEPREVSSP (F3 0F 01 EA) - Save previous shadow stack pointer
+                    ctx.consume_u8()?; // consume modrm
+                    // CET shadow stack instruction - treat as NOP in emulation
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                0xEE => {
+                    // RDPKRU (0x0F 0x01 0xEE) - Read PKRU into EAX, clear EDX
+                    ctx.consume_u8()?; // consume modrm
+                    if (self.regs.rcx as u32) != 0 {
+                        return Err(Error::Emulator("RDPKRU requires ECX=0".to_string()));
+                    }
+                    self.regs.rax = self.pkru as u64;
+                    self.regs.rdx = 0;
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                0xEF => {
+                    // WRPKRU (0x0F 0x01 0xEF) - Write EAX into PKRU
+                    ctx.consume_u8()?; // consume modrm
+                    if (self.regs.rcx as u32) != 0 || (self.regs.rdx as u32) != 0 {
+                        return Err(Error::Emulator("WRPKRU requires ECX=0 and EDX=0".to_string()));
+                    }
+                    self.pkru = self.regs.rax as u32;
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
                 0xF8 => {
                     // SWAPGS (0x0F 0x01 0xF8) - Swap GS base with IA32_KERNEL_GS_BASE
                     ctx.consume_u8()?; // consume modrm
@@ -101,9 +150,55 @@ impl X86_64Vcpu {
         let modrm = ctx.consume_u8()?;
         let reg_op = (modrm >> 3) & 0x07;
 
-        // Memory fences (mod=3, specific reg values)
+        // Memory fences and FSGSBASE (mod=3, specific reg values)
         if modrm >> 6 == 3 {
+            let rm = (modrm & 0x07) | ctx.rex_b(); // Apply REX.B for extended registers
             match reg_op {
+                // FSGSBASE instructions (require F3 prefix)
+                0 if ctx.rep_prefix == Some(0xF3) => {
+                    // RDFSBASE - Read FS base to register
+                    let value = if ctx.rex_w() {
+                        self.sregs.fs.base
+                    } else {
+                        self.sregs.fs.base & 0xFFFF_FFFF
+                    };
+                    self.set_reg(rm, value, if ctx.rex_w() { 8 } else { 4 });
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                1 if ctx.rep_prefix == Some(0xF3) => {
+                    // RDGSBASE - Read GS base to register
+                    let value = if ctx.rex_w() {
+                        self.sregs.gs.base
+                    } else {
+                        self.sregs.gs.base & 0xFFFF_FFFF
+                    };
+                    self.set_reg(rm, value, if ctx.rex_w() { 8 } else { 4 });
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                2 if ctx.rep_prefix == Some(0xF3) => {
+                    // WRFSBASE - Write register to FS base
+                    let value = if ctx.rex_w() {
+                        self.get_reg(rm, 8)
+                    } else {
+                        self.get_reg(rm, 4)
+                    };
+                    self.sregs.fs.base = value;
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                3 if ctx.rep_prefix == Some(0xF3) => {
+                    // WRGSBASE - Write register to GS base
+                    let value = if ctx.rex_w() {
+                        self.get_reg(rm, 8)
+                    } else {
+                        self.get_reg(rm, 4)
+                    };
+                    self.sregs.gs.base = value;
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
                 5 => insn::system::lfence(self, ctx), // LFENCE (E8-EF)
                 6 => insn::system::mfence(self, ctx), // MFENCE (F0-F7)
                 7 => insn::system::sfence(self, ctx), // SFENCE (F8-FF)

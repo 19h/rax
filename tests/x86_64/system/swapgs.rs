@@ -256,7 +256,7 @@ fn test_swapgs_with_interrupt_handler() {
         0x0F, 0x01, 0xF8,       // SWAPGS
 
         // Verify user GS restored
-        0xF3, 0x48, 0x0F, 0xAE, 0xC3, // RDGSBASE RBX
+        0xF3, 0x48, 0x0F, 0xAE, 0xCB, // RDGSBASE RBX (reg=1 for RDGSBASE, rm=3 for RBX)
 
         0xF4,                   // HLT
     ];
@@ -286,13 +286,13 @@ fn test_swapgs_with_wrmsr_kernel_gs_base() {
         0xF3, 0x48, 0x0F, 0xAE, 0xD8,             // WRGSBASE RAX
 
         // Read GS base before swap
-        0xF3, 0x48, 0x0F, 0xAE, 0xC3,             // RDGSBASE RBX
+        0xF3, 0x48, 0x0F, 0xAE, 0xCB,             // RDGSBASE RBX (reg=1 for RDGSBASE, rm=3 for RBX)
 
         // SWAPGS
         0x0F, 0x01, 0xF8,       // SWAPGS
 
         // Read GS base after swap (should be 0x2000)
-        0xF3, 0x48, 0x0F, 0xAE, 0xC8,             // RDGSBASE RAX
+        0xF3, 0x48, 0x0F, 0xAE, 0xC8,             // RDGSBASE RAX (reg=1 for RDGSBASE, rm=0 for RAX)
 
         0xF4,                   // HLT
     ];
@@ -323,7 +323,7 @@ fn test_swapgs_rapid_toggle() {
     }
 
     // Read final GS base
-    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xC3]); // RDGSBASE RBX
+    code.extend_from_slice(&[0xF3, 0x48, 0x0F, 0xAE, 0xCB]); // RDGSBASE RBX (reg=1, rm=3)
 
     code.push(0xF4); // HLT
 
@@ -427,7 +427,7 @@ fn test_swapgs_high_addresses() {
         0xF3, 0x48, 0x0F, 0xAE, 0xD8, // WRGSBASE RAX
 
         // Read before swap
-        0xF3, 0x48, 0x0F, 0xAE, 0xC3, // RDGSBASE RBX
+        0xF3, 0x48, 0x0F, 0xAE, 0xCB, // RDGSBASE RBX (reg=1, rm=3)
 
         // SWAPGS
         0x0F, 0x01, 0xF8,       // SWAPGS
@@ -436,7 +436,7 @@ fn test_swapgs_high_addresses() {
         0x0F, 0x01, 0xF8,       // SWAPGS
 
         // Read after double swap
-        0xF3, 0x48, 0x0F, 0xAE, 0xC1, // RDGSBASE RCX
+        0xF3, 0x48, 0x0F, 0xAE, 0xC9, // RDGSBASE RCX (reg=1, rm=1)
 
         0xF4,                   // HLT
     ];

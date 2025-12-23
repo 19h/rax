@@ -135,6 +135,13 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
     Ok(None)
 }
 
+/// CLTS - Clear Task-Switched Flag in CR0 (0x0F 0x06)
+pub fn clts(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    vcpu.sregs.cr0 &= !(1u64 << 3);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
 /// MOV r64, CRn (0x0F 0x20)
 pub fn mov_r_cr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let modrm = ctx.consume_u8()?;
