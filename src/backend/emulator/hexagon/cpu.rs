@@ -293,6 +293,9 @@ impl HexagonVcpu {
             DecodedInsn::AndImm { dst, src, imm } => {
                 new_r[dst as usize] = Some(self.regs.r[src as usize] & imm);
             }
+            DecodedInsn::OrImm { dst, src, imm } => {
+                new_r[dst as usize] = Some(self.regs.r[src as usize] | imm);
+            }
             DecodedInsn::Or { dst, src1, src2 } => {
                 new_r[dst as usize] =
                     Some(self.regs.r[src1 as usize] | self.regs.r[src2 as usize]);
@@ -303,6 +306,11 @@ impl HexagonVcpu {
             }
             DecodedInsn::AddImm { dst, src, imm } => {
                 let val = self.regs.r[src as usize].wrapping_add(imm as u32);
+                new_r[dst as usize] = Some(val);
+            }
+            // SubImmRev: Rd = #s - Rs (reversed subtract)
+            DecodedInsn::SubImmRev { dst, src, imm } => {
+                let val = (imm as u32).wrapping_sub(self.regs.r[src as usize]);
                 new_r[dst as usize] = Some(val);
             }
             DecodedInsn::Mov { dst, src } => {
@@ -789,6 +797,147 @@ impl HexagonVcpu {
             }
             DecodedInsn::Trap0 => {
                 return Ok(Some(VcpuExit::Shutdown));
+            }
+            // Absolute value: Rd = |Rs|, with optional saturation
+            DecodedInsn::Abs { dst, src, sat } => {
+                let val = self.regs.r[src as usize] as i32;
+                let result = if sat {
+                    // Saturating absolute value
+                    // Special case: 0x80000000 saturates to 0x7fffffff
+                    if val == i32::MIN {
+                        // Set overflow flag in USR (C8)
+                        self.regs.c[8] |= 1; // OVF bit
+                        i32::MAX as u32
+                    } else {
+                        val.abs() as u32
+                    }
+                } else {
+                    // Non-saturating: wraps on MIN_VALUE
+                    val.wrapping_abs() as u32
+                };
+                new_r[dst as usize] = Some(result);
+            }
+            // Saturating negation: Rd = sat(-Rs)
+            DecodedInsn::NegSat { dst, src } => {
+                let val = self.regs.r[src as usize] as i32;
+                // Special case: -0x80000000 saturates to 0x7fffffff
+                let result = if val == i32::MIN {
+                    // Set overflow flag in USR (C8)
+                    self.regs.c[8] |= 1; // OVF bit
+                    i32::MAX as u32
+                } else {
+                    (-val) as u32
+                };
+                new_r[dst as usize] = Some(result);
+            }
+            // Signed maximum: Rd = max(Rs, Rt)
+            DecodedInsn::Max { dst, src1, src2 } => {
+                let a = self.regs.r[src1 as usize] as i32;
+                let b = self.regs.r[src2 as usize] as i32;
+                let result = if a > b { a } else { b };
+                new_r[dst as usize] = Some(result as u32);
+            }
+            // Unsigned maximum: Rd = maxu(Rs, Rt)
+            DecodedInsn::Maxu { dst, src1, src2 } => {
+                let a = self.regs.r[src1 as usize];
+                let b = self.regs.r[src2 as usize];
+                let result = if a > b { a } else { b };
+                new_r[dst as usize] = Some(result);
+            }
+            // Signed minimum: Rd = min(Rs, Rt)
+            DecodedInsn::Min { dst, src1, src2 } => {
+                let a = self.regs.r[src1 as usize] as i32;
+                let b = self.regs.r[src2 as usize] as i32;
+                let result = if a < b { a } else { b };
+                new_r[dst as usize] = Some(result as u32);
+            }
+            // Unsigned minimum: Rd = minu(Rs, Rt)
+            DecodedInsn::Minu { dst, src1, src2 } => {
+                let a = self.regs.r[src1 as usize];
+                let b = self.regs.r[src2 as usize];
+                let result = if a < b { a } else { b };
+                new_r[dst as usize] = Some(result);
+            }
+            // Allocate stack frame
+            // Store LR:FP pair to memory, update SP and FP
+            DecodedInsn::AllocFrame { base, size } => {
+                let sp = self.regs.r[base as usize];
+                let ea = sp.wrapping_sub(8);
+                // LR is R31, FP is R30
+                let lr = self.regs.r[31];
+                let fp = self.regs.r[30];
+                // Store as 64-bit: LR in upper 32 bits, FP in lower 32 bits
+                let pair = ((lr as u64) << 32) | (fp as u64);
+                self.write_u64(ea, pair)?;
+                // Update SP (base register) and FP
+                let new_sp = ea.wrapping_sub(size);
+                new_r[base as usize] = Some(new_sp);
+                new_r[30] = Some(ea); // FP = ea
+            }
+            // Deallocate stack frame
+            // Load LR:FP pair from memory, update SP
+            DecodedInsn::DeallocFrame {
+                base,
+                dst,
+                update_lr_fp,
+            } => {
+                let fp_addr = self.regs.r[base as usize];
+                // Load 64-bit pair: LR in upper 32 bits, FP in lower 32 bits
+                let pair = self.read_u64(fp_addr)?;
+                let restored_fp = pair as u32;
+                let restored_lr = (pair >> 32) as u32;
+                // Update SP (base register)
+                let new_sp = fp_addr.wrapping_add(8);
+                new_r[base as usize] = Some(new_sp);
+                // If dst is specified, store the pair in register pair Rdd
+                if let Some(d) = dst {
+                    // Rdd is a register pair: even register gets low, odd gets high
+                    let even = (d & !1) as usize;
+                    new_r[even] = Some(restored_fp);
+                    new_r[even + 1] = Some(restored_lr);
+                }
+                // If update_lr_fp, restore LR and FP registers
+                if update_lr_fp {
+                    new_r[30] = Some(restored_fp); // FP = R30
+                    new_r[31] = Some(restored_lr); // LR = R31
+                }
+            }
+            // Deallocate and return
+            // Same as DeallocFrame but also jumps to LR
+            DecodedInsn::DeallocReturn {
+                base,
+                dst,
+                pred,
+                update_lr_fp,
+            } => {
+                // Check predicate condition if present
+                let should_execute = match pred {
+                    Some(p) => self.eval_pred(p, &new_p),
+                    None => true,
+                };
+                if should_execute {
+                    let fp_addr = self.regs.r[base as usize];
+                    // Load 64-bit pair: LR in upper 32 bits, FP in lower 32 bits
+                    let pair = self.read_u64(fp_addr)?;
+                    let restored_fp = pair as u32;
+                    let restored_lr = (pair >> 32) as u32;
+                    // Update SP (base register)
+                    let new_sp = fp_addr.wrapping_add(8);
+                    new_r[base as usize] = Some(new_sp);
+                    // If dst is specified, store the pair in register pair Rdd
+                    if let Some(d) = dst {
+                        let even = (d & !1) as usize;
+                        new_r[even] = Some(restored_fp);
+                        new_r[even + 1] = Some(restored_lr);
+                    }
+                    // If update_lr_fp, restore LR and FP registers
+                    if update_lr_fp {
+                        new_r[30] = Some(restored_fp); // FP = R30
+                        new_r[31] = Some(restored_lr); // LR = R31
+                    }
+                    // Jump to LR (return address)
+                    self.set_branch(branch, restored_lr, false)?;
+                }
             }
             DecodedInsn::Unknown(word) => {
                 return Err(Error::Emulator(format!(
