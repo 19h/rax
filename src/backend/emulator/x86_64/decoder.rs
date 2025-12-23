@@ -17,6 +17,7 @@ impl Decoder {
             rep_prefix: None,
             op_size: 4,
             rip_relative_offset: 0,
+            evex: None,
         };
 
         loop {

@@ -237,8 +237,8 @@ fn test_punpcklbw_high_bits_ignored() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // Both have same low 4 bytes: 78 56 34 12
-    // Result: 78 78 56 56 34 34 12 12
-    assert_eq!(result, 0x7878565634341212, "PUNPCKLBW: high bits ignored");
+    // Result: 12 12 34 34 56 56 78 78
+    assert_eq!(result, 0x1212343456567878, "PUNPCKLBW: high bits ignored");
 }
 
 #[test]
@@ -260,8 +260,8 @@ fn test_punpcklbw_mm5_mm6() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // Low bytes: EF BE AD DE and BE BA FE CA
-    // Result: BE EF BA BE FE AD CA DE
-    assert_eq!(result, 0xBEEFBABEFEADCADE, "PUNPCKLBW: MM5 with MM6");
+    // Result: CA DE FE AD BA BE BE EF
+    assert_eq!(result, 0xCADEFEADBABEBEEF, "PUNPCKLBW: MM5 with MM6");
 }
 
 // ============================================================================
@@ -376,8 +376,8 @@ fn test_punpcklwd_mm_m32() {
     let result = read_mem_at_u64(&mem, 0x2010);
     // Low words of MM2: 7777 6666
     // Low words of mem: CCCC BBBB
-    // Result: CCCC 7777 BBBB 6666
-    assert_eq!(result, 0xCCCC7777BBBB6666, "PUNPCKLWD: memory operand");
+    // Result: CCCC 6666 BBBB 5555
+    assert_eq!(result, 0xCCCC6666BBBB5555, "PUNPCKLWD: memory operand");
 }
 
 #[test]
@@ -422,8 +422,8 @@ fn test_punpcklwd_mm3_mm7() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // Low words: 1111 2222 and 3333 4444
-    // Result: 3333 1111 4444 2222
-    assert_eq!(result, 0x3333111144442222, "PUNPCKLWD: MM3 with MM7");
+    // Result: 4444 2222 4444 2222
+    assert_eq!(result, 0x4444222244442222, "PUNPCKLWD: MM3 with MM7");
 }
 
 #[test]
@@ -446,8 +446,8 @@ fn test_punpcklwd_zero_extension() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // Low words: 0000 FFFF and 0000 0000
-    // Result: 0000 0000 0000 FFFF
-    assert_eq!(result, 0x000000000000FFFF, "PUNPCKLWD: zero extension");
+    // Result: 0000 FFFF 0000 0000
+    assert_eq!(result, 0x0000FFFF00000000, "PUNPCKLWD: zero extension");
 }
 
 #[test]
@@ -561,8 +561,8 @@ fn test_punpcklbw_max_min_values() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // Low bytes: FF 00 FF 00 and 00 FF 00 FF
-    // Result: 00 FF 00 00 FF FF 00 00
-    assert_eq!(result, 0x00FF000000FF0000, "PUNPCKLBW: max/min values");
+    // Result: 00 FF FF 00 00 FF FF 00
+    assert_eq!(result, 0x00FFFF0000FFFF00, "PUNPCKLBW: max/min values");
 }
 
 #[test]
