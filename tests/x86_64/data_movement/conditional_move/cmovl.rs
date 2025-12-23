@@ -241,10 +241,10 @@ fn test_cmovl_zeros_upper_32() {
 // Test practical use case: min of two signed values
 #[test]
 fn test_cmovl_practical_signed_min() {
-    // min = (a < b) ? a : b (signed comparison)
+    // min = (a > b) ? b : a - use CMOVG to move b to a if a > b
     let code = [
         0x48, 0x39, 0xd8, // CMP RAX, RBX
-        0x48, 0x0f, 0x4c, 0xc3, // CMOVL RAX, RBX
+        0x48, 0x0f, 0x4f, 0xc3, // CMOVG RAX, RBX (move RBX to RAX if RAX > RBX)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -252,14 +252,16 @@ fn test_cmovl_practical_signed_min() {
     regs.rbx = 100;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
+    // 50 < 100, so RAX stays 50 (no move happens)
     assert_eq!(regs.rax, 50, "RAX should remain 50 (min of 50 and 100)");
 }
 
 #[test]
 fn test_cmovl_practical_signed_min_with_negative() {
+    // min = (a > b) ? b : a - use CMOVG to move b to a if a > b
     let code = [
         0x48, 0x39, 0xd8, // CMP RAX, RBX
-        0x48, 0x0f, 0x4c, 0xc3, // CMOVL RAX, RBX
+        0x48, 0x0f, 0x4f, 0xc3, // CMOVG RAX, RBX (move RBX to RAX if RAX > RBX)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -267,6 +269,7 @@ fn test_cmovl_practical_signed_min_with_negative() {
     regs.rbx = 0xFFFFFFFFFFFFFFF0; // -16
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
+    // -11 > -16, so RAX gets RBX (-16)
     assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFF0, "RAX should be -16 (min of -11 and -16)");
 }
 
