@@ -237,10 +237,14 @@ fn test_movsb_overlapping_forward() {
     vm = run_until_hlt(vm);
     let data = vm.read_memory(0x3000, 5);
     // Original: A B C ? ?
-    // After: A B A B C (forward copy works correctly)
-    assert_eq!(data[2], 0x41); // 'A'
-    assert_eq!(data[3], 0x42); // 'B'
-    assert_eq!(data[4], 0x43); // 'C'
+    // After overlapping forward copy with src < dest:
+    // - Copy[0]: Read 0x3000('A') → Write 0x3002, buffer: A B A ? ?
+    // - Copy[1]: Read 0x3001('B') → Write 0x3003, buffer: A B A B ?
+    // - Copy[2]: Read 0x3002('A') → Write 0x3004, buffer: A B A B A
+    // Byte propagation occurs because src[2] was overwritten by copy[0]
+    assert_eq!(data[2], 0x41); // 'A' (overwritten from src[0])
+    assert_eq!(data[3], 0x42); // 'B' (overwritten from src[1])
+    assert_eq!(data[4], 0x41); // 'A' (byte propagation: src[2] is now 'A')
 }
 
 #[test]

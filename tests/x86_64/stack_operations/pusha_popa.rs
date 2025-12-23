@@ -197,16 +197,17 @@ fn test_pushad_does_not_modify_flags() {
 #[test]
 fn test_popad_restores_registers() {
     // POPAD should restore all 8 general-purpose registers
+    // Note: setup_vm_compat uses CS.D=0 (16-bit default), so 0x66 prefix needed for 32-bit ops
     let code = [
         // First push known values
         0x66, 0x60,     // PUSHAD (saves current registers)
-        0xb8, 0x11, 0x11, 0x11, 0x11, // MOV EAX, 0x11111111
-        0xbb, 0x22, 0x22, 0x22, 0x22, // MOV EBX, 0x22222222
-        0xb9, 0x33, 0x33, 0x33, 0x33, // MOV ECX, 0x33333333
-        0xba, 0x44, 0x44, 0x44, 0x44, // MOV EDX, 0x44444444
-        0xbe, 0x55, 0x55, 0x55, 0x55, // MOV ESI, 0x55555555
-        0xbf, 0x66, 0x66, 0x66, 0x66, // MOV EDI, 0x66666666
-        0xbd, 0x77, 0x77, 0x77, 0x77, // MOV EBP, 0x77777777
+        0x66, 0xb8, 0x11, 0x11, 0x11, 0x11, // MOV EAX, 0x11111111
+        0x66, 0xbb, 0x22, 0x22, 0x22, 0x22, // MOV EBX, 0x22222222
+        0x66, 0xb9, 0x33, 0x33, 0x33, 0x33, // MOV ECX, 0x33333333
+        0x66, 0xba, 0x44, 0x44, 0x44, 0x44, // MOV EDX, 0x44444444
+        0x66, 0xbe, 0x55, 0x55, 0x55, 0x55, // MOV ESI, 0x55555555
+        0x66, 0xbf, 0x66, 0x66, 0x66, 0x66, // MOV EDI, 0x66666666
+        0x66, 0xbd, 0x77, 0x77, 0x77, 0x77, // MOV EBP, 0x77777777
         // Now restore original values
         0x66, 0x61,     // POPAD
         0xf4,           // HLT
@@ -276,10 +277,11 @@ fn test_popad_ignores_sp_on_stack() {
 #[test]
 fn test_pusha_popa_roundtrip() {
     // PUSHA followed by POPA should preserve all values
+    // Note: setup_vm_compat uses CS.D=0 (16-bit default), so 0x66 prefix needed for 32-bit ops
     let code = [
         0x66, 0x60,     // PUSHAD
-        0xb8, 0x11, 0x22, 0x33, 0x44, // MOV EAX, 0x44332211
-        0xbb, 0x55, 0x66, 0x77, 0x88, // MOV EBX, 0x88776655
+        0x66, 0xb8, 0x11, 0x22, 0x33, 0x44, // MOV EAX, 0x44332211
+        0x66, 0xbb, 0x55, 0x66, 0x77, 0x88, // MOV EBX, 0x88776655
         0x66, 0x61,     // POPAD (restore original)
         0xf4,           // HLT
     ];
@@ -323,11 +325,12 @@ fn test_pushad_popa_multiple_times() {
 #[test]
 fn test_pushad_popa_with_alternating_modification() {
     // PUSHAD, modify registers, POPAD, verify restoration
+    // Note: setup_vm_compat uses CS.D=0 (16-bit default), so 0x66 prefix needed for 32-bit ops
     let code = [
         0x66, 0x60,     // PUSHAD (save state 1)
-        0xb8, 0xFF, 0xFF, 0xFF, 0xFF, // MOV EAX, 0xFFFFFFFF (modify)
+        0x66, 0xb8, 0xFF, 0xFF, 0xFF, 0xFF, // MOV EAX, 0xFFFFFFFF (modify)
         0x66, 0x61,     // POPAD (restore state 1)
-        0x89, 0xc1,     // MOV ECX, EAX (copy to ECX for verification)
+        0x66, 0x89, 0xc1,     // MOV ECX, EAX (copy to ECX for verification)
         0xf4,           // HLT
     ];
     let mut regs = Registers::default();
@@ -418,13 +421,14 @@ fn test_pushad_with_different_register_patterns() {
 #[test]
 fn test_popad_overwrites_current_values() {
     // POPAD should overwrite whatever values are currently in registers
+    // Note: setup_vm_compat uses CS.D=0 (16-bit default), so 0x66 prefix needed for 32-bit ops
     let code = [
         // Pre-load stack with known values via PUSHAD
         0x66, 0x60,     // PUSHAD
         // Now the original register values are on stack
         // Load different values into registers
-        0xb8, 0x99, 0x99, 0x99, 0x99, // MOV EAX, 0x99999999
-        0xbb, 0x88, 0x88, 0x88, 0x88, // MOV EBX, 0x88888888
+        0x66, 0xb8, 0x99, 0x99, 0x99, 0x99, // MOV EAX, 0x99999999
+        0x66, 0xbb, 0x88, 0x88, 0x88, 0x88, // MOV EBX, 0x88888888
         // Pop the original values back
         0x66, 0x61,     // POPAD
         0xf4,           // HLT

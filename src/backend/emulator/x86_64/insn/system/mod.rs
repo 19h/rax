@@ -9,6 +9,7 @@ mod flags;
 mod msr;
 mod nop;
 mod stack_flags;
+mod sysenter;
 mod syscall;
 mod timing;
 
@@ -22,5 +23,6 @@ pub use flags::*;
 pub use msr::*;
 pub use nop::*;
 pub use stack_flags::*;
+pub use sysenter::*;
 pub use syscall::*;
 pub use timing::*;

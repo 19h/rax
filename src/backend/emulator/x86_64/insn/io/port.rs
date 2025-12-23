@@ -9,7 +9,7 @@ use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 pub fn in_al_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let port = ctx.consume_u8()? as u16;
     vcpu.regs.rip += ctx.cursor as u64;
-    vcpu.set_io_pending(1);
+    vcpu.set_io_pending_reg(1);
     Ok(Some(VcpuExit::IoIn { port, size: 1 }))
 }
 
@@ -18,7 +18,7 @@ pub fn in_ax_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
     let port = ctx.consume_u8()? as u16;
     let size = if ctx.operand_size_override { 2 } else { 4 };
     vcpu.regs.rip += ctx.cursor as u64;
-    vcpu.set_io_pending(size);
+    vcpu.set_io_pending_reg(size);
     Ok(Some(VcpuExit::IoIn { port, size }))
 }
 
@@ -26,7 +26,7 @@ pub fn in_ax_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
 pub fn in_al_dx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let port = vcpu.regs.rdx as u16;
     vcpu.regs.rip += ctx.cursor as u64;
-    vcpu.set_io_pending(1);
+    vcpu.set_io_pending_reg(1);
     Ok(Some(VcpuExit::IoIn { port, size: 1 }))
 }
 
@@ -35,7 +35,7 @@ pub fn in_ax_dx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     let port = vcpu.regs.rdx as u16;
     let size = if ctx.operand_size_override { 2 } else { 4 };
     vcpu.regs.rip += ctx.cursor as u64;
-    vcpu.set_io_pending(size);
+    vcpu.set_io_pending_reg(size);
     Ok(Some(VcpuExit::IoIn { port, size }))
 }
 

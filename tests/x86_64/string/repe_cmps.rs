@@ -245,8 +245,10 @@ fn test_repe_cmpsb_string_prefix_match() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // "HEL" matches, stops at position 3 ('L' vs 'P')
-    assert_eq!(regs.rcx, 2, "Stopped after 'HEL'");
+    // "HEL" matches (3 iterations), then mismatch 'L' vs 'P' (4th iteration)
+    // Intel REPE: decrement RCX AFTER each comparison (including mismatch)
+    // So RCX goes: 5 → 4 → 3 → 2 → 1 (exit after 4th comparison with ZF=0)
+    assert_eq!(regs.rcx, 1, "Stopped after comparing position 3");
     assert!(!zf_set(regs.rflags));
 }
 

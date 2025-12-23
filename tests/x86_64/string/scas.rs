@@ -321,14 +321,16 @@ fn test_scasb_empty_rep() {
 
 #[test]
 fn test_scasb_sets_flags() {
-    // SCAS performs CMP [RDI], AL
+    // SCAS computes AL - [RDI], not [RDI] - AL
+    // With AL=3, [RDI]=5: 3 - 5 = -2 (SF=1, ZF=0)
+    // JG jumps when SF=OF and ZF=0, but here SF=1, OF=0 so JG does NOT jump
     let code = [
         0x48, 0xc7, 0xc7, 0x00, 0x40, 0x00, 0x00, // MOV RDI, 0x4000
-        0xc6, 0x07, 0x05, // MOV BYTE PTR [RDI], 5
-        0xb0, 0x03, // MOV AL, 3
+        0xc6, 0x07, 0x03, // MOV BYTE PTR [RDI], 3
+        0xb0, 0x05, // MOV AL, 5
         0xfc, // CLD
-        0xae, // SCASB (5 - 3 = 2, positive)
-        0x7f, 0x01, // JG +1 (should jump, 5 > 3 unsigned)
+        0xae, // SCASB (5 - 3 = 2, positive, SF=0)
+        0x7f, 0x01, // JG +1 (should jump, AL > [RDI] signed)
         0xf4, // HLT (should not reach)
         0xf4, // HLT (target)
     ];
