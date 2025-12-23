@@ -5,6 +5,25 @@ use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
+/// XCHG r8, r/m8 (0x86)
+pub fn xchg_r8_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+
+    if is_memory {
+        let reg_val = vcpu.get_reg8(reg, ctx.rex.is_some());
+        let mem_val = vcpu.read_mem(addr, 1)?;
+        vcpu.set_reg8(reg, mem_val, ctx.rex.is_some());
+        vcpu.write_mem(addr, reg_val, 1)?;
+    } else {
+        let reg_val = vcpu.get_reg8(reg, ctx.rex.is_some());
+        let rm_val = vcpu.get_reg8(rm, ctx.rex.is_some());
+        vcpu.set_reg8(reg, rm_val, ctx.rex.is_some());
+        vcpu.set_reg8(rm, reg_val, ctx.rex.is_some());
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
 /// XCHG r, r/m (0x87)
 pub fn xchg_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;

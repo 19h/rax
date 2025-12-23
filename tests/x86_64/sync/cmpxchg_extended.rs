@@ -449,7 +449,7 @@ fn test_cmpxchg_pf_even_parity() {
 #[test]
 fn test_cmpxchg_af_auxiliary_carry() {
     let code = [
-        0x48, 0xc7, 0xc0, 0x0f, 0x00, 0x00, 0x00, // MOV RAX, 0x0F
+        0x48, 0xc7, 0xc0, 0x10, 0x00, 0x00, 0x00, // MOV RAX, 0x10
         0x48, 0xc7, 0xc1, 0x99, 0x00, 0x00, 0x00, // MOV RCX, 0x99
         0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
         0x0f, 0xb1, 0x0b,                         // CMPXCHG [RBX], ECX
@@ -458,7 +458,7 @@ fn test_cmpxchg_af_auxiliary_carry() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_mem_u32(&mem, 1);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    // Comparison 0x0F - 0x01 causes AF
+    // Comparison 0x10 - 0x01 = 0x0F causes AF (borrow from bit 4 to bit 3)
     assert_ne!(regs.rflags & 0x10, 0, "AF should be set");
 }
 
