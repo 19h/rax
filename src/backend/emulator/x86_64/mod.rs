@@ -6,6 +6,7 @@ mod decoder;
 mod dispatch;
 pub mod flags;
 mod mmu;
+mod sha;
 
 mod insn;
 
