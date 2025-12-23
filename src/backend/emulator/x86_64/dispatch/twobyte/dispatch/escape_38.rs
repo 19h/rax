@@ -389,6 +389,18 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
             }
+            // ADCX/ADOX (0xF6) - ADX instructions with mandatory prefixes
+            0xF6 => {
+                if ctx.rep_prefix == Some(0xF3) {
+                    insn::arith::adox_r_rm(self, ctx)
+                } else if ctx.operand_size_override {
+                    insn::arith::adcx_r_rm(self, ctx)
+                } else {
+                    Err(Error::Emulator(
+                        "ADCX/ADOX requires 66 or F3 prefix".to_string(),
+                    ))
+                }
+            }
 
             _ => Err(Error::Emulator(format!(
                 "unimplemented 0x0F 0x38 opcode: {:#04x} at RIP={:#x}",
