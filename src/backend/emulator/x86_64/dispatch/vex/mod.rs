@@ -273,6 +273,10 @@ impl X86_64Vcpu {
                 (0, 0x50) | (1, 0x50) => {
                     return self.execute_vex_movmskp(ctx, vex_pp, vex_l);
                 }
+                // VPMOVMSKB (0xD7 with 66)
+                (1, 0xD7) => {
+                    return self.execute_vex_pmovmskb(ctx, vex_l, vvvv);
+                }
 
                 // VRSQRTPS (0x52 with NP), VRSQRTSS (0x52 with F3)
                 (0, 0x52) | (2, 0x52) => {
@@ -512,17 +516,31 @@ impl X86_64Vcpu {
                     return self.execute_vex_packed_shift_xmm(ctx, vex_l, vvvv, opcode);
                 }
 
-                // AVX2 packed integer unpack instructions (0x60-0x6D)
-                (1, 0x60) | (1, 0x61) | (1, 0x62) | (1, 0x63) |
-                (1, 0x64) | (1, 0x65) | (1, 0x66) | (1, 0x67) |
-                (1, 0x68) | (1, 0x69) | (1, 0x6A) | (1, 0x6B) |
+                // AVX2 packed integer unpack instructions (0x60-0x62, 0x68-0x6D)
+                (1, 0x60) | (1, 0x61) | (1, 0x62) |
+                (1, 0x68) | (1, 0x69) | (1, 0x6A) |
                 (1, 0x6C) | (1, 0x6D) => {
                     return self.execute_vex_punpck(ctx, vex_l, vvvv, opcode);
+                }
+
+                // VPACKSSWB/VPACKUSWB/VPACKSSDW
+                (1, 0x63) => {
+                    return self.execute_vex_packsswb(ctx, vex_l, vvvv);
+                }
+                (1, 0x67) => {
+                    return self.execute_vex_packuswb(ctx, vex_l, vvvv);
+                }
+                (1, 0x6B) => {
+                    return self.execute_vex_packssdw(ctx, vex_l, vvvv);
                 }
 
                 // AVX2 packed integer compare (0x74-0x76)
                 (1, 0x74) | (1, 0x75) | (1, 0x76) => {
                     return self.execute_vex_pcmpeq(ctx, vex_l, vvvv, opcode);
+                }
+                // AVX2 packed integer compare greater-than (0x64-0x66)
+                (1, 0x64) | (1, 0x65) | (1, 0x66) => {
+                    return self.execute_vex_pcmpgt(ctx, vex_l, vvvv, opcode);
                 }
 
                 // AVX2 packed integer arithmetic (0xD4-0xFE)
@@ -562,6 +580,44 @@ impl X86_64Vcpu {
                 // VPERM2F128 ymm1, ymm2, ymm3/m256, imm8 (VEX.66.0F3A.W0 06 /r ib)
                 0x06 => {
                     return self.execute_vperm2f128(ctx, vex_l, vvvv);
+                }
+                // VINSERTI128 ymm1, ymm2, xmm3/m128, imm8 (VEX.66.0F3A.W0 38 /r ib)
+                0x38 => {
+                    return self.execute_vinsertf128(ctx, vex_l, vvvv);
+                }
+                // VEXTRACTI128 xmm1/m128, ymm2, imm8 (VEX.66.0F3A.W0 39 /r ib)
+                0x39 => {
+                    return self.execute_vextractf128(ctx, vex_l);
+                }
+                // VPERM2I128 ymm1, ymm2, ymm3/m256, imm8 (VEX.66.0F3A.W0 46 /r ib)
+                0x46 => {
+                    return self.execute_vperm2f128(ctx, vex_l, vvvv);
+                }
+                // VPBLENDD ymm1/xmm1, ymm2/xmm2, ymm3/m, imm8
+                0x02 => {
+                    return self.execute_vex_blendd(ctx, vex_l, vvvv);
+                }
+                // VPBLENDW ymm1/xmm1, ymm2/xmm2, ymm3/m, imm8
+                0x0E => {
+                    return self.execute_vex_blendw(ctx, vex_l, vvvv);
+                }
+                // VPALIGNR ymm1/xmm1, ymm2/xmm2, ymm3/m, imm8
+                0x0F => {
+                    return self.execute_vex_palignr(ctx, vex_l, vvvv);
+                }
+                // VMPSADBW ymm1/xmm1, ymm2/xmm2, ymm3/m, imm8
+                0x42 => {
+                    return self.execute_vex_mpsadbw(ctx, vex_l, vvvv);
+                }
+                // VPBLENDVB ymm1/xmm1, ymm2/xmm2, ymm3/m, xmm4
+                0x4C => {
+                    return self.execute_vex_pblendvb(ctx, vex_l, vvvv);
+                }
+                // VPERMQ/VPERMPD (imm8)
+                0x00 | 0x01 => {
+                    if vex_w == 1 {
+                        return self.execute_vex_permqd_imm(ctx, vex_l, vvvv);
+                    }
                 }
                 _ => {}
             }
@@ -618,13 +674,13 @@ impl X86_64Vcpu {
                 0x0D => {
                     return self.execute_vex_permilpd_reg(ctx, vex_l, vvvv);
                 }
-                // VPBLENDVB: variable blend bytes
-                0x4C => {
-                    return self.execute_vex_pblendvb(ctx, vex_l, vvvv);
-                }
                 // VPBROADCASTB/W/D/Q: broadcast
                 0x78 | 0x79 | 0x58 | 0x59 => {
                     return self.execute_vex_broadcast(ctx, vex_l, opcode);
+                }
+                // VBROADCASTI128: broadcast 128-bit integer to 256-bit
+                0x5A => {
+                    return self.execute_vex_broadcast_i128(ctx, vex_l);
                 }
                 // VPMOVSXBW/BD/BQ/WD/WQ/DQ: packed move with sign extension
                 0x20 | 0x21 | 0x22 | 0x23 | 0x24 | 0x25 => {
@@ -645,6 +701,14 @@ impl X86_64Vcpu {
                 // VPACKUSDW: pack dwords to unsigned words with saturation
                 0x2B => {
                     return self.execute_vex_packusdw(ctx, vex_l, vvvv);
+                }
+                // VPTEST: logical compare and set flags
+                0x17 => {
+                    return self.execute_vex_ptest(ctx, vex_l, vvvv);
+                }
+                // VPHMINPOSUW: horizontal min/pos
+                0x41 => {
+                    return self.execute_vex_phminposuw(ctx, vex_l, vvvv);
                 }
                 // VPMINSB: minimum of signed bytes
                 0x38 => {
@@ -690,6 +754,30 @@ impl X86_64Vcpu {
                 0x1C | 0x1D | 0x1E => {
                     return self.execute_vex_pabs(ctx, vex_l, opcode);
                 }
+                // VPERMPS/VPERMD
+                0x16 => {
+                    return self.execute_vex_permps(ctx, vex_l, vvvv);
+                }
+                0x36 => {
+                    return self.execute_vex_permd(ctx, vex_l, vvvv);
+                }
+                // VPMASKMOVD/VPMASKMOVQ
+                0x8C | 0x8E => {
+                    return self.execute_vex_pmaskmov(ctx, vex_l, vex_w, vvvv, opcode);
+                }
+                // VGATHERDPD/VGATHERQPD/VGATHERDPS/VGATHERQPS
+                0x90 | 0x91 | 0x92 | 0x93 => {
+                    return self.execute_vex_gather(ctx, vex_l, vex_w, vvvv, opcode);
+                }
+                // FMA instructions
+                0x96 | 0x97 |
+                0x98 | 0x99 | 0x9A | 0x9B | 0x9C | 0x9D | 0x9E | 0x9F |
+                0xA6 | 0xA7 |
+                0xA8 | 0xA9 | 0xAA | 0xAB | 0xAC | 0xAD | 0xAE | 0xAF |
+                0xB6 | 0xB7 |
+                0xB8 | 0xB9 | 0xBA | 0xBB | 0xBC | 0xBD | 0xBE | 0xBF => {
+                    return self.execute_vex_fma(ctx, vex_l, vex_w, vvvv, opcode);
+                }
                 _ => {}
             }
         }
@@ -705,7 +793,9 @@ impl X86_64Vcpu {
 mod arith;
 mod logical;
 mod convert;
+mod fma;
 mod shuffle;
 mod shift;
 mod integer;
 mod misc;
+mod gather;

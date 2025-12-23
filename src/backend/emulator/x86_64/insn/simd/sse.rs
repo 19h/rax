@@ -373,6 +373,799 @@ fn sub_i16_saturate(a: u64, b: u64) -> u64 {
 }
 
 // =============================================================================
+// Packed Integer Add (PADD* family)
+// =============================================================================
+
+/// PADDB - packed add bytes (0xFC)
+pub fn paddb_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        // MMX version
+        return paddb_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    vcpu.regs.xmm[xmm_dst][0] = add_u8_wrap(dst_lo, src_lo);
+    vcpu.regs.xmm[xmm_dst][1] = add_u8_wrap(dst_hi, src_hi);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn paddb_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    let dst = vcpu.regs.mm[mm_dst];
+    vcpu.regs.mm[mm_dst] = add_u8_wrap(dst, src);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PADDW - packed add words (0xFD)
+pub fn paddw_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return paddw_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    vcpu.regs.xmm[xmm_dst][0] = add_u16_wrap(dst_lo, src_lo);
+    vcpu.regs.xmm[xmm_dst][1] = add_u16_wrap(dst_hi, src_hi);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn paddw_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    let dst = vcpu.regs.mm[mm_dst];
+    vcpu.regs.mm[mm_dst] = add_u16_wrap(dst, src);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PADDD - packed add dwords (0xFE)
+pub fn paddd_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return paddd_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    vcpu.regs.xmm[xmm_dst][0] = add_u32_wrap(dst_lo, src_lo);
+    vcpu.regs.xmm[xmm_dst][1] = add_u32_wrap(dst_hi, src_hi);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn paddd_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    let dst = vcpu.regs.mm[mm_dst];
+    vcpu.regs.mm[mm_dst] = add_u32_wrap(dst, src);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PADDQ - packed add qwords (0xD4)
+pub fn paddq_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return paddq_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    vcpu.regs.xmm[xmm_dst][0] = dst_lo.wrapping_add(src_lo);
+    vcpu.regs.xmm[xmm_dst][1] = dst_hi.wrapping_add(src_hi);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn paddq_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    let dst = vcpu.regs.mm[mm_dst];
+    vcpu.regs.mm[mm_dst] = dst.wrapping_add(src);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn add_u8_wrap(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..8 {
+        let va = ((a >> (i * 8)) & 0xFF) as u8;
+        let vb = ((b >> (i * 8)) & 0xFF) as u8;
+        let sum = va.wrapping_add(vb);
+        result |= (sum as u64) << (i * 8);
+    }
+    result
+}
+
+fn add_u16_wrap(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..4 {
+        let va = ((a >> (i * 16)) & 0xFFFF) as u16;
+        let vb = ((b >> (i * 16)) & 0xFFFF) as u16;
+        let sum = va.wrapping_add(vb);
+        result |= (sum as u64) << (i * 16);
+    }
+    result
+}
+
+fn add_u32_wrap(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..2 {
+        let va = ((a >> (i * 32)) & 0xFFFF_FFFF) as u32;
+        let vb = ((b >> (i * 32)) & 0xFFFF_FFFF) as u32;
+        let sum = va.wrapping_add(vb);
+        result |= (sum as u64) << (i * 32);
+    }
+    result
+}
+
+// =============================================================================
+// Packed Integer Saturating Add (PADDS*/PADDUS* family)
+// =============================================================================
+
+/// PADDSB - packed add signed saturate bytes (0xEC)
+pub fn paddsb_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return paddsb_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    vcpu.regs.xmm[xmm_dst][0] = add_i8_saturate(dst_lo, src_lo);
+    vcpu.regs.xmm[xmm_dst][1] = add_i8_saturate(dst_hi, src_hi);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn paddsb_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    let dst = vcpu.regs.mm[mm_dst];
+    vcpu.regs.mm[mm_dst] = add_i8_saturate(dst, src);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PADDSW - packed add signed saturate words (0xED)
+pub fn paddsw_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return paddsw_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    vcpu.regs.xmm[xmm_dst][0] = add_i16_saturate(dst_lo, src_lo);
+    vcpu.regs.xmm[xmm_dst][1] = add_i16_saturate(dst_hi, src_hi);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn paddsw_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    let dst = vcpu.regs.mm[mm_dst];
+    vcpu.regs.mm[mm_dst] = add_i16_saturate(dst, src);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PADDUSB - packed add unsigned saturate bytes (0xDC)
+pub fn paddusb_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return paddusb_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    vcpu.regs.xmm[xmm_dst][0] = add_u8_saturate(dst_lo, src_lo);
+    vcpu.regs.xmm[xmm_dst][1] = add_u8_saturate(dst_hi, src_hi);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn paddusb_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    let dst = vcpu.regs.mm[mm_dst];
+    vcpu.regs.mm[mm_dst] = add_u8_saturate(dst, src);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PADDUSW - packed add unsigned saturate words (0xDD)
+pub fn paddusw_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return paddusw_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    vcpu.regs.xmm[xmm_dst][0] = add_u16_saturate(dst_lo, src_lo);
+    vcpu.regs.xmm[xmm_dst][1] = add_u16_saturate(dst_hi, src_hi);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn paddusw_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    let dst = vcpu.regs.mm[mm_dst];
+    vcpu.regs.mm[mm_dst] = add_u16_saturate(dst, src);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn add_i8_saturate(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..8 {
+        let va = ((a >> (i * 8)) & 0xFF) as i8;
+        let vb = ((b >> (i * 8)) & 0xFF) as i8;
+        let sum = va.saturating_add(vb) as u8;
+        result |= (sum as u64) << (i * 8);
+    }
+    result
+}
+
+fn add_i16_saturate(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..4 {
+        let va = ((a >> (i * 16)) & 0xFFFF) as i16;
+        let vb = ((b >> (i * 16)) & 0xFFFF) as i16;
+        let sum = va.saturating_add(vb) as u16;
+        result |= (sum as u64) << (i * 16);
+    }
+    result
+}
+
+fn add_u8_saturate(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..8 {
+        let va = ((a >> (i * 8)) & 0xFF) as u8;
+        let vb = ((b >> (i * 8)) & 0xFF) as u8;
+        let sum = va.saturating_add(vb);
+        result |= (sum as u64) << (i * 8);
+    }
+    result
+}
+
+fn add_u16_saturate(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..4 {
+        let va = ((a >> (i * 16)) & 0xFFFF) as u16;
+        let vb = ((b >> (i * 16)) & 0xFFFF) as u16;
+        let sum = va.saturating_add(vb);
+        result |= (sum as u64) << (i * 16);
+    }
+    result
+}
+
+// =============================================================================
+// Packed Integer Logical (PAND/POR/PXOR/PANDN)
+// =============================================================================
+
+/// PAND - packed logical AND (0xDB)
+pub fn pand(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return pand_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    vcpu.regs.xmm[xmm_dst][0] &= src_lo;
+    vcpu.regs.xmm[xmm_dst][1] &= src_hi;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn pand_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    vcpu.regs.mm[mm_dst] &= src;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PANDN - packed logical AND NOT (0xDF)
+pub fn pandn(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return pandn_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    vcpu.regs.xmm[xmm_dst][0] = !vcpu.regs.xmm[xmm_dst][0] & src_lo;
+    vcpu.regs.xmm[xmm_dst][1] = !vcpu.regs.xmm[xmm_dst][1] & src_hi;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn pandn_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    vcpu.regs.mm[mm_dst] = !vcpu.regs.mm[mm_dst] & src;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// POR - packed logical OR (0xEB)
+pub fn por(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return por_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    vcpu.regs.xmm[xmm_dst][0] |= src_lo;
+    vcpu.regs.xmm[xmm_dst][1] |= src_hi;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn por_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    vcpu.regs.mm[mm_dst] |= src;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+// =============================================================================
+// Packed Integer Compare (PCMPEQ*/PCMPGT*)
+// =============================================================================
+
+/// PCMPEQB - packed compare equal bytes (0x74)
+pub fn pcmpeqb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return pcmpeqb_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    vcpu.regs.xmm[xmm_dst][0] = cmp_eq_bytes(dst_lo, src_lo);
+    vcpu.regs.xmm[xmm_dst][1] = cmp_eq_bytes(dst_hi, src_hi);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn pcmpeqb_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    let dst = vcpu.regs.mm[mm_dst];
+    vcpu.regs.mm[mm_dst] = cmp_eq_bytes(dst, src);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PCMPEQW - packed compare equal words (0x75)
+pub fn pcmpeqw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return pcmpeqw_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    vcpu.regs.xmm[xmm_dst][0] = cmp_eq_words(dst_lo, src_lo);
+    vcpu.regs.xmm[xmm_dst][1] = cmp_eq_words(dst_hi, src_hi);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn pcmpeqw_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    let dst = vcpu.regs.mm[mm_dst];
+    vcpu.regs.mm[mm_dst] = cmp_eq_words(dst, src);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PCMPEQD - packed compare equal dwords (0x76)
+pub fn pcmpeqd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return pcmpeqd_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    vcpu.regs.xmm[xmm_dst][0] = cmp_eq_dwords(dst_lo, src_lo);
+    vcpu.regs.xmm[xmm_dst][1] = cmp_eq_dwords(dst_hi, src_hi);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn pcmpeqd_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    let dst = vcpu.regs.mm[mm_dst];
+    vcpu.regs.mm[mm_dst] = cmp_eq_dwords(dst, src);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PCMPGTB - packed compare greater than bytes (0x64)
+pub fn pcmpgtb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return pcmpgtb_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    vcpu.regs.xmm[xmm_dst][0] = cmp_gt_bytes(dst_lo, src_lo);
+    vcpu.regs.xmm[xmm_dst][1] = cmp_gt_bytes(dst_hi, src_hi);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn pcmpgtb_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    let dst = vcpu.regs.mm[mm_dst];
+    vcpu.regs.mm[mm_dst] = cmp_gt_bytes(dst, src);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PCMPGTW - packed compare greater than words (0x65)
+pub fn pcmpgtw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return pcmpgtw_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    vcpu.regs.xmm[xmm_dst][0] = cmp_gt_words(dst_lo, src_lo);
+    vcpu.regs.xmm[xmm_dst][1] = cmp_gt_words(dst_hi, src_hi);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn pcmpgtw_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    let dst = vcpu.regs.mm[mm_dst];
+    vcpu.regs.mm[mm_dst] = cmp_gt_words(dst, src);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PCMPGTD - packed compare greater than dwords (0x66)
+pub fn pcmpgtd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return pcmpgtd_mmx(vcpu, ctx);
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    vcpu.regs.xmm[xmm_dst][0] = cmp_gt_dwords(dst_lo, src_lo);
+    vcpu.regs.xmm[xmm_dst][1] = cmp_gt_dwords(dst_hi, src_hi);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn pcmpgtd_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let mm_dst = (reg & 0x7) as usize;
+    let src = if is_memory {
+        vcpu.read_mem(addr, 8)?
+    } else {
+        vcpu.regs.mm[(rm & 0x7) as usize]
+    };
+    let dst = vcpu.regs.mm[mm_dst];
+    vcpu.regs.mm[mm_dst] = cmp_gt_dwords(dst, src);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+fn cmp_eq_bytes(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..8 {
+        let va = (a >> (i * 8)) & 0xFF;
+        let vb = (b >> (i * 8)) & 0xFF;
+        let mask = if va == vb { 0xFF } else { 0x00 };
+        result |= mask << (i * 8);
+    }
+    result
+}
+
+fn cmp_eq_words(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..4 {
+        let va = (a >> (i * 16)) & 0xFFFF;
+        let vb = (b >> (i * 16)) & 0xFFFF;
+        let mask = if va == vb { 0xFFFF } else { 0x0000 };
+        result |= mask << (i * 16);
+    }
+    result
+}
+
+fn cmp_eq_dwords(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..2 {
+        let va = (a >> (i * 32)) & 0xFFFF_FFFF;
+        let vb = (b >> (i * 32)) & 0xFFFF_FFFF;
+        let mask = if va == vb { 0xFFFF_FFFF } else { 0x0 };
+        result |= mask << (i * 32);
+    }
+    result
+}
+
+fn cmp_gt_bytes(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..8 {
+        let va = ((a >> (i * 8)) & 0xFF) as i8;
+        let vb = ((b >> (i * 8)) & 0xFF) as i8;
+        let mask = if va > vb { 0xFF } else { 0x00 };
+        result |= (mask as u64) << (i * 8);
+    }
+    result
+}
+
+fn cmp_gt_words(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..4 {
+        let va = ((a >> (i * 16)) & 0xFFFF) as i16;
+        let vb = ((b >> (i * 16)) & 0xFFFF) as i16;
+        let mask = if va > vb { 0xFFFFu64 } else { 0x0 };
+        result |= mask << (i * 16);
+    }
+    result
+}
+
+fn cmp_gt_dwords(a: u64, b: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..2 {
+        let va = ((a >> (i * 32)) & 0xFFFF_FFFF) as i32;
+        let vb = ((b >> (i * 32)) & 0xFFFF_FFFF) as i32;
+        let mask = if va > vb { 0xFFFF_FFFFu64 } else { 0x0 };
+        result |= mask << (i * 32);
+    }
+    result
+}
+
+// =============================================================================
+// Non-Temporal Store (MOVNTQ)
+// =============================================================================
+
+/// MOVNTQ - non-temporal store MMX (0xE7)
+pub fn movntq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    if !is_memory {
+        return Err(Error::Emulator("MOVNTQ requires memory destination".to_string()));
+    }
+    let mm_src = (reg & 0x7) as usize;
+    vcpu.write_mem(addr, vcpu.regs.mm[mm_src], 8)?;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+// =============================================================================
 // Packed Integer Misc (PMADDWD/PMAX*/PMIN*/PMOVMSKB)
 // =============================================================================
 

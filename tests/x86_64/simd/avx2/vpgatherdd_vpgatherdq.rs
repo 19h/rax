@@ -447,7 +447,7 @@ fn test_vpgatherdq_sequential_indices() {
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let mut data = vec![0u8; 256];
     for i in 0..32usize {
-        let val = (i as u64 * 0x1122334455667788u64);
+        let val = (i as u64).wrapping_mul(0x1122334455667788u64);
         data[i * 8..i * 8 + 8].copy_from_slice(&val.to_le_bytes());
     }
     mem.write_slice(&data, GuestAddress(GATHER_DATA_ADDR)).unwrap();
