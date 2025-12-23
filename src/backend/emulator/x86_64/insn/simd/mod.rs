@@ -1,4 +1,4 @@
-//! SSE/AVX SIMD instruction implementations.
+//! SSE/AVX/AVX-512 SIMD instruction implementations.
 //!
 //! This module contains all SIMD-related instructions organized into submodules:
 //! - `mov`: Data movement (MOVD, MOVQ, MOVDQA, MOVDQU)
@@ -8,9 +8,11 @@
 //! - `compare`: Comparisons (CMPPS, CMPPD, CMPSS, CMPSD)
 //! - `shuffle`: Shuffle and unpack (PSHUFD, UNPCKLPS, UNPCKHPS)
 //! - `minmax`: Min/max operations (MINPS, MAXPS, MINPD, MAXPD)
+//! - `avx512`: AVX-512 instructions (EVEX-encoded)
 
 mod arith;
 mod avx;
+mod avx512;
 mod compare;
 mod convert;
 mod minmax;
@@ -23,6 +25,7 @@ mod ssse3;
 // Re-export all instruction functions
 pub use arith::*;
 pub use avx::*;
+pub use avx512::*;
 pub use compare::*;
 pub use convert::*;
 pub use minmax::*;

@@ -119,6 +119,8 @@ impl X86_64Vcpu {
 
             // SSE arithmetic
             0x51 => self.execute_sse_sqrt(ctx),
+            0x52 => self.execute_sse_rsqrt(ctx),
+            0x53 => self.execute_sse_rcp(ctx),
             0x58 => self.execute_sse_add(ctx),
             0x59 => self.execute_sse_mul(ctx),
             0x5C => self.execute_sse_sub(ctx),
@@ -167,16 +169,27 @@ impl X86_64Vcpu {
                     )))
                 }
             }
+            // Packed integer insert/extract
+            0xD7 => insn::simd::pmovmskb(self, ctx),
             // Packed integer subtract (SSE2)
             0xD8 | 0xD9 | 0xE8 | 0xE9 | 0xF8 | 0xF9 | 0xFA | 0xFB => {
                 insn::simd::psub_packed(self, ctx, opcode2)
             }
+            // Packed integer min/max (SSE2)
+            0xDA => insn::simd::pminub(self, ctx),
+            0xDE => insn::simd::pmaxub(self, ctx),
+            0xEA => insn::simd::pminsw(self, ctx),
+            0xEE => insn::simd::pmaxsw(self, ctx),
 
             // Packed integer multiply (SSE2/MMX)
             0xD5 => insn::simd::pmullw(self, ctx),  // PMULLW
             0xE4 => insn::simd::pmulhuw(self, ctx), // PMULHUW
             0xE5 => insn::simd::pmulhw(self, ctx),  // PMULHW
             0xF4 => insn::simd::pmuludq(self, ctx), // PMULUDQ
+            0xF5 => insn::simd::pmaddwd(self, ctx), // PMADDWD
+
+            // PXOR (SSE2) - XOR packed integers
+            0xEF => insn::simd::pxor(self, ctx),
 
             // SSE/SSE2 Conversion Instructions
             0x5A => {
@@ -251,6 +264,7 @@ impl X86_64Vcpu {
                     insn::simd::cvtps2pi(self, ctx)
                 }
             }
+            0x2E => insn::simd::ucomiss_ucomisd(self, ctx),
             0xE6 => {
                 if ctx.rep_prefix == Some(0xF3) {
                     // F3 0F E6: CVTDQ2PD xmm1, xmm2/m64
@@ -308,6 +322,12 @@ impl X86_64Vcpu {
 
             // CMPPS/CMPPD/CMPSS/CMPSD (0xC2)
             0xC2 => self.execute_cmpps(ctx),
+
+            // PINSRW (0xC4)
+            0xC4 => self.execute_pinsrw(ctx),
+
+            // PEXTRW (0xC5)
+            0xC5 => self.execute_pextrw(ctx),
 
             _ => Err(Error::Emulator(format!(
                 "unimplemented 0x0F opcode: {:#04x} at RIP={:#x}",

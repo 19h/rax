@@ -50,11 +50,70 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
 
     if in_64bit_mode {
         // In 64-bit mode, 0x62 is EVEX prefix (AVX-512)
-        let context_bytes: Vec<u8> = ctx.bytes[ctx.cursor..].iter().take(8).cloned().collect();
-        return Err(Error::Emulator(format!(
-            "EVEX at RIP={:#x}, bytes after 0x62: {:02x?}",
-            vcpu.regs.rip, context_bytes
-        )));
+        // Decode 3-byte EVEX payload
+        let p0 = ctx.consume_u8()?;
+        let p1 = ctx.consume_u8()?;
+        let p2 = ctx.consume_u8()?;
+
+        // Validate EVEX format:
+        // P0: bit 2 must be 0 (distinguishes from BOUND)
+        // P1: bit 2 must be 1
+        if (p0 & 0x04) != 0 || (p1 & 0x04) == 0 {
+            return Err(Error::Emulator(format!(
+                "Invalid EVEX prefix at RIP={:#x}: P0={:#x} P1={:#x}",
+                vcpu.regs.rip, p0, p1
+            )));
+        }
+
+        // Decode P0: R X B R' 0 m m m
+        let r = (p0 & 0x80) != 0;      // R bit (inverted)
+        let x = (p0 & 0x40) != 0;      // X bit (inverted)
+        let b = (p0 & 0x20) != 0;      // B bit (inverted)
+        let r_prime = (p0 & 0x10) != 0; // R' bit (inverted)
+        let mm = p0 & 0x03;            // mm field (opcode map)
+
+        // Decode P1: W v v v v 1 p p
+        let w = (p1 & 0x80) != 0;      // W bit
+        let vvvv = (p1 >> 3) & 0x0F;   // vvvv field (inverted)
+        let pp = p1 & 0x03;            // pp field (implied prefix)
+
+        // Decode P2: z L' L b V' a a a
+        let z = (p2 & 0x80) != 0;      // z bit (zeroing)
+        let ll = (p2 >> 5) & 0x03;     // L'L field
+        let broadcast = (p2 & 0x10) != 0; // b bit
+        let v_prime = (p2 & 0x08) != 0; // V' bit (inverted)
+        let aaa = p2 & 0x07;           // aaa field (opmask)
+
+        // Store EVEX prefix in context
+        ctx.evex = Some(EvexPrefix {
+            r,
+            x,
+            b,
+            r_prime,
+            mm,
+            w,
+            vvvv,
+            pp,
+            z,
+            ll,
+            broadcast,
+            v_prime,
+            aaa,
+        });
+
+        // Set operand size based on W bit
+        ctx.op_size = if w { 8 } else { 4 };
+
+        // Set implied prefix flags based on pp
+        match pp {
+            1 => ctx.operand_size_override = true, // 66
+            2 => ctx.rep_prefix = Some(0xF3),      // F3
+            3 => ctx.rep_prefix = Some(0xF2),      // F2
+            _ => {}
+        }
+
+        // Dispatch to EVEX instruction handler
+        return vcpu.execute_evex(ctx, mm);
     } else {
         // In 32-bit/compatibility mode, this is BOUND (bounds check)
         let modrm_start = ctx.cursor;

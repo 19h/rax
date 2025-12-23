@@ -129,6 +129,38 @@ pub fn group5(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             vcpu.push64(ret_addr)?;
             vcpu.regs.rip = target;
         }
+        3 => {
+            // CALL FAR m16:16/m16:32/m16:64
+            if modrm >> 6 == 3 {
+                return Err(Error::Emulator("CALL FAR requires memory operand".to_string()));
+            }
+            let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+            ctx.cursor = modrm_start + 1 + extra;
+
+            // Determine offset size using inverted logic (legacy compatibility)
+            let offset_size: u8 = if ctx.rex_w() {
+                8
+            } else if ctx.operand_size_override {
+                4
+            } else {
+                2
+            };
+
+            // Read offset and selector from memory
+            let offset = vcpu.read_mem(addr, offset_size)?;
+            let selector = vcpu.mmu.read_u16(addr + offset_size as u64, &vcpu.sregs)?;
+
+            // Push return CS:IP
+            let old_cs = vcpu.get_sreg(1);
+            let ret_addr = vcpu.regs.rip + ctx.cursor as u64;
+
+            vcpu.push64(old_cs as u64)?;
+            vcpu.push64(ret_addr)?;
+
+            // Load new CS:IP
+            vcpu.set_sreg(1, selector);
+            vcpu.regs.rip = offset;
+        }
         4 => {
             // JMP r/m64
             let target = if modrm >> 6 == 3 {
@@ -139,6 +171,31 @@ pub fn group5(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
                 vcpu.read_mem(addr, 8)?
             };
             vcpu.regs.rip = target;
+        }
+        5 => {
+            // JMP FAR m16:16/m16:32/m16:64
+            if modrm >> 6 == 3 {
+                return Err(Error::Emulator("JMP FAR requires memory operand".to_string()));
+            }
+            let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+            ctx.cursor = modrm_start + 1 + extra;
+
+            // Determine offset size using inverted logic (legacy compatibility)
+            let offset_size: u8 = if ctx.rex_w() {
+                8
+            } else if ctx.operand_size_override {
+                4
+            } else {
+                2
+            };
+
+            // Read offset and selector from memory
+            let offset = vcpu.read_mem(addr, offset_size)?;
+            let selector = vcpu.mmu.read_u16(addr + offset_size as u64, &vcpu.sregs)?;
+
+            // Load new CS:IP
+            vcpu.set_sreg(1, selector);
+            vcpu.regs.rip = offset;
         }
         6 => {
             // PUSH r/m64
