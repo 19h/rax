@@ -19,7 +19,7 @@ fn test_ltr_ax() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0x0028, "AX should be preserved");
-    assert_eq!(regs.rip, 0x1000 + 8, "RIP should advance correctly");
+    assert_eq!(regs.rip, 0x1000 + 7, "RIP should point to HLT");
 }
 
 // LTR r16 - Load TR from BX
@@ -226,7 +226,7 @@ fn test_ltr_memory() {
     write_mem_at_u16(&mem, DATA_ADDR, 0x0028);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x1000 + 9);
+    assert_eq!(regs.rip, 0x1000 + 8);
 }
 
 // LTR m16 - Load TR from memory via RAX

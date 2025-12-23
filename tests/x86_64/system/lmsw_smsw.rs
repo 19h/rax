@@ -83,8 +83,8 @@ fn test_smsw_preserves_flags() {
 #[test]
 fn test_smsw_preserves_other_registers() {
     let code = [
-        0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242
-        0x48, 0xc7, 0xc1, 0xaa, 0xaa, 0xaa, 0xaa, // MOV RCX, 0xaaaaaaaa
+        0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242 (bit 31 clear)
+        0x48, 0xc7, 0xc1, 0x2a, 0x2a, 0x2a, 0x2a, // MOV RCX, 0x2a2a2a2a (bit 31 clear)
         0x0f, 0x01, 0xe0, // SMSW RAX
         0xf4, // HLT
     ];
@@ -92,7 +92,7 @@ fn test_smsw_preserves_other_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rbx, 0x42424242, "RBX should be preserved");
-    assert_eq!(regs.rcx, 0xaaaaaaaa, "RCX should be preserved");
+    assert_eq!(regs.rcx, 0x2a2a2a2a, "RCX should be preserved");
 }
 
 // Test SMSW multiple times
@@ -164,13 +164,13 @@ fn test_lmsw_preserves_flags() {
 #[test]
 fn test_smsw_in_loop() {
     let code = [
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        // loop:
-        0x0f, 0x01, 0xe0, // SMSW RAX
-        0x48, 0x83, 0xc1, 0x01, // ADD RCX, 1
-        0x48, 0x83, 0xf9, 0x03, // CMP RCX, 3
-        0x75, 0xf5, // JNZ loop
-        0xf4, // HLT
+        0x48, 0x31, 0xc9, // XOR RCX, RCX - 3 bytes (0x1000)
+        // loop: (0x1003)
+        0x0f, 0x01, 0xe0, // SMSW RAX - 3 bytes (0x1003)
+        0x48, 0x83, 0xc1, 0x01, // ADD RCX, 1 - 4 bytes (0x1006)
+        0x48, 0x83, 0xf9, 0x03, // CMP RCX, 3 - 4 bytes (0x100A)
+        0x75, 0xf3, // JNZ loop (rel8 = -13, from 0x1010 to 0x1003) - 2 bytes (0x100E)
+        0xf4, // HLT - 1 byte (0x1010)
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -183,7 +183,7 @@ fn test_smsw_in_loop() {
 #[test]
 fn test_smsw_to_r8() {
     let code = [
-        0x4c, 0x0f, 0x01, 0xe0, // SMSW R8
+        0x49, 0x0f, 0x01, 0xe0, // SMSW R8 (REX.B=1 to extend rm to R8)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -196,7 +196,7 @@ fn test_smsw_to_r8() {
 #[test]
 fn test_smsw_to_r15() {
     let code = [
-        0x4c, 0x0f, 0x01, 0xe7, // SMSW R15
+        0x49, 0x0f, 0x01, 0xe7, // SMSW R15 (REX.B=1 to extend rm to R15)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -317,8 +317,8 @@ fn test_smsw_with_conditional() {
 #[test]
 fn test_lmsw_preserves_other_registers() {
     let code = [
-        0x48, 0xc7, 0xc3, 0x77, 0x77, 0x77, 0x77, // MOV RBX, 0x77777777
-        0x48, 0xc7, 0xc1, 0x88, 0x88, 0x88, 0x88, // MOV RCX, 0x88888888
+        0x48, 0xc7, 0xc3, 0x77, 0x77, 0x77, 0x77, // MOV RBX, 0x77777777 (bit 31 clear)
+        0x48, 0xc7, 0xc1, 0x08, 0x08, 0x08, 0x08, // MOV RCX, 0x08080808 (bit 31 clear)
         0x0f, 0x01, 0xe0, // SMSW RAX
         0x0f, 0x01, 0xf0, // LMSW RAX
         0xf4, // HLT
@@ -327,7 +327,7 @@ fn test_lmsw_preserves_other_registers() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rbx, 0x77777777, "RBX should be preserved");
-    assert_eq!(regs.rcx, 0x88888888, "RCX should be preserved");
+    assert_eq!(regs.rcx, 0x08080808, "RCX should be preserved");
 }
 
 // Test SMSW multiple sequential reads

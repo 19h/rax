@@ -1,7 +1,8 @@
-//! BMI1 and BMI2 instruction implementations.
+//! BMI1/BMI2 and related bit-manipulation instruction implementations.
 //!
 //! BMI1: ANDN, BEXTR, BLSI, BLSMSK, BLSR, TZCNT, LZCNT
 //! BMI2: BZHI, MULX, PDEP, PEXT, RORX, SARX, SHRX, SHLX
+//! TBM: BLCFILL, BLCI, BLCS, BLSFILL, BLSIC, T1MSKC, TZMSK (AMD)
 
 use crate::cpu::VcpuExit;
 use crate::error::{Error, Result};
@@ -395,6 +396,76 @@ pub fn shlx(
     let count = (vcpu.get_reg(vvvv, ctx.op_size) & count_mask) as u32;
     let result = src << count;
     vcpu.set_reg(reg, result & mask, ctx.op_size);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+// =============================================================================
+// TBM Instructions (AMD)
+// =============================================================================
+
+/// TBM group (VEX.NDD.LZ.0F38 01 /1,/2,/3,/4,/6,/7)
+/// BLCFILL, BLSFILL, BLCS, TZMSK, BLSIC, T1MSKC
+pub fn tbm_01_group(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    vvvv: u8,
+) -> Result<Option<VcpuExit>> {
+    let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+    let modrm = ctx.peek_u8()?;
+    let reg_op = (modrm >> 3) & 0x07;
+    let (_, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let src = if is_memory {
+        vcpu.read_mem(addr, ctx.op_size)? & mask
+    } else {
+        vcpu.get_reg(rm, ctx.op_size) & mask
+    };
+    let inv = !src & mask;
+    let add1 = src.wrapping_add(1);
+    let sub1 = src.wrapping_sub(1);
+    let result = match reg_op {
+        1 => src & add1,   // BLCFILL: src & (src + 1)
+        2 => src | sub1,   // BLSFILL: src | (src - 1)
+        3 => src | add1,   // BLCS: src | (src + 1)
+        4 => inv & sub1,   // TZMSK: ~src & (src - 1)
+        6 => inv | sub1,   // BLSIC: ~src | (src - 1)
+        7 => inv | add1,   // T1MSKC: ~src | (src + 1)
+        _ => {
+            return Err(Error::Emulator(format!(
+                "unimplemented VEX.0F38.01 /{}",
+                reg_op
+            )))
+        }
+    };
+    vcpu.set_reg(vvvv, result & mask, ctx.op_size);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// BLCI - Isolate Lowest Clear Bit (VEX.NDD.LZ.0F38 02 /6)
+pub fn tbm_blci(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    vvvv: u8,
+) -> Result<Option<VcpuExit>> {
+    let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+    let modrm = ctx.peek_u8()?;
+    let reg_op = (modrm >> 3) & 0x07;
+    if reg_op != 6 {
+        return Err(Error::Emulator(format!(
+            "unimplemented VEX.0F38.02 /{}",
+            reg_op
+        )));
+    }
+    let (_, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let src = if is_memory {
+        vcpu.read_mem(addr, ctx.op_size)? & mask
+    } else {
+        vcpu.get_reg(rm, ctx.op_size) & mask
+    };
+    let inv = !src & mask;
+    let result = inv & src.wrapping_add(1); // BLCI: ~src & (src + 1)
+    vcpu.set_reg(vvvv, result & mask, ctx.op_size);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

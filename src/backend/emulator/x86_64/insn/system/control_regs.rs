@@ -159,6 +159,66 @@ pub fn mov_r_cr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     Ok(None)
 }
 
+/// MOV r64, DRn (0x0F 0x21)
+pub fn mov_r_dr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let modrm = ctx.consume_u8()?;
+    let dr = (modrm >> 3) & 0x07;
+    let rm = (modrm & 0x07) | ctx.rex_b();
+    let value = match dr {
+        0 => vcpu.sregs.dr0,
+        1 => vcpu.sregs.dr1,
+        2 => vcpu.sregs.dr2,
+        3 => vcpu.sregs.dr3,
+        4 | 5 => {
+            // DR4 and DR5 are reserved; they alias DR6 and DR7 when CR4.DE=0
+            if vcpu.sregs.cr4 & (1 << 3) != 0 {
+                return Err(Error::Emulator(format!("MOV r, DR{}: #UD when CR4.DE=1", dr)));
+            }
+            if dr == 4 {
+                vcpu.sregs.dr6
+            } else {
+                vcpu.sregs.dr7
+            }
+        }
+        6 => vcpu.sregs.dr6,
+        7 => vcpu.sregs.dr7,
+        _ => return Err(Error::Emulator(format!("MOV r, DR{}: unsupported", dr))),
+    };
+    vcpu.set_reg(rm, value, 8);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// MOV DRn, r64 (0x0F 0x23)
+pub fn mov_dr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let modrm = ctx.consume_u8()?;
+    let dr = (modrm >> 3) & 0x07;
+    let rm = (modrm & 0x07) | ctx.rex_b();
+    let value = vcpu.get_reg(rm, 8);
+    match dr {
+        0 => vcpu.sregs.dr0 = value,
+        1 => vcpu.sregs.dr1 = value,
+        2 => vcpu.sregs.dr2 = value,
+        3 => vcpu.sregs.dr3 = value,
+        4 | 5 => {
+            // DR4 and DR5 are reserved; they alias DR6 and DR7 when CR4.DE=0
+            if vcpu.sregs.cr4 & (1 << 3) != 0 {
+                return Err(Error::Emulator(format!("MOV DR{}, r: #UD when CR4.DE=1", dr)));
+            }
+            if dr == 4 {
+                vcpu.sregs.dr6 = value;
+            } else {
+                vcpu.sregs.dr7 = value;
+            }
+        }
+        6 => vcpu.sregs.dr6 = value,
+        7 => vcpu.sregs.dr7 = value,
+        _ => return Err(Error::Emulator(format!("MOV DR{}, r: unsupported", dr))),
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
 /// MOV CRn, r64 (0x0F 0x22)
 pub fn mov_cr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let modrm = ctx.consume_u8()?;

@@ -86,6 +86,10 @@ impl X86_64Vcpu {
         // VEX.LZ.0F38 BMI1/BMI2 instructions
         if m_mmmm == 0x2 && vex_l == 0 {
             match (vex_pp, opcode) {
+                // TBM group: VEX.NDD.LZ.0F38 01 /1,/2,/3,/4,/6,/7
+                (0, 0x01) => return insn::bmi::tbm_01_group(self, ctx, vvvv),
+                // BLCI: VEX.NDD.LZ.0F38 02 /6
+                (0, 0x02) => return insn::bmi::tbm_blci(self, ctx, vvvv),
                 // ANDN: VEX.LZ.0F38.W{0,1} F2 /r
                 (0, 0xF2) => return insn::bmi::andn(self, ctx, vvvv),
                 // BLSI/BLSMSK/BLSR: VEX.LZ.0F38.W{0,1} F3 /1,/2,/3
@@ -262,6 +266,22 @@ impl X86_64Vcpu {
                 // VEX rounding scalar float-to-int: VCVTSS2SI (0x2D with F3), VCVTSD2SI (0x2D with F2)
                 (2, 0x2D) | (3, 0x2D) => {
                     return self.execute_vex_cvts2si(ctx, vex_pp, vex_w);
+                }
+
+                // VEX scalar moves: VMOVSS/VMOVSD (0x10/0x11 with F3/F2)
+                (2, 0x10) | (2, 0x11) | (3, 0x10) | (3, 0x11) => {
+                    return self.execute_vex_movss_sd(ctx, vex_pp, vex_l, vvvv, opcode);
+                }
+
+                // VEX duplicate moves: VMOVSLDUP/VMOVSHDUP/VMOVDDUP
+                (2, 0x12) => {
+                    return self.execute_vex_movsldup(ctx, vex_l, vvvv);
+                }
+                (2, 0x16) => {
+                    return self.execute_vex_movshdup(ctx, vex_l, vvvv);
+                }
+                (3, 0x12) => {
+                    return self.execute_vex_movddup(ctx, vex_l, vvvv);
                 }
 
                 // VSHUFPS (0xC6 with NP), VSHUFPD (0xC6 with 66)
@@ -500,6 +520,23 @@ impl X86_64Vcpu {
                     return self.execute_vex_cmp(ctx, vex_pp, vex_l, vvvv);
                 }
 
+                // VCOMISS/VUCOMISS/VCOMISD/VUCOMISD (0x2E/0x2F)
+                (0, 0x2E) | (1, 0x2E) => {
+                    return self.execute_vex_ucomis(ctx, vex_pp);
+                }
+                (0, 0x2F) | (1, 0x2F) => {
+                    return self.execute_vex_comis(ctx, vex_pp);
+                }
+
+                // VMOVLPS/VMOVHPS/VMOVHLPS/VMOVLHPS (0x12/0x16 with NP)
+                (0, 0x12) | (0, 0x16) => {
+                    return self.execute_vex_movlps_hps(ctx, vex_l, vvvv, opcode);
+                }
+                // VMOVLPD/VMOVHPD (0x12/0x16 with 66)
+                (1, 0x12) | (1, 0x16) => {
+                    return self.execute_vex_movlpd_hpd(ctx, vex_l, vvvv, opcode);
+                }
+
                 // VEX packed integer shift by immediate (Group 12/13/14)
                 // VPSLLW/VPSRAW/VPSRLW (0x71), VPSLLD/VPSRAD/VPSRLD (0x72), VPSLLQ/VPSRLQ/VPSLLDQ/VPSRLDQ (0x73)
                 (1, 0x71) | (1, 0x72) | (1, 0x73) => {
@@ -562,6 +599,11 @@ impl X86_64Vcpu {
                     return self.execute_vex_packed_int_arith(ctx, vex_l, vvvv, opcode);
                 }
 
+                // VMOVNTPS/VMOVNTPD (0x2B), VMOVNTDQ (0xE7)
+                (0, 0x2B) | (1, 0x2B) | (1, 0xE7) => {
+                    return self.execute_vex_movnt_store(ctx, vex_l, vvvv);
+                }
+
                 _ => {}
             }
         }
@@ -612,6 +654,32 @@ impl X86_64Vcpu {
                 // VPBLENDVB ymm1/xmm1, ymm2/xmm2, ymm3/m, xmm4
                 0x4C => {
                     return self.execute_vex_pblendvb(ctx, vex_l, vvvv);
+                }
+                // VPERMILPS/VPERMILPD (imm8)
+                0x04 => {
+                    return self.execute_vex_permilps_imm(ctx, vex_l, vvvv);
+                }
+                0x05 => {
+                    return self.execute_vex_permilpd_imm(ctx, vex_l, vvvv);
+                }
+                // VBLENDPS/VBLENDPD (imm8)
+                0x0C | 0x0D => {
+                    return self.execute_vex_blend_imm(ctx, vex_l, vvvv, opcode);
+                }
+                // VBLENDVPS/VBLENDVPD (mask in imm8[7:4])
+                0x4A | 0x4B => {
+                    return self.execute_vex_blendv(ctx, vex_l, vvvv, opcode);
+                }
+                // VROUNDPS/VROUNDPD/VROUNDSS/VROUNDSD (imm8)
+                0x08 | 0x09 => {
+                    return self.execute_vex_roundp(ctx, vex_l, vvvv, opcode);
+                }
+                0x0A | 0x0B => {
+                    return self.execute_vex_rounds(ctx, vvvv, opcode);
+                }
+                // VDPPS/VDPPD (imm8)
+                0x40 | 0x41 => {
+                    return self.execute_vex_dp(ctx, vex_l, vvvv, opcode);
                 }
                 // VPERMQ/VPERMPD (imm8)
                 0x00 | 0x01 => {
@@ -673,6 +741,22 @@ impl X86_64Vcpu {
                 // VPERMILPD: permute double-precision floating-point
                 0x0D => {
                     return self.execute_vex_permilpd_reg(ctx, vex_l, vvvv);
+                }
+                // VBROADCASTSS/VBROADCASTSD
+                0x18 | 0x19 => {
+                    return self.execute_vex_broadcast_fp(ctx, vex_l, vvvv, opcode);
+                }
+                // VTESTPS/VTESTPD
+                0x0E | 0x0F => {
+                    return self.execute_vex_vtest(ctx, vex_l, vvvv, opcode);
+                }
+                // VMOVNTDQA
+                0x2A => {
+                    return self.execute_vex_movntdqa(ctx, vex_l, vvvv);
+                }
+                // VMASKMOVPS/VMASKMOVPD
+                0x2C | 0x2D | 0x2E | 0x2F => {
+                    return self.execute_vex_maskmov_fp(ctx, vex_l, vvvv, opcode);
                 }
                 // VPBROADCASTB/W/D/Q: broadcast
                 0x78 | 0x79 | 0x58 | 0x59 => {
@@ -794,8 +878,10 @@ mod arith;
 mod logical;
 mod convert;
 mod fma;
+mod r#move;
 mod shuffle;
 mod shift;
 mod integer;
 mod misc;
 mod gather;
+mod compare;

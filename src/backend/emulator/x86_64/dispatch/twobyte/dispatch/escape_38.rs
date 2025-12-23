@@ -289,43 +289,105 @@ impl X86_64Vcpu {
                 Ok(None)
             }
 
-            // ===== MOVBE Instructions (existing) =====
+            // ===== CRC32 / MOVBE Instructions =====
+            // CRC32 uses F2 prefix, MOVBE doesn't
 
-            // MOVBE r, m16/32/64 (load with byte swap)
+            // CRC32 r32, r/m8 (F2 0F 38 F0) or MOVBE r, m16/32/64 (0F 38 F0)
             0xF0 => {
-                let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-                if !is_memory {
-                    return Err(Error::Emulator("MOVBE requires memory operand".to_string()));
+                if ctx.rep_prefix == Some(0xF2) {
+                    // CRC32 r32/r64, r/m8
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let src = if is_memory {
+                        self.read_mem(addr, 1)? as u8
+                    } else {
+                        self.get_reg(rm, 1) as u8
+                    };
+                    let crc_in = self.get_reg(reg, 4) as u32;
+                    let crc_out = crc32c_u8(crc_in, src);
+                    if ctx.rex_w() {
+                        self.set_reg(reg, crc_out as u64, 8);
+                    } else {
+                        self.set_reg(reg, crc_out as u64, 4);
+                    }
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                } else {
+                    // MOVBE r, m16/32/64 (load with byte swap)
+                    let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    if !is_memory {
+                        return Err(Error::Emulator("MOVBE requires memory operand".to_string()));
+                    }
+                    let size = ctx.op_size;
+                    let value = self.read_mem(addr, size)?;
+                    let swapped = match size {
+                        2 => (value as u16).swap_bytes() as u64,
+                        4 => (value as u32).swap_bytes() as u64,
+                        8 => value.swap_bytes(),
+                        _ => value,
+                    };
+                    self.set_reg(reg, swapped, size);
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
                 }
-                let size = ctx.op_size;
-                let value = self.read_mem(addr, size)?;
-                let swapped = match size {
-                    2 => (value as u16).swap_bytes() as u64,
-                    4 => (value as u32).swap_bytes() as u64,
-                    8 => value.swap_bytes(),
-                    _ => value,
-                };
-                self.set_reg(reg, swapped, size);
-                self.regs.rip += ctx.cursor as u64;
-                Ok(None)
             }
-            // MOVBE m16/32/64, r (store with byte swap)
+            // CRC32 r32, r/m16/32/64 (F2 0F 38 F1) or MOVBE m16/32/64, r (0F 38 F1)
             0xF1 => {
-                let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-                if !is_memory {
-                    return Err(Error::Emulator("MOVBE requires memory operand".to_string()));
+                if ctx.rep_prefix == Some(0xF2) {
+                    // CRC32 r32/r64, r/m16/32/64
+                    let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    let crc_in = self.get_reg(reg, 4) as u32;
+
+                    let crc_out = if ctx.rex_w() {
+                        // 64-bit source
+                        let src = if is_memory {
+                            self.read_mem(addr, 8)?
+                        } else {
+                            self.get_reg(rm, 8)
+                        };
+                        crc32c_u64(crc_in, src)
+                    } else if ctx.operand_size_override {
+                        // 16-bit source
+                        let src = if is_memory {
+                            self.read_mem(addr, 2)? as u16
+                        } else {
+                            self.get_reg(rm, 2) as u16
+                        };
+                        crc32c_u16(crc_in, src)
+                    } else {
+                        // 32-bit source
+                        let src = if is_memory {
+                            self.read_mem(addr, 4)? as u32
+                        } else {
+                            self.get_reg(rm, 4) as u32
+                        };
+                        crc32c_u32(crc_in, src)
+                    };
+
+                    if ctx.rex_w() {
+                        self.set_reg(reg, crc_out as u64, 8);
+                    } else {
+                        self.set_reg(reg, crc_out as u64, 4);
+                    }
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                } else {
+                    // MOVBE m16/32/64, r (store with byte swap)
+                    let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+                    if !is_memory {
+                        return Err(Error::Emulator("MOVBE requires memory operand".to_string()));
+                    }
+                    let size = ctx.op_size;
+                    let value = self.get_reg(reg, size);
+                    let swapped = match size {
+                        2 => (value as u16).swap_bytes() as u64,
+                        4 => (value as u32).swap_bytes() as u64,
+                        8 => value.swap_bytes(),
+                        _ => value,
+                    };
+                    self.write_mem(addr, swapped, size)?;
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
                 }
-                let size = ctx.op_size;
-                let value = self.get_reg(reg, size);
-                let swapped = match size {
-                    2 => (value as u16).swap_bytes() as u64,
-                    4 => (value as u32).swap_bytes() as u64,
-                    8 => value.swap_bytes(),
-                    _ => value,
-                };
-                self.write_mem(addr, swapped, size)?;
-                self.regs.rip += ctx.cursor as u64;
-                Ok(None)
             }
 
             _ => Err(Error::Emulator(format!(
@@ -334,4 +396,52 @@ impl X86_64Vcpu {
             ))),
         }
     }
+}
+
+// CRC-32C polynomial (Castagnoli) in reflected form
+const CRC32C_POLY: u32 = 0x82F63B78;
+
+/// Compute CRC32C for a single byte
+fn crc32c_u8(crc: u32, data: u8) -> u32 {
+    let mut crc = crc ^ (data as u32);
+    for _ in 0..8 {
+        if crc & 1 != 0 {
+            crc = (crc >> 1) ^ CRC32C_POLY;
+        } else {
+            crc >>= 1;
+        }
+    }
+    crc
+}
+
+/// Compute CRC32C for a 16-bit word
+fn crc32c_u16(crc: u32, data: u16) -> u32 {
+    let mut crc = crc;
+    crc = crc32c_u8(crc, data as u8);
+    crc = crc32c_u8(crc, (data >> 8) as u8);
+    crc
+}
+
+/// Compute CRC32C for a 32-bit dword
+fn crc32c_u32(crc: u32, data: u32) -> u32 {
+    let mut crc = crc;
+    crc = crc32c_u8(crc, data as u8);
+    crc = crc32c_u8(crc, (data >> 8) as u8);
+    crc = crc32c_u8(crc, (data >> 16) as u8);
+    crc = crc32c_u8(crc, (data >> 24) as u8);
+    crc
+}
+
+/// Compute CRC32C for a 64-bit qword
+fn crc32c_u64(crc: u32, data: u64) -> u32 {
+    let mut crc = crc;
+    crc = crc32c_u8(crc, data as u8);
+    crc = crc32c_u8(crc, (data >> 8) as u8);
+    crc = crc32c_u8(crc, (data >> 16) as u8);
+    crc = crc32c_u8(crc, (data >> 24) as u8);
+    crc = crc32c_u8(crc, (data >> 32) as u8);
+    crc = crc32c_u8(crc, (data >> 40) as u8);
+    crc = crc32c_u8(crc, (data >> 48) as u8);
+    crc = crc32c_u8(crc, (data >> 56) as u8);
+    crc
 }

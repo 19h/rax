@@ -26,6 +26,21 @@ fn read_mem_at_u64(mem: &GuestMemoryMmap, addr: u64) -> u64 {
     u64::from_le_bytes(buf)
 }
 
+fn packuswb_expected(dst: u64, src: u64) -> u64 {
+    let mut result = 0u64;
+    for i in 0..4 {
+        let w = ((dst >> (i * 16)) & 0xFFFF) as i16;
+        let b = w.clamp(0, 255) as u8;
+        result |= (b as u64) << (i * 8);
+    }
+    for i in 0..4 {
+        let w = ((src >> (i * 16)) & 0xFFFF) as i16;
+        let b = w.clamp(0, 255) as u8;
+        result |= (b as u64) << ((i + 4) * 8);
+    }
+    result
+}
+
 // ============================================================================
 // PACKUSWB mm, mm/m64 (opcode 0F 67 /r) - Pack signed words to unsigned bytes
 // ============================================================================
@@ -52,7 +67,11 @@ fn test_packuswb_mm_mm_basic() {
 
     // Result: 8 bytes from 4 words of MM0 then 4 words of MM1
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x0807060504030201, "PACKUSWB: basic packing");
+    assert_eq!(
+        result,
+        packuswb_expected(0x0004000300020001, 0x0008000700060005),
+        "PACKUSWB: basic packing"
+    );
 }
 
 #[test]
@@ -76,7 +95,11 @@ fn test_packuswb_mm_mm_positive_saturation() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // 0200->FF, 0100->FF, 00FF->FF, 0100->FF, FFFF->00, 0000->00, 0001->01, 7FFF->FF
-    assert_eq!(result, 0xFF0100000FFFFFFF, "PACKUSWB: positive saturation");
+    assert_eq!(
+        result,
+        packuswb_expected(0x010000FF01000200, 0x7FFF00010000FFFF),
+        "PACKUSWB: positive saturation"
+    );
 }
 
 #[test]
@@ -99,7 +122,11 @@ fn test_packuswb_mm_mm_negative_saturation() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x0000000000000000, "PACKUSWB: negative saturation");
+    assert_eq!(
+        result,
+        packuswb_expected(0xFFFFFFFFFFFF8000, 0xFF00FF01FF80FFFE),
+        "PACKUSWB: negative saturation"
+    );
 }
 
 #[test]
@@ -120,7 +147,11 @@ fn test_packuswb_mm_m64() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x8070605040302010, "PACKUSWB: memory operand");
+    assert_eq!(
+        result,
+        packuswb_expected(0x0010002000300040, 0x0050006000700080),
+        "PACKUSWB: memory operand"
+    );
 }
 
 #[test]
@@ -141,7 +172,11 @@ fn test_packuswb_all_zeros() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x0000000000000000, "PACKUSWB: all zeros");
+    assert_eq!(
+        result,
+        packuswb_expected(0x0000000000000000, 0x0000000000000000),
+        "PACKUSWB: all zeros"
+    );
 }
 
 #[test]
@@ -164,7 +199,11 @@ fn test_packuswb_boundary_values() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // 00FF->FF, 0000->00, 0100->FF, 0100->FF, 0000->00, 0001->01, FFFF->00, 0000->00
-    assert_eq!(result, 0x000001000000FFFFFF, "PACKUSWB: boundary values");
+    assert_eq!(
+        result,
+        packuswb_expected(0x01000100000000FF, 0x0000FFFF00010000),
+        "PACKUSWB: boundary values"
+    );
 }
 
 #[test]
@@ -185,7 +224,11 @@ fn test_packuswb_mm3_mm4() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x11100F0E0D0C0B0A, "PACKUSWB: MM3 with MM4");
+    assert_eq!(
+        result,
+        packuswb_expected(0x000A000B000C000D, 0x000E000F00100011),
+        "PACKUSWB: MM3 with MM4"
+    );
 }
 
 #[test]
@@ -207,7 +250,11 @@ fn test_packuswb_max_saturation() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0xFFFFFFFFFFFFFFFF, "PACKUSWB: all max saturation");
+    assert_eq!(
+        result,
+        packuswb_expected(0x7FFF7FFF7FFF7FFF, 0x0FFF0FFF0FFF0FFF),
+        "PACKUSWB: all max saturation"
+    );
 }
 
 #[test]
@@ -229,7 +276,11 @@ fn test_packuswb_min_saturation() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x0000000000000000, "PACKUSWB: all min saturation");
+    assert_eq!(
+        result,
+        packuswb_expected(0x8000800080008000, 0xFFFFFFFFFFFFFFFF),
+        "PACKUSWB: all min saturation"
+    );
 }
 
 #[test]
@@ -252,7 +303,11 @@ fn test_packuswb_mixed_saturation() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // 007F->7F, 8000->00, 00FF->FF, 0100->FF, 0001->01, 0FFF->FF, 0000->00, FFFF->00
-    assert_eq!(result, 0x0000FF0100FF00FF7F, "PACKUSWB: mixed saturation");
+    assert_eq!(
+        result,
+        packuswb_expected(0x010000FF8000007F, 0xFFFF00000FFF0001),
+        "PACKUSWB: mixed saturation"
+    );
 }
 
 #[test]
@@ -273,7 +328,11 @@ fn test_packuswb_sequential_values() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x0807060504030201, "PACKUSWB: sequential values");
+    assert_eq!(
+        result,
+        packuswb_expected(0x0001000200030004, 0x0005000600070008),
+        "PACKUSWB: sequential values"
+    );
 }
 
 #[test]
@@ -296,7 +355,11 @@ fn test_packuswb_alternating_saturation() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // 00FF->FF, FFFF->00, 0001->01, 7FFF->FF, 0000->00, FFFF->00, 7FFF->FF, 0001->01
-    assert_eq!(result, 0x01FF000000FF0100, "PACKUSWB: alternating saturation");
+    assert_eq!(
+        result,
+        packuswb_expected(0x7FFF0001FFFF00FF, 0x00017FFF0000FFFF),
+        "PACKUSWB: alternating saturation"
+    );
 }
 
 #[test]
@@ -320,7 +383,11 @@ fn test_packuswb_register_independence() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let mm0_result = read_mem_at_u64(&mem, 0x2018);
-    assert_eq!(mm0_result, 0x0807060504030201, "PACKUSWB: MM0 result");
+    assert_eq!(
+        mm0_result,
+        packuswb_expected(0x0001000200030004, 0x0005000600070008),
+        "PACKUSWB: MM0 result"
+    );
 
     let mm2_result = read_mem_at_u64(&mem, 0x2020);
     assert_eq!(mm2_result, 0x1111111111111111, "PACKUSWB: MM2 unchanged");
@@ -344,7 +411,11 @@ fn test_packuswb_mm5_mm6() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x561200AB00EF00, "PACKUSWB: MM5 with MM6");
+    assert_eq!(
+        result,
+        packuswb_expected(0x000000AB000000EF, 0x0000001200000056),
+        "PACKUSWB: MM5 with MM6"
+    );
 }
 
 #[test]
@@ -368,7 +439,11 @@ fn test_packuswb_just_in_range() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // 00FF->FF, 00FE->FE, 0080->80, 007F->7F, 007F->7F, 0001->01, 0001->01, 0000->00
-    assert_eq!(result, 0x7F0101000080FEFF, "PACKUSWB: just in range");
+    assert_eq!(
+        result,
+        packuswb_expected(0x007F008000FE00FF, 0x000000010001007F),
+        "PACKUSWB: just in range"
+    );
 }
 
 #[test]
@@ -391,7 +466,11 @@ fn test_packuswb_one_above_max() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // 0100->FF, 00FF->FF, 00FE->FE, 0100->FF, all others 0
-    assert_eq!(result, 0x00000000FFFEFF, "PACKUSWB: one above max");
+    assert_eq!(
+        result,
+        packuswb_expected(0x010000FE00FF0100, 0x0000000000000000),
+        "PACKUSWB: one above max"
+    );
 }
 
 #[test]
@@ -413,7 +492,11 @@ fn test_packuswb_minus_one() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x0000000000000000, "PACKUSWB: negative values to zero");
+    assert_eq!(
+        result,
+        packuswb_expected(0xFFFFFFFFFFFFFFFF, 0xFFFEFFFDFFFCFFFB),
+        "PACKUSWB: negative values to zero"
+    );
 }
 
 #[test]
@@ -436,7 +519,11 @@ fn test_packuswb_large_positive() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // All saturate to FF
-    assert_eq!(result, 0xFFFFFFFFFFFFFFFF, "PACKUSWB: large positive");
+    assert_eq!(
+        result,
+        packuswb_expected(0x1000200030004000, 0x5000600070007FFF),
+        "PACKUSWB: large positive"
+    );
 }
 
 #[test]
@@ -458,7 +545,11 @@ fn test_packuswb_mm7_mm0() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // 00FF->FF, 00FE->FE, 0030->30, 0020->20, 20AB->FF, 0100->FF, 0000->00, FFFF->00
-    assert_eq!(result, 0x00FF000020FEFF, "PACKUSWB: MM7 with MM0");
+    assert_eq!(
+        result,
+        packuswb_expected(0x0020003000FE00FF, 0xFFFF0000010020AB),
+        "PACKUSWB: MM7 with MM0"
+    );
 }
 
 #[test]
@@ -479,7 +570,11 @@ fn test_packuswb_pattern_01() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x0101010101010101, "PACKUSWB: pattern 01");
+    assert_eq!(
+        result,
+        packuswb_expected(0x0001000100010001, 0x0001000100010001),
+        "PACKUSWB: pattern 01"
+    );
 }
 
 #[test]
@@ -500,7 +595,11 @@ fn test_packuswb_pattern_ff() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0xFFFFFFFFFFFFFFFF, "PACKUSWB: pattern FF");
+    assert_eq!(
+        result,
+        packuswb_expected(0x00FF00FF00FF00FF, 0x00FF00FF00FF00FF),
+        "PACKUSWB: pattern FF"
+    );
 }
 
 #[test]
@@ -523,7 +622,11 @@ fn test_packuswb_half_saturate() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // 0100->FF, 0001->01, 7FFF->FF, 0001->01, 0100->FF, 0001->01, 0100->FF, 0001->01
-    assert_eq!(result, 0x01FF01FF01FF01FF, "PACKUSWB: half saturate");
+    assert_eq!(
+        result,
+        packuswb_expected(0x0001010000010100, 0x00017FFF00010100),
+        "PACKUSWB: half saturate"
+    );
 }
 
 #[test]
@@ -545,7 +648,11 @@ fn test_packuswb_ascending_values() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // 3C 2D 1E 0F from MM0, 78 69 5A 4B from MM1
-    assert_eq!(result, 0x78695A4B3C2D1E0F, "PACKUSWB: ascending values");
+    assert_eq!(
+        result,
+        packuswb_expected(0x000F001E002D003C, 0x004B005A00690078),
+        "PACKUSWB: ascending values"
+    );
 }
 
 #[test]
@@ -567,7 +674,11 @@ fn test_packuswb_descending_values() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // 90 B0 D0 F0 from MM0, 10 30 50 70 from MM1
-    assert_eq!(result, 0x1030507090B0D0F0, "PACKUSWB: descending values");
+    assert_eq!(
+        result,
+        packuswb_expected(0x00F000D000B00090, 0x0070005000300010),
+        "PACKUSWB: descending values"
+    );
 }
 
 #[test]
@@ -590,7 +701,11 @@ fn test_packuswb_mixed_range() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // FFFF->00, 0100->FF, 007F->7F, 0001->01, 0080->80, 0100->FF, 7FFF->FF, 0000->00
-    assert_eq!(result, 0x00FF0080017F00, "PACKUSWB: mixed range");
+    assert_eq!(
+        result,
+        packuswb_expected(0x0001007F0100FFFF, 0x00007FFF01000080),
+        "PACKUSWB: mixed range"
+    );
 }
 
 #[test]
@@ -611,5 +726,9 @@ fn test_packuswb_hex_pattern() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0xCDABFFEEDDCCBBAA, "PACKUSWB: hex pattern");
+    assert_eq!(
+        result,
+        packuswb_expected(0x00AA00BB00CC00DD, 0x00EE00FF00AB00CD),
+        "PACKUSWB: hex pattern"
+    );
 }

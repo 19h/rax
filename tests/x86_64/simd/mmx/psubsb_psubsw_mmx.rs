@@ -109,7 +109,7 @@ fn test_psubsb_mixed_signs() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x05B00F00F2B48010, "PSUBSB: mixed signs");
+    assert_eq!(result, 0x05B00F00D2B4E010, "PSUBSB: mixed signs");
 }
 
 #[test]
@@ -197,7 +197,7 @@ fn test_psubsb_alternating_pattern() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x7E017E017E017E01, "PSUBSB: alternating pattern");
+    assert_eq!(result, 0x7E807E807E807E80, "PSUBSB: alternating pattern");
 }
 
 #[test]
@@ -260,12 +260,12 @@ fn test_psubsw_basic() {
 
     // 1000-100=900, 2000-200=1800, 3000-300=2700, 4000-400=3600
     write_mm_via_mem(&mem, 0x2000, 0x0FA00BB807D003E8);
-    write_mm_via_mem(&mem, 0x2008, 0x019000C800640000);
+    write_mm_via_mem(&mem, 0x2008, 0x0190012C00C80064);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x0E100AF007080384, "PSUBSW: basic subtraction");
+    assert_eq!(result, 0x0E100A8C07080384, "PSUBSW: basic subtraction");
 }
 
 #[test]
@@ -331,7 +331,7 @@ fn test_psubsw_mixed_signs() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0xFF9C00B867008000, "PSUBSW: mixed signs");
+    assert_eq!(result, 0xFF9C00B86700D000, "PSUBSW: mixed signs");
 }
 
 #[test]
@@ -419,7 +419,7 @@ fn test_psubsw_alternating_pattern() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    assert_eq!(result, 0x7FFE80017FFE8001, "PSUBSW: alternating pattern");
+    assert_eq!(result, 0x7FFE80007FFE8000, "PSUBSW: alternating pattern");
 }
 
 #[test]

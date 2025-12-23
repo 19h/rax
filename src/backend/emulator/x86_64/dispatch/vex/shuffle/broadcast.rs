@@ -95,4 +95,56 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_broadcast_fp(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vvvv != 0 {
+            return Err(Error::Emulator("VBROADCASTSS/SD require VEX.vvvv=1111b".to_string()));
+        }
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_dst = reg as usize;
+
+        if opcode == 0x18 {
+            // VBROADCASTSS
+            let val = if is_memory {
+                self.read_mem(addr, 4)? as u32
+            } else {
+                self.regs.xmm[rm as usize][0] as u32
+            };
+            let pair = (val as u64) | ((val as u64) << 32);
+            self.regs.xmm[xmm_dst][0] = pair;
+            self.regs.xmm[xmm_dst][1] = pair;
+            if vex_l == 1 {
+                self.regs.ymm_high[xmm_dst][0] = pair;
+                self.regs.ymm_high[xmm_dst][1] = pair;
+            } else {
+                self.regs.ymm_high[xmm_dst][0] = 0;
+                self.regs.ymm_high[xmm_dst][1] = 0;
+            }
+        } else {
+            // VBROADCASTSD
+            let val = if is_memory {
+                self.read_mem(addr, 8)?
+            } else {
+                self.regs.xmm[rm as usize][0]
+            };
+            self.regs.xmm[xmm_dst][0] = val;
+            self.regs.xmm[xmm_dst][1] = val;
+            if vex_l == 1 {
+                self.regs.ymm_high[xmm_dst][0] = val;
+                self.regs.ymm_high[xmm_dst][1] = val;
+            } else {
+                self.regs.ymm_high[xmm_dst][0] = 0;
+                self.regs.ymm_high[xmm_dst][1] = 0;
+            }
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
 }

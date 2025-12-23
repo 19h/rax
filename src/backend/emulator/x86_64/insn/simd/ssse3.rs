@@ -710,11 +710,11 @@ pub fn pabsb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         let mut result_hi = 0u64;
         for i in 0..8 {
             let b = ((src_lo >> (i * 8)) & 0xFF) as i8;
-            result_lo |= ((b.abs() as u8) as u64) << (i * 8);
+            result_lo |= ((b.wrapping_abs() as u8) as u64) << (i * 8);
         }
         for i in 0..8 {
             let b = ((src_hi >> (i * 8)) & 0xFF) as i8;
-            result_hi |= ((b.abs() as u8) as u64) << (i * 8);
+            result_hi |= ((b.wrapping_abs() as u8) as u64) << (i * 8);
         }
         vcpu.regs.xmm[xmm_dst][0] = result_lo;
         vcpu.regs.xmm[xmm_dst][1] = result_hi;
@@ -728,7 +728,7 @@ pub fn pabsb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         let mut result = 0u64;
         for i in 0..8 {
             let b = ((src >> (i * 8)) & 0xFF) as i8;
-            result |= ((b.abs() as u8) as u64) << (i * 8);
+            result |= ((b.wrapping_abs() as u8) as u64) << (i * 8);
         }
         vcpu.regs.mm[mm_dst] = result;
     }
@@ -754,11 +754,11 @@ pub fn pabsw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         let mut result_hi = 0u64;
         for i in 0..4 {
             let w = ((src_lo >> (i * 16)) & 0xFFFF) as i16;
-            result_lo |= ((w.abs() as u16) as u64) << (i * 16);
+            result_lo |= ((w.wrapping_abs() as u16) as u64) << (i * 16);
         }
         for i in 0..4 {
             let w = ((src_hi >> (i * 16)) & 0xFFFF) as i16;
-            result_hi |= ((w.abs() as u16) as u64) << (i * 16);
+            result_hi |= ((w.wrapping_abs() as u16) as u64) << (i * 16);
         }
         vcpu.regs.xmm[xmm_dst][0] = result_lo;
         vcpu.regs.xmm[xmm_dst][1] = result_hi;
@@ -772,7 +772,7 @@ pub fn pabsw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         let mut result = 0u64;
         for i in 0..4 {
             let w = ((src >> (i * 16)) & 0xFFFF) as i16;
-            result |= ((w.abs() as u16) as u64) << (i * 16);
+            result |= ((w.wrapping_abs() as u16) as u64) << (i * 16);
         }
         vcpu.regs.mm[mm_dst] = result;
     }
@@ -798,11 +798,11 @@ pub fn pabsd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         let mut result_hi = 0u64;
         for i in 0..2 {
             let d = ((src_lo >> (i * 32)) & 0xFFFFFFFF) as i32;
-            result_lo |= ((d.abs() as u32) as u64) << (i * 32);
+            result_lo |= ((d.wrapping_abs() as u32) as u64) << (i * 32);
         }
         for i in 0..2 {
             let d = ((src_hi >> (i * 32)) & 0xFFFFFFFF) as i32;
-            result_hi |= ((d.abs() as u32) as u64) << (i * 32);
+            result_hi |= ((d.wrapping_abs() as u32) as u64) << (i * 32);
         }
         vcpu.regs.xmm[xmm_dst][0] = result_lo;
         vcpu.regs.xmm[xmm_dst][1] = result_hi;
@@ -816,7 +816,7 @@ pub fn pabsd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         let mut result = 0u64;
         for i in 0..2 {
             let d = ((src >> (i * 32)) & 0xFFFFFFFF) as i32;
-            result |= ((d.abs() as u32) as u64) << (i * 32);
+            result |= ((d.wrapping_abs() as u32) as u64) << (i * 32);
         }
         vcpu.regs.mm[mm_dst] = result;
     }

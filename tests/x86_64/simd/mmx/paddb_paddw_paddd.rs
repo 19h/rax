@@ -201,7 +201,7 @@ fn test_paddb_signed_unsigned() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // 7F+01=80, 80+80=00, FF+01=00, 00+01=01, 01+01=02, FE+02=00, 80+7F=FF, 01+FE=FF
-    assert_eq!(result, 0x800001020200FFFF, "PADDB: signed/unsigned mix");
+    assert_eq!(result, 0x800000010200FFFF, "PADDB: signed/unsigned mix");
 }
 
 // ============================================================================
@@ -659,7 +659,7 @@ fn test_paddw_boundary() {
 
     let result = read_mem_at_u64(&mem, 0x2010);
     // 0001+FFFF=0000, 7FFF+0001=8000, 0001+FFFF=0000, 7FFF+0001=8000
-    assert_eq!(result, 0x800000008000000, "PADDW: boundary conditions");
+    assert_eq!(result, 0x8000000080000000, "PADDW: boundary conditions");
 }
 
 #[test]

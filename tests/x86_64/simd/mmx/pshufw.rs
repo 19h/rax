@@ -255,7 +255,7 @@ fn test_pshufw_pattern_1032() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0x2222_1111_4444_3333,
+    assert_eq!(result, 0x3333_4444_1111_2222,
         "Should shuffle to pattern 1,0,3,2");
 }
 
@@ -371,7 +371,7 @@ fn test_pshufw_mm2_mm3() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0xCCCC_AAAA_BBBB_DDDD,
+    assert_eq!(result, 0xAAAA_DDDD_CCCC_BBBB,
         "Should shuffle to pattern 3,0,1,2");
 }
 
@@ -543,7 +543,7 @@ fn test_pshufw_high_low_swap() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x3000);
-    assert_eq!(result, 0x5678_1234_EF01_ABCD,
+    assert_eq!(result, 0xABCD_EF01_1234_5678,
         "Should swap high and low dwords");
 }
 

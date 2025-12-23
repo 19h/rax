@@ -140,19 +140,19 @@ fn test_rdpid_preserves_flags() {
 #[test]
 fn test_rdpid_preserves_other_registers() {
     let code = [
-        0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242
-        0x48, 0xc7, 0xc6, 0xaa, 0xaa, 0xaa, 0xaa, // MOV RSI, 0xaaaaaaaa
-        0x48, 0xc7, 0xc7, 0x99, 0x99, 0x99, 0x99, // MOV RDI, 0x99999999
+        0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42, 0x42, // MOV RBX, 0x42424242 (bit 31 clear, no sign-ext)
+        0x48, 0xc7, 0xc6, 0x2a, 0x2a, 0x2a, 0x2a, // MOV RSI, 0x2a2a2a2a (bit 31 clear, no sign-ext)
+        0x48, 0xc7, 0xc7, 0x19, 0x19, 0x19, 0x19, // MOV RDI, 0x19191919 (bit 31 clear, no sign-ext)
         0xf3, 0x0f, 0xc7, 0xf8, // RDPID RAX
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // RBX, RSI, RDI should be unchanged
+    // RBX, RSI, RDI should be unchanged (MOV r64, imm32 sign-extends, use values with bit 31 clear)
     assert_eq!(regs.rbx, 0x42424242, "RBX should not be affected");
-    assert_eq!(regs.rsi, 0xaaaaaaaa, "RSI should not be affected");
-    assert_eq!(regs.rdi, 0x99999999, "RDI should not be affected");
+    assert_eq!(regs.rsi, 0x2a2a2a2a, "RSI should not be affected");
+    assert_eq!(regs.rdi, 0x19191919, "RDI should not be affected");
 }
 
 // Test RDPID overwrites destination register

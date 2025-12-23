@@ -5,7 +5,7 @@ use rax::cpu::Registers;
 // Sets all the lower bits of the destination operand to 1 up to and including the lowest set bit
 // in the source operand. All other bits are cleared.
 // This is equivalent to: dest = src ^ (src - 1)
-// Sets ZF if source is zero, sets CF if source is non-zero, clears SF and OF.
+// Sets CF if source is zero, clears ZF and OF (SF reflects the result).
 //
 // Opcodes:
 // VEX.NDD.LZ.0F38.W0 F3 /2   BLSMSK r32, r/m32   - Create mask from lowest set bit (32-bit)
@@ -25,7 +25,7 @@ fn test_blsmsk_eax_ebx_bit_0() {
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_0001, "EAX should contain mask up to bit 0");
     assert!(!zf_set(regs.rflags), "ZF should be clear (source is non-zero)");
-    assert!(cf_set(regs.rflags), "CF should be set (source is non-zero)");
+    assert!(!cf_set(regs.rflags), "CF should be clear (source is non-zero)");
 }
 
 #[test]
@@ -42,7 +42,7 @@ fn test_blsmsk_eax_ebx_bit_3() {
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0b0000_1111, "EAX should contain mask up to bit 3 (bits 0-3)");
     assert!(!zf_set(regs.rflags), "ZF should be clear");
-    assert!(cf_set(regs.rflags), "CF should be set");
+    assert!(!cf_set(regs.rflags), "CF should be clear");
 }
 
 #[test]
@@ -74,7 +74,7 @@ fn test_blsmsk_rax_rbx_bit_0() {
 
     assert_eq!(regs.rax, 0x0000_0000_0000_0001, "RAX should contain mask up to bit 0");
     assert!(!zf_set(regs.rflags), "ZF should be clear");
-    assert!(cf_set(regs.rflags), "CF should be set");
+    assert!(!cf_set(regs.rflags), "CF should be clear");
 }
 
 #[test]
@@ -90,8 +90,8 @@ fn test_blsmsk_zero_source() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "EAX should contain all 1s for zero source");
-    assert!(zf_set(regs.rflags), "ZF should be set (source is zero)");
-    assert!(!cf_set(regs.rflags), "CF should be clear (source is zero)");
+    assert!(!zf_set(regs.rflags), "ZF should be clear (BLSMSK clears ZF)");
+    assert!(cf_set(regs.rflags), "CF should be set (source is zero)");
 }
 
 #[test]
@@ -377,7 +377,7 @@ fn test_blsmsk_mixed_high_low_64() {
 
 #[test]
 fn test_blsmsk_flags_cf() {
-    // CF should be set for non-zero, clear for zero
+    // CF should be clear for non-zero, set for zero
     let code = [
         0xc4, 0xe2, 0x78, 0xf3, 0xd3, // BLSMSK EAX, EBX
         0xf4,
@@ -388,14 +388,14 @@ fn test_blsmsk_flags_cf() {
     regs.rbx = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert!(cf_set(regs.rflags), "CF should be set for non-zero source");
+    assert!(!cf_set(regs.rflags), "CF should be clear for non-zero source");
 
     // Test zero
     let mut regs = Registers::default();
     regs.rbx = 0;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert!(!cf_set(regs.rflags), "CF should be clear for zero source");
+    assert!(cf_set(regs.rflags), "CF should be set for zero source");
 }
 
 #[test]
