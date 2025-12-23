@@ -6,9 +6,12 @@ pub mod exit;
 pub mod state;
 
 pub use exit::VcpuExit;
-pub use state::{CpuState, DescriptorTable, Registers, Segment, SystemRegisters};
+pub use state::{
+    CpuState, DescriptorTable, HexagonCpuState, HexagonRegisters, Registers, Segment,
+    SystemRegisters, X86_64CpuState,
+};
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 
 /// Abstract vCPU interface.
 ///
@@ -17,32 +20,51 @@ pub trait VCpu: Send {
     /// Run the vCPU until an exit condition.
     fn run(&mut self) -> Result<VcpuExit>;
 
-    /// Get general-purpose registers.
-    fn get_regs(&self) -> Result<Registers>;
+    /// Get general-purpose registers (x86_64 only).
+    fn get_regs(&self) -> Result<Registers> {
+        match self.get_state()? {
+            CpuState::X86_64(state) => Ok(state.regs),
+            _ => Err(Error::InvalidConfig(
+                "register access is only supported for x86_64".to_string(),
+            )),
+        }
+    }
 
-    /// Set general-purpose registers.
-    fn set_regs(&mut self, regs: &Registers) -> Result<()>;
+    /// Set general-purpose registers (x86_64 only).
+    fn set_regs(&mut self, regs: &Registers) -> Result<()> {
+        match self.get_state()? {
+            CpuState::X86_64(state) => self.set_state(&CpuState::x86_64(regs.clone(), state.sregs)),
+            _ => Err(Error::InvalidConfig(
+                "register access is only supported for x86_64".to_string(),
+            )),
+        }
+    }
 
-    /// Get system registers.
-    fn get_sregs(&self) -> Result<SystemRegisters>;
+    /// Get system registers (x86_64 only).
+    fn get_sregs(&self) -> Result<SystemRegisters> {
+        match self.get_state()? {
+            CpuState::X86_64(state) => Ok(state.sregs),
+            _ => Err(Error::InvalidConfig(
+                "system register access is only supported for x86_64".to_string(),
+            )),
+        }
+    }
 
-    /// Set system registers.
-    fn set_sregs(&mut self, sregs: &SystemRegisters) -> Result<()>;
+    /// Set system registers (x86_64 only).
+    fn set_sregs(&mut self, sregs: &SystemRegisters) -> Result<()> {
+        match self.get_state()? {
+            CpuState::X86_64(state) => self.set_state(&CpuState::x86_64(state.regs, sregs.clone())),
+            _ => Err(Error::InvalidConfig(
+                "system register access is only supported for x86_64".to_string(),
+            )),
+        }
+    }
 
     /// Get complete CPU state.
-    fn get_state(&self) -> Result<CpuState> {
-        Ok(CpuState {
-            regs: self.get_regs()?,
-            sregs: self.get_sregs()?,
-        })
-    }
+    fn get_state(&self) -> Result<CpuState>;
 
     /// Set complete CPU state.
-    fn set_state(&mut self, state: &CpuState) -> Result<()> {
-        self.set_regs(&state.regs)?;
-        self.set_sregs(&state.sregs)?;
-        Ok(())
-    }
+    fn set_state(&mut self, state: &CpuState) -> Result<()>;
 
     /// Complete an I/O in operation by providing the data read from the device.
     fn complete_io_in(&mut self, data: &[u8]);

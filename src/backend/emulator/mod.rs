@@ -3,23 +3,33 @@
 //! This module provides a software-based x86_64 CPU emulator for cross-platform support.
 
 pub mod x86_64;
+pub mod hexagon;
 
 use std::any::Any;
 use std::sync::Arc;
 
 use vm_memory::GuestMemoryMmap;
 
+use crate::config::{ArchKind, Endianness, HexagonIsa};
 use crate::cpu::VCpu;
-use crate::error::Result;
+use crate::error::{Error, Result};
 
 use super::{Backend, Vm};
 
 /// Software emulator backend.
-pub struct EmulatorBackend;
+pub struct EmulatorBackend {
+    arch: ArchKind,
+    hexagon_isa: HexagonIsa,
+    hexagon_endian: Endianness,
+}
 
 impl EmulatorBackend {
-    pub fn new() -> Self {
-        EmulatorBackend
+    pub fn new(arch: ArchKind, hexagon_isa: HexagonIsa, hexagon_endian: Endianness) -> Self {
+        EmulatorBackend {
+            arch,
+            hexagon_isa,
+            hexagon_endian,
+        }
     }
 }
 
@@ -29,26 +39,44 @@ impl Backend for EmulatorBackend {
     }
 
     fn create_vm(&self) -> Result<Box<dyn Vm>> {
-        Ok(Box::new(EmulatorVm::new()))
+        Ok(Box::new(EmulatorVm::new(
+            self.arch,
+            self.hexagon_isa,
+            self.hexagon_endian,
+        )))
     }
 }
 
 /// Emulated VM instance.
 pub struct EmulatorVm {
     irq_pending: std::sync::Mutex<Vec<u32>>,
+    arch: ArchKind,
+    hexagon_isa: HexagonIsa,
+    hexagon_endian: Endianness,
 }
 
 impl EmulatorVm {
-    pub fn new() -> Self {
+    pub fn new(arch: ArchKind, hexagon_isa: HexagonIsa, hexagon_endian: Endianness) -> Self {
         EmulatorVm {
             irq_pending: std::sync::Mutex::new(Vec::new()),
+            arch,
+            hexagon_isa,
+            hexagon_endian,
         }
     }
 }
 
 impl Vm for EmulatorVm {
     fn create_vcpu(&self, id: u32, mem: Arc<GuestMemoryMmap>) -> Result<Box<dyn VCpu>> {
-        Ok(Box::new(x86_64::X86_64Vcpu::new(id, mem)))
+        match self.arch {
+            ArchKind::X86_64 => Ok(Box::new(x86_64::X86_64Vcpu::new(id, mem))),
+            ArchKind::Hexagon => Ok(Box::new(hexagon::HexagonVcpu::new(
+                id,
+                mem,
+                self.hexagon_isa,
+                self.hexagon_endian,
+            ))),
+        }
     }
 
     fn set_irq_line(&self, irq: u32, level: bool) -> Result<()> {

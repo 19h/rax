@@ -8,8 +8,8 @@ use std::sync::Arc;
 use kvm_ioctls::{Kvm, VcpuFd, VmFd};
 use vm_memory::GuestMemoryMmap;
 
-use crate::cpu::{Registers, SystemRegisters, VCpu, VcpuExit};
-use crate::error::Result;
+use crate::cpu::{CpuState, VCpu, VcpuExit, X86_64CpuState};
+use crate::error::{Error, Result};
 use crate::memory::GuestMemoryWrapper;
 
 use super::{Backend, Vm};
@@ -167,24 +167,26 @@ impl VCpu for KvmVcpu {
         }
     }
 
-    fn get_regs(&self) -> Result<Registers> {
+    fn get_state(&self) -> Result<CpuState> {
         let kvm_regs = self.vcpu_fd.get_regs()?;
-        Ok(convert::regs_from_kvm(&kvm_regs))
-    }
-
-    fn set_regs(&mut self, regs: &Registers) -> Result<()> {
-        let kvm_regs = convert::regs_to_kvm(regs);
-        self.vcpu_fd.set_regs(&kvm_regs)?;
-        Ok(())
-    }
-
-    fn get_sregs(&self) -> Result<SystemRegisters> {
         let kvm_sregs = self.vcpu_fd.get_sregs()?;
-        Ok(convert::sregs_from_kvm(&kvm_sregs))
+        let regs = convert::regs_from_kvm(&kvm_regs);
+        let sregs = convert::sregs_from_kvm(&kvm_sregs);
+        Ok(CpuState::X86_64(X86_64CpuState { regs, sregs }))
     }
 
-    fn set_sregs(&mut self, sregs: &SystemRegisters) -> Result<()> {
-        let kvm_sregs = convert::sregs_to_kvm(sregs);
+    fn set_state(&mut self, state: &CpuState) -> Result<()> {
+        let state = match state {
+            CpuState::X86_64(state) => state,
+            _ => {
+                return Err(Error::InvalidConfig(
+                    "KVM backend only supports x86_64 state".to_string(),
+                ))
+            }
+        };
+        let kvm_regs = convert::regs_to_kvm(&state.regs);
+        let kvm_sregs = convert::sregs_to_kvm(&state.sregs);
+        self.vcpu_fd.set_regs(&kvm_regs)?;
         self.vcpu_fd.set_sregs(&kvm_sregs)?;
         Ok(())
     }

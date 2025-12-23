@@ -9,23 +9,25 @@ use crate::backend::{self, Vm};
 #[cfg(all(feature = "kvm", target_os = "linux"))]
 use crate::config::BackendKind;
 use crate::config::VmConfig;
-use crate::cpu::{VCpu, VcpuExit};
-use crate::devices::bus::{IoBus, IoDevice};
-use crate::devices::serial::Serial16550;
+use crate::cpu::{CpuState, VCpu, VcpuExit};
+use crate::devices::bus::{IoBus, IoDevice, MmioBus, MmioRange};
+use crate::devices::serial::{Serial16550, SerialMmioDevice};
 use crate::error::{Error, Result};
 use crate::memory::GuestMemoryWrapper;
 
 const SERIAL_BASE: u16 = 0x3f8;
-const SERIAL_IRQ: u32 = 4;
 
 pub struct Vmm {
     vm: Box<dyn Vm>,
     guest_mem: GuestMemoryWrapper,
     io_bus: IoBus,
-    serial: Serial16550,
+    mmio_bus: MmioBus,
+    serial: Arc<std::sync::Mutex<Serial16550>>,
     vcpus: Vec<Box<dyn VCpu>>,
     arch: Box<dyn Arch>,
     boot_info: BootInfo,
+    serial_mmio_base: Option<u64>,
+    serial_irq: Option<u32>,
 }
 
 impl Vmm {
@@ -37,7 +39,7 @@ impl Vmm {
         );
 
         // Create backend
-        let backend = backend::create(config.backend)?;
+        let backend = backend::create(&config)?;
         info!(backend = backend.name(), "using backend");
 
         // Create VM
@@ -63,11 +65,26 @@ impl Vmm {
 
         // Setup I/O devices
         let mut io_bus = IoBus::new();
-        arch.setup_devices(&mut io_bus)?;
+        let mut mmio_bus = MmioBus::new();
+        arch.setup_devices(&mut io_bus, &mut mmio_bus)?;
+
+        let serial_mmio_base = arch.serial_mmio_base();
+        let serial_irq = arch.serial_irq();
 
         // Create serial device with input enabled
-        let mut serial = Serial16550::new(SERIAL_BASE);
-        serial.enable_input();
+        let serial = Arc::new(std::sync::Mutex::new(Serial16550::new(SERIAL_BASE)));
+        if let Ok(mut serial_guard) = serial.lock() {
+            if let Some(base) = serial_mmio_base {
+                serial_guard.set_mmio_base(base);
+            }
+            serial_guard.enable_input();
+        }
+        if let Some(base) = serial_mmio_base {
+            mmio_bus.register(
+                MmioRange { base, len: 8 },
+                Box::new(SerialMmioDevice::new(serial.clone())),
+            )?;
+        }
 
         // Load kernel
         let boot_info = arch.load_kernel(guest_mem.memory(), &config)?;
@@ -103,10 +120,13 @@ impl Vmm {
             vm,
             guest_mem,
             io_bus,
+            mmio_bus,
             serial,
             vcpus,
             arch,
             boot_info,
+            serial_mmio_base,
+            serial_irq,
         })
     }
 
@@ -114,12 +134,15 @@ impl Vmm {
         info!("starting vCPU 0");
         loop {
             // Poll for input before running vCPU
-            self.serial.poll_input();
+            if let Ok(mut serial) = self.serial.lock() {
+                serial.poll_input();
 
-            // If there's pending input and interrupts are enabled, inject IRQ
-            if self.serial.has_pending_interrupt() {
-                let _ = self.vm.set_irq_line(SERIAL_IRQ, true);
-                let _ = self.vm.set_irq_line(SERIAL_IRQ, false);
+                if serial.has_pending_interrupt() {
+                    if let Some(irq) = self.serial_irq {
+                        let _ = self.vm.set_irq_line(irq, true);
+                        let _ = self.vm.set_irq_line(irq, false);
+                    }
+                }
             }
 
             let vcpu = self
@@ -133,23 +156,37 @@ impl Vmm {
                     continue;
                 }
                 VcpuExit::Shutdown => {
-                    let regs = vcpu.get_regs()?;
-                    let sregs = vcpu.get_sregs()?;
-                    info!(
-                        rip = format!("{:#x}", regs.rip),
-                        rsp = format!("{:#x}", regs.rsp),
-                        rsi = format!("{:#x}", regs.rsi),
-                        rflags = format!("{:#x}", regs.rflags),
-                        cr0 = format!("{:#x}", sregs.cr0),
-                        cr3 = format!("{:#x}", sregs.cr3),
-                        cr4 = format!("{:#x}", sregs.cr4),
-                        cs_sel = format!("{:#x}", sregs.cs.selector),
-                        cs_base = format!("{:#x}", sregs.cs.base),
-                        ds_sel = format!("{:#x}", sregs.ds.selector),
-                        gdt_base = format!("{:#x}", sregs.gdt.base),
-                        gdt_limit = format!("{:#x}", sregs.gdt.limit),
-                        "vCPU shutdown"
-                    );
+                    match vcpu.get_state()? {
+                        CpuState::X86_64(state) => {
+                            let regs = state.regs;
+                            let sregs = state.sregs;
+                            info!(
+                                rip = format!("{:#x}", regs.rip),
+                                rsp = format!("{:#x}", regs.rsp),
+                                rsi = format!("{:#x}", regs.rsi),
+                                rflags = format!("{:#x}", regs.rflags),
+                                cr0 = format!("{:#x}", sregs.cr0),
+                                cr3 = format!("{:#x}", sregs.cr3),
+                                cr4 = format!("{:#x}", sregs.cr4),
+                                cs_sel = format!("{:#x}", sregs.cs.selector),
+                                cs_base = format!("{:#x}", sregs.cs.base),
+                                ds_sel = format!("{:#x}", sregs.ds.selector),
+                                gdt_base = format!("{:#x}", sregs.gdt.base),
+                                gdt_limit = format!("{:#x}", sregs.gdt.limit),
+                                "vCPU shutdown"
+                            );
+                        }
+                        CpuState::Hexagon(state) => {
+                            let regs = state.regs;
+                            let sp = regs.r[29];
+                            info!(
+                                pc = format!("{:#x}", regs.pc()),
+                                sp = format!("{:#x}", sp),
+                                usr = format!("{:#x}", regs.usr()),
+                                "vCPU shutdown"
+                            );
+                        }
+                    }
                     break;
                 }
                 VcpuExit::IoIn { port, size } => {
@@ -157,8 +194,10 @@ impl Vmm {
                     let is_serial = port >= SERIAL_BASE && port < SERIAL_BASE + 8;
                     let mut data = vec![0u8; size as usize];
                     if is_serial {
-                        for (i, byte) in data.iter_mut().enumerate() {
-                            *byte = self.serial.read(port + i as u16);
+                        if let Ok(mut serial) = self.serial.lock() {
+                            for (i, byte) in data.iter_mut().enumerate() {
+                                *byte = IoDevice::read(&mut *serial, port + i as u16);
+                            }
                         }
                     } else {
                         self.io_bus.read(port, &mut data)?;
@@ -176,13 +215,16 @@ impl Vmm {
                     debug!(port = port, size = data.len(), "PIO write");
                     let is_serial = port >= SERIAL_BASE && port < SERIAL_BASE + 8;
                     if is_serial {
-                        for (i, byte) in data.iter().enumerate() {
-                            self.serial.write(port + i as u16, *byte);
-                        }
-                        // Inject serial interrupt after data writes
-                        if port == SERIAL_BASE {
-                            let _ = self.vm.set_irq_line(SERIAL_IRQ, true);
-                            let _ = self.vm.set_irq_line(SERIAL_IRQ, false);
+                        if let Ok(mut serial) = self.serial.lock() {
+                            for (i, byte) in data.iter().enumerate() {
+                                IoDevice::write(&mut *serial, port + i as u16, *byte);
+                            }
+                            if port == SERIAL_BASE {
+                                if let Some(irq) = self.serial_irq {
+                                    let _ = self.vm.set_irq_line(irq, true);
+                                    let _ = self.vm.set_irq_line(irq, false);
+                                }
+                            }
                         }
                     } else if port == 0xE9 {
                         // Bochs debug port - output directly
@@ -192,6 +234,14 @@ impl Vmm {
                     } else {
                         self.io_bus.write(port, &data)?;
                     }
+                }
+                VcpuExit::MmioRead { addr, size } => {
+                    let mut data = vec![0u8; size as usize];
+                    self.mmio_bus.read(addr, &mut data)?;
+                    vcpu.complete_io_in(&data);
+                }
+                VcpuExit::MmioWrite { addr, data } => {
+                    self.mmio_bus.write(addr, &data)?;
                 }
                 VcpuExit::SystemEvent { .. } => break,
                 VcpuExit::FailEntry { reason } => {

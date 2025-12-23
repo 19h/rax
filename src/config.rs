@@ -15,6 +15,7 @@ const DEFAULT_CMDLINE: &str = "console=ttyS0 earlycon=uart,io,0x3f8 nokaslr";
 #[serde(rename_all = "snake_case")]
 pub enum ArchKind {
     X86_64,
+    Hexagon,
 }
 
 impl Default for ArchKind {
@@ -40,6 +41,40 @@ impl Default for BackendKind {
         {
             BackendKind::Emulator
         }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, ValueEnum, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum Endianness {
+    Little,
+    Big,
+}
+
+impl Default for Endianness {
+    fn default() -> Self {
+        Endianness::Little
+    }
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, ValueEnum, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum HexagonIsa {
+    V4,
+    V5,
+    V55,
+    V60,
+    V62,
+    V65,
+    V66,
+    V67,
+    V68,
+    V69,
+}
+
+impl Default for HexagonIsa {
+    fn default() -> Self {
+        HexagonIsa::V68
     }
 }
 
@@ -159,6 +194,75 @@ impl<'de> Deserialize<'de> for MemorySize {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Address(pub u64);
+
+impl Address {
+    pub fn raw(self) -> u64 {
+        self.0
+    }
+}
+
+impl fmt::Display for Address {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl FromStr for Address {
+    type Err = Error;
+
+    fn from_str(input: &str) -> Result<Self> {
+        let s = input.trim();
+        if s.is_empty() {
+            return Err(Error::InvalidConfig("address is empty".to_string()));
+        }
+
+        let value = if let Some(hex) = s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")) {
+            u64::from_str_radix(hex, 16)
+                .map_err(|_| Error::InvalidConfig(format!("invalid address: {input}")))?
+        } else {
+            s.parse::<u64>()
+                .map_err(|_| Error::InvalidConfig(format!("invalid address: {input}")))?
+        };
+
+        Ok(Address(value))
+    }
+}
+
+impl<'de> Deserialize<'de> for Address {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct AddressVisitor;
+
+        impl<'de> Visitor<'de> for AddressVisitor {
+            type Value = Address;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("address as string or integer")
+            }
+
+            fn visit_u64<E>(self, value: u64) -> std::result::Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                Ok(Address(value))
+            }
+
+            fn visit_str<E>(self, value: &str) -> std::result::Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                Address::from_str(value).map_err(de::Error::custom)
+            }
+        }
+
+        deserializer.deserialize_any(AddressVisitor)
+    }
+}
+
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct FileConfig {
     pub arch: Option<ArchKind>,
@@ -168,6 +272,10 @@ pub struct FileConfig {
     pub kernel: Option<PathBuf>,
     pub initrd: Option<PathBuf>,
     pub cmdline: Option<String>,
+    pub hexagon_isa: Option<HexagonIsa>,
+    pub hexagon_endian: Option<Endianness>,
+    pub hexagon_entry: Option<Address>,
+    pub hexagon_load_addr: Option<Address>,
 }
 
 impl FileConfig {
@@ -188,6 +296,10 @@ pub struct CliConfig {
     pub kernel: Option<PathBuf>,
     pub initrd: Option<PathBuf>,
     pub cmdline: Option<String>,
+    pub hexagon_isa: Option<HexagonIsa>,
+    pub hexagon_endian: Option<Endianness>,
+    pub hexagon_entry: Option<Address>,
+    pub hexagon_load_addr: Option<Address>,
 }
 
 #[derive(Clone, Debug)]
@@ -199,6 +311,10 @@ pub struct VmConfig {
     pub kernel: PathBuf,
     pub initrd: Option<PathBuf>,
     pub cmdline: String,
+    pub hexagon_isa: HexagonIsa,
+    pub hexagon_endian: Endianness,
+    pub hexagon_entry: Option<Address>,
+    pub hexagon_load_addr: Option<Address>,
 }
 
 impl VmConfig {
@@ -217,6 +333,13 @@ impl VmConfig {
             .cmdline
             .or(file.cmdline)
             .unwrap_or_else(|| DEFAULT_CMDLINE.to_string());
+        let hexagon_isa = cli.hexagon_isa.or(file.hexagon_isa).unwrap_or_default();
+        let hexagon_endian = cli
+            .hexagon_endian
+            .or(file.hexagon_endian)
+            .unwrap_or_default();
+        let hexagon_entry = cli.hexagon_entry.or(file.hexagon_entry);
+        let hexagon_load_addr = cli.hexagon_load_addr.or(file.hexagon_load_addr);
 
         let config = VmConfig {
             arch,
@@ -226,6 +349,10 @@ impl VmConfig {
             kernel,
             initrd,
             cmdline,
+            hexagon_isa,
+            hexagon_endian,
+            hexagon_entry,
+            hexagon_load_addr,
         };
 
         config.validate()?;
@@ -258,6 +385,35 @@ impl VmConfig {
                 )));
             }
         }
+        if self.arch == ArchKind::Hexagon && self.backend == BackendKind::Kvm {
+            return Err(Error::InvalidConfig(
+                "hexagon is only supported with the emulator backend".to_string(),
+            ));
+        }
+        if self.arch == ArchKind::Hexagon {
+            let mem_bytes = self.memory.bytes();
+            if mem_bytes > (u32::MAX as u64 + 1) {
+                return Err(Error::InvalidConfig(
+                    "hexagon guest memory must not exceed 4 GiB".to_string(),
+                ));
+            }
+            if let Some(addr) = self.hexagon_load_addr {
+                if addr.raw() >= mem_bytes {
+                    return Err(Error::InvalidConfig(format!(
+                        "hexagon load address {:#x} outside guest memory",
+                        addr.raw()
+                    )));
+                }
+            }
+            if let Some(entry) = self.hexagon_entry {
+                if entry.raw() >= mem_bytes {
+                    return Err(Error::InvalidConfig(format!(
+                        "hexagon entry address {:#x} outside guest memory",
+                        entry.raw()
+                    )));
+                }
+            }
+        }
         Ok(())
     }
 }
@@ -280,5 +436,11 @@ mod tests {
         assert!(MemorySize::from_str("").is_err());
         assert!(MemorySize::from_str("abc").is_err());
         assert!(MemorySize::from_str("1Z").is_err());
+    }
+
+    #[test]
+    fn address_parses_hex_and_decimal() {
+        assert_eq!(Address::from_str("0x10").unwrap().raw(), 16);
+        assert_eq!(Address::from_str("32").unwrap().raw(), 32);
     }
 }
