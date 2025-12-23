@@ -36,9 +36,12 @@ impl X86_64Vcpu {
             // Control flow
             0xEB => insn::control::jmp_rel8(self, ctx),
             0xE9 => insn::control::jmp_rel32(self, ctx),
+            0xEA => insn::control::jmp_far_ptr(self, ctx),
             0xE8 => insn::control::call_rel32(self, ctx),
+            0x9A => insn::control::call_far_ptr(self, ctx),
             0xC3 => insn::control::ret(self, ctx),
             0xC2 => insn::control::ret_imm16(self, ctx),
+            0xCA => insn::control::retf_imm16(self, ctx),
             0xCB => insn::control::retf(self, ctx),
             0x70..=0x7F => insn::control::jcc_rel8(self, ctx, opcode & 0x0F),
 
@@ -72,6 +75,11 @@ impl X86_64Vcpu {
             0x8C => insn::data::mov_rm_sreg(self, ctx),
             0x8E => insn::data::mov_sreg_rm(self, ctx),
             0x8D => insn::data::lea(self, ctx),
+            // MOV moffs instructions
+            0xA0 => insn::data::mov_al_moffs(self, ctx),
+            0xA1 => insn::data::mov_rax_moffs(self, ctx),
+            0xA2 => insn::data::mov_moffs_al(self, ctx),
+            0xA3 => insn::data::mov_moffs_rax(self, ctx),
             0xC6 => insn::data::mov_rm8_imm8(self, ctx),
             0xC7 => insn::data::mov_rm_imm(self, ctx),
             0x50..=0x57 => insn::data::push_r64(self, ctx, opcode),

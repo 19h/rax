@@ -527,6 +527,70 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
+    /// SSE2/MMX PINSRW (0x0F 0xC4)
+    pub(in crate::backend::emulator::x86_64) fn execute_pinsrw(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+        let word = if is_memory {
+            self.read_mem(addr, 2)? as u16
+        } else {
+            self.get_reg(rm, 2) as u16
+        };
+
+        if ctx.operand_size_override {
+            let xmm_dst = reg as usize;
+            let idx = (imm8 & 0x07) as usize;
+            if idx < 4 {
+                let shift = idx * 16;
+                let mask = !(0xFFFFu64 << shift);
+                self.regs.xmm[xmm_dst][0] =
+                    (self.regs.xmm[xmm_dst][0] & mask) | ((word as u64) << shift);
+            } else {
+                let shift = (idx - 4) * 16;
+                let mask = !(0xFFFFu64 << shift);
+                self.regs.xmm[xmm_dst][1] =
+                    (self.regs.xmm[xmm_dst][1] & mask) | ((word as u64) << shift);
+            }
+        } else {
+            let mm_dst = reg as usize & 0x7;
+            let idx = (imm8 & 0x03) as usize;
+            let shift = idx * 16;
+            let mask = !(0xFFFFu64 << shift);
+            self.regs.mm[mm_dst] = (self.regs.mm[mm_dst] & mask) | ((word as u64) << shift);
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SSE2/MMX PEXTRW (0x0F 0xC5)
+    pub(in crate::backend::emulator::x86_64) fn execute_pextrw(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, _addr, _) = self.decode_modrm(ctx)?;
+        if is_memory {
+            return Err(Error::Emulator("PEXTRW does not support memory source".to_string()));
+        }
+        let imm8 = ctx.consume_u8()?;
+
+        let word = if ctx.operand_size_override {
+            let xmm_src = rm as usize;
+            let idx = (imm8 & 0x07) as usize;
+            if idx < 4 {
+                ((self.regs.xmm[xmm_src][0] >> (idx * 16)) & 0xFFFF) as u16
+            } else {
+                ((self.regs.xmm[xmm_src][1] >> ((idx - 4) * 16)) & 0xFFFF) as u16
+            }
+        } else {
+            let mm_src = rm as usize & 0x7;
+            let idx = (imm8 & 0x03) as usize;
+            ((self.regs.mm[mm_src] >> (idx * 16)) & 0xFFFF) as u16
+        };
+
+        let dest_size = if ctx.rex_w() { 8 } else { 4 };
+        self.set_reg(reg, word as u64, dest_size);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
     /// SSE PSHUFD/PSHUFHW/PSHUFLW (0x0F 0x70)
     pub(in crate::backend::emulator::x86_64) fn execute_pshufd(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;

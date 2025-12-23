@@ -373,6 +373,246 @@ fn sub_i16_saturate(a: u64, b: u64) -> u64 {
 }
 
 // =============================================================================
+// Packed Integer Misc (PMADDWD/PMAX*/PMIN*/PMOVMSKB)
+// =============================================================================
+
+/// PMADDWD - Multiply and Add Packed Integers (0xF5)
+pub fn pmaddwd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return Err(Error::Emulator(format!(
+            "PMADDWD requires 66 prefix at RIP={:#x}",
+            vcpu.regs.rip
+        )));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    let mut d_words = [0i16; 8];
+    let mut s_words = [0i16; 8];
+    for i in 0..4 {
+        d_words[i] = ((dst_lo >> (i * 16)) & 0xFFFF) as i16;
+        s_words[i] = ((src_lo >> (i * 16)) & 0xFFFF) as i16;
+    }
+    for i in 0..4 {
+        d_words[i + 4] = ((dst_hi >> (i * 16)) & 0xFFFF) as i16;
+        s_words[i + 4] = ((src_hi >> (i * 16)) & 0xFFFF) as i16;
+    }
+
+    let mut result_lo = 0u64;
+    let mut result_hi = 0u64;
+    for i in 0..4 {
+        let a0 = d_words[i * 2] as i32;
+        let a1 = d_words[i * 2 + 1] as i32;
+        let b0 = s_words[i * 2] as i32;
+        let b1 = s_words[i * 2 + 1] as i32;
+        let sum = a0.wrapping_mul(b0).wrapping_add(a1.wrapping_mul(b1));
+        let val = sum as u32 as u64;
+        if i < 2 {
+            result_lo |= val << (i * 32);
+        } else {
+            result_hi |= val << ((i - 2) * 32);
+        }
+    }
+
+    vcpu.regs.xmm[xmm_dst][0] = result_lo;
+    vcpu.regs.xmm[xmm_dst][1] = result_hi;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PMAXSW - Maximum of Packed Signed Words (0xEE)
+pub fn pmaxsw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return Err(Error::Emulator(format!(
+            "PMAXSW requires 66 prefix at RIP={:#x}",
+            vcpu.regs.rip
+        )));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    let mut result_lo = 0u64;
+    let mut result_hi = 0u64;
+    for i in 0..4 {
+        let d = ((dst_lo >> (i * 16)) & 0xFFFF) as i16;
+        let s = ((src_lo >> (i * 16)) & 0xFFFF) as i16;
+        result_lo |= ((d.max(s) as u16) as u64) << (i * 16);
+    }
+    for i in 0..4 {
+        let d = ((dst_hi >> (i * 16)) & 0xFFFF) as i16;
+        let s = ((src_hi >> (i * 16)) & 0xFFFF) as i16;
+        result_hi |= ((d.max(s) as u16) as u64) << (i * 16);
+    }
+    vcpu.regs.xmm[xmm_dst][0] = result_lo;
+    vcpu.regs.xmm[xmm_dst][1] = result_hi;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PMINSW - Minimum of Packed Signed Words (0xEA)
+pub fn pminsw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return Err(Error::Emulator(format!(
+            "PMINSW requires 66 prefix at RIP={:#x}",
+            vcpu.regs.rip
+        )));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    let mut result_lo = 0u64;
+    let mut result_hi = 0u64;
+    for i in 0..4 {
+        let d = ((dst_lo >> (i * 16)) & 0xFFFF) as i16;
+        let s = ((src_lo >> (i * 16)) & 0xFFFF) as i16;
+        result_lo |= ((d.min(s) as u16) as u64) << (i * 16);
+    }
+    for i in 0..4 {
+        let d = ((dst_hi >> (i * 16)) & 0xFFFF) as i16;
+        let s = ((src_hi >> (i * 16)) & 0xFFFF) as i16;
+        result_hi |= ((d.min(s) as u16) as u64) << (i * 16);
+    }
+    vcpu.regs.xmm[xmm_dst][0] = result_lo;
+    vcpu.regs.xmm[xmm_dst][1] = result_hi;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PMAXUB - Maximum of Packed Unsigned Bytes (0xDE)
+pub fn pmaxub(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return Err(Error::Emulator(format!(
+            "PMAXUB requires 66 prefix at RIP={:#x}",
+            vcpu.regs.rip
+        )));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    let mut result_lo = 0u64;
+    let mut result_hi = 0u64;
+    for i in 0..8 {
+        let d = ((dst_lo >> (i * 8)) & 0xFF) as u8;
+        let s = ((src_lo >> (i * 8)) & 0xFF) as u8;
+        result_lo |= (d.max(s) as u64) << (i * 8);
+    }
+    for i in 0..8 {
+        let d = ((dst_hi >> (i * 8)) & 0xFF) as u8;
+        let s = ((src_hi >> (i * 8)) & 0xFF) as u8;
+        result_hi |= (d.max(s) as u64) << (i * 8);
+    }
+    vcpu.regs.xmm[xmm_dst][0] = result_lo;
+    vcpu.regs.xmm[xmm_dst][1] = result_hi;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PMINUB - Minimum of Packed Unsigned Bytes (0xDA)
+pub fn pminub(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return Err(Error::Emulator(format!(
+            "PMINUB requires 66 prefix at RIP={:#x}",
+            vcpu.regs.rip
+        )));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let xmm_dst = reg as usize;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+
+    let mut result_lo = 0u64;
+    let mut result_hi = 0u64;
+    for i in 0..8 {
+        let d = ((dst_lo >> (i * 8)) & 0xFF) as u8;
+        let s = ((src_lo >> (i * 8)) & 0xFF) as u8;
+        result_lo |= (d.min(s) as u64) << (i * 8);
+    }
+    for i in 0..8 {
+        let d = ((dst_hi >> (i * 8)) & 0xFF) as u8;
+        let s = ((src_hi >> (i * 8)) & 0xFF) as u8;
+        result_hi |= (d.min(s) as u64) << (i * 8);
+    }
+    vcpu.regs.xmm[xmm_dst][0] = result_lo;
+    vcpu.regs.xmm[xmm_dst][1] = result_hi;
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// PMOVMSKB - Move Byte Mask (0xD7)
+pub fn pmovmskb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !ctx.operand_size_override {
+        return Err(Error::Emulator(format!(
+            "PMOVMSKB requires 66 prefix at RIP={:#x}",
+            vcpu.regs.rip
+        )));
+    }
+
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let (src_lo, src_hi) = if is_memory {
+        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    } else {
+        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+    };
+
+    let mut mask = 0u64;
+    for i in 0..8 {
+        let byte = ((src_lo >> (i * 8)) & 0xFF) as u8;
+        if byte & 0x80 != 0 {
+            mask |= 1u64 << i;
+        }
+    }
+    for i in 0..8 {
+        let byte = ((src_hi >> (i * 8)) & 0xFF) as u8;
+        if byte & 0x80 != 0 {
+            mask |= 1u64 << (i + 8);
+        }
+    }
+
+    let dst_size = if ctx.rex_w() { 8 } else { 4 };
+    vcpu.set_reg(reg, mask, dst_size);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+// =============================================================================
 // MOVLPS/MOVHPS - Move Low/High Packed Single-Precision
 // =============================================================================
 

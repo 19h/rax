@@ -408,6 +408,35 @@ pub fn pmuludq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
     Ok(None)
 }
 
+/// PXOR - XOR Packed Integers (0x0F 0xEF)
+/// SSE2: 66 0F EF /r  PXOR xmm1, xmm2/m128
+/// MMX:  NP 0F EF /r  PXOR mm, mm/m64
+pub fn pxor(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    if ctx.operand_size_override {
+        // SSE2: PXOR xmm1, xmm2/m128
+        let xmm_dst = reg as usize;
+        let (src_lo, src_hi) = if is_memory {
+            (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+        } else {
+            (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+        };
+        vcpu.regs.xmm[xmm_dst][0] ^= src_lo;
+        vcpu.regs.xmm[xmm_dst][1] ^= src_hi;
+    } else {
+        // MMX: PXOR mm, mm/m64
+        let mm_dst = reg as usize & 0x7;
+        let src = if is_memory {
+            vcpu.read_mem(addr, 8)?
+        } else {
+            vcpu.regs.mm[rm as usize & 0x7]
+        };
+        vcpu.regs.mm[mm_dst] ^= src;
+    }
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
 /// SSE packed single/double sqrt (0x51)
 pub fn sse_sqrt(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
