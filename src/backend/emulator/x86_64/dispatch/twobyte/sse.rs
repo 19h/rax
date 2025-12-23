@@ -420,6 +420,113 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
+    /// SSE2/MMX PUNPCK* (0x60/0x61/0x62/0x68/0x69/0x6A/0x6C/0x6D)
+    pub(in crate::backend::emulator::x86_64) fn execute_punpck(
+        &mut self,
+        ctx: &mut InsnContext,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        if ctx.operand_size_override {
+            let xmm_dst = reg as usize;
+            let (src2_lo, src2_hi) = if is_memory {
+                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            } else {
+                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+            };
+            let src1_lo = self.regs.xmm[xmm_dst][0];
+            let src1_hi = self.regs.xmm[xmm_dst][1];
+
+            match opcode {
+                0x60 => {
+                    self.regs.xmm[xmm_dst][0] = unpack_low_bytes(src1_lo, src2_lo);
+                    self.regs.xmm[xmm_dst][1] = unpack_high_bytes(src1_lo, src2_lo);
+                }
+                0x61 => {
+                    self.regs.xmm[xmm_dst][0] = unpack_low_words(src1_lo, src2_lo);
+                    self.regs.xmm[xmm_dst][1] = unpack_high_words(src1_lo, src2_lo);
+                }
+                0x62 => {
+                    let d0_src1 = src1_lo as u32;
+                    let d0_src2 = src2_lo as u32;
+                    let d1_src1 = (src1_lo >> 32) as u32;
+                    let d1_src2 = (src2_lo >> 32) as u32;
+                    self.regs.xmm[xmm_dst][0] = (d0_src1 as u64) | ((d0_src2 as u64) << 32);
+                    self.regs.xmm[xmm_dst][1] = (d1_src1 as u64) | ((d1_src2 as u64) << 32);
+                }
+                0x68 => {
+                    self.regs.xmm[xmm_dst][0] = unpack_low_bytes(src1_hi, src2_hi);
+                    self.regs.xmm[xmm_dst][1] = unpack_high_bytes(src1_hi, src2_hi);
+                }
+                0x69 => {
+                    self.regs.xmm[xmm_dst][0] = unpack_low_words(src1_hi, src2_hi);
+                    self.regs.xmm[xmm_dst][1] = unpack_high_words(src1_hi, src2_hi);
+                }
+                0x6A => {
+                    let d0_src1 = src1_hi as u32;
+                    let d0_src2 = src2_hi as u32;
+                    let d1_src1 = (src1_hi >> 32) as u32;
+                    let d1_src2 = (src2_hi >> 32) as u32;
+                    self.regs.xmm[xmm_dst][0] = (d0_src1 as u64) | ((d0_src2 as u64) << 32);
+                    self.regs.xmm[xmm_dst][1] = (d1_src1 as u64) | ((d1_src2 as u64) << 32);
+                }
+                0x6C => {
+                    self.regs.xmm[xmm_dst][0] = src1_lo;
+                    self.regs.xmm[xmm_dst][1] = src2_lo;
+                }
+                0x6D => {
+                    self.regs.xmm[xmm_dst][0] = src1_hi;
+                    self.regs.xmm[xmm_dst][1] = src2_hi;
+                }
+                _ => unreachable!(),
+            }
+        } else {
+            if opcode == 0x6C || opcode == 0x6D {
+                return Err(Error::Emulator(format!(
+                    "unimplemented 0x0F {:#04x} opcode variant at RIP={:#x}",
+                    opcode, self.regs.rip
+                )));
+            }
+
+            let mm_dst = reg as usize & 0x7;
+            let mm_src = rm as usize & 0x7;
+            let src = if is_memory {
+                let size = match opcode {
+                    0x60 | 0x61 | 0x62 => 4,
+                    _ => 8,
+                };
+                self.read_mem(addr, size)?
+            } else {
+                self.regs.mm[mm_src]
+            };
+            let dst = self.regs.mm[mm_dst];
+
+            let result = match opcode {
+                0x60 => unpack_low_bytes(dst, src),
+                0x61 => unpack_low_words(dst, src),
+                0x62 => {
+                    let d0_dst = dst as u32;
+                    let d0_src = src as u32;
+                    (d0_dst as u64) | ((d0_src as u64) << 32)
+                }
+                0x68 => unpack_high_bytes(dst, src),
+                0x69 => unpack_high_words(dst, src),
+                0x6A => {
+                    let d1_dst = (dst >> 32) as u32;
+                    let d1_src = (src >> 32) as u32;
+                    (d1_dst as u64) | ((d1_src as u64) << 32)
+                }
+                _ => unreachable!(),
+            };
+
+            self.regs.mm[mm_dst] = result;
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
     /// SSE PSHUFD/PSHUFHW/PSHUFLW (0x0F 0x70)
     pub(in crate::backend::emulator::x86_64) fn execute_pshufd(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -693,4 +800,44 @@ impl X86_64Vcpu {
             _ => false,
         }
     }
+}
+
+fn unpack_low_bytes(a: u64, b: u64) -> u64 {
+    let a0 = (a >> 0) & 0xFF;
+    let b0 = (b >> 0) & 0xFF;
+    let a1 = (a >> 8) & 0xFF;
+    let b1 = (b >> 8) & 0xFF;
+    let a2 = (a >> 16) & 0xFF;
+    let b2 = (b >> 16) & 0xFF;
+    let a3 = (a >> 24) & 0xFF;
+    let b3 = (b >> 24) & 0xFF;
+    a0 | (b0 << 8) | (a1 << 16) | (b1 << 24) | (a2 << 32) | (b2 << 40) | (a3 << 48) | (b3 << 56)
+}
+
+fn unpack_high_bytes(a: u64, b: u64) -> u64 {
+    let a4 = (a >> 32) & 0xFF;
+    let b4 = (b >> 32) & 0xFF;
+    let a5 = (a >> 40) & 0xFF;
+    let b5 = (b >> 40) & 0xFF;
+    let a6 = (a >> 48) & 0xFF;
+    let b6 = (b >> 48) & 0xFF;
+    let a7 = (a >> 56) & 0xFF;
+    let b7 = (b >> 56) & 0xFF;
+    a4 | (b4 << 8) | (a5 << 16) | (b5 << 24) | (a6 << 32) | (b6 << 40) | (a7 << 48) | (b7 << 56)
+}
+
+fn unpack_low_words(a: u64, b: u64) -> u64 {
+    let a0 = a & 0xFFFF;
+    let b0 = b & 0xFFFF;
+    let a1 = (a >> 16) & 0xFFFF;
+    let b1 = (b >> 16) & 0xFFFF;
+    a0 | (b0 << 16) | (a1 << 32) | (b1 << 48)
+}
+
+fn unpack_high_words(a: u64, b: u64) -> u64 {
+    let a2 = (a >> 32) & 0xFFFF;
+    let b2 = (b >> 32) & 0xFFFF;
+    let a3 = (a >> 48) & 0xFFFF;
+    let b3 = (b >> 48) & 0xFFFF;
+    a2 | (b2 << 16) | (a3 << 32) | (b3 << 48)
 }
