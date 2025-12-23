@@ -1,9 +1,9 @@
-//! Stack frame instructions: ENTER, LEAVE, BOUND.
+//! Stack frame instructions: ENTER, LEAVE, BOUND, and EVEX dispatch.
 
 use crate::cpu::VcpuExit;
 use crate::error::{Error, Result};
 
-use super::super::super::cpu::{InsnContext, X86_64Vcpu};
+use super::super::super::cpu::{EvexPrefix, InsnContext, X86_64Vcpu};
 
 /// ENTER imm16, imm8 (0xC8) - Create stack frame
 pub fn enter(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {

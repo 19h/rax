@@ -145,6 +145,39 @@ pub(super) struct InsnContext {
     pub rep_prefix: Option<u8>,
     pub op_size: u8,
     pub rip_relative_offset: usize,
+    /// EVEX prefix state (if present)
+    pub evex: Option<EvexPrefix>,
+}
+
+/// EVEX prefix decoded fields (4-byte prefix for AVX-512)
+#[derive(Clone, Copy, Debug)]
+pub(super) struct EvexPrefix {
+    /// R bit (inverted, extends ModR/M reg field to 4 bits)
+    pub r: bool,
+    /// X bit (inverted, extends SIB index field)
+    pub x: bool,
+    /// B bit (inverted, extends ModR/M r/m or SIB base)
+    pub b: bool,
+    /// R' bit (inverted, extends reg field to 5 bits for ZMM16-31)
+    pub r_prime: bool,
+    /// mm field (opcode map: 1=0F, 2=0F38, 3=0F3A)
+    pub mm: u8,
+    /// W bit (operand size: 0=32-bit, 1=64-bit elements)
+    pub w: bool,
+    /// vvvv field (inverted, non-destructive source register)
+    pub vvvv: u8,
+    /// pp field (implied prefix: 0=none, 1=66, 2=F3, 3=F2)
+    pub pp: u8,
+    /// z bit (zeroing-masking: 0=merge, 1=zero)
+    pub z: bool,
+    /// L'L field (vector length: 0=128, 1=256, 2=512)
+    pub ll: u8,
+    /// b bit (broadcast/rounding control)
+    pub broadcast: bool,
+    /// V' bit (inverted, extends vvvv to 5 bits)
+    pub v_prime: bool,
+    /// aaa field (opmask register k0-k7)
+    pub aaa: u8,
 }
 
 impl InsnContext {
@@ -161,6 +194,78 @@ impl InsnContext {
     /// Get REX.B flag (extends ModR/M r/m field or opcode reg).
     pub fn rex_b(&self) -> u8 {
         self.rex.map_or(0, |r| (r & 0x01) << 3)
+    }
+
+    // =========================================================================
+    // EVEX helper methods
+    // =========================================================================
+
+    /// Get full 5-bit destination register (ModR/M reg extended by EVEX.R and EVEX.R')
+    pub fn evex_dest_reg(&self) -> u8 {
+        if let Some(evex) = &self.evex {
+            // reg field from ModR/M (3 bits) + R (bit 3) + R' (bit 4)
+            let r_ext = if evex.r { 0 } else { 8 };
+            let r_prime_ext = if evex.r_prime { 0 } else { 16 };
+            r_ext | r_prime_ext
+        } else {
+            self.rex_r()
+        }
+    }
+
+    /// Get full 5-bit source register (EVEX.vvvv extended by EVEX.V')
+    pub fn evex_vvvv(&self) -> u8 {
+        if let Some(evex) = &self.evex {
+            // vvvv is inverted, V' extends to 5 bits
+            let v_prime_ext = if evex.v_prime { 0 } else { 16 };
+            (evex.vvvv ^ 0xF) | v_prime_ext
+        } else {
+            0
+        }
+    }
+
+    /// Get full 5-bit r/m register (extended by EVEX.B and EVEX.X for certain encodings)
+    pub fn evex_rm_reg(&self) -> u8 {
+        if let Some(evex) = &self.evex {
+            let b_ext = if evex.b { 0 } else { 8 };
+            let x_ext = if evex.x { 0 } else { 16 };
+            b_ext | x_ext
+        } else {
+            self.rex_b()
+        }
+    }
+
+    /// Get vector length from EVEX.L'L (0=128, 1=256, 2=512 bits)
+    pub fn evex_vl(&self) -> u16 {
+        if let Some(evex) = &self.evex {
+            match evex.ll {
+                0 => 128,
+                1 => 256,
+                2 => 512,
+                _ => 128,
+            }
+        } else {
+            128
+        }
+    }
+
+    /// Check if EVEX zeroing-masking is enabled
+    pub fn evex_zeroing(&self) -> bool {
+        self.evex.map_or(false, |e| e.z)
+    }
+
+    /// Get opmask register index (k0-k7)
+    pub fn evex_mask(&self) -> u8 {
+        self.evex.map_or(0, |e| e.aaa)
+    }
+
+    /// Check if EVEX broadcast is enabled
+    pub fn evex_broadcast(&self) -> bool {
+        self.evex.map_or(false, |e| e.broadcast)
+    }
+
+    /// Get EVEX.W bit (element width)
+    pub fn evex_w(&self) -> bool {
+        self.evex.map_or(false, |e| e.w)
     }
 
     /// Consume and return the next byte.
