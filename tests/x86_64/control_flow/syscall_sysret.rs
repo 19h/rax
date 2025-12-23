@@ -202,7 +202,7 @@ fn test_sysret_basic() {
     let code = [
         0x48, 0xc7, 0xc1, 0x00, 0x20, 0x00, 0x00, // MOV RCX, 0x2000 (return address)
         0x49, 0xc7, 0xc3, 0x02, 0x00, 0x00, 0x00, // MOV R11, 0x02 (flags)
-        0x0f, 0x07, // SYSRET
+        0x48, 0x0f, 0x07, // SYSRET (REX.W)
         0xf4, // HLT (should not execute)
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -223,7 +223,7 @@ fn test_sysret_restores_rip_from_rcx() {
     let code = [
         0x48, 0xc7, 0xc1, 0x00, 0x30, 0x00, 0x00, // MOV RCX, 0x3000
         0x49, 0xc7, 0xc3, 0x02, 0x00, 0x00, 0x00, // MOV R11, 0x02
-        0x0f, 0x07, // SYSRET
+        0x48, 0x0f, 0x07, // SYSRET (REX.W)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -232,7 +232,7 @@ fn test_sysret_restores_rip_from_rcx() {
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x3000);
+    assert_eq!(regs.rip, 0x3001);
 }
 
 #[test]
@@ -241,7 +241,7 @@ fn test_sysret_restores_rflags_from_r11() {
     let code = [
         0x48, 0xc7, 0xc1, 0x00, 0x20, 0x00, 0x00, // MOV RCX, 0x2000
         0x49, 0xc7, 0xc3, 0x01, 0x00, 0x00, 0x00, // MOV R11, 1 (CF set)
-        0x0f, 0x07, // SYSRET
+        0x48, 0x0f, 0x07, // SYSRET (REX.W)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -277,7 +277,7 @@ fn test_syscall_sysret_roundtrip() {
     // Kernel handler (simulated)
     let handler = [
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0 (return value)
-        0x0f, 0x07, // SYSRET (returns to RCX with RFLAGS from R11)
+        0x48, 0x0f, 0x07, // SYSRET (REX.W, returns to RCX with RFLAGS from R11)
     ];
     // Handler would be at address determined by MSR
 
@@ -373,7 +373,7 @@ fn test_sysret_transitions_to_user() {
     let code = [
         0x48, 0xc7, 0xc1, 0x00, 0x20, 0x00, 0x00, // MOV RCX, 0x2000
         0x49, 0xc7, 0xc3, 0x02, 0x00, 0x00, 0x00, // MOV R11, 0x02
-        0x0f, 0x07, // SYSRET (CPL 0 -> 3)
+        0x48, 0x0f, 0x07, // SYSRET (REX.W, CPL 0 -> 3)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -402,23 +402,30 @@ fn test_syscall_invalid_in_real_mode() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    // Should either fault or be ignored
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.efer = 0; // Clear LMA/SCE to simulate real mode
+    sregs.cs.l = false;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    assert!(run_until_hlt(&mut vcpu).is_err());
 }
 
 #[test]
 fn test_sysret_invalid_in_user_mode() {
-    // SYSRET from user mode should fault
+    // SYSRET from CPL3 should fault
     let code = [
         0x48, 0xc7, 0xc1, 0x00, 0x20, 0x00, 0x00, // MOV RCX, 0x2000
-        0x0f, 0x07, // SYSRET (invalid from user mode)
+        0x48, 0x0f, 0x07, // SYSRET (REX.W)
         0x48, 0xc7, 0xc0, 0xfe, 0x00, 0x00, 0x00, // MOV RAX, 0xFE
         0xf4,
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
 
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xfe);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 3; // CPL=3
+    vcpu.set_sregs(&sregs).unwrap();
+
+    assert!(run_until_hlt(&mut vcpu).is_err());
 }
 
 // ============================================================================
@@ -541,7 +548,7 @@ fn test_sysret_to_zero_address() {
     let code = [
         0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0
         0x49, 0xc7, 0xc3, 0x02, 0x00, 0x00, 0x00, // MOV R11, 2
-        0x0f, 0x07, // SYSRET
+        0x48, 0x0f, 0x07, // SYSRET (REX.W)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -550,7 +557,7 @@ fn test_sysret_to_zero_address() {
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x0000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x0000);
+    assert_eq!(regs.rip, 0x0001);
 }
 
 #[test]
@@ -558,7 +565,7 @@ fn test_sysret_to_high_address() {
     let code = [
         0x48, 0xc7, 0xc1, 0x00, 0xf0, 0x00, 0x00, // MOV RCX, 0xF000
         0x49, 0xc7, 0xc3, 0x02, 0x00, 0x00, 0x00, // MOV R11, 2
-        0x0f, 0x07, // SYSRET
+        0x48, 0x0f, 0x07, // SYSRET (REX.W)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -567,7 +574,7 @@ fn test_sysret_to_high_address() {
     mem.write_slice(&target_code, vm_memory::GuestAddress(0xF000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0xf000);
+    assert_eq!(regs.rip, 0xf001);
 }
 
 #[test]
@@ -575,7 +582,7 @@ fn test_sysret_with_all_flags() {
     let code = [
         0x48, 0xc7, 0xc1, 0x00, 0x20, 0x00, 0x00, // MOV RCX, 0x2000
         0x49, 0xc7, 0xc3, 0xd7, 0x08, 0x00, 0x00, // MOV R11, flags (multiple set)
-        0x0f, 0x07, // SYSRET
+        0x48, 0x0f, 0x07, // SYSRET (REX.W)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);

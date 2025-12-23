@@ -82,6 +82,14 @@ pub struct SystemRegisters {
     pub cr4: u64,
     pub cr8: u64,
     pub efer: u64,
+    /// IA32_STAR MSR (0xC0000081)
+    pub star: u64,
+    /// IA32_LSTAR MSR (0xC0000082)
+    pub lstar: u64,
+    /// IA32_CSTAR MSR (0xC0000083)
+    pub cstar: u64,
+    /// IA32_FMASK MSR (0xC0000084)
+    pub fmask: u64,
     /// Debug registers DR0-DR3: breakpoint linear addresses
     pub dr0: u64,
     pub dr1: u64,

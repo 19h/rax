@@ -12,6 +12,10 @@ pub fn wrmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
 
     match ecx {
         0xC0000080 => vcpu.sregs.efer = value,       // EFER
+        0xC0000081 => vcpu.sregs.star = value,       // STAR
+        0xC0000082 => vcpu.sregs.lstar = value,      // LSTAR
+        0xC0000083 => vcpu.sregs.cstar = value,      // CSTAR
+        0xC0000084 => vcpu.sregs.fmask = value,      // FMASK
         0xC0000100 => vcpu.sregs.fs.base = value,    // FS.base
         0xC0000101 => vcpu.sregs.gs.base = value,    // GS.base
         0xC0000102 => vcpu.kernel_gs_base = value,   // KernelGSbase
@@ -35,6 +39,10 @@ pub fn rdmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                 .unwrap_or(1_000_000)
         }
         0xC0000080 => vcpu.sregs.efer,        // EFER
+        0xC0000081 => vcpu.sregs.star,        // STAR
+        0xC0000082 => vcpu.sregs.lstar,       // LSTAR
+        0xC0000083 => vcpu.sregs.cstar,       // CSTAR
+        0xC0000084 => vcpu.sregs.fmask,       // FMASK
         0xC0000100 => vcpu.sregs.fs.base,     // FS.base
         0xC0000101 => vcpu.sregs.gs.base,     // GS.base
         0xC0000102 => vcpu.kernel_gs_base,    // KernelGSbase

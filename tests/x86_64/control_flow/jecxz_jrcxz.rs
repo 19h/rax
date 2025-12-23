@@ -87,10 +87,10 @@ fn test_jecxz_loop_countdown() {
 #[test]
 fn test_jecxz_backward_jump() {
     let code = [
-        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0
-        0xeb, 0x02, // JMP +2 (skip over target)
-        0xf4, // HLT (target)
-        0x67, 0xe3, 0xfb, // JECXZ -5 (jump back to HLT)
+        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0 (7 bytes, ends at 0x1007)
+        0xeb, 0x01, // JMP +1 (skip over HLT to JECXZ)
+        0xf4, // HLT (target at 0x1009)
+        0x67, 0xe3, 0xfc, // JECXZ -4 (jump back to HLT at 0x1009)
         0xf4, 0xf4, // HLT, HLT (should not execute)
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -99,30 +99,31 @@ fn test_jecxz_backward_jump() {
 
 #[test]
 fn test_jecxz_forward_skip() {
+    // Set RAX=42, then skip MOV RAX, 0 with JECXZ when ECX=0
     let code = [
+        0x48, 0xc7, 0xc0, 0x2a, 0x00, 0x00, 0x00, // MOV RAX, 42
         0x48, 0x31, 0xc9, // XOR RCX, RCX (ECX = 0)
-        0x67, 0xe3, 0x08, // JECXZ +8
+        0x67, 0xe3, 0x07, // JECXZ +7 (skip MOV RAX, 0)
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0 (skipped)
         0xf4, // HLT (target)
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rax, 0); // RAX should not be 0
+    assert_eq!(regs.rax, 42); // RAX should still be 42 (MOV RAX, 0 was skipped)
 }
 
 #[test]
 fn test_jecxz_preserves_flags() {
     let code = [
-        0xf9, // STC (set carry flag)
-        0x48, 0x31, 0xc9, // XOR RCX, RCX (sets ZF but we check JECXZ doesn't affect flags)
         0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0 (doesn't affect flags)
+        0xf9, // STC (set carry flag)
         0x67, 0xe3, 0x02, // JECXZ +2 (should not affect flags)
         0xf4, 0xf4, // HLT, HLT (should not execute)
         0xf4, // HLT (target)
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    // Carry flag should still be set
+    // Carry flag should still be set (JECXZ doesn't affect flags)
     assert_ne!(regs.rflags & 0x1, 0);
 }
 
@@ -230,16 +231,15 @@ fn test_jrcxz_forward_long_skip() {
 #[test]
 fn test_jrcxz_preserves_flags() {
     let code = [
-        0xf9, // STC (set carry flag)
-        0x48, 0x31, 0xc9, // XOR RCX, RCX (RCX = 0, sets ZF)
         0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0 (doesn't affect flags)
+        0xf9, // STC (set carry flag)
         0xe3, 0x02, // JRCXZ +2 (should not affect flags)
         0xf4, 0xf4, // HLT, HLT (should not execute)
         0xf4, // HLT (target)
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    // Carry flag should still be set
+    // Carry flag should still be set (JRCXZ doesn't affect flags)
     assert_ne!(regs.rflags & 0x1, 0);
 }
 
