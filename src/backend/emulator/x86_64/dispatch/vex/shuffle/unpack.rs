@@ -400,40 +400,4 @@ impl X86_64Vcpu {
         w0 | (w1 << 16) | (w2 << 32) | (w3 << 48)
     }
 
-    // Helper: compare bytes for greater than
-    fn cmp_gt_bytes(&self, a: u64, b: u64) -> u64 {
-        let mut result = 0u64;
-        for i in 0..8 {
-            let va = ((a >> (i * 8)) & 0xFF) as i8;
-            let vb = ((b >> (i * 8)) & 0xFF) as i8;
-            if va > vb {
-                result |= 0xFF << (i * 8);
-            }
-        }
-        result
-    }
-
-    // Helper: compare words for greater than
-    fn cmp_gt_words(&self, a: u64, b: u64) -> u64 {
-        let mut result = 0u64;
-        for i in 0..4 {
-            let va = ((a >> (i * 16)) & 0xFFFF) as i16;
-            let vb = ((b >> (i * 16)) & 0xFFFF) as i16;
-            if va > vb {
-                result |= 0xFFFF << (i * 16);
-            }
-        }
-        result
-    }
-
-    // Helper: compare dwords for greater than
-    fn cmp_gt_dwords(&self, a: u64, b: u64) -> u64 {
-        let lo_a = a as i32;
-        let lo_b = b as i32;
-        let hi_a = (a >> 32) as i32;
-        let hi_b = (b >> 32) as i32;
-        let lo_res = if lo_a > lo_b { 0xFFFFFFFFu64 } else { 0 };
-        let hi_res = if hi_a > hi_b { 0xFFFFFFFFu64 } else { 0 };
-        lo_res | (hi_res << 32)
-    }
 }

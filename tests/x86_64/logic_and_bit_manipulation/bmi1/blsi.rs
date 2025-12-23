@@ -415,7 +415,7 @@ fn test_blsi_max_value() {
 
 #[test]
 fn test_blsi_clear_sf_of() {
-    // BLSI clears SF and OF flags
+    // BLSI clears OF and updates SF based on result
     let code = [
         0xc4, 0xe2, 0x78, 0xf3, 0xdb, // BLSI EAX, EBX
         0xf4,

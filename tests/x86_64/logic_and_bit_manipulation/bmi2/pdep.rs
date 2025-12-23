@@ -228,7 +228,7 @@ fn test_pdep_extract_nibbles() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Each nibble deposited to alternating positions
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0D0C0B0A, "Should deposit nibbles to alternating positions");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0A0B0C0D, "Should deposit nibbles to alternating positions");
 }
 
 #[test]
@@ -328,7 +328,7 @@ fn test_pdep_byte_expansion() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x000F000F, "Should expand byte to separated positions");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x000000FF, "Should expand byte to separated positions");
 }
 
 #[test]
@@ -367,9 +367,9 @@ fn test_pdep_64bit_high_positions() {
 fn test_pdep_pattern_generation() {
     // Generate patterns by depositing bits
     let test_cases = vec![
-        (0x1, 0x11111111, 0x01010101),     // broadcast bit
-        (0x3, 0x33333333, 0x03030303),     // broadcast 2 bits
-        (0xF, 0x0F0F0F0F, 0x0F0F0F0F),     // broadcast nibble
+        (0x1, 0x11111111, 0x00000001),     // deposit single bit
+        (0x3, 0x33333333, 0x00000003),     // deposit two bits
+        (0xF, 0x0F0F0F0F, 0x0000000F),     // deposit nibble
     ];
 
     for (src, mask, expected) in test_cases {

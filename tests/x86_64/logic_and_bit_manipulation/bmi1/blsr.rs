@@ -439,7 +439,7 @@ fn test_blsr_count_set_bits() {
 
 #[test]
 fn test_blsr_clear_sf_of() {
-    // BLSR clears SF and OF flags
+    // BLSR clears OF and updates SF based on result
     let code = [
         0xc4, 0xe2, 0x78, 0xf3, 0xcb, // BLSR EAX, EBX
         0xf4,

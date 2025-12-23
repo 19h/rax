@@ -5,3 +5,4 @@ mod shufp;
 mod extract_insert;
 mod permute;
 mod broadcast;
+mod align;

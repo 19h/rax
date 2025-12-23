@@ -63,6 +63,227 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_pmovmskb(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vvvv: u8,
+    ) -> Result<Option<VcpuExit>> {
+        if vvvv != 0 {
+            return Err(Error::Emulator("VPMOVMSKB requires VEX.vvvv=1111b".to_string()));
+        }
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let xmm_src = rm as usize;
+        let mut result = 0u64;
+
+        if vex_l == 0 {
+            let mut bytes = [0u8; 16];
+            if is_memory {
+                for i in 0..16 {
+                    bytes[i] = self.read_mem(addr + i as u64, 1)? as u8;
+                }
+            } else {
+                bytes[0..8].copy_from_slice(&self.regs.xmm[xmm_src][0].to_le_bytes());
+                bytes[8..16].copy_from_slice(&self.regs.xmm[xmm_src][1].to_le_bytes());
+            }
+            for i in 0..16 {
+                if (bytes[i] & 0x80) != 0 {
+                    result |= 1u64 << i;
+                }
+            }
+        } else {
+            let mut bytes = [0u8; 32];
+            if is_memory {
+                for i in 0..32 {
+                    bytes[i] = self.read_mem(addr + i as u64, 1)? as u8;
+                }
+            } else {
+                bytes[0..8].copy_from_slice(&self.regs.xmm[xmm_src][0].to_le_bytes());
+                bytes[8..16].copy_from_slice(&self.regs.xmm[xmm_src][1].to_le_bytes());
+                bytes[16..24].copy_from_slice(&self.regs.ymm_high[xmm_src][0].to_le_bytes());
+                bytes[24..32].copy_from_slice(&self.regs.ymm_high[xmm_src][1].to_le_bytes());
+            }
+            for i in 0..32 {
+                if (bytes[i] & 0x80) != 0 {
+                    result |= 1u64 << i;
+                }
+            }
+        }
+
+        self.set_reg(reg, result, 4);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    pub(in crate::backend::emulator::x86_64) fn execute_vex_pmaskmov(
+        &mut self,
+        ctx: &mut InsnContext,
+        vex_l: u8,
+        vex_w: u8,
+        vvvv: u8,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        if !is_memory {
+            return Err(Error::Emulator("VPMASKMOV requires memory operand".to_string()));
+        }
+        let mask_reg = vvvv as usize;
+        let elem_size = if vex_w == 0 { 4 } else { 8 };
+
+        if opcode == 0x8C {
+            // Load form: reg = dest, vvvv = mask, rm = memory
+            let xmm_dst = reg as usize;
+            if elem_size == 4 {
+                let mut lo = 0u64;
+                let mut hi = 0u64;
+                for i in 0..2 {
+                    let mask = (self.regs.xmm[mask_reg][0] >> (i * 32)) as u32;
+                    let val = if (mask & 0x8000_0000) != 0 {
+                        self.read_mem(addr + (i * 4) as u64, 4)? as u32
+                    } else {
+                        0
+                    };
+                    lo |= (val as u64) << (i * 32);
+                }
+                for i in 0..2 {
+                    let mask = (self.regs.xmm[mask_reg][1] >> (i * 32)) as u32;
+                    let val = if (mask & 0x8000_0000) != 0 {
+                        self.read_mem(addr + ((i + 2) * 4) as u64, 4)? as u32
+                    } else {
+                        0
+                    };
+                    hi |= (val as u64) << (i * 32);
+                }
+                self.regs.xmm[xmm_dst][0] = lo;
+                self.regs.xmm[xmm_dst][1] = hi;
+
+                if vex_l == 1 {
+                    let mut hi2 = 0u64;
+                    let mut hi3 = 0u64;
+                    for i in 0..2 {
+                        let mask = (self.regs.ymm_high[mask_reg][0] >> (i * 32)) as u32;
+                        let val = if (mask & 0x8000_0000) != 0 {
+                            self.read_mem(addr + ((i + 4) * 4) as u64, 4)? as u32
+                        } else {
+                            0
+                        };
+                        hi2 |= (val as u64) << (i * 32);
+                    }
+                    for i in 0..2 {
+                        let mask = (self.regs.ymm_high[mask_reg][1] >> (i * 32)) as u32;
+                        let val = if (mask & 0x8000_0000) != 0 {
+                            self.read_mem(addr + ((i + 6) * 4) as u64, 4)? as u32
+                        } else {
+                            0
+                        };
+                        hi3 |= (val as u64) << (i * 32);
+                    }
+                    self.regs.ymm_high[xmm_dst][0] = hi2;
+                    self.regs.ymm_high[xmm_dst][1] = hi3;
+                } else {
+                    self.regs.ymm_high[xmm_dst][0] = 0;
+                    self.regs.ymm_high[xmm_dst][1] = 0;
+                }
+            } else {
+                let mut lo = 0u64;
+                let mut hi = 0u64;
+                for i in 0..2 {
+                    let mask = self.regs.xmm[mask_reg][i] >> 63;
+                    let val = if mask != 0 {
+                        self.read_mem(addr + (i * 8) as u64, 8)?
+                    } else {
+                        0
+                    };
+                    if i == 0 {
+                        lo = val;
+                    } else {
+                        hi = val;
+                    }
+                }
+                self.regs.xmm[xmm_dst][0] = lo;
+                self.regs.xmm[xmm_dst][1] = hi;
+
+                if vex_l == 1 {
+                    let mut hi2 = 0u64;
+                    let mut hi3 = 0u64;
+                    for i in 0..2 {
+                        let mask = self.regs.ymm_high[mask_reg][i] >> 63;
+                        let val = if mask != 0 {
+                            self.read_mem(addr + ((i + 2) * 8) as u64, 8)?
+                        } else {
+                            0
+                        };
+                        if i == 0 {
+                            hi2 = val;
+                        } else {
+                            hi3 = val;
+                        }
+                    }
+                    self.regs.ymm_high[xmm_dst][0] = hi2;
+                    self.regs.ymm_high[xmm_dst][1] = hi3;
+                } else {
+                    self.regs.ymm_high[xmm_dst][0] = 0;
+                    self.regs.ymm_high[xmm_dst][1] = 0;
+                }
+            }
+        } else {
+            // Store form: rm = memory dest, reg = source, vvvv = mask
+            let xmm_src = reg as usize;
+            if elem_size == 4 {
+                for i in 0..2 {
+                    let mask = (self.regs.xmm[mask_reg][0] >> (i * 32)) as u32;
+                    if (mask & 0x8000_0000) != 0 {
+                        let val = (self.regs.xmm[xmm_src][0] >> (i * 32)) as u32;
+                        self.write_mem(addr + (i * 4) as u64, val as u64, 4)?;
+                    }
+                }
+                for i in 0..2 {
+                    let mask = (self.regs.xmm[mask_reg][1] >> (i * 32)) as u32;
+                    if (mask & 0x8000_0000) != 0 {
+                        let val = (self.regs.xmm[xmm_src][1] >> (i * 32)) as u32;
+                        self.write_mem(addr + ((i + 2) * 4) as u64, val as u64, 4)?;
+                    }
+                }
+                if vex_l == 1 {
+                    for i in 0..2 {
+                        let mask = (self.regs.ymm_high[mask_reg][0] >> (i * 32)) as u32;
+                        if (mask & 0x8000_0000) != 0 {
+                            let val = (self.regs.ymm_high[xmm_src][0] >> (i * 32)) as u32;
+                            self.write_mem(addr + ((i + 4) * 4) as u64, val as u64, 4)?;
+                        }
+                    }
+                    for i in 0..2 {
+                        let mask = (self.regs.ymm_high[mask_reg][1] >> (i * 32)) as u32;
+                        if (mask & 0x8000_0000) != 0 {
+                            let val = (self.regs.ymm_high[xmm_src][1] >> (i * 32)) as u32;
+                            self.write_mem(addr + ((i + 6) * 4) as u64, val as u64, 4)?;
+                        }
+                    }
+                }
+            } else {
+                for i in 0..2 {
+                    let mask = self.regs.xmm[mask_reg][i] >> 63;
+                    if mask != 0 {
+                        let val = self.regs.xmm[xmm_src][i];
+                        self.write_mem(addr + (i * 8) as u64, val, 8)?;
+                    }
+                }
+                if vex_l == 1 {
+                    for i in 0..2 {
+                        let mask = self.regs.ymm_high[mask_reg][i] >> 63;
+                        if mask != 0 {
+                            let val = self.regs.ymm_high[xmm_src][i];
+                            self.write_mem(addr + ((i + 2) * 8) as u64, val, 8)?;
+                        }
+                    }
+                }
+            }
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
     /// VEX reciprocal square root: VRSQRTPS, VRSQRTSS
     pub(in crate::backend::emulator::x86_64) fn execute_vex_rsqrt(
         &mut self,
@@ -627,6 +848,217 @@ impl X86_64Vcpu {
             }
             _ => unreachable!(),
         }
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// KMOV load: Move mask from k reg or memory to k reg
+    /// KMOVB/W/D/Q k1, k2/m8/m16/m32/m64
+    pub(in crate::backend::emulator::x86_64) fn execute_kmov_load(
+        &mut self,
+        ctx: &mut InsnContext,
+        size_bits: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let modrm = ctx.consume_u8()?;
+        let k_dst = ((modrm >> 3) & 0x07) as usize;
+        let rm = modrm & 0x07;
+        let mode = (modrm >> 6) & 0x03;
+
+        let value = if mode == 3 {
+            // Register to register: source is another k reg
+            let k_src = rm as usize;
+            self.regs.k[k_src]
+        } else {
+            // Memory to register
+            ctx.cursor -= 1; // Re-decode with modrm
+            let (_, _, _, addr, _) = self.decode_modrm(ctx)?;
+            let byte_size = (size_bits / 8) as u8;
+            self.read_mem(addr, byte_size)?
+        };
+
+        // Mask to size
+        let mask = match size_bits {
+            8 => 0xFF,
+            16 => 0xFFFF,
+            32 => 0xFFFF_FFFF,
+            64 => !0u64,
+            _ => unreachable!(),
+        };
+        self.regs.k[k_dst] = value & mask;
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// KMOV store: Move mask from k reg to memory
+    /// KMOVB/W/D/Q m8/m16/m32/m64, k1
+    pub(in crate::backend::emulator::x86_64) fn execute_kmov_store(
+        &mut self,
+        ctx: &mut InsnContext,
+        size_bits: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let (reg, _, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        if !is_memory {
+            return Err(Error::Emulator("KMOV store requires memory destination".to_string()));
+        }
+
+        let k_src = reg as usize;
+        let value = self.regs.k[k_src];
+        let byte_size = (size_bits / 8) as u8;
+
+        self.write_mem(addr, value, byte_size)?;
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// KMOV from GPR: Move from general purpose register to k reg
+    /// KMOVB/W/D k1, r32 or KMOVQ k1, r64
+    pub(in crate::backend::emulator::x86_64) fn execute_kmov_from_gpr(
+        &mut self,
+        ctx: &mut InsnContext,
+        size_bits: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let modrm = ctx.consume_u8()?;
+        let k_dst = ((modrm >> 3) & 0x07) as usize;
+        let rm = modrm & 0x07;
+        let mode = (modrm >> 6) & 0x03;
+
+        if mode != 3 {
+            return Err(Error::Emulator("KMOV from GPR requires register source".to_string()));
+        }
+
+        // Get the GPR value
+        let gpr_idx = rm + if ctx.rex_b() != 0 { 8 } else { 0 };
+        let value = self.get_reg(gpr_idx, if size_bits == 64 { 8 } else { 4 });
+
+        // Mask to size
+        let mask = match size_bits {
+            8 => 0xFF,
+            16 => 0xFFFF,
+            32 => 0xFFFF_FFFF,
+            64 => !0u64,
+            _ => unreachable!(),
+        };
+        self.regs.k[k_dst] = value & mask;
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// KMOV to GPR: Move from k reg to general purpose register
+    /// KMOVB/W/D r32, k1 or KMOVQ r64, k1
+    pub(in crate::backend::emulator::x86_64) fn execute_kmov_to_gpr(
+        &mut self,
+        ctx: &mut InsnContext,
+        size_bits: u8,
+    ) -> Result<Option<VcpuExit>> {
+        let modrm = ctx.consume_u8()?;
+        let gpr_reg = ((modrm >> 3) & 0x07) + if ctx.rex_r() != 0 { 8 } else { 0 };
+        let k_src = (modrm & 0x07) as usize;
+        let mode = (modrm >> 6) & 0x03;
+
+        if mode != 3 {
+            return Err(Error::Emulator("KMOV to GPR requires register source".to_string()));
+        }
+
+        let value = self.regs.k[k_src];
+
+        // Mask to size and zero-extend to 32 or 64 bits
+        let mask = match size_bits {
+            8 => 0xFF,
+            16 => 0xFFFF,
+            32 => 0xFFFF_FFFF,
+            64 => !0u64,
+            _ => unreachable!(),
+        };
+        let result = value & mask;
+
+        // Write to GPR (32-bit writes zero-extend to 64-bit in 64-bit mode)
+        self.set_reg(gpr_reg, result, if size_bits == 64 { 8 } else { 4 });
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// Execute binary mask operation (KAND, KOR, KXOR, KANDN, KXNOR, KADD)
+    /// Format: op k1, k2, k3 where k1 = k2 op k3
+    pub(in crate::backend::emulator::x86_64) fn execute_kmask_binop<F>(
+        &mut self,
+        ctx: &mut InsnContext,
+        vvvv: u8,
+        size_bits: u8,
+        op: F,
+    ) -> Result<Option<VcpuExit>>
+    where
+        F: Fn(u64, u64) -> u64,
+    {
+        let modrm = ctx.consume_u8()?;
+        let k_dst = ((modrm >> 3) & 0x07) as usize;
+        let k_src2 = (modrm & 0x07) as usize;
+        let mode = (modrm >> 6) & 0x03;
+
+        if mode != 3 {
+            return Err(Error::Emulator("Mask logical op requires register operands".to_string()));
+        }
+
+        let k_src1 = vvvv as usize;
+        let src1 = self.regs.k[k_src1];
+        let src2 = self.regs.k[k_src2];
+
+        // Apply operation
+        let result = op(src1, src2);
+
+        // Mask to size
+        let mask = match size_bits {
+            8 => 0xFF,
+            16 => 0xFFFF,
+            32 => 0xFFFF_FFFF,
+            64 => !0u64,
+            _ => unreachable!(),
+        };
+        self.regs.k[k_dst] = result & mask;
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// Execute unary mask operation (KNOT)
+    /// Format: op k1, k2 where k1 = op(k2)
+    pub(in crate::backend::emulator::x86_64) fn execute_kmask_unaryop<F>(
+        &mut self,
+        ctx: &mut InsnContext,
+        size_bits: u8,
+        op: F,
+    ) -> Result<Option<VcpuExit>>
+    where
+        F: Fn(u64) -> u64,
+    {
+        let modrm = ctx.consume_u8()?;
+        let k_dst = ((modrm >> 3) & 0x07) as usize;
+        let k_src = (modrm & 0x07) as usize;
+        let mode = (modrm >> 6) & 0x03;
+
+        if mode != 3 {
+            return Err(Error::Emulator("Mask unary op requires register operands".to_string()));
+        }
+
+        let src = self.regs.k[k_src];
+
+        // Apply operation
+        let result = op(src);
+
+        // Mask to size
+        let mask = match size_bits {
+            8 => 0xFF,
+            16 => 0xFFFF,
+            32 => 0xFFFF_FFFF,
+            64 => !0u64,
+            _ => unreachable!(),
+        };
+        self.regs.k[k_dst] = result & mask;
+
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
