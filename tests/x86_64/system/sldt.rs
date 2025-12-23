@@ -18,7 +18,7 @@ fn test_sldt_ax() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // LDTR value depends on VM initialization, just check instruction completed
-    assert_eq!(regs.rip, 0x1000 + 3, "RIP should point to HLT");
+    assert_eq!(regs.rip, 0x1000 + 4, "RIP should point past HLT");
 }
 
 // SLDT r16 - Store LDTR to BX
@@ -270,7 +270,7 @@ fn test_sldt_memory() {
     write_mem_at_u16(&mem, DATA_ADDR, 0xFFFF);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x1000 + 8);
+    assert_eq!(regs.rip, 0x1000 + 9);
 
     // Memory should contain LDTR value (not 0xFFFF anymore)
     let ldtr = read_mem_at_u16(&mem, DATA_ADDR);

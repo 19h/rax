@@ -12,10 +12,11 @@ pub fn group2_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<O
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
     let op = (modrm >> 3) & 0x07;
+    let has_rex = ctx.rex.is_some();
     let rm = (modrm & 0x07) | ctx.rex_b();
 
     let (val, addr_opt) = if modrm >> 6 == 3 {
-        (vcpu.get_reg(rm, 1) as u8, None)
+        (vcpu.get_reg8(rm, has_rex) as u8, None)
     } else {
         let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
         ctx.cursor = modrm_start + 1 + extra;
@@ -28,7 +29,7 @@ pub fn group2_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<O
     if let Some(addr) = addr_opt {
         vcpu.mmu.write_u8(addr, result, &vcpu.sregs)?;
     } else {
-        vcpu.set_reg(rm, result as u64, 1);
+        vcpu.set_reg8(rm, result as u64, has_rex);
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -70,10 +71,11 @@ pub fn group2_rm8_1(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
     let op = (modrm >> 3) & 0x07;
+    let has_rex = ctx.rex.is_some();
     let rm = (modrm & 0x07) | ctx.rex_b();
 
     let (val, addr_opt) = if modrm >> 6 == 3 {
-        (vcpu.get_reg(rm, 1) as u8, None)
+        (vcpu.get_reg8(rm, has_rex) as u8, None)
     } else {
         let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
         ctx.cursor = modrm_start + 1 + extra;
@@ -85,7 +87,7 @@ pub fn group2_rm8_1(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
     if let Some(addr) = addr_opt {
         vcpu.mmu.write_u8(addr, result, &vcpu.sregs)?;
     } else {
-        vcpu.set_reg(rm, result as u64, 1);
+        vcpu.set_reg8(rm, result as u64, has_rex);
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -123,11 +125,12 @@ pub fn group2_rm8_cl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
     let op = (modrm >> 3) & 0x07;
+    let has_rex = ctx.rex.is_some();
     let rm = (modrm & 0x07) | ctx.rex_b();
     let count = (vcpu.regs.rcx & 0x1F) as u8;
 
     let (val, addr_opt) = if modrm >> 6 == 3 {
-        (vcpu.get_reg(rm, 1) as u8, None)
+        (vcpu.get_reg8(rm, has_rex) as u8, None)
     } else {
         let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
         ctx.cursor = modrm_start + 1 + extra;
@@ -139,7 +142,7 @@ pub fn group2_rm8_cl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
     if let Some(addr) = addr_opt {
         vcpu.mmu.write_u8(addr, result, &vcpu.sregs)?;
     } else {
-        vcpu.set_reg(rm, result as u64, 1);
+        vcpu.set_reg8(rm, result as u64, has_rex);
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)

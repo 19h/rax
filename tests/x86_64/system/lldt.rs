@@ -19,7 +19,7 @@ fn test_lldt_ax() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0x0008, "AX should be preserved");
-    assert_eq!(regs.rip, 0x1000 + 7, "RIP should point to HLT");
+    assert_eq!(regs.rip, 0x1000 + 8, "RIP should point past HLT");
 }
 
 // LLDT r16 - Load LDTR from BX
@@ -226,7 +226,7 @@ fn test_lldt_memory() {
     write_mem_at_u16(&mem, DATA_ADDR, 0x0008);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x1000 + 8);
+    assert_eq!(regs.rip, 0x1000 + 9);
 }
 
 // LLDT m16 - Load LDTR from memory via RAX
