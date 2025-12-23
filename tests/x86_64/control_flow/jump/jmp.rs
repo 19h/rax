@@ -286,13 +286,15 @@ fn test_jmp_short_max_forward() {
 
 #[test]
 fn test_jmp_short_max_backward() {
+    // Layout: MOV(7) + DEC(4) + JNZ(2) + JMP(2) + JMP(2) + HLT(1)
+    // Offsets: 0-6    7-10    11-12   13-14   15-16    17
     let code = [
-        0x48, 0xc7, 0xc0, 0x02, 0x00, 0x00, 0x00, // MOV RAX, 2
-        0x48, 0x83, 0xe8, 0x01, // DEC RAX (offset 7)
-        0x75, 0x02, // JNZ +2 (skip JMP if not zero)
-        0xeb, 0x02, // JMP +2 (exit)
-        0xeb, 0xf5, // JMP -11 (back to DEC, max we can encode nearby)
-        0xf4, // HLT
+        0x48, 0xc7, 0xc0, 0x02, 0x00, 0x00, 0x00, // MOV RAX, 2 (offset 0-6)
+        0x48, 0x83, 0xe8, 0x01, // SUB RAX, 1 (offset 7-10)
+        0x75, 0x02, // JNZ +2 (skip next JMP if not zero, offset 11-12)
+        0xeb, 0x02, // JMP +2 (exit loop, offset 13-14)
+        0xeb, 0xf6, // JMP -10 (back to SUB at offset 7, offset 15-16)
+        0xf4, // HLT (offset 17)
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
