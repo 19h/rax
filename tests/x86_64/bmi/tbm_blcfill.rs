@@ -2,7 +2,7 @@ use crate::common::*;
 use rax::cpu::Registers;
 
 // BLCFILL - Fill From Lowest Clear Bit (TBM)
-// Sets all bits below the lowest clear bit (including the lowest clear bit).
+// Clears trailing ones below the lowest clear bit.
 // Equivalent to: dest = src & (src + 1)
 //
 // Opcodes:
@@ -16,13 +16,14 @@ fn test_blcfill_basic() {
         0xc4, 0xe2, 0x78, 0x01, 0xcb, // BLCFILL EAX, EBX (/1 = ModRM 0xCB)
         0xf4,
     ];
+    let src = 0b1111_1101u32; // bit 1 is clear (first clear bit)
     let mut regs = Registers::default();
-    regs.rbx = 0b1111_1101; // bit 1 is clear (first clear bit)
+    regs.rbx = src as u64;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // Result should have bits 0-1 set: 0b1111_1111
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b1111_1111, "Fill from lowest clear bit");
+    let expected = src & src.wrapping_add(1);
+    assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "Fill from lowest clear bit");
 }
 
 #[test]
@@ -32,13 +33,14 @@ fn test_blcfill_bit_0_clear() {
         0xc4, 0xe2, 0x78, 0x01, 0xcb, // BLCFILL EAX, EBX
         0xf4,
     ];
+    let src = 0b1010_1010u32; // bit 0 is clear
     let mut regs = Registers::default();
-    regs.rbx = 0b1010_1010; // bit 0 is clear
+    regs.rbx = src as u64;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // Should set bit 0: 0b1010_1011
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b1010_1011, "Bit 0 clear");
+    let expected = src & src.wrapping_add(1);
+    assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "Bit 0 clear");
 }
 
 #[test]
@@ -80,13 +82,14 @@ fn test_blcfill_single_bit_set() {
         0xc4, 0xe2, 0x78, 0x01, 0xcb, // BLCFILL EAX, EBX
         0xf4,
     ];
+    let src = 0b1000u32; // Only bit 3 set, bits 0-2 clear
     let mut regs = Registers::default();
-    regs.rbx = 0b1000; // Only bit 3 set, bits 0-2 clear
+    regs.rbx = src as u64;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // Fill from bit 0 (first clear): 0b1001
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b1001, "Single bit set");
+    let expected = src & src.wrapping_add(1);
+    assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "Single bit set");
 }
 
 #[test]
@@ -96,27 +99,31 @@ fn test_blcfill_64bit() {
         0xc4, 0xe2, 0xf8, 0x01, 0xcb, // BLCFILL RAX, RBX (W1)
         0xf4,
     ];
+    let src = 0xFFFF_FFFF_FFFF_FFFEu64; // bit 0 clear
     let mut regs = Registers::default();
-    regs.rbx = 0xFFFF_FFFF_FFFF_FFFE; // bit 0 clear
+    regs.rbx = src;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax, 0xFFFF_FFFF_FFFF_FFFF, "64-bit fill bit 0");
+    let expected = src & src.wrapping_add(1);
+    assert_eq!(regs.rax, expected, "64-bit fill bit 0");
 }
 
 #[test]
 fn test_blcfill_extended_registers() {
     // BLCFILL R8D, R9D
     let code = [
-        0xc4, 0x42, 0x78, 0x01, 0xc9, // BLCFILL R8D, R9D
+        0xc4, 0x42, 0x38, 0x01, 0xc9, // BLCFILL R8D, R9D
         0xf4,
     ];
+    let src = 0b1111_0111u32; // bit 3 clear
     let mut regs = Registers::default();
-    regs.r9 = 0b1111_0111; // bit 3 clear
+    regs.r9 = src as u64;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.r8 & 0xFFFFFFFF, 0b1111_1111, "Extended registers");
+    let expected = src & src.wrapping_add(1);
+    assert_eq!(regs.r8 & 0xFFFFFFFF, expected as u64, "Extended registers");
 }
 
 #[test]
@@ -126,12 +133,14 @@ fn test_blcfill_pattern_1() {
         0xc4, 0xe2, 0x78, 0x01, 0xcb, // BLCFILL EAX, EBX
         0xf4,
     ];
+    let src = 0b1111_1011u32; // bit 2 clear
     let mut regs = Registers::default();
-    regs.rbx = 0b1111_1011; // bit 2 clear
+    regs.rbx = src as u64;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b1111_1111, "Pattern with gap");
+    let expected = src & src.wrapping_add(1);
+    assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "Pattern with gap");
 }
 
 #[test]
@@ -141,12 +150,14 @@ fn test_blcfill_high_bit_clear() {
         0xc4, 0xe2, 0x78, 0x01, 0xcb, // BLCFILL EAX, EBX
         0xf4,
     ];
+    let src = 0x7FFF_FFFFu32; // bit 31 clear
     let mut regs = Registers::default();
-    regs.rbx = 0x7FFFFFFF; // bit 31 clear
+    regs.rbx = src as u64;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0xFFFFFFFF, "High bit clear fills all");
+    let expected = src & src.wrapping_add(1);
+    assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "High bit clear");
 }
 
 #[test]
@@ -157,11 +168,12 @@ fn test_blcfill_mem_operand() {
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_mem_u32(&mem, 0b1101_1101); // bits 1, 5 clear
+    let src = 0b1101_1101u32; // bits 1, 5 clear
+    write_mem_u32(&mem, src);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // Fill from bit 1: 0b1101_1111
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b1101_1111, "Memory operand");
+    let expected = src & src.wrapping_add(1);
+    assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "Memory operand");
 }
 
 #[test]
@@ -177,8 +189,7 @@ fn test_blcfill_power_of_two() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        // For 2^i, result is 2^i | 1
-        let expected = (1u64 << i) | 1;
+        let expected = (1u64 << i) & (1u64 << i).wrapping_add(1);
         assert_eq!(regs.rax & 0xFFFFFFFF, expected, "Power of 2: {}", i);
     }
 }
@@ -190,12 +201,14 @@ fn test_blcfill_consecutive_bits() {
         0xc4, 0xe2, 0x78, 0x01, 0xcb, // BLCFILL EAX, EBX
         0xf4,
     ];
+    let src = 0b0111_1111u32; // bits 0-6 set, bit 7 clear
     let mut regs = Registers::default();
-    regs.rbx = 0b0111_1111; // bits 0-6 set, bit 7 clear
+    regs.rbx = src as u64;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0b1111_1111, "Consecutive bits");
+    let expected = src & src.wrapping_add(1);
+    assert_eq!(regs.rax & 0xFFFFFFFF, expected as u64, "Consecutive bits");
 }
 
 #[test]
@@ -221,12 +234,9 @@ fn test_blcfill_formula() {
 #[test]
 fn test_blcfill_64bit_patterns() {
     // 64-bit patterns
-    let test_cases = [
-        (0xFFFF_FFFF_0000_0001u64, 0xFFFF_FFFF_0000_0003u64),
-        (0x0000_0000_FFFF_FFFEu64, 0x0000_0000_FFFF_FFFFu64),
-    ];
+    let test_cases = [0xFFFF_FFFF_0000_0001u64, 0x0000_0000_FFFF_FFFEu64];
 
-    for (src, expected) in &test_cases {
+    for src in &test_cases {
         let code = [
             0xc4, 0xe2, 0xf8, 0x01, 0xcb, // BLCFILL RAX, RBX
             0xf4,
@@ -236,7 +246,8 @@ fn test_blcfill_64bit_patterns() {
         let (mut vcpu, _) = setup_vm(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        assert_eq!(regs.rax, *expected, "BLCFILL({:016x})", src);
+        let expected = src & src.wrapping_add(1);
+        assert_eq!(regs.rax, expected, "BLCFILL({:016x})", src);
     }
 }
 

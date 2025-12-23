@@ -107,7 +107,7 @@ fn test_blci_64bit() {
 fn test_blci_extended_registers() {
     // BLCI R8D, R9D
     let code = [
-        0xc4, 0x42, 0x78, 0x02, 0xf1, // BLCI R8D, R9D
+        0xc4, 0x42, 0x38, 0x02, 0xf1, // BLCI R8D, R9D
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -306,8 +306,8 @@ fn test_blci_sparse_pattern() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // Lowest clear is bit 0
-    assert_eq!(regs.rax & 0xFFFFFFFF, 1, "Sparse pattern");
+    // Lowest clear is bit 8
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x100, "Sparse pattern");
 }
 
 #[test]
@@ -369,8 +369,8 @@ fn test_blci_practical_gap_finding() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // Lowest clear is bit 0, not bit 9
-    assert_eq!(regs.rax & 0xFFFFFFFF, 1, "Bitmap gap");
+    // Lowest clear is bit 9 (bits 0-8 are set)
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x200, "Bitmap gap");
 }
 
 #[test]

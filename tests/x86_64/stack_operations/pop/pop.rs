@@ -234,7 +234,8 @@ fn test_pop_max_value() {
     regs.rsp = 0x1000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xFFFFFFFF, "RAX should be max 32-bit");
+    // MOV r64, imm32 sign-extends: 0xFFFFFFFF becomes 0xFFFFFFFFFFFFFFFF
+    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFFFF, "RAX should be sign-extended max");
 }
 
 // Practical use case: function epilogue
@@ -308,14 +309,15 @@ fn test_pop_all_extended_regs() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Reverse order
-    assert_eq!(regs.r15, 0x08, "R15 gets R8");
-    assert_eq!(regs.r14, 0x09, "R14 gets R9");
-    assert_eq!(regs.r13, 0x0A, "R13 gets R10");
-    assert_eq!(regs.r12, 0x0B, "R12 gets R11");
-    assert_eq!(regs.r11, 0x0C, "R11 gets R12");
-    assert_eq!(regs.r10, 0x0D, "R10 gets R13");
-    assert_eq!(regs.r9, 0x0E, "R9 gets R14");
-    assert_eq!(regs.r8, 0x0F, "R8 gets R15");
+    // Push R8-R15 in order, pop R15-R8 in reverse order -> each reg gets its own value
+    assert_eq!(regs.r15, 0x0F, "R15 restored");
+    assert_eq!(regs.r14, 0x0E, "R14 restored");
+    assert_eq!(regs.r13, 0x0D, "R13 restored");
+    assert_eq!(regs.r12, 0x0C, "R12 restored");
+    assert_eq!(regs.r11, 0x0B, "R11 restored");
+    assert_eq!(regs.r10, 0x0A, "R10 restored");
+    assert_eq!(regs.r9, 0x09, "R9 restored");
+    assert_eq!(regs.r8, 0x08, "R8 restored");
 }
 
 // Chain of PUSHes and POPs
@@ -428,7 +430,8 @@ fn test_pop_preserves_other_registers() {
     regs.rsp = 0x1000;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x99, "RAX popped");
+    // PUSH imm8 sign-extends: 0x99 (bit 7 set) -> 0xFFFFFFFFFFFFFF99
+    assert_eq!(regs.rax, 0xFFFFFFFFFFFFFF99, "RAX popped (sign-extended)");
     assert_eq!(regs.rbx, 0x33, "RBX unchanged");
     assert_eq!(regs.rcx, 0x44, "RCX unchanged");
 }

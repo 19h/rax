@@ -118,7 +118,8 @@ fn test_pop_mem_disp8_negative() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     let val = read_mem_at_u64(&vm, DATA_ADDR + 8);
-    assert_eq!(val, 0x99, "Value popped to [RAX-8]");
+    // PUSH imm8 sign-extends: 0x99 (bit 7 set) -> 0xFFFFFFFFFFFFFF99
+    assert_eq!(val, 0xFFFFFFFFFFFFFF99, "Value popped to [RAX-8]");
 }
 
 #[test]

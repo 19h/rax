@@ -358,7 +358,7 @@ fn test_tbm_64bit_versions() {
 fn test_tbm_extended_registers() {
     // Test with R8-R15
     let code = [
-        0xc4, 0x42, 0x78, 0x01, 0xd9, // BLCS R8D, R9D
+        0xc4, 0x42, 0x38, 0x01, 0xd9, // BLCS R8D, R9D
         0xf4,
     ];
     let mut regs = Registers::default();

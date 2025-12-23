@@ -160,7 +160,7 @@ pub(super) struct EvexPrefix {
     pub b: bool,
     /// R' bit (inverted, extends reg field to 5 bits for ZMM16-31)
     pub r_prime: bool,
-    /// mm field (opcode map: 1=0F, 2=0F38, 3=0F3A)
+    /// mm field (opcode map: 1=0F, 2=0F38, 3=0F3A, 5=MAP5, 6=MAP6)
     pub mm: u8,
     /// W bit (operand size: 0=32-bit, 1=64-bit elements)
     pub w: bool,

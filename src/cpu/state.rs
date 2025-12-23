@@ -82,6 +82,15 @@ pub struct SystemRegisters {
     pub cr4: u64,
     pub cr8: u64,
     pub efer: u64,
+    /// Debug registers DR0-DR3: breakpoint linear addresses
+    pub dr0: u64,
+    pub dr1: u64,
+    pub dr2: u64,
+    pub dr3: u64,
+    /// Debug status register (DR6)
+    pub dr6: u64,
+    /// Debug control register (DR7)
+    pub dr7: u64,
 }
 
 /// Complete x86_64 CPU state snapshot.
