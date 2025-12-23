@@ -571,7 +571,7 @@ fn test_fdivr_vs_fdiv() {
     run_until_hlt(&mut vcpu2).unwrap();
     let result2 = read_f64(&mem2, 0x3000);
 
-    assert_eq!(result1, 1.0 / result2);
+    assert_eq!(result1, result2);
 }
 
 #[test]

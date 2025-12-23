@@ -40,7 +40,7 @@ fn test_aam_zero() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x00;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x00, "AL should be 0");
@@ -55,7 +55,7 @@ fn test_aam_one() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x01;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x01, "AL should be 1");
@@ -70,7 +70,7 @@ fn test_aam_nine() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x09;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x09, "AL should be 9");
@@ -85,7 +85,7 @@ fn test_aam_ten() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0A;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x00, "AL should be 0 (10 MOD 10)");
@@ -103,7 +103,7 @@ fn test_aam_12() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0C;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x02, "AL should be 2");
@@ -116,7 +116,7 @@ fn test_aam_25() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x19;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x05, "AL should be 5");
@@ -129,7 +129,7 @@ fn test_aam_45() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x2D;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x05, "AL should be 5");
@@ -142,7 +142,7 @@ fn test_aam_81() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x51;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x01, "AL should be 1");
@@ -155,7 +155,7 @@ fn test_aam_99() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x63;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x09, "AL should be 9");
@@ -176,7 +176,7 @@ fn test_aam_after_mul_3_times_4() {
         0xd4, 0x0a,       // AAM
         0xf4,             // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x02, "Ones digit should be 2");
@@ -193,7 +193,7 @@ fn test_aam_after_mul_5_times_6() {
         0xd4, 0x0a,       // AAM
         0xf4,             // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x00, "Ones digit should be 0");
@@ -210,7 +210,7 @@ fn test_aam_after_mul_7_times_8() {
         0xd4, 0x0a,       // AAM
         0xf4,             // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x06, "Ones digit should be 6");
@@ -227,7 +227,7 @@ fn test_aam_after_mul_9_times_9() {
         0xd4, 0x0a,       // AAM
         0xf4,             // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x01, "Ones digit should be 1");
@@ -244,7 +244,7 @@ fn test_aam_after_mul_8_times_7() {
         0xd4, 0x0a,       // AAM
         0xf4,             // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x06, "Ones digit should be 6");
@@ -261,7 +261,7 @@ fn test_aam_100() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x64;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x00, "AL should be 0");
@@ -274,7 +274,7 @@ fn test_aam_127() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x7F;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x07, "AL should be 7");
@@ -287,7 +287,7 @@ fn test_aam_200() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0xC8;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x00, "AL should be 0");
@@ -300,7 +300,7 @@ fn test_aam_255() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0xFF;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x05, "AL should be 5");
@@ -320,7 +320,7 @@ fn test_aam_base_2() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x05;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x01, "AL should be 1");
@@ -336,7 +336,7 @@ fn test_aam_base_8_octal() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x19;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x01, "AL should be 1");
@@ -352,7 +352,7 @@ fn test_aam_base_12() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x25;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x01, "AL should be 1");
@@ -368,7 +368,7 @@ fn test_aam_base_16_hex() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0xAB;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x0B, "AL should be 11");
@@ -384,7 +384,7 @@ fn test_aam_base_7() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x32;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x01, "AL should be 1");
@@ -401,7 +401,7 @@ fn test_aam_flags_zero_result() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0A;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x00, "AL should be 0");
@@ -415,7 +415,7 @@ fn test_aam_flags_nonzero_result() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x19;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x05, "AL should be 5");
@@ -428,7 +428,7 @@ fn test_aam_parity_flag_even() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0C;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x02, "AL should be 2");
@@ -441,7 +441,7 @@ fn test_aam_parity_flag_odd() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0B;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x01, "AL should be 1");
@@ -458,7 +458,7 @@ fn test_aam_preserves_high_rax() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x1234_5678_DEAD_BE19;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax >> 16, 0x1234_5678_DEAD, "High bits of RAX should be preserved");
@@ -473,7 +473,7 @@ fn test_aam_all_single_digits() {
         let code = [0xd4, 0x0a, 0xf4];
         let mut regs = Registers::default();
         regs.rax = val;
-        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(regs.rax & 0xFF, val, "AL should remain {} for single digit", val);
@@ -489,7 +489,7 @@ fn test_aam_multiples_of_10() {
         let code = [0xd4, 0x0a, 0xf4];
         let mut regs = Registers::default();
         regs.rax = val;
-        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(regs.rax & 0xFF, 0x00, "AL should be 0 for {}", val);
@@ -504,7 +504,7 @@ fn test_aam_sequential_values() {
         let code = [0xd4, 0x0a, 0xf4];
         let mut regs = Registers::default();
         regs.rax = val;
-        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected_ah = val / 10;
@@ -520,7 +520,7 @@ fn test_aam_ignores_initial_ah() {
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0xFF19; // AH = 0xFF, AL = 25
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x05, "AL should be 5 (25 MOD 10)");
@@ -543,7 +543,7 @@ fn test_aam_with_different_bases_comprehensive() {
         let code = [0xd4, *base, 0xf4];
         let mut regs = Registers::default();
         regs.rax = 100;
-        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(regs.rax & 0xFF, *expected_al as u64, "AL incorrect for base {}", base);

@@ -46,7 +46,7 @@ fn test_aaa_no_adjustment_needed() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0005;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x05, "AL should remain 5");
@@ -61,7 +61,7 @@ fn test_aaa_adjustment_needed_low_nibble() {
     let code = [0x37, 0xf4]; // AAA, HLT
     let mut regs = Registers::default();
     regs.rax = 0x000A;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // AX = 0x000A + 0x0106 = 0x0110, then AL masked to 0x0F -> 0x00
@@ -78,7 +78,7 @@ fn test_aaa_adjustment_needed_af_set() {
     let mut regs = Registers::default();
     regs.rax = 0x0005;
     regs.rflags = 0x10; // Set AF flag
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // AX = 0x0005 + 0x0106 = 0x010B, then AL masked to 0x0F -> 0x0B
@@ -94,7 +94,7 @@ fn test_aaa_all_digits_0_through_9() {
         let code = [0x37, 0xf4]; // AAA, HLT
         let mut regs = Registers::default();
         regs.rax = digit;
-        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(regs.rax & 0xFF, digit, "AL should remain {}", digit);
@@ -109,10 +109,10 @@ fn test_aaa_values_0a_through_0f() {
         let code = [0x37, 0xf4]; // AAA, HLT
         let mut regs = Registers::default();
         regs.rax = val;
-        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
-        let expected_al = val & 0x0F;
+        let expected_al = val.wrapping_add(6) & 0x0F;
         assert_eq!(regs.rax & 0xFF, expected_al, "AL should be masked for value 0x{:02X}", val);
         assert_eq!((regs.rax >> 8) & 0xFF, 0x01, "AH should be 1 for value 0x{:02X}", val);
         assert!(cf_set(regs.rflags), "CF should be set for value 0x{:02X}", val);
@@ -126,7 +126,7 @@ fn test_aaa_with_initial_ah() {
     let code = [0x37, 0xf4]; // AAA, HLT
     let mut regs = Registers::default();
     regs.rax = 0x050A; // AH=5, AL=0x0A
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // AX = 0x050A + 0x0106 = 0x0610, then AL masked to 0x0F -> 0x00
@@ -142,7 +142,7 @@ fn test_aaa_bcd_addition_example() {
     let code = [0x37, 0xf4]; // AAA, HLT
     let mut regs = Registers::default();
     regs.rax = 0x000F; // Result of 8 + 7
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x05, "AL should be 5 (ones digit)");
@@ -154,7 +154,7 @@ fn test_aaa_preserves_high_bits() {
     let code = [0x37, 0xf4]; // AAA, HLT
     let mut regs = Registers::default();
     regs.rax = 0xDEADBEEF_12340A0F;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Only AX (lower 16 bits) should be modified
@@ -167,7 +167,7 @@ fn test_aaa_max_al_value() {
     let code = [0x37, 0xf4]; // AAA, HLT
     let mut regs = Registers::default();
     regs.rax = 0x00FF;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0x00FF + 0x0106 = 0x0205, AL masked to 0x0F -> 0x05
@@ -181,11 +181,11 @@ fn test_aaa_ah_overflow() {
     let code = [0x37, 0xf4]; // AAA, HLT
     let mut regs = Registers::default();
     regs.rax = 0xFF0A;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // 0xFF0A + 0x0106 = 0x10010, AX only keeps lower 16 bits = 0x0010
-    assert_eq!(regs.rax & 0xFFFF, 0x0010, "AX should wrap around");
+    // 0xFF0A + 0x0106 = 0x10010, AX wraps to 0x0010, then AL masked to 0x00
+    assert_eq!(regs.rax & 0xFFFF, 0x0000, "AX should wrap and mask to 0");
 }
 
 // ============================================================================
@@ -201,7 +201,7 @@ fn test_aas_no_adjustment_needed() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0005;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x05, "AL should remain 5");
@@ -216,7 +216,7 @@ fn test_aas_adjustment_needed_low_nibble() {
     let code = [0x3F, 0xf4]; // AAS, HLT
     let mut regs = Registers::default();
     regs.rax = 0x000F;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // AL = AL - 6 = 0x0F - 6 = 0x09, then masked to 0x0F -> 0x09
@@ -234,13 +234,13 @@ fn test_aas_adjustment_needed_af_set() {
     let mut regs = Registers::default();
     regs.rax = 0x0005;
     regs.rflags = 0x10; // Set AF flag
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // AL = AL - 6 = 5 - 6 = -1 = 0xFF, masked to 0x0F -> 0x0F
-    // AH = AH - 1 = 0 - 1 = 0xFF
+    // AH borrows from AL subtraction, then decrements by 1
     assert_eq!(regs.rax & 0xFF, 0x0F, "AL should be 0x0F");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0xFF, "AH should be decremented");
+    assert_eq!((regs.rax >> 8) & 0xFF, 0xFE, "AH should be decremented with borrow");
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -251,7 +251,7 @@ fn test_aas_all_digits_0_through_9() {
         let code = [0x3F, 0xf4]; // AAS, HLT
         let mut regs = Registers::default();
         regs.rax = digit;
-        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(regs.rax & 0xFF, digit, "AL should remain {}", digit);
@@ -266,7 +266,7 @@ fn test_aas_values_0a_through_0f() {
         let code = [0x3F, 0xf4]; // AAS, HLT
         let mut regs = Registers::default();
         regs.rax = val;
-        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         let expected_al = ((val as i8 - 6) as u8) & 0x0F;
@@ -283,7 +283,7 @@ fn test_aas_with_initial_ah() {
     let code = [0x3F, 0xf4]; // AAS, HLT
     let mut regs = Registers::default();
     regs.rax = 0x050A;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // AL = 0x0A - 6 = 4, masked to 0x0F -> 0x04
@@ -299,7 +299,7 @@ fn test_aas_bcd_subtraction_example() {
     let code = [0x3F, 0xf4]; // AAS, HLT
     let mut regs = Registers::default();
     regs.rax = 0x020C; // Simulating 12 - 6 with intermediate result
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // AL = 0x0C - 6 = 6, masked to 0x0F -> 0x06
@@ -313,7 +313,7 @@ fn test_aas_preserves_high_bits() {
     let code = [0x3F, 0xf4]; // AAS, HLT
     let mut regs = Registers::default();
     regs.rax = 0xDEADBEEF_12340F0F;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Only AX (lower 16 bits) should be modified
@@ -326,7 +326,7 @@ fn test_aas_zero_ah() {
     let code = [0x3F, 0xf4]; // AAS, HLT
     let mut regs = Registers::default();
     regs.rax = 0x000E;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // AL = 0x0E - 6 = 8, masked to 0x0F -> 0x08
@@ -341,7 +341,7 @@ fn test_aas_max_ah() {
     let code = [0x3F, 0xf4]; // AAS, HLT
     let mut regs = Registers::default();
     regs.rax = 0xFF0B;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // AL = 0x0B - 6 = 5, masked to 0x0F -> 0x05
@@ -364,12 +364,12 @@ fn test_aaa_then_aas() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x000E;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // After AAA: 0x000E + 0x0106 = 0x0114, masked -> AH=1, AL=4
-    // After AAS: No adjustment (AL=4 <= 9), stays at 0x0104
-    assert_eq!(regs.rax & 0xFFFF, 0x0104, "Result should be 0x0104");
+    // After AAA: 0x000E + 0x0106 = 0x0114, masked -> AH=1, AL=4 (AF set)
+    // After AAS: adjustment due to AF set -> AX becomes 0xFF0E
+    assert_eq!(regs.rax & 0xFFFF, 0xFF0E, "Result should be 0xFF0E");
 }
 
 #[test]
@@ -383,7 +383,7 @@ fn test_multiple_aaa_operations() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x000F;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Each AAA processes the current state
@@ -403,7 +403,7 @@ fn test_aaa_with_all_flags_set() {
     let mut regs = Registers::default();
     regs.rax = 0x0003;
     regs.rflags = 0xFFF; // Set all flags
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // AF was set, so adjustment occurs: 0x0003 + 0x0106 = 0x0109, masked -> 0x0109
@@ -417,7 +417,7 @@ fn test_aas_with_all_flags_set() {
     let mut regs = Registers::default();
     regs.rax = 0x0508;
     regs.rflags = 0xFFF; // Set all flags
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // AF was set, so adjustment occurs: AL = 8 - 6 = 2, AH = 5 - 1 = 4
@@ -430,7 +430,7 @@ fn test_aaa_zero_value() {
     let code = [0x37, 0xf4]; // AAA, HLT
     let mut regs = Registers::default();
     regs.rax = 0x0000;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0x0000, "AX should remain 0");
@@ -443,7 +443,7 @@ fn test_aas_zero_value() {
     let code = [0x3F, 0xf4]; // AAS, HLT
     let mut regs = Registers::default();
     regs.rax = 0x0000;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFFFF, 0x0000, "AX should remain 0");
@@ -459,7 +459,7 @@ fn test_aaa_boundary_9_to_10() {
     // Test 9: no adjustment
     let mut regs = Registers::default();
     regs.rax = 0x0009;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFF, 0x09, "AL=9 needs no adjustment");
     assert!(!af_set(regs.rflags), "AF should be clear for 9");
@@ -467,7 +467,7 @@ fn test_aaa_boundary_9_to_10() {
     // Test 10 (0x0A): adjustment needed
     let mut regs = Registers::default();
     regs.rax = 0x000A;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFFFF, 0x0100, "AL=0x0A should adjust to 0x0100");
     assert!(af_set(regs.rflags), "AF should be set for 0x0A");
@@ -481,7 +481,7 @@ fn test_aas_boundary_9_to_10() {
     // Test 9: no adjustment
     let mut regs = Registers::default();
     regs.rax = 0x0509;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFFFF, 0x0509, "AL=9 needs no adjustment");
     assert!(!af_set(regs.rflags), "AF should be clear for 9");
@@ -489,7 +489,7 @@ fn test_aas_boundary_9_to_10() {
     // Test 10 (0x0A): adjustment needed
     let mut regs = Registers::default();
     regs.rax = 0x050A;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax & 0xFFFF, 0x0404, "AL=0x0A should adjust");
     assert!(af_set(regs.rflags), "AF should be set for 0x0A");
@@ -504,7 +504,8 @@ fn test_aaa_unpacked_bcd_chain() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0011; // 9 + 8 = 17 (0x11 in hex, adjust needed)
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    regs.rflags = 0x10; // Set AF to reflect carry from prior addition
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0x0011 + 0x0106 = 0x0117, masked -> 0x0107
@@ -521,7 +522,7 @@ fn test_aas_unpacked_bcd_chain() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x030C; // Intermediate result needing adjustment
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // AL = 0x0C - 6 = 6, AH = 3 - 1 = 2
@@ -535,7 +536,7 @@ fn test_aaa_masking_high_nibble() {
     let code = [0x37, 0xf4]; // AAA, HLT
     let mut regs = Registers::default();
     regs.rax = 0x00F5; // High nibble = F, low nibble = 5
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // No adjustment (low nibble 5 <= 9), but high nibble masked
@@ -548,7 +549,7 @@ fn test_aas_masking_high_nibble() {
     let code = [0x3F, 0xf4]; // AAS, HLT
     let mut regs = Registers::default();
     regs.rax = 0x05F8; // High nibble = F, low nibble = 8
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // No adjustment (low nibble 8 <= 9), but high nibble masked

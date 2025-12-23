@@ -169,7 +169,7 @@ fn test_fcomi_st2() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let flags = read_u64(&mem, 0x3000);
-    assert_ne!(flags & CF_BIT, 0, "CF should be set (3.0 > 1.0)");
+    assert_eq!(flags & CF_BIT, 0, "CF should be clear (3.0 > 1.0)");
 }
 
 #[test]
@@ -199,7 +199,7 @@ fn test_fcomi_st3() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let flags = read_u64(&mem, 0x3000);
-    assert_ne!(flags & CF_BIT, 0, "CF should be set (4.0 > 1.0)");
+    assert_eq!(flags & CF_BIT, 0, "CF should be clear (4.0 > 1.0)");
 }
 
 #[test]
@@ -384,7 +384,7 @@ fn test_fcomip_st2() {
     let val2 = read_f64(&mem, 0x3010);
     assert_eq!(val1, 2.0);
     assert_eq!(val2, 1.0);
-    assert_ne!(flags & CF_BIT, 0, "CF should be set (3.0 > 1.0)");
+    assert_eq!(flags & CF_BIT, 0, "CF should be clear (3.0 > 1.0)");
 }
 
 // ============================================================================
@@ -429,8 +429,8 @@ fn test_fcomi_conditional_jb() {
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 10.0);
-    write_f64(&mem, 0x2008, 5.0);
+    write_f64(&mem, 0x2000, 5.0);
+    write_f64(&mem, 0x2008, 10.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
@@ -515,8 +515,8 @@ fn test_fcomi_sequence() {
 
     let flags1 = read_u64(&mem, 0x3000);
     let flags2 = read_u64(&mem, 0x3008);
-    assert_ne!(flags1 & CF_BIT, 0, "First comparison: 2.0 > 1.0");
-    assert_ne!(flags2 & CF_BIT, 0, "Second comparison: 3.0 > 2.0");
+    assert_eq!(flags1 & CF_BIT, 0, "First comparison: 2.0 > 1.0");
+    assert_eq!(flags2 & CF_BIT, 0, "Second comparison: 3.0 > 2.0");
 }
 
 #[test]
@@ -545,7 +545,7 @@ fn test_fcomip_chain() {
     let flags1 = read_u64(&mem, 0x3000);
     let flags2 = read_u64(&mem, 0x3008);
     assert_ne!(flags1 & ZF_BIT, 0, "First comparison: 2.0 == 2.0");
-    assert_ne!(flags2 & CF_BIT, 0, "Second comparison: 2.0 > 1.0");
+    assert_eq!(flags2 & CF_BIT, 0, "Second comparison: 2.0 > 1.0");
 }
 
 #[test]
@@ -612,7 +612,7 @@ fn test_fcomip_negative_numbers() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let flags = read_u64(&mem, 0x3000);
-    assert_ne!(flags & CF_BIT, 0, "CF should be set (-5.0 > -10.0, so ST(0) < ST(1))");
+    assert_eq!(flags & CF_BIT, 0, "CF should be clear (-5.0 > -10.0)");
 }
 
 #[test]
@@ -683,5 +683,5 @@ fn test_fcomip_constants() {
 
     let flags = read_u64(&mem, 0x3000);
     assert_eq!(flags & ZF_BIT, 0, "ZF should be clear");
-    assert_eq!(flags & CF_BIT, 0, "CF should be clear (LOG2_E < PI, so ST(0) > ST(1))");
+    assert_ne!(flags & CF_BIT, 0, "CF should be set (LOG2_E < PI)");
 }

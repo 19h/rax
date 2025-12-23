@@ -323,7 +323,7 @@ fn test_fsincos_pythagorean_identity() {
         0xD8, 0xC8,                                  // FMUL ST(0), ST(0) (cos²)
         0xD9, 0xCA,                                  // FXCH ST(2)
         0xD8, 0xC8,                                  // FMUL ST(0), ST(0) (sin²)
-        0xDE, 0xC1,                                  // FADDP (add sin² + cos²)
+        0xDE, 0xC2,                                  // FADDP (add sin² + cos²)
         0xDD, 0xD8,                                  // FSTP ST(0) (pop extra)
         0xDD, 0x1C, 0x25, 0x00, 0x30, 0x00, 0x00,  // FSTP qword [0x3000]
         0xF4,                                        // HLT

@@ -41,7 +41,7 @@ fn test_aad_zero() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0000;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x00, "AL should be 0");
@@ -56,7 +56,7 @@ fn test_aad_single_digit_in_al() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0005;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x05, "AL should be 5");
@@ -69,7 +69,7 @@ fn test_aad_single_digit_in_ah() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0300;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 30, "AL should be 30 (3 * 10)");
@@ -86,7 +86,7 @@ fn test_aad_12() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0102;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 12, "AL should be 12");
@@ -99,7 +99,7 @@ fn test_aad_25() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0205;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 25, "AL should be 25");
@@ -112,7 +112,7 @@ fn test_aad_37() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0307;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 37, "AL should be 37");
@@ -125,7 +125,7 @@ fn test_aad_58() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0508;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 58, "AL should be 58");
@@ -138,7 +138,7 @@ fn test_aad_99() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0909;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 99, "AL should be 99");
@@ -155,7 +155,7 @@ fn test_aad_10() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0100;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 10, "AL should be 10");
@@ -168,7 +168,7 @@ fn test_aad_20() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0200;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 20, "AL should be 20");
@@ -181,7 +181,7 @@ fn test_aad_50() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0500;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 50, "AL should be 50");
@@ -194,7 +194,7 @@ fn test_aad_90() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0900;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 90, "AL should be 90");
@@ -215,7 +215,7 @@ fn test_aad_before_div_58_by_4() {
         0xf6, 0xf3,       // DIV BL (AL = quotient, AH = remainder)
         0xf4,             // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 14, "Quotient should be 14");
@@ -232,7 +232,7 @@ fn test_aad_before_div_72_by_8() {
         0xf6, 0xf3,       // DIV BL
         0xf4,             // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 9, "Quotient should be 9");
@@ -249,7 +249,7 @@ fn test_aad_before_div_37_by_5() {
         0xf6, 0xf3,       // DIV BL
         0xf4,             // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 7, "Quotient should be 7");
@@ -266,7 +266,7 @@ fn test_aad_before_div_99_by_9() {
         0xf6, 0xf3,       // DIV BL
         0xf4,             // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 11, "Quotient should be 11");
@@ -286,7 +286,7 @@ fn test_aad_base_2() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0301;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 7, "AL should be 7 (3*2 + 1)");
@@ -302,7 +302,7 @@ fn test_aad_base_8_octal() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0305;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 29, "AL should be 29 (3*8 + 5)");
@@ -318,7 +318,7 @@ fn test_aad_base_12() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0407;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 55, "AL should be 55 (4*12 + 7)");
@@ -334,7 +334,7 @@ fn test_aad_base_16_hex() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0A0B;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 171, "AL should be 171 (10*16 + 11)");
@@ -350,7 +350,7 @@ fn test_aad_base_7() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x0506;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 41, "AL should be 41 (5*7 + 6)");
@@ -367,7 +367,7 @@ fn test_aad_overflow_truncated() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x1905;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 255, "AL should be 255");
@@ -380,7 +380,7 @@ fn test_aad_overflow_wraps() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x1A00;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 4, "AL should be 4 (260 & 0xFF)");
@@ -393,7 +393,7 @@ fn test_aad_large_value() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0xFF09;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 255, "AL should be 255 (2559 & 0xFF)");
@@ -410,7 +410,7 @@ fn test_aad_flags_zero_result() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0000;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x00, "AL should be 0");
@@ -424,7 +424,7 @@ fn test_aad_flags_nonzero_result() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0205;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 25, "AL should be 25");
@@ -437,7 +437,7 @@ fn test_aad_parity_flag_even() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0103;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 13, "AL should be 13");
@@ -450,7 +450,7 @@ fn test_aad_parity_flag_odd() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0101;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 11, "AL should be 11");
@@ -467,7 +467,7 @@ fn test_aad_preserves_high_rax() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x1234_5678_DEAD_0205;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax >> 16, 0x1234_5678_DEAD, "High bits of RAX should be preserved");
@@ -486,7 +486,7 @@ fn test_aad_all_two_digit_bcd() {
             let code = [0xd5, 0x0a, 0xf4];
             let mut regs = Registers::default();
             regs.rax = bcd;
-            let (mut vcpu, _) = setup_vm(&code, Some(regs));
+            let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
             let regs = run_until_hlt(&mut vcpu).unwrap();
 
             assert_eq!(regs.rax & 0xFF, expected, "AL should be {} for BCD {}{}", expected, tens, ones);
@@ -502,7 +502,7 @@ fn test_aad_al_only() {
         let code = [0xd5, 0x0a, 0xf4];
         let mut regs = Registers::default();
         regs.rax = al_val;
-        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(regs.rax & 0xFF, al_val, "AL should remain {}", al_val);
@@ -517,7 +517,7 @@ fn test_aad_ah_only() {
         let code = [0xd5, 0x0a, 0xf4];
         let mut regs = Registers::default();
         regs.rax = ah_val << 8;
-        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(regs.rax & 0xFF, ah_val * 10, "AL should be {}", ah_val * 10);
@@ -540,7 +540,7 @@ fn test_aad_with_different_bases() {
         let code = [0xd5, *base, 0xf4];
         let mut regs = Registers::default();
         regs.rax = 0x0304;
-        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(regs.rax & 0xFF, *expected as u64, "AL incorrect for base {}", base);
@@ -554,7 +554,7 @@ fn test_aad_max_ah_max_al() {
     let code = [0xd5, 0x0a, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0909;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 99, "AL should be 99");

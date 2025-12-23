@@ -401,6 +401,10 @@ impl X86_64Vcpu {
                     ))
                 }
             }
+            // MOVDIR64B (0xF8)
+            0xF8 => insn::data::movdir64b(self, ctx),
+            // MOVDIRI (0xF9)
+            0xF9 => insn::data::movdiri(self, ctx),
 
             _ => Err(Error::Emulator(format!(
                 "unimplemented 0x0F 0x38 opcode: {:#04x} at RIP={:#x}",

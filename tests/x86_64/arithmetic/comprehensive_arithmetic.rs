@@ -200,7 +200,7 @@ fn test_add_64bit_large_values() {
 fn test_add_memory_operand() {
     // ADD EAX, [mem]
     let code = [
-        0x03, 0x05, 0xf6, 0x0f, 0x00, 0x00, // ADD EAX, [rip+0x0FF6]
+        0x03, 0x05, 0xfa, 0x0f, 0x00, 0x00, // ADD EAX, [rip+0x0FFA]
         0xf4,
     ];
     let mut regs = Registers::default();
@@ -823,7 +823,7 @@ fn test_idiv_32bit_signed() {
 #[test]
 fn test_cbw_positive() {
     // CBW: AL -> AX (sign-extend byte to word)
-    let code = [0x98, 0xf4]; // CBW
+    let code = [0x66, 0x98, 0xf4]; // CBW (0x66 in 64-bit mode)
     let mut regs = Registers::default();
     regs.rax = 0x7F; // AL = 127 (positive)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -834,7 +834,7 @@ fn test_cbw_positive() {
 
 #[test]
 fn test_cbw_negative() {
-    let code = [0x98, 0xf4]; // CBW
+    let code = [0x66, 0x98, 0xf4]; // CBW (0x66 in 64-bit mode)
     let mut regs = Registers::default();
     regs.rax = 0x80; // AL = -128 (negative)
     let (mut vcpu, _) = setup_vm(&code, Some(regs));

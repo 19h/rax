@@ -59,8 +59,8 @@ pub fn cmc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 /// Loads SF, ZF, AF, PF, CF from RFLAGS into AH
 pub fn lahf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     // AH = SF:ZF:0:AF:0:PF:1:CF (bits 7:6:5:4:3:2:1:0)
-    // These correspond to RFLAGS bits 7, 6, 4, 2, 0
-    let flags_byte = (vcpu.regs.rflags & 0xFF) as u8;
+    let mut flags_byte = (vcpu.regs.rflags & 0xD5) as u8;
+    flags_byte |= 0x02;
     // Set AH (bits 8-15 of RAX)
     vcpu.regs.rax = (vcpu.regs.rax & !0xFF00) | ((flags_byte as u64) << 8);
     vcpu.regs.rip += ctx.cursor as u64;
