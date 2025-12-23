@@ -1,9 +1,9 @@
 use crate::common::*;
-use rax::cpu::Registers;
 
 // Comprehensive tests for FAR CALL instruction (inter-segment call)
 // CALL ptr16:16, CALL ptr16:32, CALL m16:16, CALL m16:32, CALL m16:64
 // Opcode: 9A (immediate), FF /3 (memory)
+// Note: 0x9A is invalid in 64-bit mode; use compatibility mode for that form.
 
 // ============================================================================
 // FAR CALL - Direct with Immediate Selector:Offset
@@ -63,7 +63,7 @@ fn test_far_call_saves_return_address() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 1);
-    assert_eq!(regs.rip, 0x2001);
+    assert_eq!(regs.rip, 0x2008);
 }
 
 // ============================================================================
@@ -72,9 +72,9 @@ fn test_far_call_saves_return_address() {
 
 #[test]
 fn test_far_call_mem_indirect_16_16() {
-    // CALL FAR [mem] - load selector:offset from memory
+    // CALL FAR [mem] with 16-bit offset (0x66 operand-size override in 64-bit mode).
     let code = [
-        0xff, 0x1c, 0x25, 0x00, 0x20, 0x00, 0x00, // CALL FAR [0x2000]
+        0x66, 0xff, 0x1c, 0x25, 0x00, 0x20, 0x00, 0x00, // CALL FAR [0x2000]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -88,14 +88,14 @@ fn test_far_call_mem_indirect_16_16() {
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x3000);
+    assert_eq!(regs.rip, 0x3001);
 }
 
 #[test]
 fn test_far_call_mem_indirect_16_32() {
-    // CALL FAR [mem] with 32-bit offset
+    // CALL FAR [mem] with 32-bit offset (default in 64-bit mode).
     let code = [
-        0x66, 0xff, 0x1c, 0x25, 0x00, 0x20, 0x00, 0x00, // CALL FAR [0x2000]
+        0xff, 0x1c, 0x25, 0x00, 0x20, 0x00, 0x00, // CALL FAR [0x2000]
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
@@ -108,7 +108,7 @@ fn test_far_call_mem_indirect_16_32() {
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x4000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x4000);
+    assert_eq!(regs.rip, 0x4001);
 }
 
 #[test]
@@ -131,7 +131,7 @@ fn test_far_call_mem_indirect_16_64() {
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x5000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x5000);
+    assert_eq!(regs.rip, 0x5001);
 }
 
 // ============================================================================
@@ -146,7 +146,7 @@ fn test_far_call_stack_push_order() {
         0x9a, 0x00, 0x20, 0x08, 0x00, // CALL 0x0008:0x2000
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [0xf4];
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
@@ -154,7 +154,7 @@ fn test_far_call_stack_push_order() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Stack should have return address pushed
-    // In 64-bit mode: push IP, then push CS
+    // Stack should have return address pushed above the prior stack contents.
     assert!(regs.rsp < 0x8000);
 }
 
@@ -165,7 +165,7 @@ fn test_far_call_stack_alignment() {
         0x9a, 0x00, 0x20, 0x08, 0x00, // CALL 0x0008:0x2000
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [
         0x48, 0x89, 0xe0, // MOV RAX, RSP (save stack pointer)
@@ -190,7 +190,7 @@ fn test_far_call_same_privilege_level() {
         0x9a, 0x00, 0x20, 0x08, 0x00, // CALL 0x0008:0x2000
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [
         0x48, 0xc7, 0xc1, 0xaa, 0x00, 0x00, 0x00, // MOV RCX, 0xAA
@@ -204,12 +204,12 @@ fn test_far_call_same_privilege_level() {
 
 #[test]
 fn test_far_call_conforming_segment() {
-    // Call to conforming code segment
+    // Call using an alternate GDT selector (descriptor checks not modeled).
     let code = [
-        0x9a, 0x00, 0x20, 0x0c, 0x00, // CALL 0x000C:0x2000 (conforming segment)
+        0x9a, 0x00, 0x20, 0x10, 0x00, // CALL 0x0010:0x2000
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [
         0x48, 0xc7, 0xc2, 0xbb, 0x00, 0x00, 0x00, // MOV RDX, 0xBB
@@ -232,7 +232,7 @@ fn test_far_call_through_call_gate_basic() {
         0x9a, 0x00, 0x20, 0x10, 0x00, // CALL 0x0010:0x2000 (call gate selector)
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [
         0x48, 0xc7, 0xc3, 0xcc, 0x00, 0x00, 0x00, // MOV RBX, 0xCC
@@ -246,24 +246,32 @@ fn test_far_call_through_call_gate_basic() {
 
 #[test]
 fn test_far_call_call_gate_parameter_copy() {
-    // Call gate with parameter count - parameters copied to new stack
+    // In IA-32e mode, far calls do not copy parameters to a new stack.
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x80, 0x00, 0x00, // MOV RSP, 0x8000
         0x48, 0xc7, 0xc0, 0x11, 0x00, 0x00, 0x00, // MOV RAX, 0x11
         0x50, // PUSH RAX (parameter)
-        0x9a, 0x00, 0x20, 0x10, 0x00, // CALL through gate
+        0x48, 0xff, 0x1c, 0x25, 0x00, 0x20, 0x00, 0x00, // CALL FAR [0x2000] (64-bit offset)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     let target_code = [
-        0x58, // POP RAX (retrieve parameter)
+        0x58, // POP RAX (return RIP)
+        0x5b, // POP RBX (return CS)
+        0x59, // POP RCX (original parameter)
         0xf4,
     ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
+    let far_ptr = [
+        0x00, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 64-bit offset
+        0x08, 0x00, // selector
+    ];
+    mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x11);
+    assert_eq!(regs.rax, CODE_ADDR + 23);
+    assert_eq!(regs.rcx, 0x11);
 }
 
 // ============================================================================
@@ -272,12 +280,13 @@ fn test_far_call_call_gate_parameter_copy() {
 
 #[test]
 fn test_far_call_through_task_gate() {
-    // Call through task gate causes task switch
+    // NOTE: Task gates are not supported in IA-32e mode; this verifies the
+    // emulator's simplified far-call transfer only.
     let code = [
         0x9a, 0x00, 0x20, 0x18, 0x00, // CALL 0x0018:0x2000 (task gate)
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [
         0x48, 0xc7, 0xc4, 0xdd, 0x00, 0x00, 0x00, // MOV RSP, 0xDD
@@ -291,13 +300,14 @@ fn test_far_call_through_task_gate() {
 
 #[test]
 fn test_far_call_task_gate_saves_state() {
-    // Task switch should save current task state in TSS
+    // NOTE: Task gates are not supported in IA-32e mode; this verifies the
+    // emulator's simplified far-call transfer only.
     let code = [
         0x48, 0xc7, 0xc0, 0x42, 0x00, 0x00, 0x00, // MOV RAX, 0x42
         0x9a, 0x00, 0x20, 0x18, 0x00, // CALL task gate
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [
         0x48, 0xc7, 0xc0, 0x99, 0x00, 0x00, 0x00, // MOV RAX, 0x99
@@ -316,51 +326,40 @@ fn test_far_call_task_gate_saves_state() {
 
 #[test]
 fn test_far_call_null_selector() {
-    // Calling with null selector should fault
+    // Calling with a null selector should fault (#GP).
     let code = [
         0x9a, 0x00, 0x20, 0x00, 0x00, // CALL 0x0000:0x2000 (null selector)
         0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1 (fallback)
         0xf4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
 
-    // This should either fault or not execute the far call
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    // If we get here, fallback code executed
-    assert_eq!(regs.rax, 1);
+    assert!(run_until_hlt(&mut vcpu).is_err());
 }
 
 #[test]
 fn test_far_call_invalid_selector() {
-    // Selector beyond GDT/LDT limit
+    // Selector beyond GDT/LDT limit should fault (#GP).
     let code = [
         0x9a, 0x00, 0x20, 0xff, 0xff, // CALL 0xFFFF:0x2000
         0x48, 0xc7, 0xc0, 0x02, 0x00, 0x00, 0x00, // MOV RAX, 2
         0xf4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
 
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 2);
+    assert!(run_until_hlt(&mut vcpu).is_err());
 }
 
 #[test]
 fn test_far_call_ldt_selector() {
-    // Call using LDT selector (bit 2 set in selector)
+    // Call using an LDT selector without an LDT present should fault (#GP).
     let code = [
         0x9a, 0x00, 0x20, 0x0c, 0x00, // CALL 0x000C:0x2000 (LDT selector)
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, _mem) = setup_vm_compat(&code, None);
 
-    let target_code = [
-        0x48, 0xc7, 0xc5, 0xee, 0x00, 0x00, 0x00, // MOV RBP, 0xEE
-        0xf4,
-    ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
-
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbp, 0xee);
+    assert!(run_until_hlt(&mut vcpu).is_err());
 }
 
 // ============================================================================
@@ -369,34 +368,34 @@ fn test_far_call_ldt_selector() {
 
 #[test]
 fn test_far_call_operand_size_16() {
-    // 16-bit operand size prefix
+    // 16-bit operand size (default in compatibility mode).
     let code = [
-        0x66, 0x9a, 0x00, 0x20, 0x08, 0x00, // CALL 0x0008:0x2000 (16-bit)
+        0x9a, 0x00, 0x20, 0x08, 0x00, // CALL 0x0008:0x2000 (16-bit)
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [0xf4];
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x2000);
+    assert_eq!(regs.rip, 0x2001);
 }
 
 #[test]
 fn test_far_call_operand_size_32() {
-    // 32-bit operand size
+    // 32-bit operand size (0x66 in compatibility mode).
     let code = [
-        0x9a, 0x00, 0x30, 0x00, 0x00, 0x08, 0x00, // CALL 0x0008:0x3000 (32-bit offset)
+        0x66, 0x9a, 0x00, 0x30, 0x00, 0x00, 0x08, 0x00, // CALL 0x0008:0x3000 (32-bit offset)
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [0xf4];
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x3000);
+    assert_eq!(regs.rip, 0x3001);
 }
 
 #[test]
@@ -418,7 +417,7 @@ fn test_far_call_rex_prefix_64() {
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x4000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x4000);
+    assert_eq!(regs.rip, 0x4001);
 }
 
 // ============================================================================
@@ -432,7 +431,7 @@ fn test_far_call_nested_same_segment() {
         0x9a, 0x00, 0x20, 0x08, 0x00, // CALL 0x0008:0x2000
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     // First level call
     let level1_code = [
@@ -459,7 +458,7 @@ fn test_far_call_nested_different_segments() {
         0x9a, 0x00, 0x20, 0x08, 0x00, // CALL 0x0008:0x2000
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let level1_code = [
         0x9a, 0x00, 0x30, 0x10, 0x00, // CALL 0x0010:0x3000 (different segment)
@@ -483,30 +482,28 @@ fn test_far_call_nested_different_segments() {
 
 #[test]
 fn test_far_call_non_present_segment() {
-    // Segment marked not present
+    // Selector beyond GDT limit should fault (#GP).
     let code = [
         0x9a, 0x00, 0x20, 0x20, 0x00, // CALL 0x0020:0x2000 (non-present)
         0x48, 0xc7, 0xc0, 0xff, 0x00, 0x00, 0x00, // MOV RAX, 0xFF
         0xf4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
 
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xff);
+    assert!(run_until_hlt(&mut vcpu).is_err());
 }
 
 #[test]
 fn test_far_call_wrong_descriptor_type() {
-    // Calling through data segment descriptor
+    // Selector beyond GDT limit should fault (#GP).
     let code = [
         0x9a, 0x00, 0x20, 0x28, 0x00, // CALL 0x0028:0x2000 (data segment)
         0x48, 0xc7, 0xc0, 0xfe, 0x00, 0x00, 0x00, // MOV RAX, 0xFE
         0xf4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
 
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0xfe);
+    assert!(run_until_hlt(&mut vcpu).is_err());
 }
 
 // ============================================================================
@@ -523,14 +520,14 @@ fn test_far_call_mem_register_indirect() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let far_ptr = [0x00, 0x30, 0x08, 0x00];
+    let far_ptr = [0x00, 0x30, 0x00, 0x00, 0x08, 0x00];
     mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000)).unwrap();
 
     let target_code = [0xf4];
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x3000);
+    assert_eq!(regs.rip, 0x3001);
 }
 
 #[test]
@@ -543,14 +540,14 @@ fn test_far_call_mem_base_displacement() {
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    let far_ptr = [0x00, 0x40, 0x08, 0x00];
+    let far_ptr = [0x00, 0x40, 0x00, 0x00, 0x08, 0x00];
     mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000)).unwrap();
 
     let target_code = [0xf4];
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x4000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x4000);
+    assert_eq!(regs.rip, 0x4001);
 }
 
 #[test]
@@ -565,14 +562,14 @@ fn test_far_call_mem_sib_addressing() {
     let (mut vcpu, mem) = setup_vm(&code, None);
 
     // Address = 0x1E00 + 0x80*4 = 0x1E00 + 0x200 = 0x2000
-    let far_ptr = [0x00, 0x50, 0x08, 0x00];
+    let far_ptr = [0x00, 0x50, 0x00, 0x00, 0x08, 0x00];
     mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x2000)).unwrap();
 
     let target_code = [0xf4];
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x5000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x5000);
+    assert_eq!(regs.rip, 0x5001);
 }
 
 // ============================================================================
@@ -588,7 +585,7 @@ fn test_far_call_preserves_general_registers() {
         0x9a, 0x00, 0x20, 0x08, 0x00, // CALL 0x0008:0x2000
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [
         // Registers should be preserved
@@ -608,13 +605,13 @@ fn test_far_call_modifies_cs_and_rip() {
         0x9a, 0x00, 0x20, 0x08, 0x00, // CALL 0x0008:0x2000
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [0xf4];
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x2000);
+    assert_eq!(regs.rip, 0x2001);
     // CS should be updated to selector 0x0008
 }
 
@@ -629,13 +626,13 @@ fn test_far_call_to_boundary_address() {
         0x9a, 0xff, 0xff, 0x08, 0x00, // CALL 0x0008:0xFFFF
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [0xf4];
     mem.write_slice(&target_code, vm_memory::GuestAddress(0xFFFF)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0xFFFF);
+    assert_eq!(regs.rip, 0x10000);
 }
 
 #[test]
@@ -645,29 +642,29 @@ fn test_far_call_zero_offset() {
         0x9a, 0x00, 0x00, 0x08, 0x00, // CALL 0x0008:0x0000
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [0xf4];
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x0000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x0000);
+    assert_eq!(regs.rip, 0x0001);
 }
 
 #[test]
 fn test_far_call_max_offset_32bit() {
-    // Call with maximum 32-bit offset
+    // Call with maximum 32-bit offset within test memory.
     let code = [
-        0x66, 0x9a, 0xff, 0xff, 0xff, 0xff, 0x08, 0x00, // CALL 0x0008:0xFFFFFFFF
+        0x66, 0x9a, 0xff, 0xff, 0xff, 0x00, 0x08, 0x00, // CALL 0x0008:0x00FFFFFF
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [0xf4];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0xFFFFFFFF)).unwrap();
+    mem.write_slice(&target_code, vm_memory::GuestAddress(0x00FF_FFFF)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0xFFFFFFFF);
+    assert_eq!(regs.rip, 0x0100_0000);
 }
 
 #[test]
@@ -677,13 +674,13 @@ fn test_far_call_aligned_addresses() {
         0x9a, 0x00, 0x30, 0x08, 0x00, // CALL 0x0008:0x3000 (aligned)
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [0xf4];
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x3000);
+    assert_eq!(regs.rip, 0x3001);
 }
 
 #[test]
@@ -693,11 +690,11 @@ fn test_far_call_unaligned_addresses() {
         0x9a, 0x03, 0x30, 0x08, 0x00, // CALL 0x0008:0x3003 (unaligned)
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
 
     let target_code = [0xf4];
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x3003)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x3003);
+    assert_eq!(regs.rip, 0x3004);
 }

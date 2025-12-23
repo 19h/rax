@@ -136,6 +136,9 @@ pub fn sregs_from_kvm(kvm: &kvm_sregs) -> SystemRegisters {
         lstar: 0,
         cstar: 0,
         fmask: 0,
+        sysenter_cs: 0,
+        sysenter_esp: 0,
+        sysenter_eip: 0,
         // Debug registers (not part of kvm_sregs, initialized to defaults)
         dr0: 0,
         dr1: 0,

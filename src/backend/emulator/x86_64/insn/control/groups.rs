@@ -5,6 +5,7 @@ use crate::error::{Error, Result};
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::flags;
+use super::call::validate_far_selector;
 
 /// Group 4: INC/DEC r/m8 (0xFE)
 pub fn group4(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
@@ -137,25 +138,44 @@ pub fn group5(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
 
-            // Determine offset size using inverted logic (legacy compatibility)
-            let offset_size: u8 = if ctx.rex_w() {
-                8
-            } else if ctx.operand_size_override {
-                4
-            } else {
-                2
-            };
+            let offset_size = ctx.op_size;
 
             // Read offset and selector from memory
             let offset = vcpu.read_mem(addr, offset_size)?;
             let selector = vcpu.mmu.read_u16(addr + offset_size as u64, &vcpu.sregs)?;
+            validate_far_selector(vcpu, selector)?;
+            let old_cpl = vcpu.sregs.cs.selector & 0x3;
+            let new_cpl = selector & 0x3;
+            if new_cpl != old_cpl {
+                return Err(Error::Emulator(
+                    "JMP FAR privilege change not supported".to_string(),
+                ));
+            }
 
             // Push return CS:IP
             let old_cs = vcpu.get_sreg(1);
             let ret_addr = vcpu.regs.rip + ctx.cursor as u64;
 
-            vcpu.push64(old_cs as u64)?;
-            vcpu.push64(ret_addr)?;
+            match ctx.op_size {
+                2 => {
+                    vcpu.push16(old_cs)?;
+                    vcpu.push16(ret_addr as u16)?;
+                }
+                4 => {
+                    vcpu.push32(old_cs as u32)?;
+                    vcpu.push32(ret_addr as u32)?;
+                }
+                8 => {
+                    vcpu.push64(old_cs as u64)?;
+                    vcpu.push64(ret_addr)?;
+                }
+                _ => {
+                    return Err(Error::Emulator(format!(
+                        "CALL FAR m16:16/m16:32 invalid return size: {}",
+                        ctx.op_size
+                    )));
+                }
+            }
 
             // Load new CS:IP
             vcpu.set_sreg(1, selector);
@@ -180,18 +200,12 @@ pub fn group5(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
 
-            // Determine offset size using inverted logic (legacy compatibility)
-            let offset_size: u8 = if ctx.rex_w() {
-                8
-            } else if ctx.operand_size_override {
-                4
-            } else {
-                2
-            };
+            let offset_size = ctx.op_size;
 
             // Read offset and selector from memory
             let offset = vcpu.read_mem(addr, offset_size)?;
             let selector = vcpu.mmu.read_u16(addr + offset_size as u64, &vcpu.sregs)?;
+            validate_far_selector(vcpu, selector)?;
 
             // Load new CS:IP
             vcpu.set_sreg(1, selector);

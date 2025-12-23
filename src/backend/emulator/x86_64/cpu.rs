@@ -131,8 +131,14 @@ pub struct X86_64Vcpu {
 }
 
 /// Pending I/O operation.
+enum IoInTarget {
+    Reg,
+    Mem { addr: u64 },
+}
+
 struct IoPending {
     size: u8,
+    target: IoInTarget,
 }
 
 /// Decoded instruction context passed to instruction handlers.
@@ -641,8 +647,18 @@ impl X86_64Vcpu {
     }
 
     // I/O pending helpers
-    pub(super) fn set_io_pending(&mut self, size: u8) {
-        self.io_pending = Some(IoPending { size });
+    pub(super) fn set_io_pending_reg(&mut self, size: u8) {
+        self.io_pending = Some(IoPending {
+            size,
+            target: IoInTarget::Reg,
+        });
+    }
+
+    pub(super) fn set_io_pending_mem(&mut self, size: u8, addr: u64) {
+        self.io_pending = Some(IoPending {
+            size,
+            target: IoInTarget::Mem { addr },
+        });
     }
 
     // Segment register access
@@ -668,6 +684,9 @@ impl X86_64Vcpu {
             5 => &mut self.sregs.gs,
             _ => return,
         };
+        let preserve_mode = sreg == 1;
+        let prev_db = seg.db;
+        let prev_l = seg.l;
         seg.selector = value;
         // In protected/long mode, we should load the descriptor from GDT
         // For now, set a basic flat segment
@@ -676,9 +695,9 @@ impl X86_64Vcpu {
         seg.type_ = 0x03; // Data segment, read/write, accessed
         seg.present = true;
         seg.dpl = 0;
-        seg.db = true;
+        seg.db = if preserve_mode { prev_db } else { true };
         seg.s = true;
-        seg.l = false;
+        seg.l = if preserve_mode { prev_l } else { false };
         seg.g = true;
     }
 
@@ -1551,11 +1570,17 @@ impl VCpu for X86_64Vcpu {
                 }
                 _ => 0,
             };
-            match pending.size {
-                1 => self.regs.rax = (self.regs.rax & !0xFF) | value,
-                2 => self.regs.rax = (self.regs.rax & !0xFFFF) | value,
-                4 => self.regs.rax = value,
-                _ => {}
+
+            match pending.target {
+                IoInTarget::Reg => match pending.size {
+                    1 => self.regs.rax = (self.regs.rax & !0xFF) | value,
+                    2 => self.regs.rax = (self.regs.rax & !0xFFFF) | value,
+                    4 => self.regs.rax = value,
+                    _ => {}
+                },
+                IoInTarget::Mem { addr } => {
+                    let _ = self.write_mem(addr, value, pending.size);
+                }
             }
         }
     }
