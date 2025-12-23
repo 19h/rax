@@ -176,7 +176,7 @@ fn test_aaa_with_upper_nibble_fx() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x02, "AL should be 0x02");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0x01, "AH should be incremented to 0x01");
+    assert_eq!((regs.rax >> 8) & 0xFF, 0x02, "AH should be incremented to 0x02");
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
@@ -489,7 +489,7 @@ fn test_aaa_max_value_ff() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x05, "AL should be 0x05");
-    assert_eq!((regs.rax >> 8) & 0xFF, 0x01, "AH should be 0x01");
+    assert_eq!((regs.rax >> 8) & 0xFF, 0x02, "AH should be 0x02");
     assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
