@@ -26,9 +26,12 @@ pub fn regs_from_kvm(kvm: &kvm_regs) -> Registers {
         rip: kvm.rip,
         rflags: kvm.rflags,
         // Note: MMX/XMM/YMM registers are part of FPU state in KVM, initialized to defaults here
-        mm: [0; 8],
         xmm: [[0; 2]; 16],
         ymm_high: [[0; 2]; 16],
+        zmm_high: [[0; 4]; 16],
+        zmm_ext: [[0; 8]; 16],
+        k: [0; 8],
+        mm: [0; 8],
     }
 }
 

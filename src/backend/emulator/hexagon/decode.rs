@@ -1,4 +1,15 @@
+use crate::config::HexagonIsa;
+
+use super::opcode::{self, DecodedOp, EncClass, FieldVal, Opcode};
+
 #[derive(Clone, Copy, Debug)]
+pub struct PredCond {
+    pub pred: u8,
+    pub sense: bool,
+    pub pred_new: bool,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MemWidth {
     Byte,
     Half,
@@ -38,26 +49,77 @@ pub enum CmpKind {
 }
 
 #[derive(Clone, Copy, Debug)]
+pub enum ExtendKind {
+    Sxt8,
+    Sxt16,
+    Zxt8,
+    Zxt16,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum CombineOperand {
+    Reg(u8),
+    Imm(u32),
+}
+
+#[derive(Clone, Copy, Debug)]
 pub enum DecodedInsn {
     ImmExt { value: u32 },
     Add { dst: u8, src1: u8, src2: u8 },
     Sub { dst: u8, src1: u8, src2: u8 },
     And { dst: u8, src1: u8, src2: u8 },
+    AndImm { dst: u8, src: u8, imm: u32 },
+    OrImm { dst: u8, src: u8, imm: u32 },
     Or { dst: u8, src1: u8, src2: u8 },
     Xor { dst: u8, src1: u8, src2: u8 },
     AddImm { dst: u8, src: u8, imm: i32 },
+    SubImmRev { dst: u8, src: u8, imm: i32 },
     Mov { dst: u8, src: u8 },
     MovImm { dst: u8, imm: i32 },
+    Abs { dst: u8, src: u8, sat: bool },
+    NegSat { dst: u8, src: u8 },
+    Max { dst: u8, src1: u8, src2: u8 },
+    Maxu { dst: u8, src1: u8, src2: u8 },
+    Min { dst: u8, src1: u8, src2: u8 },
+    Minu { dst: u8, src1: u8, src2: u8 },
+    ClearCond { dst: u8, pred: PredCond },
+    Extend { dst: u8, src: u8, kind: ExtendKind },
+    Combine {
+        dst: u8,
+        high: CombineOperand,
+        low: CombineOperand,
+    },
     Load {
         dst: u8,
         addr: AddrMode,
         width: MemWidth,
         sign: MemSign,
+        pred: Option<PredCond>,
     },
     Store {
         src: u8,
         addr: AddrMode,
         width: MemWidth,
+        pred: Option<PredCond>,
+        src_new: bool,
+    },
+    StoreImm {
+        value: u32,
+        addr: AddrMode,
+        width: MemWidth,
+        pred: Option<PredCond>,
+    },
+    AllocFrame { base: u8, size: u32 },
+    DeallocFrame {
+        base: u8,
+        dst: Option<u8>,
+        update_lr_fp: bool,
+    },
+    DeallocReturn {
+        base: u8,
+        dst: Option<u8>,
+        pred: Option<PredCond>,
+        update_lr_fp: bool,
     },
     Jump { offset: i32 },
     JumpCond {
@@ -120,19 +182,12 @@ pub enum DecodedInsn {
 pub struct DecodedWord {
     pub insn: DecodedInsn,
     pub used_ext: bool,
+    pub opcode: Option<Opcode>,
 }
 
-fn bits(word: u32, hi: u8, lo: u8) -> u32 {
-    (word >> lo) & ((1u32 << (hi - lo + 1)) - 1)
-}
-
-fn gather_bits(word: u32, positions: &[u8]) -> u32 {
-    let mut value = 0u32;
-    for &bit in positions {
-        value <<= 1;
-        value |= (word >> bit) & 1;
-    }
-    value
+pub struct DecodedSub {
+    pub insn: DecodedInsn,
+    pub opcode: Option<Opcode>,
 }
 
 fn sign_extend(value: u32, bits: u8) -> i32 {
@@ -140,47 +195,109 @@ fn sign_extend(value: u32, bits: u8) -> i32 {
     ((value << shift) as i32) >> shift
 }
 
+fn isa_version(isa: HexagonIsa) -> u16 {
+    match isa {
+        HexagonIsa::V4 => 4,
+        HexagonIsa::V5 => 5,
+        HexagonIsa::V55 => 55,
+        HexagonIsa::V60 => 60,
+        HexagonIsa::V62 => 62,
+        HexagonIsa::V65 => 65,
+        HexagonIsa::V66 => 66,
+        HexagonIsa::V67 => 67,
+        HexagonIsa::V68 => 68,
+        HexagonIsa::V69 => 69,
+    }
+}
+
+fn isa_at_least(isa: HexagonIsa, min: HexagonIsa) -> bool {
+    isa_version(isa) >= isa_version(min)
+}
+
+fn isa_supports_duplex(isa: HexagonIsa) -> bool {
+    isa_at_least(isa, HexagonIsa::V4)
+}
+
+fn isa_supports_dotnew(isa: HexagonIsa) -> bool {
+    isa_at_least(isa, HexagonIsa::V4)
+}
+
+fn pred_uses_dotnew(pred: Option<PredCond>) -> bool {
+    pred.map_or(false, |cond| cond.pred_new)
+}
+
+fn insn_uses_dotnew(insn: &DecodedInsn) -> bool {
+    match insn {
+        DecodedInsn::Load { pred, .. } => pred_uses_dotnew(*pred),
+        DecodedInsn::Store {
+            pred, src_new, ..
+        } => pred_uses_dotnew(*pred) || *src_new,
+        DecodedInsn::StoreImm { pred, .. } => pred_uses_dotnew(*pred),
+        DecodedInsn::JumpCond { pred_new, .. } => *pred_new,
+        DecodedInsn::JumpRegCond { pred_new, .. } => *pred_new,
+        DecodedInsn::DeallocReturn { pred, .. } => pred_uses_dotnew(*pred),
+        DecodedInsn::ClearCond { pred, .. } => pred.pred_new,
+        _ => false,
+    }
+}
+
+pub(crate) fn isa_supports_insn(
+    isa: HexagonIsa,
+    insn: &DecodedInsn,
+    opcode: Option<Opcode>,
+) -> bool {
+    if insn_uses_dotnew(insn) && !isa_supports_dotnew(isa) {
+        return false;
+    }
+    if let Some(opcode) = opcode {
+        return isa_version(isa) >= opcode::opcode_min_version(opcode);
+    }
+    true
+}
+
 fn apply_immext(imm: u32, immext: u32) -> u32 {
     let ext = immext & 0x03ff_ffff;
     (ext << 6) | (imm & 0x3f)
 }
 
-fn decode_simm(word: u32, positions: &[u8], bits: u8, immext: Option<u32>) -> (i32, bool) {
-    let imm = gather_bits(word, positions);
+fn decode_simm_val(imm: u32, bits: u8, immext: Option<u32>) -> (i32, bool) {
     if let Some(ext) = immext {
         return (apply_immext(imm, ext) as i32, true);
     }
     (sign_extend(imm, bits), false)
 }
 
-fn decode_uimm(word: u32, positions: &[u8], immext: Option<u32>) -> (u32, bool) {
-    let imm = gather_bits(word, positions);
+fn decode_uimm_val(imm: u32, immext: Option<u32>) -> (u32, bool) {
     if let Some(ext) = immext {
         return (apply_immext(imm, ext), true);
     }
     (imm, false)
 }
 
-fn decode_ld_width(op: u32) -> Option<(MemWidth, MemSign)> {
-    match op {
-        0b1000 => Some((MemWidth::Byte, MemSign::Signed)),
-        0b1001 => Some((MemWidth::Byte, MemSign::Unsigned)),
-        0b1010 => Some((MemWidth::Half, MemSign::Signed)),
-        0b1011 => Some((MemWidth::Half, MemSign::Unsigned)),
-        0b1100 => Some((MemWidth::Word, MemSign::Unsigned)),
-        0b1110 => Some((MemWidth::Double, MemSign::Unsigned)),
-        _ => None,
-    }
+fn field_val(decoded: &DecodedOp, letter: u8) -> Option<FieldVal> {
+    decoded.field(letter)
 }
 
-fn decode_st_width(op: u32) -> Option<MemWidth> {
-    match op {
-        0b1000 => Some(MemWidth::Byte),
-        0b1010 => Some(MemWidth::Half),
-        0b1100 => Some(MemWidth::Word),
-        0b1110 => Some(MemWidth::Double),
-        _ => None,
-    }
+fn field_u8(decoded: &DecodedOp, letter: u8) -> Option<u8> {
+    decoded.field(letter).map(|val| val.value as u8)
+}
+
+fn decode_field_simm(
+    decoded: &DecodedOp,
+    letter: u8,
+    immext: Option<u32>,
+) -> Option<(i32, bool)> {
+    let field = field_val(decoded, letter)?;
+    Some(decode_simm_val(field.value, field.bits, immext))
+}
+
+fn decode_field_uimm(
+    decoded: &DecodedOp,
+    letter: u8,
+    immext: Option<u32>,
+) -> Option<(u32, bool)> {
+    let field = field_val(decoded, letter)?;
+    Some(decode_uimm_val(field.value, immext))
 }
 
 fn width_shift(width: MemWidth) -> u8 {
@@ -192,505 +309,1359 @@ fn width_shift(width: MemWidth) -> u8 {
     }
 }
 
-pub fn decode(word: u32, immext: Option<u32>) -> DecodedWord {
-    let iclass = bits(word, 31, 28);
+fn subreg(code: u8) -> u8 {
+    if code < 8 {
+        code
+    } else {
+        code + 8
+    }
+}
 
-    if iclass == 0x0 {
-        let high = bits(word, 27, 16);
-        let low = bits(word, 13, 0);
-        let value = (high << 14) | low;
-        return DecodedWord {
-            insn: DecodedInsn::ImmExt { value },
-            used_ext: false,
+fn subreg_pair(code: u8) -> u8 {
+    let code = code & 0x7;
+    if code < 4 {
+        code * 2
+    } else {
+        16 + (code - 4) * 2
+    }
+}
+
+fn pred_cond(pred: u8, sense: bool, pred_new: bool) -> PredCond {
+    PredCond {
+        pred,
+        sense,
+        pred_new,
+    }
+}
+
+fn load_io(
+    decoded: &DecodedOp,
+    width: MemWidth,
+    sign: MemSign,
+    immext: Option<u32>,
+) -> Option<(DecodedInsn, bool)> {
+    let base = field_u8(decoded, b's')?;
+    let dst = field_u8(decoded, b'd')?;
+    let (imm, used) = decode_field_simm(decoded, b'i', immext)?;
+    let offset = imm.wrapping_shl(width_shift(width) as u32);
+    Some((
+        DecodedInsn::Load {
+            dst,
+            addr: AddrMode::Offset { base, offset },
+            width,
+            sign,
+            pred: None,
+        },
+        used,
+    ))
+}
+
+fn load_gp(decoded: &DecodedOp, width: MemWidth, sign: MemSign) -> Option<(DecodedInsn, bool)> {
+    let dst = field_u8(decoded, b'd')?;
+    let (imm, _) = decode_field_uimm(decoded, b'i', None)?;
+    let offset = (imm << width_shift(width)) as i32;
+    Some((
+        DecodedInsn::Load {
+            dst,
+            addr: AddrMode::GpOffset { offset },
+            width,
+            sign,
+            pred: None,
+        },
+        false,
+    ))
+}
+
+fn load_pi(decoded: &DecodedOp, width: MemWidth, sign: MemSign) -> Option<(DecodedInsn, bool)> {
+    let base = field_u8(decoded, b'x')?;
+    let dst = field_u8(decoded, b'd')?;
+    let (imm, _) = decode_field_simm(decoded, b'i', None)?;
+    let offset = imm.wrapping_shl(width_shift(width) as u32);
+    Some((
+        DecodedInsn::Load {
+            dst,
+            addr: AddrMode::PostIncImm { base, offset },
+            width,
+            sign,
+            pred: None,
+        },
+        false,
+    ))
+}
+
+fn store_io(
+    decoded: &DecodedOp,
+    width: MemWidth,
+    immext: Option<u32>,
+    src_new: bool,
+) -> Option<(DecodedInsn, bool)> {
+    let base = field_u8(decoded, b's')?;
+    let src = field_u8(decoded, b't')?;
+    let (imm, used) = decode_field_simm(decoded, b'i', immext)?;
+    let offset = imm.wrapping_shl(width_shift(width) as u32);
+    Some((
+        DecodedInsn::Store {
+            src,
+            addr: AddrMode::Offset { base, offset },
+            width,
+            pred: None,
+            src_new,
+        },
+        used,
+    ))
+}
+
+fn store_gp(
+    decoded: &DecodedOp,
+    width: MemWidth,
+    src_new: bool,
+) -> Option<(DecodedInsn, bool)> {
+    let src = field_u8(decoded, b't')?;
+    let (imm, _) = decode_field_uimm(decoded, b'i', None)?;
+    let offset = (imm << width_shift(width)) as i32;
+    Some((
+        DecodedInsn::Store {
+            src,
+            addr: AddrMode::GpOffset { offset },
+            width,
+            pred: None,
+            src_new,
+        },
+        false,
+    ))
+}
+
+fn store_pi(
+    decoded: &DecodedOp,
+    width: MemWidth,
+    src_new: bool,
+) -> Option<(DecodedInsn, bool)> {
+    let base = field_u8(decoded, b'x')?;
+    let src = field_u8(decoded, b't')?;
+    let (imm, _) = decode_field_simm(decoded, b'i', None)?;
+    let offset = imm.wrapping_shl(width_shift(width) as u32);
+    Some((
+        DecodedInsn::Store {
+            src,
+            addr: AddrMode::PostIncImm { base, offset },
+            width,
+            pred: None,
+            src_new,
+        },
+        false,
+    ))
+}
+
+fn pred_load_io(
+    decoded: &DecodedOp,
+    width: MemWidth,
+    sign: MemSign,
+    sense: bool,
+    pred_new: bool,
+) -> Option<(DecodedInsn, bool)> {
+    let base = field_u8(decoded, b's')?;
+    let dst = field_u8(decoded, b'd')?;
+    let pred = field_u8(decoded, b't')?;
+    let (imm, _) = decode_field_uimm(decoded, b'i', None)?;
+    let offset = (imm << width_shift(width)) as i32;
+    Some((
+        DecodedInsn::Load {
+            dst,
+            addr: AddrMode::Offset { base, offset },
+            width,
+            sign,
+            pred: Some(pred_cond(pred, sense, pred_new)),
+        },
+        false,
+    ))
+}
+
+fn pred_store_io(
+    decoded: &DecodedOp,
+    width: MemWidth,
+    sense: bool,
+    pred_new: bool,
+    src_new: bool,
+) -> Option<(DecodedInsn, bool)> {
+    let base = field_u8(decoded, b's')?;
+    let src = field_u8(decoded, b't')?;
+    let pred = field_u8(decoded, b'v')?;
+    let (imm, _) = decode_field_uimm(decoded, b'i', None)?;
+    let offset = (imm << width_shift(width)) as i32;
+    Some((
+        DecodedInsn::Store {
+            src,
+            addr: AddrMode::Offset { base, offset },
+            width,
+            pred: Some(pred_cond(pred, sense, pred_new)),
+            src_new,
+        },
+        false,
+    ))
+}
+
+fn decode_main(decoded: &DecodedOp, word: u32, immext: Option<u32>) -> (DecodedInsn, bool) {
+    macro_rules! req {
+        ($expr:expr) => {
+            match $expr {
+                Some(value) => value,
+                None => return (DecodedInsn::Unknown(word), false),
+            }
         };
     }
 
-    if iclass == 0xf {
-        let maj4 = bits(word, 27, 24);
-        let min3 = bits(word, 23, 21);
-        let s = bits(word, 20, 16) as u8;
-        let t = bits(word, 12, 8) as u8;
-        let d = bits(word, 4, 0) as u8;
-
-        if maj4 == 0b0010 {
-            let dst_hi = bits(word, 4, 2);
-            if dst_hi == 0 {
-                let pred = bits(word, 1, 0) as u8;
-                let kind = match min3 & 0b011 {
-                    0b00 => CmpKind::Eq,
-                    0b10 => CmpKind::Gt,
-                    0b11 => CmpKind::Gtu,
-                    _ => {
-                        return DecodedWord {
-                            insn: DecodedInsn::Unknown(word),
-                            used_ext: false,
-                        }
-                    }
-                };
-                return DecodedWord {
-                    insn: DecodedInsn::Cmp {
-                        pred,
-                        src1: s,
-                        src2: t,
-                        kind,
-                    },
-                    used_ext: false,
-                };
-            }
+    match decoded.opcode {
+        Opcode::A4_ext => {
+            let imm = req!(field_val(decoded, b'i')).value;
+            (DecodedInsn::ImmExt { value: imm }, false)
         }
-
-        let insn = match (maj4, min3) {
-            (0b0011, 0b000) => DecodedInsn::Add {
-                dst: d,
-                src1: s,
-                src2: t,
-            },
-            (0b0011, 0b001) => DecodedInsn::Sub {
-                dst: d,
-                src1: s,
-                src2: t,
-            },
-            (0b0001, 0b000) => DecodedInsn::And {
-                dst: d,
-                src1: s,
-                src2: t,
-            },
-            (0b0001, 0b001) => DecodedInsn::Or {
-                dst: d,
-                src1: s,
-                src2: t,
-            },
-            (0b0001, 0b011) => DecodedInsn::Xor {
-                dst: d,
-                src1: s,
-                src2: t,
-            },
-            _ => DecodedInsn::Unknown(word),
-        };
-
-        return DecodedWord {
-            insn,
-            used_ext: false,
-        };
-    }
-
-    if iclass == 0xb {
-        let s = bits(word, 20, 16) as u8;
-        let d = bits(word, 4, 0) as u8;
-        let imm_positions = [
-            27, 26, 25, 24, 23, 22, 21, 13, 12, 11, 10, 9, 8, 7, 6, 5,
-        ];
-        let (imm, used) = decode_simm(word, &imm_positions, 16, immext);
-        return DecodedWord {
-            insn: DecodedInsn::AddImm { dst: d, src: s, imm },
-            used_ext: used,
-        };
-    }
-
-    if iclass == 0x7 {
-        let maj4 = bits(word, 27, 24);
-        let min3 = bits(word, 23, 21);
-        let s = bits(word, 20, 16) as u8;
-        let d = bits(word, 4, 0) as u8;
-        let smod = bits(word, 13, 13);
-
-        if maj4 == 0b0101 {
-            let dst_hi = bits(word, 4, 2);
-            if dst_hi == 0 {
-                let pred = bits(word, 1, 0) as u8;
-                let op2 = bits(word, 23, 22);
-                if op2 == 0b00 {
-                    let imm_positions = [21, 13, 12, 11, 10, 9, 8, 7, 6, 5];
-                    let (imm, used) = decode_simm(word, &imm_positions, 10, immext);
-                    return DecodedWord {
-                        insn: DecodedInsn::CmpImm {
-                            pred,
-                            src: s,
-                            imm,
-                            kind: CmpKind::Eq,
-                            unsigned: false,
-                        },
-                        used_ext: used,
-                    };
-                }
-                if op2 == 0b01 {
-                    let imm_positions = [21, 13, 12, 11, 10, 9, 8, 7, 6, 5];
-                    let (imm, used) = decode_simm(word, &imm_positions, 10, immext);
-                    return DecodedWord {
-                        insn: DecodedInsn::CmpImm {
-                            pred,
-                            src: s,
-                            imm,
-                            kind: CmpKind::Gt,
-                            unsigned: false,
-                        },
-                        used_ext: used,
-                    };
-                }
-                if op2 == 0b10 && bits(word, 21, 21) == 0 {
-                    let imm_positions = [13, 12, 11, 10, 9, 8, 7, 6, 5];
-                    let (imm, used) = decode_uimm(word, &imm_positions, immext);
-                    return DecodedWord {
-                        insn: DecodedInsn::CmpImm {
-                            pred,
-                            src: s,
-                            imm: imm as i32,
-                            kind: CmpKind::Gtu,
-                            unsigned: true,
-                        },
-                        used_ext: used,
-                    };
-                }
-            }
-        }
-
-        if maj4 == 0b0000 && min3 == 0b011 && smod == 0 {
-            return DecodedWord {
-                insn: DecodedInsn::Mov { dst: d, src: s },
-                used_ext: false,
-            };
-        }
-
-        if maj4 == 0b1000 {
-            let imm_positions = [
-                23, 22, 20, 19, 18, 17, 16, 13, 12, 11, 10, 9, 8, 7, 6, 5,
-            ];
-            let (imm, used) = decode_simm(word, &imm_positions, 16, immext);
-            return DecodedWord {
-                insn: DecodedInsn::MovImm { dst: d, imm },
-                used_ext: used,
-            };
-        }
-    }
-
-    if iclass == 0x9 {
-        let op = bits(word, 24, 21);
-        if bits(word, 27, 27) == 0 {
-            if let Some((width, sign)) = decode_ld_width(op) {
-                let base = bits(word, 20, 16) as u8;
-                let dst = bits(word, 4, 0) as u8;
-                let imm_positions = [26, 25, 13, 12, 11, 10, 9, 8, 7, 6, 5];
-                let (imm, used) = decode_simm(word, &imm_positions, 11, immext);
-                let offset = imm.wrapping_shl(width_shift(width) as u32);
-                return DecodedWord {
-                    insn: DecodedInsn::Load {
-                        dst,
-                        addr: AddrMode::Offset { base, offset },
-                        width,
-                        sign,
-                    },
-                    used_ext: used,
-                };
-            }
-        }
-        if bits(word, 27, 25) == 0b101 && bits(word, 13, 12) == 0 {
-            if let Some((width, sign)) = decode_ld_width(op) {
-                let base = bits(word, 20, 16) as u8;
-                let dst = bits(word, 4, 0) as u8;
-                let imm_positions = [8, 7, 6, 5];
-                let (imm, used) = decode_simm(word, &imm_positions, 4, immext);
-                let offset = imm.wrapping_shl(width_shift(width) as u32);
-                return DecodedWord {
-                    insn: DecodedInsn::Load {
-                        dst,
-                        addr: AddrMode::PostIncImm { base, offset },
-                        width,
-                        sign,
-                    },
-                    used_ext: used,
-                };
-            }
-        }
-    }
-
-    if iclass == 0xa {
-        let op = bits(word, 24, 21);
-        if bits(word, 27, 27) == 0 {
-            if let Some(width) = decode_st_width(op) {
-                let base = bits(word, 20, 16) as u8;
-                let src = bits(word, 12, 8) as u8;
-                let imm_positions = [26, 25, 13, 7, 6, 5, 4, 3, 2, 1, 0];
-                let (imm, used) = decode_simm(word, &imm_positions, 11, immext);
-                let offset = imm.wrapping_shl(width_shift(width) as u32);
-                return DecodedWord {
-                    insn: DecodedInsn::Store {
-                        src,
-                        addr: AddrMode::Offset { base, offset },
-                        width,
-                    },
-                    used_ext: used,
-                };
-            }
-        }
-        if bits(word, 27, 25) == 0b101 && bits(word, 13, 13) == 0 {
-            if let Some(width) = decode_st_width(op) {
-                let base = bits(word, 20, 16) as u8;
-                let src = bits(word, 12, 8) as u8;
-                let imm_positions = [6, 5, 4, 3];
-                let (imm, used) = decode_simm(word, &imm_positions, 4, immext);
-                let offset = imm.wrapping_shl(width_shift(width) as u32);
-                return DecodedWord {
-                    insn: DecodedInsn::Store {
-                        src,
-                        addr: AddrMode::PostIncImm { base, offset },
-                        width,
-                    },
-                    used_ext: used,
-                };
-            }
-        }
-    }
-
-    if iclass == 0x4 && bits(word, 27, 27) == 1 {
-        let is_load = bits(word, 24, 24) == 1;
-        let op = bits(word, 23, 21);
-        if is_load {
-            if let Some((width, sign)) = decode_ld_width(op) {
-                let dst = bits(word, 4, 0) as u8;
-                let imm_positions = [
-                    26, 25, 20, 19, 18, 17, 16, 13, 12, 11, 10, 9, 8, 7, 6, 5,
-                ];
-                let (imm, used) = decode_uimm(word, &imm_positions, immext);
-                let offset = (imm << width_shift(width)) as i32;
-                return DecodedWord {
-                    insn: DecodedInsn::Load {
-                        dst,
-                        addr: AddrMode::GpOffset { offset },
-                        width,
-                        sign,
-                    },
-                    used_ext: used,
-                };
-            }
-        } else if let Some(width) = decode_st_width(op) {
-            let src = bits(word, 12, 8) as u8;
-            let imm_positions = [
-                26, 25, 20, 19, 18, 17, 16, 13, 7, 6, 5, 4, 3, 2, 1, 0,
-            ];
-            let (imm, used) = decode_uimm(word, &imm_positions, immext);
-            let offset = (imm << width_shift(width)) as i32;
-            return DecodedWord {
-                insn: DecodedInsn::Store {
-                    src,
-                    addr: AddrMode::GpOffset { offset },
-                    width,
+        Opcode::A2_add => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src1 = req!(field_u8(decoded, b's'));
+            let src2 = req!(field_u8(decoded, b't'));
+            (
+                DecodedInsn::Add {
+                    dst,
+                    src1,
+                    src2,
                 },
-                used_ext: used,
-            };
+                false,
+            )
         }
-    }
-
-    if iclass == 0x5 {
-        let major = bits(word, 27, 24);
-        if major == 0b1000 || major == 0b1001 {
-            let imm_positions = [
-                24, 23, 22, 21, 20, 19, 18, 17, 16, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3,
-                2, 1,
-            ];
-            let (imm, used) = decode_simm(word, &imm_positions, 22, immext);
-            return DecodedWord {
-                insn: DecodedInsn::Jump { offset: imm << 2 },
-                used_ext: used,
-            };
+        Opcode::A2_sub => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src1 = req!(field_u8(decoded, b't'));
+            let src2 = req!(field_u8(decoded, b's'));
+            (
+                DecodedInsn::Sub {
+                    dst,
+                    src1,
+                    src2,
+                },
+                false,
+            )
         }
-        if major == 0b1010 || major == 0b1011 {
-            let imm_positions = [
-                24, 23, 22, 21, 20, 19, 18, 17, 16, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3,
-                2, 1,
-            ];
-            let (imm, used) = decode_simm(word, &imm_positions, 22, immext);
-            return DecodedWord {
-                insn: DecodedInsn::Call { offset: imm << 2 },
-                used_ext: used,
-            };
+        Opcode::A2_and => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src1 = req!(field_u8(decoded, b's'));
+            let src2 = req!(field_u8(decoded, b't'));
+            (
+                DecodedInsn::And {
+                    dst,
+                    src1,
+                    src2,
+                },
+                false,
+            )
         }
-        if major == 0b1100 {
-            let pred = bits(word, 9, 8) as u8;
-            let pred_new = bits(word, 11, 11) == 1;
-            let sense = bits(word, 21, 21) == 0;
-            let imm_positions = [23, 22, 20, 19, 18, 17, 16, 13, 7, 6, 5, 4, 3, 2, 1];
-            let (imm, used) = decode_simm(word, &imm_positions, 15, immext);
-            return DecodedWord {
-                insn: DecodedInsn::JumpCond {
+        Opcode::A2_or => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src1 = req!(field_u8(decoded, b's'));
+            let src2 = req!(field_u8(decoded, b't'));
+            (
+                DecodedInsn::Or {
+                    dst,
+                    src1,
+                    src2,
+                },
+                false,
+            )
+        }
+        Opcode::A2_xor => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src1 = req!(field_u8(decoded, b's'));
+            let src2 = req!(field_u8(decoded, b't'));
+            (
+                DecodedInsn::Xor {
+                    dst,
+                    src1,
+                    src2,
+                },
+                false,
+            )
+        }
+        Opcode::A2_addi => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            let (imm, used) = req!(decode_field_simm(decoded, b'i', immext));
+            (DecodedInsn::AddImm { dst, src, imm }, used)
+        }
+        Opcode::A2_tfr => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            (DecodedInsn::Mov { dst, src }, false)
+        }
+        Opcode::A2_tfrsi => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let (imm, used) = req!(decode_field_simm(decoded, b'i', immext));
+            (DecodedInsn::MovImm { dst, imm }, used)
+        }
+        Opcode::A2_andir => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            let (imm, used) = req!(decode_field_simm(decoded, b'i', immext));
+            (
+                DecodedInsn::AndImm {
+                    dst,
+                    src,
+                    imm: imm as u32,
+                },
+                used,
+            )
+        }
+        Opcode::A2_sxtb => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            (
+                DecodedInsn::Extend {
+                    dst,
+                    src,
+                    kind: ExtendKind::Sxt8,
+                },
+                false,
+            )
+        }
+        Opcode::A2_sxth => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            (
+                DecodedInsn::Extend {
+                    dst,
+                    src,
+                    kind: ExtendKind::Sxt16,
+                },
+                false,
+            )
+        }
+        Opcode::A2_zxth => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            (
+                DecodedInsn::Extend {
+                    dst,
+                    src,
+                    kind: ExtendKind::Zxt16,
+                },
+                false,
+            )
+        }
+        Opcode::A2_tfrcrr => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            (DecodedInsn::TfrCrR { dst, src }, false)
+        }
+        Opcode::A2_tfrrcr => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            (DecodedInsn::TfrRrCr { dst, src }, false)
+        }
+        Opcode::M2_mpyi => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src1 = req!(field_u8(decoded, b's'));
+            let src2 = req!(field_u8(decoded, b't'));
+            (
+                DecodedInsn::Mul {
+                    dst,
+                    src1,
+                    src2,
+                },
+                false,
+            )
+        }
+        Opcode::S2_asr_i_r => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            let amount = req!(decode_field_uimm(decoded, b'i', None)).0 as u8;
+            (
+                DecodedInsn::ShiftImm {
+                    dst,
+                    src,
+                    kind: ShiftKind::Asr,
+                    amount,
+                },
+                false,
+            )
+        }
+        Opcode::S2_lsr_i_r => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            let amount = req!(decode_field_uimm(decoded, b'i', None)).0 as u8;
+            (
+                DecodedInsn::ShiftImm {
+                    dst,
+                    src,
+                    kind: ShiftKind::Lsr,
+                    amount,
+                },
+                false,
+            )
+        }
+        Opcode::S2_asl_i_r => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            let amount = req!(decode_field_uimm(decoded, b'i', None)).0 as u8;
+            (
+                DecodedInsn::ShiftImm {
+                    dst,
+                    src,
+                    kind: ShiftKind::Lsl,
+                    amount,
+                },
+                false,
+            )
+        }
+        Opcode::S2_asr_r_r => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            let amt = req!(field_u8(decoded, b't'));
+            (
+                DecodedInsn::ShiftReg {
+                    dst,
+                    src,
+                    amt,
+                    kind: ShiftKind::Asr,
+                },
+                false,
+            )
+        }
+        Opcode::S2_lsr_r_r => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            let amt = req!(field_u8(decoded, b't'));
+            (
+                DecodedInsn::ShiftReg {
+                    dst,
+                    src,
+                    amt,
+                    kind: ShiftKind::Lsr,
+                },
+                false,
+            )
+        }
+        Opcode::S2_asl_r_r => {
+            let dst = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            let amt = req!(field_u8(decoded, b't'));
+            (
+                DecodedInsn::ShiftReg {
+                    dst,
+                    src,
+                    amt,
+                    kind: ShiftKind::Lsl,
+                },
+                false,
+            )
+        }
+        Opcode::C2_cmpeq => {
+            let pred = req!(field_u8(decoded, b'd'));
+            let src1 = req!(field_u8(decoded, b's'));
+            let src2 = req!(field_u8(decoded, b't'));
+            (
+                DecodedInsn::Cmp {
+                    pred,
+                    src1,
+                    src2,
+                    kind: CmpKind::Eq,
+                },
+                false,
+            )
+        }
+        Opcode::C2_cmpgt => {
+            let pred = req!(field_u8(decoded, b'd'));
+            let src1 = req!(field_u8(decoded, b's'));
+            let src2 = req!(field_u8(decoded, b't'));
+            (
+                DecodedInsn::Cmp {
+                    pred,
+                    src1,
+                    src2,
+                    kind: CmpKind::Gt,
+                },
+                false,
+            )
+        }
+        Opcode::C2_cmpgtu => {
+            let pred = req!(field_u8(decoded, b'd'));
+            let src1 = req!(field_u8(decoded, b's'));
+            let src2 = req!(field_u8(decoded, b't'));
+            (
+                DecodedInsn::Cmp {
+                    pred,
+                    src1,
+                    src2,
+                    kind: CmpKind::Gtu,
+                },
+                false,
+            )
+        }
+        Opcode::C2_cmpeqi => {
+            let pred = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            let (imm, used) = req!(decode_field_simm(decoded, b'i', immext));
+            (
+                DecodedInsn::CmpImm {
+                    pred,
+                    src,
+                    imm,
+                    kind: CmpKind::Eq,
+                    unsigned: false,
+                },
+                used,
+            )
+        }
+        Opcode::C2_cmpgti => {
+            let pred = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            let (imm, used) = req!(decode_field_simm(decoded, b'i', immext));
+            (
+                DecodedInsn::CmpImm {
+                    pred,
+                    src,
+                    imm,
+                    kind: CmpKind::Gt,
+                    unsigned: false,
+                },
+                used,
+            )
+        }
+        Opcode::C2_cmpgtui => {
+            let pred = req!(field_u8(decoded, b'd'));
+            let src = req!(field_u8(decoded, b's'));
+            let (imm, used) = req!(decode_field_uimm(decoded, b'i', immext));
+            (
+                DecodedInsn::CmpImm {
+                    pred,
+                    src,
+                    imm: imm as i32,
+                    kind: CmpKind::Gtu,
+                    unsigned: true,
+                },
+                used,
+            )
+        }
+        Opcode::J2_jump => {
+            let (imm, used) = req!(decode_field_simm(decoded, b'i', immext));
+            (DecodedInsn::Jump { offset: imm << 2 }, used)
+        }
+        Opcode::J2_call => {
+            let (imm, used) = req!(decode_field_simm(decoded, b'i', immext));
+            (DecodedInsn::Call { offset: imm << 2 }, used)
+        }
+        Opcode::J2_jumpr => {
+            let src = req!(field_u8(decoded, b's'));
+            (DecodedInsn::JumpReg { src }, false)
+        }
+        Opcode::J2_callr => {
+            let src = req!(field_u8(decoded, b's'));
+            (DecodedInsn::CallReg { src }, false)
+        }
+        Opcode::J2_jumpt
+        | Opcode::J2_jumptpt
+        | Opcode::J2_jumptnew
+        | Opcode::J2_jumptnewpt
+        | Opcode::J2_jumpf
+        | Opcode::J2_jumpfpt
+        | Opcode::J2_jumpfnew
+        | Opcode::J2_jumpfnewpt => {
+            let pred = req!(field_u8(decoded, b'u'));
+            let (imm, used) = req!(decode_field_simm(decoded, b'i', immext));
+            let (sense, pred_new) = match decoded.opcode {
+                Opcode::J2_jumpt | Opcode::J2_jumptpt => (true, false),
+                Opcode::J2_jumpf | Opcode::J2_jumpfpt => (false, false),
+                Opcode::J2_jumptnew | Opcode::J2_jumptnewpt => (true, true),
+                _ => (false, true),
+            };
+            (
+                DecodedInsn::JumpCond {
                     offset: imm << 2,
                     pred,
                     sense,
                     pred_new,
                 },
-                used_ext: used,
+                used,
+            )
+        }
+        Opcode::J2_jumprt
+        | Opcode::J2_jumprtpt
+        | Opcode::J2_jumprtnew
+        | Opcode::J2_jumprtnewpt
+        | Opcode::J2_jumprf
+        | Opcode::J2_jumprfpt
+        | Opcode::J2_jumprfnew
+        | Opcode::J2_jumprfnewpt => {
+            let src = req!(field_u8(decoded, b's'));
+            let pred = req!(field_u8(decoded, b'u'));
+            let (sense, pred_new) = match decoded.opcode {
+                Opcode::J2_jumprt | Opcode::J2_jumprtpt => (true, false),
+                Opcode::J2_jumprf | Opcode::J2_jumprfpt => (false, false),
+                Opcode::J2_jumprtnew | Opcode::J2_jumprtnewpt => (true, true),
+                _ => (false, true),
             };
+            (
+                DecodedInsn::JumpRegCond {
+                    src,
+                    pred,
+                    sense,
+                    pred_new,
+                },
+                false,
+            )
         }
-        if major == 0b0010 && bits(word, 23, 21) == 0b100 {
-            let src = bits(word, 20, 16) as u8;
-            return DecodedWord {
-                insn: DecodedInsn::JumpReg { src },
-                used_ext: false,
+        Opcode::J2_loop0r | Opcode::J2_loop1r => {
+            let loop_id = if matches!(decoded.opcode, Opcode::J2_loop0r) {
+                0
+            } else {
+                1
             };
-        }
-        if major == 0b0011 {
-            let sub = bits(word, 23, 21);
-            if sub == 0b010 || sub == 0b011 {
-                let src = bits(word, 20, 16) as u8;
-                let pred = bits(word, 9, 8) as u8;
-                let pred_new = bits(word, 11, 11) == 1;
-                let sense = sub == 0b010;
-                return DecodedWord {
-                    insn: DecodedInsn::JumpRegCond {
-                        src,
-                        pred,
-                        sense,
-                        pred_new,
-                    },
-                    used_ext: false,
-                };
-            }
-        }
-        if major == 0b0000 && bits(word, 23, 21) == 0b101 {
-            let src = bits(word, 20, 16) as u8;
-            return DecodedWord {
-                insn: DecodedInsn::CallReg { src },
-                used_ext: false,
-            };
-        }
-        if major == 0b0100 && bits(word, 23, 22) == 0b00 {
-            return DecodedWord {
-                insn: DecodedInsn::Trap0,
-                used_ext: false,
-            };
-        }
-    }
-
-    if iclass == 0x6 {
-        let maj4 = bits(word, 27, 24);
-        let min3 = bits(word, 23, 21);
-        if maj4 == 0b1010 && min3 == 0b000 {
-            let src = bits(word, 20, 16) as u8;
-            let dst = bits(word, 4, 0) as u8;
-            return DecodedWord {
-                insn: DecodedInsn::TfrCrR { dst, src },
-                used_ext: false,
-            };
-        }
-        if maj4 == 0b0010 && min3 == 0b001 {
-            let src = bits(word, 20, 16) as u8;
-            let dst = bits(word, 4, 0) as u8;
-            return DecodedWord {
-                insn: DecodedInsn::TfrRrCr { dst, src },
-                used_ext: false,
-            };
-        }
-        if maj4 == 0b0000 && (min3 == 0b000 || min3 == 0b001) {
-            let loop_id = if min3 == 0b000 { 0 } else { 1 };
-            let count_reg = bits(word, 20, 16) as u8;
-            let imm_positions = [12, 11, 10, 9, 8, 4, 3];
-            let (imm, used) = decode_simm(word, &imm_positions, 7, immext);
-            return DecodedWord {
-                insn: DecodedInsn::LoopStartReg {
+            let count_reg = req!(field_u8(decoded, b's'));
+            let (imm, used) = req!(decode_field_simm(decoded, b'i', immext));
+            (
+                DecodedInsn::LoopStartReg {
                     loop_id,
                     start_offset: imm << 2,
                     count_reg,
                 },
-                used_ext: used,
-            };
+                used,
+            )
         }
-        if maj4 == 0b1001 && (min3 == 0b000 || min3 == 0b001) {
-            let loop_id = if min3 == 0b000 { 0 } else { 1 };
-            let imm_positions = [12, 11, 10, 9, 8, 4, 3];
-            let (imm, used) = decode_simm(word, &imm_positions, 7, immext);
-            let count_positions = [20, 19, 18, 17, 16, 7, 6, 5, 2, 1];
-            let (count, _) = decode_uimm(word, &count_positions, None);
-            return DecodedWord {
-                insn: DecodedInsn::LoopStartImm {
+        Opcode::J2_loop0i | Opcode::J2_loop1i => {
+            let loop_id = if matches!(decoded.opcode, Opcode::J2_loop0i) {
+                0
+            } else {
+                1
+            };
+            let (imm, used) = req!(decode_field_simm(decoded, b'i', immext));
+            let count = req!(decode_field_uimm(decoded, b'I', None)).0;
+            (
+                DecodedInsn::LoopStartImm {
                     loop_id,
                     start_offset: imm << 2,
                     count,
                 },
-                used_ext: used,
-            };
+                used,
+            )
         }
-    }
-
-    if iclass == 0x8 {
-        let maj4 = bits(word, 27, 24);
-        let min3 = bits(word, 23, 21);
-        if maj4 == 0b1100 && min3 == 0b000 && bits(word, 13, 13) == 0 {
-            let src = bits(word, 20, 16) as u8;
-            let dst = bits(word, 4, 0) as u8;
-            let amount = bits(word, 12, 8) as u8;
-            let vmin3 = bits(word, 7, 5) & 0b011;
-            let kind = match vmin3 {
-                0b00 => ShiftKind::Asr,
-                0b01 => ShiftKind::Lsr,
-                0b10 => ShiftKind::Lsl,
-                _ => {
-                    return DecodedWord {
-                        insn: DecodedInsn::Unknown(word),
-                        used_ext: false,
-                    }
-                }
-            };
-            return DecodedWord {
-                insn: DecodedInsn::ShiftImm {
-                    dst,
-                    src,
-                    kind,
-                    amount,
+        Opcode::J2_trap0 => (DecodedInsn::Trap0, false),
+        Opcode::S2_allocframe => {
+            let base = req!(field_u8(decoded, b'x'));
+            let imm = req!(decode_field_uimm(decoded, b'i', None)).0;
+            (
+                DecodedInsn::AllocFrame {
+                    base,
+                    size: imm << 3,
                 },
-                used_ext: false,
-            };
+                false,
+            )
         }
-    }
-
-    if iclass == 0xc {
-        let maj4 = bits(word, 27, 24);
-        let min3 = bits(word, 23, 21);
-        if maj4 == 0b0110 && (min3 & 0b110) == 0b010 {
-            let src = bits(word, 20, 16) as u8;
-            let amt = bits(word, 12, 8) as u8;
-            let dst = bits(word, 4, 0) as u8;
-            let vmin3 = bits(word, 7, 5);
-            let kind = match vmin3 & 0b110 {
-                0b000 => ShiftKind::Asr,
-                0b010 => ShiftKind::Lsr,
-                0b100 | 0b110 => ShiftKind::Lsl,
-                _ => {
-                    return DecodedWord {
-                        insn: DecodedInsn::Unknown(word),
-                        used_ext: false,
-                    }
-                }
-            };
-            return DecodedWord {
-                insn: DecodedInsn::ShiftReg {
-                    dst,
-                    src,
-                    amt,
-                    kind,
+        Opcode::L2_deallocframe => {
+            let base = req!(field_u8(decoded, b's'));
+            let dst = req!(field_u8(decoded, b'd'));
+            (
+                DecodedInsn::DeallocFrame {
+                    base,
+                    dst: Some(dst),
+                    update_lr_fp: false,
                 },
-                used_ext: false,
-            };
+                false,
+            )
         }
+        Opcode::L4_return
+        | Opcode::L4_return_t
+        | Opcode::L4_return_f
+        | Opcode::L4_return_tnew_pt
+        | Opcode::L4_return_tnew_pnt
+        | Opcode::L4_return_fnew_pt
+        | Opcode::L4_return_fnew_pnt => {
+            let base = req!(field_u8(decoded, b's'));
+            let dst = req!(field_u8(decoded, b'd'));
+            let pred = match decoded.opcode {
+                Opcode::L4_return => None,
+                Opcode::L4_return_t => Some(pred_cond(req!(field_u8(decoded, b'v')), true, false)),
+                Opcode::L4_return_f => Some(pred_cond(req!(field_u8(decoded, b'v')), false, false)),
+                Opcode::L4_return_tnew_pt | Opcode::L4_return_tnew_pnt => {
+                    Some(pred_cond(req!(field_u8(decoded, b'v')), true, true))
+                }
+                _ => Some(pred_cond(req!(field_u8(decoded, b'v')), false, true)),
+            };
+            (
+                DecodedInsn::DeallocReturn {
+                    base,
+                    dst: Some(dst),
+                    pred,
+                    update_lr_fp: false,
+                },
+                false,
+            )
+        }
+        Opcode::L2_loadrb_io => req!(load_io(decoded, MemWidth::Byte, MemSign::Signed, immext)),
+        Opcode::L2_loadrub_io => req!(load_io(decoded, MemWidth::Byte, MemSign::Unsigned, immext)),
+        Opcode::L2_loadrh_io => req!(load_io(decoded, MemWidth::Half, MemSign::Signed, immext)),
+        Opcode::L2_loadruh_io => req!(load_io(decoded, MemWidth::Half, MemSign::Unsigned, immext)),
+        Opcode::L2_loadri_io => req!(load_io(decoded, MemWidth::Word, MemSign::Unsigned, immext)),
+        Opcode::L2_loadrd_io => req!(load_io(decoded, MemWidth::Double, MemSign::Unsigned, immext)),
+        Opcode::L2_loadrbgp => req!(load_gp(decoded, MemWidth::Byte, MemSign::Signed)),
+        Opcode::L2_loadrubgp => req!(load_gp(decoded, MemWidth::Byte, MemSign::Unsigned)),
+        Opcode::L2_loadrhgp => req!(load_gp(decoded, MemWidth::Half, MemSign::Signed)),
+        Opcode::L2_loadruhgp => req!(load_gp(decoded, MemWidth::Half, MemSign::Unsigned)),
+        Opcode::L2_loadrigp => req!(load_gp(decoded, MemWidth::Word, MemSign::Unsigned)),
+        Opcode::L2_loadrdgp => req!(load_gp(decoded, MemWidth::Double, MemSign::Unsigned)),
+        Opcode::L2_loadrb_pi => req!(load_pi(decoded, MemWidth::Byte, MemSign::Signed)),
+        Opcode::L2_loadrub_pi => req!(load_pi(decoded, MemWidth::Byte, MemSign::Unsigned)),
+        Opcode::L2_loadrh_pi => req!(load_pi(decoded, MemWidth::Half, MemSign::Signed)),
+        Opcode::L2_loadruh_pi => req!(load_pi(decoded, MemWidth::Half, MemSign::Unsigned)),
+        Opcode::L2_loadri_pi => req!(load_pi(decoded, MemWidth::Word, MemSign::Unsigned)),
+        Opcode::L2_loadrd_pi => req!(load_pi(decoded, MemWidth::Double, MemSign::Unsigned)),
+        Opcode::S2_storerb_io => req!(store_io(decoded, MemWidth::Byte, immext, false)),
+        Opcode::S2_storerh_io => req!(store_io(decoded, MemWidth::Half, immext, false)),
+        Opcode::S2_storeri_io => req!(store_io(decoded, MemWidth::Word, immext, false)),
+        Opcode::S2_storerd_io => req!(store_io(decoded, MemWidth::Double, immext, false)),
+        Opcode::S2_storerbgp => req!(store_gp(decoded, MemWidth::Byte, false)),
+        Opcode::S2_storerhgp => req!(store_gp(decoded, MemWidth::Half, false)),
+        Opcode::S2_storerigp => req!(store_gp(decoded, MemWidth::Word, false)),
+        Opcode::S2_storerdgp => req!(store_gp(decoded, MemWidth::Double, false)),
+        Opcode::S2_storerb_pi => req!(store_pi(decoded, MemWidth::Byte, false)),
+        Opcode::S2_storerh_pi => req!(store_pi(decoded, MemWidth::Half, false)),
+        Opcode::S2_storeri_pi => req!(store_pi(decoded, MemWidth::Word, false)),
+        Opcode::S2_storerd_pi => req!(store_pi(decoded, MemWidth::Double, false)),
+        Opcode::L2_ploadrbt_io | Opcode::L2_ploadrbf_io | Opcode::L2_ploadrbtnew_io
+        | Opcode::L2_ploadrbfnew_io => {
+            let (sense, pred_new) = match decoded.opcode {
+                Opcode::L2_ploadrbt_io => (true, false),
+                Opcode::L2_ploadrbf_io => (false, false),
+                Opcode::L2_ploadrbtnew_io => (true, true),
+                _ => (false, true),
+            };
+            req!(pred_load_io(
+                decoded,
+                MemWidth::Byte,
+                MemSign::Signed,
+                sense,
+                pred_new
+            ))
+        }
+        Opcode::L2_ploadrubt_io | Opcode::L2_ploadrubf_io | Opcode::L2_ploadrubtnew_io
+        | Opcode::L2_ploadrubfnew_io => {
+            let (sense, pred_new) = match decoded.opcode {
+                Opcode::L2_ploadrubt_io => (true, false),
+                Opcode::L2_ploadrubf_io => (false, false),
+                Opcode::L2_ploadrubtnew_io => (true, true),
+                _ => (false, true),
+            };
+            req!(pred_load_io(
+                decoded,
+                MemWidth::Byte,
+                MemSign::Unsigned,
+                sense,
+                pred_new
+            ))
+        }
+        Opcode::L2_ploadrht_io | Opcode::L2_ploadrhf_io | Opcode::L2_ploadrhtnew_io
+        | Opcode::L2_ploadrhfnew_io => {
+            let (sense, pred_new) = match decoded.opcode {
+                Opcode::L2_ploadrht_io => (true, false),
+                Opcode::L2_ploadrhf_io => (false, false),
+                Opcode::L2_ploadrhtnew_io => (true, true),
+                _ => (false, true),
+            };
+            req!(pred_load_io(
+                decoded,
+                MemWidth::Half,
+                MemSign::Signed,
+                sense,
+                pred_new
+            ))
+        }
+        Opcode::L2_ploadruht_io | Opcode::L2_ploadruhf_io | Opcode::L2_ploadruhtnew_io
+        | Opcode::L2_ploadruhfnew_io => {
+            let (sense, pred_new) = match decoded.opcode {
+                Opcode::L2_ploadruht_io => (true, false),
+                Opcode::L2_ploadruhf_io => (false, false),
+                Opcode::L2_ploadruhtnew_io => (true, true),
+                _ => (false, true),
+            };
+            req!(pred_load_io(
+                decoded,
+                MemWidth::Half,
+                MemSign::Unsigned,
+                sense,
+                pred_new
+            ))
+        }
+        Opcode::L2_ploadrit_io | Opcode::L2_ploadrif_io | Opcode::L2_ploadritnew_io
+        | Opcode::L2_ploadrifnew_io => {
+            let (sense, pred_new) = match decoded.opcode {
+                Opcode::L2_ploadrit_io => (true, false),
+                Opcode::L2_ploadrif_io => (false, false),
+                Opcode::L2_ploadritnew_io => (true, true),
+                _ => (false, true),
+            };
+            req!(pred_load_io(
+                decoded,
+                MemWidth::Word,
+                MemSign::Unsigned,
+                sense,
+                pred_new
+            ))
+        }
+        Opcode::L2_ploadrdt_io | Opcode::L2_ploadrdf_io | Opcode::L2_ploadrdtnew_io
+        | Opcode::L2_ploadrdfnew_io => {
+            let (sense, pred_new) = match decoded.opcode {
+                Opcode::L2_ploadrdt_io => (true, false),
+                Opcode::L2_ploadrdf_io => (false, false),
+                Opcode::L2_ploadrdtnew_io => (true, true),
+                _ => (false, true),
+            };
+            req!(pred_load_io(
+                decoded,
+                MemWidth::Double,
+                MemSign::Unsigned,
+                sense,
+                pred_new
+            ))
+        }
+        Opcode::S2_pstorerbt_io | Opcode::S2_pstorerbf_io => {
+            let sense = matches!(decoded.opcode, Opcode::S2_pstorerbt_io);
+            req!(pred_store_io(decoded, MemWidth::Byte, sense, false, false))
+        }
+        Opcode::S2_pstorerbnewt_io | Opcode::S2_pstorerbnewf_io => {
+            let sense = matches!(decoded.opcode, Opcode::S2_pstorerbnewt_io);
+            req!(pred_store_io(decoded, MemWidth::Byte, sense, false, true))
+        }
+        Opcode::S2_pstorerht_io | Opcode::S2_pstorerhf_io => {
+            let sense = matches!(decoded.opcode, Opcode::S2_pstorerht_io);
+            req!(pred_store_io(decoded, MemWidth::Half, sense, false, false))
+        }
+        Opcode::S2_pstorerhnewt_io | Opcode::S2_pstorerhnewf_io => {
+            let sense = matches!(decoded.opcode, Opcode::S2_pstorerhnewt_io);
+            req!(pred_store_io(decoded, MemWidth::Half, sense, false, true))
+        }
+        Opcode::S2_pstorerit_io | Opcode::S2_pstorerif_io => {
+            let sense = matches!(decoded.opcode, Opcode::S2_pstorerit_io);
+            req!(pred_store_io(decoded, MemWidth::Word, sense, false, false))
+        }
+        Opcode::S2_pstorerinewt_io | Opcode::S2_pstorerinewf_io => {
+            let sense = matches!(decoded.opcode, Opcode::S2_pstorerinewt_io);
+            req!(pred_store_io(decoded, MemWidth::Word, sense, false, true))
+        }
+        Opcode::S2_pstorerdt_io | Opcode::S2_pstorerdf_io => {
+            let sense = matches!(decoded.opcode, Opcode::S2_pstorerdt_io);
+            req!(pred_store_io(decoded, MemWidth::Double, sense, false, false))
+        }
+        _ => (DecodedInsn::Unknown(word), false),
+    }
+}
+
+fn decode_subinsn(sub: u16, class: EncClass, isa: HexagonIsa) -> Option<DecodedSub> {
+    let decoded = opcode::decode_sub(sub, class)?;
+    let opcode = decoded.opcode;
+    let insn = match opcode {
+        Opcode::SL1_loadri_io => {
+            let base = subreg(field_u8(&decoded, b's')?);
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            let offset = imm << 2;
+            DecodedInsn::Load {
+                dst,
+                addr: AddrMode::Offset { base, offset },
+                width: MemWidth::Word,
+                sign: MemSign::Unsigned,
+                pred: None,
+            }
+        }
+        Opcode::SL1_loadrub_io => {
+            let base = subreg(field_u8(&decoded, b's')?);
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::Load {
+                dst,
+                addr: AddrMode::Offset { base, offset: imm },
+                width: MemWidth::Byte,
+                sign: MemSign::Unsigned,
+                pred: None,
+            }
+        }
+        Opcode::SS1_storew_io => {
+            let base = subreg(field_u8(&decoded, b's')?);
+            let src = subreg(field_u8(&decoded, b't')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::Store {
+                src,
+                addr: AddrMode::Offset {
+                    base,
+                    offset: imm << 2,
+                },
+                width: MemWidth::Word,
+                pred: None,
+                src_new: false,
+            }
+        }
+        Opcode::SS1_storeb_io => {
+            let base = subreg(field_u8(&decoded, b's')?);
+            let src = subreg(field_u8(&decoded, b't')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::Store {
+                src,
+                addr: AddrMode::Offset { base, offset: imm },
+                width: MemWidth::Byte,
+                pred: None,
+                src_new: false,
+            }
+        }
+        Opcode::SL2_loadrh_io => {
+            let base = subreg(field_u8(&decoded, b's')?);
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::Load {
+                dst,
+                addr: AddrMode::Offset {
+                    base,
+                    offset: imm << 1,
+                },
+                width: MemWidth::Half,
+                sign: MemSign::Signed,
+                pred: None,
+            }
+        }
+        Opcode::SL2_loadruh_io => {
+            let base = subreg(field_u8(&decoded, b's')?);
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::Load {
+                dst,
+                addr: AddrMode::Offset {
+                    base,
+                    offset: imm << 1,
+                },
+                width: MemWidth::Half,
+                sign: MemSign::Unsigned,
+                pred: None,
+            }
+        }
+        Opcode::SL2_loadrb_io => {
+            let base = subreg(field_u8(&decoded, b's')?);
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::Load {
+                dst,
+                addr: AddrMode::Offset { base, offset: imm },
+                width: MemWidth::Byte,
+                sign: MemSign::Signed,
+                pred: None,
+            }
+        }
+        Opcode::SL2_loadri_sp => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::Load {
+                dst,
+                addr: AddrMode::Offset {
+                    base: 29,
+                    offset: imm << 2,
+                },
+                width: MemWidth::Word,
+                sign: MemSign::Unsigned,
+                pred: None,
+            }
+        }
+        Opcode::SL2_loadrd_sp => {
+            let dst = subreg_pair(field_u8(&decoded, b'd')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::Load {
+                dst,
+                addr: AddrMode::Offset {
+                    base: 29,
+                    offset: imm << 3,
+                },
+                width: MemWidth::Double,
+                sign: MemSign::Unsigned,
+                pred: None,
+            }
+        }
+        Opcode::SL2_deallocframe => DecodedInsn::DeallocFrame {
+            base: 30,
+            dst: None,
+            update_lr_fp: true,
+        },
+        Opcode::SL2_return => DecodedInsn::DeallocReturn {
+            base: 30,
+            dst: None,
+            pred: None,
+            update_lr_fp: true,
+        },
+        Opcode::SL2_return_t => DecodedInsn::DeallocReturn {
+            base: 30,
+            dst: None,
+            pred: Some(pred_cond(0, true, false)),
+            update_lr_fp: true,
+        },
+        Opcode::SL2_return_f => DecodedInsn::DeallocReturn {
+            base: 30,
+            dst: None,
+            pred: Some(pred_cond(0, false, false)),
+            update_lr_fp: true,
+        },
+        Opcode::SL2_return_tnew => DecodedInsn::DeallocReturn {
+            base: 30,
+            dst: None,
+            pred: Some(pred_cond(0, true, true)),
+            update_lr_fp: true,
+        },
+        Opcode::SL2_return_fnew => DecodedInsn::DeallocReturn {
+            base: 30,
+            dst: None,
+            pred: Some(pred_cond(0, false, true)),
+            update_lr_fp: true,
+        },
+        Opcode::SL2_jumpr31 => DecodedInsn::JumpReg { src: 31 },
+        Opcode::SL2_jumpr31_t => DecodedInsn::JumpRegCond {
+            src: 31,
+            pred: 0,
+            sense: true,
+            pred_new: false,
+        },
+        Opcode::SL2_jumpr31_f => DecodedInsn::JumpRegCond {
+            src: 31,
+            pred: 0,
+            sense: false,
+            pred_new: false,
+        },
+        Opcode::SL2_jumpr31_tnew => DecodedInsn::JumpRegCond {
+            src: 31,
+            pred: 0,
+            sense: true,
+            pred_new: true,
+        },
+        Opcode::SL2_jumpr31_fnew => DecodedInsn::JumpRegCond {
+            src: 31,
+            pred: 0,
+            sense: false,
+            pred_new: true,
+        },
+        Opcode::SS2_allocframe => {
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0;
+            DecodedInsn::AllocFrame {
+                base: 29,
+                size: imm << 3,
+            }
+        }
+        Opcode::SS2_storeh_io => {
+            let base = subreg(field_u8(&decoded, b's')?);
+            let src = subreg(field_u8(&decoded, b't')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::Store {
+                src,
+                addr: AddrMode::Offset {
+                    base,
+                    offset: imm << 1,
+                },
+                width: MemWidth::Half,
+                pred: None,
+                src_new: false,
+            }
+        }
+        Opcode::SS2_storew_sp => {
+            let src = subreg(field_u8(&decoded, b't')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::Store {
+                src,
+                addr: AddrMode::Offset {
+                    base: 29,
+                    offset: imm << 2,
+                },
+                width: MemWidth::Word,
+                pred: None,
+                src_new: false,
+            }
+        }
+        Opcode::SS2_stored_sp => {
+            let src = subreg_pair(field_u8(&decoded, b't')?);
+            let imm = decode_simm_val(decode_field_uimm(&decoded, b'i', None)?.0, 6, None).0;
+            DecodedInsn::Store {
+                src,
+                addr: AddrMode::Offset {
+                    base: 29,
+                    offset: imm << 3,
+                },
+                width: MemWidth::Double,
+                pred: None,
+                src_new: false,
+            }
+        }
+        Opcode::SS2_storewi0 => {
+            let base = subreg(field_u8(&decoded, b's')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::StoreImm {
+                value: 0,
+                addr: AddrMode::Offset {
+                    base,
+                    offset: imm << 2,
+                },
+                width: MemWidth::Word,
+                pred: None,
+            }
+        }
+        Opcode::SS2_storewi1 => {
+            let base = subreg(field_u8(&decoded, b's')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::StoreImm {
+                value: 1,
+                addr: AddrMode::Offset {
+                    base,
+                    offset: imm << 2,
+                },
+                width: MemWidth::Word,
+                pred: None,
+            }
+        }
+        Opcode::SS2_storebi0 => {
+            let base = subreg(field_u8(&decoded, b's')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::StoreImm {
+                value: 0,
+                addr: AddrMode::Offset { base, offset: imm },
+                width: MemWidth::Byte,
+                pred: None,
+            }
+        }
+        Opcode::SS2_storebi1 => {
+            let base = subreg(field_u8(&decoded, b's')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::StoreImm {
+                value: 1,
+                addr: AddrMode::Offset { base, offset: imm },
+                width: MemWidth::Byte,
+                pred: None,
+            }
+        }
+        Opcode::SA1_addi => {
+            let rx = subreg(field_u8(&decoded, b'x')?);
+            let imm = decode_simm_val(decode_field_uimm(&decoded, b'i', None)?.0, 7, None).0;
+            DecodedInsn::AddImm {
+                dst: rx,
+                src: rx,
+                imm,
+            }
+        }
+        Opcode::SA1_addsp => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::AddImm {
+                dst,
+                src: 29,
+                imm: imm << 2,
+            }
+        }
+        Opcode::SA1_seti => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::MovImm { dst, imm }
+        }
+        Opcode::SA1_setin1 => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            DecodedInsn::MovImm { dst, imm: -1 }
+        }
+        Opcode::SA1_tfr => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let src = subreg(field_u8(&decoded, b's')?);
+            DecodedInsn::Mov { dst, src }
+        }
+        Opcode::SA1_inc => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let src = subreg(field_u8(&decoded, b's')?);
+            DecodedInsn::AddImm { dst, src, imm: 1 }
+        }
+        Opcode::SA1_dec => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let src = subreg(field_u8(&decoded, b's')?);
+            DecodedInsn::AddImm { dst, src, imm: -1 }
+        }
+        Opcode::SA1_and1 => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let src = subreg(field_u8(&decoded, b's')?);
+            DecodedInsn::AndImm {
+                dst,
+                src,
+                imm: 1,
+            }
+        }
+        Opcode::SA1_sxtb => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let src = subreg(field_u8(&decoded, b's')?);
+            DecodedInsn::Extend {
+                dst,
+                src,
+                kind: ExtendKind::Sxt8,
+            }
+        }
+        Opcode::SA1_sxth => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let src = subreg(field_u8(&decoded, b's')?);
+            DecodedInsn::Extend {
+                dst,
+                src,
+                kind: ExtendKind::Sxt16,
+            }
+        }
+        Opcode::SA1_zxtb => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let src = subreg(field_u8(&decoded, b's')?);
+            DecodedInsn::Extend {
+                dst,
+                src,
+                kind: ExtendKind::Zxt8,
+            }
+        }
+        Opcode::SA1_zxth => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            let src = subreg(field_u8(&decoded, b's')?);
+            DecodedInsn::Extend {
+                dst,
+                src,
+                kind: ExtendKind::Zxt16,
+            }
+        }
+        Opcode::SA1_cmpeqi => {
+            let src = subreg(field_u8(&decoded, b's')?);
+            let imm = decode_field_uimm(&decoded, b'i', None)?.0 as i32;
+            DecodedInsn::CmpImm {
+                pred: 0,
+                src,
+                imm,
+                kind: CmpKind::Eq,
+                unsigned: false,
+            }
+        }
+        Opcode::SA1_clrt => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            DecodedInsn::ClearCond {
+                dst,
+                pred: pred_cond(0, true, false),
+            }
+        }
+        Opcode::SA1_clrf => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            DecodedInsn::ClearCond {
+                dst,
+                pred: pred_cond(0, false, false),
+            }
+        }
+        Opcode::SA1_clrtnew => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            DecodedInsn::ClearCond {
+                dst,
+                pred: pred_cond(0, true, true),
+            }
+        }
+        Opcode::SA1_clrfnew => {
+            let dst = subreg(field_u8(&decoded, b'd')?);
+            DecodedInsn::ClearCond {
+                dst,
+                pred: pred_cond(0, false, true),
+            }
+        }
+        Opcode::SA1_combinezr => {
+            let dst = subreg_pair(field_u8(&decoded, b'd')?);
+            let src = subreg(field_u8(&decoded, b's')?);
+            DecodedInsn::Combine {
+                dst,
+                high: CombineOperand::Imm(0),
+                low: CombineOperand::Reg(src),
+            }
+        }
+        Opcode::SA1_combinerz => {
+            let dst = subreg_pair(field_u8(&decoded, b'd')?);
+            let src = subreg(field_u8(&decoded, b's')?);
+            DecodedInsn::Combine {
+                dst,
+                high: CombineOperand::Reg(src),
+                low: CombineOperand::Imm(0),
+            }
+        }
+        Opcode::SA1_combine0i
+        | Opcode::SA1_combine1i
+        | Opcode::SA1_combine2i
+        | Opcode::SA1_combine3i => {
+            let dst = subreg_pair(field_u8(&decoded, b'd')?);
+            let low = decode_field_uimm(&decoded, b'i', None)?.0;
+            let high = match decoded.opcode {
+                Opcode::SA1_combine0i => 0,
+                Opcode::SA1_combine1i => 1,
+                Opcode::SA1_combine2i => 2,
+                _ => 3,
+            };
+            DecodedInsn::Combine {
+                dst,
+                high: CombineOperand::Imm(high),
+                low: CombineOperand::Imm(low),
+            }
+        }
+        _ => DecodedInsn::Unknown(sub as u32),
+    };
+
+    if insn_uses_dotnew(&insn) && !isa_supports_dotnew(isa) {
+        return None;
     }
 
-    if iclass == 0xe {
-        let regtype = bits(word, 27, 24);
-        if regtype == 0b1101
-            && bits(word, 23, 21) == 0
-            && bits(word, 13, 13) == 0
-            && bits(word, 7, 5) == 0
-        {
-            let src1 = bits(word, 20, 16) as u8;
-            let src2 = bits(word, 12, 8) as u8;
-            let dst = bits(word, 4, 0) as u8;
+    Some(DecodedSub {
+        insn,
+        opcode: Some(opcode),
+    })
+}
+
+fn duplex_iclass(word: u32) -> u8 {
+    let low = ((word >> 13) & 0x1) as u8;
+    let high = ((word >> 29) & 0x7) as u8;
+    (high << 1) | low
+}
+
+pub fn decode_duplex(word: u32, isa: HexagonIsa) -> Option<(DecodedSub, DecodedSub)> {
+    if !isa_supports_duplex(isa) {
+        return None;
+    }
+    let iclass = duplex_iclass(word);
+    let slot0 = (word & 0x1fff) as u16;
+    let slot1 = ((word >> 16) & 0x1fff) as u16;
+
+    let (class1, class0) = match iclass {
+        0x0 => (EncClass::SubinsnL1, EncClass::SubinsnL1),
+        0x1 => (EncClass::SubinsnL2, EncClass::SubinsnL1),
+        0x2 => (EncClass::SubinsnL2, EncClass::SubinsnL2),
+        0x3 => (EncClass::SubinsnA, EncClass::SubinsnA),
+        0x4 => (EncClass::SubinsnL1, EncClass::SubinsnA),
+        0x5 => (EncClass::SubinsnL2, EncClass::SubinsnA),
+        0x6 => (EncClass::SubinsnS1, EncClass::SubinsnA),
+        0x7 => (EncClass::SubinsnS2, EncClass::SubinsnA),
+        0x8 => (EncClass::SubinsnS1, EncClass::SubinsnL1),
+        0x9 => (EncClass::SubinsnS1, EncClass::SubinsnL2),
+        0xa => (EncClass::SubinsnS1, EncClass::SubinsnS1),
+        0xb => (EncClass::SubinsnS2, EncClass::SubinsnS1),
+        0xc => (EncClass::SubinsnS2, EncClass::SubinsnL1),
+        0xd => (EncClass::SubinsnS2, EncClass::SubinsnL2),
+        0xe => (EncClass::SubinsnS2, EncClass::SubinsnS2),
+        _ => return None,
+    };
+
+    let insn1 = decode_subinsn(slot1, class1, isa)?;
+    let insn0 = decode_subinsn(slot0, class0, isa)?;
+    Some((insn1, insn0))
+}
+
+pub fn decode(word: u32, immext: Option<u32>, _isa: HexagonIsa) -> DecodedWord {
+    let decoded = match opcode::decode_word(word) {
+        Some(decoded) => decoded,
+        None => {
             return DecodedWord {
-                insn: DecodedInsn::Mul { dst, src1, src2 },
+                insn: DecodedInsn::Unknown(word),
                 used_ext: false,
+                opcode: None,
             };
         }
-    }
+    };
 
+    let (insn, used_ext) = decode_main(&decoded, word, immext);
     DecodedWord {
-        insn: DecodedInsn::Unknown(word),
-        used_ext: false,
+        insn,
+        used_ext,
+        opcode: Some(decoded.opcode),
     }
 }
