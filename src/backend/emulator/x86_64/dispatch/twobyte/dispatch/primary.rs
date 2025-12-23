@@ -23,6 +23,7 @@ impl X86_64Vcpu {
             0x03 => insn::system::lsl(self, ctx),
             0x05 => insn::system::syscall(self, ctx),
             0x06 => insn::system::clts(self, ctx),
+            0x07 => insn::system::sysret(self, ctx),
             // INVD/WBINVD - cache invalidation (NOP in emulator)
             0x08 => {
                 // INVD - Invalidate internal caches

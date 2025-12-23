@@ -268,7 +268,12 @@ fn test_shr_esi_with_carry() {
 
 #[test]
 fn test_shr_edi_to_zero() {
-    let code = [0xc1, 0xef, 0x20, 0xf4]; // SHR EDI, 32
+    // Note: SHR EDI, 32 would mask to 0 (no shift), so we use 31 + 1
+    let code = [
+        0xc1, 0xef, 0x1f, // SHR EDI, 31
+        0xd1, 0xef,       // SHR EDI, 1
+        0xf4,
+    ];
     let mut regs = Registers::default();
     regs.rdi = 0x12345678;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
@@ -331,7 +336,12 @@ fn test_shr_rsi_with_carry() {
 
 #[test]
 fn test_shr_rdi_to_zero() {
-    let code = [0x48, 0xc1, 0xef, 0x40, 0xf4]; // SHR RDI, 64
+    // Note: SHR RDI, 64 would mask to 0 (no shift), so we use 63 + 1
+    let code = [
+        0x48, 0xc1, 0xef, 0x3f, // SHR RDI, 63
+        0x48, 0xd1, 0xef,       // SHR RDI, 1
+        0xf4,
+    ];
     let mut regs = Registers::default();
     regs.rdi = 0x123456789ABCDEF0;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
