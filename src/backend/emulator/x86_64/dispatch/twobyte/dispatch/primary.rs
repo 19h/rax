@@ -117,6 +117,9 @@ impl X86_64Vcpu {
             0x56 => insn::simd::orps(self, ctx),
             0x57 => insn::simd::xorps(self, ctx),
 
+            // MOVMSKPS/MOVMSKPD - extract sign bits
+            0x50 => self.execute_movmsk(ctx),
+
             // SSE arithmetic
             0x51 => self.execute_sse_sqrt(ctx),
             0x52 => self.execute_sse_rsqrt(ctx),
@@ -171,10 +174,35 @@ impl X86_64Vcpu {
             }
             // Packed integer insert/extract
             0xD7 => insn::simd::pmovmskb(self, ctx),
+            // Packed integer add (SSE2/MMX)
+            0xD4 => insn::simd::paddq_packed(self, ctx),
+            0xFC => insn::simd::paddb_packed(self, ctx),
+            0xFD => insn::simd::paddw_packed(self, ctx),
+            0xFE => insn::simd::paddd_packed(self, ctx),
+            // Packed integer saturating add (SSE2/MMX)
+            0xEC => insn::simd::paddsb_packed(self, ctx),
+            0xED => insn::simd::paddsw_packed(self, ctx),
+            0xDC => insn::simd::paddusb_packed(self, ctx),
+            0xDD => insn::simd::paddusw_packed(self, ctx),
             // Packed integer subtract (SSE2)
             0xD8 | 0xD9 | 0xE8 | 0xE9 | 0xF8 | 0xF9 | 0xFA | 0xFB => {
                 insn::simd::psub_packed(self, ctx, opcode2)
             }
+            // Packed integer logical (SSE2/MMX)
+            0xDB => insn::simd::pand(self, ctx),
+            0xDF => insn::simd::pandn(self, ctx),
+            0xEB => insn::simd::por(self, ctx),
+            // Packed integer compare (SSE2/MMX)
+            0x74 => insn::simd::pcmpeqb(self, ctx),
+            0x75 => insn::simd::pcmpeqw(self, ctx),
+            0x76 => insn::simd::pcmpeqd(self, ctx),
+            0x64 => insn::simd::pcmpgtb(self, ctx),
+            0x65 => insn::simd::pcmpgtw(self, ctx),
+            0x66 => insn::simd::pcmpgtd(self, ctx),
+            // MOVNTQ - non-temporal store MMX
+            0xE7 => insn::simd::movntq(self, ctx),
+            // MOVNTDQ - non-temporal store XMM
+            0xE5 if ctx.operand_size_override => self.execute_movnt_store(ctx),
             // Packed integer min/max (SSE2)
             0xDA => insn::simd::pminub(self, ctx),
             0xDE => insn::simd::pmaxub(self, ctx),
@@ -264,7 +292,11 @@ impl X86_64Vcpu {
                     insn::simd::cvtps2pi(self, ctx)
                 }
             }
+            // MOVNTPS/MOVNTPD - non-temporal hint store
+            0x2B => self.execute_movnt_store(ctx),
             0x2E => insn::simd::ucomiss_ucomisd(self, ctx),
+            // COMISS/COMISD - compare scalar and set EFLAGS
+            0x2F => self.execute_comiss(ctx),
             0xE6 => {
                 if ctx.rep_prefix == Some(0xF3) {
                     // F3 0F E6: CVTDQ2PD xmm1, xmm2/m64
@@ -320,8 +352,23 @@ impl X86_64Vcpu {
                 }
             }
 
+            // SSE2/MMX shift immediate (groups 12, 13, 14)
+            0x71 => self.execute_shift_imm_group12(ctx),
+            0x72 => self.execute_shift_imm_group13(ctx),
+            0x73 => self.execute_shift_imm_group14(ctx),
+
+            // SSE3 horizontal add/sub
+            0x7C => self.execute_hadd(ctx),
+            0x7D => self.execute_hsub(ctx),
+
+            // SSE3 ADDSUBPS/ADDSUBPD
+            0xD0 => self.execute_addsubps(ctx),
+
             // CMPPS/CMPPD/CMPSS/CMPSD (0xC2)
             0xC2 => self.execute_cmpps(ctx),
+
+            // SHUFPS/SHUFPD (0xC6)
+            0xC6 => self.execute_shufps(ctx),
 
             // PINSRW (0xC4)
             0xC4 => self.execute_pinsrw(ctx),
