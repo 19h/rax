@@ -6,6 +6,19 @@ use crate::error::Result;
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::flags;
 
+fn add_with_carry_unsigned(dest: u64, src: u64, carry_in: bool, op_size: u8) -> (u64, bool) {
+    let bits = (op_size as u32) * 8;
+    let full_sum = (dest as u128) + (src as u128) + if carry_in { 1 } else { 0 };
+    let mask = if bits == 64 {
+        u128::MAX
+    } else {
+        (1u128 << bits) - 1
+    };
+    let result = (full_sum & mask) as u64;
+    let carry_out = full_sum > mask;
+    (result, carry_out)
+}
+
 /// ADD r/m8, r8 (0x00)
 pub fn add_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
@@ -191,6 +204,54 @@ pub fn adc_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     let result = dst.wrapping_add(src).wrapping_add(cf_val);
     vcpu.set_reg(reg, result, op_size);
     flags::update_flags_adc(&mut vcpu.regs.rflags, dst, src, cf_in, result, op_size);
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// ADCX r32/r64, r/m32/r/m64 (0x0F 0x38 0xF6 /r with 0x66 prefix)
+pub fn adcx_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = if ctx.rex_w() { 8 } else { 4 };
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let dst = vcpu.get_reg(reg, op_size);
+    let src = if is_memory {
+        vcpu.read_mem(addr, op_size)?
+    } else {
+        vcpu.get_reg(rm, op_size)
+    };
+    let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
+    let (result, carry_out) = add_with_carry_unsigned(dst, src, cf_in, op_size);
+    vcpu.set_reg(reg, result, op_size);
+
+    if carry_out {
+        vcpu.regs.rflags |= flags::bits::CF;
+    } else {
+        vcpu.regs.rflags &= !flags::bits::CF;
+    }
+
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// ADOX r32/r64, r/m32/r/m64 (0x0F 0x38 0xF6 /r with 0xF3 prefix)
+pub fn adox_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let op_size = if ctx.rex_w() { 8 } else { 4 };
+    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let dst = vcpu.get_reg(reg, op_size);
+    let src = if is_memory {
+        vcpu.read_mem(addr, op_size)?
+    } else {
+        vcpu.get_reg(rm, op_size)
+    };
+    let of_in = (vcpu.regs.rflags & flags::bits::OF) != 0;
+    let (result, carry_out) = add_with_carry_unsigned(dst, src, of_in, op_size);
+    vcpu.set_reg(reg, result, op_size);
+
+    if carry_out {
+        vcpu.regs.rflags |= flags::bits::OF;
+    } else {
+        vcpu.regs.rflags &= !flags::bits::OF;
+    }
+
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
