@@ -56,7 +56,7 @@ fn test_cmovg_eax_ebx_less() {
     regs.rbx = 0x22222222;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax & 0xFFFFFFFF, 0x0000000a, "EAX should not be moved when 5 < 10");
+    assert_eq!(regs.rax & 0xFFFFFFFF, 0x00000005, "EAX should not be moved when 5 < 10");
 }
 
 // CMOVNLE (same as CMOVG)
@@ -242,10 +242,10 @@ fn test_cmovg_zeros_upper_32() {
 // Test practical use case: max of two signed values
 #[test]
 fn test_cmovg_practical_signed_max() {
-    // max = (a > b) ? a : b (signed comparison)
+    // max = (a < b) ? b : a - use CMOVL to move b to a if a < b
     let code = [
         0x48, 0x39, 0xd8, // CMP RAX, RBX
-        0x48, 0x0f, 0x4f, 0xc3, // CMOVG RAX, RBX
+        0x48, 0x0f, 0x4c, 0xc3, // CMOVL RAX, RBX (move RBX to RAX if RAX < RBX)
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
