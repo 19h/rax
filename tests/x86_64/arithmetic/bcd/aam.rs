@@ -424,14 +424,14 @@ fn test_aam_flags_nonzero_result() {
 
 #[test]
 fn test_aam_parity_flag_even() {
-    // AL = 12, result AL = 2 (even parity)
+    // AL = 13, result AL = 3 (even parity)
     let code = [0xd4, 0x0a, 0xf4];
     let mut regs = Registers::default();
-    regs.rax = 0x0C;
+    regs.rax = 0x0D;
     let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax & 0xFF, 0x02, "AL should be 2");
+    assert_eq!(regs.rax & 0xFF, 0x03, "AL should be 3");
     assert!(pf_set(regs.rflags), "PF should be set for even parity");
 }
 

@@ -315,7 +315,7 @@ fn test_das_af_set_causes_underflow() {
 
     // 0x05 - 0x06 = 0xFF (underflow)
     assert_eq!(regs.rax & 0xFF, 0xFF, "AL should be 0xFF");
-    assert!(!cf_set(regs.rflags), "CF should be clear");
+    assert!(cf_set(regs.rflags), "CF should be set");
     assert!(af_set(regs.rflags), "AF should be set");
 }
 

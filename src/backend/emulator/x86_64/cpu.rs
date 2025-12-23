@@ -395,13 +395,19 @@ impl X86_64Vcpu {
         // Decode prefixes
         let mut ctx = Decoder::decode_prefixes(bytes)?;
 
-        // Determine operand size
-        ctx.op_size = if ctx.rex_w() {
-            8
-        } else if ctx.operand_size_override {
-            2
+        // Determine operand size (64-bit mode defaults to 32-bit; compat depends on CS.D).
+        ctx.op_size = if self.sregs.cs.l {
+            if ctx.rex_w() {
+                8
+            } else if ctx.operand_size_override {
+                2
+            } else {
+                4
+            }
         } else {
-            4
+            let default_16bit = !self.sregs.cs.db;
+            let is_16bit = default_16bit ^ ctx.operand_size_override;
+            if is_16bit { 2 } else { 4 }
         };
 
         // Get opcode
