@@ -35,17 +35,22 @@ pub fn escape_dc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
         // Register form: op ST(i), ST(0)
         let st0 = vcpu.fpu.get_st(0);
         let sti = vcpu.fpu.get_st(rm);
-        match reg {
-            0 => vcpu.fpu.set_st(rm, sti + st0), // FADD ST(i), ST(0)
-            1 => vcpu.fpu.set_st(rm, sti * st0), // FMUL ST(i), ST(0)
-            4 => vcpu.fpu.set_st(rm, sti - st0), // FSUB ST(i), ST(0)
-            5 => vcpu.fpu.set_st(rm, st0 - sti), // FSUBR ST(i), ST(0)
-            6 => vcpu.fpu.set_st(rm, sti / st0), // FDIV ST(i), ST(0)
-            7 => vcpu.fpu.set_st(rm, st0 / sti), // FDIVR ST(i), ST(0)
+        match modrm {
+            0xC0..=0xC7 => vcpu.fpu.set_st(rm, sti + st0), // FADD ST(i), ST(0)
+            0xC8..=0xCF => vcpu.fpu.set_st(rm, sti * st0), // FMUL ST(i), ST(0)
+            0xD0..=0xD7 => set_fpu_compare_flags(vcpu, st0, sti), // FCOM ST(i)
+            0xD8..=0xDF => { // FCOMP ST(i)
+                set_fpu_compare_flags(vcpu, st0, sti);
+                vcpu.fpu.pop();
+            }
+            0xE0..=0xE7 => vcpu.fpu.set_st(rm, st0 - sti), // FSUBR ST(i), ST(0)
+            0xE8..=0xEF => vcpu.fpu.set_st(rm, sti - st0), // FSUB ST(i), ST(0)
+            0xF0..=0xF7 => vcpu.fpu.set_st(rm, st0 / sti), // FDIVR ST(i), ST(0)
+            0xF8..=0xFF => vcpu.fpu.set_st(rm, sti / st0), // FDIV ST(i), ST(0)
             _ => {
                 return Err(Error::Emulator(format!(
-                    "unimplemented DC register opcode reg={} at RIP={:#x}",
-                    reg, vcpu.regs.rip
+                    "unimplemented DC register opcode modrm={:#x} at RIP={:#x}",
+                    modrm, vcpu.regs.rip
                 )));
             }
         }

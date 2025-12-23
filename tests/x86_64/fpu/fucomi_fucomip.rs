@@ -175,7 +175,7 @@ fn test_fucomi_st2() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let flags = read_u64(&mem, 0x3000);
-    assert_ne!(flags & CF_BIT, 0, "CF should be set (3.0 > 1.0)");
+    assert_eq!(flags & CF_BIT, 0, "CF should be clear (3.0 > 1.0)");
 }
 
 // ============================================================================
@@ -453,7 +453,7 @@ fn test_fucomip_st2() {
     let val2 = read_f64(&mem, 0x3010);
     assert_eq!(val1, 2.0);
     assert_eq!(val2, 1.0);
-    assert_ne!(flags & CF_BIT, 0, "CF should be set (3.0 > 1.0)");
+    assert_eq!(flags & CF_BIT, 0, "CF should be clear (3.0 > 1.0)");
 }
 
 // ============================================================================
@@ -500,8 +500,8 @@ fn test_fucomi_conditional_jb() {
     ];
 
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_f64(&mem, 0x2000, 10.0);
-    write_f64(&mem, 0x2008, 5.0);
+    write_f64(&mem, 0x2000, 5.0);
+    write_f64(&mem, 0x2008, 10.0);
 
     run_until_hlt(&mut vcpu).unwrap();
 
@@ -588,8 +588,8 @@ fn test_fucomi_sequence() {
 
     let flags1 = read_u64(&mem, 0x3000);
     let flags2 = read_u64(&mem, 0x3008);
-    assert_ne!(flags1 & CF_BIT, 0, "First comparison: 2.0 < 1.0 should set CF");
-    assert_ne!(flags2 & CF_BIT, 0, "Second comparison: 3.0 < 2.0 should set CF");
+    assert_eq!(flags1 & CF_BIT, 0, "First comparison: 2.0 > 1.0");
+    assert_eq!(flags2 & CF_BIT, 0, "Second comparison: 3.0 > 2.0");
 }
 
 #[test]
@@ -618,7 +618,7 @@ fn test_fucomip_chain() {
     let flags1 = read_u64(&mem, 0x3000);
     let flags2 = read_u64(&mem, 0x3008);
     assert_ne!(flags1 & ZF_BIT, 0, "First comparison: 2.0 == 2.0 should set ZF");
-    assert_ne!(flags2 & CF_BIT, 0, "Second comparison: 2.0 < 1.0 should set CF");
+    assert_eq!(flags2 & CF_BIT, 0, "Second comparison: 2.0 > 1.0");
 }
 
 #[test]
@@ -685,7 +685,7 @@ fn test_fucomip_negative_numbers() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let flags = read_u64(&mem, 0x3000);
-    assert_ne!(flags & CF_BIT, 0, "CF should be set (-5.0 < -10.0)");
+    assert_eq!(flags & CF_BIT, 0, "CF should be clear (-5.0 > -10.0)");
 }
 
 #[test]

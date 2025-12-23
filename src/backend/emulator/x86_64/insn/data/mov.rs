@@ -34,11 +34,11 @@ pub fn mov_r_imm(
 
 /// MOV AL, moffs8 (0xA0) - Load byte from absolute address
 pub fn mov_al_moffs(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    // In 64-bit mode with REX.W, address is 64-bit, otherwise determined by address size
-    let addr = if ctx.rex_w() || !ctx.address_size_override {
-        ctx.consume_u64()?
-    } else {
+    // Address size is 64-bit by default in 64-bit mode, 32-bit with 67h.
+    let addr = if ctx.address_size_override {
         ctx.consume_u32()? as u64
+    } else {
+        ctx.consume_u64()?
     };
     let value = vcpu.mmu.read_u8(addr, &vcpu.sregs)?;
     vcpu.regs.rax = (vcpu.regs.rax & !0xFF) | (value as u64);
@@ -48,10 +48,10 @@ pub fn mov_al_moffs(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
 
 /// MOV rAX, moffs (0xA1) - Load word/dword/qword from absolute address
 pub fn mov_rax_moffs(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let addr = if ctx.rex_w() || !ctx.address_size_override {
-        ctx.consume_u64()?
-    } else {
+    let addr = if ctx.address_size_override {
         ctx.consume_u32()? as u64
+    } else {
+        ctx.consume_u64()?
     };
     let value = vcpu.read_mem(addr, ctx.op_size)?;
     vcpu.set_reg(0, value, ctx.op_size);
@@ -61,10 +61,10 @@ pub fn mov_rax_moffs(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
 
 /// MOV moffs8, AL (0xA2) - Store byte to absolute address
 pub fn mov_moffs_al(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let addr = if ctx.rex_w() || !ctx.address_size_override {
-        ctx.consume_u64()?
-    } else {
+    let addr = if ctx.address_size_override {
         ctx.consume_u32()? as u64
+    } else {
+        ctx.consume_u64()?
     };
     vcpu.mmu.write_u8(addr, vcpu.regs.rax as u8, &vcpu.sregs)?;
     vcpu.regs.rip += ctx.cursor as u64;
@@ -73,10 +73,10 @@ pub fn mov_moffs_al(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
 
 /// MOV moffs, rAX (0xA3) - Store word/dword/qword to absolute address
 pub fn mov_moffs_rax(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let addr = if ctx.rex_w() || !ctx.address_size_override {
-        ctx.consume_u64()?
-    } else {
+    let addr = if ctx.address_size_override {
         ctx.consume_u32()? as u64
+    } else {
+        ctx.consume_u64()?
     };
     vcpu.write_mem(addr, vcpu.get_reg(0, ctx.op_size), ctx.op_size)?;
     vcpu.regs.rip += ctx.cursor as u64;

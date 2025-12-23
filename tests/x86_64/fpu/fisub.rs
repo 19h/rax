@@ -383,5 +383,6 @@ fn test_fisub_fractional_preservation() {
     write_i32(&mem, DATA_ADDR + 8, 5);
 
     run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(read_f64(&mem, 0x3000), 5.123);
+    let result = read_f64(&mem, 0x3000);
+    assert!((result - 5.123).abs() < 1e-12);
 }

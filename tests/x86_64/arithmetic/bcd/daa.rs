@@ -50,7 +50,7 @@ fn test_daa_no_adjustment() {
     ];
     let mut regs = Registers::default();
     regs.rax = 0x25;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x25, "AL should remain 0x25");
@@ -64,7 +64,7 @@ fn test_daa_zero() {
     let code = [0x27, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x00;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x00, "AL should remain 0x00");
@@ -82,7 +82,7 @@ fn test_daa_valid_bcd_values() {
         let code = [0x27, 0xf4];
         let mut regs = Registers::default();
         regs.rax = *val as u64;
-        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(regs.rax & 0xFF, *val as u64, "AL should remain {:#04x}", val);
@@ -101,7 +101,7 @@ fn test_daa_lower_nibble_0a() {
     let code = [0x27, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0A;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x10, "AL should be 0x10 (0x0A + 0x06)");
@@ -115,7 +115,7 @@ fn test_daa_lower_nibble_0f() {
     let code = [0x27, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x0F;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x15, "AL should be 0x15 (0x0F + 0x06)");
@@ -129,7 +129,7 @@ fn test_daa_lower_nibble_1c() {
     let code = [0x27, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x1C;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x22, "AL should be 0x22 (0x1C + 0x06)");
@@ -147,7 +147,7 @@ fn test_daa_upper_nibble_a0() {
     let code = [0x27, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0xA0;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x00, "AL should be 0x00 (0xA0 + 0x60 = 0x100, wrapped)");
@@ -160,7 +160,7 @@ fn test_daa_upper_nibble_f0() {
     let code = [0x27, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0xF0;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x50, "AL should be 0x50 (0xF0 + 0x60 = 0x150, wrapped)");
@@ -177,7 +177,7 @@ fn test_daa_both_nibbles_ae() {
     let code = [0x27, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0xAE;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0xAE + 0x06 = 0xB4, then 0xB4 + 0x60 = 0x14 (wrapped)
@@ -192,7 +192,7 @@ fn test_daa_both_nibbles_ff() {
     let code = [0x27, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0xFF;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0xFF + 0x06 = 0x105 (wrapped to 0x05), then 0x05 + 0x60 = 0x65
@@ -214,7 +214,7 @@ fn test_daa_after_add_25_plus_34() {
         0x27,       // DAA
         0xf4,       // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x59, "Result should be 0x59 (BCD 59)");
@@ -230,7 +230,7 @@ fn test_daa_after_add_79_plus_35() {
         0x27,       // DAA (should produce 0x14 with CF=1)
         0xf4,       // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x14, "Result should be 0x14 (ones place of 114)");
@@ -246,7 +246,7 @@ fn test_daa_after_add_58_plus_46() {
         0x27,       // DAA
         0xf4,       // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x04, "Result should be 0x04 (ones place of 104)");
@@ -262,7 +262,7 @@ fn test_daa_after_add_99_plus_99() {
         0x27,       // DAA
         0xf4,       // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x98, "Result should be 0x98 (ones place of 198)");
@@ -278,7 +278,7 @@ fn test_daa_after_add_15_plus_27() {
         0x27,       // DAA
         0xf4,       // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x42, "Result should be 0x42 (BCD 42)");
@@ -296,7 +296,7 @@ fn test_daa_af_set_valid_lower_nibble() {
     let mut regs = Registers::default();
     regs.rax = 0x25;
     regs.rflags = 0x10; // Set AF
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x2B, "AL should be 0x2B (0x25 + 0x06)");
@@ -311,7 +311,7 @@ fn test_daa_af_set_causes_upper_adjust() {
     let mut regs = Registers::default();
     regs.rax = 0x99;
     regs.rflags = 0x10; // Set AF
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0x99 + 0x06 = 0x9F, then 0x9F + 0x60 = 0xFF
@@ -331,7 +331,7 @@ fn test_daa_cf_set_causes_upper_adjust() {
     let mut regs = Registers::default();
     regs.rax = 0x25;
     regs.rflags = 0x01; // Set CF
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x85, "AL should be 0x85 (0x25 + 0x60)");
@@ -345,7 +345,7 @@ fn test_daa_cf_set_with_overflow() {
     let mut regs = Registers::default();
     regs.rax = 0xA5;
     regs.rflags = 0x01; // Set CF
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0xA5 + 0x60 = 0x105, wrapped to 0x05
@@ -366,7 +366,7 @@ fn test_daa_multidigit_12_plus_34() {
         0x27,       // DAA
         0xf4,       // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x06, "Ones digit should be 6");
@@ -382,7 +382,7 @@ fn test_daa_multidigit_28_plus_37() {
         0x27,       // DAA
         0xf4,       // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x15, "Result should be 0x15 (BCD 15)");
@@ -400,7 +400,7 @@ fn test_daa_all_lower_nibbles() {
         let code = [0x27, 0xf4];
         let mut regs = Registers::default();
         regs.rax = lower;
-        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         if lower <= 9 {
@@ -420,7 +420,7 @@ fn test_daa_preserves_high_rax() {
     let code = [0x27, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x1234_5678_DEAD_BE0A;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax >> 8, 0x1234_5678_DEAD_BE, "High bits of RAX should be preserved");
@@ -433,7 +433,7 @@ fn test_daa_flag_combinations() {
     let mut regs = Registers::default();
     regs.rax = 0x88;
     regs.rflags = 0x11; // Set both AF and CF
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // 0x88 + 0x06 = 0x8E, then 0x8E + 0x60 = 0xEE
@@ -448,7 +448,7 @@ fn test_daa_boundary_09() {
     let code = [0x27, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x09;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x09, "AL should remain 0x09");
@@ -461,7 +461,7 @@ fn test_daa_boundary_90() {
     let code = [0x27, 0xf4];
     let mut regs = Registers::default();
     regs.rax = 0x90;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let (mut vcpu, _) = setup_vm_compat(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0xF0, "AL should be 0xF0 (0x90 + 0x60)");
@@ -479,7 +479,7 @@ fn test_daa_sequential_additions() {
         0x27,       // DAA (result: 0x80)
         0xf4,       // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x80, "Final result should be 0x80 (BCD 80)");
@@ -494,7 +494,7 @@ fn test_daa_with_previous_carry() {
         0x27,       // DAA (should produce 0x00 with CF=1)
         0xf4,       // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_compat(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax & 0xFF, 0x00, "Result should be 0x00");
@@ -518,7 +518,7 @@ fn test_daa_comprehensive_packed_bcd() {
             0x27,       // DAA
             0xf4,       // HLT
         ];
-        let (mut vcpu, _) = setup_vm(&code, None);
+        let (mut vcpu, _) = setup_vm_compat(&code, None);
         let regs = run_until_hlt(&mut vcpu).unwrap();
 
         assert_eq!(regs.rax & 0xFF, *expected as u64,

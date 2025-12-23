@@ -45,11 +45,9 @@ pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Ar
     let mut vcpu = X86_64Vcpu::new(0, mem.clone());
 
     // Set up initial registers
-    // Only override RSP if no initial regs were provided
-    let has_custom_regs = initial_regs.is_some();
     let mut regs = initial_regs.unwrap_or_else(Registers::default);
     regs.rip = CODE_ADDR;
-    if !has_custom_regs {
+    if regs.rsp == 0 {
         regs.rsp = STACK_ADDR;
     }
     // Preserve flags from initial_regs but ensure reserved bit 1 is set
@@ -95,10 +93,9 @@ pub fn setup_vm_compat(code: &[u8], initial_regs: Option<Registers>) -> (X86_64V
     let mut vcpu = X86_64Vcpu::new(0, mem.clone());
 
     // Set up initial registers
-    let has_custom_regs = initial_regs.is_some();
     let mut regs = initial_regs.unwrap_or_else(Registers::default);
     regs.rip = CODE_ADDR;
-    if !has_custom_regs {
+    if regs.rsp == 0 {
         regs.rsp = STACK_ADDR;
     }
     regs.rflags |= 0x2;

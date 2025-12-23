@@ -454,7 +454,7 @@ fn test_fprem_very_large_dividend() {
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_f64(&mem, 0x3000);
-    assert_eq!(result, 6.0, "1000000.0 % 7.0 = 6.0");
+    assert_eq!(result, 1.0, "1000000.0 % 7.0 = 1.0");
 }
 
 #[test]
