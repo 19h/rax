@@ -76,6 +76,13 @@ impl X86_64Vcpu {
             0x8C => insn::data::mov_rm_sreg(self, ctx),
             0x8E => insn::data::mov_sreg_rm(self, ctx),
             0x8D => insn::data::lea(self, ctx),
+            0x06 => insn::data::push_sreg(self, ctx, 0), // PUSH ES
+            0x0E => insn::data::push_sreg(self, ctx, 1), // PUSH CS
+            0x16 => insn::data::push_sreg(self, ctx, 2), // PUSH SS
+            0x1E => insn::data::push_sreg(self, ctx, 3), // PUSH DS
+            0x07 => insn::data::pop_sreg(self, ctx, 0),  // POP ES
+            0x17 => insn::data::pop_sreg(self, ctx, 2),  // POP SS
+            0x1F => insn::data::pop_sreg(self, ctx, 3),  // POP DS
             // MOV moffs instructions
             0xA0 => insn::data::mov_al_moffs(self, ctx),
             0xA1 => insn::data::mov_rax_moffs(self, ctx),

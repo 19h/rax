@@ -28,7 +28,7 @@ fn test_lgdt_basic() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Verify instruction completed
-    assert_eq!(regs.rip, 0x1000 + 8, "RIP should point to HLT (HLT doesn't advance RIP)");
+    assert_eq!(regs.rip, 0x1000 + 9, "RIP should point past HLT");
 }
 
 // LIDT m80 - Load IDTR from memory (basic)
@@ -47,7 +47,7 @@ fn test_lidt_basic() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // Verify instruction completed
-    assert_eq!(regs.rip, 0x1000 + 8, "RIP should point to HLT (HLT doesn't advance RIP)");
+    assert_eq!(regs.rip, 0x1000 + 9, "RIP should point past HLT");
 }
 
 // LGDT with maximum limit value
@@ -64,7 +64,7 @@ fn test_lgdt_max_limit() {
     write_mem_at_u64(&mem, DATA_ADDR + 2, 0x0000000000005000);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x1000 + 8);
+    assert_eq!(regs.rip, 0x1000 + 9);
 }
 
 // LIDT with maximum limit value
@@ -80,7 +80,7 @@ fn test_lidt_max_limit() {
     write_mem_at_u64(&mem, DATA_ADDR + 2, 0x0000000000006000);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x1000 + 8);
+    assert_eq!(regs.rip, 0x1000 + 9);
 }
 
 // LGDT with zero limit
@@ -96,7 +96,7 @@ fn test_lgdt_zero_limit() {
     write_mem_at_u64(&mem, DATA_ADDR + 2, 0x0000000000007000);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x1000 + 8);
+    assert_eq!(regs.rip, 0x1000 + 9);
 }
 
 // LIDT with zero limit
@@ -112,7 +112,7 @@ fn test_lidt_zero_limit() {
     write_mem_at_u64(&mem, DATA_ADDR + 2, 0x0000000000008000);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x1000 + 8);
+    assert_eq!(regs.rip, 0x1000 + 9);
 }
 
 // LGDT with high base address
@@ -128,7 +128,7 @@ fn test_lgdt_high_base() {
     write_mem_at_u64(&mem, DATA_ADDR + 2, 0x00000000FFFF0000);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x1000 + 8);
+    assert_eq!(regs.rip, 0x1000 + 9);
 }
 
 // LIDT with high base address
@@ -144,7 +144,7 @@ fn test_lidt_high_base() {
     write_mem_at_u64(&mem, DATA_ADDR + 2, 0x00000000FFFF8000);
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x1000 + 8);
+    assert_eq!(regs.rip, 0x1000 + 9);
 }
 
 // LGDT using RAX register indirect

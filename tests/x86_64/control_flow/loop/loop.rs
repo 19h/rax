@@ -21,17 +21,26 @@ fn test_loop_basic_countdown() {
 
 #[test]
 fn test_loop_zero_iterations() {
+    // To achieve zero iterations with RCX=0, we must use JRCXZ to skip the loop body
+    // LOOP alone always executes the body at least once (it's at the END of the loop)
+    // Layout:
+    // 0x1000: MOV RCX, 0 (7 bytes)
+    // 0x1007: JRCXZ +5 (2 bytes) -> target = 0x1009 + 5 = 0x100E
+    // 0x1009: INC RAX (3 bytes) - loop body
+    // 0x100C: LOOP -5 (2 bytes) -> target = 0x100E - 5 = 0x1009
+    // 0x100E: HLT (1 byte)
     let code = [
         0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0
+        0xe3, 0x05, // JRCXZ +5 (skip loop body if RCX=0)
         // loop_start:
-        0x48, 0xff, 0xc0, // INC RAX (should not execute)
-        0xe2, 0xfb, // LOOP -5 (should not jump)
+        0x48, 0xff, 0xc0, // INC RAX (should not execute when RCX=0)
+        0xe2, 0xfb, // LOOP -5 (back to loop_start)
         0xf4, // HLT
     ];
     let vm = setup_vm(&code);
     let vm = run_until_hlt(vm);
     assert_eq!(vm.rax, 0); // Loop body not executed
-    assert_eq!(vm.rcx, 0xFFFFFFFFFFFFFFFF); // RCX wrapped around (0 - 1)
+    assert_eq!(vm.rcx, 0); // RCX unchanged
 }
 
 #[test]
@@ -116,16 +125,24 @@ fn test_loop_decrements_rcx_before_test() {
 
 #[test]
 fn test_loop_forward_jump() {
+    // Layout:
+    // 0x1000: MOV RCX, 3 (7 bytes)
+    // 0x1007: LOOP +4 (2 bytes) -> next_rip = 0x1009, target = 0x1009 + 4 = 0x100D
+    // 0x1009: HLT (skipped when jumping forward)
+    // 0x100A: NOP (padding)
+    // 0x100B: NOP (padding)
+    // 0x100C: NOP (padding)
+    // 0x100D: HLT (target)
     let code = [
         0x48, 0xc7, 0xc1, 0x03, 0x00, 0x00, 0x00, // MOV RCX, 3
-        0xe2, 0x03, // LOOP +3 (forward - unusual but valid)
+        0xe2, 0x04, // LOOP +4 (forward - unusual but valid)
         0xf4, // HLT (should not reach on first iteration)
-        0x48, 0xff, 0xc0, // INC RAX
-        0xf4, // HLT
+        0x90, 0x90, 0x90, // NOP padding
+        0xf4, // HLT (target)
     ];
     let vm = setup_vm(&code);
     let vm = run_until_hlt(vm);
-    // RCX=3, LOOP decrements to 2 and jumps forward +3
+    // RCX=3, LOOP decrements to 2 and jumps forward +4
     assert_eq!(vm.rcx, 2);
 }
 
@@ -167,6 +184,14 @@ fn test_loop_preserves_flags() {
 #[test]
 fn test_loop_array_iteration() {
     // Process 4 array elements
+    // Layout:
+    // 0x1000: MOV RCX, 4 (7 bytes)
+    // 0x1007: XOR RAX, RAX (3 bytes)
+    // 0x100A: MOV RBX, 1 (7 bytes)
+    // 0x1011: ADD RAX, RBX (3 bytes) <- loop_start
+    // 0x1014: ADD RBX, 2 (4 bytes)
+    // 0x1018: LOOP -9 (2 bytes) -> next_rip = 0x101A, target = 0x101A - 9 = 0x1011
+    // 0x101A: HLT
     let code = [
         0x48, 0xc7, 0xc1, 0x04, 0x00, 0x00, 0x00, // MOV RCX, 4 (count)
         0x48, 0x31, 0xc0, // XOR RAX, RAX (sum)
@@ -174,7 +199,7 @@ fn test_loop_array_iteration() {
         // loop_start:
         0x48, 0x01, 0xd8, // ADD RAX, RBX (add to sum)
         0x48, 0x83, 0xc3, 0x02, // ADD RBX, 2 (next odd number)
-        0xe2, 0xf6, // LOOP -10
+        0xe2, 0xf7, // LOOP -9
         0xf4, // HLT
     ];
     let vm = setup_vm(&code);
@@ -185,16 +210,31 @@ fn test_loop_array_iteration() {
 #[test]
 fn test_loop_nested_loops_outer() {
     // Outer loop with inner manual counter
+    // Layout:
+    // 0x1000: MOV RCX, 3 (7 bytes)
+    // 0x1007: XOR RAX, RAX (3 bytes)
+    // 0x100A: MOV RBX, 2 (7 bytes) <- outer_loop
+    // 0x1011: INC RAX (3 bytes) <- inner_loop
+    // 0x1014: DEC RBX (3 bytes)
+    // 0x1017: JNZ -9 (2 bytes) -> target = 0x1019 - 9 = 0x1010... need to adjust
+    // Actually JNZ -6 targets 0x1019 - 6 = 0x1013... wrong
+    // Let me recalculate:
+    // JNZ is at 0x1017-0x1018. Next instruction at 0x1019.
+    // Target should be inner_loop at 0x1011. Displacement = 0x1011 - 0x1019 = -8
+    // 0x1019: LOOP -15 -> target = 0x101B - 15 = 0x100C... wrong, should be 0x100A
+    // LOOP at 0x1019-0x101A. Next instruction at 0x101B.
+    // Displacement = 0x100A - 0x101B = -17
+    // 0x101B: HLT
     let code = [
         0x48, 0xc7, 0xc1, 0x03, 0x00, 0x00, 0x00, // MOV RCX, 3 (outer count)
         0x48, 0x31, 0xc0, // XOR RAX, RAX
-        // outer_loop:
+        // outer_loop (0x100A):
         0x48, 0xc7, 0xc3, 0x02, 0x00, 0x00, 0x00, // MOV RBX, 2 (inner count)
-        // inner_loop:
+        // inner_loop (0x1011):
         0x48, 0xff, 0xc0, // INC RAX
         0x48, 0xff, 0xcb, // DEC RBX
-        0x75, 0xf9, // JNZ -7 (inner loop)
-        0xe2, 0xf1, // LOOP -15 (outer loop)
+        0x75, 0xf8, // JNZ -8 (inner loop: 0x1019 - 8 = 0x1011)
+        0xe2, 0xef, // LOOP -17 (outer loop: 0x101B - 17 = 0x100A)
         0xf4, // HLT
     ];
     let vm = setup_vm(&code);

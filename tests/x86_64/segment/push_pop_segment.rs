@@ -3,6 +3,17 @@ use rax::cpu::Registers;
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress};
 
+fn assert_invalid_segment(code: &[u8]) {
+    let (mut vcpu, _) = setup_vm(code, None);
+    let result = vcpu.run();
+    match result {
+        Ok(VcpuExit::Hlt) => panic!("segment opcode should be invalid in 64-bit mode"),
+        Ok(VcpuExit::Shutdown) => {}
+        Err(_) => {}
+        _ => {}
+    }
+}
+
 // Comprehensive tests for PUSH and POP with segment registers
 //
 // PUSH ES/CS/SS/DS/FS/GS - Push segment register onto stack
@@ -16,74 +27,39 @@ use vm_memory::{Bytes, GuestAddress};
 // ============================================================================
 
 #[test]
-fn test_push_es() {
+fn test_push_es_invalid_in_64bit() {
     let code = [
         0x06, // PUSH ES
-        0xf4, // HLT
+        0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // Stack pointer should have decreased by 8 (in 64-bit mode)
-    assert_eq!(regs.rsp, STACK_ADDR - 8);
-
-    // Read value from stack
-    let mut buf = [0u8; 8];
-    mem.read_slice(&mut buf, GuestAddress(STACK_ADDR - 8)).unwrap();
-    let stack_value = u64::from_le_bytes(buf);
-    // Lower 16 bits contain ES, upper bits should be zero
-    assert_eq!(stack_value >> 16, 0);
+    assert_invalid_segment(&code);
 }
 
 #[test]
-fn test_push_cs() {
+fn test_push_cs_invalid_in_64bit() {
     let code = [
         0x0e, // PUSH CS
-        0xf4, // HLT
+        0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rsp, STACK_ADDR - 8);
-
-    let mut buf = [0u8; 8];
-    mem.read_slice(&mut buf, GuestAddress(STACK_ADDR - 8)).unwrap();
-    let stack_value = u64::from_le_bytes(buf);
-    assert_eq!(stack_value >> 16, 0);
+    assert_invalid_segment(&code);
 }
 
 #[test]
-fn test_push_ss() {
+fn test_push_ss_invalid_in_64bit() {
     let code = [
         0x16, // PUSH SS
-        0xf4, // HLT
+        0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rsp, STACK_ADDR - 8);
-
-    let mut buf = [0u8; 8];
-    mem.read_slice(&mut buf, GuestAddress(STACK_ADDR - 8)).unwrap();
-    let stack_value = u64::from_le_bytes(buf);
-    assert_eq!(stack_value >> 16, 0);
+    assert_invalid_segment(&code);
 }
 
 #[test]
-fn test_push_ds() {
+fn test_push_ds_invalid_in_64bit() {
     let code = [
         0x1e, // PUSH DS
-        0xf4, // HLT
+        0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rsp, STACK_ADDR - 8);
-
-    let mut buf = [0u8; 8];
-    mem.read_slice(&mut buf, GuestAddress(STACK_ADDR - 8)).unwrap();
-    let stack_value = u64::from_le_bytes(buf);
-    assert_eq!(stack_value >> 16, 0);
+    assert_invalid_segment(&code);
 }
 
 #[test]
@@ -126,43 +102,30 @@ fn test_push_gs() {
 // ============================================================================
 
 #[test]
-fn test_pop_es() {
+fn test_pop_es_invalid_in_64bit() {
     let code = [
-        0x06, // PUSH ES
         0x07, // POP ES
-        0xf4, // HLT
+        0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // Stack should be balanced
-    assert_eq!(regs.rsp, STACK_ADDR);
+    assert_invalid_segment(&code);
 }
 
 #[test]
-fn test_pop_ss() {
+fn test_pop_ss_invalid_in_64bit() {
     let code = [
-        0x16, // PUSH SS
         0x17, // POP SS
-        0xf4, // HLT
+        0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rsp, STACK_ADDR);
+    assert_invalid_segment(&code);
 }
 
 #[test]
-fn test_pop_ds() {
+fn test_pop_ds_invalid_in_64bit() {
     let code = [
-        0x1e, // PUSH DS
         0x1f, // POP DS
-        0xf4, // HLT
+        0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rsp, STACK_ADDR);
+    assert_invalid_segment(&code);
 }
 
 #[test]
@@ -196,28 +159,28 @@ fn test_pop_gs() {
 // ============================================================================
 
 #[test]
-fn test_push_pop_transfer_es_to_ds() {
+fn test_push_pop_transfer_gs_to_fs() {
     let code = [
-        0x06, // PUSH ES
-        0x1f, // POP DS
-        0x8c, 0xd8, // MOV AX, DS (read DS)
-        0x8c, 0xc3, // MOV BX, ES (read ES)
+        0x0f, 0xa8, // PUSH GS
+        0x0f, 0xa1, // POP FS
+        0x8c, 0xe0, // MOV AX, FS (read FS)
+        0x8c, 0xeb, // MOV BX, GS (read GS)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // DS should equal ES (transferred via stack)
+    // FS should equal GS (transferred via stack)
     assert_eq!(regs.rax & 0xFFFF, regs.rbx & 0xFFFF);
 }
 
 #[test]
-fn test_push_pop_transfer_ds_to_fs() {
+fn test_push_pop_transfer_fs_to_gs() {
     let code = [
-        0x1e, // PUSH DS
-        0x0f, 0xa1, // POP FS
-        0x8c, 0xd8, // MOV AX, DS
-        0x8c, 0xe3, // MOV BX, FS
+        0x0f, 0xa0, // PUSH FS
+        0x0f, 0xa9, // POP GS
+        0x8c, 0xe0, // MOV AX, FS
+        0x8c, 0xeb, // MOV BX, GS
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

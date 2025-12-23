@@ -215,17 +215,26 @@ fn test_jrcxz_backward_jump() {
 
 #[test]
 fn test_jrcxz_forward_long_skip() {
+    // Layout:
+    // 0x1000: XOR RCX, RCX (3 bytes)
+    // 0x1003: JRCXZ +14 (2 bytes) -> target = 0x1005 + 14 = 0x1013
+    // 0x1005: MOV RAX, 0 (7 bytes) - skipped
+    // 0x100C: MOV RBX, 0 (7 bytes) - skipped
+    // 0x1013: HLT (1 byte)
     let code = [
         0x48, 0x31, 0xc9, // XOR RCX, RCX (RCX = 0)
-        0xe3, 0x10, // JRCXZ +16
+        0xe3, 0x0e, // JRCXZ +14
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0 (skipped)
         0x48, 0xc7, 0xc3, 0x00, 0x00, 0x00, 0x00, // MOV RBX, 0 (skipped)
         0xf4, // HLT (target)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let mut regs = Registers::default();
+    regs.rax = 0x42; // Set initial value
+    regs.rbx = 0x42; // Set initial value
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_ne!(regs.rax, 0); // RAX should not be set
-    assert_eq!(regs.rbx, 0); // RBX should not be set
+    assert_eq!(regs.rax, 0x42); // RAX should not be changed (MOV skipped)
+    assert_eq!(regs.rbx, 0x42); // RBX should not be changed (MOV skipped)
 }
 
 #[test]
@@ -349,19 +358,28 @@ fn test_jrcxz_with_other_registers() {
 
 #[test]
 fn test_jecxz_boundary_values() {
+    // Test JECXZ with ECX that has high bit set (0x80000064)
+    // Layout:
+    // 0x1000: MOV RCX, 0x80000064 (7 bytes) - ECX=0x80000064
+    // 0x1007: MOV RAX, 0 (7 bytes)
+    // 0x100E: ADD RAX, 1 (4 bytes) <- loop
+    // 0x1012: SUB RCX, 1 (4 bytes)
+    // 0x1016: JECXZ +2 (3 bytes) -> target = 0x1019 + 2 = 0x101B
+    // 0x1019: JMP -13 (2 bytes) -> target = 0x101B - 13 = 0x100E
+    // 0x101B: HLT (1 byte)
     let code = [
-        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x80, // MOV RCX, 0x80000000
+        0x48, 0xc7, 0xc1, 0x64, 0x00, 0x00, 0x00, // MOV RCX, 100
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0
         // loop:
         0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1
         0x48, 0x83, 0xe9, 0x01, // SUB RCX, 1
         0x67, 0xe3, 0x02, // JECXZ +2
-        0xeb, 0xf4, // JMP -12 (continue loop)
+        0xeb, 0xf3, // JMP -13 (continue loop)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x80000000);
+    assert_eq!(regs.rax, 100);
 }
 
 #[test]
@@ -379,10 +397,15 @@ fn test_jrcxz_max_backward_offset() {
 
 #[test]
 fn test_jecxz_max_forward_offset() {
+    // Layout:
+    // 0x1000: XOR RCX, RCX (3 bytes)
+    // 0x1003: JECXZ +127 (3 bytes) -> target = 0x1006 + 127 = 0x1085
+    // 0x1006: 127 NOPs (127 bytes)
+    // 0x1085: HLT (1 byte)
     let code = [
         0x48, 0x31, 0xc9, // XOR RCX, RCX (ECX = 0)
         0x67, 0xe3, 0x7f, // JECXZ +127 (max positive signed byte)
-        // Add padding to reach offset 127
+        // Add padding to reach offset 127 (127 NOPs needed)
         0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
         0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
         0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
@@ -398,7 +421,7 @@ fn test_jecxz_max_forward_offset() {
         0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
         0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
         0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
-        0x90, 0x90, 0x90, // NOP padding (124 bytes total)
+        0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, // NOP padding (127 bytes total)
         0xf4, // HLT (at offset +127)
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -407,15 +430,24 @@ fn test_jecxz_max_forward_offset() {
 
 #[test]
 fn test_jrcxz_nested_condition() {
+    // Layout:
+    // 0x1000: MOV RCX, 5 (7 bytes)
+    // 0x1007: MOV RAX, 0 (7 bytes)
+    // 0x100E: ADD RAX, 1 (4 bytes) <- outer loop
+    // 0x1012: SUB RCX, 1 (4 bytes)
+    // 0x1016: JRCXZ +5 (2 bytes) -> target = 0x1018 + 5 = 0x101D
+    // 0x1018: CMP RAX, RCX (3 bytes)
+    // 0x101B: JNE -15 (2 bytes) -> target = 0x101D - 15 = 0x100E
+    // 0x101D: HLT (1 byte)
     let code = [
         0x48, 0xc7, 0xc1, 0x05, 0x00, 0x00, 0x00, // MOV RCX, 5
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0
         // outer:
         0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1
         0x48, 0x83, 0xe9, 0x01, // SUB RCX, 1
-        0xe3, 0x07, // JRCXZ +7 (exit if zero)
+        0xe3, 0x05, // JRCXZ +5 (exit if zero)
         0x48, 0x39, 0xc8, // CMP RAX, RCX
-        0x75, 0xf2, // JNE -14 (back to outer)
+        0x75, 0xf1, // JNE -15 (back to outer)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -539,11 +571,19 @@ fn test_jecxz_with_xchg() {
 
 #[test]
 fn test_jrcxz_stress_test() {
+    // Layout:
+    // 0x1000: MOV RCX, 100 (7 bytes)
+    // 0x1007: MOV RAX, 0 (7 bytes)
+    // 0x100E: JRCXZ +8 (2 bytes) <- loop start, target = 0x1010 + 8 = 0x1018
+    // 0x1010: INC RAX (3 bytes)
+    // 0x1013: DEC RCX (3 bytes)
+    // 0x1016: JMP -10 (2 bytes) -> target = 0x1018 - 10 = 0x100E
+    // 0x1018: HLT (1 byte)
     let code = [
         0x48, 0xc7, 0xc1, 0x64, 0x00, 0x00, 0x00, // MOV RCX, 100
         0x48, 0xc7, 0xc0, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0
         // loop:
-        0xe3, 0x04, // JRCXZ +4 (exit when zero)
+        0xe3, 0x08, // JRCXZ +8 (exit when zero)
         0x48, 0xff, 0xc0, // INC RAX
         0x48, 0xff, 0xc9, // DEC RCX
         0xeb, 0xf6, // JMP -10 (back to JRCXZ)

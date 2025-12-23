@@ -43,6 +43,10 @@ impl X86_64Vcpu {
             0x31 => insn::system::rdtsc(self, ctx),
             0x32 => insn::system::rdmsr(self, ctx),
             0x33 => insn::system::rdpmc(self, ctx),
+            0xA0 => insn::data::push_sreg(self, ctx, 4), // PUSH FS
+            0xA1 => insn::data::pop_sreg(self, ctx, 4),  // POP FS
+            0xA8 => insn::data::push_sreg(self, ctx, 5), // PUSH GS
+            0xA9 => insn::data::pop_sreg(self, ctx, 5),  // POP GS
             0xA2 => insn::system::cpuid(self, ctx),
             0xAE => self.execute_0fae(ctx),
 
