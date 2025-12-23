@@ -72,7 +72,7 @@ fn test_call_ret_round_trip() {
     let vm = run_until_hlt(vm);
     assert_eq!(vm.rax, 0x42);
     assert_eq!(vm.rsp, 0x2000); // Stack should be balanced after return
-    assert_eq!(vm.rip, CODE_ADDR + 19); // HLT stops at return point
+    assert_eq!(vm.rip, CODE_ADDR + 20); // RIP advances past HLT
 }
 
 #[test]
@@ -260,11 +260,11 @@ fn test_call_function_pointer_table() {
         0xf4, // HLT
         // function_table (at 0x101E):
         0x2e, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // func0 address
-        0x35, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // func1 address
+        0x36, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // func1 address
         // func0 (at 0x102E):
         0x48, 0xc7, 0xc1, 0xaa, 0x00, 0x00, 0x00, // MOV RCX, 0xAA
         0xc3, // RET
-        // func1 (at 0x1035):
+        // func1 (at 0x1036):
         0x48, 0xc7, 0xc1, 0xbb, 0x00, 0x00, 0x00, // MOV RCX, 0xBB
         0xc3, // RET
     ];
@@ -343,7 +343,7 @@ fn test_call_preserves_flags() {
     ];
     let vm = setup_vm(&code);
     let vm = run_until_hlt(vm);
-    assert_eq!(vm.rip, CODE_ADDR + 26);
+    assert_eq!(vm.rip, CODE_ADDR + 27);
 }
 
 #[test]
