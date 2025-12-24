@@ -35,30 +35,44 @@ impl X86_64Vcpu {
             self.regs.xmm[xmm_dst][0] = (dst + src).to_bits();
         } else if ctx.operand_size_override {
             // ADDPD - packed double (2 x f64)
-            let (src_lo, src_hi) = if is_memory {
-                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            use super::super::super::simd_native;
+
+            let src: simd_native::Xmm = if is_memory {
+                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
             } else {
-                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
-            let d0 = f64::from_bits(self.regs.xmm[xmm_dst][0]) + f64::from_bits(src_lo);
-            let d1 = f64::from_bits(self.regs.xmm[xmm_dst][1]) + f64::from_bits(src_hi);
-            self.regs.xmm[xmm_dst][0] = d0.to_bits();
-            self.regs.xmm[xmm_dst][1] = d1.to_bits();
+
+            let mut dst: simd_native::Xmm = [
+                self.regs.xmm[xmm_dst][0],
+                self.regs.xmm[xmm_dst][1],
+            ];
+
+            simd_native::addpd_xmm(&mut dst, &src);
+
+            self.regs.xmm[xmm_dst][0] = dst[0];
+            self.regs.xmm[xmm_dst][1] = dst[1];
         } else {
             // ADDPS - packed single (4 x f32)
-            let (src_lo, src_hi) = if is_memory {
-                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            // Use native SIMD passthrough when available
+            use super::super::super::simd_native;
+
+            let src: simd_native::Xmm = if is_memory {
+                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
             } else {
-                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
-            let dst_lo = self.regs.xmm[xmm_dst][0];
-            let dst_hi = self.regs.xmm[xmm_dst][1];
-            let r0 = f32::from_bits(dst_lo as u32) + f32::from_bits(src_lo as u32);
-            let r1 = f32::from_bits((dst_lo >> 32) as u32) + f32::from_bits((src_lo >> 32) as u32);
-            let r2 = f32::from_bits(dst_hi as u32) + f32::from_bits(src_hi as u32);
-            let r3 = f32::from_bits((dst_hi >> 32) as u32) + f32::from_bits((src_hi >> 32) as u32);
-            self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
-            self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
+
+            let mut dst: simd_native::Xmm = [
+                self.regs.xmm[xmm_dst][0],
+                self.regs.xmm[xmm_dst][1],
+            ];
+
+            // Native SSE if available, scalar fallback otherwise
+            simd_native::addps_xmm(&mut dst, &src);
+
+            self.regs.xmm[xmm_dst][0] = dst[0];
+            self.regs.xmm[xmm_dst][1] = dst[1];
         }
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
@@ -87,28 +101,43 @@ impl X86_64Vcpu {
             let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
             self.regs.xmm[xmm_dst][0] = (dst - src).to_bits();
         } else if ctx.operand_size_override {
-            let (src_lo, src_hi) = if is_memory {
-                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            // SUBPD - packed double (2 x f64)
+            use super::super::super::simd_native;
+
+            let src: simd_native::Xmm = if is_memory {
+                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
             } else {
-                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
-            self.regs.xmm[xmm_dst][0] =
-                (f64::from_bits(self.regs.xmm[xmm_dst][0]) - f64::from_bits(src_lo)).to_bits();
-            self.regs.xmm[xmm_dst][1] =
-                (f64::from_bits(self.regs.xmm[xmm_dst][1]) - f64::from_bits(src_hi)).to_bits();
+
+            let mut dst: simd_native::Xmm = [
+                self.regs.xmm[xmm_dst][0],
+                self.regs.xmm[xmm_dst][1],
+            ];
+
+            simd_native::subpd_xmm(&mut dst, &src);
+
+            self.regs.xmm[xmm_dst][0] = dst[0];
+            self.regs.xmm[xmm_dst][1] = dst[1];
         } else {
-            let (src_lo, src_hi) = if is_memory {
-                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            // SUBPS - packed single (4 x f32)
+            use super::super::super::simd_native;
+
+            let src: simd_native::Xmm = if is_memory {
+                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
             } else {
-                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
-            let (dst_lo, dst_hi) = (self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]);
-            let r0 = f32::from_bits(dst_lo as u32) - f32::from_bits(src_lo as u32);
-            let r1 = f32::from_bits((dst_lo >> 32) as u32) - f32::from_bits((src_lo >> 32) as u32);
-            let r2 = f32::from_bits(dst_hi as u32) - f32::from_bits(src_hi as u32);
-            let r3 = f32::from_bits((dst_hi >> 32) as u32) - f32::from_bits((src_hi >> 32) as u32);
-            self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
-            self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
+
+            let mut dst: simd_native::Xmm = [
+                self.regs.xmm[xmm_dst][0],
+                self.regs.xmm[xmm_dst][1],
+            ];
+
+            simd_native::subps_xmm(&mut dst, &src);
+
+            self.regs.xmm[xmm_dst][0] = dst[0];
+            self.regs.xmm[xmm_dst][1] = dst[1];
         }
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
@@ -137,28 +166,43 @@ impl X86_64Vcpu {
             let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
             self.regs.xmm[xmm_dst][0] = (dst * src).to_bits();
         } else if ctx.operand_size_override {
-            let (src_lo, src_hi) = if is_memory {
-                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            // MULPD - packed double (2 x f64)
+            use super::super::super::simd_native;
+
+            let src: simd_native::Xmm = if is_memory {
+                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
             } else {
-                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
-            self.regs.xmm[xmm_dst][0] =
-                (f64::from_bits(self.regs.xmm[xmm_dst][0]) * f64::from_bits(src_lo)).to_bits();
-            self.regs.xmm[xmm_dst][1] =
-                (f64::from_bits(self.regs.xmm[xmm_dst][1]) * f64::from_bits(src_hi)).to_bits();
+
+            let mut dst: simd_native::Xmm = [
+                self.regs.xmm[xmm_dst][0],
+                self.regs.xmm[xmm_dst][1],
+            ];
+
+            simd_native::mulpd_xmm(&mut dst, &src);
+
+            self.regs.xmm[xmm_dst][0] = dst[0];
+            self.regs.xmm[xmm_dst][1] = dst[1];
         } else {
-            let (src_lo, src_hi) = if is_memory {
-                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            // MULPS - packed single (4 x f32)
+            use super::super::super::simd_native;
+
+            let src: simd_native::Xmm = if is_memory {
+                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
             } else {
-                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
-            let (dst_lo, dst_hi) = (self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]);
-            let r0 = f32::from_bits(dst_lo as u32) * f32::from_bits(src_lo as u32);
-            let r1 = f32::from_bits((dst_lo >> 32) as u32) * f32::from_bits((src_lo >> 32) as u32);
-            let r2 = f32::from_bits(dst_hi as u32) * f32::from_bits(src_hi as u32);
-            let r3 = f32::from_bits((dst_hi >> 32) as u32) * f32::from_bits((src_hi >> 32) as u32);
-            self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
-            self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
+
+            let mut dst: simd_native::Xmm = [
+                self.regs.xmm[xmm_dst][0],
+                self.regs.xmm[xmm_dst][1],
+            ];
+
+            simd_native::mulps_xmm(&mut dst, &src);
+
+            self.regs.xmm[xmm_dst][0] = dst[0];
+            self.regs.xmm[xmm_dst][1] = dst[1];
         }
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
@@ -187,28 +231,43 @@ impl X86_64Vcpu {
             let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
             self.regs.xmm[xmm_dst][0] = (dst / src).to_bits();
         } else if ctx.operand_size_override {
-            let (src_lo, src_hi) = if is_memory {
-                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            // DIVPD - packed double (2 x f64)
+            use super::super::super::simd_native;
+
+            let src: simd_native::Xmm = if is_memory {
+                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
             } else {
-                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
-            self.regs.xmm[xmm_dst][0] =
-                (f64::from_bits(self.regs.xmm[xmm_dst][0]) / f64::from_bits(src_lo)).to_bits();
-            self.regs.xmm[xmm_dst][1] =
-                (f64::from_bits(self.regs.xmm[xmm_dst][1]) / f64::from_bits(src_hi)).to_bits();
+
+            let mut dst: simd_native::Xmm = [
+                self.regs.xmm[xmm_dst][0],
+                self.regs.xmm[xmm_dst][1],
+            ];
+
+            simd_native::divpd_xmm(&mut dst, &src);
+
+            self.regs.xmm[xmm_dst][0] = dst[0];
+            self.regs.xmm[xmm_dst][1] = dst[1];
         } else {
-            let (src_lo, src_hi) = if is_memory {
-                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
+            // DIVPS - packed single (4 x f32)
+            use super::super::super::simd_native;
+
+            let src: simd_native::Xmm = if is_memory {
+                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
             } else {
-                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
-            let (dst_lo, dst_hi) = (self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]);
-            let r0 = f32::from_bits(dst_lo as u32) / f32::from_bits(src_lo as u32);
-            let r1 = f32::from_bits((dst_lo >> 32) as u32) / f32::from_bits((src_lo >> 32) as u32);
-            let r2 = f32::from_bits(dst_hi as u32) / f32::from_bits(src_hi as u32);
-            let r3 = f32::from_bits((dst_hi >> 32) as u32) / f32::from_bits((src_hi >> 32) as u32);
-            self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
-            self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
+
+            let mut dst: simd_native::Xmm = [
+                self.regs.xmm[xmm_dst][0],
+                self.regs.xmm[xmm_dst][1],
+            ];
+
+            simd_native::divps_xmm(&mut dst, &src);
+
+            self.regs.xmm[xmm_dst][0] = dst[0];
+            self.regs.xmm[xmm_dst][1] = dst[1];
         }
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
