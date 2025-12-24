@@ -9,19 +9,36 @@ use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let leaf = vcpu.regs.rax as u32;
     let subleaf = vcpu.regs.rcx as u32;
+    let rip = vcpu.regs.rip;
 
     let (eax, ebx, ecx, edx) = match leaf {
         0 => {
-            // Return max leaf and vendor string "RaxEmulato"
-            (0x07, 0x45786152, 0x6f74616c, 0x756d456d)
+            // Return max leaf and vendor string "GenuineIntel"
+            // EBX = "Genu", EDX = "ineI", ECX = "ntel"
+            (0x07, 0x756e6547, 0x49656e69, 0x6c65746e)
         }
         1 => {
             // Processor signature and features
             // EAX: Stepping=1, Model=15, Family=6 => 0x6F1 (typical x86-64)
             let signature: u32 = 0x000006F1;
-            let features_edx =
-                0x00800001 | (1 << 3) | (1 << 5) | (1 << 6) | (1 << 9) | (1 << 15) | (1 << 19);
-            // ECX: SSE3(0), SSSE3(9), SSE4.1(19), SSE4.2(20), POPCNT(23), LAHF/SAHF(0)
+            // EDX features (required by Linux: 0x0700a169)
+            // bit 0: FPU, bit 3: PSE, bit 5: MSR, bit 6: PAE, bit 8: CX8
+            // bit 9: APIC, bit 13: PGE, bit 15: CMOV, bit 19: CLFLUSH
+            // bit 23: MMX, bit 24: FXSR, bit 25: SSE, bit 26: SSE2
+            let features_edx: u32 = (1 << 0)   // FPU
+                                  | (1 << 3)   // PSE
+                                  | (1 << 5)   // MSR
+                                  | (1 << 6)   // PAE
+                                  | (1 << 8)   // CX8 (CMPXCHG8B) - REQUIRED
+                                  | (1 << 9)   // APIC
+                                  | (1 << 13)  // PGE - REQUIRED
+                                  | (1 << 15)  // CMOV
+                                  | (1 << 19)  // CLFLUSH
+                                  | (1 << 23)  // MMX
+                                  | (1 << 24)  // FXSR - REQUIRED
+                                  | (1 << 25)  // SSE - REQUIRED
+                                  | (1 << 26); // SSE2 - REQUIRED
+            // ECX: SSE3(0), SSSE3(9), SSE4.1(19), SSE4.2(20), POPCNT(23)
             let features_ecx: u32 = (1 << 0) | (1 << 9) | (1 << 19) | (1 << 20) | (1 << 23);
             (signature, 0x00000000, features_ecx, features_edx)
         }
@@ -75,6 +92,7 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         }
         _ => (0, 0, 0, 0),
     };
+
 
     vcpu.regs.rax = eax as u64;
     vcpu.regs.rbx = ebx as u64;
