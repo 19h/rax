@@ -692,19 +692,23 @@ impl X86_64Vcpu {
     /// Returns (buffer, actual_length).
     #[inline]
     pub(super) fn fetch(&mut self) -> Result<([u8; MAX_INSN_LEN], usize)> {
+        let rip = self.regs.rip;
+        // Mark this page as containing code for self-modifying code detection
+        self.mmu.mark_code_page(rip);
+
         let mut buf = [0u8; MAX_INSN_LEN];
-        if self.mmu.read(self.regs.rip, &mut buf, &self.sregs).is_ok() {
+        if self.mmu.read(rip, &mut buf, &self.sregs).is_ok() {
             return Ok((buf, MAX_INSN_LEN));
         }
         // If we can't read 15 bytes, try smaller amounts
         for len in (1..MAX_INSN_LEN).rev() {
-            if self.mmu.read(self.regs.rip, &mut buf[..len], &self.sregs).is_ok() {
+            if self.mmu.read(rip, &mut buf[..len], &self.sregs).is_ok() {
                 return Ok((buf, len));
             }
         }
         Err(Error::Emulator(format!(
             "failed to fetch instruction at RIP={:#x}",
-            self.regs.rip
+            rip
         )))
     }
 
@@ -908,8 +912,34 @@ impl X86_64Vcpu {
         }
     }
 
+    /// Check if a memory write is to a code page and invalidate decode cache if so.
+    /// This handles self-modifying code by ensuring we don't use stale cached decodes.
+    #[inline(always)]
+    fn check_smc(&mut self, addr: u64) {
+        if self.mmu.is_code_page(addr) {
+            // Self-modifying code detected - invalidate decode cache for this page.
+            // Invalidate all entries that might be on this page.
+            // Since decode cache is indexed by RIP, we need to invalidate
+            // entries whose RIP falls on this page.
+            let page_base = addr & !0xFFF;
+            // Invalidate a range of cache entries for this page
+            // Since instructions are max 15 bytes, check entries from page_base to page_base + 0xFFF
+            for offset in (0..0x1000).step_by(64) {
+                let rip = page_base + offset as u64;
+                let idx = Self::decode_cache_index(rip);
+                let entry = &mut self.decode_cache[idx];
+                if (entry.rip & !0xFFF) == page_base {
+                    entry.rip = 0; // Invalidate
+                }
+            }
+        }
+    }
+
     #[inline(always)]
     pub(super) fn write_mem(&mut self, addr: u64, value: u64, size: u8) -> Result<()> {
+        // Check for self-modifying code
+        self.check_smc(addr);
+
         match size {
             1 => self.mmu.write_u8(addr, value as u8, &self.sregs),
             2 => self.mmu.write_u16(addr, value as u16, &self.sregs),
@@ -927,6 +957,7 @@ impl X86_64Vcpu {
 
     #[inline(always)]
     pub(super) fn write_mem16(&mut self, addr: u64, value: u16) -> Result<()> {
+        self.check_smc(addr);
         self.mmu.write_u16(addr, value, &self.sregs)
     }
 
@@ -937,6 +968,7 @@ impl X86_64Vcpu {
 
     #[inline(always)]
     pub(super) fn write_mem32(&mut self, addr: u64, value: u32) -> Result<()> {
+        self.check_smc(addr);
         self.mmu.write_u32(addr, value, &self.sregs)
     }
 
@@ -947,6 +979,7 @@ impl X86_64Vcpu {
 
     #[inline(always)]
     pub(super) fn write_mem64(&mut self, addr: u64, value: u64) -> Result<()> {
+        self.check_smc(addr);
         self.mmu.write_u64(addr, value, &self.sregs)
     }
 
@@ -958,6 +991,7 @@ impl X86_64Vcpu {
 
     #[inline(always)]
     pub(super) fn write_f32(&mut self, addr: u64, value: f32) -> Result<()> {
+        self.check_smc(addr);
         self.mmu.write_u32(addr, value.to_bits(), &self.sregs)
     }
 
@@ -969,6 +1003,7 @@ impl X86_64Vcpu {
 
     #[inline(always)]
     pub(super) fn write_f64(&mut self, addr: u64, value: f64) -> Result<()> {
+        self.check_smc(addr);
         self.mmu.write_u64(addr, value.to_bits(), &self.sregs)
     }
 
