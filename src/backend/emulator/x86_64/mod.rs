@@ -8,6 +8,7 @@ pub mod flags;
 mod mmu;
 mod sha;
 mod simd_native;
+mod threaded;
 
 mod insn;
 
