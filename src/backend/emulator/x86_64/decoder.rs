@@ -1,25 +1,37 @@
-//! x86_64 instruction decoder.
+//! x86_64 instruction decoder with LUT-based prefix detection.
 
 use super::cpu::{InsnContext, X86_64Vcpu};
 use crate::error::{Error, Result};
 
+/// Lookup table for prefix detection (256 bytes, index = byte value).
+/// Value is 1 if the byte is a prefix, 0 otherwise.
+static PREFIX_LUT: [u8; 256] = {
+    let mut lut = [0u8; 256];
+    // Segment overrides
+    lut[0x26] = 1; lut[0x2E] = 1; lut[0x36] = 1;
+    lut[0x3E] = 1; lut[0x64] = 1; lut[0x65] = 1;
+    // Operand/address size
+    lut[0x66] = 1; lut[0x67] = 1;
+    // LOCK, REP
+    lut[0xF0] = 1; lut[0xF2] = 1; lut[0xF3] = 1;
+    // REX (0x40-0x4F)
+    lut[0x40] = 1; lut[0x41] = 1; lut[0x42] = 1; lut[0x43] = 1;
+    lut[0x44] = 1; lut[0x45] = 1; lut[0x46] = 1; lut[0x47] = 1;
+    lut[0x48] = 1; lut[0x49] = 1; lut[0x4A] = 1; lut[0x4B] = 1;
+    lut[0x4C] = 1; lut[0x4D] = 1; lut[0x4E] = 1; lut[0x4F] = 1;
+    lut
+};
+
 pub struct Decoder;
 
 impl Decoder {
-    /// Check if byte is a legacy prefix or REX prefix.
+    /// Check if byte is a prefix using LUT (faster than match).
     #[inline(always)]
     fn is_prefix(b: u8) -> bool {
-        matches!(
-            b,
-            0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65  // segment overrides
-            | 0x66 | 0x67  // operand/address size
-            | 0xF0 | 0xF2 | 0xF3  // LOCK, REP
-            | 0x40..=0x4F  // REX
-        )
+        PREFIX_LUT[b as usize] != 0
     }
 
     /// Decode instruction prefixes and return context.
-    /// Takes a fixed-size array and length to avoid allocation.
     #[inline]
     pub fn decode_prefixes(bytes: [u8; super::cpu::MAX_INSN_LEN], bytes_len: usize) -> Result<InsnContext> {
         if bytes_len == 0 {
@@ -43,7 +55,7 @@ impl Decoder {
             });
         }
 
-        // Slow path: has at least one prefix
+        // Has prefix(es) - parse them
         let mut ctx = InsnContext {
             bytes,
             bytes_len,
@@ -75,6 +87,42 @@ impl Decoder {
         }
 
         Ok(ctx)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_prefix() {
+        // Segment overrides
+        assert!(Decoder::is_prefix(0x26));
+        assert!(Decoder::is_prefix(0x2E));
+        assert!(Decoder::is_prefix(0x36));
+        assert!(Decoder::is_prefix(0x3E));
+        assert!(Decoder::is_prefix(0x64));
+        assert!(Decoder::is_prefix(0x65));
+
+        // Operand/address size
+        assert!(Decoder::is_prefix(0x66));
+        assert!(Decoder::is_prefix(0x67));
+
+        // LOCK, REP
+        assert!(Decoder::is_prefix(0xF0));
+        assert!(Decoder::is_prefix(0xF2));
+        assert!(Decoder::is_prefix(0xF3));
+
+        // REX
+        for i in 0x40..=0x4F {
+            assert!(Decoder::is_prefix(i), "REX 0x{:02X} not detected", i);
+        }
+
+        // Non-prefixes
+        assert!(!Decoder::is_prefix(0x00));
+        assert!(!Decoder::is_prefix(0x90)); // NOP
+        assert!(!Decoder::is_prefix(0xB8)); // MOV
+        assert!(!Decoder::is_prefix(0xFF));
     }
 }
 
