@@ -1,11 +1,14 @@
 use std::fs::File;
 use std::io::{Read, Seek};
 
+use goblin::elf::Elf as GoblinElf;
+
 use linux_loader::cmdline::Cmdline;
 use linux_loader::configurator::linux::LinuxBootConfigurator;
 use linux_loader::configurator::BootConfigurator;
 use linux_loader::configurator::BootParams;
 use linux_loader::loader::bootparam::{boot_e820_entry, boot_params};
+use linux_loader::loader::elf::Elf;
 use linux_loader::loader::{load_cmdline, BzImage, KernelLoader, KernelLoaderResult};
 use tracing::{debug, info};
 use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestMemoryMmap};
@@ -74,38 +77,87 @@ impl X86_64Arch {
         Ok(cmdline_builder)
     }
 
-    fn load_kernel_image(mem: &GuestMemoryMmap, kernel: &VmConfig) -> Result<KernelLoaderResult> {
+    /// Returns (loader_result, is_elf, elf_phys_entry) where elf_phys_entry is the physical
+    /// address of the first LOAD segment for ELF files (the actual startup_64 location)
+    fn load_kernel_image(mem: &GuestMemoryMmap, kernel: &VmConfig) -> Result<(KernelLoaderResult, bool, Option<u64>)> {
         info!(path = %kernel.kernel.display(), "loading kernel image");
         let mut kernel_file = File::open(&kernel.kernel)?;
-        let result = BzImage::load(
-            mem,
-            Some(GuestAddress(KERNEL_LOAD_ADDR)),
-            &mut kernel_file,
-            Some(GuestAddress(KERNEL_LOAD_ADDR)),
-        )
-        .map_err(Error::from)?;
 
-        // The compressed kernel data needs to be at 0x4000000 for the decompressor to find it
-        // Read payload_offset and payload_length directly from the kernel file
-        kernel_file.seek(std::io::SeekFrom::Start(0x248))?;
-        let mut payload_info = [0u8; 8];
-        kernel_file.read_exact(&mut payload_info)?;
-        let payload_offset = u32::from_le_bytes([payload_info[0], payload_info[1], payload_info[2], payload_info[3]]) as u64;
-        let payload_length = u32::from_le_bytes([payload_info[4], payload_info[5], payload_info[6], payload_info[7]]) as u64;
+        // Check if this is an ELF file by reading the magic bytes
+        let mut magic = [0u8; 4];
+        kernel_file.read_exact(&mut magic)?;
+        kernel_file.seek(std::io::SeekFrom::Start(0))?;
 
-        info!(
-            payload_offset = format!("{:#x}", payload_offset),
-            payload_length = format!("{:#x}", payload_length),
-            "kernel payload info"
-        );
+        let is_elf = magic == [0x7f, b'E', b'L', b'F'];
 
-        // Note: we don't copy the compressed data here anymore.
-        // The kernel's startup code copies the entire protected mode kernel (including
-        // compressed data) to the relocation target. The _compressed symbol uses
-        // RIP-relative addressing which works correctly after relocation.
-        let _ = (payload_offset, payload_length); // silence unused warnings
+        if is_elf {
+            info!("detected ELF kernel (vmlinux)");
 
-        Ok(result)
+            // Read the full file to parse with goblin
+            let kernel_data = std::fs::read(&kernel.kernel)?;
+            let elf = GoblinElf::parse(&kernel_data)
+                .map_err(|e| Error::KernelLoad(format!("failed to parse ELF: {}", e)))?;
+
+            // Find the first LOAD segment's physical address - this is where startup_64 is
+            let phys_entry = elf.program_headers.iter()
+                .find(|ph| ph.p_type == goblin::elf::program_header::PT_LOAD)
+                .map(|ph| ph.p_paddr)
+                .ok_or_else(|| Error::KernelLoad("no LOAD segment in ELF".to_string()))?;
+
+            info!(
+                elf_entry = format!("{:#x}", elf.header.e_entry),
+                phys_entry = format!("{:#x}", phys_entry),
+                "ELF header parsed"
+            );
+
+            // Load the ELF into memory
+            kernel_file.seek(std::io::SeekFrom::Start(0))?;
+            let result = Elf::load(
+                mem,
+                None, // Use PhysAddr from ELF headers
+                &mut kernel_file,
+                None,
+            )
+            .map_err(Error::from)?;
+
+            info!(
+                kernel_end = format!("{:#x}", result.kernel_end),
+                "ELF kernel loaded"
+            );
+
+            Ok((result, true, Some(phys_entry)))
+        } else {
+            info!("detected bzImage kernel");
+            let result = BzImage::load(
+                mem,
+                Some(GuestAddress(KERNEL_LOAD_ADDR)),
+                &mut kernel_file,
+                Some(GuestAddress(KERNEL_LOAD_ADDR)),
+            )
+            .map_err(Error::from)?;
+
+            // The compressed kernel data needs to be at 0x4000000 for the decompressor to find it
+            // Read payload_offset and payload_length directly from the kernel file
+            kernel_file.seek(std::io::SeekFrom::Start(0x248))?;
+            let mut payload_info = [0u8; 8];
+            kernel_file.read_exact(&mut payload_info)?;
+            let payload_offset = u32::from_le_bytes([payload_info[0], payload_info[1], payload_info[2], payload_info[3]]) as u64;
+            let payload_length = u32::from_le_bytes([payload_info[4], payload_info[5], payload_info[6], payload_info[7]]) as u64;
+
+            info!(
+                payload_offset = format!("{:#x}", payload_offset),
+                payload_length = format!("{:#x}", payload_length),
+                "kernel payload info"
+            );
+
+            // Note: we don't copy the compressed data here anymore.
+            // The kernel's startup code copies the entire protected mode kernel (including
+            // compressed data) to the relocation target. The _compressed symbol uses
+            // RIP-relative addressing which works correctly after relocation.
+            let _ = (payload_offset, payload_length); // silence unused warnings
+
+            Ok((result, false, None))
+        }
     }
 
     fn load_initrd(
@@ -434,49 +486,16 @@ impl Arch for X86_64Arch {
         let identity_map_addr = reserved_start;
         let tss_addr = reserved_start + PAGE_SIZE;
 
-        let loader_result = Self::load_kernel_image(mem, config)?;
+        let (loader_result, is_elf, elf_phys_entry) = Self::load_kernel_image(mem, config)?;
 
-        // Patch the kernel's hardcoded physical address bits
-        // The decompressor uses 39 bits (512GB) which is too large for typical VMs
-        // Patch to 36 bits (64GB) which gives more reasonable buffer calculations
-        let kernel_base = loader_result.kernel_load.raw_value();
-        // The phys_bits variable is at a fixed offset in the decompressor
-        // We need to find and patch it after the kernel is loaded
-        // The value 0x27 (39) is at offset ~0x39394 from decompressor base
-        // The decompressor is at the kernel load address
-        if kernel_base >= 0x100000 {
-            // Search for the pattern and patch if found
-            let patch_offset = 0x3b394_u64; // Approximate offset where phys_bits is stored
-            let patch_addr = GuestAddress(kernel_base + patch_offset);
-            let new_phys_bits: u32 = 36; // 64GB - gives plenty of headroom
-            if mem.write_obj(new_phys_bits, patch_addr).is_ok() {
-                debug!("patched phys_bits to {} at {:#x}", new_phys_bits, patch_addr.raw_value());
-            }
-
-            // Also patch the hardcoded immediate in MOV RAX, 0x8000000000
-            // This is at offset ~0x21d87 from decompressor base
-            let imm_offset = 0x21d87_u64;
-            let imm_addr = GuestAddress(kernel_base + imm_offset);
-            let new_limit: u64 = 0x1000000000; // 64GB
-            if mem.write_obj(new_limit, imm_addr).is_ok() {
-                debug!("patched immediate to {:#x} at {:#x}", new_limit, imm_addr.raw_value());
-            }
+        let kernel_end = loader_result.kernel_end as u64;
+        if kernel_end >= reserved_start {
+            return Err(Error::KernelLoad(
+                "kernel image overlaps reserved KVM region".to_string(),
+            ));
         }
 
-        let setup_header = loader_result
-            .setup_header
-            .ok_or_else(|| Error::KernelLoad("missing setup header".to_string()))?;
-
-        let hdr_version = { setup_header.version };
-        let hdr_loadflags = { setup_header.loadflags };
-        let hdr_code32_start = { setup_header.code32_start };
-        debug!(
-            version = format!("{:#x}", hdr_version),
-            loadflags = format!("{:#x}", hdr_loadflags),
-            code32_start = format!("{:#x}", hdr_code32_start),
-            "setup header"
-        );
-
+        // Build command line
         let cmdline = Self::build_cmdline(&config.cmdline)?;
         load_cmdline(mem, GuestAddress(CMDLINE_ADDR), &cmdline).map_err(Error::from)?;
         let cmdline_size = cmdline
@@ -488,92 +507,151 @@ impl Arch for X86_64Arch {
             return Err(Error::KernelLoad("cmdline exceeds low memory".to_string()));
         }
 
-        let mut params = boot_params::default();
-        params.hdr = setup_header;
-        params.hdr.type_of_loader = 0xff;
-        params.hdr.loadflags |= 0x1 | 0x40; // LOADED_HIGH + KEEP_SEGMENTS
-        params.hdr.cmd_line_ptr = CMDLINE_ADDR as u32;
-        params.hdr.cmdline_size = cmdline_size;
+        let entry_point = if is_elf {
+            // ELF kernel (vmlinux) - simpler boot process
+            // The entry point is directly from the ELF header
+            let mut params = boot_params::default();
+            params.hdr.type_of_loader = 0xff;
+            params.hdr.loadflags = 0x1 | 0x40; // LOADED_HIGH + KEEP_SEGMENTS
+            params.hdr.cmd_line_ptr = CMDLINE_ADDR as u32;
+            params.hdr.cmdline_size = cmdline_size;
 
-        // Set pref_address very close to the decompressor's boot_params copy location
-        // The bp_offset = pref_address - bp determines how much buffer is used for boot_params
-        // Remaining buffer = BOOT_PGT_SIZE - bp_offset is used for page tables
-        // With BOOT_PGT_SIZE ≈ 76KB, we want bp_offset ≈ 10KB to leave 66KB for page tables
-        // Decompressor copies boot_params to ~0x5072c20, so:
-        // pref_address = 0x5072c20 + 0x2800 (10KB) = 0x5075420 → round to 0x5076000
-        params.hdr.pref_address = 0x5076000;  // ~80.5MB - just 12KB above bp
-        let pref_addr = params.hdr.pref_address;
-        let init_sz = params.hdr.init_size;
-        debug!(
-            pref_address = format!("{:#x}", pref_addr),
-            init_size = format!("{:#x}", init_sz),
-            "set pref_address close to decompressor bp"
-        );
+            // Load initrd if specified
+            if let Some(initrd_path) = &config.initrd {
+                let initrd_max = reserved_start - 1;
+                let (initrd_addr, initrd_size) =
+                    Self::load_initrd(mem, initrd_path, initrd_max, kernel_end)?;
+                params.hdr.ramdisk_image = initrd_addr.raw_value() as u32;
+                params.hdr.ramdisk_size = initrd_size as u32;
+            }
 
-        let kernel_end = loader_result.kernel_end as u64;
-        if kernel_end >= reserved_start {
-            return Err(Error::KernelLoad(
-                "kernel image overlaps reserved KVM region".to_string(),
-            ));
-        }
-        if let Some(initrd_path) = &config.initrd {
-            let initrd_addr_max = if params.hdr.initrd_addr_max == 0 {
-                reserved_start - 1
-            } else {
-                params.hdr.initrd_addr_max as u64
-            };
-            let initrd_max = initrd_addr_max.min(reserved_start - 1);
-            let (initrd_addr, initrd_size) =
-                Self::load_initrd(mem, initrd_path, initrd_max, kernel_end)?;
-            params.hdr.ramdisk_image = initrd_addr.raw_value() as u32;
-            params.hdr.ramdisk_size = initrd_size as u32;
-        }
+            // Build e820 memory map
+            let e820_entries = Self::build_e820(mem_size, reserved_start);
+            debug!(entries = e820_entries.len(), "built e820 map");
+            params.e820_entries = e820_entries.len() as u8;
+            for (index, entry) in e820_entries.iter().enumerate() {
+                params.e820_table[index] = *entry;
+            }
 
-        let e820_entries = Self::build_e820(mem_size, reserved_start);
-        debug!(entries = e820_entries.len(), "built e820 map");
-        params.e820_entries = e820_entries.len() as u8;
-        for (index, entry) in e820_entries.iter().enumerate() {
-            params.e820_table[index] = *entry;
-        }
+            let boot_params = BootParams::new(&params, GuestAddress(BOOT_PARAMS_ADDR));
+            LinuxBootConfigurator::write_bootparams(&boot_params, mem)?;
 
-        let boot_params = BootParams::new(&params, GuestAddress(BOOT_PARAMS_ADDR));
-        LinuxBootConfigurator::write_bootparams(&boot_params, mem)?;
+            // For ELF vmlinux, use the physical address of the first LOAD segment
+            // This is where startup_64 (or a jump to it) is located
+            // Note: We use the parsed PhysAddr, NOT the ELF e_entry which may be different
+            let entry = elf_phys_entry.unwrap_or(loader_result.kernel_load.raw_value());
+            debug!(
+                entry = format!("{:#x}", entry),
+                kernel_end = format!("{:#x}", kernel_end),
+                "ELF kernel entry point (physical start of first LOAD segment)"
+            );
+            entry
+        } else {
+            // bzImage kernel - needs decompression setup
+            // Patch the kernel's hardcoded physical address bits
+            let kernel_base = loader_result.kernel_load.raw_value();
+            if kernel_base >= 0x100000 {
+                let patch_offset = 0x3b394_u64;
+                let patch_addr = GuestAddress(kernel_base + patch_offset);
+                let new_phys_bits: u32 = 36;
+                if mem.write_obj(new_phys_bits, patch_addr).is_ok() {
+                    debug!("patched phys_bits to {} at {:#x}", new_phys_bits, patch_addr.raw_value());
+                }
 
-        // Verify kernel is loaded by reading first bytes
-        let mut first_bytes = [0u8; 16];
-        mem.read_slice(
-            &mut first_bytes,
-            GuestAddress(loader_result.kernel_load.raw_value()),
-        )
-        .map_err(|e| Error::KernelLoad(format!("failed to read kernel: {e}")))?;
-        debug!(
-            entry = format!("{:#x}", loader_result.kernel_load.raw_value()),
-            kernel_end = format!("{:#x}", loader_result.kernel_end),
-            first_bytes = format!("{:02x?}", first_bytes),
-            "kernel loaded"
-        );
+                let imm_offset = 0x21d87_u64;
+                let imm_addr = GuestAddress(kernel_base + imm_offset);
+                let new_limit: u64 = 0x1000000000;
+                if mem.write_obj(new_limit, imm_addr).is_ok() {
+                    debug!("patched immediate to {:#x} at {:#x}", new_limit, imm_addr.raw_value());
+                }
+            }
 
-        // For 64-bit boot, use startup_64 at offset 0x200 from the 32-bit entry
-        let entry_point_64 = loader_result.kernel_load.raw_value() + 0x200;
+            let setup_header = loader_result
+                .setup_header
+                .ok_or_else(|| Error::KernelLoad("missing setup header".to_string()))?;
 
-        // Debug: read bytes at 64-bit entry point
-        let mut entry64_bytes = [0u8; 16];
-        mem.read_slice(&mut entry64_bytes, GuestAddress(entry_point_64))
-            .map_err(|e| Error::KernelLoad(format!("failed to read entry64: {e}")))?;
-        let mut bytes_at_262 = [0u8; 16];
-        mem.read_slice(&mut bytes_at_262, GuestAddress(loader_result.kernel_load.raw_value() + 0x262))
-            .map_err(|e| Error::KernelLoad(format!("failed to read 0x262: {e}")))?;
+            let hdr_version = { setup_header.version };
+            let hdr_loadflags = { setup_header.loadflags };
+            let hdr_code32_start = { setup_header.code32_start };
+            debug!(
+                version = format!("{:#x}", hdr_version),
+                loadflags = format!("{:#x}", hdr_loadflags),
+                code32_start = format!("{:#x}", hdr_code32_start),
+                "setup header"
+            );
 
-        debug!(
-            entry32 = format!("{:#x}", loader_result.kernel_load.raw_value()),
-            entry64 = format!("{:#x}", entry_point_64),
-            entry64_bytes = format!("{:02x?}", entry64_bytes),
-            bytes_at_262 = format!("{:02x?}", bytes_at_262),
-            "kernel entry points"
-        );
+            let mut params = boot_params::default();
+            params.hdr = setup_header;
+            params.hdr.type_of_loader = 0xff;
+            params.hdr.loadflags |= 0x1 | 0x40;
+            params.hdr.cmd_line_ptr = CMDLINE_ADDR as u32;
+            params.hdr.cmdline_size = cmdline_size;
+            params.hdr.pref_address = 0x5076000;
+
+            let pref_addr = params.hdr.pref_address;
+            let init_sz = params.hdr.init_size;
+            debug!(
+                pref_address = format!("{:#x}", pref_addr),
+                init_size = format!("{:#x}", init_sz),
+                "set pref_address close to decompressor bp"
+            );
+
+            if let Some(initrd_path) = &config.initrd {
+                let initrd_addr_max = if params.hdr.initrd_addr_max == 0 {
+                    reserved_start - 1
+                } else {
+                    params.hdr.initrd_addr_max as u64
+                };
+                let initrd_max = initrd_addr_max.min(reserved_start - 1);
+                let (initrd_addr, initrd_size) =
+                    Self::load_initrd(mem, initrd_path, initrd_max, kernel_end)?;
+                params.hdr.ramdisk_image = initrd_addr.raw_value() as u32;
+                params.hdr.ramdisk_size = initrd_size as u32;
+            }
+
+            let e820_entries = Self::build_e820(mem_size, reserved_start);
+            debug!(entries = e820_entries.len(), "built e820 map");
+            params.e820_entries = e820_entries.len() as u8;
+            for (index, entry) in e820_entries.iter().enumerate() {
+                params.e820_table[index] = *entry;
+            }
+
+            let boot_params = BootParams::new(&params, GuestAddress(BOOT_PARAMS_ADDR));
+            LinuxBootConfigurator::write_bootparams(&boot_params, mem)?;
+
+            // Verify kernel is loaded
+            let mut first_bytes = [0u8; 16];
+            mem.read_slice(
+                &mut first_bytes,
+                GuestAddress(loader_result.kernel_load.raw_value()),
+            )
+            .map_err(|e| Error::KernelLoad(format!("failed to read kernel: {e}")))?;
+            debug!(
+                entry = format!("{:#x}", loader_result.kernel_load.raw_value()),
+                kernel_end = format!("{:#x}", loader_result.kernel_end),
+                first_bytes = format!("{:02x?}", first_bytes),
+                "kernel loaded"
+            );
+
+            // For 64-bit boot, use startup_64 at offset 0x200 from the 32-bit entry
+            let entry_point_64 = loader_result.kernel_load.raw_value() + 0x200;
+
+            let mut entry64_bytes = [0u8; 16];
+            mem.read_slice(&mut entry64_bytes, GuestAddress(entry_point_64))
+                .map_err(|e| Error::KernelLoad(format!("failed to read entry64: {e}")))?;
+
+            debug!(
+                entry32 = format!("{:#x}", loader_result.kernel_load.raw_value()),
+                entry64 = format!("{:#x}", entry_point_64),
+                entry64_bytes = format!("{:02x?}", entry64_bytes),
+                "kernel entry points"
+            );
+
+            entry_point_64
+        };
 
         Ok(BootInfo::X86_64(X86_64BootInfo {
-            entry_point: entry_point_64,
+            entry_point,
             boot_params_addr: GuestAddress(BOOT_PARAMS_ADDR),
             tss_addr,
             identity_map_addr,

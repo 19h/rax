@@ -726,6 +726,8 @@ impl X86_64Vcpu {
         CURRENT_RIP.store(self.regs.rip, Ordering::Relaxed);
 
         let rip = self.regs.rip;
+
+
         let cache_idx = Self::decode_cache_index(rip);
 
         // Check decode cache for a hit (copy to avoid borrow issues)
