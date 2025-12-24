@@ -75,6 +75,12 @@ impl Default for TlbEntry {
 const TLB_SIZE: usize = 256;
 const TLB_MASK: usize = TLB_SIZE - 1;
 
+/// Code page bitmap size - tracks which pages have been executed from.
+/// Each bit represents a 4KB page. 64KB of bitmap = 512MB of tracked memory.
+/// For larger address spaces, we use a hash of the virtual address.
+const CODE_PAGE_BITMAP_SIZE: usize = 64 * 1024; // 64KB = 512K pages = 2GB coverage
+const CODE_PAGE_BITMAP_MASK: usize = CODE_PAGE_BITMAP_SIZE * 8 - 1;
+
 /// Memory Management Unit for address translation with TLB.
 pub struct Mmu {
     memory: Arc<GuestMemoryMmap>,
@@ -82,6 +88,10 @@ pub struct Mmu {
     tlb: [TlbEntry; TLB_SIZE],
     /// Cached CR3 for detecting context switches
     cached_cr3: u64,
+    /// Bitmap tracking pages that have been executed from (code pages).
+    /// Used for self-modifying code detection: writes to code pages
+    /// require decode cache invalidation.
+    code_page_bitmap: Box<[u8; CODE_PAGE_BITMAP_SIZE]>,
 }
 
 impl Mmu {
@@ -90,7 +100,46 @@ impl Mmu {
             memory,
             tlb: [TlbEntry::default(); TLB_SIZE],
             cached_cr3: 0,
+            code_page_bitmap: Box::new([0u8; CODE_PAGE_BITMAP_SIZE]),
         }
+    }
+
+    // =========================================================================
+    // Self-modifying code detection
+    // =========================================================================
+
+    /// Compute the bitmap index for a virtual page.
+    #[inline(always)]
+    fn code_page_index(vaddr: u64) -> (usize, u8) {
+        // Use page number (vaddr >> 12) and hash to fit in bitmap
+        let page_num = (vaddr >> 12) as usize;
+        let bit_index = page_num & CODE_PAGE_BITMAP_MASK;
+        let byte_index = bit_index >> 3;
+        let bit_offset = (bit_index & 7) as u8;
+        (byte_index, 1u8 << bit_offset)
+    }
+
+    /// Mark a page as containing executed code.
+    /// Called when fetching instructions from a page.
+    #[inline(always)]
+    pub fn mark_code_page(&mut self, vaddr: u64) {
+        let (byte_idx, bit_mask) = Self::code_page_index(vaddr);
+        self.code_page_bitmap[byte_idx] |= bit_mask;
+    }
+
+    /// Check if a page has been marked as code.
+    /// Called when writing to memory to detect self-modifying code.
+    #[inline(always)]
+    pub fn is_code_page(&self, vaddr: u64) -> bool {
+        let (byte_idx, bit_mask) = Self::code_page_index(vaddr);
+        (self.code_page_bitmap[byte_idx] & bit_mask) != 0
+    }
+
+    /// Clear the code page bitmap.
+    /// Should be called on context switch or when JIT cache is fully cleared.
+    #[inline]
+    pub fn clear_code_pages(&mut self) {
+        self.code_page_bitmap.fill(0);
     }
 
     /// Check if paging is enabled.

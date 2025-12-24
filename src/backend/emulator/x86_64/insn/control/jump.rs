@@ -27,10 +27,14 @@ pub fn jcc_rel8(
     cc: u8,
 ) -> Result<Option<VcpuExit>> {
     let disp = ctx.consume_u8()? as i8 as i64;
+    let taken_target = (vcpu.regs.rip as i64 + ctx.cursor as i64 + disp) as u64;
+    let fall_through = vcpu.regs.rip + ctx.cursor as u64;
+
+    // Evaluate condition and branch
     if vcpu.check_condition(cc) {
-        vcpu.regs.rip = (vcpu.regs.rip as i64 + ctx.cursor as i64 + disp) as u64;
+        vcpu.regs.rip = taken_target;
     } else {
-        vcpu.regs.rip += ctx.cursor as u64;
+        vcpu.regs.rip = fall_through;
     }
     Ok(None)
 }
@@ -42,10 +46,14 @@ pub fn jcc_rel32(
     cc: u8,
 ) -> Result<Option<VcpuExit>> {
     let disp = ctx.consume_u32()? as i32 as i64;
+    let taken_target = (vcpu.regs.rip as i64 + ctx.cursor as i64 + disp) as u64;
+    let fall_through = vcpu.regs.rip + ctx.cursor as u64;
+
+    // Evaluate condition and branch
     if vcpu.check_condition(cc) {
-        vcpu.regs.rip = (vcpu.regs.rip as i64 + ctx.cursor as i64 + disp) as u64;
+        vcpu.regs.rip = taken_target;
     } else {
-        vcpu.regs.rip += ctx.cursor as u64;
+        vcpu.regs.rip = fall_through;
     }
     Ok(None)
 }
