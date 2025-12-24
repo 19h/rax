@@ -25,6 +25,7 @@ pub fn xadd_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
         vcpu.set_reg(reg, dst as u64, 1);
         flags::update_flags_add(&mut vcpu.regs.rflags, dst as u64, src as u64, sum as u64, 1);
     }
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -56,6 +57,7 @@ pub fn xadd_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
         }
         flags::update_flags_add(&mut vcpu.regs.rflags, dst, src, sum, op_size);
     }
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -75,6 +77,7 @@ pub fn cmpxchg_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Op
     // Compare AL with destination
     let cmp_result = al.wrapping_sub(dst);
     flags::update_flags_sub(&mut vcpu.regs.rflags, al as u64, dst as u64, cmp_result as u64, 1);
+    vcpu.clear_lazy_flags();
 
     if al == dst {
         // ZF is set, store source into destination
@@ -107,6 +110,7 @@ pub fn cmpxchg_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
     // Compare rAX with destination
     let cmp_result = rax.wrapping_sub(dst);
     flags::update_flags_sub(&mut vcpu.regs.rflags, rax, dst, cmp_result, op_size);
+    vcpu.clear_lazy_flags();
 
     if rax == dst {
         // ZF is set, store source into destination

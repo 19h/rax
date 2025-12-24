@@ -8,6 +8,7 @@ use super::super::super::flags;
 
 /// LOOPNZ/LOOPNE rel8 (0xE0) - Decrement ECX/RCX; jump if not zero and ZF=0
 pub fn loopnz(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    vcpu.materialize_flags();
     let disp = ctx.consume_u8()? as i8 as i64;
     let next_rip = vcpu.regs.rip + ctx.cursor as u64;
 
@@ -33,6 +34,7 @@ pub fn loopnz(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
 
 /// LOOPZ/LOOPE rel8 (0xE1) - Decrement ECX/RCX; jump if not zero and ZF=1
 pub fn loopz(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    vcpu.materialize_flags();
     let disp = ctx.consume_u8()? as i8 as i64;
     let next_rip = vcpu.regs.rip + ctx.cursor as u64;
 

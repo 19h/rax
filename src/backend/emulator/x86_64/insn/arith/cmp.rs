@@ -4,7 +4,6 @@ use crate::cpu::VcpuExit;
 use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
-use super::super::super::flags;
 
 /// CMP r/m8, r8 (0x38)
 pub fn cmp_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
@@ -17,7 +16,7 @@ pub fn cmp_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         vcpu.get_reg(rm, 1) as u8
     };
     let result = dst.wrapping_sub(src) as u64;
-    flags::update_flags_sub(&mut vcpu.regs.rflags, dst as u64, src as u64, result, 1);
+    vcpu.set_lazy_sub(dst as u64, src as u64, result, 1);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -34,7 +33,7 @@ pub fn cmp_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
         vcpu.get_reg(rm, op_size)
     };
     let result = dst.wrapping_sub(src);
-    flags::update_flags_sub(&mut vcpu.regs.rflags, dst, src, result, op_size);
+    vcpu.set_lazy_sub(dst, src, result, op_size);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -50,7 +49,7 @@ pub fn cmp_r8_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         vcpu.get_reg(rm, 1) as u8
     };
     let result = dst.wrapping_sub(src) as u64;
-    flags::update_flags_sub(&mut vcpu.regs.rflags, dst as u64, src as u64, result, 1);
+    vcpu.set_lazy_sub(dst as u64, src as u64, result, 1);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -67,7 +66,7 @@ pub fn cmp_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
         vcpu.get_reg(rm, op_size)
     };
     let result = dst.wrapping_sub(src);
-    flags::update_flags_sub(&mut vcpu.regs.rflags, dst, src, result, op_size);
+    vcpu.set_lazy_sub(dst, src, result, op_size);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -77,7 +76,7 @@ pub fn cmp_al_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
     let imm = ctx.consume_u8()? as u64;
     let al = vcpu.regs.rax & 0xFF;
     let result = al.wrapping_sub(imm);
-    flags::update_flags_sub(&mut vcpu.regs.rflags, al, imm, result, 1);
+    vcpu.set_lazy_sub(al, imm, result, 1);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -94,7 +93,7 @@ pub fn cmp_rax_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
     };
     let rax = vcpu.get_reg(0, op_size);
     let result = rax.wrapping_sub(imm);
-    flags::update_flags_sub(&mut vcpu.regs.rflags, rax, imm, result, op_size);
+    vcpu.set_lazy_sub(rax, imm, result, op_size);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
