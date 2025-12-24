@@ -1,5 +1,5 @@
 # Build output
-/target/
+target/
 
 # Cargo.lock is typically committed for binaries but not libraries
 # Uncomment if this is a library
