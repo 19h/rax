@@ -36,7 +36,11 @@ fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Arc<Gu
     let mut sregs = SystemRegisters::default();
     sregs.cr0 = 0x00050033; // PE but NOT PG (no paging)
     sregs.cr4 = 0x20; // PAE
-    sregs.efer = 0x500; // LMA, LME for long mode
+    sregs.efer = 0x501; // SCE, LMA, LME for long mode
+    // Set CS.L=1 for true 64-bit mode
+    sregs.cs.l = true;
+    sregs.cs.db = false; // Must be 0 when L=1 for 64-bit mode
+    sregs.cs.selector = 0x8;
     vcpu.set_sregs(&sregs).unwrap();
 
     (vcpu, mem)

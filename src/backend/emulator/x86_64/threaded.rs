@@ -1,0 +1,523 @@
+//! Threaded interpretation for x86_64 emulator.
+//!
+//! This module provides an optimized execution path where instruction handlers
+//! are inlined and directly dispatch to the next instruction without returning
+//! to a central loop. This reduces function call overhead and improves branch
+//! prediction.
+
+use crate::cpu::VcpuExit;
+use crate::error::Result;
+
+use super::cpu::{InsnContext, X86_64Vcpu, MAX_INSN_LEN, DECODE_CACHE_MASK};
+use super::decoder::Decoder;
+
+/// Batch size for threaded execution before checking for exits
+const THREADED_BATCH_SIZE: usize = 64;
+
+impl X86_64Vcpu {
+    /// Run the CPU using threaded interpretation.
+    ///
+    /// This is an optimized execution path that keeps the hot loop tight
+    /// and avoids function call overhead by inlining handlers and directly
+    /// dispatching to the next instruction.
+    #[inline(never)] // Prevent inlining to keep instruction cache locality
+    pub fn run_threaded(&mut self) -> Result<VcpuExit> {
+        // Main threaded execution loop
+        loop {
+            // Execute a batch of instructions before checking for exits
+            match self.run_threaded_batch() {
+                Ok(None) => continue,
+                Ok(Some(exit)) => return Ok(exit),
+                Err(e) => return Err(e),
+            }
+        }
+    }
+
+    /// Execute a batch of instructions using threaded interpretation.
+    ///
+    /// Returns None to continue, Some(exit) to exit to caller.
+    #[inline(always)]
+    fn run_threaded_batch(&mut self) -> Result<Option<VcpuExit>> {
+        // Pre-check halt state
+        if self.halted {
+            return Ok(Some(VcpuExit::Hlt));
+        }
+
+        // Execute instructions in a tight loop
+        for _ in 0..THREADED_BATCH_SIZE {
+            // Inline the fetch-decode-execute cycle
+            let exit = self.threaded_step()?;
+            if exit.is_some() {
+                return Ok(exit);
+            }
+
+            // Check halt after each instruction
+            if self.halted {
+                return Ok(Some(VcpuExit::Hlt));
+            }
+        }
+
+        Ok(None)
+    }
+
+    /// Single instruction step optimized for threaded interpretation.
+    ///
+    /// This is similar to step() but optimized for being called in a tight loop.
+    #[inline(always)]
+    fn threaded_step(&mut self) -> Result<Option<VcpuExit>> {
+        let rip = self.regs.rip;
+        let cache_idx = (rip as usize) & DECODE_CACHE_MASK;
+
+        // Check decode cache
+        let cached = self.decode_cache[cache_idx];
+        if cached.rip == rip {
+            // Cache hit - fast path
+            let (bytes, bytes_len) = self.fetch()?;
+            let mut ctx = InsnContext {
+                bytes,
+                bytes_len,
+                cursor: cached.cursor + 1,
+                rex: cached.rex,
+                operand_size_override: cached.operand_size_override,
+                address_size_override: cached.address_size_override,
+                rep_prefix: cached.rep_prefix,
+                op_size: cached.op_size,
+                rip_relative_offset: 0,
+                evex: None,
+            };
+            return self.dispatch_threaded(cached.opcode, &mut ctx);
+        }
+
+        // Cache miss - full decode
+        let (bytes, bytes_len) = self.fetch()?;
+        let mut ctx = Decoder::decode_prefixes(bytes, bytes_len)?;
+
+        // Determine operand size
+        ctx.op_size = if self.sregs.cs.l {
+            if ctx.rex_w() {
+                8
+            } else if ctx.operand_size_override {
+                2
+            } else {
+                4
+            }
+        } else {
+            let default_16bit = !self.sregs.cs.db;
+            let is_16bit = default_16bit ^ ctx.operand_size_override;
+            if is_16bit { 2 } else { 4 }
+        };
+
+        let opcode_cursor = ctx.cursor;
+        let opcode = ctx.consume_u8()?;
+
+        // Update cache
+        self.decode_cache[cache_idx] = super::cpu::DecodeCacheEntry {
+            rip,
+            opcode,
+            op_size: ctx.op_size,
+            cursor: opcode_cursor,
+            rex: ctx.rex,
+            operand_size_override: ctx.operand_size_override,
+            address_size_override: ctx.address_size_override,
+            rep_prefix: ctx.rep_prefix,
+        };
+
+        self.dispatch_threaded(opcode, &mut ctx)
+    }
+
+    /// Threaded dispatch - inlined handlers for common instructions.
+    ///
+    /// The most common instructions are handled inline here to avoid
+    /// function call overhead. Less common instructions fall through
+    /// to the standard dispatch.
+    #[inline(always)]
+    fn dispatch_threaded(
+        &mut self,
+        opcode: u8,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        // Fast path for most common instructions (inlined)
+        match opcode {
+            // NOP - extremely common
+            0x90 if ctx.rep_prefix.is_none() => {
+                self.regs.rip += ctx.cursor as u64;
+                Ok(None)
+            }
+
+            // MOV r64, imm64 - very common
+            0xB8..=0xBF => {
+                self.threaded_mov_r_imm(ctx, opcode)
+            }
+
+            // MOV r/m, r and MOV r, r/m - very common
+            0x89 => self.threaded_mov_rm_r(ctx),
+            0x8B => self.threaded_mov_r_rm(ctx),
+
+            // PUSH r64 - common
+            0x50..=0x57 => {
+                self.threaded_push_r64(ctx, opcode)
+            }
+
+            // POP r64 - common
+            0x58..=0x5F => {
+                self.threaded_pop_r64(ctx, opcode)
+            }
+
+            // ADD r/m, r and ADD r, r/m
+            0x01 => self.threaded_add_rm_r(ctx),
+            0x03 => self.threaded_add_r_rm(ctx),
+
+            // SUB r/m, r and SUB r, r/m
+            0x29 => self.threaded_sub_rm_r(ctx),
+            0x2B => self.threaded_sub_r_rm(ctx),
+
+            // CMP r/m, r and CMP r, r/m
+            0x39 => self.threaded_cmp_rm_r(ctx),
+            0x3B => self.threaded_cmp_r_rm(ctx),
+
+            // XOR r/m, r and XOR r, r/m (common for zeroing)
+            0x31 => self.threaded_xor_rm_r(ctx),
+            0x33 => self.threaded_xor_r_rm(ctx),
+
+            // TEST r/m, r
+            0x85 => self.threaded_test_rm_r(ctx),
+
+            // LEA r, m - very common
+            0x8D => self.threaded_lea(ctx),
+
+            // JMP rel8 and rel32
+            0xEB => self.threaded_jmp_rel8(ctx),
+            0xE9 => self.threaded_jmp_rel32(ctx),
+
+            // Jcc rel8 - conditional jumps
+            0x70..=0x7F => self.threaded_jcc_rel8(ctx, opcode & 0x0F),
+
+            // CALL rel32
+            0xE8 => self.threaded_call_rel32(ctx),
+
+            // RET
+            0xC3 => self.threaded_ret(ctx),
+
+            // HLT
+            0xF4 => {
+                self.regs.rip += ctx.cursor as u64;
+                self.halted = true;
+                Ok(Some(VcpuExit::Hlt))
+            }
+
+            // Two-byte opcode escape - delegate to specialized handler
+            0x0F => self.execute_0f(ctx),
+
+            // VEX prefixes
+            0xC4 => self.execute_vex3(ctx),
+            0xC5 => self.execute_vex2(ctx),
+
+            // Fall through to standard dispatch for less common opcodes
+            _ => self.execute(opcode, ctx),
+        }
+    }
+
+    // =========================================================================
+    // Inlined instruction handlers for threaded interpretation
+    // =========================================================================
+
+    /// MOV r, imm (0xB8-0xBF)
+    #[inline(always)]
+    fn threaded_mov_r_imm(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+        let reg = (opcode - 0xB8) | ctx.rex_b();
+        let imm = ctx.consume_imm(ctx.op_size)?;
+        self.set_reg(reg, imm, ctx.op_size);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// MOV r/m, r (0x89)
+    #[inline(always)]
+    fn threaded_mov_rm_r(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let value = self.get_reg(reg, ctx.op_size);
+        if is_memory {
+            self.write_mem(addr, value, ctx.op_size)?;
+        } else {
+            self.set_reg(rm, value, ctx.op_size);
+        }
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// MOV r, r/m (0x8B)
+    #[inline(always)]
+    fn threaded_mov_r_rm(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let value = if is_memory {
+            self.read_mem(addr, ctx.op_size)?
+        } else {
+            self.get_reg(rm, ctx.op_size)
+        };
+        self.set_reg(reg, value, ctx.op_size);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// PUSH r64 (0x50-0x57)
+    #[inline(always)]
+    fn threaded_push_r64(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+        let reg = (opcode & 0x07) | ctx.rex_b();
+        let value = self.get_reg(reg, 8);
+        self.regs.rsp = self.regs.rsp.wrapping_sub(8);
+        self.write_mem(self.regs.rsp, value, 8)?;
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// POP r64 (0x58-0x5F)
+    #[inline(always)]
+    fn threaded_pop_r64(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+        let reg = (opcode & 0x07) | ctx.rex_b();
+        let value = self.read_mem(self.regs.rsp, 8)?;
+        self.regs.rsp = self.regs.rsp.wrapping_add(8);
+        self.set_reg(reg, value, 8);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// ADD r/m, r (0x01)
+    #[inline(always)]
+    fn threaded_add_rm_r(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let src = self.get_reg(reg, ctx.op_size);
+        let dst = if is_memory {
+            self.read_mem(addr, ctx.op_size)?
+        } else {
+            self.get_reg(rm, ctx.op_size)
+        };
+        let result = dst.wrapping_add(src);
+        if is_memory {
+            self.write_mem(addr, result, ctx.op_size)?;
+        } else {
+            self.set_reg(rm, result, ctx.op_size);
+        }
+        self.set_lazy_add(dst, src, result, ctx.op_size);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// ADD r, r/m (0x03)
+    #[inline(always)]
+    fn threaded_add_r_rm(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let dst = self.get_reg(reg, ctx.op_size);
+        let src = if is_memory {
+            self.read_mem(addr, ctx.op_size)?
+        } else {
+            self.get_reg(rm, ctx.op_size)
+        };
+        let result = dst.wrapping_add(src);
+        self.set_reg(reg, result, ctx.op_size);
+        self.set_lazy_add(dst, src, result, ctx.op_size);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SUB r/m, r (0x29)
+    #[inline(always)]
+    fn threaded_sub_rm_r(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let src = self.get_reg(reg, ctx.op_size);
+        let dst = if is_memory {
+            self.read_mem(addr, ctx.op_size)?
+        } else {
+            self.get_reg(rm, ctx.op_size)
+        };
+        let result = dst.wrapping_sub(src);
+        if is_memory {
+            self.write_mem(addr, result, ctx.op_size)?;
+        } else {
+            self.set_reg(rm, result, ctx.op_size);
+        }
+        self.set_lazy_sub(dst, src, result, ctx.op_size);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// SUB r, r/m (0x2B)
+    #[inline(always)]
+    fn threaded_sub_r_rm(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let dst = self.get_reg(reg, ctx.op_size);
+        let src = if is_memory {
+            self.read_mem(addr, ctx.op_size)?
+        } else {
+            self.get_reg(rm, ctx.op_size)
+        };
+        let result = dst.wrapping_sub(src);
+        self.set_reg(reg, result, ctx.op_size);
+        self.set_lazy_sub(dst, src, result, ctx.op_size);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// CMP r/m, r (0x39) - like SUB but doesn't store result
+    #[inline(always)]
+    fn threaded_cmp_rm_r(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let src = self.get_reg(reg, ctx.op_size);
+        let dst = if is_memory {
+            self.read_mem(addr, ctx.op_size)?
+        } else {
+            self.get_reg(rm, ctx.op_size)
+        };
+        let result = dst.wrapping_sub(src);
+        self.set_lazy_sub(dst, src, result, ctx.op_size);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// CMP r, r/m (0x3B)
+    #[inline(always)]
+    fn threaded_cmp_r_rm(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let dst = self.get_reg(reg, ctx.op_size);
+        let src = if is_memory {
+            self.read_mem(addr, ctx.op_size)?
+        } else {
+            self.get_reg(rm, ctx.op_size)
+        };
+        let result = dst.wrapping_sub(src);
+        self.set_lazy_sub(dst, src, result, ctx.op_size);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// XOR r/m, r (0x31)
+    #[inline(always)]
+    fn threaded_xor_rm_r(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let src = self.get_reg(reg, ctx.op_size);
+        let dst = if is_memory {
+            self.read_mem(addr, ctx.op_size)?
+        } else {
+            self.get_reg(rm, ctx.op_size)
+        };
+        let result = dst ^ src;
+        if is_memory {
+            self.write_mem(addr, result, ctx.op_size)?;
+        } else {
+            self.set_reg(rm, result, ctx.op_size);
+        }
+        self.set_lazy_logic(result, ctx.op_size);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// XOR r, r/m (0x33)
+    #[inline(always)]
+    fn threaded_xor_r_rm(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let dst = self.get_reg(reg, ctx.op_size);
+        let src = if is_memory {
+            self.read_mem(addr, ctx.op_size)?
+        } else {
+            self.get_reg(rm, ctx.op_size)
+        };
+        let result = dst ^ src;
+        self.set_reg(reg, result, ctx.op_size);
+        self.set_lazy_logic(result, ctx.op_size);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// TEST r/m, r (0x85)
+    #[inline(always)]
+    fn threaded_test_rm_r(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let src = self.get_reg(reg, ctx.op_size);
+        let dst = if is_memory {
+            self.read_mem(addr, ctx.op_size)?
+        } else {
+            self.get_reg(rm, ctx.op_size)
+        };
+        let result = dst & src;
+        self.set_lazy_logic(result, ctx.op_size);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// LEA r, m (0x8D)
+    #[inline(always)]
+    fn threaded_lea(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let (reg, _, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        if !is_memory {
+            // LEA with register operand is undefined, but we handle it
+            self.regs.rip += ctx.cursor as u64;
+            return Ok(None);
+        }
+        self.set_reg(reg, addr, ctx.op_size);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// JMP rel8 (0xEB)
+    #[inline(always)]
+    fn threaded_jmp_rel8(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let rel = ctx.consume_u8()? as i8 as i64;
+        self.regs.rip = self.regs.rip.wrapping_add(ctx.cursor as u64).wrapping_add(rel as u64);
+        Ok(None)
+    }
+
+    /// JMP rel32 (0xE9)
+    #[inline(always)]
+    fn threaded_jmp_rel32(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let rel = ctx.consume_u32()? as i32 as i64;
+        self.regs.rip = self.regs.rip.wrapping_add(ctx.cursor as u64).wrapping_add(rel as u64);
+        Ok(None)
+    }
+
+    /// Jcc rel8 (0x70-0x7F)
+    #[inline(always)]
+    fn threaded_jcc_rel8(&mut self, ctx: &mut InsnContext, cc: u8) -> Result<Option<VcpuExit>> {
+        let rel = ctx.consume_u8()? as i8 as i64;
+        let next_rip = self.regs.rip.wrapping_add(ctx.cursor as u64);
+        if self.check_condition(cc) {
+            self.regs.rip = next_rip.wrapping_add(rel as u64);
+        } else {
+            self.regs.rip = next_rip;
+        }
+        Ok(None)
+    }
+
+    /// CALL rel32 (0xE8)
+    #[inline(always)]
+    fn threaded_call_rel32(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let rel = ctx.consume_u32()? as i32 as i64;
+        let next_rip = self.regs.rip.wrapping_add(ctx.cursor as u64);
+        // Push return address
+        self.regs.rsp = self.regs.rsp.wrapping_sub(8);
+        self.write_mem(self.regs.rsp, next_rip, 8)?;
+        // Jump to target
+        self.regs.rip = next_rip.wrapping_add(rel as u64);
+        Ok(None)
+    }
+
+    /// RET (0xC3)
+    #[inline(always)]
+    fn threaded_ret(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let _ = ctx; // Unused, but keep for consistency
+        let ret_addr = self.read_mem(self.regs.rsp, 8)?;
+        self.regs.rsp = self.regs.rsp.wrapping_add(8);
+        self.regs.rip = ret_addr;
+        Ok(None)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_threaded_batch_size() {
+        // Ensure batch size is reasonable
+        assert!(THREADED_BATCH_SIZE >= 16);
+        assert!(THREADED_BATCH_SIZE <= 256);
+    }
+}
