@@ -7,11 +7,19 @@
 #   test-quick     - Run tests without x86_64-suite
 #   microkernel    - Build the bare-metal microkernel
 #   run-microkernel- Build and run the microkernel in the emulator
-#   run-linux      - Run a Linux kernel in the emulator (configure linux/config.toml)
+#   linux          - Fetch and build Linux kernel (uncompressed vmlinux)
+#   run-linux      - Run a Linux kernel in the emulator
 #   clean          - Clean all build artifacts
+#   clean-linux    - Remove fetched Linux source
 #   help           - Show this help message
 
-.PHONY: all build build-debug test test-quick microkernel run-microkernel run-linux clean help
+# Linux kernel configuration
+LINUX_VERSION ?= v6.12
+LINUX_DIR     := linux/kernel/linux
+LINUX_VMLINUX := linux/vmlinux
+NPROC         := $(shell nproc 2>/dev/null || echo 4)
+
+.PHONY: all build build-debug test test-quick microkernel run-microkernel linux run-linux clean clean-linux help
 
 # Default target
 all: build
@@ -44,27 +52,47 @@ microkernel/microkernel.bin: microkernel/src/main.rs microkernel/Cargo.toml micr
 run-microkernel: microkernel
 	cargo run --release --no-default-features --example run_microkernel
 
-# Run a Linux kernel (requires linux/config.toml to be configured)
-run-linux: build
-	@if grep -q '/path/to/bzImage' linux/config.toml 2>/dev/null; then \
-		echo "Error: linux/config.toml still contains placeholder paths."; \
-		echo ""; \
-		echo "To run a Linux kernel, edit linux/config.toml and set:"; \
-		echo "  kernel = \"/path/to/your/bzImage\""; \
-		echo "  initrd = \"/path/to/your/initrd\"  (optional)"; \
-		echo ""; \
-		echo "You can build a minimal kernel with:"; \
-		echo "  git clone --depth 1 https://github.com/torvalds/linux"; \
-		echo "  cd linux && make tinyconfig && make -j\$$(nproc)"; \
-		exit 1; \
-	fi
+# Fetch Linux kernel source
+$(LINUX_DIR):
+	@mkdir -p linux/kernel
+	git clone --depth 1 --branch $(LINUX_VERSION) https://github.com/torvalds/linux.git $(LINUX_DIR)
+
+# Build uncompressed Linux kernel (vmlinux)
+$(LINUX_VMLINUX): $(LINUX_DIR)
+	@echo "Configuring Linux kernel..."
+	cd $(LINUX_DIR) && make defconfig
+	@echo "Disabling kernel compression..."
+	cd $(LINUX_DIR) && ./scripts/config --disable CONFIG_KERNEL_GZIP
+	cd $(LINUX_DIR) && ./scripts/config --disable CONFIG_KERNEL_BZIP2
+	cd $(LINUX_DIR) && ./scripts/config --disable CONFIG_KERNEL_LZMA
+	cd $(LINUX_DIR) && ./scripts/config --disable CONFIG_KERNEL_XZ
+	cd $(LINUX_DIR) && ./scripts/config --disable CONFIG_KERNEL_LZO
+	cd $(LINUX_DIR) && ./scripts/config --disable CONFIG_KERNEL_LZ4
+	cd $(LINUX_DIR) && ./scripts/config --disable CONFIG_KERNEL_ZSTD
+	cd $(LINUX_DIR) && ./scripts/config --enable CONFIG_KERNEL_UNCOMPRESSED
+	cd $(LINUX_DIR) && make olddefconfig
+	@echo "Building Linux kernel (this may take a while)..."
+	cd $(LINUX_DIR) && make -j$(NPROC) vmlinux
+	cp $(LINUX_DIR)/vmlinux $(LINUX_VMLINUX)
+	@echo "Built $(LINUX_VMLINUX) ($$(stat -c%s $(LINUX_VMLINUX) 2>/dev/null || stat -f%z $(LINUX_VMLINUX)) bytes)"
+
+# Convenience target to fetch and build Linux
+linux: $(LINUX_VMLINUX)
+
+# Run a Linux kernel
+run-linux: build linux
 	cargo run --release -- --config linux/config.toml
 
-# Clean all build artifacts
+# Clean all build artifacts (preserves Linux source)
 clean:
 	cargo clean
 	cd microkernel && cargo clean
 	rm -f microkernel/microkernel.bin
+
+# Remove fetched Linux source and built kernel
+clean-linux:
+	rm -rf linux/kernel/linux
+	rm -f $(LINUX_VMLINUX)
 
 # Show help
 help:
@@ -76,11 +104,18 @@ help:
 	@echo "  make test-quick      - Run tests without x86_64-suite (faster)"
 	@echo "  make microkernel     - Build the bare-metal microkernel binary"
 	@echo "  make run-microkernel - Build and run microkernel in emulator"
-	@echo "  make run-linux       - Run a Linux kernel (edit linux/config.toml first)"
-	@echo "  make clean           - Clean all build artifacts"
+	@echo "  make linux           - Fetch and build Linux kernel (uncompressed vmlinux)"
+	@echo "  make run-linux       - Build Linux and run it in emulator"
+	@echo "  make clean           - Clean build artifacts (preserves Linux source)"
+	@echo "  make clean-linux     - Remove fetched Linux source"
 	@echo "  make help            - Show this help message"
+	@echo ""
+	@echo "Linux kernel options:"
+	@echo "  LINUX_VERSION=v6.12  - Kernel version to fetch (default: v6.12)"
 	@echo ""
 	@echo "Examples:"
 	@echo "  make build test      - Build and run all tests"
 	@echo "  make run-microkernel - Quick demo of the emulator"
-	@echo "  make run-linux       - Run Linux (after configuring linux/config.toml)"
+	@echo "  make linux           - Fetch and build uncompressed Linux kernel"
+	@echo "  make run-linux       - Build and run Linux in emulator"
+	@echo "  make linux LINUX_VERSION=v6.6 - Build a specific kernel version"

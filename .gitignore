@@ -1,6 +1,9 @@
 # Build output
 target/
 
+# Linux kernel and artifacts (fetched/built by `make linux`)
+/linux/
+
 # Cargo.lock is typically committed for binaries but not libraries
 # Uncomment if this is a library
 # Cargo.lock
