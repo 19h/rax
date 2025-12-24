@@ -1,6 +1,9 @@
 //! x86_64 CPU state and core execution loop.
 
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::cell::Cell;
+#[cfg(debug_assertions)]
+use std::sync::atomic::Ordering;
+use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 
 /// Global tracker for current RIP (for debugging write watchpoints)
@@ -111,6 +114,45 @@ impl FpuState {
     }
 }
 
+/// Type of lazy flag operation - determines how to compute flags on demand
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(super) enum LazyFlagOp {
+    /// No lazy flags - rflags is valid
+    None,
+    /// Add operation: CF = result < a, OF = signed overflow
+    Add,
+    /// Sub/CMP operation: CF = a < b (borrow), OF = signed overflow
+    Sub,
+    /// Logic operation (AND/OR/XOR/TEST): CF=OF=0
+    Logic,
+    /// Inc operation: like Add but CF preserved
+    Inc,
+    /// Dec operation: like Sub but CF preserved
+    Dec,
+}
+
+/// Lazy flag state - stores operands to compute flags on demand
+#[derive(Clone, Copy, Debug)]
+pub(super) struct LazyFlags {
+    pub op: LazyFlagOp,
+    pub result: u64,
+    pub src: u64,      // First operand (a)
+    pub dst: u64,      // Second operand (b) - only used for Add/Sub
+    pub size: u8,
+}
+
+impl Default for LazyFlags {
+    fn default() -> Self {
+        LazyFlags {
+            op: LazyFlagOp::None,
+            result: 0,
+            src: 0,
+            dst: 0,
+            size: 4,
+        }
+    }
+}
+
 /// Emulated x86_64 vCPU.
 pub struct X86_64Vcpu {
     id: u32,
@@ -120,11 +162,14 @@ pub struct X86_64Vcpu {
     pub(super) fpu: FpuState,
     pub(super) halted: bool,
     io_pending: Option<IoPending>,
-    trace_enabled: bool,
     /// IA32_KERNEL_GS_BASE MSR (0xC0000102) for SWAPGS
     pub(super) kernel_gs_base: u64,
     /// Protection Key Rights Register (PKRU).
     pub(super) pkru: u32,
+    /// Decoded instruction cache for avoiding re-decode in hot loops
+    decode_cache: Box<[DecodeCacheEntry; DECODE_CACHE_SIZE]>,
+    /// Lazy flag state for deferred flag computation (Cell for interior mutability in get_state)
+    pub(super) lazy_flags: Cell<LazyFlags>,
 }
 
 /// Pending I/O operation.
@@ -140,6 +185,47 @@ struct IoPending {
 
 /// Maximum instruction length in bytes.
 pub const MAX_INSN_LEN: usize = 15;
+
+/// Decode cache size (must be power of 2 for fast indexing)
+const DECODE_CACHE_SIZE: usize = 4096;
+const DECODE_CACHE_MASK: usize = DECODE_CACHE_SIZE - 1;
+
+/// Cached decoded instruction entry
+#[derive(Clone, Copy, Debug)]
+struct DecodeCacheEntry {
+    /// RIP where this instruction lives (0 = invalid)
+    rip: u64,
+    /// Primary opcode byte
+    opcode: u8,
+    /// Decoded operand size
+    op_size: u8,
+    /// Cursor position after prefix decode (start of opcode)
+    cursor: usize,
+    /// REX prefix if present
+    rex: Option<u8>,
+    /// 0x66 prefix
+    operand_size_override: bool,
+    /// 0x67 prefix
+    address_size_override: bool,
+    /// REP/REPNE prefix
+    rep_prefix: Option<u8>,
+}
+
+impl Default for DecodeCacheEntry {
+    #[inline(always)]
+    fn default() -> Self {
+        DecodeCacheEntry {
+            rip: 0,
+            opcode: 0,
+            op_size: 4,
+            cursor: 0,
+            rex: None,
+            operand_size_override: false,
+            address_size_override: false,
+            rep_prefix: None,
+        }
+    }
+}
 
 /// Decoded instruction context passed to instruction handlers.
 pub(super) struct InsnContext {
@@ -362,6 +448,11 @@ impl InsnContext {
 
 impl X86_64Vcpu {
     pub fn new(id: u32, mem: Arc<GuestMemoryMmap>) -> Self {
+        // Use vec! to heap-allocate the cache, then convert to boxed array
+        let cache_vec = vec![DecodeCacheEntry::default(); DECODE_CACHE_SIZE];
+        let decode_cache: Box<[DecodeCacheEntry; DECODE_CACHE_SIZE]> =
+            cache_vec.into_boxed_slice().try_into().unwrap();
+
         X86_64Vcpu {
             id,
             regs: Registers::default(),
@@ -370,10 +461,231 @@ impl X86_64Vcpu {
             fpu: FpuState::default(),
             halted: false,
             io_pending: None,
-            trace_enabled: std::env::var("RAX_TRACE").is_ok(),
             kernel_gs_base: 0,
             pkru: 0,
+            decode_cache,
+            lazy_flags: Cell::new(LazyFlags::default()),
         }
+    }
+
+    /// Materialize lazy flags into rflags.
+    /// Call this before any instruction that reads flags (Jcc, CMOVcc, SETcc, ADC, SBB, PUSHF, LAHF).
+    #[inline]
+    pub(super) fn materialize_flags(&mut self) {
+        let lf = self.lazy_flags.get();
+        if lf.op == LazyFlagOp::None {
+            return; // Flags already materialized
+        }
+
+        let result = lf.result;
+        let a = lf.src;
+        let b = lf.dst;
+        let size = lf.size;
+
+        let mask = match size {
+            1 => 0xFFu64,
+            2 => 0xFFFFu64,
+            4 => 0xFFFF_FFFFu64,
+            _ => u64::MAX,
+        };
+        let result_m = result & mask;
+        let a_m = a & mask;
+        let b_m = b & mask;
+
+        let sign_bit = match size {
+            1 => 0x80u64,
+            2 => 0x8000u64,
+            4 => 0x8000_0000u64,
+            _ => 0x8000_0000_0000_0000u64,
+        };
+
+        // Common flags for all operations
+        let zf = result_m == 0;
+        let sf = (result_m & sign_bit) != 0;
+        let pf = (result as u8).count_ones() % 2 == 0;
+
+        // Clear status flags (preserve CF for Inc/Dec)
+        let cf_mask = if lf.op == LazyFlagOp::Inc || lf.op == LazyFlagOp::Dec {
+            0 // Don't clear CF for INC/DEC
+        } else {
+            flags::bits::CF
+        };
+        self.regs.rflags &= !(cf_mask | flags::bits::ZF | flags::bits::SF | flags::bits::PF | flags::bits::OF | flags::bits::AF);
+
+        // Set common flags
+        if zf { self.regs.rflags |= flags::bits::ZF; }
+        if sf { self.regs.rflags |= flags::bits::SF; }
+        if pf { self.regs.rflags |= flags::bits::PF; }
+
+        // Operation-specific flags
+        match lf.op {
+            LazyFlagOp::Add | LazyFlagOp::Inc => {
+                let cf = result_m < a_m;
+                let of = ((a_m ^ result_m) & (b_m ^ result_m) & sign_bit) != 0;
+                let af = ((a_m ^ b_m ^ result_m) & 0x10) != 0;
+                if lf.op == LazyFlagOp::Add && cf { self.regs.rflags |= flags::bits::CF; }
+                if of { self.regs.rflags |= flags::bits::OF; }
+                if af { self.regs.rflags |= flags::bits::AF; }
+            }
+            LazyFlagOp::Sub | LazyFlagOp::Dec => {
+                let cf = a_m < b_m;
+                let of = ((a_m ^ b_m) & (a_m ^ result_m) & sign_bit) != 0;
+                let af = ((a_m ^ b_m ^ result_m) & 0x10) != 0;
+                if lf.op == LazyFlagOp::Sub && cf { self.regs.rflags |= flags::bits::CF; }
+                if of { self.regs.rflags |= flags::bits::OF; }
+                if af { self.regs.rflags |= flags::bits::AF; }
+            }
+            LazyFlagOp::Logic => {
+                // CF=0, OF=0 already cleared above; AF is undefined
+            }
+            LazyFlagOp::None => {}
+        }
+
+        // Mark flags as materialized
+        self.lazy_flags.set(LazyFlags { op: LazyFlagOp::None, ..lf });
+    }
+
+    /// Compute what rflags would be if lazy flags were materialized (without modifying self).
+    /// Used by get_state() to return accurate flags via &self.
+    #[inline]
+    fn compute_materialized_rflags(&self) -> u64 {
+        let lf = self.lazy_flags.get();
+        if lf.op == LazyFlagOp::None {
+            return self.regs.rflags; // Already materialized
+        }
+
+        let result = lf.result;
+        let a = lf.src;
+        let b = lf.dst;
+        let size = lf.size;
+
+        let mask = match size {
+            1 => 0xFFu64,
+            2 => 0xFFFFu64,
+            4 => 0xFFFF_FFFFu64,
+            _ => u64::MAX,
+        };
+        let result_m = result & mask;
+        let a_m = a & mask;
+        let b_m = b & mask;
+
+        let sign_bit = match size {
+            1 => 0x80u64,
+            2 => 0x8000u64,
+            4 => 0x8000_0000u64,
+            _ => 0x8000_0000_0000_0000u64,
+        };
+
+        // Common flags for all operations
+        let zf = result_m == 0;
+        let sf = (result_m & sign_bit) != 0;
+        let pf = (result as u8).count_ones() % 2 == 0;
+
+        // Start with current rflags, clear status flags (preserve CF for Inc/Dec)
+        let cf_mask = if lf.op == LazyFlagOp::Inc || lf.op == LazyFlagOp::Dec {
+            0 // Don't clear CF for INC/DEC
+        } else {
+            flags::bits::CF
+        };
+        let mut rflags = self.regs.rflags & !(cf_mask | flags::bits::ZF | flags::bits::SF | flags::bits::PF | flags::bits::OF | flags::bits::AF);
+
+        // Set common flags
+        if zf { rflags |= flags::bits::ZF; }
+        if sf { rflags |= flags::bits::SF; }
+        if pf { rflags |= flags::bits::PF; }
+
+        // Operation-specific flags
+        match lf.op {
+            LazyFlagOp::Add | LazyFlagOp::Inc => {
+                let cf = result_m < a_m;
+                let of = ((a_m ^ result_m) & (b_m ^ result_m) & sign_bit) != 0;
+                let af = ((a_m ^ b_m ^ result_m) & 0x10) != 0;
+                if lf.op == LazyFlagOp::Add && cf { rflags |= flags::bits::CF; }
+                if of { rflags |= flags::bits::OF; }
+                if af { rflags |= flags::bits::AF; }
+            }
+            LazyFlagOp::Sub | LazyFlagOp::Dec => {
+                let cf = a_m < b_m;
+                let of = ((a_m ^ b_m) & (a_m ^ result_m) & sign_bit) != 0;
+                let af = ((a_m ^ b_m ^ result_m) & 0x10) != 0;
+                if lf.op == LazyFlagOp::Sub && cf { rflags |= flags::bits::CF; }
+                if of { rflags |= flags::bits::OF; }
+                if af { rflags |= flags::bits::AF; }
+            }
+            LazyFlagOp::Logic => {
+                // CF=0, OF=0 already cleared above; AF is undefined
+            }
+            LazyFlagOp::None => {}
+        }
+
+        rflags
+    }
+
+    /// Set lazy flags for an Add operation
+    #[inline(always)]
+    pub(super) fn set_lazy_add(&mut self, a: u64, b: u64, result: u64, size: u8) {
+        self.lazy_flags.set(LazyFlags {
+            op: LazyFlagOp::Add,
+            result,
+            src: a,
+            dst: b,
+            size,
+        });
+    }
+
+    /// Set lazy flags for a Sub/CMP operation
+    #[inline(always)]
+    pub(super) fn set_lazy_sub(&mut self, a: u64, b: u64, result: u64, size: u8) {
+        self.lazy_flags.set(LazyFlags {
+            op: LazyFlagOp::Sub,
+            result,
+            src: a,
+            dst: b,
+            size,
+        });
+    }
+
+    /// Set lazy flags for a Logic operation (AND/OR/XOR/TEST)
+    #[inline(always)]
+    pub(super) fn set_lazy_logic(&mut self, result: u64, size: u8) {
+        self.lazy_flags.set(LazyFlags {
+            op: LazyFlagOp::Logic,
+            result,
+            src: 0,
+            dst: 0,
+            size,
+        });
+    }
+
+    /// Set lazy flags for an Inc operation (CF preserved)
+    #[inline(always)]
+    pub(super) fn set_lazy_inc(&mut self, a: u64, result: u64, size: u8) {
+        self.lazy_flags.set(LazyFlags {
+            op: LazyFlagOp::Inc,
+            result,
+            src: a,
+            dst: 1,
+            size,
+        });
+    }
+
+    /// Set lazy flags for a Dec operation (CF preserved)
+    #[inline(always)]
+    pub(super) fn set_lazy_dec(&mut self, a: u64, result: u64, size: u8) {
+        self.lazy_flags.set(LazyFlags {
+            op: LazyFlagOp::Dec,
+            result,
+            src: a,
+            dst: 1,
+            size,
+        });
+    }
+
+    /// Clear lazy flags state (call after directly writing to rflags)
+    #[inline(always)]
+    pub(super) fn clear_lazy_flags(&mut self) {
+        let lf = self.lazy_flags.get();
+        self.lazy_flags.set(LazyFlags { op: LazyFlagOp::None, ..lf });
     }
 
     /// Fetch instruction bytes from RIP into a stack buffer.
@@ -396,20 +708,44 @@ impl X86_64Vcpu {
         )))
     }
 
+    /// Compute decode cache index from RIP
+    #[inline(always)]
+    fn decode_cache_index(rip: u64) -> usize {
+        (rip as usize) & DECODE_CACHE_MASK
+    }
+
     /// Execute a single instruction.
     #[inline]
     pub fn step(&mut self) -> Result<Option<VcpuExit>> {
-        // Update global RIP tracker for debugging
+        // Update global RIP tracker for debugging (only in debug builds)
+        #[cfg(debug_assertions)]
         CURRENT_RIP.store(self.regs.rip, Ordering::Relaxed);
 
-        let (bytes, bytes_len) = self.fetch()?;
+        let rip = self.regs.rip;
+        let cache_idx = Self::decode_cache_index(rip);
 
-        // Trace execution for debugging
-        let trace_bytes = if self.trace_enabled {
-            Some(bytes[..std::cmp::min(8, bytes_len)].to_vec())
-        } else {
-            None
-        };
+        // Check decode cache for a hit (copy to avoid borrow issues)
+        let cached = self.decode_cache[cache_idx];
+        if cached.rip == rip {
+            // Cache hit! Fetch bytes and reconstruct context from cached decode
+            let (bytes, bytes_len) = self.fetch()?;
+            let mut ctx = InsnContext {
+                bytes,
+                bytes_len,
+                cursor: cached.cursor + 1, // Skip past opcode byte
+                rex: cached.rex,
+                operand_size_override: cached.operand_size_override,
+                address_size_override: cached.address_size_override,
+                rep_prefix: cached.rep_prefix,
+                op_size: cached.op_size,
+                rip_relative_offset: 0,
+                evex: None,
+            };
+            return self.execute(cached.opcode, &mut ctx);
+        }
+
+        // Cache miss - do full decode
+        let (bytes, bytes_len) = self.fetch()?;
 
         // Decode prefixes
         let mut ctx = Decoder::decode_prefixes(bytes, bytes_len)?;
@@ -429,18 +765,23 @@ impl X86_64Vcpu {
             if is_16bit { 2 } else { 4 }
         };
 
+        // Save cursor before consuming opcode (for cache)
+        let opcode_cursor = ctx.cursor;
+
         // Get opcode
         let opcode = ctx.consume_u8()?;
 
-        // Trace execution for debugging
-        if let Some(tb) = trace_bytes {
-            tracing::trace!(
-                rip = format!("{:#x}", self.regs.rip),
-                opcode = format!("{:#04x}", opcode),
-                bytes = format!("{:02x?}", tb),
-                "exec"
-            );
-        }
+        // Cache the decoded instruction
+        self.decode_cache[cache_idx] = DecodeCacheEntry {
+            rip,
+            opcode,
+            op_size: ctx.op_size,
+            cursor: opcode_cursor,
+            rex: ctx.rex,
+            operand_size_override: ctx.operand_size_override,
+            address_size_override: ctx.address_size_override,
+            rep_prefix: ctx.rep_prefix,
+        };
 
         // Execute instruction
         self.execute(opcode, &mut ctx)
@@ -732,8 +1073,11 @@ impl X86_64Vcpu {
         seg.g = true;
     }
 
-    // Condition checking for Jcc/SETcc
-    pub(super) fn check_condition(&self, cc: u8) -> bool {
+    // Condition checking for Jcc/SETcc/CMOVcc - materializes lazy flags first
+    pub(super) fn check_condition(&mut self, cc: u8) -> bool {
+        // Materialize lazy flags before reading
+        self.materialize_flags();
+
         let cf = self.regs.rflags & flags::bits::CF != 0;
         let zf = self.regs.rflags & flags::bits::ZF != 0;
         let sf = self.regs.rflags & flags::bits::SF != 0;
@@ -777,8 +1121,12 @@ impl VCpu for X86_64Vcpu {
 
 
     fn get_state(&self) -> Result<CpuState> {
+        // Compute materialized rflags without modifying self
+        let rflags = self.compute_materialized_rflags();
+        let mut regs = self.regs.clone();
+        regs.rflags = rflags;
         Ok(CpuState::X86_64(X86_64CpuState {
-            regs: self.regs.clone(),
+            regs,
             sregs: self.sregs.clone(),
         }))
     }

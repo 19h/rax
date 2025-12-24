@@ -13,6 +13,7 @@ pub fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Resu
     let count = count & 0x1F;
     let cf_bit = flags::bits::CF;
     let of_bit = flags::bits::OF;
+    vcpu.materialize_flags(); // Need CF for RCL/RCR
     let old_cf = (vcpu.regs.rflags & cf_bit) != 0;
 
     let is_rotate = op <= 3;
@@ -155,6 +156,7 @@ pub fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Resu
             vcpu.regs.rflags &= !of_bit;
         }
     }
+    vcpu.clear_lazy_flags();
 
     Ok(result)
 }
@@ -172,6 +174,7 @@ pub fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u
     };
     let cf_bit = flags::bits::CF;
     let of_bit = flags::bits::OF;
+    vcpu.materialize_flags(); // Need CF for RCL/RCR
     let old_cf = (vcpu.regs.rflags & cf_bit) != 0;
 
     let is_rotate = op <= 3;
@@ -347,6 +350,7 @@ pub fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u
             vcpu.regs.rflags &= !of_bit;
         }
     }
+    vcpu.clear_lazy_flags();
 
     Ok(result)
 }

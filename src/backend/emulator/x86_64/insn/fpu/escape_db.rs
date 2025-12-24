@@ -52,24 +52,28 @@ pub fn escape_db(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     } else {
         match modrm {
             0xC0..=0xC7 => { // FCMOVNB ST(0), ST(i)
+                vcpu.materialize_flags();
                 if vcpu.regs.rflags & 1 == 0 {
                     let sti = vcpu.fpu.get_st(rm);
                     vcpu.fpu.set_st(0, sti);
                 }
             }
             0xC8..=0xCF => { // FCMOVNE ST(0), ST(i)
+                vcpu.materialize_flags();
                 if vcpu.regs.rflags & 0x40 == 0 {
                     let sti = vcpu.fpu.get_st(rm);
                     vcpu.fpu.set_st(0, sti);
                 }
             }
             0xD0..=0xD7 => { // FCMOVNBE ST(0), ST(i)
+                vcpu.materialize_flags();
                 if vcpu.regs.rflags & 0x41 == 0 {
                     let sti = vcpu.fpu.get_st(rm);
                     vcpu.fpu.set_st(0, sti);
                 }
             }
             0xD8..=0xDF => { // FCMOVNU ST(0), ST(i)
+                vcpu.materialize_flags();
                 if vcpu.regs.rflags & 4 == 0 {
                     let sti = vcpu.fpu.get_st(rm);
                     vcpu.fpu.set_st(0, sti);

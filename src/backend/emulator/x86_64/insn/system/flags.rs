@@ -22,14 +22,18 @@ pub fn sti(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 
 /// CLC - Clear Carry Flag (0xF8)
 pub fn clc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    vcpu.materialize_flags();
     vcpu.regs.rflags &= !flags::bits::CF;
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
 
 /// STC - Set Carry Flag (0xF9)
 pub fn stc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    vcpu.materialize_flags();
     vcpu.regs.rflags |= flags::bits::CF;
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -50,7 +54,9 @@ pub fn std(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 
 /// CMC - Complement Carry Flag (0xF5)
 pub fn cmc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    vcpu.materialize_flags();
     vcpu.regs.rflags ^= flags::bits::CF;
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -58,6 +64,7 @@ pub fn cmc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 /// LAHF - Load AH from Flags (0x9F)
 /// Loads SF, ZF, AF, PF, CF from RFLAGS into AH
 pub fn lahf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    vcpu.materialize_flags();
     // AH = SF:ZF:0:AF:0:PF:1:CF (bits 7:6:5:4:3:2:1:0)
     let mut flags_byte = (vcpu.regs.rflags & 0xD5) as u8;
     flags_byte |= 0x02;
@@ -77,6 +84,7 @@ pub fn sahf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
     vcpu.regs.rflags = (vcpu.regs.rflags & !mask) | (ah & mask);
     // Bit 1 is always set
     vcpu.regs.rflags |= 0x2;
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

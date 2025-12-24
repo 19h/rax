@@ -1651,6 +1651,7 @@ impl X86_64Vcpu {
             | flags::bits::AF
             | flags::bits::PF);
         self.regs.rflags |= flags::bits::CF;
+        self.clear_lazy_flags();
 
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
@@ -1708,6 +1709,7 @@ impl X86_64Vcpu {
             | flags::bits::AF
             | flags::bits::PF);
         self.regs.rflags |= flags::bits::CF;
+        self.clear_lazy_flags();
 
         self.regs.rip += ctx.cursor as u64;
         Ok(None)

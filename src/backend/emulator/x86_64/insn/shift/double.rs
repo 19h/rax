@@ -156,6 +156,7 @@ fn execute_shld(vcpu: &mut X86_64Vcpu, dst: u64, src: u64, count: u8, size: u8) 
     } else {
         vcpu.regs.rflags &= !flags::bits::OF;
     }
+    vcpu.clear_lazy_flags();
 
     result
 }
@@ -204,6 +205,7 @@ fn execute_shrd(vcpu: &mut X86_64Vcpu, dst: u64, src: u64, count: u8, size: u8) 
     } else {
         vcpu.regs.rflags &= !flags::bits::OF;
     }
+    vcpu.clear_lazy_flags();
 
     result
 }

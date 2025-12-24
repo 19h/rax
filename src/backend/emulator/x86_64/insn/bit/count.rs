@@ -34,6 +34,7 @@ pub fn tzcnt(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     if result == 0 {
         vcpu.regs.rflags |= flags::bits::ZF;
     }
+    vcpu.clear_lazy_flags();
 
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -76,6 +77,7 @@ pub fn lzcnt(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     if result == 0 {
         vcpu.regs.rflags |= flags::bits::ZF;
     }
+    vcpu.clear_lazy_flags();
 
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -106,6 +108,7 @@ pub fn popcnt(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
     if count == 0 {
         vcpu.regs.rflags |= flags::bits::ZF;
     }
+    vcpu.clear_lazy_flags();
 
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
