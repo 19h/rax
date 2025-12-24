@@ -33,6 +33,7 @@ pub fn escape_da(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
         }
     } else {
         // Register forms - FCMOV
+        vcpu.materialize_flags();
         let st0 = vcpu.fpu.get_st(0);
         let sti = vcpu.fpu.get_st(rm);
         let rflags = vcpu.regs.rflags;

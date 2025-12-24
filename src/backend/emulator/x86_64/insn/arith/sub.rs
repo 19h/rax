@@ -15,12 +15,12 @@ pub fn sub_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         let dst = vcpu.mmu.read_u8(addr, &vcpu.sregs)? as u64;
         let result = dst.wrapping_sub(src) & 0xFF;
         vcpu.mmu.write_u8(addr, result as u8, &vcpu.sregs)?;
-        flags::update_flags_sub(&mut vcpu.regs.rflags, dst, src, result, 1);
+        vcpu.set_lazy_sub(dst, src, result, 1);
     } else {
         let dst = vcpu.get_reg(rm, 1);
         let result = dst.wrapping_sub(src) & 0xFF;
         vcpu.set_reg(rm, result, 1);
-        flags::update_flags_sub(&mut vcpu.regs.rflags, dst, src, result, 1);
+        vcpu.set_lazy_sub(dst, src, result, 1);
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -36,12 +36,12 @@ pub fn sub_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
         let dst = vcpu.read_mem(addr, op_size)?;
         let result = dst.wrapping_sub(src);
         vcpu.write_mem(addr, result, op_size)?;
-        flags::update_flags_sub(&mut vcpu.regs.rflags, dst, src, result, op_size);
+        vcpu.set_lazy_sub(dst, src, result, op_size);
     } else {
         let dst = vcpu.get_reg(rm, op_size);
         let result = dst.wrapping_sub(src);
         vcpu.set_reg(rm, result, op_size);
-        flags::update_flags_sub(&mut vcpu.regs.rflags, dst, src, result, op_size);
+        vcpu.set_lazy_sub(dst, src, result, op_size);
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -59,7 +59,7 @@ pub fn sub_r8_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
     };
     let result = dst.wrapping_sub(src) & 0xFF;
     vcpu.set_reg(reg, result, 1);
-    flags::update_flags_sub(&mut vcpu.regs.rflags, dst, src, result, 1);
+    vcpu.set_lazy_sub(dst, src, result, 1);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -77,7 +77,7 @@ pub fn sub_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     };
     let result = dst.wrapping_sub(src);
     vcpu.set_reg(reg, result, op_size);
-    flags::update_flags_sub(&mut vcpu.regs.rflags, dst, src, result, op_size);
+    vcpu.set_lazy_sub(dst, src, result, op_size);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -88,7 +88,7 @@ pub fn sub_al_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
     let al = vcpu.regs.rax & 0xFF;
     let result = al.wrapping_sub(imm);
     vcpu.regs.rax = (vcpu.regs.rax & !0xFF) | (result & 0xFF);
-    flags::update_flags_sub(&mut vcpu.regs.rflags, al, imm, result, 1);
+    vcpu.set_lazy_sub(al, imm, result, 1);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -106,7 +106,7 @@ pub fn sub_rax_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
     let rax = vcpu.get_reg(0, op_size);
     let result = rax.wrapping_sub(imm);
     vcpu.set_reg(0, result, op_size);
-    flags::update_flags_sub(&mut vcpu.regs.rflags, rax, imm, result, op_size);
+    vcpu.set_lazy_sub(rax, imm, result, op_size);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -115,6 +115,7 @@ pub fn sub_rax_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
 pub fn sbb_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let src = vcpu.get_reg(reg, 1);
+    vcpu.materialize_flags(); // Need CF
     let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
     let cf_val = if cf_in { 1u64 } else { 0 };
 
@@ -129,6 +130,7 @@ pub fn sbb_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         vcpu.set_reg(rm, result, 1);
         flags::update_flags_sbb(&mut vcpu.regs.rflags, dst, src, cf_in, result, 1);
     }
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -138,6 +140,7 @@ pub fn sbb_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     let op_size = ctx.op_size;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let src = vcpu.get_reg(reg, op_size);
+    vcpu.materialize_flags(); // Need CF
     let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
     let cf_val = if cf_in { 1u64 } else { 0 };
 
@@ -152,6 +155,7 @@ pub fn sbb_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
         vcpu.set_reg(rm, result, op_size);
         flags::update_flags_sbb(&mut vcpu.regs.rflags, dst, src, cf_in, result, op_size);
     }
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -160,6 +164,7 @@ pub fn sbb_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 pub fn sbb_r8_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let dst = vcpu.get_reg(reg, 1);
+    vcpu.materialize_flags(); // Need CF
     let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
     let cf_val = if cf_in { 1u64 } else { 0 };
 
@@ -171,6 +176,7 @@ pub fn sbb_r8_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
     let result = dst.wrapping_sub(src).wrapping_sub(cf_val) & 0xFF;
     vcpu.set_reg(reg, result, 1);
     flags::update_flags_sbb(&mut vcpu.regs.rflags, dst, src, cf_in, result, 1);
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -180,6 +186,7 @@ pub fn sbb_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     let op_size = ctx.op_size;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let dst = vcpu.get_reg(reg, op_size);
+    vcpu.materialize_flags(); // Need CF
     let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
     let cf_val = if cf_in { 1u64 } else { 0 };
 
@@ -191,6 +198,7 @@ pub fn sbb_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     let result = dst.wrapping_sub(src).wrapping_sub(cf_val);
     vcpu.set_reg(reg, result, op_size);
     flags::update_flags_sbb(&mut vcpu.regs.rflags, dst, src, cf_in, result, op_size);
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -199,11 +207,13 @@ pub fn sbb_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 pub fn sbb_al_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let imm = ctx.consume_u8()? as u64;
     let al = vcpu.regs.rax & 0xFF;
+    vcpu.materialize_flags(); // Need CF
     let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
     let cf_val = if cf_in { 1u64 } else { 0 };
     let result = al.wrapping_sub(imm).wrapping_sub(cf_val);
     vcpu.regs.rax = (vcpu.regs.rax & !0xFF) | (result & 0xFF);
     flags::update_flags_sbb(&mut vcpu.regs.rflags, al, imm, cf_in, result, 1);
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -219,11 +229,13 @@ pub fn sbb_rax_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
         imm
     };
     let rax = vcpu.get_reg(0, op_size);
+    vcpu.materialize_flags(); // Need CF
     let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
     let cf_val = if cf_in { 1u64 } else { 0 };
     let result = rax.wrapping_sub(imm).wrapping_sub(cf_val);
     vcpu.set_reg(0, result, op_size);
     flags::update_flags_sbb(&mut vcpu.regs.rflags, rax, imm, cf_in, result, op_size);
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

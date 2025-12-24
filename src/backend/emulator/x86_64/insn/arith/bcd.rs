@@ -23,6 +23,7 @@ fn ensure_not_long_mode(vcpu: &X86_64Vcpu, mnemonic: &str) -> Result<()> {
 /// Adjusts AL after BCD addition
 pub fn daa(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     ensure_not_long_mode(vcpu, "DAA")?;
+    vcpu.materialize_flags();
     let old_al = (vcpu.regs.rax & 0xFF) as u8;
     let old_cf = (vcpu.regs.rflags & flags::bits::CF) != 0;
     let af = (vcpu.regs.rflags & flags::bits::AF) != 0;
@@ -62,6 +63,7 @@ pub fn daa(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 
     // SF, ZF, PF based on result
     flags::update_szp(&mut vcpu.regs.rflags, al as u64, 1);
+    vcpu.clear_lazy_flags();
 
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -71,6 +73,7 @@ pub fn daa(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 /// Adjusts AL after BCD subtraction
 pub fn das(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     ensure_not_long_mode(vcpu, "DAS")?;
+    vcpu.materialize_flags();
     let old_al = (vcpu.regs.rax & 0xFF) as u8;
     let old_cf = (vcpu.regs.rflags & flags::bits::CF) != 0;
     let af = (vcpu.regs.rflags & flags::bits::AF) != 0;
@@ -110,6 +113,7 @@ pub fn das(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 
     // SF, ZF, PF based on result
     flags::update_szp(&mut vcpu.regs.rflags, al as u64, 1);
+    vcpu.clear_lazy_flags();
 
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -119,6 +123,7 @@ pub fn das(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 /// Adjusts AL and AH after unpacked BCD addition
 pub fn aaa(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     ensure_not_long_mode(vcpu, "AAA")?;
+    vcpu.materialize_flags();
     let al = (vcpu.regs.rax & 0xFF) as u8;
     let ah = ((vcpu.regs.rax >> 8) & 0xFF) as u8;
     let af = (vcpu.regs.rflags & flags::bits::AF) != 0;
@@ -147,6 +152,7 @@ pub fn aaa(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
     } else {
         vcpu.regs.rflags &= !flags::bits::AF;
     }
+    vcpu.clear_lazy_flags();
 
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -156,6 +162,7 @@ pub fn aaa(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 /// Adjusts AL and AH after unpacked BCD subtraction
 pub fn aas(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     ensure_not_long_mode(vcpu, "AAS")?;
+    vcpu.materialize_flags();
     let al = (vcpu.regs.rax & 0xFF) as u8;
     let ah = ((vcpu.regs.rax >> 8) & 0xFF) as u8;
     let af = (vcpu.regs.rflags & flags::bits::AF) != 0;
@@ -185,6 +192,7 @@ pub fn aas(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
     } else {
         vcpu.regs.rflags &= !flags::bits::AF;
     }
+    vcpu.clear_lazy_flags();
 
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -210,6 +218,7 @@ pub fn aam(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 
     // Update SF, ZF, PF based on AL
     flags::update_szp(&mut vcpu.regs.rflags, new_al as u64, 1);
+    vcpu.clear_lazy_flags();
 
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -231,6 +240,7 @@ pub fn aad(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 
     // Update SF, ZF, PF based on AL
     flags::update_szp(&mut vcpu.regs.rflags, new_al as u64, 1);
+    vcpu.clear_lazy_flags();
 
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)

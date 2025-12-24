@@ -22,18 +22,22 @@ pub fn group4(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
                 let result = (val as u8).wrapping_add(1) as u64;
                 vcpu.set_reg(rm, result, 1);
                 // INC preserves CF
+                vcpu.materialize_flags();
                 let cf = vcpu.regs.rflags & flags::bits::CF;
                 flags::update_flags_add(&mut vcpu.regs.rflags, val, 1, result, 1);
                 vcpu.regs.rflags = (vcpu.regs.rflags & !flags::bits::CF) | cf;
+                vcpu.clear_lazy_flags();
             } else {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
                 let val = vcpu.mmu.read_u8(addr, &vcpu.sregs)? as u64;
                 let result = (val as u8).wrapping_add(1) as u64;
                 vcpu.mmu.write_u8(addr, result as u8, &vcpu.sregs)?;
+                vcpu.materialize_flags();
                 let cf = vcpu.regs.rflags & flags::bits::CF;
                 flags::update_flags_add(&mut vcpu.regs.rflags, val, 1, result, 1);
                 vcpu.regs.rflags = (vcpu.regs.rflags & !flags::bits::CF) | cf;
+                vcpu.clear_lazy_flags();
             }
             vcpu.regs.rip += ctx.cursor as u64;
         }
@@ -44,18 +48,22 @@ pub fn group4(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
                 let result = (val as u8).wrapping_sub(1) as u64;
                 vcpu.set_reg(rm, result, 1);
                 // DEC preserves CF
+                vcpu.materialize_flags();
                 let cf = vcpu.regs.rflags & flags::bits::CF;
                 flags::update_flags_sub(&mut vcpu.regs.rflags, val, 1, result, 1);
                 vcpu.regs.rflags = (vcpu.regs.rflags & !flags::bits::CF) | cf;
+                vcpu.clear_lazy_flags();
             } else {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
                 let val = vcpu.mmu.read_u8(addr, &vcpu.sregs)? as u64;
                 let result = (val as u8).wrapping_sub(1) as u64;
                 vcpu.mmu.write_u8(addr, result as u8, &vcpu.sregs)?;
+                vcpu.materialize_flags();
                 let cf = vcpu.regs.rflags & flags::bits::CF;
                 flags::update_flags_sub(&mut vcpu.regs.rflags, val, 1, result, 1);
                 vcpu.regs.rflags = (vcpu.regs.rflags & !flags::bits::CF) | cf;
+                vcpu.clear_lazy_flags();
             }
             vcpu.regs.rip += ctx.cursor as u64;
         }
@@ -81,18 +89,22 @@ pub fn group5(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
                 let val = vcpu.get_reg(rm, op_size);
                 let result = val.wrapping_add(1);
                 vcpu.set_reg(rm, result, op_size);
+                vcpu.materialize_flags();
                 let cf = vcpu.regs.rflags & flags::bits::CF;
                 flags::update_flags_add(&mut vcpu.regs.rflags, val, 1, result, op_size);
                 vcpu.regs.rflags = (vcpu.regs.rflags & !flags::bits::CF) | cf;
+                vcpu.clear_lazy_flags();
             } else {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
                 let val = vcpu.read_mem(addr, op_size)?;
                 let result = val.wrapping_add(1);
                 vcpu.write_mem(addr, result, op_size)?;
+                vcpu.materialize_flags();
                 let cf = vcpu.regs.rflags & flags::bits::CF;
                 flags::update_flags_add(&mut vcpu.regs.rflags, val, 1, result, op_size);
                 vcpu.regs.rflags = (vcpu.regs.rflags & !flags::bits::CF) | cf;
+                vcpu.clear_lazy_flags();
             }
             vcpu.regs.rip += ctx.cursor as u64;
         }
@@ -102,18 +114,22 @@ pub fn group5(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
                 let val = vcpu.get_reg(rm, op_size);
                 let result = val.wrapping_sub(1);
                 vcpu.set_reg(rm, result, op_size);
+                vcpu.materialize_flags();
                 let cf = vcpu.regs.rflags & flags::bits::CF;
                 flags::update_flags_sub(&mut vcpu.regs.rflags, val, 1, result, op_size);
                 vcpu.regs.rflags = (vcpu.regs.rflags & !flags::bits::CF) | cf;
+                vcpu.clear_lazy_flags();
             } else {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
                 let val = vcpu.read_mem(addr, op_size)?;
                 let result = val.wrapping_sub(1);
                 vcpu.write_mem(addr, result, op_size)?;
+                vcpu.materialize_flags();
                 let cf = vcpu.regs.rflags & flags::bits::CF;
                 flags::update_flags_sub(&mut vcpu.regs.rflags, val, 1, result, op_size);
                 vcpu.regs.rflags = (vcpu.regs.rflags & !flags::bits::CF) | cf;
+                vcpu.clear_lazy_flags();
             }
             vcpu.regs.rip += ctx.cursor as u64;
         }

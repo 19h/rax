@@ -32,53 +32,57 @@ pub fn group1_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<O
         0 => {
             // ADD
             let r = (dst as u8).wrapping_add(imm as u8) as u64;
-            flags::update_flags_add(&mut vcpu.regs.rflags, dst, imm, r, 1);
+            vcpu.set_lazy_add(dst, imm, r, 1);
             (r, true)
         }
         1 => {
             // OR
             let r = (dst | imm) & 0xFF;
-            flags::update_flags_logic(&mut vcpu.regs.rflags, r, 1);
+            vcpu.set_lazy_logic(r, 1);
             (r, true)
         }
         2 => {
             // ADC
+            vcpu.materialize_flags();
             let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
             let cf_val = if cf_in { 1u8 } else { 0 };
             let r = (dst as u8).wrapping_add(imm as u8).wrapping_add(cf_val) as u64;
             flags::update_flags_adc(&mut vcpu.regs.rflags, dst, imm, cf_in, r, 1);
+            vcpu.clear_lazy_flags();
             (r, true)
         }
         3 => {
             // SBB
+            vcpu.materialize_flags();
             let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
             let cf_val = if cf_in { 1u8 } else { 0 };
             let r = (dst as u8).wrapping_sub(imm as u8).wrapping_sub(cf_val) as u64;
             flags::update_flags_sbb(&mut vcpu.regs.rflags, dst, imm, cf_in, r, 1);
+            vcpu.clear_lazy_flags();
             (r, true)
         }
         4 => {
             // AND
             let r = (dst & imm) & 0xFF;
-            flags::update_flags_logic(&mut vcpu.regs.rflags, r, 1);
+            vcpu.set_lazy_logic(r, 1);
             (r, true)
         }
         5 => {
             // SUB
             let r = (dst as u8).wrapping_sub(imm as u8) as u64;
-            flags::update_flags_sub(&mut vcpu.regs.rflags, dst, imm, r, 1);
+            vcpu.set_lazy_sub(dst, imm, r, 1);
             (r, true)
         }
         6 => {
             // XOR
             let r = (dst ^ imm) & 0xFF;
-            flags::update_flags_logic(&mut vcpu.regs.rflags, r, 1);
+            vcpu.set_lazy_logic(r, 1);
             (r, true)
         }
         7 => {
             // CMP
             let r = (dst as u8).wrapping_sub(imm as u8) as u64;
-            flags::update_flags_sub(&mut vcpu.regs.rflags, dst, imm, r, 1);
+            vcpu.set_lazy_sub(dst, imm, r, 1);
             (r, false)
         }
         _ => return Err(Error::Emulator(format!("invalid 0x80 /op: {}", op))),
@@ -124,53 +128,57 @@ pub fn group1_rm_imm32(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<O
         0 => {
             // ADD
             let r = dst.wrapping_add(imm);
-            flags::update_flags_add(&mut vcpu.regs.rflags, dst, imm, r, op_size);
+            vcpu.set_lazy_add(dst, imm, r, op_size);
             (r, true)
         }
         1 => {
             // OR
             let r = dst | imm;
-            flags::update_flags_logic(&mut vcpu.regs.rflags, r, op_size);
+            vcpu.set_lazy_logic(r, op_size);
             (r, true)
         }
         2 => {
             // ADC
+            vcpu.materialize_flags();
             let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
             let cf_val = if cf_in { 1u64 } else { 0 };
             let r = dst.wrapping_add(imm).wrapping_add(cf_val);
             flags::update_flags_adc(&mut vcpu.regs.rflags, dst, imm, cf_in, r, op_size);
+            vcpu.clear_lazy_flags();
             (r, true)
         }
         3 => {
             // SBB
+            vcpu.materialize_flags();
             let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
             let cf_val = if cf_in { 1u64 } else { 0 };
             let r = dst.wrapping_sub(imm).wrapping_sub(cf_val);
             flags::update_flags_sbb(&mut vcpu.regs.rflags, dst, imm, cf_in, r, op_size);
+            vcpu.clear_lazy_flags();
             (r, true)
         }
         4 => {
             // AND
             let r = dst & imm;
-            flags::update_flags_logic(&mut vcpu.regs.rflags, r, op_size);
+            vcpu.set_lazy_logic(r, op_size);
             (r, true)
         }
         5 => {
             // SUB
             let r = dst.wrapping_sub(imm);
-            flags::update_flags_sub(&mut vcpu.regs.rflags, dst, imm, r, op_size);
+            vcpu.set_lazy_sub(dst, imm, r, op_size);
             (r, true)
         }
         6 => {
             // XOR
             let r = dst ^ imm;
-            flags::update_flags_logic(&mut vcpu.regs.rflags, r, op_size);
+            vcpu.set_lazy_logic(r, op_size);
             (r, true)
         }
         7 => {
             // CMP
             let r = dst.wrapping_sub(imm);
-            flags::update_flags_sub(&mut vcpu.regs.rflags, dst, imm, r, op_size);
+            vcpu.set_lazy_sub(dst, imm, r, op_size);
             (r, false)
         }
         _ => return Err(Error::Emulator(format!("unimplemented 0x81 /op: {}", op))),
@@ -210,53 +218,57 @@ pub fn group1_rm_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Op
         0 => {
             // ADD
             let r = dst.wrapping_add(imm);
-            flags::update_flags_add(&mut vcpu.regs.rflags, dst, imm, r, op_size);
+            vcpu.set_lazy_add(dst, imm, r, op_size);
             (r, true)
         }
         1 => {
             // OR
             let r = dst | imm;
-            flags::update_flags_logic(&mut vcpu.regs.rflags, r, op_size);
+            vcpu.set_lazy_logic(r, op_size);
             (r, true)
         }
         2 => {
             // ADC
+            vcpu.materialize_flags();
             let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
             let cf_val = if cf_in { 1u64 } else { 0 };
             let r = dst.wrapping_add(imm).wrapping_add(cf_val);
             flags::update_flags_adc(&mut vcpu.regs.rflags, dst, imm, cf_in, r, op_size);
+            vcpu.clear_lazy_flags();
             (r, true)
         }
         3 => {
             // SBB
+            vcpu.materialize_flags();
             let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
             let cf_val = if cf_in { 1u64 } else { 0 };
             let r = dst.wrapping_sub(imm).wrapping_sub(cf_val);
             flags::update_flags_sbb(&mut vcpu.regs.rflags, dst, imm, cf_in, r, op_size);
+            vcpu.clear_lazy_flags();
             (r, true)
         }
         4 => {
             // AND
             let r = dst & imm;
-            flags::update_flags_logic(&mut vcpu.regs.rflags, r, op_size);
+            vcpu.set_lazy_logic(r, op_size);
             (r, true)
         }
         5 => {
             // SUB
             let r = dst.wrapping_sub(imm);
-            flags::update_flags_sub(&mut vcpu.regs.rflags, dst, imm, r, op_size);
+            vcpu.set_lazy_sub(dst, imm, r, op_size);
             (r, true)
         }
         6 => {
             // XOR
             let r = dst ^ imm;
-            flags::update_flags_logic(&mut vcpu.regs.rflags, r, op_size);
+            vcpu.set_lazy_logic(r, op_size);
             (r, true)
         }
         7 => {
             // CMP
             let r = dst.wrapping_sub(imm);
-            flags::update_flags_sub(&mut vcpu.regs.rflags, dst, imm, r, op_size);
+            vcpu.set_lazy_sub(dst, imm, r, op_size);
             (r, false)
         }
         _ => return Err(Error::Emulator(format!("invalid 0x83 /op: {}", op))),
