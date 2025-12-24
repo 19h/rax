@@ -260,7 +260,16 @@ pub fn group5(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             vcpu.regs.rip += ctx.cursor as u64;
         }
         _ => {
-            return Err(Error::Emulator(format!("unimplemented 0xFF /{}", op)));
+            // Debug: dump RIP and nearby bytes
+            let rip = vcpu.regs.rip;
+            let mut bytes = [0u8; 16];
+            for i in 0..16 {
+                bytes[i] = vcpu.mmu.read_u8(rip + i as u64, &vcpu.sregs).unwrap_or(0xCC);
+            }
+            return Err(Error::Emulator(format!(
+                "unimplemented 0xFF /{} at RIP={:#x} bytes={:02x?}",
+                op, rip, bytes
+            )));
         }
     }
     Ok(None)

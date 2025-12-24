@@ -475,7 +475,8 @@ impl Mmu {
             let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
             let mut buf = [0u8; 8];
             self.read_phys(paddr, &mut buf)?;
-            Ok(u64::from_le_bytes(buf))
+            let val = u64::from_le_bytes(buf);
+            Ok(val)
         } else {
             let mut buf = [0u8; 8];
             self.read(vaddr, &mut buf, sregs)?;
