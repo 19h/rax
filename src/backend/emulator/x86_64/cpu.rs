@@ -167,7 +167,7 @@ pub struct X86_64Vcpu {
     /// Protection Key Rights Register (PKRU).
     pub(super) pkru: u32,
     /// Decoded instruction cache for avoiding re-decode in hot loops
-    decode_cache: Box<[DecodeCacheEntry; DECODE_CACHE_SIZE]>,
+    pub(super) decode_cache: Box<[DecodeCacheEntry; DECODE_CACHE_SIZE]>,
     /// Lazy flag state for deferred flag computation (Cell for interior mutability in get_state)
     pub(super) lazy_flags: Cell<LazyFlags>,
 }
@@ -188,27 +188,27 @@ pub const MAX_INSN_LEN: usize = 15;
 
 /// Decode cache size (must be power of 2 for fast indexing)
 const DECODE_CACHE_SIZE: usize = 4096;
-const DECODE_CACHE_MASK: usize = DECODE_CACHE_SIZE - 1;
+pub(super) const DECODE_CACHE_MASK: usize = DECODE_CACHE_SIZE - 1;
 
 /// Cached decoded instruction entry
 #[derive(Clone, Copy, Debug)]
-struct DecodeCacheEntry {
+pub(super) struct DecodeCacheEntry {
     /// RIP where this instruction lives (0 = invalid)
-    rip: u64,
+    pub(super) rip: u64,
     /// Primary opcode byte
-    opcode: u8,
+    pub(super) opcode: u8,
     /// Decoded operand size
-    op_size: u8,
+    pub(super) op_size: u8,
     /// Cursor position after prefix decode (start of opcode)
-    cursor: usize,
+    pub(super) cursor: usize,
     /// REX prefix if present
-    rex: Option<u8>,
+    pub(super) rex: Option<u8>,
     /// 0x66 prefix
-    operand_size_override: bool,
+    pub(super) operand_size_override: bool,
     /// 0x67 prefix
-    address_size_override: bool,
+    pub(super) address_size_override: bool,
     /// REP/REPNE prefix
-    rep_prefix: Option<u8>,
+    pub(super) rep_prefix: Option<u8>,
 }
 
 impl Default for DecodeCacheEntry {
@@ -691,7 +691,7 @@ impl X86_64Vcpu {
     /// Fetch instruction bytes from RIP into a stack buffer.
     /// Returns (buffer, actual_length).
     #[inline]
-    fn fetch(&mut self) -> Result<([u8; MAX_INSN_LEN], usize)> {
+    pub(super) fn fetch(&mut self) -> Result<([u8; MAX_INSN_LEN], usize)> {
         let mut buf = [0u8; MAX_INSN_LEN];
         if self.mmu.read(self.regs.rip, &mut buf, &self.sregs).is_ok() {
             return Ok((buf, MAX_INSN_LEN));
