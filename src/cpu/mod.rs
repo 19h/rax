@@ -69,6 +69,19 @@ pub trait VCpu: Send {
     /// Complete an I/O in operation by providing the data read from the device.
     fn complete_io_in(&mut self, data: &[u8]);
 
+    /// Inject an external interrupt (hardware IRQ).
+    /// Returns Ok(true) if the interrupt was injected, Ok(false) if interrupts are disabled.
+    fn inject_interrupt(&mut self, vector: u8) -> Result<bool> {
+        // Default implementation does nothing
+        let _ = vector;
+        Ok(false)
+    }
+
+    /// Check if interrupts are enabled and can be injected.
+    fn can_inject_interrupt(&self) -> bool {
+        false
+    }
+
     /// Get vCPU ID.
     fn id(&self) -> u32;
 }

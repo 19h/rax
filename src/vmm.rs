@@ -10,12 +10,42 @@ use crate::backend::{self, Vm};
 use crate::config::BackendKind;
 use crate::config::VmConfig;
 use crate::cpu::{CpuState, VCpu, VcpuExit};
-use crate::devices::bus::{IoBus, IoDevice, MmioBus, MmioRange};
+use crate::devices::bus::{IoBus, IoDevice, IoRange, MmioBus, MmioRange};
+use crate::devices::lapic::{LapicDevice, LocalApic, LAPIC_BASE, LAPIC_SIZE};
+use crate::devices::pic::{DualPic, MasterPicDevice, SlavePicDevice};
+use crate::devices::pit::Pit;
 use crate::devices::serial::{Serial16550, SerialMmioDevice};
 use crate::error::{Error, Result};
 use crate::memory::GuestMemoryWrapper;
 
 const SERIAL_BASE: u16 = 0x3f8;
+
+/// Wrapper to make Pit implement IoDevice via shared reference
+struct PitDevice {
+    pit: Arc<std::sync::Mutex<Pit>>,
+}
+
+impl PitDevice {
+    fn new(pit: Arc<std::sync::Mutex<Pit>>) -> Self {
+        PitDevice { pit }
+    }
+}
+
+impl IoDevice for PitDevice {
+    fn read(&mut self, port: u16) -> u8 {
+        if let Ok(mut pit) = self.pit.lock() {
+            pit.read(port)
+        } else {
+            0xFF
+        }
+    }
+
+    fn write(&mut self, port: u16, value: u8) {
+        if let Ok(mut pit) = self.pit.lock() {
+            pit.write(port, value);
+        }
+    }
+}
 
 pub struct Vmm {
     vm: Box<dyn Vm>,
@@ -23,6 +53,9 @@ pub struct Vmm {
     io_bus: IoBus,
     mmio_bus: MmioBus,
     serial: Arc<std::sync::Mutex<Serial16550>>,
+    pit: Arc<std::sync::Mutex<Pit>>,
+    pic: Arc<std::sync::Mutex<DualPic>>,
+    lapic: Arc<std::sync::Mutex<LocalApic>>,
     vcpus: Vec<Box<dyn VCpu>>,
     arch: Box<dyn Arch>,
     boot_info: BootInfo,
@@ -86,6 +119,40 @@ impl Vmm {
             )?;
         }
 
+        // Create PIT (Programmable Interval Timer) at ports 0x40-0x43
+        let pit = Arc::new(std::sync::Mutex::new(Pit::new()));
+
+        // Create PIC (Programmable Interrupt Controller)
+        let pic = Arc::new(std::sync::Mutex::new(DualPic::new()));
+
+        // Register PIT on I/O bus
+        io_bus.register(
+            IoRange { base: 0x40, len: 4 },
+            Box::new(PitDevice::new(pit.clone())),
+        )?;
+
+        // Register master PIC (0x20-0x21)
+        io_bus.register(
+            IoRange { base: 0x20, len: 2 },
+            Box::new(MasterPicDevice::new(pic.clone())),
+        )?;
+
+        // Register slave PIC (0xA0-0xA1)
+        io_bus.register(
+            IoRange { base: 0xA0, len: 2 },
+            Box::new(SlavePicDevice::new(pic.clone())),
+        )?;
+
+        // Create and register Local APIC at 0xFEE00000
+        let lapic = Arc::new(std::sync::Mutex::new(LocalApic::new(0)));
+        mmio_bus.register(
+            MmioRange {
+                base: LAPIC_BASE,
+                len: LAPIC_SIZE,
+            },
+            Box::new(LapicDevice::new(lapic.clone())),
+        )?;
+
         // Load kernel
         let boot_info = arch.load_kernel(guest_mem.memory(), &config)?;
 
@@ -122,6 +189,9 @@ impl Vmm {
             io_bus,
             mmio_bus,
             serial,
+            pit,
+            pic,
+            lapic,
             vcpus,
             arch,
             boot_info,
@@ -141,6 +211,57 @@ impl Vmm {
                     if let Some(irq) = self.serial_irq {
                         let _ = self.vm.set_irq_line(irq, true);
                         let _ = self.vm.set_irq_line(irq, false);
+                    }
+                }
+            }
+
+            // Tick the PIT and check for timer interrupts
+            if let Ok(mut pit) = self.pit.lock() {
+                if pit.tick() {
+                    // Timer fired - raise IRQ 0 via the PIC
+                    if let Ok(mut pic) = self.pic.lock() {
+                        pic.set_irq(0, true);
+                    }
+                }
+            }
+
+            // Tick the LAPIC timer and check for timer interrupts
+            {
+                let vcpu = self
+                    .vcpus
+                    .get_mut(0)
+                    .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
+
+                if let Ok(mut lapic) = self.lapic.lock() {
+                    if let Some(vector) = lapic.tick() {
+                        // LAPIC timer interrupt - inject directly if possible
+                        if vcpu.can_inject_interrupt() {
+                            if vcpu.inject_interrupt(vector).unwrap_or(false) {
+                                lapic.clear_timer_pending();
+                            }
+                        }
+                    } else if lapic.has_pending_timer() && vcpu.can_inject_interrupt() {
+                        // Previously pending timer interrupt
+                        let vector = lapic.timer_vector();
+                        if vcpu.inject_interrupt(vector).unwrap_or(false) {
+                            lapic.clear_timer_pending();
+                        }
+                    }
+                }
+            }
+
+            // Check for pending PIC interrupts and inject them
+            {
+                let vcpu = self
+                    .vcpus
+                    .get_mut(0)
+                    .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
+
+                if vcpu.can_inject_interrupt() {
+                    if let Ok(mut pic) = self.pic.lock() {
+                        if let Some(vector) = pic.get_pending_vector() {
+                            let _ = vcpu.inject_interrupt(vector);
+                        }
                     }
                 }
             }

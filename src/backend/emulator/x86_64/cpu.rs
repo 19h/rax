@@ -1265,6 +1265,14 @@ impl X86_64Vcpu {
 impl VCpu for X86_64Vcpu {
     fn run(&mut self) -> Result<VcpuExit> {
         loop {
+            // Check for pending LAPIC timer interrupts
+            if let Some(vector) = self.mmu.tick_lapic_timer() {
+                if self.can_inject_interrupt() {
+                    let _ = self.inject_interrupt(vector);
+                    self.halted = false; // Wake up from HLT
+                }
+            }
+
             if self.halted {
                 return Ok(VcpuExit::Hlt);
             }
@@ -1351,5 +1359,27 @@ impl VCpu for X86_64Vcpu {
 
     fn id(&self) -> u32 {
         self.id
+    }
+
+    fn can_inject_interrupt(&self) -> bool {
+        // Check if interrupts are enabled (IF flag in RFLAGS)
+        let rflags = self.compute_materialized_rflags();
+        (rflags & flags::bits::IF) != 0
+    }
+
+    fn inject_interrupt(&mut self, vector: u8) -> Result<bool> {
+        // Check if interrupts are enabled
+        if !self.can_inject_interrupt() {
+            return Ok(false);
+        }
+
+        // Inject the external interrupt
+        // External interrupts don't push an error code
+        self.inject_exception(vector, None)?;
+
+        // Clear the halted state if we were halted
+        self.halted = false;
+
+        Ok(true)
     }
 }

@@ -1,11 +1,233 @@
 //! Memory Management Unit - page table translation with TLB caching.
 
+use std::cell::RefCell;
 use std::sync::Arc;
+use std::time::Instant;
 
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
 use crate::cpu::SystemRegisters;
 use crate::error::{Error, Result};
+
+// LAPIC constants
+const LAPIC_BASE: u64 = 0xFEE00000;
+const LAPIC_SIZE: u64 = 0x1000;
+const LAPIC_ID: u64 = 0x020;
+const LAPIC_VERSION: u64 = 0x030;
+const LAPIC_TPR: u64 = 0x080;
+const LAPIC_EOI: u64 = 0x0B0;
+const LAPIC_LDR: u64 = 0x0D0;
+const LAPIC_DFR: u64 = 0x0E0;
+const LAPIC_SVR: u64 = 0x0F0;
+const LAPIC_ISR_BASE: u64 = 0x100;
+const LAPIC_TMR_BASE: u64 = 0x180;
+const LAPIC_IRR_BASE: u64 = 0x200;
+const LAPIC_ESR: u64 = 0x280;
+const LAPIC_ICR_LOW: u64 = 0x300;
+const LAPIC_ICR_HIGH: u64 = 0x310;
+const LAPIC_LVT_TIMER: u64 = 0x320;
+const LAPIC_LVT_LINT0: u64 = 0x350;
+const LAPIC_LVT_LINT1: u64 = 0x360;
+const LAPIC_LVT_ERROR: u64 = 0x370;
+const LAPIC_TIMER_ICR: u64 = 0x380;
+const LAPIC_TIMER_CCR: u64 = 0x390;
+const LAPIC_TIMER_DCR: u64 = 0x3E0;
+
+const LVT_MASK: u32 = 1 << 16;
+const SVR_APIC_ENABLED: u32 = 1 << 8;
+
+/// Inline LAPIC state for emulator
+#[derive(Clone)]
+struct InlineLapic {
+    id: u32,
+    version: u32,
+    tpr: u32,
+    ldr: u32,
+    dfr: u32,
+    svr: u32,
+    isr: [u32; 8],
+    tmr: [u32; 8],
+    irr: [u32; 8],
+    esr: u32,
+    icr: u64,
+    lvt_timer: u32,
+    lvt_lint0: u32,
+    lvt_lint1: u32,
+    lvt_error: u32,
+    timer_initial_count: u32,
+    timer_divide_config: u32,
+    timer_start: Option<Instant>,
+}
+
+impl InlineLapic {
+    fn new() -> Self {
+        InlineLapic {
+            id: 0,
+            version: 0x00050014, // Modern APIC
+            tpr: 0,
+            ldr: 0,
+            dfr: 0xFFFFFFFF,
+            svr: 0xFF, // Disabled initially
+            isr: [0; 8],
+            tmr: [0; 8],
+            irr: [0; 8],
+            esr: 0,
+            icr: 0,
+            lvt_timer: LVT_MASK,
+            lvt_lint0: LVT_MASK,
+            lvt_lint1: LVT_MASK,
+            lvt_error: LVT_MASK,
+            timer_initial_count: 0,
+            timer_divide_config: 0,
+            timer_start: None,
+        }
+    }
+
+    fn timer_divisor(&self) -> u32 {
+        let bits = (self.timer_divide_config & 0x3) | ((self.timer_divide_config >> 1) & 0x4);
+        match bits {
+            0b000 => 2, 0b001 => 4, 0b010 => 8, 0b011 => 16,
+            0b100 => 32, 0b101 => 64, 0b110 => 128, 0b111 => 1,
+            _ => 1,
+        }
+    }
+
+    fn read(&self, offset: u64) -> u32 {
+        match offset {
+            LAPIC_ID => self.id,
+            LAPIC_VERSION => self.version,
+            LAPIC_TPR => self.tpr,
+            LAPIC_LDR => self.ldr,
+            LAPIC_DFR => self.dfr,
+            LAPIC_SVR => self.svr,
+            o if o >= LAPIC_ISR_BASE && o < LAPIC_ISR_BASE + 0x80 => {
+                let idx = ((o - LAPIC_ISR_BASE) / 0x10) as usize;
+                if idx < 8 { self.isr[idx] } else { 0 }
+            }
+            o if o >= LAPIC_TMR_BASE && o < LAPIC_TMR_BASE + 0x80 => {
+                let idx = ((o - LAPIC_TMR_BASE) / 0x10) as usize;
+                if idx < 8 { self.tmr[idx] } else { 0 }
+            }
+            o if o >= LAPIC_IRR_BASE && o < LAPIC_IRR_BASE + 0x80 => {
+                let idx = ((o - LAPIC_IRR_BASE) / 0x10) as usize;
+                if idx < 8 { self.irr[idx] } else { 0 }
+            }
+            LAPIC_ESR => self.esr,
+            LAPIC_ICR_LOW => self.icr as u32,
+            LAPIC_ICR_HIGH => (self.icr >> 32) as u32,
+            LAPIC_LVT_TIMER => self.lvt_timer,
+            LAPIC_LVT_LINT0 => self.lvt_lint0,
+            LAPIC_LVT_LINT1 => self.lvt_lint1,
+            LAPIC_LVT_ERROR => self.lvt_error,
+            LAPIC_TIMER_ICR => self.timer_initial_count,
+            LAPIC_TIMER_CCR => {
+                // Compute current count based on elapsed time
+                if self.timer_initial_count == 0 || self.timer_start.is_none() {
+                    return 0;
+                }
+                let start = self.timer_start.unwrap();
+                let elapsed = start.elapsed();
+                let divisor = self.timer_divisor() as u64;
+                let ticks_per_sec = 1_000_000_000u64 / divisor;
+                let elapsed_ticks = (elapsed.as_nanos() as u64 * ticks_per_sec) / 1_000_000_000;
+                let initial = self.timer_initial_count as u64;
+                if elapsed_ticks >= initial {
+                    0
+                } else {
+                    (initial - elapsed_ticks) as u32
+                }
+            }
+            LAPIC_TIMER_DCR => self.timer_divide_config,
+            _ => 0,
+        }
+    }
+
+    fn write(&mut self, offset: u64, value: u32) {
+        match offset {
+            LAPIC_ID => self.id = value & 0xFF000000,
+            LAPIC_TPR => self.tpr = value & 0xFF,
+            LAPIC_EOI => {
+                // Clear highest priority in-service bit
+                for i in (0..8).rev() {
+                    if self.isr[i] != 0 {
+                        for bit in (0..32).rev() {
+                            if self.isr[i] & (1 << bit) != 0 {
+                                self.isr[i] &= !(1 << bit);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            LAPIC_LDR => self.ldr = value,
+            LAPIC_DFR => self.dfr = value,
+            LAPIC_SVR => self.svr = value,
+            LAPIC_ESR => self.esr = 0,
+            LAPIC_ICR_LOW => self.icr = (self.icr & 0xFFFFFFFF00000000) | (value as u64),
+            LAPIC_ICR_HIGH => self.icr = (self.icr & 0x00000000FFFFFFFF) | ((value as u64) << 32),
+            LAPIC_LVT_TIMER => self.lvt_timer = value,
+            LAPIC_LVT_LINT0 => self.lvt_lint0 = value,
+            LAPIC_LVT_LINT1 => self.lvt_lint1 = value,
+            LAPIC_LVT_ERROR => self.lvt_error = value,
+            LAPIC_TIMER_ICR => {
+                self.timer_initial_count = value;
+                if value > 0 {
+                    self.timer_start = Some(Instant::now());
+                } else {
+                    self.timer_start = None;
+                }
+            }
+            LAPIC_TIMER_DCR => self.timer_divide_config = value & 0xB,
+            _ => {}
+        }
+    }
+
+    fn is_enabled(&self) -> bool {
+        (self.svr & SVR_APIC_ENABLED) != 0
+    }
+
+    /// Check if timer interrupt should fire and return vector if so
+    fn tick_timer(&mut self) -> Option<u8> {
+        if !self.is_enabled() || self.timer_initial_count == 0 {
+            return None;
+        }
+        // Check if timer is masked
+        if (self.lvt_timer & LVT_MASK) != 0 {
+            return None;
+        }
+        let Some(start) = self.timer_start else {
+            return None;
+        };
+
+        let elapsed = start.elapsed();
+        let divisor = self.timer_divisor() as u64;
+        let ticks_per_sec = 1_000_000_000u64 / divisor;
+        let elapsed_ticks = (elapsed.as_nanos() as u64 * ticks_per_sec) / 1_000_000_000;
+        let initial = self.timer_initial_count as u64;
+
+        let mode = (self.lvt_timer >> 17) & 0x3; // Timer mode bits
+        let vector = (self.lvt_timer & 0xFF) as u8;
+
+        match mode {
+            0 => {
+                // One-shot: fire once when count reaches 0
+                if elapsed_ticks >= initial {
+                    self.timer_start = None; // Stop timer
+                    return Some(vector);
+                }
+            }
+            1 => {
+                // Periodic: fire and restart
+                if elapsed_ticks >= initial {
+                    self.timer_start = Some(Instant::now());
+                    return Some(vector);
+                }
+            }
+            _ => {}
+        }
+        None
+    }
+}
 
 /// Page table entry flags.
 #[allow(dead_code)]
@@ -92,6 +314,9 @@ pub struct Mmu {
     /// Used for self-modifying code detection: writes to code pages
     /// require decode cache invalidation.
     code_page_bitmap: Box<[u8; CODE_PAGE_BITMAP_SIZE]>,
+    /// Inline LAPIC for emulator (handles MMIO to 0xFEE00000)
+    /// Uses RefCell for interior mutability since read_phys/write_phys take &self
+    lapic: RefCell<InlineLapic>,
 }
 
 impl Mmu {
@@ -101,7 +326,19 @@ impl Mmu {
             tlb: [TlbEntry::default(); TLB_SIZE],
             cached_cr3: 0,
             code_page_bitmap: Box::new([0u8; CODE_PAGE_BITMAP_SIZE]),
+            lapic: RefCell::new(InlineLapic::new()),
         }
+    }
+
+    /// Check if an address is in the LAPIC MMIO range
+    #[inline(always)]
+    fn is_lapic_addr(paddr: u64) -> bool {
+        paddr >= LAPIC_BASE && paddr < LAPIC_BASE + LAPIC_SIZE
+    }
+
+    /// Tick the inline LAPIC timer and return pending interrupt vector if any
+    pub fn tick_lapic_timer(&self) -> Option<u8> {
+        self.lapic.borrow_mut().tick_timer()
     }
 
     // =========================================================================
@@ -349,6 +586,46 @@ impl Mmu {
     /// Read bytes from guest memory (physical address).
     #[inline(always)]
     pub fn read_phys(&self, paddr: u64, buf: &mut [u8]) -> Result<()> {
+        // Handle LAPIC MMIO
+        if Self::is_lapic_addr(paddr) {
+            let offset = paddr - LAPIC_BASE;
+            let aligned_offset = offset & !0x3;
+            let value = self.lapic.borrow().read(aligned_offset);
+            // LAPIC reads are always 32-bit aligned
+            match buf.len() {
+                1 => {
+                    let byte_offset = (offset & 0x3) as usize;
+                    buf[0] = ((value >> (byte_offset * 8)) & 0xFF) as u8;
+                }
+                2 => {
+                    let byte_offset = (offset & 0x2) as usize;
+                    let word = ((value >> (byte_offset * 8)) & 0xFFFF) as u16;
+                    buf[0] = (word & 0xFF) as u8;
+                    buf[1] = ((word >> 8) & 0xFF) as u8;
+                }
+                4 => {
+                    buf[0] = (value & 0xFF) as u8;
+                    buf[1] = ((value >> 8) & 0xFF) as u8;
+                    buf[2] = ((value >> 16) & 0xFF) as u8;
+                    buf[3] = ((value >> 24) & 0xFF) as u8;
+                }
+                8 => {
+                    // 64-bit read: read two consecutive 32-bit registers
+                    buf[0] = (value & 0xFF) as u8;
+                    buf[1] = ((value >> 8) & 0xFF) as u8;
+                    buf[2] = ((value >> 16) & 0xFF) as u8;
+                    buf[3] = ((value >> 24) & 0xFF) as u8;
+                    let value2 = self.lapic.borrow().read(aligned_offset + 0x10);
+                    buf[4] = (value2 & 0xFF) as u8;
+                    buf[5] = ((value2 >> 8) & 0xFF) as u8;
+                    buf[6] = ((value2 >> 16) & 0xFF) as u8;
+                    buf[7] = ((value2 >> 24) & 0xFF) as u8;
+                }
+                _ => buf.fill(0),
+            }
+            return Ok(());
+        }
+
         self.memory
             .read_slice(buf, GuestAddress(paddr))
             .map_err(|e| Error::Emulator(format!("failed to read at {:#x}: {}", paddr, e)))
@@ -357,7 +634,39 @@ impl Mmu {
     /// Write bytes to guest memory (physical address).
     #[inline(always)]
     pub fn write_phys(&self, paddr: u64, buf: &[u8]) -> Result<()> {
-        // Debug: DISABLED - was watching PML4 entries
+        // Handle LAPIC MMIO
+        if Self::is_lapic_addr(paddr) {
+            let offset = paddr - LAPIC_BASE;
+            let aligned_offset = offset & !0x3;
+            let value = match buf.len() {
+                1 => buf[0] as u32,
+                2 => (buf[0] as u32) | ((buf[1] as u32) << 8),
+                4 => {
+                    (buf[0] as u32)
+                        | ((buf[1] as u32) << 8)
+                        | ((buf[2] as u32) << 16)
+                        | ((buf[3] as u32) << 24)
+                }
+                8 => {
+                    // 64-bit write: write two consecutive 32-bit registers
+                    let lo = (buf[0] as u32)
+                        | ((buf[1] as u32) << 8)
+                        | ((buf[2] as u32) << 16)
+                        | ((buf[3] as u32) << 24);
+                    let hi = (buf[4] as u32)
+                        | ((buf[5] as u32) << 8)
+                        | ((buf[6] as u32) << 16)
+                        | ((buf[7] as u32) << 24);
+                    self.lapic.borrow_mut().write(aligned_offset, lo);
+                    self.lapic.borrow_mut().write(aligned_offset + 0x10, hi);
+                    return Ok(());
+                }
+                _ => return Ok(()),
+            };
+            self.lapic.borrow_mut().write(aligned_offset, value);
+            return Ok(());
+        }
+
         self.memory
             .write_slice(buf, GuestAddress(paddr))
             .map_err(|e| Error::Emulator(format!("failed to write at {:#x}: {}", paddr, e)))
