@@ -57,6 +57,8 @@ struct InlineLapic {
     timer_initial_count: u32,
     timer_divide_config: u32,
     timer_start: Option<Instant>,
+    /// Pending timer interrupt vector (not yet delivered)
+    pending_timer_vector: Option<u8>,
 }
 
 impl InlineLapic {
@@ -80,6 +82,7 @@ impl InlineLapic {
             timer_initial_count: 0,
             timer_divide_config: 0,
             timer_start: None,
+            pending_timer_vector: None,
         }
     }
 
@@ -127,10 +130,11 @@ impl InlineLapic {
                 }
                 let start = self.timer_start.unwrap();
                 let elapsed = start.elapsed();
-                let divisor = self.timer_divisor() as u64;
-                let ticks_per_sec = 1_000_000_000u64 / divisor;
-                let elapsed_ticks = (elapsed.as_nanos() as u64 * ticks_per_sec) / 1_000_000_000;
-                let initial = self.timer_initial_count as u64;
+                let divisor = self.timer_divisor() as u128;
+                // Use u128 to avoid overflow: elapsed_ticks = elapsed_ns / divisor
+                // The APIC timer runs at bus_clock / divisor, assume ~1GHz bus clock
+                let elapsed_ticks = elapsed.as_nanos() / divisor;
+                let initial = self.timer_initial_count as u128;
                 if elapsed_ticks >= initial {
                     0
                 } else {
@@ -186,8 +190,29 @@ impl InlineLapic {
         (self.svr & SVR_APIC_ENABLED) != 0
     }
 
-    /// Check if timer interrupt should fire and return vector if so
+    /// Check if there's a pending interrupt that hasn't been delivered yet
+    fn has_pending(&self) -> bool {
+        self.pending_timer_vector.is_some()
+    }
+
+    /// Get pending interrupt vector without clearing it
+    fn get_pending(&self) -> Option<u8> {
+        self.pending_timer_vector
+    }
+
+    /// Clear the pending interrupt (called after successful injection)
+    fn clear_pending(&mut self) {
+        self.pending_timer_vector = None;
+    }
+
+    /// Check if timer interrupt should fire and return vector if so.
+    /// If an interrupt fires but can't be delivered, it becomes pending.
     fn tick_timer(&mut self) -> Option<u8> {
+        // If there's already a pending interrupt, return it
+        if let Some(vector) = self.pending_timer_vector {
+            return Some(vector);
+        }
+
         if !self.is_enabled() || self.timer_initial_count == 0 {
             return None;
         }
@@ -200,10 +225,10 @@ impl InlineLapic {
         };
 
         let elapsed = start.elapsed();
-        let divisor = self.timer_divisor() as u64;
-        let ticks_per_sec = 1_000_000_000u64 / divisor;
-        let elapsed_ticks = (elapsed.as_nanos() as u64 * ticks_per_sec) / 1_000_000_000;
-        let initial = self.timer_initial_count as u64;
+        let divisor = self.timer_divisor() as u128;
+        // Use u128 to avoid overflow: elapsed_ticks = elapsed_ns / divisor
+        let elapsed_ticks = elapsed.as_nanos() / divisor;
+        let initial = self.timer_initial_count as u128;
 
         let mode = (self.lvt_timer >> 17) & 0x3; // Timer mode bits
         let vector = (self.lvt_timer & 0xFF) as u8;
@@ -213,6 +238,7 @@ impl InlineLapic {
                 // One-shot: fire once when count reaches 0
                 if elapsed_ticks >= initial {
                     self.timer_start = None; // Stop timer
+                    self.pending_timer_vector = Some(vector);
                     return Some(vector);
                 }
             }
@@ -220,6 +246,7 @@ impl InlineLapic {
                 // Periodic: fire and restart
                 if elapsed_ticks >= initial {
                     self.timer_start = Some(Instant::now());
+                    self.pending_timer_vector = Some(vector);
                     return Some(vector);
                 }
             }
@@ -339,6 +366,16 @@ impl Mmu {
     /// Tick the inline LAPIC timer and return pending interrupt vector if any
     pub fn tick_lapic_timer(&self) -> Option<u8> {
         self.lapic.borrow_mut().tick_timer()
+    }
+
+    /// Clear pending LAPIC timer interrupt (call after successful injection)
+    pub fn clear_lapic_pending(&self) {
+        self.lapic.borrow_mut().clear_pending()
+    }
+
+    /// Check if there's a pending LAPIC timer interrupt
+    pub fn has_lapic_pending(&self) -> bool {
+        self.lapic.borrow().has_pending()
     }
 
     // =========================================================================
