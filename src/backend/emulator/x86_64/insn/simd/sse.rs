@@ -4,6 +4,7 @@ use crate::cpu::VcpuExit;
 use crate::error::{Error, Result};
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
+use super::super::super::simd_native;
 
 // =============================================================================
 // Packed Move Instructions (MOVUPS, MOVAPS, MOVSS, MOVSD)
@@ -260,24 +261,32 @@ pub fn psub_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, opcode: u8) -> 
 
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
-    let (src_lo, src_hi) = if is_memory {
-        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    let src: simd_native::Xmm = if is_memory {
+        [vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?]
     } else {
-        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+        vcpu.regs.xmm[rm as usize]
     };
 
-    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
-    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
-
-    let (res_lo, res_hi) = match opcode {
-        0xD8 => (sub_u8_saturate(dst_lo, src_lo), sub_u8_saturate(dst_hi, src_hi)), // PSUBUSB
-        0xD9 => (sub_u16_saturate(dst_lo, src_lo), sub_u16_saturate(dst_hi, src_hi)), // PSUBUSW
-        0xE8 => (sub_i8_saturate(dst_lo, src_lo), sub_i8_saturate(dst_hi, src_hi)), // PSUBSB
-        0xE9 => (sub_i16_saturate(dst_lo, src_lo), sub_i16_saturate(dst_hi, src_hi)), // PSUBSW
-        0xF8 => (sub_u8_wrap(dst_lo, src_lo), sub_u8_wrap(dst_hi, src_hi)), // PSUBB
-        0xF9 => (sub_u16_wrap(dst_lo, src_lo), sub_u16_wrap(dst_hi, src_hi)), // PSUBW
-        0xFA => (sub_u32_wrap(dst_lo, src_lo), sub_u32_wrap(dst_hi, src_hi)), // PSUBD
-        0xFB => (dst_lo.wrapping_sub(src_lo), dst_hi.wrapping_sub(src_hi)), // PSUBQ
+    match opcode {
+        // Wrapping variants - use native SIMD
+        0xF8 => simd_native::psubb_xmm(&mut vcpu.regs.xmm[xmm_dst], &src), // PSUBB
+        0xF9 => simd_native::psubw_xmm(&mut vcpu.regs.xmm[xmm_dst], &src), // PSUBW
+        0xFA => simd_native::psubd_xmm(&mut vcpu.regs.xmm[xmm_dst], &src), // PSUBD
+        0xFB => simd_native::psubq_xmm(&mut vcpu.regs.xmm[xmm_dst], &src), // PSUBQ
+        // Saturating variants - keep scalar for now (no native support)
+        0xD8 | 0xD9 | 0xE8 | 0xE9 => {
+            let dst_lo = vcpu.regs.xmm[xmm_dst][0];
+            let dst_hi = vcpu.regs.xmm[xmm_dst][1];
+            let (res_lo, res_hi) = match opcode {
+                0xD8 => (sub_u8_saturate(dst_lo, src[0]), sub_u8_saturate(dst_hi, src[1])), // PSUBUSB
+                0xD9 => (sub_u16_saturate(dst_lo, src[0]), sub_u16_saturate(dst_hi, src[1])), // PSUBUSW
+                0xE8 => (sub_i8_saturate(dst_lo, src[0]), sub_i8_saturate(dst_hi, src[1])), // PSUBSB
+                0xE9 => (sub_i16_saturate(dst_lo, src[0]), sub_i16_saturate(dst_hi, src[1])), // PSUBSW
+                _ => unreachable!(),
+            };
+            vcpu.regs.xmm[xmm_dst][0] = res_lo;
+            vcpu.regs.xmm[xmm_dst][1] = res_hi;
+        }
         _ => {
             return Err(Error::Emulator(format!(
                 "unimplemented PSUB opcode {:#x} at RIP={:#x}",
@@ -286,8 +295,6 @@ pub fn psub_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, opcode: u8) -> 
         }
     };
 
-    vcpu.regs.xmm[xmm_dst][0] = res_lo;
-    vcpu.regs.xmm[xmm_dst][1] = res_hi;
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -414,17 +421,13 @@ pub fn paddb_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
 
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
-    let (src_lo, src_hi) = if is_memory {
-        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    let src: simd_native::Xmm = if is_memory {
+        [vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?]
     } else {
-        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+        vcpu.regs.xmm[rm as usize]
     };
 
-    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
-    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
-
-    vcpu.regs.xmm[xmm_dst][0] = add_u8_wrap(dst_lo, src_lo);
-    vcpu.regs.xmm[xmm_dst][1] = add_u8_wrap(dst_hi, src_hi);
+    simd_native::paddb_xmm(&mut vcpu.regs.xmm[xmm_dst], &src);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -451,17 +454,13 @@ pub fn paddw_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
 
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
-    let (src_lo, src_hi) = if is_memory {
-        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    let src: simd_native::Xmm = if is_memory {
+        [vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?]
     } else {
-        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+        vcpu.regs.xmm[rm as usize]
     };
 
-    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
-    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
-
-    vcpu.regs.xmm[xmm_dst][0] = add_u16_wrap(dst_lo, src_lo);
-    vcpu.regs.xmm[xmm_dst][1] = add_u16_wrap(dst_hi, src_hi);
+    simd_native::paddw_xmm(&mut vcpu.regs.xmm[xmm_dst], &src);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -488,17 +487,13 @@ pub fn paddd_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
 
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
-    let (src_lo, src_hi) = if is_memory {
-        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    let src: simd_native::Xmm = if is_memory {
+        [vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?]
     } else {
-        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+        vcpu.regs.xmm[rm as usize]
     };
 
-    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
-    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
-
-    vcpu.regs.xmm[xmm_dst][0] = add_u32_wrap(dst_lo, src_lo);
-    vcpu.regs.xmm[xmm_dst][1] = add_u32_wrap(dst_hi, src_hi);
+    simd_native::paddd_xmm(&mut vcpu.regs.xmm[xmm_dst], &src);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -525,17 +520,13 @@ pub fn paddq_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
 
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
-    let (src_lo, src_hi) = if is_memory {
-        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    let src: simd_native::Xmm = if is_memory {
+        [vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?]
     } else {
-        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+        vcpu.regs.xmm[rm as usize]
     };
 
-    let dst_lo = vcpu.regs.xmm[xmm_dst][0];
-    let dst_hi = vcpu.regs.xmm[xmm_dst][1];
-
-    vcpu.regs.xmm[xmm_dst][0] = dst_lo.wrapping_add(src_lo);
-    vcpu.regs.xmm[xmm_dst][1] = dst_hi.wrapping_add(src_hi);
+    simd_native::paddq_xmm(&mut vcpu.regs.xmm[xmm_dst], &src);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -795,14 +786,13 @@ pub fn pand(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
 
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
-    let (src_lo, src_hi) = if is_memory {
-        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    let src: simd_native::Xmm = if is_memory {
+        [vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?]
     } else {
-        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+        vcpu.regs.xmm[rm as usize]
     };
 
-    vcpu.regs.xmm[xmm_dst][0] &= src_lo;
-    vcpu.regs.xmm[xmm_dst][1] &= src_hi;
+    simd_native::pand_xmm(&mut vcpu.regs.xmm[xmm_dst], &src);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -828,14 +818,13 @@ pub fn pandn(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
 
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
-    let (src_lo, src_hi) = if is_memory {
-        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    let src: simd_native::Xmm = if is_memory {
+        [vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?]
     } else {
-        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+        vcpu.regs.xmm[rm as usize]
     };
 
-    vcpu.regs.xmm[xmm_dst][0] = !vcpu.regs.xmm[xmm_dst][0] & src_lo;
-    vcpu.regs.xmm[xmm_dst][1] = !vcpu.regs.xmm[xmm_dst][1] & src_hi;
+    simd_native::pandn_xmm(&mut vcpu.regs.xmm[xmm_dst], &src);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -861,14 +850,13 @@ pub fn por(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let xmm_dst = reg as usize;
-    let (src_lo, src_hi) = if is_memory {
-        (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+    let src: simd_native::Xmm = if is_memory {
+        [vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?]
     } else {
-        (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+        vcpu.regs.xmm[rm as usize]
     };
 
-    vcpu.regs.xmm[xmm_dst][0] |= src_lo;
-    vcpu.regs.xmm[xmm_dst][1] |= src_hi;
+    simd_native::por_xmm(&mut vcpu.regs.xmm[xmm_dst], &src);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
