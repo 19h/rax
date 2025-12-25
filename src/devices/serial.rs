@@ -30,12 +30,11 @@ enum CprFilterState {
     InNumber,
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, PartialEq)]
 enum CpqFilterState {
     Normal,
-    GotEsc,
-    GotBracket,
-    Got6,
+    /// Buffering potential CPQ sequence bytes
+    Buffering(Vec<u8>),
 }
 
 pub struct Serial16550 {
@@ -89,42 +88,50 @@ impl Serial16550 {
         self.base_mmio = Some(base);
     }
 
-    /// Filter cursor position query (ESC[6n) on output
-    /// Returns true if byte should be suppressed
-    fn filter_cpq(&mut self, byte: u8) -> bool {
-        match (self.cpq_state, byte) {
-            (CpqFilterState::Normal, 0x1b) => {
-                self.cpq_state = CpqFilterState::GotEsc;
-                false // don't suppress yet, might not be CPQ
+    /// Filter cursor position query (ESC[6n) on output.
+    /// Returns None if byte should be suppressed (part of CPQ),
+    /// or Some(bytes) with the bytes that should be output.
+    fn filter_cpq(&mut self, byte: u8) -> Option<Vec<u8>> {
+        let state = std::mem::replace(&mut self.cpq_state, CpqFilterState::Normal);
+        match state {
+            CpqFilterState::Normal => {
+                if byte == 0x1b {
+                    // Start buffering potential CPQ
+                    self.cpq_state = CpqFilterState::Buffering(vec![byte]);
+                    None
+                } else {
+                    Some(vec![byte])
+                }
             }
-            (CpqFilterState::GotEsc, b'[') => {
-                self.cpq_state = CpqFilterState::GotBracket;
-                false
+            CpqFilterState::Buffering(mut buf) => {
+                buf.push(byte);
+                // Check if this matches the CPQ pattern: ESC [ 6 n
+                match buf.as_slice() {
+                    [0x1b] => {
+                        // Just ESC, keep buffering
+                        self.cpq_state = CpqFilterState::Buffering(buf);
+                        None
+                    }
+                    [0x1b, b'['] => {
+                        // ESC [, keep buffering
+                        self.cpq_state = CpqFilterState::Buffering(buf);
+                        None
+                    }
+                    [0x1b, b'[', b'6'] => {
+                        // ESC [ 6, keep buffering
+                        self.cpq_state = CpqFilterState::Buffering(buf);
+                        None
+                    }
+                    [0x1b, b'[', b'6', b'n'] => {
+                        // Complete CPQ sequence - suppress entire thing
+                        None
+                    }
+                    _ => {
+                        // Not a CPQ sequence, output buffered bytes
+                        Some(buf)
+                    }
+                }
             }
-            (CpqFilterState::GotEsc, _) => {
-                self.cpq_state = CpqFilterState::Normal;
-                false
-            }
-            (CpqFilterState::GotBracket, b'6') => {
-                self.cpq_state = CpqFilterState::Got6;
-                false
-            }
-            (CpqFilterState::GotBracket, _) => {
-                self.cpq_state = CpqFilterState::Normal;
-                false
-            }
-            (CpqFilterState::Got6, b'n') => {
-                // Complete CPQ sequence - suppress it
-                // We already output ESC [ 6, so we can't take them back
-                // But we suppress the 'n' to break the sequence
-                self.cpq_state = CpqFilterState::Normal;
-                true // suppress 'n'
-            }
-            (CpqFilterState::Got6, _) => {
-                self.cpq_state = CpqFilterState::Normal;
-                false
-            }
-            (CpqFilterState::Normal, _) => false,
         }
     }
 
@@ -262,8 +269,8 @@ impl Serial16550 {
                     self.divisor = (self.divisor & 0xff00) | value as u16;
                 } else {
                     // Filter cursor position queries (ESC[6n) to prevent terminal responses
-                    if !self.filter_cpq(value) {
-                        let _ = io::stdout().write_all(&[value]);
+                    if let Some(bytes) = self.filter_cpq(value) {
+                        let _ = io::stdout().write_all(&bytes);
                         let _ = io::stdout().flush();
                     }
                     // Set THRE interrupt pending (transmitter is immediately empty)
