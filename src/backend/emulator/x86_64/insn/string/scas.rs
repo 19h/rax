@@ -21,6 +21,7 @@ pub fn scasb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         let al = vcpu.regs.rax & 0xFF;
         let result = al.wrapping_sub(val);
         flags::update_flags_sub(&mut vcpu.regs.rflags, al, val, result, 1);
+        vcpu.clear_lazy_flags();
         if vcpu.regs.rflags & flags::bits::DF == 0 {
             vcpu.regs.rdi = vcpu.regs.rdi.wrapping_add(1);
         } else {
@@ -60,6 +61,7 @@ pub fn scas(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
         let rax = vcpu.get_reg(0, op_size);
         let result = rax.wrapping_sub(val);
         flags::update_flags_sub(&mut vcpu.regs.rflags, rax, val, result, op_size);
+        vcpu.clear_lazy_flags();
         if vcpu.regs.rflags & flags::bits::DF == 0 {
             vcpu.regs.rdi = vcpu.regs.rdi.wrapping_add(delta);
         } else {

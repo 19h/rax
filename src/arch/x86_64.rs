@@ -98,16 +98,14 @@ impl X86_64Arch {
             let elf = GoblinElf::parse(&kernel_data)
                 .map_err(|e| Error::KernelLoad(format!("failed to parse ELF: {}", e)))?;
 
-            // Find the first LOAD segment's physical address - this is where startup_64 is
-            let phys_entry = elf.program_headers.iter()
-                .find(|ph| ph.p_type == goblin::elf::program_header::PT_LOAD)
-                .map(|ph| ph.p_paddr)
-                .ok_or_else(|| Error::KernelLoad("no LOAD segment in ELF".to_string()))?;
+            // For vmlinux, the ELF entry point (e_entry) is typically a physical address
+            // that points directly to startup_64 (the 64-bit entry point)
+            let phys_entry = elf.header.e_entry;
 
             info!(
                 elf_entry = format!("{:#x}", elf.header.e_entry),
                 phys_entry = format!("{:#x}", phys_entry),
-                "ELF header parsed"
+                "ELF header parsed, using e_entry as physical entry point"
             );
 
             // Load the ELF into memory
@@ -511,6 +509,14 @@ impl Arch for X86_64Arch {
             // ELF kernel (vmlinux) - simpler boot process
             // The entry point is directly from the ELF header
             let mut params = boot_params::default();
+
+            // Configure VGA text mode console (80x25, mode 3)
+            params.screen_info.orig_video_mode = 3;      // Standard VGA text mode
+            params.screen_info.orig_video_cols = 80;     // 80 columns
+            params.screen_info.orig_video_lines = 25;    // 25 rows
+            params.screen_info.orig_video_isVGA = 1;     // VGA detected
+            params.screen_info.orig_video_points = 16;   // 16 scanlines per char
+
             params.hdr.type_of_loader = 0xff;
             params.hdr.loadflags = 0x1 | 0x40; // LOADED_HIGH + KEEP_SEGMENTS
             params.hdr.cmd_line_ptr = CMDLINE_ADDR as u32;
@@ -581,6 +587,14 @@ impl Arch for X86_64Arch {
             );
 
             let mut params = boot_params::default();
+
+            // Configure VGA text mode console (80x25, mode 3)
+            params.screen_info.orig_video_mode = 3;      // Standard VGA text mode
+            params.screen_info.orig_video_cols = 80;     // 80 columns
+            params.screen_info.orig_video_lines = 25;    // 25 rows
+            params.screen_info.orig_video_isVGA = 1;     // VGA detected
+            params.screen_info.orig_video_points = 16;   // 16 scanlines per char
+
             params.hdr = setup_header;
             params.hdr.type_of_loader = 0xff;
             params.hdr.loadflags |= 0x1 | 0x40;
@@ -691,6 +705,18 @@ impl Arch for X86_64Arch {
         };
 
         let sregs = Self::build_sregs();
+
+        info!(
+            rip = format!("{:#x}", regs.rip),
+            rsp = format!("{:#x}", regs.rsp),
+            rsi = format!("{:#x}", regs.rsi),
+            cr0 = format!("{:#x}", sregs.cr0),
+            cr3 = format!("{:#x}", sregs.cr3),
+            cr4 = format!("{:#x}", sregs.cr4),
+            efer = format!("{:#x}", sregs.efer),
+            cs_l = sregs.cs.l,
+            "initial CPU state built"
+        );
 
         Ok(CpuState::X86_64(X86_64CpuState { regs, sregs }))
     }

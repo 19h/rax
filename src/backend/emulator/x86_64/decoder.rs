@@ -51,6 +51,7 @@ impl Decoder {
                 rep_prefix: None,
                 op_size: 4,
                 rip_relative_offset: 0,
+                segment_override: None,
                 evex: None,
             });
         }
@@ -66,6 +67,7 @@ impl Decoder {
             rep_prefix: None,
             op_size: 4,
             rip_relative_offset: 0,
+            segment_override: None,
             evex: None,
         };
 
@@ -80,7 +82,7 @@ impl Decoder {
                 0x40..=0x4F => ctx.rex = Some(b),
                 0xF0 => {} // LOCK - ignore for now
                 0xF2 | 0xF3 => ctx.rep_prefix = Some(b),
-                0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65 => {} // Segment overrides
+                0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65 => ctx.segment_override = Some(b),
                 _ => break,
             }
             ctx.cursor += 1;
@@ -127,6 +129,18 @@ mod tests {
 }
 
 impl X86_64Vcpu {
+    /// Get the segment base address for a segment override prefix.
+    /// In 64-bit mode, only FS and GS have non-zero bases.
+    #[inline]
+    pub(super) fn get_segment_base(&self, segment_override: Option<u8>) -> u64 {
+        match segment_override {
+            Some(0x64) => self.sregs.fs.base, // FS segment
+            Some(0x65) => self.sregs.gs.base, // GS segment
+            // In 64-bit mode, ES/CS/SS/DS bases are treated as 0
+            _ => 0,
+        }
+    }
+
     /// Decode ModR/M byte to get effective address.
     /// Returns (address, bytes_consumed_after_modrm).
     #[inline]
@@ -247,6 +261,10 @@ impl X86_64Vcpu {
             }
             _ => {}
         }
+
+        // Apply segment override (in 64-bit mode, only FS and GS have non-zero bases)
+        let seg_base = self.get_segment_base(ctx.segment_override);
+        addr = addr.wrapping_add(seg_base);
 
         Ok((addr, extra))
     }
@@ -388,6 +406,10 @@ impl X86_64Vcpu {
                 _ => {}
             }
         }
+
+        // Apply segment override (in 64-bit mode, only FS and GS have non-zero bases)
+        let seg_base = self.get_segment_base(ctx.segment_override);
+        addr = addr.wrapping_add(seg_base);
 
         Ok(addr)
     }

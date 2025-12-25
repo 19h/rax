@@ -16,7 +16,8 @@ pub fn jmp_rel8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// JMP rel32 (0xE9)
 pub fn jmp_rel32(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let disp = ctx.consume_u32()? as i32 as i64;
-    vcpu.regs.rip = (vcpu.regs.rip as i64 + ctx.cursor as i64 + disp) as u64;
+    let target = (vcpu.regs.rip as i64 + ctx.cursor as i64 + disp) as u64;
+    vcpu.regs.rip = target;
     Ok(None)
 }
 

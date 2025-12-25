@@ -30,7 +30,7 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
             };
             let imm = ctx.consume_u8()? as u64;
             let result = dst & imm;
-            flags::update_flags_logic(&mut vcpu.regs.rflags, result, 1);
+            vcpu.set_lazy_logic(result, 1);
         }
         2 => {
             // NOT r/m8
@@ -51,6 +51,7 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
                 let result = (val as i8).wrapping_neg() as u8;
                 vcpu.set_reg8(rm, result as u64, has_rex);
                 flags::update_flags_sub(&mut vcpu.regs.rflags, 0, val as u64, result as u64, 1);
+                vcpu.clear_lazy_flags();
             } else {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
@@ -58,6 +59,7 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
                 let result = (val as i8).wrapping_neg() as u8;
                 vcpu.mmu.write_u8(addr, result, &vcpu.sregs)?;
                 flags::update_flags_sub(&mut vcpu.regs.rflags, 0, val as u64, result as u64, 1);
+                vcpu.clear_lazy_flags();
             }
         }
         4 => {
@@ -74,6 +76,7 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
             vcpu.set_reg(0, result as u64, 2);
             let overflow = (result >> 8) != 0;
             flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+            vcpu.clear_lazy_flags();
         }
         5 => {
             // IMUL r/m8 (signed, one-operand)
@@ -89,6 +92,7 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
             vcpu.set_reg(0, result as i16 as u16 as u64, 2);
             let overflow = result != (result as i8 as i16);
             flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+            vcpu.clear_lazy_flags();
         }
         6 => {
             // DIV r/m8 (unsigned)
@@ -166,7 +170,7 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 imm
             };
             let result = dst & imm;
-            flags::update_flags_logic(&mut vcpu.regs.rflags, result, op_size);
+            vcpu.set_lazy_logic(result, op_size);
         }
         2 => {
             // NOT r/m
@@ -193,6 +197,7 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 };
                 vcpu.set_reg(rm, result, op_size);
                 flags::update_flags_sub(&mut vcpu.regs.rflags, 0, val, result, op_size);
+                vcpu.clear_lazy_flags();
             } else {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
@@ -206,6 +211,7 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 };
                 vcpu.write_mem(addr, result, op_size)?;
                 flags::update_flags_sub(&mut vcpu.regs.rflags, 0, val, result, op_size);
+                vcpu.clear_lazy_flags();
             }
         }
         4 => {
@@ -226,6 +232,7 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     vcpu.set_reg(2, ((result >> 16) & 0xFFFF) as u64, 2);
                     let overflow = (result >> 16) != 0;
                     flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+                    vcpu.clear_lazy_flags();
                 }
                 4 => {
                     let result = (vcpu.regs.rax as u32 as u64) * (val as u32 as u64);
@@ -233,6 +240,7 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     vcpu.set_reg(2, ((result >> 32) & 0xFFFFFFFF) as u64, 4);
                     let overflow = (result >> 32) != 0;
                     flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+                    vcpu.clear_lazy_flags();
                 }
                 8 => {
                     let result = (vcpu.regs.rax as u128) * (val as u128);
@@ -240,6 +248,7 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     vcpu.set_reg(2, (result >> 64) as u64, 8);
                     let overflow = (result >> 64) != 0;
                     flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+                    vcpu.clear_lazy_flags();
                 }
                 _ => {}
             }
@@ -261,6 +270,7 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     vcpu.set_reg(2, (result >> 16) as i16 as u16 as u64, 2);
                     let overflow = result as i16 as i32 != result;
                     flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+                    vcpu.clear_lazy_flags();
                 }
                 4 => {
                     let result = (vcpu.regs.rax as i32 as i64) * (val as i32 as i64);
@@ -268,6 +278,7 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     vcpu.set_reg(2, (result >> 32) as u32 as u64, 4);
                     let overflow = result as i32 as i64 != result;
                     flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+                    vcpu.clear_lazy_flags();
                 }
                 8 => {
                     let result = (vcpu.regs.rax as i64 as i128) * (val as i64 as i128);
@@ -275,6 +286,7 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     vcpu.set_reg(2, (result >> 64) as u64, 8);
                     let overflow = result as i64 as i128 != result;
                     flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+                    vcpu.clear_lazy_flags();
                 }
                 _ => {}
             }

@@ -83,6 +83,7 @@ impl X86_64Vcpu {
                 rep_prefix: cached.rep_prefix,
                 op_size: cached.op_size,
                 rip_relative_offset: 0,
+                segment_override: cached.segment_override,
                 evex: None,
             };
             return self.dispatch_threaded(cached.opcode, &mut ctx);
@@ -120,101 +121,22 @@ impl X86_64Vcpu {
             operand_size_override: ctx.operand_size_override,
             address_size_override: ctx.address_size_override,
             rep_prefix: ctx.rep_prefix,
+            segment_override: ctx.segment_override,
         };
 
         self.dispatch_threaded(opcode, &mut ctx)
     }
 
-    /// Threaded dispatch - inlined handlers for common instructions.
-    ///
-    /// The most common instructions are handled inline here to avoid
-    /// function call overhead. Less common instructions fall through
-    /// to the standard dispatch.
+    /// Threaded dispatch - delegates to standard execute for now.
+    /// TODO: Re-enable inlined handlers after fixing mode-aware issues.
     #[inline(always)]
     fn dispatch_threaded(
         &mut self,
         opcode: u8,
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
-        // Fast path for most common instructions (inlined)
-        match opcode {
-            // NOP - extremely common
-            0x90 if ctx.rep_prefix.is_none() => {
-                self.regs.rip += ctx.cursor as u64;
-                Ok(None)
-            }
-
-            // MOV r64, imm64 - very common
-            0xB8..=0xBF => {
-                self.threaded_mov_r_imm(ctx, opcode)
-            }
-
-            // MOV r/m, r and MOV r, r/m - very common
-            0x89 => self.threaded_mov_rm_r(ctx),
-            0x8B => self.threaded_mov_r_rm(ctx),
-
-            // PUSH r64 - common
-            0x50..=0x57 => {
-                self.threaded_push_r64(ctx, opcode)
-            }
-
-            // POP r64 - common
-            0x58..=0x5F => {
-                self.threaded_pop_r64(ctx, opcode)
-            }
-
-            // ADD r/m, r and ADD r, r/m
-            0x01 => self.threaded_add_rm_r(ctx),
-            0x03 => self.threaded_add_r_rm(ctx),
-
-            // SUB r/m, r and SUB r, r/m
-            0x29 => self.threaded_sub_rm_r(ctx),
-            0x2B => self.threaded_sub_r_rm(ctx),
-
-            // CMP r/m, r and CMP r, r/m
-            0x39 => self.threaded_cmp_rm_r(ctx),
-            0x3B => self.threaded_cmp_r_rm(ctx),
-
-            // XOR r/m, r and XOR r, r/m (common for zeroing)
-            0x31 => self.threaded_xor_rm_r(ctx),
-            0x33 => self.threaded_xor_r_rm(ctx),
-
-            // TEST r/m, r
-            0x85 => self.threaded_test_rm_r(ctx),
-
-            // LEA r, m - very common
-            0x8D => self.threaded_lea(ctx),
-
-            // JMP rel8 and rel32
-            0xEB => self.threaded_jmp_rel8(ctx),
-            0xE9 => self.threaded_jmp_rel32(ctx),
-
-            // Jcc rel8 - conditional jumps
-            0x70..=0x7F => self.threaded_jcc_rel8(ctx, opcode & 0x0F),
-
-            // CALL rel32
-            0xE8 => self.threaded_call_rel32(ctx),
-
-            // RET
-            0xC3 => self.threaded_ret(ctx),
-
-            // HLT
-            0xF4 => {
-                self.regs.rip += ctx.cursor as u64;
-                self.halted = true;
-                Ok(Some(VcpuExit::Hlt))
-            }
-
-            // Two-byte opcode escape - delegate to specialized handler
-            0x0F => self.execute_0f(ctx),
-
-            // VEX prefixes
-            0xC4 => self.execute_vex3(ctx),
-            0xC5 => self.execute_vex2(ctx),
-
-            // Fall through to standard dispatch for less common opcodes
-            _ => self.execute(opcode, ctx),
-        }
+        // For now, just use the standard execute to isolate issues
+        self.execute(opcode, ctx)
     }
 
     // =========================================================================

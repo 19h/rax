@@ -7,13 +7,14 @@ use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
 /// CMP r/m8, r8 (0x38)
 pub fn cmp_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let src = vcpu.get_reg(reg, 1) as u8;
+    let src = vcpu.get_reg8(reg, has_rex) as u8;
 
     let dst = if is_memory {
         vcpu.mmu.read_u8(addr, &vcpu.sregs)?
     } else {
-        vcpu.get_reg(rm, 1) as u8
+        vcpu.get_reg8(rm, has_rex) as u8
     };
     let result = dst.wrapping_sub(src) as u64;
     vcpu.set_lazy_sub(dst as u64, src as u64, result, 1);
@@ -40,13 +41,14 @@ pub fn cmp_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 
 /// CMP r8, r/m8 (0x3A)
 pub fn cmp_r8_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let dst = vcpu.get_reg(reg, 1) as u8;
+    let dst = vcpu.get_reg8(reg, has_rex) as u8;
 
     let src = if is_memory {
         vcpu.mmu.read_u8(addr, &vcpu.sregs)?
     } else {
-        vcpu.get_reg(rm, 1) as u8
+        vcpu.get_reg8(rm, has_rex) as u8
     };
     let result = dst.wrapping_sub(src) as u64;
     vcpu.set_lazy_sub(dst as u64, src as u64, result, 1);

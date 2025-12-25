@@ -229,14 +229,8 @@ pub fn mov_cr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
         0 => vcpu.sregs.cr0 = value,
         2 => vcpu.sregs.cr2 = value,
         3 => {
-            tracing::debug!(
-                old_cr3 = format!("{:#x}", vcpu.sregs.cr3),
-                new_cr3 = format!("{:#x}", value),
-                rip = format!("{:#x}", vcpu.regs.rip),
-                "MOV CR3"
-            );
-
             vcpu.sregs.cr3 = value;
+            vcpu.mmu.flush_tlb();
         }
         4 => vcpu.sregs.cr4 = value,
         _ => return Err(Error::Emulator(format!("MOV CR{}, r: unsupported", cr))),
