@@ -110,7 +110,11 @@ impl Vm for KvmVm {
         let cpuid = self.kvm.get_supported_cpuid(KVM_MAX_CPUID_ENTRIES)?;
         vcpu_fd.set_cpuid2(&cpuid)?;
 
-        Ok(Box::new(KvmVcpu { vcpu_fd, id }))
+        Ok(Box::new(KvmVcpu {
+            vcpu_fd,
+            id,
+            pending_io_in: None,
+        }))
     }
 
     fn set_irq_line(&self, irq: u32, level: bool) -> Result<()> {
@@ -127,7 +131,20 @@ impl Vm for KvmVm {
 pub struct KvmVcpu {
     vcpu_fd: VcpuFd,
     id: u32,
+    /// Pointer and length to pending IoIn/MmioRead data buffer.
+    /// This is set during run() when we get an IoIn/MmioRead exit,
+    /// and written to in complete_io_in().
+    /// Safety: The pointer is valid between run() calls as it points
+    /// to the mmap'd kvm_run structure owned by vcpu_fd.
+    pending_io_in: Option<(*mut u8, usize)>,
 }
+
+// Safety: KvmVcpu is Send because:
+// - VcpuFd is Send
+// - The raw pointer in pending_io_in points to memory owned by vcpu_fd
+//   (the mmap'd kvm_run structure), so it moves with the struct
+// - We only access the pointer from methods that take &mut self
+unsafe impl Send for KvmVcpu {}
 
 impl KvmVcpu {
     /// Get reference to the VcpuFd.
@@ -138,21 +155,32 @@ impl KvmVcpu {
 
 impl VCpu for KvmVcpu {
     fn run(&mut self) -> Result<VcpuExit> {
+        // Clear any previous pending I/O
+        self.pending_io_in = None;
+
         match self.vcpu_fd.run()? {
             kvm_ioctls::VcpuExit::Hlt => Ok(VcpuExit::Hlt),
             kvm_ioctls::VcpuExit::Shutdown => Ok(VcpuExit::Shutdown),
-            kvm_ioctls::VcpuExit::IoIn(port, data) => Ok(VcpuExit::IoIn {
-                port,
-                size: data.len() as u8,
-            }),
+            kvm_ioctls::VcpuExit::IoIn(port, data) => {
+                // Store pointer to the data buffer so complete_io_in() can write to it
+                self.pending_io_in = Some((data.as_mut_ptr(), data.len()));
+                Ok(VcpuExit::IoIn {
+                    port,
+                    size: data.len() as u8,
+                })
+            }
             kvm_ioctls::VcpuExit::IoOut(port, data) => Ok(VcpuExit::IoOut {
                 port,
                 data: data.to_vec(),
             }),
-            kvm_ioctls::VcpuExit::MmioRead(addr, data) => Ok(VcpuExit::MmioRead {
-                addr,
-                size: data.len() as u8,
-            }),
+            kvm_ioctls::VcpuExit::MmioRead(addr, data) => {
+                // Store pointer to the data buffer so complete_io_in() can write to it
+                self.pending_io_in = Some((data.as_mut_ptr(), data.len()));
+                Ok(VcpuExit::MmioRead {
+                    addr,
+                    size: data.len() as u8,
+                })
+            }
             kvm_ioctls::VcpuExit::MmioWrite(addr, data) => Ok(VcpuExit::MmioWrite {
                 addr,
                 data: data.to_vec(),
@@ -191,10 +219,17 @@ impl VCpu for KvmVcpu {
         Ok(())
     }
 
-    fn complete_io_in(&mut self, _data: &[u8]) {
-        // KVM handles this automatically - the data buffer is filled
-        // before the run() call returns for IoIn exits.
-        // This is a no-op for KVM.
+    fn complete_io_in(&mut self, data: &[u8]) {
+        // Write the response data to the KVM I/O buffer
+        if let Some((ptr, len)) = self.pending_io_in.take() {
+            let to_copy = data.len().min(len);
+            // Safety: The pointer is valid as it points to the mmap'd kvm_run
+            // structure which stays valid between run() calls. We only write
+            // up to the buffer length that KVM told us.
+            unsafe {
+                std::ptr::copy_nonoverlapping(data.as_ptr(), ptr, to_copy);
+            }
+        }
     }
 
     fn id(&self) -> u32 {
