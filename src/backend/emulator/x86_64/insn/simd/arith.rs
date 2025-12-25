@@ -4,6 +4,7 @@ use crate::cpu::VcpuExit;
 use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
+use super::super::super::simd_native;
 
 /// SSE packed single/double add (0x58)
 pub fn sse_add(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
@@ -223,30 +224,12 @@ pub fn pmullw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
     if ctx.operand_size_override {
         // SSE2: PMULLW xmm1, xmm2/m128
         let xmm_dst = reg as usize;
-        let (src_lo, src_hi) = if is_memory {
-            (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+        let src: simd_native::Xmm = if is_memory {
+            [vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?]
         } else {
-            (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+            vcpu.regs.xmm[rm as usize]
         };
-        let dst_lo = vcpu.regs.xmm[xmm_dst][0];
-        let dst_hi = vcpu.regs.xmm[xmm_dst][1];
-
-        let mut result_lo = 0u64;
-        let mut result_hi = 0u64;
-        for i in 0..4 {
-            let d = ((dst_lo >> (i * 16)) & 0xFFFF) as i16;
-            let s = ((src_lo >> (i * 16)) & 0xFFFF) as i16;
-            let r = d.wrapping_mul(s) as u16;
-            result_lo |= (r as u64) << (i * 16);
-        }
-        for i in 0..4 {
-            let d = ((dst_hi >> (i * 16)) & 0xFFFF) as i16;
-            let s = ((src_hi >> (i * 16)) & 0xFFFF) as i16;
-            let r = d.wrapping_mul(s) as u16;
-            result_hi |= (r as u64) << (i * 16);
-        }
-        vcpu.regs.xmm[xmm_dst][0] = result_lo;
-        vcpu.regs.xmm[xmm_dst][1] = result_hi;
+        simd_native::pmullw_xmm(&mut vcpu.regs.xmm[xmm_dst], &src);
     } else {
         // MMX: PMULLW mm, mm/m64
         let mm_dst = reg as usize & 0x7;
@@ -416,13 +399,12 @@ pub fn pxor(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
     if ctx.operand_size_override {
         // SSE2: PXOR xmm1, xmm2/m128
         let xmm_dst = reg as usize;
-        let (src_lo, src_hi) = if is_memory {
-            (vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)
+        let src: simd_native::Xmm = if is_memory {
+            [vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?]
         } else {
-            (vcpu.regs.xmm[rm as usize][0], vcpu.regs.xmm[rm as usize][1])
+            vcpu.regs.xmm[rm as usize]
         };
-        vcpu.regs.xmm[xmm_dst][0] ^= src_lo;
-        vcpu.regs.xmm[xmm_dst][1] ^= src_hi;
+        simd_native::pxor_xmm(&mut vcpu.regs.xmm[xmm_dst], &src);
     } else {
         // MMX: PXOR mm, mm/m64
         let mm_dst = reg as usize & 0x7;
