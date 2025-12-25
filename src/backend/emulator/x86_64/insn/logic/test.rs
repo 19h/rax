@@ -4,20 +4,21 @@ use crate::cpu::VcpuExit;
 use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
-use super::super::super::flags;
 
 /// TEST r/m8, r8 (0x84)
 pub fn test_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let src = vcpu.get_reg(reg, 1) as u8;
+    let src = vcpu.get_reg8(reg, has_rex) as u8;
 
     let dst = if is_memory {
         vcpu.mmu.read_u8(addr, &vcpu.sregs)?
     } else {
-        vcpu.get_reg(rm, 1) as u8
+        vcpu.get_reg8(rm, has_rex) as u8
     };
     let result = (dst & src) as u64;
-    flags::update_flags_logic(&mut vcpu.regs.rflags, result, 1);
+    // Use lazy flags to avoid stale flags when Jcc materializes
+    vcpu.set_lazy_logic(result, 1);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -34,7 +35,8 @@ pub fn test_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
         vcpu.get_reg(rm, op_size)
     };
     let result = dst & src;
-    flags::update_flags_logic(&mut vcpu.regs.rflags, result, op_size);
+    // Use lazy flags to avoid stale flags when Jcc materializes
+    vcpu.set_lazy_logic(result, op_size);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -43,7 +45,8 @@ pub fn test_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
 pub fn test_al_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let imm = ctx.consume_u8()? as u64;
     let result = (vcpu.regs.rax & 0xFF) & imm;
-    flags::update_flags_logic(&mut vcpu.regs.rflags, result, 1);
+    // Use lazy flags to avoid stale flags when Jcc materializes
+    vcpu.set_lazy_logic(result, 1);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -59,7 +62,8 @@ pub fn test_rax_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
         imm
     };
     let result = vcpu.get_reg(0, op_size) & imm;
-    flags::update_flags_logic(&mut vcpu.regs.rflags, result, op_size);
+    // Use lazy flags to avoid stale flags when Jcc materializes
+    vcpu.set_lazy_logic(result, op_size);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

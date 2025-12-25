@@ -9,7 +9,6 @@ use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let leaf = vcpu.regs.rax as u32;
     let subleaf = vcpu.regs.rcx as u32;
-    let rip = vcpu.regs.rip;
 
     let (eax, ebx, ecx, edx) = match leaf {
         0 => {
@@ -92,7 +91,6 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         }
         _ => (0, 0, 0, 0),
     };
-
 
     vcpu.regs.rax = eax as u64;
     vcpu.regs.rbx = ebx as u64;

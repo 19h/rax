@@ -191,7 +191,7 @@ impl Mmu {
     pub fn translate(
         &mut self,
         vaddr: u64,
-        _access: AccessType,
+        access: AccessType,
         sregs: &SystemRegisters,
     ) -> Result<u64> {
         // If paging is disabled, virtual = physical
@@ -205,19 +205,25 @@ impl Mmu {
             self.cached_cr3 = sregs.cr3;
         }
 
-        // TLB lookup
-        let index = Self::tlb_index(vaddr);
-        let tag = Self::tlb_tag(vaddr, sregs.cr3);
+        // TLB lookup - only use for reads (writes need permission check)
+        // TODO: Could cache write permission in TLB for better performance
+        if !matches!(access, AccessType::Write) {
+            let index = Self::tlb_index(vaddr);
+            let tag = Self::tlb_tag(vaddr, sregs.cr3);
 
-        let entry = &self.tlb[index];
-        if entry.valid && entry.tag == tag {
-            // TLB hit! Fast path
-            let offset_mask = (1u64 << entry.page_shift) - 1;
-            return Ok(entry.phys_base | (vaddr & offset_mask));
+            let entry = &self.tlb[index];
+            if entry.valid && entry.tag == tag {
+                // TLB hit! Fast path
+                let offset_mask = (1u64 << entry.page_shift) - 1;
+                let paddr = entry.phys_base | (vaddr & offset_mask);
+                return Ok(paddr);
+            }
         }
 
-        // TLB miss - do full page table walk
-        self.translate_slow(vaddr, sregs, index, tag)
+        // TLB miss or write - do full page table walk with permission check
+        let index = Self::tlb_index(vaddr);
+        let tag = Self::tlb_tag(vaddr, sregs.cr3);
+        self.translate_slow(vaddr, access, sregs, index, tag)
     }
 
     /// Slow path: full page table walk (called on TLB miss)
@@ -225,6 +231,7 @@ impl Mmu {
     fn translate_slow(
         &mut self,
         vaddr: u64,
+        access: AccessType,
         sregs: &SystemRegisters,
         tlb_index: usize,
         tlb_tag: u64,
@@ -236,6 +243,8 @@ impl Mmu {
             ));
         }
 
+        let is_write = matches!(access, AccessType::Write);
+
         // 4-level paging: PML4 -> PDPT -> PD -> PT
         let pml4_base = sregs.cr3 & !0xFFF;
         let pml4_index = (vaddr >> 39) & 0x1FF;
@@ -246,20 +255,23 @@ impl Mmu {
         // Read PML4 entry
         let pml4e = self.read_pte(pml4_base + pml4_index * 8)?;
         if pml4e & flags::PRESENT == 0 {
-            return Err(Error::Emulator(format!(
-                "page fault: PML4E not present at vaddr {:#x}",
-                vaddr
-            )));
+            return Err(Error::PageFault { vaddr, error_code: 0 });
+        }
+        // Check write permission at PML4 level
+        if is_write && pml4e & flags::WRITABLE == 0 {
+            // error_code bit 1 = write access, bit 0 = present
+            return Err(Error::PageFault { vaddr, error_code: 0x3 });
         }
 
         // Read PDPT entry
         let pdpt_base = pml4e & 0x000F_FFFF_FFFF_F000;
         let pdpte = self.read_pte(pdpt_base + pdpt_index * 8)?;
         if pdpte & flags::PRESENT == 0 {
-            return Err(Error::Emulator(format!(
-                "page fault: PDPTE not present at vaddr {:#x}",
-                vaddr
-            )));
+            return Err(Error::PageFault { vaddr, error_code: 0 });
+        }
+        // Check write permission at PDPT level
+        if is_write && pdpte & flags::WRITABLE == 0 {
+            return Err(Error::PageFault { vaddr, error_code: 0x3 });
         }
 
         // Check for 1GB huge page
@@ -279,10 +291,11 @@ impl Mmu {
         let pd_base = pdpte & 0x000F_FFFF_FFFF_F000;
         let pde = self.read_pte(pd_base + pd_index * 8)?;
         if pde & flags::PRESENT == 0 {
-            return Err(Error::Emulator(format!(
-                "page fault: PDE not present at vaddr {:#x}",
-                vaddr
-            )));
+            return Err(Error::PageFault { vaddr, error_code: 0 });
+        }
+        // Check write permission at PD level
+        if is_write && pde & flags::WRITABLE == 0 {
+            return Err(Error::PageFault { vaddr, error_code: 0x3 });
         }
 
         // Check for 2MB huge page
@@ -302,10 +315,11 @@ impl Mmu {
         let pt_base = pde & 0x000F_FFFF_FFFF_F000;
         let pte = self.read_pte(pt_base + pt_index * 8)?;
         if pte & flags::PRESENT == 0 {
-            return Err(Error::Emulator(format!(
-                "page fault: PTE not present at vaddr {:#x}",
-                vaddr
-            )));
+            return Err(Error::PageFault { vaddr, error_code: 0 });
+        }
+        // Check write permission at PT level
+        if is_write && pte & flags::WRITABLE == 0 {
+            return Err(Error::PageFault { vaddr, error_code: 0x3 });
         }
 
         let page_base = pte & 0x000F_FFFF_FFFF_F000;
@@ -343,6 +357,7 @@ impl Mmu {
     /// Write bytes to guest memory (physical address).
     #[inline(always)]
     pub fn write_phys(&self, paddr: u64, buf: &[u8]) -> Result<()> {
+        // Debug: DISABLED - was watching PML4 entries
         self.memory
             .write_slice(buf, GuestAddress(paddr))
             .map_err(|e| Error::Emulator(format!("failed to write at {:#x}: {}", paddr, e)))
@@ -475,8 +490,7 @@ impl Mmu {
             let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
             let mut buf = [0u8; 8];
             self.read_phys(paddr, &mut buf)?;
-            let val = u64::from_le_bytes(buf);
-            Ok(val)
+            Ok(u64::from_le_bytes(buf))
         } else {
             let mut buf = [0u8; 8];
             self.read(vaddr, &mut buf, sregs)?;
@@ -523,4 +537,5 @@ impl Mmu {
             self.write(vaddr, &value.to_le_bytes(), sregs)
         }
     }
+
 }

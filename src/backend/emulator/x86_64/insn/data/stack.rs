@@ -89,11 +89,10 @@ pub fn push_sreg(
     let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
 
     if in_64bit_mode && segment_invalid_in_64bit(sreg) {
-        return Err(Error::Emulator(format!(
-            "PUSH {} invalid in 64-bit mode at RIP={:#x}",
-            segment_name(sreg),
-            vcpu.regs.rip
-        )));
+        // PUSH ES/CS/SS/DS invalid in 64-bit mode - inject #UD
+        // Don't advance RIP - exception should point to faulting instruction
+        vcpu.inject_exception(6, None)?; // #UD = vector 6
+        return Ok(None);
     }
 
     let op_size = segment_op_size(vcpu, ctx);
@@ -123,11 +122,10 @@ pub fn pop_sreg(
     let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
 
     if in_64bit_mode && segment_invalid_in_64bit(sreg) {
-        return Err(Error::Emulator(format!(
-            "POP {} invalid in 64-bit mode at RIP={:#x}",
-            segment_name(sreg),
-            vcpu.regs.rip
-        )));
+        // POP ES/CS/SS/DS invalid in 64-bit mode - inject #UD
+        // Don't advance RIP - exception should point to faulting instruction
+        vcpu.inject_exception(6, None)?; // #UD = vector 6
+        return Ok(None);
     }
 
     let op_size = segment_op_size(vcpu, ctx);
@@ -197,6 +195,32 @@ pub fn pop_r64(
 ) -> Result<Option<VcpuExit>> {
     let reg = (opcode - 0x58) | ctx.rex_b();
     let op_size = stack_op_size(vcpu, ctx);
+
+    // Special handling for POP RSP (reg 4)
+    // Intel manual: "The POP ESP instruction increments the stack pointer (ESP)
+    // before data at the old top of stack is written into the destination."
+    // But since DEST is RSP itself, the increment to old RSP is effectively discarded.
+    // Final RSP = value read from [old_RSP]
+    if (reg & 0x07) == 4 && ctx.rex_b() == 0 {
+        // POP RSP - special case: just read value and set RSP to it
+        let value = match op_size {
+            2 => vcpu.mmu.read_u16(vcpu.regs.rsp, &vcpu.sregs)? as u64,
+            4 => vcpu.mmu.read_u32(vcpu.regs.rsp, &vcpu.sregs)? as u64,
+            8 => vcpu.mmu.read_u64(vcpu.regs.rsp, &vcpu.sregs)?,
+            _ => {
+                return Err(Error::Emulator(format!(
+                    "invalid POP RSP op size: {}",
+                    op_size
+                )))
+            }
+        };
+        // For POP RSP, the final RSP is just the value read from stack
+        // The normal +8 increment is discarded because we're writing to RSP
+        vcpu.regs.rsp = value;
+        vcpu.regs.rip += ctx.cursor as u64;
+        return Ok(None);
+    }
+
     let value = match op_size {
         2 => vcpu.pop16()? as u64,
         4 => vcpu.pop32()? as u64,
@@ -248,10 +272,10 @@ pub fn pusha(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     let cs_l = vcpu.sregs.cs.l; // CS.L indicates 64-bit code segment
 
     if in_long_mode && cs_l {
-        return Err(Error::Emulator(format!(
-            "PUSHA/PUSHAD invalid in 64-bit mode at RIP={:#x}",
-            vcpu.regs.rip
-        )));
+        // PUSHA/PUSHAD invalid in 64-bit mode - inject #UD
+        // Don't advance RIP - exception should point to faulting instruction
+        vcpu.inject_exception(6, None)?; // #UD = vector 6
+        return Ok(None);
     }
 
     // Determine operand size: 0x66 prefix TOGGLES the default operand size
@@ -314,10 +338,10 @@ pub fn popa(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
     let cs_l = vcpu.sregs.cs.l; // CS.L indicates 64-bit code segment
 
     if in_long_mode && cs_l {
-        return Err(Error::Emulator(format!(
-            "POPA/POPAD invalid in 64-bit mode at RIP={:#x}",
-            vcpu.regs.rip
-        )));
+        // POPA/POPAD invalid in 64-bit mode - inject #UD
+        // Don't advance RIP - exception should point to faulting instruction
+        vcpu.inject_exception(6, None)?; // #UD = vector 6
+        return Ok(None);
     }
 
     // Determine operand size: 0x66 prefix TOGGLES the default operand size

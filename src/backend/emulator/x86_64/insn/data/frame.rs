@@ -33,7 +33,13 @@ pub fn enter(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
 
 /// LEAVE (0xC9)
 pub fn leave(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let old_rsp = vcpu.regs.rsp;
     vcpu.regs.rsp = vcpu.regs.rbp;
+    // Trace LEAVE when it changes RSP in xas_store's stack range
+    if old_rsp >= 0xffffffff82c03c80 && old_rsp <= 0xffffffff82c03cc0 {
+        eprintln!("[LEAVE] RIP={:#x} RSP: {:#x} -> {:#x} (RBP={:#x})",
+                  vcpu.regs.rip, old_rsp, vcpu.regs.rsp, vcpu.regs.rbp);
+    }
     vcpu.regs.rbp = vcpu.pop64()?;
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)

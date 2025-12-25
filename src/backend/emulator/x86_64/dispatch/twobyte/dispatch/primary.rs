@@ -36,6 +36,13 @@ impl X86_64Vcpu {
                 self.regs.rip += ctx.cursor as u64;
                 Ok(None)
             }
+            // UD2 - Undefined Instruction (intentional #UD exception)
+            0x0B => {
+                eprintln!("[UD2] at RIP={:#x}", self.regs.rip);
+                // Don't advance RIP - #UD is a fault, exception points to faulting instruction
+                self.inject_exception(6, None)?; // #UD = vector 6
+                Ok(None)
+            }
             0x20 => insn::system::mov_r_cr(self, ctx),
             0x21 => insn::system::mov_r_dr(self, ctx),
             0x22 => insn::system::mov_cr_r(self, ctx),
@@ -94,6 +101,14 @@ impl X86_64Vcpu {
             // CMPXCHG
             0xB0 => insn::data::cmpxchg_rm8_r8(self, ctx),
             0xB1 => insn::data::cmpxchg_rm_r(self, ctx),
+            // UD1 - Undefined Instruction (intentional #UD exception with ModRM)
+            0xB9 => {
+                // UD1 has a ModR/M byte but always generates #UD
+                // Don't advance RIP - #UD is a fault, exception points to faulting instruction
+                let _modrm = ctx.consume_u8()?;
+                self.inject_exception(6, None)?; // #UD = vector 6
+                Ok(None)
+            }
 
             // XADD
             0xC0 => insn::data::xadd_rm8_r8(self, ctx),

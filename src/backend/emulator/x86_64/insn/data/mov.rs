@@ -85,13 +85,14 @@ pub fn mov_moffs_rax(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
 
 /// MOV r/m8, r8 (0x88)
 pub fn mov_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let value = vcpu.get_reg(reg, 1);
+    let value = vcpu.get_reg8(reg, has_rex);
 
     if is_memory {
         vcpu.mmu.write_u8(addr, value as u8, &vcpu.sregs)?;
     } else {
-        vcpu.set_reg(rm, value, 1);
+        vcpu.set_reg8(rm, value, has_rex);
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -114,14 +115,15 @@ pub fn mov_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 
 /// MOV r8, r/m8 (0x8A)
 pub fn mov_r8_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
 
     let value = if is_memory {
         vcpu.mmu.read_u8(addr, &vcpu.sregs)? as u64
     } else {
-        vcpu.get_reg(rm, 1)
+        vcpu.get_reg8(rm, has_rex)
     };
-    vcpu.set_reg(reg, value, 1);
+    vcpu.set_reg8(reg, value, has_rex);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -173,6 +175,7 @@ pub fn mov_sreg_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
 
 /// MOV r/m8, imm8 (0xC6 /0) or XABORT (0xC6 F8 imm8)
 pub fn mov_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     // Check for XABORT (C6 F8 imm8) - ModRM F8 has reg=7
     let modrm = ctx.peek_u8()?;
     let reg = (modrm >> 3) & 0x07;
@@ -194,7 +197,7 @@ pub fn mov_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
     if is_memory {
         vcpu.mmu.write_u8(addr, imm, &vcpu.sregs)?;
     } else {
-        vcpu.set_reg(rm, imm as u64, 1);
+        vcpu.set_reg8(rm, imm as u64, has_rex);
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)

@@ -8,21 +8,22 @@ use super::super::super::flags;
 
 /// XADD r/m8, r8 (0x0F 0xC0) - Exchange and Add
 pub fn xadd_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let src = vcpu.get_reg(reg, 1) as u8;
+    let src = vcpu.get_reg8(reg, has_rex) as u8;
 
     if is_memory {
         let dst = vcpu.mmu.read_u8(addr, &vcpu.sregs)?;
         let sum = dst.wrapping_add(src);
         // DEST = DEST + SRC, SRC = old DEST
         vcpu.mmu.write_u8(addr, sum, &vcpu.sregs)?;
-        vcpu.set_reg(reg, dst as u64, 1);
+        vcpu.set_reg8(reg, dst as u64, has_rex);
         flags::update_flags_add(&mut vcpu.regs.rflags, dst as u64, src as u64, sum as u64, 1);
     } else {
-        let dst = vcpu.get_reg(rm, 1) as u8;
+        let dst = vcpu.get_reg8(rm, has_rex) as u8;
         let sum = dst.wrapping_add(src);
-        vcpu.set_reg(rm, sum as u64, 1);
-        vcpu.set_reg(reg, dst as u64, 1);
+        vcpu.set_reg8(rm, sum as u64, has_rex);
+        vcpu.set_reg8(reg, dst as u64, has_rex);
         flags::update_flags_add(&mut vcpu.regs.rflags, dst as u64, src as u64, sum as u64, 1);
     }
     vcpu.clear_lazy_flags();
@@ -64,14 +65,15 @@ pub fn xadd_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
 
 /// CMPXCHG r/m8, r8 (0x0F 0xB0) - Compare and Exchange
 pub fn cmpxchg_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let src = vcpu.get_reg(reg, 1) as u8;
+    let src = vcpu.get_reg8(reg, has_rex) as u8;
     let al = (vcpu.regs.rax & 0xFF) as u8;
 
     let dst = if is_memory {
         vcpu.mmu.read_u8(addr, &vcpu.sregs)?
     } else {
-        vcpu.get_reg(rm, 1) as u8
+        vcpu.get_reg8(rm, has_rex) as u8
     };
 
     // Compare AL with destination
@@ -84,7 +86,7 @@ pub fn cmpxchg_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Op
         if is_memory {
             vcpu.mmu.write_u8(addr, src, &vcpu.sregs)?;
         } else {
-            vcpu.set_reg(rm, src as u64, 1);
+            vcpu.set_reg8(rm, src as u64, has_rex);
         }
     } else {
         // ZF is clear, load destination into AL

@@ -1,13 +1,21 @@
 //! x86_64 CPU state and core execution loop.
 
 use std::cell::Cell;
-#[cfg(debug_assertions)]
 use std::sync::atomic::Ordering;
-use std::sync::atomic::AtomicU64;
+use std::sync::atomic::{AtomicU64, AtomicUsize};
 use std::sync::Arc;
 
 /// Global tracker for current RIP (for debugging write watchpoints)
 pub static CURRENT_RIP: AtomicU64 = AtomicU64::new(0);
+
+/// Circular buffer of last 16 RIPs for debugging crashes
+static RIP_HISTORY: [AtomicU64; 16] = [
+    AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0),
+    AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0),
+    AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0),
+    AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0),
+];
+static RIP_IDX: AtomicUsize = AtomicUsize::new(0);
 
 use vm_memory::GuestMemoryMmap;
 
@@ -209,6 +217,8 @@ pub(super) struct DecodeCacheEntry {
     pub(super) address_size_override: bool,
     /// REP/REPNE prefix
     pub(super) rep_prefix: Option<u8>,
+    /// Segment override prefix (0x64=FS, 0x65=GS, etc.)
+    pub(super) segment_override: Option<u8>,
 }
 
 impl Default for DecodeCacheEntry {
@@ -223,6 +233,7 @@ impl Default for DecodeCacheEntry {
             operand_size_override: false,
             address_size_override: false,
             rep_prefix: None,
+            segment_override: None,
         }
     }
 }
@@ -240,6 +251,8 @@ pub(super) struct InsnContext {
     pub rep_prefix: Option<u8>,
     pub op_size: u8,
     pub rip_relative_offset: usize,
+    /// Segment override prefix (0x26=ES, 0x2E=CS, 0x36=SS, 0x3E=DS, 0x64=FS, 0x65=GS)
+    pub segment_override: Option<u8>,
     /// EVEX prefix state (if present)
     pub evex: Option<EvexPrefix>,
 }
@@ -706,6 +719,16 @@ impl X86_64Vcpu {
                 return Ok((buf, len));
             }
         }
+        // Dump last few RIPs for debugging
+        eprintln!("[CRASH] Last 16 RIPs before RIP={:#x}:", rip);
+        let idx = RIP_IDX.load(Ordering::Relaxed);
+        for i in 0..16 {
+            let hist_idx = (idx + 16 - 1 - i) % 16;
+            let hist_rip = RIP_HISTORY[hist_idx].load(Ordering::Relaxed);
+            if hist_rip != 0 {
+                eprintln!("  [-{}] {:#x}", i, hist_rip);
+            }
+        }
         Err(Error::Emulator(format!(
             "failed to fetch instruction at RIP={:#x}",
             rip
@@ -721,13 +744,16 @@ impl X86_64Vcpu {
     /// Execute a single instruction.
     #[inline]
     pub fn step(&mut self) -> Result<Option<VcpuExit>> {
-        // Update global RIP tracker for debugging (only in debug builds)
-        #[cfg(debug_assertions)]
+        // Update global RIP tracker for debugging
         CURRENT_RIP.store(self.regs.rip, Ordering::Relaxed);
 
+        // Track RIP history for debugging crashes
+        {
+            let idx = RIP_IDX.fetch_add(1, Ordering::Relaxed) % 16;
+            RIP_HISTORY[idx].store(self.regs.rip, Ordering::Relaxed);
+        }
+
         let rip = self.regs.rip;
-
-
         let cache_idx = Self::decode_cache_index(rip);
 
         // Check decode cache for a hit (copy to avoid borrow issues)
@@ -735,6 +761,7 @@ impl X86_64Vcpu {
         if cached.rip == rip {
             // Cache hit! Fetch bytes and reconstruct context from cached decode
             let (bytes, bytes_len) = self.fetch()?;
+
             let mut ctx = InsnContext {
                 bytes,
                 bytes_len,
@@ -745,6 +772,7 @@ impl X86_64Vcpu {
                 rep_prefix: cached.rep_prefix,
                 op_size: cached.op_size,
                 rip_relative_offset: 0,
+                segment_override: cached.segment_override,
                 evex: None,
             };
             return self.execute(cached.opcode, &mut ctx);
@@ -787,6 +815,7 @@ impl X86_64Vcpu {
             operand_size_override: ctx.operand_size_override,
             address_size_override: ctx.address_size_override,
             rep_prefix: ctx.rep_prefix,
+            segment_override: ctx.segment_override,
         };
 
         // Execute instruction
@@ -920,17 +949,14 @@ impl X86_64Vcpu {
     fn check_smc(&mut self, addr: u64) {
         if self.mmu.is_code_page(addr) {
             // Self-modifying code detected - invalidate decode cache for this page.
-            // Invalidate all entries that might be on this page.
-            // Since decode cache is indexed by RIP, we need to invalidate
-            // entries whose RIP falls on this page.
+            // We need to check ALL cache entries since any RIP on this page could
+            // have a cached decode. The cache is indexed by (RIP & 0xFFF), so we
+            // iterate over all 4096 cache entries and invalidate any that point
+            // to this page.
             let page_base = addr & !0xFFF;
-            // Invalidate a range of cache entries for this page
-            // Since instructions are max 15 bytes, check entries from page_base to page_base + 0xFFF
-            for offset in (0..0x1000).step_by(64) {
-                let rip = page_base + offset as u64;
-                let idx = Self::decode_cache_index(rip);
+            for idx in 0..DECODE_CACHE_SIZE {
                 let entry = &mut self.decode_cache[idx];
-                if (entry.rip & !0xFFF) == page_base {
+                if entry.rip != 0 && (entry.rip & !0xFFF) == page_base {
                     entry.rip = 0; // Invalidate
                 }
             }
@@ -981,8 +1007,8 @@ impl X86_64Vcpu {
 
     #[inline(always)]
     pub(super) fn write_mem64(&mut self, addr: u64, value: u64) -> Result<()> {
-        self.check_smc(addr);
-        self.mmu.write_u64(addr, value, &self.sregs)
+        // Use the generic write_mem which has watchpoints
+        self.write_mem(addr, value, 8)
     }
 
     #[inline(always)]
@@ -1141,6 +1167,99 @@ impl X86_64Vcpu {
             _ => false,
         }
     }
+
+    /// Inject a page fault exception (#PF, vector 14) into the guest.
+    /// This allows the kernel's page fault handler to run and set up page tables on demand.
+    pub(super) fn inject_page_fault(&mut self, vaddr: u64, error_code: u64) -> Result<()> {
+        // Set CR2 to the faulting virtual address
+        self.sregs.cr2 = vaddr;
+        self.inject_exception(14, Some(error_code))
+    }
+
+    /// Inject a generic exception into the guest.
+    /// vector: exception vector number (0-255)
+    /// error_code: optional error code (only for exceptions that have error codes)
+    pub fn inject_exception(&mut self, vector: u8, error_code: Option<u64>) -> Result<()> {
+        // Read IDT entry for the vector
+        // Each IDT entry in 64-bit mode is 16 bytes
+        let idt_base = self.sregs.idt.base;
+        let idt_entry_addr = idt_base + (vector as u64) * 16;
+
+        // Read the 16-byte IDT entry
+        let mut idt_entry = [0u8; 16];
+        self.mmu.read(idt_entry_addr, &mut idt_entry, &self.sregs)?;
+
+        let offset_low = u16::from_le_bytes([idt_entry[0], idt_entry[1]]) as u64;
+        let selector = u16::from_le_bytes([idt_entry[2], idt_entry[3]]);
+        let ist = idt_entry[4] & 0x07;
+        let type_attr = idt_entry[5];
+        let offset_mid = u16::from_le_bytes([idt_entry[6], idt_entry[7]]) as u64;
+        let offset_high = u32::from_le_bytes([idt_entry[8], idt_entry[9], idt_entry[10], idt_entry[11]]) as u64;
+
+        // Check if entry is present
+        if type_attr & 0x80 == 0 {
+            return Err(Error::Emulator(format!(
+                "IDT entry {} not present (type_attr={:#x})",
+                vector, type_attr
+            )));
+        }
+
+        let handler_addr = offset_low | (offset_mid << 16) | (offset_high << 32);
+
+        // Materialize lazy flags before saving RFLAGS
+        self.materialize_flags();
+
+        // In 64-bit mode, push exception frame (in this order, growing downward):
+        // SS, RSP, RFLAGS, CS, RIP, [Error Code if applicable]
+
+        // Save current state
+        let old_ss = self.sregs.ss.selector;
+        let old_rsp = self.regs.rsp;
+        let old_rflags = self.regs.rflags;
+        let old_cs = self.sregs.cs.selector;
+        let old_rip = self.regs.rip;
+
+        // If IST is non-zero, switch to the IST stack
+        // IST entries are in the TSS at offset 0x24 + (ist-1)*8
+        if ist != 0 {
+            let tss_base = self.sregs.tr.base;
+            let ist_offset = 0x24 + ((ist as u64 - 1) * 8);
+            let ist_addr = tss_base + ist_offset;
+            let ist_rsp = self.mmu.read_u64(ist_addr, &self.sregs)?;
+            if ist_rsp != 0 {
+                self.regs.rsp = ist_rsp;
+                // SS is set to 0 for IST switches in 64-bit mode
+                self.set_sreg(2, 0);
+            }
+            // If IST entry is 0, keep current RSP (kernel might not have set up IST yet)
+        }
+
+        // Push exception frame (each push is 8 bytes in 64-bit mode)
+        self.push64(old_ss as u64)?;
+        self.push64(old_rsp)?;
+        self.push64(old_rflags)?;
+        self.push64(old_cs as u64)?;
+        self.push64(old_rip)?;
+        if let Some(ec) = error_code {
+            self.push64(ec)?;
+        }
+
+        // Clear IF (disable interrupts) for interrupt gates (type 0xE)
+        // Trap gates (type 0xF) don't clear IF
+        let gate_type = type_attr & 0x0F;
+        if gate_type == 0x0E {
+            self.regs.rflags &= !flags::bits::IF;
+        }
+
+        // Jump to the handler
+        self.regs.rip = handler_addr;
+
+        // Update CS selector (handler runs in kernel mode)
+        // The segment selector from the IDT entry becomes the new CS
+        self.set_sreg(1, selector);
+
+        Ok(())
+    }
 }
 
 impl VCpu for X86_64Vcpu {
@@ -1150,8 +1269,31 @@ impl VCpu for X86_64Vcpu {
                 return Ok(VcpuExit::Hlt);
             }
 
-            if let Some(exit) = self.step()? {
-                return Ok(exit);
+            match self.step() {
+                Ok(Some(exit)) => return Ok(exit),
+                Ok(None) => continue,
+                Err(Error::PageFault { vaddr, error_code }) => {
+                    // Inject the page fault exception into the guest
+                    match self.inject_page_fault(vaddr, error_code) {
+                        Ok(()) => continue,
+                        Err(Error::PageFault { vaddr: _df_vaddr, .. }) => {
+                            // Page fault during page fault delivery = double fault
+                            // Try to inject #DF (vector 8)
+                            match self.inject_exception(8, Some(0)) {
+                                Ok(()) => continue,
+                                Err(e) => {
+                                    // Triple fault - CPU should reset
+                                    return Err(Error::Emulator(format!(
+                                        "Triple fault at RIP={:#x} (double fault delivery failed: {:?}, original #PF at {:#x})",
+                                        self.regs.rip, e, vaddr
+                                    )));
+                                }
+                            }
+                        }
+                        Err(e) => return Err(e),
+                    }
+                }
+                Err(e) => return Err(e),
             }
         }
     }

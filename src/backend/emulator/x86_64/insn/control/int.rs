@@ -88,6 +88,10 @@ pub fn iret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
     let op_size = ctx.op_size;
     let old_cpl = vcpu.sregs.cs.selector & 0x3;
 
+    // Check if we're in 64-bit mode
+    let in_long_mode = (vcpu.sregs.efer & 0x400) != 0; // EFER.LMA = bit 10
+    let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
+
     let ret_ip = pop_by_size(vcpu, op_size)?;
     let cs = pop_by_size(vcpu, op_size)? as u16;
     validate_far_selector(vcpu, cs)?;
@@ -100,9 +104,12 @@ pub fn iret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
         ));
     }
 
-    if new_cpl > old_cpl {
+    // In 64-bit mode, IRETQ ALWAYS pops RSP and SS, regardless of privilege level change.
+    // In 32-bit mode, RSP/SS are only popped on privilege level change.
+    if in_64bit_mode || new_cpl > old_cpl {
         let new_rsp = pop_by_size(vcpu, op_size)?;
         let new_ss = pop_by_size(vcpu, op_size)? as u16;
+
         vcpu.set_sreg(2, new_ss); // SS is segment register 2
         vcpu.regs.rsp = new_rsp;
     }
