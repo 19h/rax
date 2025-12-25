@@ -1,6 +1,9 @@
 pub mod bus;
 pub mod debug;
+pub mod lapic;
 pub mod map;
 pub mod pci;
+pub mod pic;
+pub mod pit;
 pub mod rtc;
 pub mod serial;
