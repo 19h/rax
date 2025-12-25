@@ -1268,12 +1268,20 @@ impl VCpu for X86_64Vcpu {
             // Check for pending LAPIC timer interrupts
             if let Some(vector) = self.mmu.tick_lapic_timer() {
                 if self.can_inject_interrupt() {
-                    let _ = self.inject_interrupt(vector);
-                    self.halted = false; // Wake up from HLT
+                    if self.inject_interrupt(vector).unwrap_or(false) {
+                        self.mmu.clear_lapic_pending(); // Only clear if injection succeeded
+                        self.halted = false; // Wake up from HLT
+                    }
                 }
             }
 
             if self.halted {
+                // If halted but there's a pending interrupt, keep trying
+                if self.mmu.has_lapic_pending() {
+                    // Spin briefly to avoid busy-waiting too aggressively
+                    std::thread::yield_now();
+                    continue;
+                }
                 return Ok(VcpuExit::Hlt);
             }
 
