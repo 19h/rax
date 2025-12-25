@@ -61,7 +61,33 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
                 vcpu.get_reg(rm, 2) as u16
             };
             vcpu.sregs.tr.selector = selector;
-            // In a real implementation, we'd load the TSS descriptor from the GDT
+
+            // Load the TSS descriptor from the GDT
+            // In 64-bit mode, TSS descriptor is 16 bytes (system segment descriptor)
+            let gdt_base = vcpu.sregs.gdt.base;
+            let index = (selector >> 3) as u64;
+            let desc_addr = gdt_base + index * 8;
+
+            // Read the 16-byte system segment descriptor
+            let mut desc_bytes = [0u8; 16];
+            vcpu.mmu.read(desc_addr, &mut desc_bytes, &vcpu.sregs)?;
+
+            // Parse the descriptor (64-bit TSS descriptor format)
+            // Bytes 0-7: legacy descriptor format
+            // Bytes 8-15: upper 32 bits of base address + reserved
+            let limit_low = u16::from_le_bytes([desc_bytes[0], desc_bytes[1]]) as u32;
+            let base_low = u16::from_le_bytes([desc_bytes[2], desc_bytes[3]]) as u64;
+            let base_mid = desc_bytes[4] as u64;
+            let _type_attr = desc_bytes[5];
+            let limit_high = (desc_bytes[6] & 0x0F) as u32;
+            let base_high_byte = desc_bytes[7] as u64;
+            let base_upper = u32::from_le_bytes([desc_bytes[8], desc_bytes[9], desc_bytes[10], desc_bytes[11]]) as u64;
+
+            let limit = limit_low | (limit_high << 16);
+            let base = base_low | (base_mid << 16) | (base_high_byte << 24) | (base_upper << 32);
+
+            vcpu.sregs.tr.base = base;
+            vcpu.sregs.tr.limit = limit;
         }
         // VERR - Verify Read (0x0F 0x00 /4)
         4 => {

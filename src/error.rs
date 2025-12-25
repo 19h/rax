@@ -27,6 +27,8 @@ pub enum Error {
     KernelLoad(String),
     #[error("Emulator error: {0}")]
     Emulator(String),
+    #[error("Page fault at vaddr {vaddr:#x} (error_code={error_code:#x})")]
+    PageFault { vaddr: u64, error_code: u64 },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

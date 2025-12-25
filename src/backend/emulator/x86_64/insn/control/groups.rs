@@ -9,6 +9,7 @@ use super::call::validate_far_selector;
 
 /// Group 4: INC/DEC r/m8 (0xFE)
 pub fn group4(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
     let op = (modrm >> 3) & 0x07;
@@ -18,9 +19,9 @@ pub fn group4(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         0 => {
             // INC r/m8
             if modrm >> 6 == 3 {
-                let val = vcpu.get_reg(rm, 1);
+                let val = vcpu.get_reg8(rm, has_rex);
                 let result = (val as u8).wrapping_add(1) as u64;
-                vcpu.set_reg(rm, result, 1);
+                vcpu.set_reg8(rm, result, has_rex);
                 // INC preserves CF
                 vcpu.materialize_flags();
                 let cf = vcpu.regs.rflags & flags::bits::CF;
@@ -44,9 +45,9 @@ pub fn group4(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         1 => {
             // DEC r/m8
             if modrm >> 6 == 3 {
-                let val = vcpu.get_reg(rm, 1);
+                let val = vcpu.get_reg8(rm, has_rex);
                 let result = (val as u8).wrapping_sub(1) as u64;
-                vcpu.set_reg(rm, result, 1);
+                vcpu.set_reg8(rm, result, has_rex);
                 // DEC preserves CF
                 vcpu.materialize_flags();
                 let cf = vcpu.regs.rflags & flags::bits::CF;
@@ -149,7 +150,10 @@ pub fn group5(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         3 => {
             // CALL FAR m16:16/m16:32/m16:64
             if modrm >> 6 == 3 {
-                return Err(Error::Emulator("CALL FAR requires memory operand".to_string()));
+                // CALL FAR with register operand is undefined - inject #UD
+                // Don't advance RIP - exception should point to faulting instruction
+                vcpu.inject_exception(6, None)?;
+                return Ok(None);
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
@@ -211,7 +215,10 @@ pub fn group5(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         5 => {
             // JMP FAR m16:16/m16:32/m16:64
             if modrm >> 6 == 3 {
-                return Err(Error::Emulator("JMP FAR requires memory operand".to_string()));
+                // JMP FAR with register operand is undefined - inject #UD
+                // Don't advance RIP - exception should point to faulting instruction
+                vcpu.inject_exception(6, None)?;
+                return Ok(None);
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
@@ -260,16 +267,9 @@ pub fn group5(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             vcpu.regs.rip += ctx.cursor as u64;
         }
         _ => {
-            // Debug: dump RIP and nearby bytes
-            let rip = vcpu.regs.rip;
-            let mut bytes = [0u8; 16];
-            for i in 0..16 {
-                bytes[i] = vcpu.mmu.read_u8(rip + i as u64, &vcpu.sregs).unwrap_or(0xCC);
-            }
-            return Err(Error::Emulator(format!(
-                "unimplemented 0xFF /{} at RIP={:#x} bytes={:02x?}",
-                op, rip, bytes
-            )));
+            // 0xFF /7 is undefined - inject #UD exception
+            // Don't advance RIP - exception should point to faulting instruction
+            vcpu.inject_exception(6, None)?; // #UD = vector 6
         }
     }
     Ok(None)

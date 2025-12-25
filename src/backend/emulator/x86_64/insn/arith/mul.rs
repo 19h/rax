@@ -35,6 +35,7 @@ pub fn imul_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     };
     vcpu.set_reg(reg, result, op_size);
     flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -77,6 +78,7 @@ pub fn imul_r_rm_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
     };
     vcpu.set_reg(reg, result, op_size);
     flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -113,6 +115,7 @@ pub fn imul_r_rm_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Op
     };
     vcpu.set_reg(reg, result, op_size);
     flags::set_cf_of(&mut vcpu.regs.rflags, overflow, overflow);
+    vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

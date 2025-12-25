@@ -8,8 +8,9 @@ use super::super::super::flags;
 
 /// SUB r/m8, r8 (0x28)
 pub fn sub_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let src = vcpu.get_reg(reg, 1);
+    let src = vcpu.get_reg8(reg, has_rex);
 
     if is_memory {
         let dst = vcpu.mmu.read_u8(addr, &vcpu.sregs)? as u64;
@@ -17,9 +18,9 @@ pub fn sub_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         vcpu.mmu.write_u8(addr, result as u8, &vcpu.sregs)?;
         vcpu.set_lazy_sub(dst, src, result, 1);
     } else {
-        let dst = vcpu.get_reg(rm, 1);
+        let dst = vcpu.get_reg8(rm, has_rex);
         let result = dst.wrapping_sub(src) & 0xFF;
-        vcpu.set_reg(rm, result, 1);
+        vcpu.set_reg8(rm, result, has_rex);
         vcpu.set_lazy_sub(dst, src, result, 1);
     }
     vcpu.regs.rip += ctx.cursor as u64;
@@ -49,16 +50,17 @@ pub fn sub_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 
 /// SUB r8, r/m8 (0x2A)
 pub fn sub_r8_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let dst = vcpu.get_reg(reg, 1);
+    let dst = vcpu.get_reg8(reg, has_rex);
 
     let src = if is_memory {
         vcpu.mmu.read_u8(addr, &vcpu.sregs)? as u64
     } else {
-        vcpu.get_reg(rm, 1)
+        vcpu.get_reg8(rm, has_rex)
     };
     let result = dst.wrapping_sub(src) & 0xFF;
-    vcpu.set_reg(reg, result, 1);
+    vcpu.set_reg8(reg, result, has_rex);
     vcpu.set_lazy_sub(dst, src, result, 1);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -113,8 +115,9 @@ pub fn sub_rax_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
 
 /// SBB r/m8, r8 (0x18) - Subtract with Borrow
 pub fn sbb_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let src = vcpu.get_reg(reg, 1);
+    let src = vcpu.get_reg8(reg, has_rex);
     vcpu.materialize_flags(); // Need CF
     let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
     let cf_val = if cf_in { 1u64 } else { 0 };
@@ -125,9 +128,9 @@ pub fn sbb_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         vcpu.mmu.write_u8(addr, result as u8, &vcpu.sregs)?;
         flags::update_flags_sbb(&mut vcpu.regs.rflags, dst, src, cf_in, result, 1);
     } else {
-        let dst = vcpu.get_reg(rm, 1);
+        let dst = vcpu.get_reg8(rm, has_rex);
         let result = dst.wrapping_sub(src).wrapping_sub(cf_val) & 0xFF;
-        vcpu.set_reg(rm, result, 1);
+        vcpu.set_reg8(rm, result, has_rex);
         flags::update_flags_sbb(&mut vcpu.regs.rflags, dst, src, cf_in, result, 1);
     }
     vcpu.clear_lazy_flags();
@@ -162,8 +165,9 @@ pub fn sbb_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 
 /// SBB r8, r/m8 (0x1A) - Subtract with Borrow
 pub fn sbb_r8_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let dst = vcpu.get_reg(reg, 1);
+    let dst = vcpu.get_reg8(reg, has_rex);
     vcpu.materialize_flags(); // Need CF
     let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
     let cf_val = if cf_in { 1u64 } else { 0 };
@@ -171,10 +175,10 @@ pub fn sbb_r8_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
     let src = if is_memory {
         vcpu.mmu.read_u8(addr, &vcpu.sregs)? as u64
     } else {
-        vcpu.get_reg(rm, 1)
+        vcpu.get_reg8(rm, has_rex)
     };
     let result = dst.wrapping_sub(src).wrapping_sub(cf_val) & 0xFF;
-    vcpu.set_reg(reg, result, 1);
+    vcpu.set_reg8(reg, result, has_rex);
     flags::update_flags_sbb(&mut vcpu.regs.rflags, dst, src, cf_in, result, 1);
     vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;

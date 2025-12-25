@@ -21,6 +21,7 @@ pub fn cmpsb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         let val2 = vcpu.mmu.read_u8(vcpu.regs.rdi, &vcpu.sregs)? as u64;
         let result = val1.wrapping_sub(val2);
         flags::update_flags_sub(&mut vcpu.regs.rflags, val1, val2, result, 1);
+        vcpu.clear_lazy_flags();
         if vcpu.regs.rflags & flags::bits::DF == 0 {
             vcpu.regs.rsi = vcpu.regs.rsi.wrapping_add(1);
             vcpu.regs.rdi = vcpu.regs.rdi.wrapping_add(1);
@@ -60,6 +61,7 @@ pub fn cmps(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
         let val2 = vcpu.read_mem(vcpu.regs.rdi, op_size)?;
         let result = val1.wrapping_sub(val2);
         flags::update_flags_sub(&mut vcpu.regs.rflags, val1, val2, result, op_size);
+        vcpu.clear_lazy_flags();
         if vcpu.regs.rflags & flags::bits::DF == 0 {
             vcpu.regs.rsi = vcpu.regs.rsi.wrapping_add(delta);
             vcpu.regs.rdi = vcpu.regs.rdi.wrapping_add(delta);

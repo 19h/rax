@@ -297,11 +297,12 @@ impl X86_64Vcpu {
             0xF0 => {
                 if ctx.rep_prefix == Some(0xF2) {
                     // CRC32 r32/r64, r/m8
+                    let has_rex = ctx.rex.is_some();
                     let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                     let src = if is_memory {
                         self.read_mem(addr, 1)? as u8
                     } else {
-                        self.get_reg(rm, 1) as u8
+                        self.get_reg8(rm, has_rex) as u8
                     };
                     let crc_in = self.get_reg(reg, 4) as u32;
                     let crc_out = crc32c_u8(crc_in, src);

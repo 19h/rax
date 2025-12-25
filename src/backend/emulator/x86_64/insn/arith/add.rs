@@ -17,8 +17,9 @@ fn add_with_carry_unsigned(dest: u64, src: u64, carry_in: bool, op_size: u8) -> 
 
 /// ADD r/m8, r8 (0x00)
 pub fn add_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let src = vcpu.get_reg(reg, 1);
+    let src = vcpu.get_reg8(reg, has_rex);
 
     if is_memory {
         let dst = vcpu.mmu.read_u8(addr, &vcpu.sregs)? as u64;
@@ -26,9 +27,9 @@ pub fn add_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         vcpu.mmu.write_u8(addr, result as u8, &vcpu.sregs)?;
         vcpu.set_lazy_add(dst, src, result, 1);
     } else {
-        let dst = vcpu.get_reg(rm, 1);
+        let dst = vcpu.get_reg8(rm, has_rex);
         let result = dst.wrapping_add(src) & 0xFF;
-        vcpu.set_reg(rm, result, 1);
+        vcpu.set_reg8(rm, result, has_rex);
         vcpu.set_lazy_add(dst, src, result, 1);
     }
     vcpu.regs.rip += ctx.cursor as u64;
@@ -58,16 +59,17 @@ pub fn add_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 
 /// ADD r8, r/m8 (0x02)
 pub fn add_r8_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let dst = vcpu.get_reg(reg, 1);
+    let dst = vcpu.get_reg8(reg, has_rex);
 
     let src = if is_memory {
         vcpu.mmu.read_u8(addr, &vcpu.sregs)? as u64
     } else {
-        vcpu.get_reg(rm, 1)
+        vcpu.get_reg8(rm, has_rex)
     };
     let result = dst.wrapping_add(src) & 0xFF;
-    vcpu.set_reg(reg, result, 1);
+    vcpu.set_reg8(reg, result, has_rex);
     vcpu.set_lazy_add(dst, src, result, 1);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -78,7 +80,6 @@ pub fn add_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     let op_size = ctx.op_size;
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let dst = vcpu.get_reg(reg, op_size);
-
     let src = if is_memory {
         vcpu.read_mem(addr, op_size)?
     } else {
@@ -122,8 +123,9 @@ pub fn add_rax_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
 
 /// ADC r/m8, r8 (0x10) - Add with Carry
 pub fn adc_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let src = vcpu.get_reg(reg, 1);
+    let src = vcpu.get_reg8(reg, has_rex);
     vcpu.materialize_flags(); // Need CF
     let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
     let cf_val = if cf_in { 1u64 } else { 0 };
@@ -134,9 +136,9 @@ pub fn adc_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         vcpu.mmu.write_u8(addr, result as u8, &vcpu.sregs)?;
         flags::update_flags_adc(&mut vcpu.regs.rflags, dst, src, cf_in, result, 1);
     } else {
-        let dst = vcpu.get_reg(rm, 1);
+        let dst = vcpu.get_reg8(rm, has_rex);
         let result = dst.wrapping_add(src).wrapping_add(cf_val) & 0xFF;
-        vcpu.set_reg(rm, result, 1);
+        vcpu.set_reg8(rm, result, has_rex);
         flags::update_flags_adc(&mut vcpu.regs.rflags, dst, src, cf_in, result, 1);
     }
     vcpu.clear_lazy_flags();
@@ -171,8 +173,9 @@ pub fn adc_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 
 /// ADC r8, r/m8 (0x12) - Add with Carry
 pub fn adc_r8_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let has_rex = ctx.rex.is_some();
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let dst = vcpu.get_reg(reg, 1);
+    let dst = vcpu.get_reg8(reg, has_rex);
     vcpu.materialize_flags(); // Need CF
     let cf_in = (vcpu.regs.rflags & flags::bits::CF) != 0;
     let cf_val = if cf_in { 1u64 } else { 0 };
@@ -180,10 +183,10 @@ pub fn adc_r8_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
     let src = if is_memory {
         vcpu.mmu.read_u8(addr, &vcpu.sregs)? as u64
     } else {
-        vcpu.get_reg(rm, 1)
+        vcpu.get_reg8(rm, has_rex)
     };
     let result = dst.wrapping_add(src).wrapping_add(cf_val) & 0xFF;
-    vcpu.set_reg(reg, result, 1);
+    vcpu.set_reg8(reg, result, has_rex);
     flags::update_flags_adc(&mut vcpu.regs.rflags, dst, src, cf_in, result, 1);
     vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;

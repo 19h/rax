@@ -41,6 +41,13 @@ pub fn rdmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                 .map(|d| d.as_nanos() as u64)
                 .unwrap_or(1_000_000)
         }
+        0x1B => {
+            // IA32_APIC_BASE - APIC base address
+            // Bit 8: BSP flag (this is the bootstrap processor)
+            // Bit 11: APIC global enable
+            // Bits 12-35: APIC base physical address (default 0xFEE00000)
+            (1u64 << 8) | (1u64 << 11) | 0xFEE00000u64
+        }
         0xC0000080 => vcpu.sregs.efer,        // EFER
         0xC0000081 => vcpu.sregs.star,        // STAR
         0xC0000082 => vcpu.sregs.lstar,       // LSTAR
