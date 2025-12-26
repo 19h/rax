@@ -1,4 +1,8 @@
 use std::sync::Arc;
+#[cfg(feature = "debug")]
+use std::sync::mpsc::TryRecvError;
+#[cfg(feature = "debug")]
+use std::thread::JoinHandle;
 
 use tracing::{debug, info};
 use vm_memory::Bytes;
@@ -11,6 +15,8 @@ use crate::backend::{self, Vm};
 use crate::config::BackendKind;
 use crate::config::VmConfig;
 use crate::cpu::{CpuState, VCpu, VcpuExit};
+#[cfg(feature = "debug")]
+use crate::gdb::{self, GdbCommand, GdbResponse, VmmGdbChannels};
 use crate::devices::bus::{IoBus, IoDevice, IoRange, MmioBus, MmioRange};
 use crate::devices::lapic::{LapicDevice, LocalApic, LAPIC_BASE, LAPIC_SIZE};
 use crate::devices::pic::{DualPic, MasterPicDevice, SlavePicDevice};
@@ -62,6 +68,24 @@ pub struct Vmm {
     boot_info: BootInfo,
     serial_mmio_base: Option<u64>,
     serial_irq: Option<u32>,
+    /// GDB server channels (when --features debug and --gdb is used).
+    #[cfg(feature = "debug")]
+    gdb_channels: Option<VmmGdbChannels>,
+    /// GDB server thread handle.
+    #[cfg(feature = "debug")]
+    gdb_thread: Option<JoinHandle<()>>,
+    /// Whether in single-step mode for GDB.
+    #[cfg(feature = "debug")]
+    gdb_single_step: bool,
+    /// Whether GDB requested a stop.
+    #[cfg(feature = "debug")]
+    gdb_stopped: bool,
+    /// Software breakpoints: addr -> original byte.
+    #[cfg(feature = "debug")]
+    gdb_breakpoints: std::collections::HashMap<u64, u8>,
+    /// Wait for GDB connection before starting.
+    #[cfg(feature = "debug")]
+    wait_gdb: bool,
 }
 
 impl Vmm {
@@ -198,6 +222,24 @@ impl Vmm {
             vcpus.push(vcpu);
         }
 
+        // Initialize GDB server if configured
+        #[cfg(feature = "debug")]
+        let (gdb_channels, gdb_thread) = if let Some(port) = config.gdb_port {
+            let (gdb_ch, vmm_ch) = gdb::create_channels();
+            let handle = gdb::spawn_server(port, gdb_ch, config.wait_gdb)
+                .map_err(|e| Error::InvalidConfig(format!("failed to start GDB server: {}", e)))?;
+            (Some(vmm_ch), Some(handle))
+        } else {
+            (None, None)
+        };
+
+        #[cfg(not(feature = "debug"))]
+        if config.gdb_port.is_some() {
+            return Err(Error::InvalidConfig(
+                "--gdb requires building with --features debug".to_string(),
+            ));
+        }
+
         Ok(Vmm {
             vm,
             guest_mem,
@@ -212,11 +254,47 @@ impl Vmm {
             boot_info,
             serial_mmio_base,
             serial_irq,
+            #[cfg(feature = "debug")]
+            gdb_channels,
+            #[cfg(feature = "debug")]
+            gdb_thread,
+            #[cfg(feature = "debug")]
+            gdb_single_step: false,
+            #[cfg(feature = "debug")]
+            gdb_stopped: false,
+            #[cfg(feature = "debug")]
+            gdb_breakpoints: std::collections::HashMap::new(),
+            #[cfg(feature = "debug")]
+            wait_gdb: config.wait_gdb,
         })
     }
 
     pub fn run(&mut self) -> Result<()> {
         info!("starting vCPU 0");
+
+        // Wait for GDB connection if --wait-gdb was specified
+        #[cfg(feature = "debug")]
+        if self.wait_gdb {
+            if let Some(ref channels) = self.gdb_channels {
+                info!("Waiting for GDB to connect and send command...");
+                // Block until we receive a command from GDB
+                match channels.cmd_rx.recv() {
+                    Ok(cmd) => {
+                        info!("GDB connected, received initial command");
+                        // Handle the initial command and stop
+                        self.gdb_stopped = true;
+                        if let Some(should_break) = self.handle_gdb_command(cmd)? {
+                            if should_break {
+                                return Ok(());
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        info!("GDB channel closed before connection");
+                    }
+                }
+            }
+        }
 
         loop {
             // Poll for input before running vCPU
@@ -288,6 +366,47 @@ impl Vmm {
                         }
                     }
                 }
+            }
+
+            // Handle GDB commands (non-blocking)
+            #[cfg(feature = "debug")]
+            if let Some(ref channels) = self.gdb_channels {
+                match channels.cmd_rx.try_recv() {
+                    Ok(cmd) => {
+                        if let Some(should_break) = self.handle_gdb_command(cmd)? {
+                            if should_break {
+                                break;
+                            }
+                            continue;
+                        }
+                    }
+                    Err(TryRecvError::Empty) => {}
+                    Err(TryRecvError::Disconnected) => {
+                        // GDB disconnected, continue without GDB
+                        debug!("GDB disconnected");
+                    }
+                }
+            }
+
+            // If GDB stopped us, wait for continue/step command
+            #[cfg(feature = "debug")]
+            if self.gdb_stopped {
+                if let Some(ref channels) = self.gdb_channels {
+                    match channels.cmd_rx.recv() {
+                        Ok(cmd) => {
+                            if let Some(should_break) = self.handle_gdb_command(cmd)? {
+                                if should_break {
+                                    break;
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // GDB disconnected
+                            self.gdb_stopped = false;
+                        }
+                    }
+                }
+                continue;
             }
 
             let vcpu = self
@@ -408,6 +527,26 @@ impl Vmm {
                     // Software interrupt - just continue
                     continue;
                 }
+                #[cfg(feature = "debug")]
+                VcpuExit::GdbBreakpoint { addr } => {
+                    debug!(addr = format!("{:#x}", addr), "GDB breakpoint hit");
+                    if let Some(ref channels) = self.gdb_channels {
+                        let _ = channels.resp_tx.send(GdbResponse::StopReply(5)); // SIGTRAP
+                    }
+                    self.gdb_stopped = true;
+                    self.gdb_single_step = false;
+                    continue;
+                }
+                #[cfg(feature = "debug")]
+                VcpuExit::GdbStep => {
+                    debug!("GDB single step complete");
+                    if let Some(ref channels) = self.gdb_channels {
+                        let _ = channels.resp_tx.send(GdbResponse::StopReply(5)); // SIGTRAP
+                    }
+                    self.gdb_stopped = true;
+                    self.gdb_single_step = false;
+                    continue;
+                }
                 exit => {
                     return Err(Error::KernelLoad(format!("unhandled exit: {exit:?}")))
                 }
@@ -431,5 +570,137 @@ impl Vmm {
 
     pub fn arch(&self) -> &dyn Arch {
         self.arch.as_ref()
+    }
+
+    /// Handle a GDB command from the debug server.
+    /// Returns Some(true) to break the run loop, Some(false) to continue, None for commands that resume execution.
+    #[cfg(feature = "debug")]
+    fn handle_gdb_command(&mut self, cmd: GdbCommand) -> Result<Option<bool>> {
+        use crate::gdb::registers::{pack_registers, unpack_registers};
+        use crate::gdb::protocol::encode_hex;
+
+        let channels = match &self.gdb_channels {
+            Some(ch) => ch,
+            None => return Ok(None),
+        };
+
+        match cmd {
+            GdbCommand::Continue => {
+                self.gdb_stopped = false;
+                self.gdb_single_step = false;
+                // Disable single-step mode on vcpu
+                if let Some(vcpu) = self.vcpus.get_mut(0) {
+                    vcpu.set_single_step(false);
+                }
+                return Ok(None); // Resume execution
+            }
+            GdbCommand::Step => {
+                self.gdb_stopped = false;
+                self.gdb_single_step = true;
+                // Enable single-step mode on vcpu
+                if let Some(vcpu) = self.vcpus.get_mut(0) {
+                    vcpu.set_single_step(true);
+                }
+                return Ok(None); // Resume execution for one instruction
+            }
+            GdbCommand::ReadRegisters => {
+                let vcpu = self.vcpus.get(0)
+                    .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
+                match vcpu.get_state()? {
+                    CpuState::X86_64(state) => {
+                        let hex = pack_registers(&state);
+                        let _ = channels.resp_tx.send(GdbResponse::Registers(hex));
+                    }
+                    _ => {
+                        let _ = channels.resp_tx.send(GdbResponse::Error(1));
+                    }
+                }
+            }
+            GdbCommand::WriteRegisters(data) => {
+                let vcpu = self.vcpus.get_mut(0)
+                    .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
+                match vcpu.get_state()? {
+                    CpuState::X86_64(mut state) => {
+                        let hex = String::from_utf8_lossy(&data).to_string();
+                        if unpack_registers(&hex, &mut state) {
+                            vcpu.set_state(&CpuState::X86_64(state))?;
+                            let _ = channels.resp_tx.send(GdbResponse::Ok);
+                        } else {
+                            let _ = channels.resp_tx.send(GdbResponse::Error(1));
+                        }
+                    }
+                    _ => {
+                        let _ = channels.resp_tx.send(GdbResponse::Error(1));
+                    }
+                }
+            }
+            GdbCommand::ReadMemory { addr, len } => {
+                let mem = self.guest_mem.memory();
+                let mut data = vec![0u8; len];
+                if mem.read_slice(&mut data, vm_memory::GuestAddress(addr)).is_ok() {
+                    let hex = encode_hex(&data);
+                    let _ = channels.resp_tx.send(GdbResponse::Memory(hex));
+                } else {
+                    let _ = channels.resp_tx.send(GdbResponse::Error(1));
+                }
+            }
+            GdbCommand::WriteMemory { addr, data } => {
+                let mem = self.guest_mem.memory();
+                if mem.write_slice(&data, vm_memory::GuestAddress(addr)).is_ok() {
+                    let _ = channels.resp_tx.send(GdbResponse::Ok);
+                } else {
+                    let _ = channels.resp_tx.send(GdbResponse::Error(1));
+                }
+            }
+            GdbCommand::SetBreakpoint { addr } => {
+                // Read original byte and patch with INT3 (0xCC)
+                let mem = self.guest_mem.memory();
+                let mut orig = [0u8; 1];
+                if mem.read_slice(&mut orig, vm_memory::GuestAddress(addr)).is_ok() {
+                    if mem.write_slice(&[0xCC], vm_memory::GuestAddress(addr)).is_ok() {
+                        // Store original byte for later restoration
+                        self.gdb_breakpoints.insert(addr, orig[0]);
+                        debug!(addr = format!("{:#x}", addr), orig = format!("{:#x}", orig[0]), "Set breakpoint");
+                        let _ = channels.resp_tx.send(GdbResponse::Ok);
+                    } else {
+                        let _ = channels.resp_tx.send(GdbResponse::Error(1));
+                    }
+                } else {
+                    let _ = channels.resp_tx.send(GdbResponse::Error(1));
+                }
+            }
+            GdbCommand::RemoveBreakpoint { addr } => {
+                // Restore original byte from tracking map
+                let mem = self.guest_mem.memory();
+                if let Some(orig) = self.gdb_breakpoints.remove(&addr) {
+                    if mem.write_slice(&[orig], vm_memory::GuestAddress(addr)).is_ok() {
+                        debug!(addr = format!("{:#x}", addr), orig = format!("{:#x}", orig), "Removed breakpoint");
+                        let _ = channels.resp_tx.send(GdbResponse::Ok);
+                    } else {
+                        // Failed to write, put it back in the map
+                        self.gdb_breakpoints.insert(addr, orig);
+                        let _ = channels.resp_tx.send(GdbResponse::Error(1));
+                    }
+                } else {
+                    // No breakpoint at this address
+                    debug!(addr = format!("{:#x}", addr), "No breakpoint to remove");
+                    let _ = channels.resp_tx.send(GdbResponse::Ok);
+                }
+            }
+            GdbCommand::QueryHaltReason => {
+                let _ = channels.resp_tx.send(GdbResponse::StopReply(5)); // SIGTRAP
+            }
+            GdbCommand::Detach => {
+                self.gdb_stopped = false;
+                self.gdb_single_step = false;
+                let _ = channels.resp_tx.send(GdbResponse::Detached);
+                return Ok(Some(false));
+            }
+            GdbCommand::Kill => {
+                return Ok(Some(true)); // Break run loop
+            }
+        }
+
+        Ok(Some(false)) // Don't break, but don't resume execution either
     }
 }

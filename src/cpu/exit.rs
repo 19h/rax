@@ -64,6 +64,17 @@ pub enum VcpuExit {
     /// Software interrupt or exception.
     Exception(u8),
 
+    /// GDB breakpoint hit.
+    #[cfg(feature = "debug")]
+    GdbBreakpoint {
+        /// Address of the breakpoint.
+        addr: u64,
+    },
+
+    /// GDB single step completed.
+    #[cfg(feature = "debug")]
+    GdbStep,
+
     /// Unknown or unhandled exit.
     Unknown(String),
 }

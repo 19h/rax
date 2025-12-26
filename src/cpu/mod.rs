@@ -82,6 +82,18 @@ pub trait VCpu: Send {
         false
     }
 
+    /// Enable or disable single-step mode for debugging.
+    #[cfg(feature = "debug")]
+    fn set_single_step(&mut self, enabled: bool) {
+        let _ = enabled;
+    }
+
+    /// Check if single-step mode is enabled.
+    #[cfg(feature = "debug")]
+    fn is_single_step(&self) -> bool {
+        false
+    }
+
     /// Get vCPU ID.
     fn id(&self) -> u32;
 }
