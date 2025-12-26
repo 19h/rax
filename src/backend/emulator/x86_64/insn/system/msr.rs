@@ -20,26 +20,8 @@ pub fn wrmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         0x175 => vcpu.sregs.sysenter_esp = value,    // IA32_SYSENTER_ESP
         0x176 => vcpu.sregs.sysenter_eip = value,    // IA32_SYSENTER_EIP
         0xC0000100 => vcpu.sregs.fs.base = value,    // FS.base
-        0xC0000101 => {
-            // Debug: trace GS.base writes
-            use std::sync::atomic::{AtomicU64, Ordering};
-            static GS_BASE_WRITE_COUNT: AtomicU64 = AtomicU64::new(0);
-            let count = GS_BASE_WRITE_COUNT.fetch_add(1, Ordering::Relaxed);
-            if count < 10 {
-                eprintln!("[WRMSR GS_BASE #{}] value={:#x} (from RIP={:#x})", count, value, vcpu.regs.rip);
-            }
-            vcpu.sregs.gs.base = value;
-        }
-        0xC0000102 => {
-            // Debug: trace KERNEL_GS_BASE writes
-            use std::sync::atomic::{AtomicU64, Ordering};
-            static KGS_BASE_WRITE_COUNT: AtomicU64 = AtomicU64::new(0);
-            let count = KGS_BASE_WRITE_COUNT.fetch_add(1, Ordering::Relaxed);
-            if count < 10 {
-                eprintln!("[WRMSR KERNEL_GS_BASE #{}] value={:#x}", count, value);
-            }
-            vcpu.kernel_gs_base = value;
-        }
+        0xC0000101 => vcpu.sregs.gs.base = value,     // GS.base
+        0xC0000102 => vcpu.kernel_gs_base = value,    // KernelGSbase
         _ => {}                                       // Ignore unknown MSRs
     }
     vcpu.regs.rip += ctx.cursor as u64;
