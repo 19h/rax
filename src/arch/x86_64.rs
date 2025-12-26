@@ -161,19 +161,20 @@ impl X86_64Arch {
                 pvh_boot_cap: linux_loader::loader::elf::PvhBootCapability::PvhEntryNotPresent,
             };
 
-            // The ELF entry point for vmlinux is the PHYSICAL address of startup_64.
-            // The kernel expects to start with identity mapping (phys == virt) and
-            // sets up its own virtual address mapping during early boot.
+            // The ELF entry point for vmlinux. Modern kernels built with
+            // CONFIG_PHYSICAL_START have e_entry as a physical address.
+            // The kernel expects to start with identity mapping (phys == virt)
+            // and sets up its own virtual address mapping during early boot.
             // The __pi___startup_64 code verifies: (kernel_base >> 46) == 0
             // which requires running at the physical address, not virtual.
-            let phys_entry = elf.header.e_entry;
+            let entry = elf.header.e_entry;
 
             info!(
-                phys_entry = format!("{:#x}", phys_entry),
+                entry = format!("{:#x}", entry),
                 kernel_end = format!("{:#x}", max_phys_end),
-                "ELF kernel entry point (using physical address for identity-mapped boot)"
+                "ELF kernel entry point"
             );
-            Ok((result, true, Some(phys_entry)))
+            Ok((result, true, Some(entry)))
         } else {
             info!("raw binary kernel, entry at load address");
             Ok((result, false, None))

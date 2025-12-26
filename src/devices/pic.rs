@@ -128,12 +128,6 @@ impl Pic8259 {
     fn write_command(&mut self, value: u8) {
         if value & 0x10 != 0 {
             // ICW1 - start initialization sequence
-            tracing::info!(
-                "PIC ICW1: value={:#x}, icw4_needed={}, cascade={}",
-                value,
-                value & 0x01 != 0,
-                value & 0x02 == 0
-            );
             self.icw1 = value;
             self.icw4_needed = value & 0x01 != 0;
             self.init_state = InitState::WaitingICW2;
@@ -152,13 +146,12 @@ impl Pic8259 {
             let eoi_type = (value >> 5) & 0x07;
             match eoi_type {
                 0b001 => {
-                    tracing::debug!("PIC OCW2: non-specific EOI, isr={:#x}", self.isr);
+                    // Non-specific EOI
                     self.eoi(None);
                 }
                 0b011 => {
                     // Specific EOI
                     let irq = value & 0x07;
-                    tracing::debug!("PIC OCW2: specific EOI irq={}", irq);
                     self.eoi(Some(irq));
                 }
                 0b101 => {

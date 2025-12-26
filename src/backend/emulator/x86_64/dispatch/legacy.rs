@@ -135,7 +135,7 @@ impl X86_64Vcpu {
             0x3C => insn::arith::cmp_al_imm8(self, ctx),
             0x3D => insn::arith::cmp_rax_imm(self, ctx),
             0x3F => insn::arith::aas(self, ctx),
-            0x80 => insn::arith::group1_rm8_imm8(self, ctx),
+            0x80 | 0x82 => insn::arith::group1_rm8_imm8(self, ctx), // 0x82 is alias for 0x80
             0x81 => insn::arith::group1_rm_imm32(self, ctx),
             0x83 => insn::arith::group1_rm_imm8(self, ctx),
             0x69 => insn::arith::imul_r_rm_imm(self, ctx),

@@ -6,6 +6,8 @@ pub mod devices;
 pub mod error;
 pub mod memory;
 pub mod timing;
+#[cfg(feature = "trace")]
+pub mod trace;
 pub mod vmm;
 
 pub use crate::error::{Error, Result};
