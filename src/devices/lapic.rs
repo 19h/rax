@@ -357,9 +357,35 @@ impl LocalApic {
             LAPIC_LVT_ERROR => self.lvt_error,
             LAPIC_TIMER_ICR => self.timer_initial_count,
             LAPIC_TIMER_CCR => {
-                // Current count is computed dynamically
-                if self.timer_initial_count == 0 || self.timer_start.is_none() {
+                // Current count must be computed dynamically on every read
+                // The kernel uses this for timer calibration
+                if self.timer_initial_count == 0 {
                     0
+                } else if let Some(start) = self.timer_start {
+                    let elapsed = start.elapsed();
+                    let divisor = self.timer_divisor() as u64;
+                    let ticks_per_sec = LAPIC_TIMER_FREQ_HZ / divisor;
+
+                    // Calculate how many timer ticks have elapsed
+                    let elapsed_ticks = (elapsed.as_nanos() as u64 * ticks_per_sec) / 1_000_000_000;
+                    let initial = self.timer_initial_count as u64;
+
+                    let mode = self.timer_mode();
+                    match mode {
+                        TIMER_MODE_ONESHOT => {
+                            if elapsed_ticks >= initial {
+                                0
+                            } else {
+                                (initial - elapsed_ticks) as u32
+                            }
+                        }
+                        TIMER_MODE_PERIODIC => {
+                            // In periodic mode, wrap around
+                            let remainder = elapsed_ticks % initial;
+                            (initial - remainder) as u32
+                        }
+                        _ => 0, // TSC-deadline mode returns 0
+                    }
                 } else {
                     self.timer_current_count
                 }

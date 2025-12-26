@@ -1337,8 +1337,27 @@ impl VCpu for X86_64Vcpu {
     fn run(&mut self) -> Result<VcpuExit> {
         let start_time = std::time::Instant::now();
         let mut insn_count: u64 = 0;
+        static DEBUG_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
         loop {
             insn_count += 1;
+
+            // Debug: periodically log RIP to find where we're stuck
+            let debug_count = DEBUG_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            if debug_count % 50_000_000 == 0 {
+                // If we're in delay_tsc, log what the cpu_number comparison sees
+                let extra_info = if self.regs.rip >= 0xffffffff8224ea00 && self.regs.rip < 0xffffffff8224eb00 {
+                    format!(" r9={:#x} rsi={:#x}", self.regs.r9, self.regs.rsi)
+                } else {
+                    String::new()
+                };
+                tracing::info!(
+                    rip = format!("{:#x}", self.regs.rip),
+                    gs_base = format!("{:#x}", self.sregs.gs.base),
+                    r8 = format!("{:#x}", self.regs.r8),
+                    extra = extra_info,
+                    "CPU position"
+                );
+            }
 
             // Periodically yield to VMM for interrupt handling (every ~1ms)
             if insn_count % 100_000 == 0 {
