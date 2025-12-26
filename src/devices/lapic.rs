@@ -109,6 +109,13 @@ pub struct LocalApic {
 
 impl LocalApic {
     pub fn new(apic_id: u32) -> Self {
+        // Configure for virtual wire mode (what BIOS would normally do):
+        // - APIC enabled (SVR bit 8 = 1)
+        // - LINT0 configured for ExtInt mode (delivery mode 7 = external interrupt)
+        // - LINT1 configured for NMI (delivery mode 4)
+        //
+        // LINT0 value: delivery_mode=7 (ExtInt), not masked = 0x700
+        // LINT1 value: delivery_mode=4 (NMI), not masked = 0x400
         LocalApic {
             id: apic_id << 24, // ID is in bits 24-31
             // Version: bits 0-7 = version (0x14 = modern APIC)
@@ -117,7 +124,7 @@ impl LocalApic {
             tpr: 0,
             ldr: 0,
             dfr: 0xFFFFFFFF, // Flat model
-            svr: 0xFF, // APIC disabled initially, spurious vector 0xFF
+            svr: 0x1FF, // APIC enabled (bit 8), spurious vector 0xFF
             isr: [0; 8],
             tmr: [0; 8],
             irr: [0; 8],
@@ -126,8 +133,8 @@ impl LocalApic {
             lvt_timer: LVT_MASK, // Masked initially
             lvt_thermal: LVT_MASK,
             lvt_pmc: LVT_MASK,
-            lvt_lint0: LVT_MASK,
-            lvt_lint1: LVT_MASK,
+            lvt_lint0: 0x700, // ExtInt mode, not masked - virtual wire mode
+            lvt_lint1: 0x400, // NMI mode, not masked
             lvt_error: LVT_MASK,
             timer_initial_count: 0,
             timer_current_count: 0,
