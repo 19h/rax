@@ -134,6 +134,12 @@ impl X86_64Arch {
             )
             .map_err(Error::from)?;
 
+            info!(
+                kernel_load = format!("{:#x}", result.kernel_load.raw_value()),
+                kernel_end = format!("{:#x}", result.kernel_end),
+                "bzImage loaded by linux-loader"
+            );
+
             // The compressed kernel data needs to be at 0x4000000 for the decompressor to find it
             // Read payload_offset and payload_length directly from the kernel file
             kernel_file.seek(std::io::SeekFrom::Start(0x248))?;
@@ -495,6 +501,7 @@ impl Arch for X86_64Arch {
 
         // Build command line
         let cmdline = Self::build_cmdline(&config.cmdline)?;
+        info!(cmdline = %config.cmdline, "loading kernel command line");
         load_cmdline(mem, GuestAddress(CMDLINE_ADDR), &cmdline).map_err(Error::from)?;
         let cmdline_size = cmdline
             .as_cstring()
@@ -554,23 +561,8 @@ impl Arch for X86_64Arch {
             entry
         } else {
             // bzImage kernel - needs decompression setup
-            // Patch the kernel's hardcoded physical address bits
-            let kernel_base = loader_result.kernel_load.raw_value();
-            if kernel_base >= 0x100000 {
-                let patch_offset = 0x3b394_u64;
-                let patch_addr = GuestAddress(kernel_base + patch_offset);
-                let new_phys_bits: u32 = 36;
-                if mem.write_obj(new_phys_bits, patch_addr).is_ok() {
-                    debug!("patched phys_bits to {} at {:#x}", new_phys_bits, patch_addr.raw_value());
-                }
-
-                let imm_offset = 0x21d87_u64;
-                let imm_addr = GuestAddress(kernel_base + imm_offset);
-                let new_limit: u64 = 0x1000000000;
-                if mem.write_obj(new_limit, imm_addr).is_ok() {
-                    debug!("patched immediate to {:#x} at {:#x}", new_limit, imm_addr.raw_value());
-                }
-            }
+            // Note: Do NOT patch the bzImage - the compressed kernel data would be corrupted.
+            // Any patches should be applied after decompression by the kernel itself.
 
             let setup_header = loader_result
                 .setup_header

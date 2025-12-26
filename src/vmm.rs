@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use tracing::{debug, info};
+use vm_memory::Bytes;
 
 use crate::arch::{self, Arch, BootInfo};
 #[cfg(all(feature = "kvm", target_os = "linux"))]
@@ -202,6 +203,7 @@ impl Vmm {
 
     pub fn run(&mut self) -> Result<()> {
         info!("starting vCPU 0");
+
         loop {
             // Poll for input before running vCPU
             if let Ok(mut serial) = self.serial.lock() {
@@ -365,6 +367,14 @@ impl Vmm {
                 }
                 VcpuExit::InternalError => {
                     return Err(Error::KernelLoad("vCPU internal error".to_string()))
+                }
+                VcpuExit::Debug => {
+                    // INT3 breakpoint - kernel debugging, just continue
+                    continue;
+                }
+                VcpuExit::Exception(_vector) => {
+                    // Software interrupt - just continue
+                    continue;
                 }
                 exit => {
                     return Err(Error::KernelLoad(format!("unhandled exit: {exit:?}")))

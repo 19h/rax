@@ -26,6 +26,20 @@ impl X86_64Vcpu {
         ctx: &mut InsnContext,
         mm: u8,
     ) -> Result<Option<VcpuExit>> {
+        // EVEX requires AVX-512, which we don't advertise in CPUID.
+        // Check CR4.OSXSAVE (bit 18) - if not set, #UD
+        let cr4_osxsave = (self.sregs.cr4 & (1 << 18)) != 0;
+        if !cr4_osxsave {
+            self.inject_exception(6, None)?; // #UD = vector 6
+            return Ok(None);
+        }
+        // Even if OSXSAVE is set, we don't support AVX-512 (XCR0 bits for opmask, ZMM)
+        // So still inject #UD for any EVEX instruction
+        self.inject_exception(6, None)?;
+        return Ok(None);
+
+        #[allow(unreachable_code)]
+        {
         let opcode = ctx.consume_u8()?;
 
         match mm {
@@ -37,6 +51,7 @@ impl X86_64Vcpu {
                 "Invalid EVEX mm field {} at RIP={:#x}",
                 mm, self.regs.rip
             ))),
+        }
         }
     }
 

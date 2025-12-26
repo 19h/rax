@@ -9,7 +9,7 @@ use std::str::FromStr;
 const DEFAULT_MEM_MIB: u64 = 512;
 const MIN_MEM_MIB: u64 = 128;
 const DEFAULT_VCPUS: u8 = 1;
-const DEFAULT_CMDLINE: &str = "console=ttyS0 earlycon=uart,io,0x3f8 nokaslr";
+const DEFAULT_CMDLINE: &str = "console=ttyS0 earlyprintk=serial,ttyS0,115200 nokaslr";
 
 #[derive(Clone, Copy, Debug, Deserialize, ValueEnum, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]

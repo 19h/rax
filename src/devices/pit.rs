@@ -148,11 +148,41 @@ impl Pit {
         false
     }
 
-    fn read_channel(&mut self, channel: usize) -> u8 {
-        let ch = &mut self.channels[channel];
+    /// Calculate the current count for a channel based on elapsed time
+    fn current_count(&self, channel: usize) -> u16 {
+        let ch = &self.channels[channel];
+        let now = Instant::now();
+        let elapsed_ns = now.duration_since(self.last_tick_time).as_nanos() as u64;
+        let pit_ticks = (elapsed_ns * PIT_FREQUENCY) / 1_000_000_000;
 
-        // If latched, return latched value
-        if let Some(latch) = ch.read_latch {
+        if pit_ticks == 0 {
+            return ch.count;
+        }
+
+        let reload = if ch.reload_value == 0 { 0x10000u32 } else { ch.reload_value as u32 };
+
+        match ch.operating_mode {
+            OperatingMode::RateGenerator | OperatingMode::SquareWaveGenerator => {
+                // Count down continuously with wrap-around at reload value
+                let total_ticks = pit_ticks as u32;
+                if total_ticks >= ch.count as u32 {
+                    let remaining = (total_ticks - ch.count as u32) % reload;
+                    (reload - remaining) as u16
+                } else {
+                    ch.count.wrapping_sub(pit_ticks as u16)
+                }
+            }
+            _ => {
+                // Simple countdown
+                ch.count.saturating_sub(pit_ticks as u16)
+            }
+        }
+    }
+
+    fn read_channel(&mut self, channel: usize) -> u8 {
+        // Check if we have a latched value first
+        if let Some(latch) = self.channels[channel].read_latch {
+            let ch = &mut self.channels[channel];
             match ch.access_mode {
                 AccessMode::LowByteOnly | AccessMode::LowHighByte => {
                     if ch.access_mode == AccessMode::LowHighByte {
@@ -173,8 +203,9 @@ impl Pit {
                 }
             }
         } else {
-            // Return current count
-            let count = ch.count;
+            // Calculate current count based on wall-clock time
+            let count = self.current_count(channel);
+            let ch = &mut self.channels[channel];
             match ch.access_mode {
                 AccessMode::LowByteOnly => (count & 0xFF) as u8,
                 AccessMode::HighByteOnly => (count >> 8) as u8,
