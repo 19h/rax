@@ -5,6 +5,9 @@ use std::sync::atomic::Ordering;
 use std::sync::atomic::{AtomicU64, AtomicUsize};
 use std::sync::Arc;
 
+#[cfg(feature = "trace")]
+use crate::trace;
+
 /// Global tracker for current RIP (for debugging write watchpoints)
 pub static CURRENT_RIP: AtomicU64 = AtomicU64::new(0);
 
@@ -756,45 +759,6 @@ impl X86_64Vcpu {
         }
 
         let rip = self.regs.rip;
-
-        // Debug: dump phys_base at various kernel checkpoints
-        const PHYS_BASE_ADDR: u64 = 0xffffffff82c38010;
-        const START_KERNEL: u64 = 0xffffffff82c01000;  // Approximate start_kernel entry
-        const TEXT_POKE_ADDR: u64 = 0xffffffff812a83a0;
-
-        // Check at start_kernel entry (one-shot)
-        static LOGGED_START_KERNEL: std::sync::atomic::AtomicBool =
-            std::sync::atomic::AtomicBool::new(false);
-
-        if rip >= 0xffffffff834a0000 && rip < 0xffffffff834b1000
-           && !LOGGED_START_KERNEL.swap(true, std::sync::atomic::Ordering::Relaxed) {
-            // First time in start_kernel region - dump phys_base
-            if let Ok(phys_base) = self.mmu.read_u64(PHYS_BASE_ADDR, &self.sregs) {
-                eprintln!("\n=== PHYS_BASE DEBUG (start_kernel region) ===");
-                eprintln!("RIP = 0x{:016x}", rip);
-                eprintln!("phys_base @ 0x{:016x} = 0x{:016x}", PHYS_BASE_ADDR, phys_base);
-                eprintln!("CR3 = 0x{:016x}", self.sregs.cr3);
-                eprintln!("=============================================\n");
-            }
-        }
-
-        // Check at __text_poke entry
-        if rip == TEXT_POKE_ADDR {
-            match self.mmu.read_u64(PHYS_BASE_ADDR, &self.sregs) {
-                Ok(phys_base) => {
-                    eprintln!("\n=== TEXT_POKE DEBUG (emulator) ===");
-                    eprintln!("RIP = 0x{:016x} (__text_poke entry)", rip);
-                    eprintln!("phys_base = 0x{:016x}", phys_base);
-                    eprintln!("RDI (addr arg) = 0x{:016x}", self.regs.rdi);
-                    eprintln!("RSI (src arg) = 0x{:016x}", self.regs.rsi);
-                    eprintln!("RDX (len arg) = 0x{:016x}", self.regs.rdx);
-                    eprintln!("==================================\n");
-                }
-                Err(e) => {
-                    eprintln!("TEXT_POKE DEBUG: Failed to read phys_base: {:?}", e);
-                }
-            }
-        }
         let cache_idx = Self::decode_cache_index(rip);
 
         // Check decode cache for a hit (copy to avoid borrow issues)
@@ -816,7 +780,7 @@ impl X86_64Vcpu {
                 segment_override: cached.segment_override,
                 evex: None,
             };
-            return self.execute(cached.opcode, &mut ctx);
+            return self.trace_and_execute(cached.opcode, &mut ctx, rip);
         }
 
         // Cache miss - do full decode
@@ -860,7 +824,100 @@ impl X86_64Vcpu {
         };
 
         // Execute instruction
-        self.execute(opcode, &mut ctx)
+        self.trace_and_execute(opcode, &mut ctx, rip)
+    }
+
+    /// Execute instruction with optional tracing (when trace feature is enabled)
+    #[cfg(feature = "trace")]
+    #[inline]
+    fn trace_and_execute(
+        &mut self,
+        opcode: u8,
+        ctx: &mut InsnContext,
+        rip: u64,
+    ) -> Result<Option<VcpuExit>> {
+        if trace::is_enabled() {
+            // Save pre-execution state for comparison
+            let pre_regs = self.regs.clone();
+            let pre_xmm = self.regs.xmm.clone();
+
+            // Execute the instruction
+            let result = self.execute(opcode, ctx);
+
+            // Format instruction bytes as hex
+            let insn_len = ctx.cursor.min(15);
+            let mut insn_hex = String::with_capacity(insn_len * 3);
+            for i in 0..insn_len {
+                if i > 0 { insn_hex.push(' '); }
+                insn_hex.push_str(&format!("{:02x}", ctx.bytes[i]));
+            }
+
+            // Build register change description
+            let mut changes = String::new();
+
+            // Check for GPR changes
+            if self.regs.rax != pre_regs.rax {
+                changes.push_str(&format!("rax = 0x{:x}", self.regs.rax));
+            }
+            if self.regs.rcx != pre_regs.rcx {
+                if !changes.is_empty() { changes.push_str(", "); }
+                changes.push_str(&format!("rcx = 0x{:x}", self.regs.rcx));
+            }
+            if self.regs.rdx != pre_regs.rdx {
+                if !changes.is_empty() { changes.push_str(", "); }
+                changes.push_str(&format!("rdx = 0x{:x}", self.regs.rdx));
+            }
+            if self.regs.rbx != pre_regs.rbx {
+                if !changes.is_empty() { changes.push_str(", "); }
+                changes.push_str(&format!("rbx = 0x{:x}", self.regs.rbx));
+            }
+            if self.regs.rsp != pre_regs.rsp {
+                if !changes.is_empty() { changes.push_str(", "); }
+                changes.push_str(&format!("rsp = 0x{:x}", self.regs.rsp));
+            }
+            if self.regs.rbp != pre_regs.rbp {
+                if !changes.is_empty() { changes.push_str(", "); }
+                changes.push_str(&format!("rbp = 0x{:x}", self.regs.rbp));
+            }
+            if self.regs.rsi != pre_regs.rsi {
+                if !changes.is_empty() { changes.push_str(", "); }
+                changes.push_str(&format!("rsi = 0x{:x}", self.regs.rsi));
+            }
+            if self.regs.rdi != pre_regs.rdi {
+                if !changes.is_empty() { changes.push_str(", "); }
+                changes.push_str(&format!("rdi = 0x{:x}", self.regs.rdi));
+            }
+            if self.regs.rflags != pre_regs.rflags {
+                if !changes.is_empty() { changes.push_str(", "); }
+                changes.push_str(&format!("rflags = 0x{:x}", self.regs.rflags));
+            }
+
+            // Write instruction trace
+            trace::write_insn(rip, &insn_hex, &changes);
+
+            // Check for XMM changes and output them
+            for i in 0..16 {
+                if self.regs.xmm[i] != pre_xmm[i] {
+                    trace::write_xmm(i, self.regs.xmm[i][0], self.regs.xmm[i][1]);
+                }
+            }
+
+            result
+        } else {
+            self.execute(opcode, ctx)
+        }
+    }
+
+    /// Execute instruction (no tracing - default when trace feature is disabled)
+    #[cfg(not(feature = "trace"))]
+    #[inline(always)]
+    fn trace_and_execute(
+        &mut self,
+        opcode: u8,
+        ctx: &mut InsnContext,
+        _rip: u64,
+    ) -> Result<Option<VcpuExit>> {
+        self.execute(opcode, ctx)
     }
 
     // Register access methods
@@ -1340,26 +1397,12 @@ impl VCpu for X86_64Vcpu {
     fn run(&mut self) -> Result<VcpuExit> {
         let start_time = std::time::Instant::now();
         let mut insn_count: u64 = 0;
-        static DEBUG_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        static TOTAL_INSN: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
         loop {
             insn_count += 1;
-
-            // Debug: periodically log RIP to find where we're stuck
-            let debug_count = DEBUG_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-            if debug_count % 50_000_000 == 0 {
-                // If we're in delay_tsc, log what the cpu_number comparison sees
-                let extra_info = if self.regs.rip >= 0xffffffff8224ea00 && self.regs.rip < 0xffffffff8224eb00 {
-                    format!(" r9={:#x} rsi={:#x}", self.regs.r9, self.regs.rsi)
-                } else {
-                    String::new()
-                };
-                tracing::info!(
-                    rip = format!("{:#x}", self.regs.rip),
-                    gs_base = format!("{:#x}", self.sregs.gs.base),
-                    r8 = format!("{:#x}", self.regs.r8),
-                    extra = extra_info,
-                    "CPU position"
-                );
+            let total = TOTAL_INSN.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            if total % 100_000_000 == 0 {
+                eprintln!("[RIP] {:#x} (insn #{})", self.regs.rip, total);
             }
 
             // Periodically yield to VMM for interrupt handling (every ~1ms)
@@ -1411,7 +1454,13 @@ impl VCpu for X86_64Vcpu {
                                 }
                             }
                         }
-                        Err(e) => return Err(e),
+                        Err(e) => {
+                            // IDT entry not present or other error during #PF injection
+                            return Err(Error::Emulator(format!(
+                                "#PF at vaddr={:#x} (error_code={:#x}, RIP={:#x}): {}",
+                                vaddr, error_code, self.regs.rip, e
+                            )));
+                        }
                     }
                 }
                 Err(e) => return Err(e),
@@ -1485,6 +1534,8 @@ impl VCpu for X86_64Vcpu {
         if !self.can_inject_interrupt() {
             return Ok(false);
         }
+
+        let old_rip = self.regs.rip;
 
         // Inject the external interrupt
         // External interrupts don't push an error code
