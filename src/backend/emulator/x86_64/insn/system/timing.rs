@@ -1,19 +1,12 @@
 //! Timing instructions: RDTSC, RDTSCP, RDPMC.
 
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::OnceLock;
-use std::time::Instant;
 
 use crate::cpu::VcpuExit;
 use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
-
-/// Boot time for TSC calculation (set on first RDTSC call)
-static TSC_BOOT_TIME: OnceLock<Instant> = OnceLock::new();
-
-/// Simulated TSC frequency: ~2.5 GHz (cycles per nanosecond = 2.5)
-const TSC_FREQ_CYCLES_PER_NS: u64 = 3;
+use super::super::super::timing;
 
 /// Performance monitoring counters (PMCs) for RDPMC
 static PMC: [AtomicU64; 8] = [
@@ -27,12 +20,10 @@ static PMC: [AtomicU64; 8] = [
     AtomicU64::new(0),
 ];
 
-/// Get TSC value based on real wall-clock time since boot
+/// Get TSC value based on instruction count (deterministic, not wall-clock)
 #[inline]
 fn get_tsc() -> u64 {
-    let boot_time = TSC_BOOT_TIME.get_or_init(Instant::now);
-    let elapsed_ns = boot_time.elapsed().as_nanos() as u64;
-    elapsed_ns.saturating_mul(TSC_FREQ_CYCLES_PER_NS)
+    timing::tsc()
 }
 
 /// RDTSC - Read Time-Stamp Counter (0x0F 0x31)

@@ -104,13 +104,17 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
                 vcpu.mmu.read_u8(addr, &vcpu.sregs)?
             };
             if divisor == 0 {
-                return Err(Error::Emulator("divide by zero".to_string()));
+                // #DE exception - don't advance RIP
+                vcpu.inject_exception(0, None)?;
+                return Ok(None);
             }
             let dividend = vcpu.regs.rax as u16;
             let quotient = dividend / divisor as u16;
             let remainder = dividend % divisor as u16;
             if quotient > 0xFF {
-                return Err(Error::Emulator("divide overflow".to_string()));
+                // #DE exception for overflow - don't advance RIP
+                vcpu.inject_exception(0, None)?;
+                return Ok(None);
             }
             let ax = ((remainder as u16) << 8) | (quotient as u16);
             vcpu.set_reg(0, ax as u64, 2);
@@ -125,14 +129,18 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
                 vcpu.mmu.read_u8(addr, &vcpu.sregs)?
             };
             if divisor == 0 {
-                return Err(Error::Emulator("divide by zero".to_string()));
+                // #DE exception - don't advance RIP
+                vcpu.inject_exception(0, None)?;
+                return Ok(None);
             }
             let dividend = vcpu.regs.rax as i16;
             let divisor = divisor as i8 as i16;
             let quotient = dividend / divisor;
             let remainder = dividend % divisor;
             if quotient < i8::MIN as i16 || quotient > i8::MAX as i16 {
-                return Err(Error::Emulator("divide overflow".to_string()));
+                // #DE exception for overflow - don't advance RIP
+                vcpu.inject_exception(0, None)?;
+                return Ok(None);
             }
             let ax = ((remainder as i8 as u8 as u16) << 8) | (quotient as i8 as u8 as u16);
             vcpu.set_reg(0, ax as u64, 2);
@@ -302,7 +310,9 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
             };
 
             if divisor == 0 {
-                return Err(Error::Emulator("divide by zero".to_string()));
+                // #DE exception - don't advance RIP
+                vcpu.inject_exception(0, None)?;
+                return Ok(None);
             }
 
             match op_size {
@@ -312,7 +322,9 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     let quotient = dividend / divisor;
                     let remainder = dividend % divisor;
                     if quotient > 0xFFFF {
-                        return Err(Error::Emulator("divide overflow".to_string()));
+                        // #DE exception for overflow - don't advance RIP
+                        vcpu.inject_exception(0, None)?;
+                        return Ok(None);
                     }
                     vcpu.set_reg(0, quotient as u64, 2);
                     vcpu.set_reg(2, remainder as u64, 2);
@@ -323,7 +335,9 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     let quotient = dividend / divisor;
                     let remainder = dividend % divisor;
                     if quotient > 0xFFFFFFFF {
-                        return Err(Error::Emulator("divide overflow".to_string()));
+                        // #DE exception for overflow - don't advance RIP
+                        vcpu.inject_exception(0, None)?;
+                        return Ok(None);
                     }
                     vcpu.set_reg(0, quotient as u32 as u64, 4);
                     vcpu.set_reg(2, remainder as u32 as u64, 4);
@@ -334,7 +348,9 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     let quotient = dividend / divisor;
                     let remainder = dividend % divisor;
                     if quotient > u64::MAX as u128 {
-                        return Err(Error::Emulator("divide overflow".to_string()));
+                        // #DE exception for overflow - don't advance RIP
+                        vcpu.inject_exception(0, None)?;
+                        return Ok(None);
                     }
                     vcpu.set_reg(0, quotient as u64, 8);
                     vcpu.set_reg(2, remainder as u64, 8);
@@ -353,7 +369,9 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
             };
 
             if divisor == 0 {
-                return Err(Error::Emulator("divide by zero".to_string()));
+                // #DE exception - don't advance RIP
+                vcpu.inject_exception(0, None)?;
+                return Ok(None);
             }
 
             match op_size {
@@ -363,7 +381,9 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     let quotient = dividend / divisor;
                     let remainder = dividend % divisor;
                     if quotient < i16::MIN as i32 || quotient > i16::MAX as i32 {
-                        return Err(Error::Emulator("divide overflow".to_string()));
+                        // #DE exception for overflow - don't advance RIP
+                        vcpu.inject_exception(0, None)?;
+                        return Ok(None);
                     }
                     vcpu.set_reg(0, quotient as u16 as u64, 2);
                     vcpu.set_reg(2, remainder as u16 as u64, 2);
@@ -374,7 +394,9 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     let quotient = dividend / divisor;
                     let remainder = dividend % divisor;
                     if quotient < i32::MIN as i64 || quotient > i32::MAX as i64 {
-                        return Err(Error::Emulator("divide overflow".to_string()));
+                        // #DE exception for overflow - don't advance RIP
+                        vcpu.inject_exception(0, None)?;
+                        return Ok(None);
                     }
                     vcpu.set_reg(0, quotient as u32 as u64, 4);
                     vcpu.set_reg(2, remainder as u32 as u64, 4);
@@ -385,7 +407,9 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     let quotient = dividend / divisor;
                     let remainder = dividend % divisor;
                     if quotient < i64::MIN as i128 || quotient > i64::MAX as i128 {
-                        return Err(Error::Emulator("divide overflow".to_string()));
+                        // #DE exception for overflow - don't advance RIP
+                        vcpu.inject_exception(0, None)?;
+                        return Ok(None);
                     }
                     vcpu.set_reg(0, quotient as u64, 8);
                     vcpu.set_reg(2, remainder as u64, 8);

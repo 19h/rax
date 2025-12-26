@@ -2,12 +2,13 @@
 
 use std::cell::RefCell;
 use std::sync::Arc;
-use std::time::Instant;
 
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
 use crate::cpu::SystemRegisters;
 use crate::error::{Error, Result};
+
+use super::timing;
 
 // LAPIC constants
 const LAPIC_BASE: u64 = 0xFEE00000;
@@ -56,7 +57,8 @@ struct InlineLapic {
     lvt_error: u32,
     timer_initial_count: u32,
     timer_divide_config: u32,
-    timer_start: Option<Instant>,
+    /// Instruction count when timer was started (None = timer not running)
+    timer_start_insn: Option<u64>,
     /// Pending timer interrupt vector (not yet delivered)
     pending_timer_vector: Option<u8>,
 }
@@ -69,19 +71,19 @@ impl InlineLapic {
             tpr: 0,
             ldr: 0,
             dfr: 0xFFFFFFFF,
-            svr: 0xFF, // Disabled initially
+            svr: 0x1FF, // APIC enabled (bit 8), spurious vector 0xFF - Virtual Wire Mode
             isr: [0; 8],
             tmr: [0; 8],
             irr: [0; 8],
             esr: 0,
             icr: 0,
             lvt_timer: LVT_MASK,
-            lvt_lint0: LVT_MASK,
-            lvt_lint1: LVT_MASK,
+            lvt_lint0: 0x700, // ExtInt mode, not masked - Virtual Wire Mode
+            lvt_lint1: 0x400, // NMI mode, not masked
             lvt_error: LVT_MASK,
             timer_initial_count: 0,
             timer_divide_config: 0,
-            timer_start: None,
+            timer_start_insn: None,
             pending_timer_vector: None,
         }
     }
@@ -124,21 +126,44 @@ impl InlineLapic {
             LAPIC_LVT_ERROR => self.lvt_error,
             LAPIC_TIMER_ICR => self.timer_initial_count,
             LAPIC_TIMER_CCR => {
-                // Compute current count based on elapsed time
-                if self.timer_initial_count == 0 || self.timer_start.is_none() {
+                // Compute current count based on instruction count
+                if self.timer_initial_count == 0 || self.timer_start_insn.is_none() {
                     return 0;
                 }
-                let start = self.timer_start.unwrap();
-                let elapsed = start.elapsed();
-                let divisor = self.timer_divisor() as u128;
-                // Use u128 to avoid overflow: elapsed_ticks = elapsed_ns / divisor
-                // The APIC timer runs at bus_clock / divisor, assume ~1GHz bus clock
-                let elapsed_ticks = elapsed.as_nanos() / divisor;
-                let initial = self.timer_initial_count as u128;
-                if elapsed_ticks >= initial {
-                    0
-                } else {
-                    (initial - elapsed_ticks) as u32
+                let start_insn = self.timer_start_insn.unwrap();
+                let current_insn = timing::current();
+                let elapsed_insn = current_insn.saturating_sub(start_insn);
+
+                // Convert instructions to timer ticks:
+                // At 3 GHz CPU with 1 GHz LAPIC timer base, we have 3 CPU cycles per timer tick
+                // With divisor, timer tick rate = 1 GHz / divisor
+                // Timer ticks elapsed = elapsed_insn * (timer_freq / cpu_freq) / divisor
+                //                     = elapsed_insn / (3 * divisor)
+                let divisor = self.timer_divisor() as u64;
+                let elapsed_ticks = elapsed_insn / (3 * divisor);
+
+                let initial = self.timer_initial_count as u64;
+                let mode = (self.lvt_timer >> 17) & 0x3;
+
+                match mode {
+                    0 => {
+                        // One-shot: count down to 0
+                        if elapsed_ticks >= initial {
+                            0
+                        } else {
+                            (initial - elapsed_ticks) as u32
+                        }
+                    }
+                    1 => {
+                        // Periodic: wrap around
+                        if initial == 0 {
+                            0
+                        } else {
+                            let remainder = elapsed_ticks % initial;
+                            (initial - remainder) as u32
+                        }
+                    }
+                    _ => 0, // TSC-deadline mode returns 0
                 }
             }
             LAPIC_TIMER_DCR => self.timer_divide_config,
@@ -189,9 +214,10 @@ impl InlineLapic {
                 );
                 self.timer_initial_count = value;
                 if value > 0 {
-                    self.timer_start = Some(Instant::now());
+                    self.timer_start_insn = Some(timing::current());
+                    self.pending_timer_vector = None; // Clear any pending interrupt on restart
                 } else {
-                    self.timer_start = None;
+                    self.timer_start_insn = None;
                 }
             }
             LAPIC_TIMER_DCR => self.timer_divide_config = value & 0xB,
@@ -233,15 +259,17 @@ impl InlineLapic {
         if (self.lvt_timer & LVT_MASK) != 0 {
             return None;
         }
-        let Some(start) = self.timer_start else {
+        let Some(start_insn) = self.timer_start_insn else {
             return None;
         };
 
-        let elapsed = start.elapsed();
-        let divisor = self.timer_divisor() as u128;
-        // Use u128 to avoid overflow: elapsed_ticks = elapsed_ns / divisor
-        let elapsed_ticks = elapsed.as_nanos() / divisor;
-        let initial = self.timer_initial_count as u128;
+        let current_insn = timing::current();
+        let elapsed_insn = current_insn.saturating_sub(start_insn);
+
+        // Convert instructions to timer ticks (same formula as in read)
+        let divisor = self.timer_divisor() as u64;
+        let elapsed_ticks = elapsed_insn / (3 * divisor);
+        let initial = self.timer_initial_count as u64;
 
         let mode = (self.lvt_timer >> 17) & 0x3; // Timer mode bits
         let vector = (self.lvt_timer & 0xFF) as u8;
@@ -250,7 +278,7 @@ impl InlineLapic {
             0 => {
                 // One-shot: fire once when count reaches 0
                 if elapsed_ticks >= initial {
-                    self.timer_start = None; // Stop timer
+                    self.timer_start_insn = None; // Stop timer
                     self.pending_timer_vector = Some(vector);
                     return Some(vector);
                 }
@@ -258,7 +286,8 @@ impl InlineLapic {
             1 => {
                 // Periodic: fire and restart
                 if elapsed_ticks >= initial {
-                    self.timer_start = Some(Instant::now());
+                    // Restart timer from current instruction count
+                    self.timer_start_insn = Some(current_insn);
                     self.pending_timer_vector = Some(vector);
                     return Some(vector);
                 }
