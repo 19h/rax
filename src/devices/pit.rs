@@ -11,12 +11,12 @@
 //! - 0x42: Channel 2 data
 //! - 0x43: Mode/Command register
 
-use std::time::Instant;
+use crate::timing;
 
 use super::bus::IoDevice;
 
 /// PIT oscillator frequency (1.193182 MHz)
-const PIT_FREQUENCY: u64 = 1193182;
+const PIT_FREQUENCY: u64 = timing::PIT_FREQUENCY_HZ;
 
 /// Default reload value for ~100 Hz (10ms period)
 const DEFAULT_RELOAD: u16 = 11932;
@@ -68,19 +68,21 @@ impl Default for Channel {
 
 pub struct Pit {
     channels: [Channel; 3],
-    start_time: Instant,
-    last_tick_time: Instant,
+    /// Instruction count at start
+    start_insn: u64,
+    /// Instruction count at last tick
+    last_tick_insn: u64,
     irq_pending: bool,
     tick_count: u64,
 }
 
 impl Pit {
     pub fn new() -> Self {
-        let now = Instant::now();
+        let now = timing::current();
         Pit {
             channels: [Channel::default(), Channel::default(), Channel::default()],
-            start_time: now,
-            last_tick_time: now,
+            start_insn: now,
+            last_tick_insn: now,
             irq_pending: false,
             tick_count: 0,
         }
@@ -99,18 +101,22 @@ impl Pit {
     /// Tick the timer - should be called periodically
     /// Returns true if an interrupt should be generated
     pub fn tick(&mut self) -> bool {
-        let now = Instant::now();
-        let elapsed = now.duration_since(self.last_tick_time);
+        let now = timing::current();
+        let elapsed_insn = now.saturating_sub(self.last_tick_insn);
 
-        // Calculate how many PIT ticks have elapsed
-        let elapsed_ns = elapsed.as_nanos() as u64;
-        let pit_ticks = (elapsed_ns * PIT_FREQUENCY) / 1_000_000_000;
+        // Convert instruction count to PIT ticks
+        // At 3 GHz CPU, PIT runs at 1.193182 MHz
+        // pit_ticks = elapsed_insn * PIT_FREQUENCY / CPU_FREQUENCY
+        //           = elapsed_insn * 1193182 / 3000000000
+        //           ≈ elapsed_insn / 2514
+        // To avoid division by zero and get more precision:
+        let pit_ticks = (elapsed_insn * PIT_FREQUENCY) / timing::CPU_FREQUENCY_HZ;
 
         if pit_ticks == 0 {
             return false;
         }
 
-        self.last_tick_time = now;
+        self.last_tick_insn = now;
 
         // Update channel 0 (system timer)
         let ch0 = &mut self.channels[0];
@@ -148,12 +154,12 @@ impl Pit {
         false
     }
 
-    /// Calculate the current count for a channel based on elapsed time
+    /// Calculate the current count for a channel based on instruction count
     fn current_count(&self, channel: usize) -> u16 {
         let ch = &self.channels[channel];
-        let now = Instant::now();
-        let elapsed_ns = now.duration_since(self.last_tick_time).as_nanos() as u64;
-        let pit_ticks = (elapsed_ns * PIT_FREQUENCY) / 1_000_000_000;
+        let now = timing::current();
+        let elapsed_insn = now.saturating_sub(self.last_tick_insn);
+        let pit_ticks = (elapsed_insn * PIT_FREQUENCY) / timing::CPU_FREQUENCY_HZ;
 
         if pit_ticks == 0 {
             return ch.count;

@@ -236,12 +236,12 @@ impl DualPic {
         // Use standard x86 protected mode vector offsets:
         // Master PIC: vectors 0x20-0x27 (IRQ 0-7)
         // Slave PIC: vectors 0x28-0x2F (IRQ 8-15)
-        // Also unmask IRQ0 (timer) and IRQ2 (cascade) for virtual wire mode
-        let mut master = Pic8259::new(0x20);
-        master.imr = 0xFB; // Unmask IRQ2 (cascade) - bit 2 = 0
-        master.imr = 0x00; // Unmask all for now (will be masked by kernel if needed)
-        let mut slave = Pic8259::new(0x28);
-        slave.imr = 0x00; // Unmask all
+        //
+        // PICs start with all interrupts MASKED (0xFF).
+        // The kernel will unmask specific IRQs as it initializes drivers.
+        // This matches real hardware behavior and prevents spurious interrupts.
+        let master = Pic8259::new(0x20); // imr = 0xFF by default
+        let slave = Pic8259::new(0x28);  // imr = 0xFF by default
         DualPic { master, slave }
     }
 

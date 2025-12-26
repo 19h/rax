@@ -743,6 +743,9 @@ impl X86_64Vcpu {
     /// Execute a single instruction.
     #[inline]
     pub fn step(&mut self) -> Result<Option<VcpuExit>> {
+        // Increment global instruction counter for timing
+        super::timing::tick();
+
         // Update global RIP tracker for debugging
         CURRENT_RIP.store(self.regs.rip, Ordering::Relaxed);
 

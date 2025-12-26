@@ -9,6 +9,7 @@ mod mmu;
 mod sha;
 mod simd_native;
 mod threaded;
+pub mod timing;
 
 mod insn;
 
