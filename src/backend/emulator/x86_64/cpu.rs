@@ -181,6 +181,9 @@ pub struct X86_64Vcpu {
     pub(super) decode_cache: Box<[DecodeCacheEntry; DECODE_CACHE_SIZE]>,
     /// Lazy flag state for deferred flag computation (Cell for interior mutability in get_state)
     pub(super) lazy_flags: Cell<LazyFlags>,
+    /// Single-step mode for GDB debugging.
+    #[cfg(feature = "debug")]
+    single_step: bool,
 }
 
 /// Pending I/O operation.
@@ -481,6 +484,8 @@ impl X86_64Vcpu {
             pkru: 0,
             decode_cache,
             lazy_flags: Cell::new(LazyFlags::default()),
+            #[cfg(feature = "debug")]
+            single_step: false,
         }
     }
 
@@ -752,18 +757,46 @@ impl X86_64Vcpu {
         // Update global RIP tracker for debugging
         CURRENT_RIP.store(self.regs.rip, Ordering::Relaxed);
 
+        // Debug: trace instructions in delay_tsc
+        let rip = self.regs.rip;
+        if rip >= 0xffffffff8224ea40 && rip <= 0xffffffff8224ea60 {
+            use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
+            static DELAY_DEBUG_COUNT: AtomicU64 = AtomicU64::new(0);
+            let count = DELAY_DEBUG_COUNT.fetch_add(1, AtomicOrdering::Relaxed);
+            if count < 100 || count % 1000000 == 0 {
+                // Fetch and show raw bytes
+                if let Ok((bytes, len)) = self.fetch() {
+                    eprintln!(
+                        "[DELAY_TSC #{} RIP={:#x}] bytes[0..8]={:02x} {:02x} {:02x} {:02x} {:02x} {:02x} {:02x} {:02x}",
+                        count, rip, bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]
+                    );
+                }
+            }
+        }
+
         // Track RIP history for debugging crashes
         {
             let idx = RIP_IDX.fetch_add(1, Ordering::Relaxed) % 16;
             RIP_HISTORY[idx].store(self.regs.rip, Ordering::Relaxed);
         }
 
-        let rip = self.regs.rip;
         let cache_idx = Self::decode_cache_index(rip);
 
         // Check decode cache for a hit (copy to avoid borrow issues)
         let cached = self.decode_cache[cache_idx];
         if cached.rip == rip {
+            // Debug: check cache hit for delay_tsc
+            if rip >= 0xffffffff8224ea40 && rip <= 0xffffffff8224ea60 {
+                use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
+                static CACHE_HIT_COUNT: AtomicU64 = AtomicU64::new(0);
+                let count = CACHE_HIT_COUNT.fetch_add(1, AtomicOrdering::Relaxed);
+                if count < 20 {
+                    eprintln!(
+                        "[CACHE_HIT #{} RIP={:#x}] segment_override={:?}",
+                        count, rip, cached.segment_override
+                    );
+                }
+            }
             // Cache hit! Fetch bytes and reconstruct context from cached decode
             let (bytes, bytes_len) = self.fetch()?;
 
@@ -809,6 +842,19 @@ impl X86_64Vcpu {
 
         // Get opcode
         let opcode = ctx.consume_u8()?;
+
+        // Debug: cache miss for delay_tsc
+        if rip >= 0xffffffff8224ea40 && rip <= 0xffffffff8224ea60 {
+            use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
+            static CACHE_MISS_COUNT: AtomicU64 = AtomicU64::new(0);
+            let count = CACHE_MISS_COUNT.fetch_add(1, AtomicOrdering::Relaxed);
+            if count < 50 {
+                eprintln!(
+                    "[CACHE_MISS #{} RIP={:#x}] segment_override={:?}, first_byte={:#02x}",
+                    count, rip, ctx.segment_override, bytes[0]
+                );
+            }
+        }
 
         // Cache the decoded instruction
         self.decode_cache[cache_idx] = DecodeCacheEntry {
@@ -1435,7 +1481,14 @@ impl VCpu for X86_64Vcpu {
 
             match self.step() {
                 Ok(Some(exit)) => return Ok(exit),
-                Ok(None) => continue,
+                Ok(None) => {
+                    // Check for single-step mode (GDB debugging)
+                    #[cfg(feature = "debug")]
+                    if self.single_step {
+                        return Ok(VcpuExit::GdbStep);
+                    }
+                    continue;
+                }
                 Err(Error::PageFault { vaddr, error_code }) => {
                     // Inject the page fault exception into the guest
                     match self.inject_page_fault(vaddr, error_code) {
@@ -1545,5 +1598,15 @@ impl VCpu for X86_64Vcpu {
         self.halted = false;
 
         Ok(true)
+    }
+
+    #[cfg(feature = "debug")]
+    fn set_single_step(&mut self, enabled: bool) {
+        self.single_step = enabled;
+    }
+
+    #[cfg(feature = "debug")]
+    fn is_single_step(&self) -> bool {
+        self.single_step
     }
 }

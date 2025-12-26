@@ -40,6 +40,12 @@ struct Cli {
     /// Output instruction trace file (SDE-compatible format)
     #[arg(long)]
     trace: Option<PathBuf>,
+    /// Enable GDB server on specified port (requires --features debug)
+    #[arg(long)]
+    gdb: Option<u16>,
+    /// Wait for GDB connection before starting execution
+    #[arg(long)]
+    wait_gdb: bool,
 }
 
 fn main() -> Result<()> {
@@ -68,6 +74,8 @@ fn main() -> Result<()> {
         hexagon_entry: cli.hexagon_entry,
         hexagon_load_addr: cli.hexagon_load_addr,
         trace: cli.trace,
+        gdb_port: cli.gdb,
+        wait_gdb: cli.wait_gdb,
     };
 
     let config = VmConfig::from_sources(cli_config, file_config)?;

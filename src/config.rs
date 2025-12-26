@@ -306,6 +306,10 @@ pub struct CliConfig {
     pub hexagon_entry: Option<Address>,
     pub hexagon_load_addr: Option<Address>,
     pub trace: Option<PathBuf>,
+    /// GDB server port (enables GDB server when set).
+    pub gdb_port: Option<u16>,
+    /// Wait for GDB connection before starting.
+    pub wait_gdb: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -322,6 +326,10 @@ pub struct VmConfig {
     pub hexagon_entry: Option<Address>,
     pub hexagon_load_addr: Option<Address>,
     pub trace: Option<PathBuf>,
+    /// GDB server port (enables GDB server when set).
+    pub gdb_port: Option<u16>,
+    /// Wait for GDB connection before starting.
+    pub wait_gdb: bool,
 }
 
 impl VmConfig {
@@ -361,6 +369,8 @@ impl VmConfig {
             hexagon_entry,
             hexagon_load_addr,
             trace: cli.trace,
+            gdb_port: cli.gdb_port,
+            wait_gdb: cli.wait_gdb,
         };
 
         config.validate()?;
