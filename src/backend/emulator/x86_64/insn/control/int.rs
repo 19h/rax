@@ -43,9 +43,8 @@ fn apply_iret_flags(vcpu: &mut X86_64Vcpu, size: u8, value: u64) -> Result<()> {
 pub fn int3(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     // INT3 is a 1-byte instruction - RIP should point AFTER the INT3
     vcpu.regs.rip += ctx.cursor as u64;
-    // Inject #BP exception (vector 3) - this is a trap, so RIP already points after the instruction
-    vcpu.inject_exception(3, None)?;
-    Ok(None)
+    // Return #BP exception (vector 3) - this is a trap, so RIP already points after the instruction
+    Ok(Some(VcpuExit::Exception(3)))
 }
 
 /// INT imm8 (0xCD) - Software interrupt
