@@ -206,7 +206,9 @@ pub fn aam(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 
     // Division by zero causes #DE
     if imm8 == 0 {
-        return Err(Error::Emulator("AAM: divide by zero".to_string()));
+        // #DE exception - don't advance RIP
+        vcpu.inject_exception(0, None)?;
+        return Ok(None);
     }
 
     let al = (vcpu.regs.rax & 0xFF) as u8;

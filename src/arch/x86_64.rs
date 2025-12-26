@@ -110,11 +110,20 @@ impl X86_64Arch {
         if magic == [0x7f, b'E', b'L', b'F'] {
             let elf = GoblinElf::parse(&kernel_data)
                 .map_err(|e| Error::KernelLoad(format!("failed to parse ELF: {}", e)))?;
+
+            // The ELF entry point for vmlinux is the PHYSICAL address of startup_64.
+            // Since we boot with paging enabled, we need to convert to virtual address.
+            // The kernel virtual address mapping is: virt = phys + 0xffffffff80000000
+            // (this matches __START_KERNEL_map in the Linux kernel)
+            let phys_entry = elf.header.e_entry;
+            let virt_entry = phys_entry.wrapping_add(0xffffffff80000000);
+
             info!(
-                entry = format!("{:#x}", elf.header.e_entry),
-                "ELF kernel, using ELF entry point"
+                phys_entry = format!("{:#x}", phys_entry),
+                virt_entry = format!("{:#x}", virt_entry),
+                "ELF kernel entry point"
             );
-            Ok((result, true, Some(elf.header.e_entry)))
+            Ok((result, true, Some(virt_entry)))
         } else {
             info!("raw binary kernel, entry at load address");
             Ok((result, false, None))
@@ -334,17 +343,29 @@ impl X86_64Arch {
             mem.write_obj(pdpte_entry, GuestAddress(PDPTE_DIRECT_ADDR + i * 8))?;
         }
 
-        // === PDPTE for kernel text (PML4[511] at 0xffffffff80000000) ===
-        // The kernel text area starts at 0xffffffff80000000
-        // Map all kernel virtual addresses back to physical 0 (first 1GB)
-        // This is a simplistic mapping that allows the kernel to access its code/data
-        // using high virtual addresses while the memory actually lives at low physical addresses.
+        // === PDPTE for kernel text (PML4[511]) ===
+        // PML4[511] covers virtual 0xffffff8000000000 to 0xffffffffffffffff (512 GB).
+        // The kernel text area starts at 0xffffffff80000000.
         //
-        // Use 1GB huge pages mapping all entries to physical 0 (wrapping around our memory)
+        // Virtual address 0xffffffff80000000 is in PML4[511] at:
+        //   offset = 0xffffffff80000000 - 0xffffff8000000000 = 0x7f80000000
+        //   PDPTE index = offset / 1GB = 510
+        //
+        // Linux kernel expects: virt 0xffffffff80000000 + X -> phys X
+        // So PDPTE[510] should map to physical 0, PDPTE[511] to physical 1GB, etc.
+        //
+        // PDPTE[i] for i < 510: not used by kernel, map to 0
+        // PDPTE[510]: physical 0 (covers 0xffffffff80000000-0xffffffffbfffffff)
+        // PDPTE[511]: physical 1GB (covers 0xffffffffc0000000-0xffffffffffffffff)
         for i in 0u64..512 {
-            // Map all PDPT entries to physical 0 - this means any access in this 512GB
-            // virtual range will access physical memory starting at 0
-            let pdpte_entry: u64 = 0x83; // Present + Writable + Huge (1GB page at physical 0)
+            let phys_addr = if i >= 510 {
+                // Kernel text region: PDPTE[510+j] -> physical j*1GB
+                ((i - 510) % 8) << 30
+            } else {
+                // Below kernel text: not normally used, map to 0 for safety
+                0
+            };
+            let pdpte_entry: u64 = phys_addr | 0x83; // Present + Writable + Huge (1GB page)
             mem.write_obj(pdpte_entry, GuestAddress(PDPTE_KERNEL_ADDR + i * 8))?;
         }
 
