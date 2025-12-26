@@ -7,3 +7,12 @@ target/
 # Cargo.lock is typically committed for binaries but not libraries
 # Uncomment if this is a library
 # Cargo.lock
+
+*.id0
+*.id1
+*.id2
+*.nam
+*.til
+*.o
+*.bin
+*.elf
