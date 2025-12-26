@@ -79,6 +79,11 @@ impl Pic8259 {
         // Find highest priority (lowest number) pending interrupt
         for i in 0..8 {
             if pending & (1 << i) != 0 {
+                // Don't deliver an interrupt that's already being serviced
+                // (waiting for EOI)
+                if self.isr & (1 << i) != 0 {
+                    continue;
+                }
                 // Check if a higher priority interrupt is already being serviced
                 let higher_priority_mask = (1 << i) - 1;
                 if self.isr & higher_priority_mask != 0 {
@@ -212,10 +217,16 @@ pub struct DualPic {
 
 impl DualPic {
     pub fn new() -> Self {
-        DualPic {
-            master: Pic8259::new(0x08), // Default DOS vector offset
-            slave: Pic8259::new(0x70),
-        }
+        // Use standard x86 protected mode vector offsets:
+        // Master PIC: vectors 0x20-0x27 (IRQ 0-7)
+        // Slave PIC: vectors 0x28-0x2F (IRQ 8-15)
+        // Also unmask IRQ0 (timer) and IRQ2 (cascade) for virtual wire mode
+        let mut master = Pic8259::new(0x20);
+        master.imr = 0xFB; // Unmask IRQ2 (cascade) - bit 2 = 0
+        master.imr = 0x00; // Unmask all for now (will be masked by kernel if needed)
+        let mut slave = Pic8259::new(0x28);
+        slave.imr = 0x00; // Unmask all
+        DualPic { master, slave }
     }
 
     /// Set an IRQ line (0-15)

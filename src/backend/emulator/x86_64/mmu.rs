@@ -624,6 +624,8 @@ impl Mmu {
                 return Err(Error::PageFault { vaddr, error_code: user_bit | 0x9 });
             }
             let page_base = pde & 0x000F_FFFF_FFE0_0000;
+            let paddr = page_base | (vaddr & 0x1F_FFFF);
+
             // Cache in TLB
             self.tlb[tlb_index] = TlbEntry {
                 tag: tlb_tag,
@@ -631,7 +633,7 @@ impl Mmu {
                 page_shift: 21, // 2MB
                 valid: true,
             };
-            return Ok(page_base | (vaddr & 0x1F_FFFF));
+            return Ok(paddr);
         }
 
         // Read PT entry
