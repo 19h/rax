@@ -39,10 +39,13 @@ fn apply_iret_flags(vcpu: &mut X86_64Vcpu, size: u8, value: u64) -> Result<()> {
 }
 
 /// INT3 (0xCC) - Debug breakpoint interrupt
+/// This instruction invokes exception vector 3 (breakpoint exception)
 pub fn int3(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // INT3 is a 1-byte instruction - RIP should point AFTER the INT3
     vcpu.regs.rip += ctx.cursor as u64;
-    // Return breakpoint exit to caller
-    Ok(Some(VcpuExit::Debug))
+    // Inject #BP exception (vector 3) - this is a trap, so RIP already points after the instruction
+    vcpu.inject_exception(3, None)?;
+    Ok(None)
 }
 
 /// INT imm8 (0xCD) - Software interrupt
@@ -106,13 +109,16 @@ pub fn iret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
 
     // In 64-bit mode, IRETQ ALWAYS pops RSP and SS, regardless of privilege level change.
     // In 32-bit mode, RSP/SS are only popped on privilege level change.
-    if in_64bit_mode || new_cpl > old_cpl {
+    let (new_rsp, new_ss) = if in_64bit_mode || new_cpl > old_cpl {
         let new_rsp = pop_by_size(vcpu, op_size)?;
         let new_ss = pop_by_size(vcpu, op_size)? as u16;
 
         vcpu.set_sreg(2, new_ss); // SS is segment register 2
         vcpu.regs.rsp = new_rsp;
-    }
+        (new_rsp, new_ss)
+    } else {
+        (vcpu.regs.rsp, vcpu.sregs.ss.selector)
+    };
 
     apply_iret_flags(vcpu, op_size, flags)?;
     vcpu.regs.rip = ret_ip;

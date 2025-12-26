@@ -277,6 +277,12 @@ mod cr0 {
     pub const PG: u64 = 1 << 31; // Paging Enable
 }
 
+/// Physical address bits (must match CPUID 0x80000008 EAX[7:0])
+const PHYS_BITS: u32 = 48;
+/// Reserved bits mask: bits in PTE address field that must be zero
+/// For 40 phys bits: bits 51:40 in the address portion (0x000FFF0000000000)
+const PTE_RSVD_MASK: u64 = !((1u64 << PHYS_BITS) - 1) & 0x000F_FFFF_FFFF_F000;
+
 #[allow(dead_code)]
 mod cr4 {
     pub const PAE: u64 = 1 << 5; // Physical Address Extension
@@ -519,6 +525,12 @@ impl Mmu {
 
         let is_write = matches!(access, AccessType::Write);
 
+        // Determine current privilege level (CPL) from CS selector
+        let cpl = (sregs.cs.selector & 0x3) as u8;
+        let is_user = cpl == 3;
+        // U bit (bit 2) in error code: 1 = user mode, 0 = supervisor mode
+        let user_bit = if is_user { 0x4 } else { 0 };
+
         // 4-level paging: PML4 -> PDPT -> PD -> PT
         let pml4_base = sregs.cr3 & !0xFFF;
         let pml4_index = (vaddr >> 39) & 0x1FF;
@@ -529,27 +541,50 @@ impl Mmu {
         // Read PML4 entry
         let pml4e = self.read_pte(pml4_base + pml4_index * 8)?;
         if pml4e & flags::PRESENT == 0 {
-            return Err(Error::PageFault { vaddr, error_code: 0 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit });
+        }
+        // Check reserved bits (must be zero) - error code 0x9 = RSVD | P
+        if pml4e & PTE_RSVD_MASK != 0 {
+            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x9 });
+        }
+        // Check U/S permission: if user mode, page must have USER bit set
+        if is_user && pml4e & flags::USER == 0 {
+            // User mode accessing supervisor page = protection violation
+            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x1 });
         }
         // Check write permission at PML4 level
         if is_write && pml4e & flags::WRITABLE == 0 {
             // error_code bit 1 = write access, bit 0 = present
-            return Err(Error::PageFault { vaddr, error_code: 0x3 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x3 });
         }
 
         // Read PDPT entry
         let pdpt_base = pml4e & 0x000F_FFFF_FFFF_F000;
         let pdpte = self.read_pte(pdpt_base + pdpt_index * 8)?;
         if pdpte & flags::PRESENT == 0 {
-            return Err(Error::PageFault { vaddr, error_code: 0 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit });
+        }
+        // Check reserved bits
+        if pdpte & PTE_RSVD_MASK != 0 {
+            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x9 });
+        }
+        // Check U/S permission
+        if is_user && pdpte & flags::USER == 0 {
+            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x1 });
         }
         // Check write permission at PDPT level
         if is_write && pdpte & flags::WRITABLE == 0 {
-            return Err(Error::PageFault { vaddr, error_code: 0x3 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x3 });
         }
 
         // Check for 1GB huge page
         if pdpte & flags::HUGE_PAGE != 0 {
+            // For 1GB pages, bits 29:13 in address portion must be zero (bit 12 is PAT)
+            // Additional reserved mask: (0x40000000 - 1) & 0x000FFFFFFFFFF000 & ~0x1000 = 0x3FFFE000
+            let huge_rsvd = 0x3FFFE000u64;
+            if pdpte & (PTE_RSVD_MASK | huge_rsvd) != 0 {
+                return Err(Error::PageFault { vaddr, error_code: user_bit | 0x9 });
+            }
             let page_base = pdpte & 0x000F_FFFF_C000_0000;
             // Cache in TLB
             self.tlb[tlb_index] = TlbEntry {
@@ -565,15 +600,29 @@ impl Mmu {
         let pd_base = pdpte & 0x000F_FFFF_FFFF_F000;
         let pde = self.read_pte(pd_base + pd_index * 8)?;
         if pde & flags::PRESENT == 0 {
-            return Err(Error::PageFault { vaddr, error_code: 0 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit });
+        }
+        // Check reserved bits
+        if pde & PTE_RSVD_MASK != 0 {
+            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x9 });
+        }
+        // Check U/S permission
+        if is_user && pde & flags::USER == 0 {
+            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x1 });
         }
         // Check write permission at PD level
         if is_write && pde & flags::WRITABLE == 0 {
-            return Err(Error::PageFault { vaddr, error_code: 0x3 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x3 });
         }
 
         // Check for 2MB huge page
         if pde & flags::HUGE_PAGE != 0 {
+            // For 2MB pages, bits 20:13 in address portion must be zero (bit 12 is PAT)
+            // Additional reserved mask: (0x200000 - 1) & 0x000FFFFFFFFFF000 & ~0x1000 = 0x1FE000
+            let huge_rsvd = 0x1FE000u64;
+            if pde & (PTE_RSVD_MASK | huge_rsvd) != 0 {
+                return Err(Error::PageFault { vaddr, error_code: user_bit | 0x9 });
+            }
             let page_base = pde & 0x000F_FFFF_FFE0_0000;
             // Cache in TLB
             self.tlb[tlb_index] = TlbEntry {
@@ -587,17 +636,27 @@ impl Mmu {
 
         // Read PT entry
         let pt_base = pde & 0x000F_FFFF_FFFF_F000;
-        let pte = self.read_pte(pt_base + pt_index * 8)?;
+        let pt_addr = pt_base + pt_index * 8;
+        let pte = self.read_pte(pt_addr)?;
         if pte & flags::PRESENT == 0 {
-            return Err(Error::PageFault { vaddr, error_code: 0 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit });
+        }
+        // Check reserved bits
+        if pte & PTE_RSVD_MASK != 0 {
+            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x9 });
+        }
+        // Check U/S permission
+        if is_user && pte & flags::USER == 0 {
+            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x1 });
         }
         // Check write permission at PT level
         if is_write && pte & flags::WRITABLE == 0 {
-            return Err(Error::PageFault { vaddr, error_code: 0x3 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x3 });
         }
 
         let page_base = pte & 0x000F_FFFF_FFFF_F000;
         let offset = vaddr & 0xFFF;
+        let paddr = page_base | offset;
 
         // Cache in TLB
         self.tlb[tlb_index] = TlbEntry {
@@ -607,7 +666,7 @@ impl Mmu {
             valid: true,
         };
 
-        Ok(page_base | offset)
+        Ok(paddr)
     }
 
     /// Read a page table entry from physical memory.
@@ -724,6 +783,38 @@ impl Mmu {
 
         // Slow path: handle page boundary crossing
         self.read_crossing(vaddr, buf, sregs)
+    }
+
+    /// Read bytes from guest memory with supervisor privilege.
+    /// Used for exception/interrupt delivery where the CPU always accesses
+    /// kernel data structures (IDT, TSS, etc.) as supervisor, regardless of CPL.
+    #[inline]
+    pub fn read_supervisor(&mut self, vaddr: u64, buf: &mut [u8], sregs: &SystemRegisters) -> Result<()> {
+        // Create a temporary sregs with CPL=0 (supervisor)
+        let mut supervisor_sregs = sregs.clone();
+        supervisor_sregs.cs.selector &= !0x3; // Clear CPL bits to 0
+        self.read(vaddr, buf, &supervisor_sregs)
+    }
+
+    /// Read a u64 from guest memory with supervisor privilege.
+    pub fn read_u64_supervisor(&mut self, vaddr: u64, sregs: &SystemRegisters) -> Result<u64> {
+        let mut buf = [0u8; 8];
+        self.read_supervisor(vaddr, &mut buf, sregs)?;
+        Ok(u64::from_le_bytes(buf))
+    }
+
+    /// Write bytes to guest memory with supervisor privilege.
+    /// Used for exception/interrupt delivery.
+    #[inline]
+    pub fn write_supervisor(&mut self, vaddr: u64, buf: &[u8], sregs: &SystemRegisters) -> Result<()> {
+        let mut supervisor_sregs = sregs.clone();
+        supervisor_sregs.cs.selector &= !0x3;
+        self.write(vaddr, buf, &supervisor_sregs)
+    }
+
+    /// Write a u64 to guest memory with supervisor privilege.
+    pub fn write_u64_supervisor(&mut self, vaddr: u64, value: u64, sregs: &SystemRegisters) -> Result<()> {
+        self.write_supervisor(vaddr, &value.to_le_bytes(), sregs)
     }
 
     /// Slow path for reads that cross page boundaries

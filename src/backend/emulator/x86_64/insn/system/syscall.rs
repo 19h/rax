@@ -78,11 +78,13 @@ pub fn sysret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
     }
 
     let is_64 = ctx.rex_w();
-    vcpu.regs.rip = if is_64 {
+    let new_rip = if is_64 {
         vcpu.regs.rcx
     } else {
         (vcpu.regs.rcx as u32) as u64
     };
+
+    vcpu.regs.rip = new_rip;
     vcpu.regs.rflags = (vcpu.regs.r11 & SYSRET_RFLAGS_MASK) | 0x2;
 
     let star = vcpu.sregs.star;

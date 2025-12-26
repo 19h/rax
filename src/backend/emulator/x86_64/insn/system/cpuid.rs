@@ -13,19 +13,25 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     let (eax, ebx, ecx, edx) = match leaf {
         0 => {
             // Return max leaf and vendor string "GenuineIntel"
-            // EBX = "Genu", EDX = "ineI", ECX = "ntel"
-            (0x07, 0x756e6547, 0x49656e69, 0x6c65746e)
+            // x86 vendor string format: EBX + EDX + ECX (not EBX + ECX + EDX!)
+            // "GenuineIntel" = "Genu" (EBX) + "ineI" (EDX) + "ntel" (ECX)
+            // EBX = "Genu" = 0x756e6547 (little-endian: G=0x47, e=0x65, n=0x6e, u=0x75)
+            // EDX = "ineI" = 0x49656e69 (little-endian: i=0x69, n=0x6e, e=0x65, I=0x49)
+            // ECX = "ntel" = 0x6c65746e (little-endian: n=0x6e, t=0x74, e=0x65, l=0x6c)
+            // Note: Our tuple is (eax, ebx, ecx, edx) so we must swap ecx and edx values!
+            (0x16, 0x756e6547, 0x6c65746e, 0x49656e69)
         }
         1 => {
             // Processor signature and features
             // EAX: Stepping=1, Model=15, Family=6 => 0x6F1 (typical x86-64)
             let signature: u32 = 0x000006F1;
             // EDX features (required by Linux: 0x0700a169)
-            // bit 0: FPU, bit 3: PSE, bit 5: MSR, bit 6: PAE, bit 8: CX8
+            // bit 0: FPU, bit 3: PSE, bit 4: TSC, bit 5: MSR, bit 6: PAE, bit 8: CX8
             // bit 9: APIC, bit 13: PGE, bit 15: CMOV, bit 19: CLFLUSH
             // bit 23: MMX, bit 24: FXSR, bit 25: SSE, bit 26: SSE2
             let features_edx: u32 = (1 << 0)   // FPU
                                   | (1 << 3)   // PSE
+                                  | (1 << 4)   // TSC - Time Stamp Counter
                                   | (1 << 5)   // MSR
                                   | (1 << 6)   // PAE
                                   | (1 << 8)   // CX8 (CMPXCHG8B) - REQUIRED
@@ -37,9 +43,21 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                                   | (1 << 24)  // FXSR - REQUIRED
                                   | (1 << 25)  // SSE - REQUIRED
                                   | (1 << 26); // SSE2 - REQUIRED
-            // ECX: SSE3(0), SSSE3(9), SSE4.1(19), SSE4.2(20), POPCNT(23)
-            let features_ecx: u32 = (1 << 0) | (1 << 9) | (1 << 19) | (1 << 20) | (1 << 23);
+            // ECX: SSE3(0), SSSE3(9), SSE4.1(19), SSE4.2(20), POPCNT(23), TSC_DEADLINE(24)
+            let features_ecx: u32 = (1 << 0) | (1 << 9) | (1 << 19) | (1 << 20) | (1 << 23) | (1 << 24);
             (signature, 0x00000000, features_ecx, features_edx)
+        }
+        0x15 => {
+            // TSC/Crystal ratio - helps kernel determine TSC frequency
+            // Return: EAX = denominator, EBX = numerator, ECX = crystal frequency in Hz
+            // TSC_freq = crystal_freq * EBX / EAX
+            // We'll say 3 GHz TSC with 25 MHz crystal: 3000000000 = 25000000 * 120 / 1
+            (1, 120, 25_000_000, 0)
+        }
+        0x16 => {
+            // Processor frequency info (MHz)
+            // EAX = base freq, EBX = max freq, ECX = bus/ref freq
+            (3000, 3000, 100, 0) // 3 GHz base, 3 GHz max, 100 MHz bus
         }
         2 => {
             // Cache and TLB information
@@ -67,9 +85,15 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             // EAX: Same signature as leaf 1 (extended signature)
             let signature: u32 = 0x000006F1;
             let features_edx = (1u32 << 29)  // LM (Long Mode)
-                             | (1u32 << 26)  // PDPE1GB (1GB huge pages in PDPTE)
+                             | (1u32 << 27)  // RDTSCP instruction available
+                             // Removed PDPE1GB - causes issues with direct mapping
                              | (1u32 << 20); // NX (No Execute)
             (signature, 0, 0, features_edx)
+        }
+        0x80000007 => {
+            // Advanced power management
+            // EDX bit 8 = Invariant TSC (TSC rate is constant regardless of P-states)
+            (0, 0, 0, 1u32 << 8)
         }
         // Brand string: "Rax Emulator" padded to 48 bytes (3 leaves x 16 bytes)
         0x80000002 => {
@@ -84,8 +108,8 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         }
         0x80000008 => {
             // Address sizes: physical bits, linear bits, number of cores
-            // Use 36 bits (64GB) for a reasonable physical address space
-            let phys_bits: u32 = 36; // 64GB physical address space
+            // Use 48 bits for physical address space (common for real systems)
+            let phys_bits: u32 = 48;
             let linear_bits: u32 = 48;
             (phys_bits | (linear_bits << 8), 0, 0, 0)
         }
