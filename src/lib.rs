@@ -4,6 +4,8 @@ pub mod config;
 pub mod cpu;
 pub mod devices;
 pub mod error;
+#[cfg(feature = "debug")]
+pub mod gdb;
 pub mod memory;
 pub mod timing;
 #[cfg(feature = "trace")]
