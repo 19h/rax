@@ -3,21 +3,30 @@
 //! Demonstrates:
 //! - Memory allocation (bump allocator)
 //! - Real-world physics simulation (n-body gravitational)
-//! - Serial output via port 0xE9
+//! - Serial output via port 0xE9 (bare-metal) or syscall (usermode)
 //! - Complex instruction coverage (arithmetic, SIMD, branching)
+//!
+//! Build modes:
+//! - Bare-metal (default): cargo build --release
+//! - Usermode (for Intel SDE): cargo build --release --features usermode --target x86_64-unknown-linux-gnu
 
-#![no_std]
-#![no_main]
+#![cfg_attr(not(feature = "usermode"), no_std)]
+#![cfg_attr(not(feature = "usermode"), no_main)]
 
-use core::arch::{asm, naked_asm};
+use core::arch::asm;
+#[cfg(not(feature = "usermode"))]
+use core::arch::naked_asm;
 use core::fmt;
+#[cfg(not(feature = "usermode"))]
 use core::panic::PanicInfo;
+#[cfg(not(feature = "usermode"))]
 use core::ptr::{self, addr_of_mut};
 
 // =============================================================================
-// Entry Point
+// Entry Point (bare-metal)
 // =============================================================================
 
+#[cfg(not(feature = "usermode"))]
 #[unsafe(naked)]
 #[unsafe(no_mangle)]
 #[unsafe(link_section = ".text._start")]
@@ -34,12 +43,17 @@ extern "C" fn _start() -> ! {
         "rep stosq",
         // Call main
         "call {main}",
-        // Halt
+        // Shutdown via ACPI power-off (port 0x604)
+        "mov dx, 0x604",
+        "mov ax, 0x2000",
+        "out dx, ax",
+        // Fallback: halt
         "hlt",
         main = sym kernel_main,
     )
 }
 
+#[cfg(not(feature = "usermode"))]
 unsafe extern "C" {
     static __bss_start: u8;
     static __bss_end: u8;
@@ -49,19 +63,57 @@ unsafe extern "C" {
 }
 
 // =============================================================================
-// Serial Output (Port 0xE9 - QEMU/Bochs debug port)
+// Entry Point (usermode for Intel SDE)
+// =============================================================================
+
+#[cfg(feature = "usermode")]
+fn main() {
+    kernel_main();
+    // Exit cleanly via syscall
+    unsafe {
+        asm!(
+            "mov rax, 60",  // exit syscall
+            "xor rdi, rdi", // exit code 0
+            "syscall",
+            options(noreturn)
+        );
+    }
+}
+
+// =============================================================================
+// Serial Output
 // =============================================================================
 
 struct Serial;
 
 impl Serial {
+    #[cfg(not(feature = "usermode"))]
     fn write_byte(&self, b: u8) {
+        // Bare-metal: use port 0xE9 (QEMU/Bochs debug port)
         unsafe {
             asm!(
                 "out dx, al",
                 in("dx") 0xE9u16,
                 in("al") b,
                 options(nostack, preserves_flags)
+            );
+        }
+    }
+
+    #[cfg(feature = "usermode")]
+    fn write_byte(&self, b: u8) {
+        // Usermode: use write() syscall to stdout
+        let buf: [u8; 1] = [b];
+        unsafe {
+            asm!(
+                "syscall",
+                in("rax") 1u64,     // write syscall
+                in("rdi") 1u64,     // fd = stdout
+                in("rsi") buf.as_ptr(),
+                in("rdx") 1u64,     // count = 1
+                lateout("rax") _,
+                lateout("rcx") _,
+                lateout("r11") _,
             );
         }
     }
@@ -123,6 +175,12 @@ macro_rules! println {
 // Bump Allocator
 // =============================================================================
 
+#[cfg(feature = "usermode")]
+const HEAP_SIZE: usize = 64 * 1024; // 64KB heap for usermode
+
+#[cfg(feature = "usermode")]
+static mut HEAP_BUFFER: [u8; HEAP_SIZE] = [0u8; HEAP_SIZE];
+
 struct BumpAllocator {
     next: *mut u8,
     end: *mut u8,
@@ -132,16 +190,27 @@ struct BumpAllocator {
 impl BumpAllocator {
     const fn new() -> Self {
         Self {
-            next: ptr::null_mut(),
-            end: ptr::null_mut(),
+            next: core::ptr::null_mut(),
+            end: core::ptr::null_mut(),
             allocated: 0,
         }
     }
 
+    #[cfg(not(feature = "usermode"))]
     unsafe fn init(&mut self) {
         unsafe {
             self.next = &__heap_start as *const u8 as *mut u8;
             self.end = &__heap_end as *const u8 as *mut u8;
+        }
+        self.allocated = 0;
+    }
+
+    #[cfg(feature = "usermode")]
+    unsafe fn init(&mut self) {
+        unsafe {
+            let heap_ptr = core::ptr::addr_of_mut!(HEAP_BUFFER) as *mut u8;
+            self.next = heap_ptr;
+            self.end = heap_ptr.add(HEAP_SIZE);
         }
         self.allocated = 0;
     }
@@ -169,6 +238,14 @@ impl BumpAllocator {
 }
 
 static mut ALLOCATOR: BumpAllocator = BumpAllocator::new();
+
+/// Helper to access the allocator safely
+#[inline(always)]
+fn allocator() -> &'static mut BumpAllocator {
+    unsafe {
+        &mut *core::ptr::addr_of_mut!(ALLOCATOR)
+    }
+}
 
 // =============================================================================
 // Fixed-Point Math
@@ -504,9 +581,7 @@ fn kernel_main() {
     println!("{}", 12345u64);
 
     // Initialize allocator
-    unsafe {
-        (*addr_of_mut!(ALLOCATOR)).init();
-    }
+    unsafe { allocator().init(); }
 
     for c in b"[INIT] Heap allocator initialized\n" {
         serial.write_byte(*c);
@@ -514,7 +589,7 @@ fn kernel_main() {
 
     // Allocate bodies
     let body_count = 8usize;
-    let bodies: *mut Body = unsafe { (*addr_of_mut!(ALLOCATOR)).alloc::<Body>(body_count).unwrap() };
+    let bodies: *mut Body = allocator().alloc::<Body>(body_count).unwrap();
 
     for c in b"[ALLOC] Bodies allocated: " {
         serial.write_byte(*c);
@@ -623,7 +698,7 @@ fn kernel_main() {
     for c in b"[STAT] Heap used: " {
         serial.write_byte(*c);
     }
-    let allocated = unsafe { (*addr_of_mut!(ALLOCATOR)).allocated_bytes() };
+    let allocated = allocator().allocated_bytes();
     serial.write_u64(allocated as u64);
     for c in b" bytes\n" {
         serial.write_byte(*c);
@@ -641,11 +716,12 @@ fn kernel_main() {
 }
 
 // =============================================================================
-// Panic Handler
+// Panic Handler (bare-metal only)
 // =============================================================================
 
+#[cfg(not(feature = "usermode"))]
 #[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
+fn panic(_info: &PanicInfo) -> ! {
     let serial = Serial;
     for c in b"KERNEL PANIC: " {
         serial.write_byte(*c);
