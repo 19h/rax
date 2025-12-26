@@ -1,11 +1,11 @@
 /* Linker script for bare-metal x86_64 microkernel */
-/* Binary loaded at 0x100000 by the emulator */
+/* Binary loaded at 0x1000000 (16MB) by the emulator */
 
 ENTRY(_start)
 
 SECTIONS
 {
-    . = 0x100000;
+    . = 0x1000000;
 
     .text : {
         *(.text._start)
@@ -27,16 +27,16 @@ SECTIONS
         __bss_end = .;
     }
 
-    /* Stack grows down from 0x110000 */
-    . = 0x110000;
+    /* Stack grows down from 0x1010000 */
+    . = 0x1010000;
     __stack_top = .;
 
-    /* Heap starts at 0x200000 */
-    . = 0x200000;
+    /* Heap starts at 0x1100000 */
+    . = 0x1100000;
     __heap_start = .;
 
-    /* Heap ends at 0x800000 (6MB heap) */
-    . = 0x800000;
+    /* Heap ends at 0x1700000 (6MB heap) */
+    . = 0x1700000;
     __heap_end = .;
 
     /DISCARD/ : {
