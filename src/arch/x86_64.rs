@@ -26,7 +26,8 @@ use crate::devices::rtc::{RtcStub, RTC_ADDRESS};
 use crate::error::{Error, Result};
 use crate::memory::{align_down, PAGE_SIZE};
 
-const KERNEL_LOAD_ADDR: u64 = 0x100000;
+/// Kernel load address - must match ELF PhysAddr (typically 16MB for x86_64 Linux)
+const KERNEL_LOAD_ADDR: u64 = 0x1000000;
 const BOOT_PARAMS_ADDR: u64 = 0x7000;
 const CMDLINE_ADDR: u64 = 0x20000;
 const GDT_ADDR: u64 = 0x500;
@@ -111,6 +112,55 @@ impl X86_64Arch {
             let elf = GoblinElf::parse(&kernel_data)
                 .map_err(|e| Error::KernelLoad(format!("failed to parse ELF: {}", e)))?;
 
+            // Load each LOAD segment to its correct physical address
+            let mut max_phys_end = KERNEL_LOAD_ADDR;
+            for ph in elf.program_headers.iter() {
+                if ph.p_type == goblin::elf::program_header::PT_LOAD {
+                    let phys_addr = ph.p_paddr;
+                    let file_offset = ph.p_offset as usize;
+                    let file_size = ph.p_filesz as usize;
+                    let mem_size = ph.p_memsz as usize;
+
+                    info!(
+                        phys_addr = format!("{:#x}", phys_addr),
+                        virt_addr = format!("{:#x}", ph.p_vaddr),
+                        file_offset = format!("{:#x}", file_offset),
+                        file_size = format!("{:#x}", file_size),
+                        mem_size = format!("{:#x}", mem_size),
+                        "loading ELF LOAD segment"
+                    );
+
+                    // Load file content
+                    if file_size > 0 && file_offset + file_size <= kernel_data.len() {
+                        mem.write_slice(
+                            &kernel_data[file_offset..file_offset + file_size],
+                            GuestAddress(phys_addr),
+                        )?;
+                    }
+
+                    // Zero BSS (mem_size > file_size)
+                    if mem_size > file_size {
+                        let bss_start = phys_addr + file_size as u64;
+                        let bss_size = mem_size - file_size;
+                        let zeros = vec![0u8; bss_size];
+                        mem.write_slice(&zeros, GuestAddress(bss_start))?;
+                    }
+
+                    let seg_end = phys_addr + mem_size as u64;
+                    if seg_end > max_phys_end {
+                        max_phys_end = seg_end;
+                    }
+                }
+            }
+
+            // Update kernel_end to reflect actual loaded size
+            let result = KernelLoaderResult {
+                kernel_load: GuestAddress(KERNEL_LOAD_ADDR),
+                kernel_end: max_phys_end,
+                setup_header: None,
+                pvh_boot_cap: linux_loader::loader::elf::PvhBootCapability::PvhEntryNotPresent,
+            };
+
             // The ELF entry point for vmlinux is the PHYSICAL address of startup_64.
             // Since we boot with paging enabled, we need to convert to virtual address.
             // The kernel virtual address mapping is: virt = phys + 0xffffffff80000000
@@ -121,6 +171,7 @@ impl X86_64Arch {
             info!(
                 phys_entry = format!("{:#x}", phys_entry),
                 virt_entry = format!("{:#x}", virt_entry),
+                kernel_end = format!("{:#x}", max_phys_end),
                 "ELF kernel entry point"
             );
             Ok((result, true, Some(virt_entry)))
