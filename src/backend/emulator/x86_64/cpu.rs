@@ -710,13 +710,22 @@ impl X86_64Vcpu {
         self.mmu.mark_code_page(rip);
 
         let mut buf = [0u8; MAX_INSN_LEN];
-        if self.mmu.read(rip, &mut buf, &self.sregs).is_ok() {
-            return Ok((buf, MAX_INSN_LEN));
+        match self.mmu.read(rip, &mut buf, &self.sregs) {
+            Ok(()) => return Ok((buf, MAX_INSN_LEN)),
+            Err(Error::PageFault { vaddr, error_code }) => {
+                // Instruction fetch page fault - add instruction fetch bit to error code
+                return Err(Error::PageFault { vaddr, error_code: error_code | 0x10 });
+            }
+            Err(_) => {} // Try smaller amounts
         }
         // If we can't read 15 bytes, try smaller amounts
         for len in (1..MAX_INSN_LEN).rev() {
-            if self.mmu.read(rip, &mut buf[..len], &self.sregs).is_ok() {
-                return Ok((buf, len));
+            match self.mmu.read(rip, &mut buf[..len], &self.sregs) {
+                Ok(()) => return Ok((buf, len)),
+                Err(Error::PageFault { vaddr, error_code }) => {
+                    return Err(Error::PageFault { vaddr, error_code: error_code | 0x10 });
+                }
+                Err(_) => continue,
             }
         }
         // Dump last few RIPs for debugging
@@ -1053,6 +1062,14 @@ impl X86_64Vcpu {
         self.mmu.write_u64(self.regs.rsp, value, &self.sregs)
     }
 
+    /// Push a 64-bit value to the stack with supervisor privilege.
+    /// Used during exception/interrupt delivery where the kernel stack
+    /// is accessed regardless of current CPL.
+    fn push64_supervisor(&mut self, value: u64) -> Result<()> {
+        self.regs.rsp = self.regs.rsp.wrapping_sub(8);
+        self.mmu.write_u64_supervisor(self.regs.rsp, value, &self.sregs)
+    }
+
     pub(super) fn pop64(&mut self) -> Result<u64> {
         let value = self.mmu.read_u64(self.regs.rsp, &self.sregs)?;
         self.regs.rsp = self.regs.rsp.wrapping_add(8);
@@ -1185,9 +1202,10 @@ impl X86_64Vcpu {
         let idt_base = self.sregs.idt.base;
         let idt_entry_addr = idt_base + (vector as u64) * 16;
 
-        // Read the 16-byte IDT entry
+        // Read the 16-byte IDT entry (using supervisor access - exception delivery
+        // always uses supervisor privilege regardless of current CPL)
         let mut idt_entry = [0u8; 16];
-        self.mmu.read(idt_entry_addr, &mut idt_entry, &self.sregs)?;
+        self.mmu.read_supervisor(idt_entry_addr, &mut idt_entry, &self.sregs)?;
 
         let offset_low = u16::from_le_bytes([idt_entry[0], idt_entry[1]]) as u64;
         let selector = u16::from_le_bytes([idt_entry[2], idt_entry[3]]);
@@ -1219,29 +1237,49 @@ impl X86_64Vcpu {
         let old_cs = self.sregs.cs.selector;
         let old_rip = self.regs.rip;
 
-        // If IST is non-zero, switch to the IST stack
-        // IST entries are in the TSS at offset 0x24 + (ist-1)*8
+        // Determine privilege levels for stack switching
+        // The target CPL comes from the code segment selector in the IDT gate (RPL bits)
+        // For kernel exception handlers, this is typically 0x10 (ring 0 code segment)
+        let target_cpl = (selector & 0x3) as u8;
+        let old_cpl = (old_cs & 0x3) as u8;
+
+        // Stack switching rules for 64-bit mode:
+        // 1. If IST is non-zero, use the IST stack (regardless of privilege change)
+        // 2. Else if transitioning to a more privileged level, load RSP from TSS
+        //    (CPL 3 to 0 uses RSP0, CPL 3 to 1 uses RSP1, etc.)
+        // 3. Else keep current RSP (same or less privileged)
         if ist != 0 {
+            // IST entries are in the TSS at offset 0x24 + (ist-1)*8
             let tss_base = self.sregs.tr.base;
             let ist_offset = 0x24 + ((ist as u64 - 1) * 8);
             let ist_addr = tss_base + ist_offset;
-            let ist_rsp = self.mmu.read_u64(ist_addr, &self.sregs)?;
+            let ist_rsp = self.mmu.read_u64_supervisor(ist_addr, &self.sregs)?;
             if ist_rsp != 0 {
                 self.regs.rsp = ist_rsp;
-                // SS is set to 0 for IST switches in 64-bit mode
-                self.set_sreg(2, 0);
+                self.set_sreg(2, 0); // SS = 0 for IST switches
             }
-            // If IST entry is 0, keep current RSP (kernel might not have set up IST yet)
+        } else if old_cpl > target_cpl {
+            // Inter-privilege transition - load RSP from TSS
+            // RSP0 is at offset 0x04, RSP1 at 0x0C, RSP2 at 0x14 in 64-bit TSS
+            let tss_base = self.sregs.tr.base;
+            let rsp_offset = 0x04 + (target_cpl as u64) * 8;
+            let new_rsp = self.mmu.read_u64_supervisor(tss_base + rsp_offset, &self.sregs)?;
+            if new_rsp != 0 {
+                self.regs.rsp = new_rsp;
+                self.set_sreg(2, 0); // SS = 0 for inter-privilege switches
+            }
         }
+        // If same privilege or less privileged, keep current RSP
 
         // Push exception frame (each push is 8 bytes in 64-bit mode)
-        self.push64(old_ss as u64)?;
-        self.push64(old_rsp)?;
-        self.push64(old_rflags)?;
-        self.push64(old_cs as u64)?;
-        self.push64(old_rip)?;
+        // Use supervisor access since we're writing to the kernel stack
+        self.push64_supervisor(old_ss as u64)?;
+        self.push64_supervisor(old_rsp)?;
+        self.push64_supervisor(old_rflags)?;
+        self.push64_supervisor(old_cs as u64)?;
+        self.push64_supervisor(old_rip)?;
         if let Some(ec) = error_code {
-            self.push64(ec)?;
+            self.push64_supervisor(ec)?;
         }
 
         // Clear IF (disable interrupts) for interrupt gates (type 0xE)
@@ -1264,7 +1302,22 @@ impl X86_64Vcpu {
 
 impl VCpu for X86_64Vcpu {
     fn run(&mut self) -> Result<VcpuExit> {
+        let start_time = std::time::Instant::now();
+        let mut insn_count: u64 = 0;
         loop {
+            insn_count += 1;
+            if insn_count % 50_000_000 == 0 {
+                eprintln!("[CPU] insn={} rip={:#x}", insn_count, self.regs.rip);
+            }
+
+            // Periodically yield to VMM for interrupt handling (every ~1ms)
+            if insn_count % 100_000 == 0 {
+                if start_time.elapsed().as_millis() >= 1 {
+                    // Return to VMM to process timers and interrupts
+                    return Ok(VcpuExit::Hlt);
+                }
+            }
+
             // Check for pending LAPIC timer interrupts
             if let Some(vector) = self.mmu.tick_lapic_timer() {
                 if self.can_inject_interrupt() {

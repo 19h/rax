@@ -78,6 +78,10 @@ impl X86_64Vcpu {
         vvvv: u8,
         opcode: u8,
     ) -> Result<Option<VcpuExit>> {
+        // Note: We allow VEX.L=1 (256-bit YMM) operations as we have implementations
+        // for the common AVX instructions. The individual handlers support L=1.
+        // We reject EVEX (AVX-512) separately in the EVEX dispatcher.
+
         // VEX.LZ.F2.0F3A.W{0,1} F0 /r ib (RORX)
         if m_mmmm == 0x3 && vex_pp == 0x3 && vex_l == 0 && opcode == 0xF0 {
             return insn::bmi::rorx(self, ctx);

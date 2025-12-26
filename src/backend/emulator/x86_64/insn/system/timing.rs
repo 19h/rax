@@ -1,14 +1,19 @@
 //! Timing instructions: RDTSC, RDTSCP, RDPMC.
 
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::OnceLock;
+use std::time::Instant;
 
 use crate::cpu::VcpuExit;
 use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
-/// Shared time-stamp counter for RDTSC and RDTSCP
-static TSC: AtomicU64 = AtomicU64::new(0);
+/// Boot time for TSC calculation (set on first RDTSC call)
+static TSC_BOOT_TIME: OnceLock<Instant> = OnceLock::new();
+
+/// Simulated TSC frequency: ~2.5 GHz (cycles per nanosecond = 2.5)
+const TSC_FREQ_CYCLES_PER_NS: u64 = 3;
 
 /// Performance monitoring counters (PMCs) for RDPMC
 static PMC: [AtomicU64; 8] = [
@@ -22,10 +27,18 @@ static PMC: [AtomicU64; 8] = [
     AtomicU64::new(0),
 ];
 
+/// Get TSC value based on real wall-clock time since boot
+#[inline]
+fn get_tsc() -> u64 {
+    let boot_time = TSC_BOOT_TIME.get_or_init(Instant::now);
+    let elapsed_ns = boot_time.elapsed().as_nanos() as u64;
+    elapsed_ns.saturating_mul(TSC_FREQ_CYCLES_PER_NS)
+}
+
 /// RDTSC - Read Time-Stamp Counter (0x0F 0x31)
 /// Reads 64-bit TSC into EDX:EAX. Upper 32 bits of RAX and RDX are cleared.
 pub fn rdtsc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let tsc = TSC.fetch_add(1000, Ordering::Relaxed);
+    let tsc = get_tsc();
     // EDX:EAX = TSC, upper 32 bits of RAX and RDX are cleared
     vcpu.regs.rax = tsc & 0xFFFF_FFFF;
     vcpu.regs.rdx = (tsc >> 32) & 0xFFFF_FFFF;
@@ -37,7 +50,7 @@ pub fn rdtsc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
 /// Reads 64-bit TSC into EDX:EAX, and IA32_TSC_AUX[31:0] into ECX.
 /// Upper 32 bits of RAX, RDX, and RCX are cleared.
 pub fn rdtscp(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let tsc = TSC.fetch_add(1000, Ordering::Relaxed);
+    let tsc = get_tsc();
     // EDX:EAX = TSC, upper 32 bits cleared
     vcpu.regs.rax = tsc & 0xFFFF_FFFF;
     vcpu.regs.rdx = (tsc >> 32) & 0xFFFF_FFFF;
