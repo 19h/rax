@@ -728,16 +728,6 @@ impl X86_64Vcpu {
                 Err(_) => continue,
             }
         }
-        // Dump last few RIPs for debugging
-        eprintln!("[CRASH] Last 16 RIPs before RIP={:#x}:", rip);
-        let idx = RIP_IDX.load(Ordering::Relaxed);
-        for i in 0..16 {
-            let hist_idx = (idx + 16 - 1 - i) % 16;
-            let hist_rip = RIP_HISTORY[hist_idx].load(Ordering::Relaxed);
-            if hist_rip != 0 {
-                eprintln!("  [-{}] {:#x}", i, hist_rip);
-            }
-        }
         Err(Error::Emulator(format!(
             "failed to fetch instruction at RIP={:#x}",
             rip
@@ -763,6 +753,45 @@ impl X86_64Vcpu {
         }
 
         let rip = self.regs.rip;
+
+        // Debug: dump phys_base at various kernel checkpoints
+        const PHYS_BASE_ADDR: u64 = 0xffffffff82c38010;
+        const START_KERNEL: u64 = 0xffffffff82c01000;  // Approximate start_kernel entry
+        const TEXT_POKE_ADDR: u64 = 0xffffffff812a83a0;
+
+        // Check at start_kernel entry (one-shot)
+        static LOGGED_START_KERNEL: std::sync::atomic::AtomicBool =
+            std::sync::atomic::AtomicBool::new(false);
+
+        if rip >= 0xffffffff834a0000 && rip < 0xffffffff834b1000
+           && !LOGGED_START_KERNEL.swap(true, std::sync::atomic::Ordering::Relaxed) {
+            // First time in start_kernel region - dump phys_base
+            if let Ok(phys_base) = self.mmu.read_u64(PHYS_BASE_ADDR, &self.sregs) {
+                eprintln!("\n=== PHYS_BASE DEBUG (start_kernel region) ===");
+                eprintln!("RIP = 0x{:016x}", rip);
+                eprintln!("phys_base @ 0x{:016x} = 0x{:016x}", PHYS_BASE_ADDR, phys_base);
+                eprintln!("CR3 = 0x{:016x}", self.sregs.cr3);
+                eprintln!("=============================================\n");
+            }
+        }
+
+        // Check at __text_poke entry
+        if rip == TEXT_POKE_ADDR {
+            match self.mmu.read_u64(PHYS_BASE_ADDR, &self.sregs) {
+                Ok(phys_base) => {
+                    eprintln!("\n=== TEXT_POKE DEBUG (emulator) ===");
+                    eprintln!("RIP = 0x{:016x} (__text_poke entry)", rip);
+                    eprintln!("phys_base = 0x{:016x}", phys_base);
+                    eprintln!("RDI (addr arg) = 0x{:016x}", self.regs.rdi);
+                    eprintln!("RSI (src arg) = 0x{:016x}", self.regs.rsi);
+                    eprintln!("RDX (len arg) = 0x{:016x}", self.regs.rdx);
+                    eprintln!("==================================\n");
+                }
+                Err(e) => {
+                    eprintln!("TEXT_POKE DEBUG: Failed to read phys_base: {:?}", e);
+                }
+            }
+        }
         let cache_idx = Self::decode_cache_index(rip);
 
         // Check decode cache for a hit (copy to avoid borrow issues)
@@ -938,6 +967,8 @@ impl X86_64Vcpu {
             8 => *reg_ref = value,
             _ => {}
         }
+
+        // Debug code removed - was detecting false positives for valid user-space addresses
     }
 
     // Memory access helpers
@@ -976,6 +1007,8 @@ impl X86_64Vcpu {
     pub(super) fn write_mem(&mut self, addr: u64, value: u64, size: u8) -> Result<()> {
         // Check for self-modifying code
         self.check_smc(addr);
+
+        // Watchpoint removed - text_poke_mm_addr legitimately uses user-space addresses
 
         match size {
             1 => self.mmu.write_u8(addr, value as u8, &self.sregs),
@@ -1306,9 +1339,6 @@ impl VCpu for X86_64Vcpu {
         let mut insn_count: u64 = 0;
         loop {
             insn_count += 1;
-            if insn_count % 50_000_000 == 0 {
-                eprintln!("[CPU] insn={} rip={:#x}", insn_count, self.regs.rip);
-            }
 
             // Periodically yield to VMM for interrupt handling (every ~1ms)
             if insn_count % 100_000 == 0 {

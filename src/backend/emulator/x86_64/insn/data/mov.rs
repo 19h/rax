@@ -104,17 +104,6 @@ pub fn mov_rm_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let value = vcpu.get_reg(reg, op_size);
 
-    // Debug: trace store of garbage phys_base value
-    if value == 0x315b00000020b9df {
-        eprintln!("[MOV_GARBAGE] rip={:#x} storing {:#x} from reg{} to addr={:#x}",
-            vcpu.regs.rip, value, reg, addr);
-        eprintln!("  rax={:#x} rbx={:#x} rcx={:#x} rdx={:#x}",
-            vcpu.regs.rax, vcpu.regs.rbx, vcpu.regs.rcx, vcpu.regs.rdx);
-        eprintln!("  rsi={:#x} rdi={:#x} rbp={:#x} rsp={:#x}",
-            vcpu.regs.rsi, vcpu.regs.rdi, vcpu.regs.rbp, vcpu.regs.rsp);
-        eprintln!("  bytes={:02x?}", &ctx.bytes[..ctx.cursor.min(16)]);
-    }
-
     if is_memory {
         vcpu.write_mem(addr, value, op_size)?;
     } else {

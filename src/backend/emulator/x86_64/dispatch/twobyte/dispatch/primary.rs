@@ -38,7 +38,6 @@ impl X86_64Vcpu {
             }
             // UD2 - Undefined Instruction (intentional #UD exception)
             0x0B => {
-                eprintln!("[UD2] at RIP={:#x}", self.regs.rip);
                 // Don't advance RIP - #UD is a fault, exception points to faulting instruction
                 self.inject_exception(6, None)?; // #UD = vector 6
                 Ok(None)

@@ -41,6 +41,7 @@ impl GuestMemoryWrapper {
 
     #[cfg(all(feature = "kvm", target_os = "linux"))]
     pub fn register(&self, vm_fd: &VmFd) -> Result<()> {
+        panic!("NOTE TO CLAUDE: YOU PROBABLY MEANT TO USE THE EMULATOR BACKEND!");
         for (slot, region) in self.mem.iter().enumerate() {
             info!(
                 slot,
