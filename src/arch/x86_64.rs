@@ -162,19 +162,18 @@ impl X86_64Arch {
             };
 
             // The ELF entry point for vmlinux is the PHYSICAL address of startup_64.
-            // Since we boot with paging enabled, we need to convert to virtual address.
-            // The kernel virtual address mapping is: virt = phys + 0xffffffff80000000
-            // (this matches __START_KERNEL_map in the Linux kernel)
+            // The kernel expects to start with identity mapping (phys == virt) and
+            // sets up its own virtual address mapping during early boot.
+            // The __pi___startup_64 code verifies: (kernel_base >> 46) == 0
+            // which requires running at the physical address, not virtual.
             let phys_entry = elf.header.e_entry;
-            let virt_entry = phys_entry.wrapping_add(0xffffffff80000000);
 
             info!(
                 phys_entry = format!("{:#x}", phys_entry),
-                virt_entry = format!("{:#x}", virt_entry),
                 kernel_end = format!("{:#x}", max_phys_end),
-                "ELF kernel entry point"
+                "ELF kernel entry point (using physical address for identity-mapped boot)"
             );
-            Ok((result, true, Some(virt_entry)))
+            Ok((result, true, Some(phys_entry)))
         } else {
             info!("raw binary kernel, entry at load address");
             Ok((result, false, None))

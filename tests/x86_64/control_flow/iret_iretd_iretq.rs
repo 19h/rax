@@ -60,13 +60,15 @@ fn test_iret_basic_16bit() {
 #[test]
 fn test_iret_pops_ip_cs_flags() {
     // Verify IRET pops IP, CS, and FLAGS
+    // In 64-bit mode, IRET always pops RSP and SS too
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x80, 0x00, 0x00, // MOV RSP, 0x8000
-        0x66, 0xcf, // IRET
+        0x66, 0xcf, // IRET (16-bit)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_iret_frame(&mem, 0x8000, 2, 0x3000, 0x08, 0x0202);
+    // In 64-bit mode, even 16-bit IRET pops RSP and SS
+    write_iret_outer_frame(&mem, 0x8000, 2, 0x3000, 0x08, 0x0202, 0x7000, 0x10);
 
     let target_code = [
         0x48, 0x89, 0xe0, // MOV RAX, RSP (check stack restored)
@@ -75,7 +77,8 @@ fn test_iret_pops_ip_cs_flags() {
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert!(regs.rax >= 0x8000 - 16);
+    // RSP should be restored to 0x7000
+    assert_eq!(regs.rax & 0xFFFF, 0x7000);
 }
 
 // ============================================================================
@@ -103,22 +106,26 @@ fn test_iretd_basic_32bit() {
 #[test]
 fn test_iretd_restores_eflags() {
     // IRETD restores EFLAGS register
+    // In 64-bit mode, IRET always pops RSP and SS
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x80, 0x00, 0x00, // MOV RSP, 0x8000
         0xcf, // IRETD
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_iret_frame(&mem, 0x8000, 4, 0x3000, 0x08, 0x0000_0402);
+    // Provide RSP=0x7000, SS=0x10 so PUSHFQ has a valid stack
+    write_iret_outer_frame(&mem, 0x8000, 4, 0x3000, 0x08, 0x0000_0402, 0x7000, 0x10);
 
     let target_code = [
         0x9c, // PUSHFQ (save restored flags)
+        0x58, // POP RAX
         0xf4,
     ];
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x3000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    // Flags should be restored
+    // Check DF (bit 10) is set in restored flags
+    assert_ne!(regs.rax & 0x400, 0, "DF should be set");
 }
 
 // ============================================================================
@@ -146,13 +153,15 @@ fn test_iretq_basic_64bit() {
 #[test]
 fn test_iretq_restores_rflags() {
     // IRETQ restores full RFLAGS
+    // In 64-bit mode, IRETQ always pops RSP and SS
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x80, 0x00, 0x00, // MOV RSP, 0x8000
         0x48, 0xcf, // IRETQ
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_iret_frame(&mem, 0x8000, 8, 0x4000, 0x08, 0x0000_0246);
+    // Provide RSP=0x7000, SS=0x10 so PUSHFQ has a valid stack
+    write_iret_outer_frame(&mem, 0x8000, 8, 0x4000, 0x08, 0x0000_0246, 0x7000, 0x10);
 
     let target_code = [
         0x9c, // PUSHFQ
@@ -162,7 +171,9 @@ fn test_iretq_restores_rflags() {
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x4000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    // Check flags were restored
+    // Check ZF (bit 6), PF (bit 2) are set in restored flags (0x246 = ZF|PF|IF|reserved)
+    assert_ne!(regs.rax & 0x40, 0, "ZF should be set");
+    assert_ne!(regs.rax & 0x04, 0, "PF should be set");
 }
 
 // ============================================================================
@@ -326,13 +337,16 @@ fn test_iret_restores_overflow_flag() {
 
 #[test]
 fn test_iret_restores_direction_flag() {
+    // In 64-bit mode, IRET always pops RSP and SS
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x80, 0x00, 0x00, // MOV RSP, 0x8000
         0xcf, // IRET
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_iret_frame(&mem, 0x8000, 4, 0x2000, 0x08, 0x0000_0402);
+    // Provide RSP=0x7000, SS=0x10 so PUSHFQ has a valid stack
+    // 0x402 = DF (bit 10) + reserved bit 1
+    write_iret_outer_frame(&mem, 0x8000, 4, 0x2000, 0x08, 0x0000_0402, 0x7000, 0x10);
 
     let target_code = [
         0x9c, // PUSHFQ
@@ -342,18 +356,22 @@ fn test_iret_restores_direction_flag() {
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    // DF should be set in restored flags
+    // DF (bit 10) should be set in restored flags
+    assert_ne!(regs.rax & 0x400, 0, "DF should be set");
 }
 
 #[test]
 fn test_iret_restores_interrupt_flag() {
+    // In 64-bit mode, IRET always pops RSP and SS
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x80, 0x00, 0x00, // MOV RSP, 0x8000
         0xcf, // IRET
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_iret_frame(&mem, 0x8000, 4, 0x2000, 0x08, 0x0000_0202);
+    // Provide RSP=0x7000, SS=0x10 so PUSHFQ has a valid stack
+    // 0x202 = IF (bit 9) + reserved bit 1
+    write_iret_outer_frame(&mem, 0x8000, 4, 0x2000, 0x08, 0x0000_0202, 0x7000, 0x10);
 
     let target_code = [
         0x9c, // PUSHFQ
@@ -363,7 +381,8 @@ fn test_iret_restores_interrupt_flag() {
     mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    // IF should be restored
+    // IF (bit 9) should be set in restored flags
+    assert_ne!(regs.rax & 0x200, 0, "IF should be set");
 }
 
 // ============================================================================
@@ -458,14 +477,17 @@ fn test_iret_insufficient_stack() {
 #[test]
 fn test_iret_nested_interrupts() {
     // Simulate nested interrupt returns
+    // In 64-bit mode, each IRET pops RSP and SS, so we need outer frames
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x80, 0x00, 0x00, // MOV RSP, 0x8000
         0xcf, // IRET to level 1
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_iret_frame(&mem, 0x8000, 4, 0x2000, 0x08, 0x2);
-    write_iret_frame(&mem, 0x8000 + 12, 4, 0x3000, 0x08, 0x2);
+    // First IRET: jump to 0x2000, set RSP to 0x7000 (where second frame is)
+    write_iret_outer_frame(&mem, 0x8000, 4, 0x2000, 0x08, 0x2, 0x7000, 0x10);
+    // Second IRET: at RSP=0x7000, jump to 0x3000, set RSP to 0x6000
+    write_iret_outer_frame(&mem, 0x7000, 4, 0x3000, 0x08, 0x2, 0x6000, 0x10);
 
     // Level 1 handler
     let level1 = [
@@ -648,13 +670,15 @@ fn test_iret_unaligned_address() {
 #[test]
 fn test_iret_interrupt_handler_pattern() {
     // Common interrupt handler pattern
+    // In 64-bit mode, IRET always pops RSP and SS
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x80, 0x00, 0x00, // MOV RSP, 0x8000
         0xcf, // IRET (return from handler)
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_iret_frame(&mem, 0x8000, 4, 0x2000, 0x08, 0x2);
+    // Provide RSP=0x7000 so PUSH RAX has a valid stack
+    write_iret_outer_frame(&mem, 0x8000, 4, 0x2000, 0x08, 0x2, 0x7000, 0x10);
 
     let handler = [
         0x50, // PUSH RAX (save registers)
@@ -665,7 +689,8 @@ fn test_iret_interrupt_handler_pattern() {
     mem.write_slice(&handler, vm_memory::GuestAddress(0x2000)).unwrap();
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
-    // Interrupt handler executed and returned
+    // RAX should be restored to 0 (original value) after POP
+    assert_eq!(regs.rax, 0);
 }
 
 #[test]
