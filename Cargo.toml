@@ -6,6 +6,7 @@ edition = "2024"
 [features]
 default = ["kvm"]
 kvm = ["kvm-bindings", "kvm-ioctls"]
+trace = []
 x86_64-suite = []
 x86-suite = ["x86_64-suite"]
 

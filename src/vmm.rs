@@ -72,6 +72,20 @@ impl Vmm {
             "initializing VMM"
         );
 
+        // Initialize instruction tracing if requested (requires trace feature)
+        #[cfg(feature = "trace")]
+        if let Some(ref trace_path) = config.trace {
+            crate::trace::init(trace_path)
+                .map_err(|e| Error::InvalidConfig(format!("failed to open trace file: {}", e)))?;
+            info!(trace_path = ?trace_path, "instruction tracing enabled");
+        }
+        #[cfg(not(feature = "trace"))]
+        if config.trace.is_some() {
+            return Err(Error::InvalidConfig(
+                "--trace requires building with --features trace".to_string()
+            ));
+        }
+
         // Create backend
         let backend = backend::create(&config)?;
         info!(backend = backend.name(), "using backend");
@@ -221,6 +235,11 @@ impl Vmm {
             if let Ok(mut pit) = self.pit.lock() {
                 if pit.tick() {
                     // Timer fired - raise IRQ 0 via the PIC
+                    static PIT_FIRE_COUNT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+                    let count = PIT_FIRE_COUNT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    if count % 1000 == 0 {
+                        eprintln!("[VMM] PIT fire #{}", count);
+                    }
                     if let Ok(mut pic) = self.pic.lock() {
                         pic.set_irq(0, true);
                     }
@@ -261,15 +280,11 @@ impl Vmm {
 
                 let can_inject = vcpu.can_inject_interrupt();
                 if let Ok(mut pic) = self.pic.lock() {
-                    let has_pending = pic.has_pending();
-                    if has_pending && can_inject {
-                        if let Some(vector) = pic.get_pending_vector() {
-                            let result = vcpu.inject_interrupt(vector);
-                            tracing::info!(
-                                "PIC inject: vector={:#x}, result={:?}",
-                                vector,
-                                result
-                            );
+                    if pic.has_pending() {
+                        if can_inject {
+                            if let Some(vector) = pic.get_pending_vector() {
+                                let _ = vcpu.inject_interrupt(vector);
+                            }
                         }
                     }
                 }
@@ -336,6 +351,16 @@ impl Vmm {
                 }
                 VcpuExit::IoOut { port, data } => {
                     debug!(port = port, size = data.len(), "PIO write");
+
+                    // ACPI shutdown port (0x604, value 0x2000 = S5 power off)
+                    if port == 0x604 && data.len() >= 2 {
+                        let val = u16::from_le_bytes([data[0], data[1]]);
+                        if val == 0x2000 {
+                            info!("ACPI shutdown requested");
+                            break;
+                        }
+                    }
+
                     let is_serial = port >= SERIAL_BASE && port < SERIAL_BASE + 8;
                     if is_serial {
                         if let Ok(mut serial) = self.serial.lock() {
@@ -388,6 +413,11 @@ impl Vmm {
                 }
             }
         }
+
+        // Flush and close trace file
+        #[cfg(feature = "trace")]
+        crate::trace::close();
+
         Ok(())
     }
 

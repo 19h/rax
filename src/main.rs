@@ -37,6 +37,9 @@ struct Cli {
     hexagon_entry: Option<Address>,
     #[arg(long, value_parser = clap::value_parser!(Address))]
     hexagon_load_addr: Option<Address>,
+    /// Output instruction trace file (SDE-compatible format)
+    #[arg(long)]
+    trace: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -64,6 +67,7 @@ fn main() -> Result<()> {
         hexagon_endian: cli.hexagon_endian,
         hexagon_entry: cli.hexagon_entry,
         hexagon_load_addr: cli.hexagon_load_addr,
+        trace: cli.trace,
     };
 
     let config = VmConfig::from_sources(cli_config, file_config)?;

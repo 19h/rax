@@ -305,6 +305,7 @@ pub struct CliConfig {
     pub hexagon_endian: Option<Endianness>,
     pub hexagon_entry: Option<Address>,
     pub hexagon_load_addr: Option<Address>,
+    pub trace: Option<PathBuf>,
 }
 
 #[derive(Clone, Debug)]
@@ -320,6 +321,7 @@ pub struct VmConfig {
     pub hexagon_endian: Endianness,
     pub hexagon_entry: Option<Address>,
     pub hexagon_load_addr: Option<Address>,
+    pub trace: Option<PathBuf>,
 }
 
 impl VmConfig {
@@ -358,6 +360,7 @@ impl VmConfig {
             hexagon_endian,
             hexagon_entry,
             hexagon_load_addr,
+            trace: cli.trace,
         };
 
         config.validate()?;

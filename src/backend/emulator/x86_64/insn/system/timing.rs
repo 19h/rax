@@ -20,7 +20,7 @@ static PMC: [AtomicU64; 8] = [
     AtomicU64::new(0),
 ];
 
-/// Get TSC value based on instruction count (deterministic, not wall-clock)
+/// Get TSC value based on wall-clock time (scaled to emulated CPU frequency)
 #[inline]
 fn get_tsc() -> u64 {
     timing::tsc()
@@ -29,7 +29,29 @@ fn get_tsc() -> u64 {
 /// RDTSC - Read Time-Stamp Counter (0x0F 0x31)
 /// Reads 64-bit TSC into EDX:EAX. Upper 32 bits of RAX and RDX are cleared.
 pub fn rdtsc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static RDTSC_COUNT: AtomicU64 = AtomicU64::new(0);
+
     let tsc = get_tsc();
+    let count = RDTSC_COUNT.fetch_add(1, Ordering::Relaxed);
+
+    // Debug: print R8 (target) value when in delay_tsc
+    let rip = vcpu.regs.rip;
+    static IN_DELAY: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    if rip >= 0xffffffff8224ea00 && rip <= 0xffffffff8224eaff {
+        let delay_count = IN_DELAY.fetch_add(1, Ordering::Relaxed);
+        if delay_count < 5 || delay_count % 1_000_000 == 0 {
+            let r8 = vcpu.regs.r8;
+            let r9 = vcpu.regs.r9 as u32;  // Saved cpu_number
+            let rsi = vcpu.regs.rsi as u32; // Current cpu_number (after mov)
+            let rdi = vcpu.regs.rdi;
+            let elapsed = tsc.saturating_sub(rdi);
+            let gs_base = vcpu.sregs.gs.base;
+            eprintln!("[RDTSC #{} delay_tsc] elapsed={}, target={}, r9(saved_cpu)={}, rsi(cur_cpu)={}, gs.base={:#x}",
+                delay_count, elapsed, r8, r9, rsi, gs_base);
+        }
+    }
+
     // EDX:EAX = TSC, upper 32 bits of RAX and RDX are cleared
     vcpu.regs.rax = tsc & 0xFFFF_FFFF;
     vcpu.regs.rdx = (tsc >> 32) & 0xFFFF_FFFF;
