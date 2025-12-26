@@ -169,11 +169,24 @@ impl InlineLapic {
             LAPIC_ESR => self.esr = 0,
             LAPIC_ICR_LOW => self.icr = (self.icr & 0xFFFFFFFF00000000) | (value as u64),
             LAPIC_ICR_HIGH => self.icr = (self.icr & 0x00000000FFFFFFFF) | ((value as u64) << 32),
-            LAPIC_LVT_TIMER => self.lvt_timer = value,
+            LAPIC_LVT_TIMER => {
+                tracing::debug!(
+                    "LAPIC LVT_TIMER write: value={:#x}, vector={}, mode={}, masked={}",
+                    value,
+                    value & 0xFF,
+                    (value >> 17) & 3,
+                    (value & 0x10000) != 0
+                );
+                self.lvt_timer = value;
+            }
             LAPIC_LVT_LINT0 => self.lvt_lint0 = value,
             LAPIC_LVT_LINT1 => self.lvt_lint1 = value,
             LAPIC_LVT_ERROR => self.lvt_error = value,
             LAPIC_TIMER_ICR => {
+                tracing::debug!(
+                    "LAPIC TIMER_ICR write: value={:#x}, lvt_timer={:#x}, divisor={}",
+                    value, self.lvt_timer, self.timer_divisor()
+                );
                 self.timer_initial_count = value;
                 if value > 0 {
                     self.timer_start = Some(Instant::now());

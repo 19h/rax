@@ -102,7 +102,12 @@ impl Pic8259 {
         if self.auto_eoi {
             self.isr &= !(1 << irq);
         }
-        self.vector_offset + irq
+        let vector = self.vector_offset + irq;
+        tracing::debug!(
+            "PIC ack_irq: irq={}, vector={:#x}, auto_eoi={}, isr={:#x}",
+            irq, vector, self.auto_eoi, self.isr
+        );
+        vector
     }
 
     /// End of interrupt
@@ -123,6 +128,12 @@ impl Pic8259 {
     fn write_command(&mut self, value: u8) {
         if value & 0x10 != 0 {
             // ICW1 - start initialization sequence
+            tracing::info!(
+                "PIC ICW1: value={:#x}, icw4_needed={}, cascade={}",
+                value,
+                value & 0x01 != 0,
+                value & 0x02 == 0
+            );
             self.icw1 = value;
             self.icw4_needed = value & 0x01 != 0;
             self.init_state = InitState::WaitingICW2;
@@ -140,10 +151,14 @@ impl Pic8259 {
             // OCW2
             let eoi_type = (value >> 5) & 0x07;
             match eoi_type {
-                0b001 => self.eoi(None), // Non-specific EOI
+                0b001 => {
+                    tracing::debug!("PIC OCW2: non-specific EOI, isr={:#x}", self.isr);
+                    self.eoi(None);
+                }
                 0b011 => {
                     // Specific EOI
                     let irq = value & 0x07;
+                    tracing::debug!("PIC OCW2: specific EOI irq={}", irq);
                     self.eoi(Some(irq));
                 }
                 0b101 => {
@@ -165,6 +180,7 @@ impl Pic8259 {
         match self.init_state {
             InitState::WaitingICW2 => {
                 self.vector_offset = value & 0xF8;
+                tracing::info!("PIC ICW2: vector_offset set to {:#x}", self.vector_offset);
                 if self.icw1 & 0x02 != 0 {
                     // Single mode - skip ICW3
                     self.init_state = if self.icw4_needed {
