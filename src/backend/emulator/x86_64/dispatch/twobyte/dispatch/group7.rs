@@ -20,6 +20,16 @@ impl X86_64Vcpu {
         // Check for special instructions with mod=3
         if modrm >> 6 == 3 {
             match modrm {
+                0xC1 => {
+                    // VMCALL (0x0F 0x01 0xC1) - VMX hypercall
+                    ctx.consume_u8()?; // consume modrm
+                    // In a real hypervisor, this would cause a VM exit.
+                    // When running without VMX, this should generate #UD.
+                    // For our emulator, treat as NOP - kernel uses this for
+                    // paravirtualized hints in delay loops.
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
                 0xC8 => {
                     // MONITOR (0x0F 0x01 0xC8) - Set up address range monitoring
                     ctx.consume_u8()?; // consume modrm
@@ -56,10 +66,24 @@ impl X86_64Vcpu {
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
+                0xD4 => {
+                    // VMFUNC (0x0F 0x01 0xD4) - VMX function
+                    ctx.consume_u8()?; // consume modrm
+                    // Treat as NOP in emulator
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
                 0xD5 => {
                     // XEND (0x0F 0x01 0xD5) - End transaction
                     ctx.consume_u8()?; // consume modrm
                                        // TSX not supported, treat as NOP
+                    self.regs.rip += ctx.cursor as u64;
+                    Ok(None)
+                }
+                0xD9 => {
+                    // VMMCALL (0x0F 0x01 0xD9) - AMD SVM hypercall
+                    ctx.consume_u8()?; // consume modrm
+                    // Treat as NOP like VMCALL
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }

@@ -259,10 +259,17 @@ impl Vmm {
                     .get_mut(0)
                     .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
 
-                if vcpu.can_inject_interrupt() {
-                    if let Ok(mut pic) = self.pic.lock() {
+                let can_inject = vcpu.can_inject_interrupt();
+                if let Ok(mut pic) = self.pic.lock() {
+                    let has_pending = pic.has_pending();
+                    if has_pending && can_inject {
                         if let Some(vector) = pic.get_pending_vector() {
-                            let _ = vcpu.inject_interrupt(vector);
+                            let result = vcpu.inject_interrupt(vector);
+                            tracing::info!(
+                                "PIC inject: vector={:#x}, result={:?}",
+                                vector,
+                                result
+                            );
                         }
                     }
                 }

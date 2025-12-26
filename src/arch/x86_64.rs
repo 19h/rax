@@ -77,89 +77,46 @@ impl X86_64Arch {
         Ok(cmdline_builder)
     }
 
-    /// Returns (loader_result, is_elf, elf_phys_entry) where elf_phys_entry is the physical
-    /// address of the first LOAD segment for ELF files (the actual startup_64 location)
+    /// Load kernel image - just load the binary at KERNEL_LOAD_ADDR
+    /// The kernel handles its own decompression if needed
     fn load_kernel_image(mem: &GuestMemoryMmap, kernel: &VmConfig) -> Result<(KernelLoaderResult, bool, Option<u64>)> {
         info!(path = %kernel.kernel.display(), "loading kernel image");
-        let mut kernel_file = File::open(&kernel.kernel)?;
 
-        // Check if this is an ELF file by reading the magic bytes
+        // Read the entire kernel file
+        let kernel_data = std::fs::read(&kernel.kernel)?;
+        let kernel_size = kernel_data.len() as u64;
+
+        info!(
+            size = kernel_size,
+            load_addr = format!("{:#x}", KERNEL_LOAD_ADDR),
+            "loading kernel binary"
+        );
+
+        // Load at KERNEL_LOAD_ADDR
+        mem.write_slice(&kernel_data, GuestAddress(KERNEL_LOAD_ADDR))?;
+
+        let result = KernelLoaderResult {
+            kernel_load: GuestAddress(KERNEL_LOAD_ADDR),
+            kernel_end: KERNEL_LOAD_ADDR + kernel_size,
+            setup_header: None,
+            pvh_boot_cap: linux_loader::loader::elf::PvhBootCapability::PvhEntryNotPresent,
+        };
+
+        // Check if it's ELF to get entry point, otherwise use load address
+        let mut kernel_file = File::open(&kernel.kernel)?;
         let mut magic = [0u8; 4];
         kernel_file.read_exact(&mut magic)?;
-        kernel_file.seek(std::io::SeekFrom::Start(0))?;
 
-        let is_elf = magic == [0x7f, b'E', b'L', b'F'];
-
-        if is_elf {
-            info!("detected ELF kernel (vmlinux)");
-
-            // Read the full file to parse with goblin
-            let kernel_data = std::fs::read(&kernel.kernel)?;
+        if magic == [0x7f, b'E', b'L', b'F'] {
             let elf = GoblinElf::parse(&kernel_data)
                 .map_err(|e| Error::KernelLoad(format!("failed to parse ELF: {}", e)))?;
-
-            // For vmlinux, the ELF entry point (e_entry) is typically a physical address
-            // that points directly to startup_64 (the 64-bit entry point)
-            let phys_entry = elf.header.e_entry;
-
             info!(
-                elf_entry = format!("{:#x}", elf.header.e_entry),
-                phys_entry = format!("{:#x}", phys_entry),
-                "ELF header parsed, using e_entry as physical entry point"
+                entry = format!("{:#x}", elf.header.e_entry),
+                "ELF kernel, using ELF entry point"
             );
-
-            // Load the ELF into memory
-            kernel_file.seek(std::io::SeekFrom::Start(0))?;
-            let result = Elf::load(
-                mem,
-                None, // Use PhysAddr from ELF headers
-                &mut kernel_file,
-                None,
-            )
-            .map_err(Error::from)?;
-
-            info!(
-                kernel_end = format!("{:#x}", result.kernel_end),
-                "ELF kernel loaded"
-            );
-
-            Ok((result, true, Some(phys_entry)))
+            Ok((result, true, Some(elf.header.e_entry)))
         } else {
-            info!("detected bzImage kernel");
-            let result = BzImage::load(
-                mem,
-                Some(GuestAddress(KERNEL_LOAD_ADDR)),
-                &mut kernel_file,
-                Some(GuestAddress(KERNEL_LOAD_ADDR)),
-            )
-            .map_err(Error::from)?;
-
-            info!(
-                kernel_load = format!("{:#x}", result.kernel_load.raw_value()),
-                kernel_end = format!("{:#x}", result.kernel_end),
-                "bzImage loaded by linux-loader"
-            );
-
-            // The compressed kernel data needs to be at 0x4000000 for the decompressor to find it
-            // Read payload_offset and payload_length directly from the kernel file
-            kernel_file.seek(std::io::SeekFrom::Start(0x248))?;
-            let mut payload_info = [0u8; 8];
-            kernel_file.read_exact(&mut payload_info)?;
-            let payload_offset = u32::from_le_bytes([payload_info[0], payload_info[1], payload_info[2], payload_info[3]]) as u64;
-            let payload_length = u32::from_le_bytes([payload_info[4], payload_info[5], payload_info[6], payload_info[7]]) as u64;
-
-            info!(
-                payload_offset = format!("{:#x}", payload_offset),
-                payload_length = format!("{:#x}", payload_length),
-                "kernel payload info"
-            );
-
-            // Note: we don't copy the compressed data here anymore.
-            // The kernel's startup code copies the entire protected mode kernel (including
-            // compressed data) to the relocation target. The _compressed symbol uses
-            // RIP-relative addressing which works correctly after relocation.
-            let _ = (payload_offset, payload_length); // silence unused warnings
-
+            info!("raw binary kernel, entry at load address");
             Ok((result, false, None))
         }
     }
@@ -559,14 +516,10 @@ impl Arch for X86_64Arch {
                 "ELF kernel entry point (physical start of first LOAD segment)"
             );
             entry
-        } else {
+        } else if let Some(setup_header) = loader_result.setup_header {
             // bzImage kernel - needs decompression setup
             // Note: Do NOT patch the bzImage - the compressed kernel data would be corrupted.
             // Any patches should be applied after decompression by the kernel itself.
-
-            let setup_header = loader_result
-                .setup_header
-                .ok_or_else(|| Error::KernelLoad("missing setup header".to_string()))?;
 
             let hdr_version = { setup_header.version };
             let hdr_loadflags = { setup_header.loadflags };
@@ -654,6 +607,25 @@ impl Arch for X86_64Arch {
             );
 
             entry_point_64
+        } else {
+            // Raw binary - just load and jump to it
+            // Load initrd if specified (place it after the kernel)
+            if let Some(initrd_path) = &config.initrd {
+                let initrd_max = reserved_start - 1;
+                let (initrd_addr, initrd_size) =
+                    Self::load_initrd(mem, initrd_path, initrd_max, kernel_end)?;
+                info!(
+                    initrd_addr = format!("{:#x}", initrd_addr.raw_value()),
+                    initrd_size = initrd_size,
+                    "initrd loaded for raw binary"
+                );
+            }
+
+            info!(
+                entry = format!("{:#x}", loader_result.kernel_load.raw_value()),
+                "raw binary entry point"
+            );
+            loader_result.kernel_load.raw_value()
         };
 
         Ok(BootInfo::X86_64(X86_64BootInfo {
