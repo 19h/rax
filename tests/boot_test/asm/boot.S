@@ -302,20 +302,35 @@ timer_fail:
 
     /* ========================================
      * TEST 10: Exception handling (divide by zero)
-     * BUG: rax returns error instead of injecting #DE
-     * See group3.rs - needs vcpu.inject_exception(0, None)
      * ======================================== */
 test10:
     leaq msg_test10(%rip), %rdi
     call serial_puts
 
-    /* SKIP: rax has a bug where div-by-zero returns an emulator error
-     * instead of injecting #DE exception (vector 0) to the guest.
-     * The fix is in src/backend/emulator/x86_64/insn/logic/group3.rs:
-     * Change: return Err(Error::Emulator("divide by zero".to_string()));
-     * To: vcpu.inject_exception(0, None)?; return Ok(None);
-     */
-    leaq msg_skip_bug(%rip), %rdi
+    /* Set flag that we expect an exception */
+    movb $1, expect_exception(%rip)
+    movb $0, exception_occurred(%rip)
+
+    /* Trigger divide by zero - #DE exception */
+    xorl %eax, %eax
+    xorl %edx, %edx
+    movl $0, %ecx
+    /* The div instruction will cause #DE when divisor is 0 */
+    /* Handler will skip past the div instruction */
+    divl %ecx              /* This triggers #DE */
+
+exception_return:
+    /* Check if exception occurred */
+    movb $0, expect_exception(%rip)
+    cmpb $1, exception_occurred(%rip)
+    jne exc_test_fail
+
+    leaq msg_pass(%rip), %rdi
+    call serial_puts
+    jmp test11
+
+exc_test_fail:
+    leaq msg_fail(%rip), %rdi
     call serial_puts
 
     /* ========================================
@@ -929,8 +944,6 @@ msg_fail:
     .asciz "[FAIL]\n"
 msg_skip:
     .asciz "[SKIP]\n"
-msg_skip_bug:
-    .asciz "[SKIP - rax bug]\n"
 msg_complete:
     .asciz "\n=== All tests completed ===\n"
 msg_unhandled:
