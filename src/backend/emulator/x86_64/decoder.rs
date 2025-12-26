@@ -41,20 +41,6 @@ impl Decoder {
         // Fast path: most instructions have no prefixes
         let first = bytes[0];
 
-        // Debug: check if GS prefix (0x65) is first byte
-        if first == 0x65 {
-            use std::sync::atomic::{AtomicU64, Ordering};
-            static GS_FIRST_COUNT: AtomicU64 = AtomicU64::new(0);
-            let count = GS_FIRST_COUNT.fetch_add(1, Ordering::Relaxed);
-            if count < 20 || count % 10000 == 0 {
-                let is_prefix = Self::is_prefix(first);
-                eprintln!(
-                    "[GS_FIRST #{} first=0x65] is_prefix={}, PREFIX_LUT[0x65]={}",
-                    count, is_prefix, PREFIX_LUT[0x65]
-                );
-            }
-        }
-
         if !Self::is_prefix(first) {
             return Ok(InsnContext {
                 bytes,
@@ -99,15 +85,6 @@ impl Decoder {
                 0xF2 | 0xF3 => ctx.rep_prefix = Some(b),
                 0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65 => {
                     ctx.segment_override = Some(b);
-                    // Debug GS prefix detection
-                    if b == 0x65 {
-                        use std::sync::atomic::{AtomicU64, Ordering};
-                        static GS_PREFIX_COUNT: AtomicU64 = AtomicU64::new(0);
-                        let count = GS_PREFIX_COUNT.fetch_add(1, Ordering::Relaxed);
-                        if count < 20 || count % 10000 == 0 {
-                            eprintln!("[GS_PREFIX #{}] GS prefix detected in decode_prefixes", count);
-                        }
-                    }
                 }
                 _ => break,
             }
@@ -175,19 +152,6 @@ impl X86_64Vcpu {
         ctx: &InsnContext,
         modrm_offset: usize,
     ) -> Result<(u64, usize)> {
-        // Debug segment overrides
-        if ctx.segment_override.is_some() {
-            use std::sync::atomic::{AtomicU64, Ordering};
-            static SEG_DEBUG_COUNT: AtomicU64 = AtomicU64::new(0);
-            let count = SEG_DEBUG_COUNT.fetch_add(1, Ordering::Relaxed);
-            if count < 20 {
-                eprintln!(
-                    "[SEG_OVERRIDE #{} @ RIP {:#x}] segment_override={:?}",
-                    count, self.regs.rip, ctx.segment_override
-                );
-            }
-        }
-
         let bytes = &ctx.bytes[modrm_offset..];
         if bytes.is_empty() {
             return Err(Error::Emulator("ModR/M: no bytes".to_string()));
@@ -304,19 +268,6 @@ impl X86_64Vcpu {
         // Apply segment override (in 64-bit mode, only FS and GS have non-zero bases)
         let seg_base = self.get_segment_base(ctx.segment_override);
         let final_addr = addr.wrapping_add(seg_base);
-
-        // Debug GS-relative accesses for delay_tsc
-        if ctx.segment_override == Some(0x65) && self.regs.rip >= 0xffffffff8224ea40 && self.regs.rip <= 0xffffffff8224ea60 {
-            use std::sync::atomic::{AtomicU64, Ordering};
-            static GS_DEBUG_COUNT: AtomicU64 = AtomicU64::new(0);
-            let count = GS_DEBUG_COUNT.fetch_add(1, Ordering::Relaxed);
-            if count < 20 || count % 1000000 == 0 {
-                eprintln!(
-                    "[GS #{} @ RIP {:#x}] effective(sym_addr)={:#x}, gs.base={:#x}, final(linear)={:#x}",
-                    count, self.regs.rip, addr, seg_base, final_addr
-                );
-            }
-        }
 
         Ok((final_addr, extra))
     }

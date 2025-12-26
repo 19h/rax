@@ -398,15 +398,20 @@ impl Vmm {
                                 if should_break {
                                     break;
                                 }
+                                // Command handled but didn't resume execution, wait for more
+                                continue;
                             }
+                            // Command returned None = resume execution (step/continue)
+                            // Fall through to run the VCPU
                         }
                         Err(_) => {
                             // GDB disconnected
                             self.gdb_stopped = false;
                         }
                     }
+                } else {
+                    continue;
                 }
-                continue;
             }
 
             let vcpu = self
@@ -523,8 +528,42 @@ impl Vmm {
                     // INT3 breakpoint - kernel debugging, just continue
                     continue;
                 }
-                VcpuExit::Exception(_vector) => {
-                    // Software interrupt - just continue
+                VcpuExit::Exception(vector) => {
+                    // Check for breakpoint exception (vector 3) when GDB is attached
+                    #[cfg(feature = "debug")]
+                    if vector == 3 && self.gdb_channels.is_some() {
+                        // INT3 was hit - RIP is now AFTER the INT3, back up 1 byte
+                        let bp_addr = vcpu.get_regs().map(|r| r.rip).unwrap_or(0) - 1;
+
+                        // Check if this is one of our breakpoints
+                        if let Some(orig_byte) = self.gdb_breakpoints.get(&bp_addr) {
+                            debug!(addr = format!("{:#x}", bp_addr), "Software breakpoint hit");
+                            // Restore original byte so we can re-execute the instruction
+                            let mem = self.guest_mem.memory();
+                            let _ = mem.write_slice(&[*orig_byte], vm_memory::GuestAddress(bp_addr));
+                            debug!(addr = format!("{:#x}", bp_addr), orig = format!("{:#x}", orig_byte), "Restored original byte");
+                            // Invalidate decode cache so the CPU re-reads the instruction
+                            vcpu.invalidate_code_cache(bp_addr);
+
+                            // Back up RIP to point at the breakpoint address (so user can re-execute)
+                            let mut regs = vcpu.get_regs().unwrap_or_default();
+                            regs.rip = bp_addr;
+                            let _ = vcpu.set_regs(&regs);
+                        } else {
+                            // Natural INT3 in the code (not our breakpoint)
+                            // Don't back up RIP - leave it past the INT3 so continue works
+                            debug!(addr = format!("{:#x}", bp_addr), "Natural INT3 instruction hit");
+                        }
+
+                        // Notify GDB
+                        if let Some(ref channels) = self.gdb_channels {
+                            let _ = channels.resp_tx.send(GdbResponse::StopReply(5)); // SIGTRAP
+                        }
+                        self.gdb_stopped = true;
+                        self.gdb_single_step = false;
+                        continue;
+                    }
+                    // Other exceptions - just continue for now
                     continue;
                 }
                 #[cfg(feature = "debug")]
@@ -540,6 +579,15 @@ impl Vmm {
                 #[cfg(feature = "debug")]
                 VcpuExit::GdbStep => {
                     debug!("GDB single step complete");
+
+                    // Re-apply all breakpoints (in case we stepped over one)
+                    let mem = self.guest_mem.memory();
+                    for (addr, _orig) in &self.gdb_breakpoints {
+                        let _ = mem.write_slice(&[0xCC], vm_memory::GuestAddress(*addr));
+                        // Invalidate decode cache for this breakpoint address
+                        vcpu.invalidate_code_cache(*addr);
+                    }
+
                     if let Some(ref channels) = self.gdb_channels {
                         let _ = channels.resp_tx.send(GdbResponse::StopReply(5)); // SIGTRAP
                     }
@@ -661,6 +709,10 @@ impl Vmm {
                         // Store original byte for later restoration
                         self.gdb_breakpoints.insert(addr, orig[0]);
                         debug!(addr = format!("{:#x}", addr), orig = format!("{:#x}", orig[0]), "Set breakpoint");
+                        // Invalidate decode cache so CPU re-reads the instruction
+                        if let Some(vcpu) = self.vcpus.get_mut(0) {
+                            vcpu.invalidate_code_cache(addr);
+                        }
                         let _ = channels.resp_tx.send(GdbResponse::Ok);
                     } else {
                         let _ = channels.resp_tx.send(GdbResponse::Error(1));
@@ -675,6 +727,10 @@ impl Vmm {
                 if let Some(orig) = self.gdb_breakpoints.remove(&addr) {
                     if mem.write_slice(&[orig], vm_memory::GuestAddress(addr)).is_ok() {
                         debug!(addr = format!("{:#x}", addr), orig = format!("{:#x}", orig), "Removed breakpoint");
+                        // Invalidate decode cache so CPU re-reads the instruction
+                        if let Some(vcpu) = self.vcpus.get_mut(0) {
+                            vcpu.invalidate_code_cache(addr);
+                        }
                         let _ = channels.resp_tx.send(GdbResponse::Ok);
                     } else {
                         // Failed to write, put it back in the map
