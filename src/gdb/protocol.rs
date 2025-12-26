@@ -4,6 +4,7 @@
 //! Checksum is 2 hex digits = sum of data bytes mod 256
 
 use std::io::Write;
+use tracing::trace;
 
 /// Parse a GDB RSP packet from a buffer.
 /// Returns (packet_data, bytes_consumed) if a complete packet is found.
@@ -42,6 +43,12 @@ fn checksum(data: &[u8]) -> u8 {
 /// Send a GDB RSP packet.
 pub fn send_packet<W: Write>(writer: &mut W, data: &str) -> std::io::Result<()> {
     let sum = checksum(data.as_bytes());
+    let display_data = if data.len() > 100 {
+        format!("{}...[{} chars total]", &data[..100], data.len())
+    } else {
+        data.to_string()
+    };
+    trace!(data = %display_data, checksum = format!("{:02x}", sum), "GDB TX");
     write!(writer, "${}#{:02x}", data, sum)?;
     writer.flush()
 }

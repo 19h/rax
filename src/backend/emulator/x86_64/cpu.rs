@@ -757,19 +757,28 @@ impl X86_64Vcpu {
         // Update global RIP tracker for debugging
         CURRENT_RIP.store(self.regs.rip, Ordering::Relaxed);
 
-        // Debug: trace instructions in delay_tsc
         let rip = self.regs.rip;
-        if rip >= 0xffffffff8224ea40 && rip <= 0xffffffff8224ea60 {
-            use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
-            static DELAY_DEBUG_COUNT: AtomicU64 = AtomicU64::new(0);
-            let count = DELAY_DEBUG_COUNT.fetch_add(1, AtomicOrdering::Relaxed);
-            if count < 100 || count % 1000000 == 0 {
-                // Fetch and show raw bytes
-                if let Ok((bytes, len)) = self.fetch() {
-                    eprintln!(
-                        "[DELAY_TSC #{} RIP={:#x}] bytes[0..8]={:02x} {:02x} {:02x} {:02x} {:02x} {:02x} {:02x} {:02x}",
-                        count, rip, bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]
-                    );
+
+        // Detect entry to __stack_chk_fail (0xffffffff82256ab0)
+        if rip == 0xffffffff82256ab0 {
+            use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
+            static SCF_SEEN: AtomicBool = AtomicBool::new(false);
+            if !SCF_SEEN.swap(true, AtomicOrdering::Relaxed) {
+                eprintln!("\n[__stack_chk_fail CALLED!]");
+                eprintln!("RSP={:#x} RBP={:#x}", self.regs.rsp, self.regs.rbp);
+                // Dump stack (8 qwords)
+                eprintln!("Stack dump:");
+                for i in 0..8 {
+                    let addr = self.regs.rsp + (i * 8);
+                    if let Ok(val) = self.mmu.read_u64(addr, &self.sregs) {
+                        eprintln!("  RSP+{:#x}: {:#018x}", i * 8, val);
+                    }
+                }
+                // Print RIP history
+                eprintln!("RIP history (RIP_IDX={}):", RIP_IDX.load(Ordering::Relaxed));
+                for i in 0..16 {
+                    let hist_rip = RIP_HISTORY[i].load(Ordering::Relaxed);
+                    eprintln!("  [{}] {:#x}", i, hist_rip);
                 }
             }
         }
@@ -785,18 +794,6 @@ impl X86_64Vcpu {
         // Check decode cache for a hit (copy to avoid borrow issues)
         let cached = self.decode_cache[cache_idx];
         if cached.rip == rip {
-            // Debug: check cache hit for delay_tsc
-            if rip >= 0xffffffff8224ea40 && rip <= 0xffffffff8224ea60 {
-                use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
-                static CACHE_HIT_COUNT: AtomicU64 = AtomicU64::new(0);
-                let count = CACHE_HIT_COUNT.fetch_add(1, AtomicOrdering::Relaxed);
-                if count < 20 {
-                    eprintln!(
-                        "[CACHE_HIT #{} RIP={:#x}] segment_override={:?}",
-                        count, rip, cached.segment_override
-                    );
-                }
-            }
             // Cache hit! Fetch bytes and reconstruct context from cached decode
             let (bytes, bytes_len) = self.fetch()?;
 
@@ -842,19 +839,6 @@ impl X86_64Vcpu {
 
         // Get opcode
         let opcode = ctx.consume_u8()?;
-
-        // Debug: cache miss for delay_tsc
-        if rip >= 0xffffffff8224ea40 && rip <= 0xffffffff8224ea60 {
-            use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
-            static CACHE_MISS_COUNT: AtomicU64 = AtomicU64::new(0);
-            let count = CACHE_MISS_COUNT.fetch_add(1, AtomicOrdering::Relaxed);
-            if count < 50 {
-                eprintln!(
-                    "[CACHE_MISS #{} RIP={:#x}] segment_override={:?}, first_byte={:#02x}",
-                    count, rip, ctx.segment_override, bytes[0]
-                );
-            }
-        }
 
         // Cache the decoded instruction
         self.decode_cache[cache_idx] = DecodeCacheEntry {
@@ -1608,5 +1592,18 @@ impl VCpu for X86_64Vcpu {
     #[cfg(feature = "debug")]
     fn is_single_step(&self) -> bool {
         self.single_step
+    }
+
+    #[cfg(feature = "debug")]
+    fn invalidate_code_cache(&mut self, addr: u64) {
+        // Invalidate all decode cache entries on the same page as addr.
+        // This ensures we re-decode instructions after breakpoint modification.
+        let page_base = addr & !0xFFF;
+        for idx in 0..DECODE_CACHE_SIZE {
+            let entry = &mut self.decode_cache[idx];
+            if entry.rip != 0 && (entry.rip & !0xFFF) == page_base {
+                entry.rip = 0; // Invalidate
+            }
+        }
     }
 }

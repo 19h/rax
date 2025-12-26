@@ -13,7 +13,7 @@ use std::net::{TcpListener, TcpStream};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread::{self, JoinHandle};
 
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info, trace, warn};
 
 pub use commands::handle_command;
 pub use protocol::{parse_packet, send_packet, send_stop_reply};
@@ -153,6 +153,10 @@ impl GdbServer {
 
             pending.extend_from_slice(&buf[..n]);
 
+            // Log raw data received
+            let raw_display = String::from_utf8_lossy(&buf[..n]);
+            trace!(bytes = n, raw = %raw_display, "GDB RX raw");
+
             // Process packets
             while let Some((packet, consumed)) = protocol::parse_packet(&pending) {
                 pending.drain(..consumed);
@@ -160,6 +164,7 @@ impl GdbServer {
                 // Send ACK
                 stream.write_all(b"+")?;
                 stream.flush()?;
+                trace!("GDB TX: +");
 
                 debug!(packet = %packet, "GDB packet received");
 

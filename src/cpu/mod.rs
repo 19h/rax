@@ -94,6 +94,13 @@ pub trait VCpu: Send {
         false
     }
 
+    /// Invalidate any cached instruction decodes for the given address.
+    /// Called when modifying code memory (e.g., for software breakpoints).
+    #[cfg(feature = "debug")]
+    fn invalidate_code_cache(&mut self, addr: u64) {
+        let _ = addr;
+    }
+
     /// Get vCPU ID.
     fn id(&self) -> u32;
 }
