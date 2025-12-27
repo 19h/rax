@@ -19,7 +19,11 @@ pub fn wrmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         0x174 => vcpu.sregs.sysenter_cs = value,     // IA32_SYSENTER_CS
         0x175 => vcpu.sregs.sysenter_esp = value,    // IA32_SYSENTER_ESP
         0x176 => vcpu.sregs.sysenter_eip = value,    // IA32_SYSENTER_EIP
-        0xC0000100 => vcpu.sregs.fs.base = value,    // FS.base
+        0xC0000100 => {
+            // FS.base - used for TLS (Thread-Local Storage)
+            eprintln!("[WRMSR] FS.base = {:#x} RIP={:#x}", value, vcpu.regs.rip);
+            vcpu.sregs.fs.base = value;
+        }    // FS.base
         0xC0000101 => {
             // GS.base - used for per-CPU data access
             // Log the write to help debug per-CPU address issues

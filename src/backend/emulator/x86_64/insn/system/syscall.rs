@@ -45,9 +45,19 @@ fn build_ss(selector: u16, dpl: u8) -> Segment {
 
 /// SYSCALL (0x0F 0x05)
 pub fn syscall(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    static SYSCALL_COUNT: AtomicUsize = AtomicUsize::new(0);
+
     let in_long_mode = (vcpu.sregs.efer & EFER_LMA) != 0 && vcpu.sregs.cs.l;
     if !in_long_mode || (vcpu.sregs.efer & EFER_SCE) == 0 {
         return Err(Error::Emulator("SYSCALL requires EFER.LMA and EFER.SCE".to_string()));
+    }
+
+    let count = SYSCALL_COUNT.fetch_add(1, Ordering::Relaxed);
+    let syscall_nr = vcpu.regs.rax;
+    let from_rip = vcpu.regs.rip;
+    if count < 10 {
+        eprintln!("[SYSCALL #{}] nr={} from_rip={:#x}", count, syscall_nr, from_rip);
     }
 
     let next_rip = vcpu.regs.rip + ctx.cursor as u64;
@@ -67,6 +77,9 @@ pub fn syscall(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 
 /// SYSRET (0x0F 0x07)
 pub fn sysret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    static SYSRET_COUNT: AtomicUsize = AtomicUsize::new(0);
+
     let in_long_mode = (vcpu.sregs.efer & EFER_LMA) != 0 && vcpu.sregs.cs.l;
     if !in_long_mode || (vcpu.sregs.efer & EFER_SCE) == 0 {
         return Err(Error::Emulator("SYSRET requires EFER.LMA and EFER.SCE".to_string()));
@@ -84,6 +97,11 @@ pub fn sysret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
     } else {
         (vcpu.regs.rcx as u32) as u64
     };
+
+    let count = SYSRET_COUNT.fetch_add(1, Ordering::Relaxed);
+    if count < 100 || (count % 10000 == 0) {
+        eprintln!("[SYSRET #{}] returning to user RIP={:#x} 64bit={}", count, new_rip, is_64);
+    }
 
     vcpu.regs.rip = new_rip;
     vcpu.regs.rflags = (vcpu.regs.r11 & SYSRET_RFLAGS_MASK) | 0x2;
