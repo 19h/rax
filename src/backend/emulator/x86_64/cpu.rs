@@ -841,7 +841,8 @@ impl X86_64Vcpu {
         if rip == 0xffffffff812a79d0 {  // text_poke_memcpy
             let dest = self.regs.rdi;
             let src = self.regs.rsi;
-            let count = self.regs.rcx;
+            // At function entry, count is in RDX (mov rcx, rdx copies it to rcx later)
+            let count = self.regs.rdx;
             // RBX contains the actual kernel address being patched
             let kernel_addr = self.regs.rbx;
 
@@ -852,114 +853,102 @@ impl X86_64Vcpu {
                 static TPM_COUNT: AtomicUsize = AtomicUsize::new(0);
                 let n = TPM_COUNT.fetch_add(1, AtomicOrdering::Relaxed);
 
-                if n < 10000 {
-                    // Translate kernel_addr using page tables to get actual physical address
-                    use super::mmu::AccessType;
+                // Translate kernel_addr using page tables to get actual physical address
+                use super::mmu::AccessType;
 
-                    // Try translating kernel_addr
-                    let kernel_phys = self.mmu.translate(kernel_addr, AccessType::Read, &self.sregs).ok();
+                // Try translating kernel_addr
+                let kernel_phys = self.mmu.translate(kernel_addr, AccessType::Read, &self.sregs).ok();
 
-                    // Read src bytes for analysis
-                    let mut src_preview = [0u8; 16];
+                // Only log first few patches
+                let should_log = n < 5;
+                let mut src_preview = [0u8; 16];
+                if should_log {
                     let preview_len = (count as usize).min(16);
                     for i in 0..preview_len {
                         if let Ok(b) = self.mmu.read_u8(src + i as u64, &self.sregs) {
                             src_preview[i] = b;
                         }
                     }
+                    eprintln!("[text_poke_memcpy #{}] kernel_addr={:#x} count={} src={:02x?}",
+                              n, kernel_addr, count, &src_preview[..(count as usize).min(16)]);
+                }
 
-                    // Log first few patches AND any patches to blake2s area
-                    let in_blake2s_area = kernel_addr >= 0xffffffff817fcac0 && kernel_addr < 0xffffffff817fcb70;
-                    if n < 5 || in_blake2s_area {
-                        eprintln!("[text_poke_memcpy #{}] kernel_addr={:#x} count={} src={:02x?}{}",
-                                  n, kernel_addr, count, &src_preview[..preview_len],
-                                  if in_blake2s_area { " [BLAKE2S]" } else { "" });
+                // Use the kernel_addr physical address
+                if let Some(actual_phys) = kernel_phys {
+                    // WORKAROUND: Skip ALL 2-byte text_poke patches.
+                    // The kernel's static call/branch patching uses a 3-step protocol that
+                    // corrupts adjacent code in our emulator. The patches create 3-byte JMPs
+                    // that overwrite adjacent CALL instructions.
+                    //
+                    // By skipping all 2-byte patches, we leave the original vmlinux code intact.
+                    // The original code works correctly for single-CPU non-SMP operation.
+                    if count == 2 {
+                        if should_log {
+                            eprintln!("[SKIP 2-BYTE #{}] kernel_addr={:#x} src={:02x?}",
+                                      n, kernel_addr, &src_preview[..2]);
+                        }
+                        {
+                            let mut addrs = PATCHED_ADDRS.lock().unwrap();
+                            addrs.insert(kernel_addr);
+                            addrs.insert(kernel_addr + 1);
+                        }
+                        self.regs.rax = dest;
+                        if let Ok(ret_addr) = self.mmu.read_u64(self.regs.rsp, &self.sregs) {
+                            self.regs.rip = ret_addr;
+                            self.regs.rsp += 8;
+                            return Ok(None);
+                        }
                     }
 
-                    // Use the kernel_addr physical address
-                    if let Some(actual_phys) = kernel_phys {
-                        // WORKAROUND: Skip ALL 2-byte text_poke patches.
-                        // The kernel's static call/branch patching uses a 3-step protocol that
-                        // corrupts adjacent code in our emulator. The patches create 3-byte JMPs
-                        // that overwrite adjacent CALL instructions.
-                        //
-                        // By skipping all 2-byte patches, we leave the original vmlinux code intact.
-                        // The original code works correctly for single-CPU non-SMP operation.
-                        if count == 2 {
-                            if n < 20 {
-                                eprintln!("[SKIP 2-BYTE #{}] kernel_addr={:#x} src={:02x?}",
-                                          n, kernel_addr, &src_preview[..2]);
-                            }
-                            {
-                                let mut addrs = PATCHED_ADDRS.lock().unwrap();
-                                addrs.insert(kernel_addr);
-                                addrs.insert(kernel_addr + 1);
-                            }
-                            self.regs.rax = dest;
-                            if let Ok(ret_addr) = self.mmu.read_u64(self.regs.rsp, &self.sregs) {
-                                self.regs.rip = ret_addr;
-                                self.regs.rsp += 8;
-                                return Ok(None);
-                            }
-                        }
+                    // Read source bytes and write directly to physical address
+                    let mut success = true;
 
-                        // Read source bytes and write directly to physical address
-                        let mut success = true;
-                        let mut bytes_written = Vec::new();
-
-                        for i in 0..count {
-                            let src_byte = self.mmu.read_u8(src + i, &self.sregs);
-                            match src_byte {
-                                Ok(byte) => {
-                                    // Use actual physical address from page table translation
-                                    let phys_addr = actual_phys + i;
-                                    // Write directly to physical memory bypassing page table checks
-                                    if self.mmu.write_phys(phys_addr, &[byte]).is_err() {
+                    for i in 0..count {
+                        let src_byte = self.mmu.read_u8(src + i, &self.sregs);
+                        match src_byte {
+                            Ok(byte) => {
+                                // Use actual physical address from page table translation
+                                let phys_addr = actual_phys + i;
+                                // Write directly to physical memory bypassing page table checks
+                                if self.mmu.write_phys(phys_addr, &[byte]).is_err() {
+                                    if should_log {
                                         eprintln!("  Failed to write to phys {:#x}", phys_addr);
-                                        success = false;
-                                        break;
                                     }
-                                    bytes_written.push(byte);
-                                }
-                                Err(_) => {
-                                    eprintln!("  Failed to read from src+{}", i);
                                     success = false;
                                     break;
                                 }
                             }
-                        }
-
-                        if success {
-                            // Invalidate TLB for this address to ensure fresh reads
-                            self.mmu.invlpg(kernel_addr);
-
-                            // Record patched addresses for memcmp verification bypass
-                            {
-                                let mut addrs = PATCHED_ADDRS.lock().unwrap();
-                                for i in 0..count {
-                                    addrs.insert(kernel_addr + i);
+                            Err(_) => {
+                                if should_log {
+                                    eprintln!("  Failed to read from src+{}", i);
                                 }
-                            }
-
-                            // Verify the write by reading back (only first few)
-                            if n < 5 {
-                                let mut verify = [0u8; 8];
-                                let verify_len = (count as usize).min(8);
-                                if self.mmu.read_phys(actual_phys, &mut verify[..verify_len]).is_ok() {
-                                    eprintln!("  Wrote {:02x?}, readback {:02x?}", &bytes_written, &verify[..verify_len]);
-                                }
-                            }
-
-                            self.regs.rax = dest;  // memcpy returns destination
-                            if let Ok(ret_addr) = self.mmu.read_u64(self.regs.rsp, &self.sregs) {
-                                self.regs.rip = ret_addr;
-                                self.regs.rsp += 8;
-                                return Ok(None);
+                                success = false;
+                                break;
                             }
                         }
-                    } else {
-                        eprintln!("[text_poke_memcpy #{} WORKAROUND] Failed to translate dest={:#x} or kernel_addr={:#x}", n, dest, kernel_addr);
                     }
+
+                    if success {
+                        // Invalidate TLB for this address to ensure fresh reads
+                        self.mmu.invlpg(kernel_addr);
+
+                        // Record patched addresses for memcmp verification bypass
+                        {
+                            let mut addrs = PATCHED_ADDRS.lock().unwrap();
+                            for i in 0..count {
+                                addrs.insert(kernel_addr + i);
+                            }
+                        }
+
+                        self.regs.rax = dest;  // memcpy returns destination
+                        if let Ok(ret_addr) = self.mmu.read_u64(self.regs.rsp, &self.sregs) {
+                            self.regs.rip = ret_addr;
+                            self.regs.rsp += 8;
+                            return Ok(None);
+                        }
+                    }
+                } else if should_log {
+                    eprintln!("[text_poke_memcpy #{} WORKAROUND] Failed to translate kernel_addr={:#x}", n, kernel_addr);
                 }
             }
         }
@@ -1447,17 +1436,23 @@ impl X86_64Vcpu {
     }
 
     // Stack helpers
+    // NOTE: These must NOT modify RSP if the write fails, otherwise page fault
+    // handling will corrupt the stack (RSP gets decremented twice on retry).
     pub(super) fn push64(&mut self, value: u64) -> Result<()> {
-        self.regs.rsp = self.regs.rsp.wrapping_sub(8);
-        self.mmu.write_u64(self.regs.rsp, value, &self.sregs)
+        let new_rsp = self.regs.rsp.wrapping_sub(8);
+        self.mmu.write_u64(new_rsp, value, &self.sregs)?;
+        self.regs.rsp = new_rsp;
+        Ok(())
     }
 
     /// Push a 64-bit value to the stack with supervisor privilege.
     /// Used during exception/interrupt delivery where the kernel stack
     /// is accessed regardless of current CPL.
     fn push64_supervisor(&mut self, value: u64) -> Result<()> {
-        self.regs.rsp = self.regs.rsp.wrapping_sub(8);
-        self.mmu.write_u64_supervisor(self.regs.rsp, value, &self.sregs)
+        let new_rsp = self.regs.rsp.wrapping_sub(8);
+        self.mmu.write_u64_supervisor(new_rsp, value, &self.sregs)?;
+        self.regs.rsp = new_rsp;
+        Ok(())
     }
 
     pub(super) fn pop64(&mut self) -> Result<u64> {
@@ -1467,8 +1462,10 @@ impl X86_64Vcpu {
     }
 
     pub(super) fn push32(&mut self, value: u32) -> Result<()> {
-        self.regs.rsp = self.regs.rsp.wrapping_sub(4);
-        self.mmu.write_u32(self.regs.rsp, value, &self.sregs)
+        let new_rsp = self.regs.rsp.wrapping_sub(4);
+        self.mmu.write_u32(new_rsp, value, &self.sregs)?;
+        self.regs.rsp = new_rsp;
+        Ok(())
     }
 
     pub(super) fn pop32(&mut self) -> Result<u32> {
@@ -1478,8 +1475,10 @@ impl X86_64Vcpu {
     }
 
     pub(super) fn push16(&mut self, value: u16) -> Result<()> {
-        self.regs.rsp = self.regs.rsp.wrapping_sub(2);
-        self.mmu.write_u16(self.regs.rsp, value, &self.sregs)
+        let new_rsp = self.regs.rsp.wrapping_sub(2);
+        self.mmu.write_u16(new_rsp, value, &self.sregs)?;
+        self.regs.rsp = new_rsp;
+        Ok(())
     }
 
     pub(super) fn pop16(&mut self) -> Result<u16> {
@@ -1686,6 +1685,14 @@ impl X86_64Vcpu {
         // Trap gates (type 0xF) don't clear IF
         let gate_type = type_attr & 0x0F;
         if gate_type == 0x0E {
+            use std::sync::atomic::{AtomicUsize, Ordering};
+            static GATE_IF_CLEAR: AtomicUsize = AtomicUsize::new(0);
+            let n = GATE_IF_CLEAR.fetch_add(1, Ordering::Relaxed);
+            if n < 20 || n % 1000 == 0 {
+                let old_if = (self.regs.rflags & flags::bits::IF) != 0;
+                eprintln!("[INT_GATE #{}] vec={} saved_IF={} clearing IF, handler={:#x}",
+                    n, vector, if old_if { 1 } else { 0 }, handler_addr);
+            }
             self.regs.rflags &= !flags::bits::IF;
         }
 
