@@ -1050,6 +1050,7 @@ impl X86_64Vcpu {
             _ => return,
         };
 
+        let old_val = *reg_ref;
         match size {
             1 => *reg_ref = (*reg_ref & !0xFF) | (value & 0xFF),
             2 => *reg_ref = (*reg_ref & !0xFFFF) | (value & 0xFFFF),
@@ -1058,7 +1059,6 @@ impl X86_64Vcpu {
             _ => {}
         }
 
-        // Debug code removed - was detecting false positives for valid user-space addresses
     }
 
     // Memory access helpers
@@ -1098,7 +1098,11 @@ impl X86_64Vcpu {
         // Check for self-modifying code
         self.check_smc(addr);
 
-        // Watchpoint removed - text_poke_mm_addr legitimately uses user-space addresses
+        // Debug: catch when truncated blake2s address is written to memory
+        if size == 4 && value >= 0x83b49000 && value <= 0x83b4a000 {
+            eprintln!("[MEM WRITE TRUNC] addr={:#x} value={:#x} size={} RIP={:#x}",
+                      addr, value, size, self.regs.rip);
+        }
 
         match size {
             1 => self.mmu.write_u8(addr, value as u8, &self.sregs),
