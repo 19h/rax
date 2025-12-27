@@ -69,7 +69,10 @@ pub fn group4(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             vcpu.regs.rip += ctx.cursor as u64;
         }
         _ => {
-            return Err(Error::Emulator(format!("unimplemented 0xFE /{}", op)));
+            // 0xFE /2-7 are undefined - inject #UD exception
+            eprintln!("[#UD] 0xFE /{} at RIP={:#x} (undefined opcode)", op, vcpu.regs.rip);
+            vcpu.inject_exception(6, None)?; // #UD = vector 6
+            return Ok(None);
         }
     }
     Ok(None)

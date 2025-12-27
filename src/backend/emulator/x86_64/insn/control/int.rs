@@ -112,9 +112,11 @@ pub fn iret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
 
     // Log ALL IRETs to see what's happening
     let count = IRET_TO_USER.fetch_add(1, Ordering::Relaxed);
-    // Log more generously
-    if count < 100 || (count % 10000 == 0) || new_cpl == 3 {
-        eprintln!("[IRET #{}] cpl:{}->{} RIP={:#x} CS={:#x}", count, old_cpl, new_cpl, ret_ip, cs);
+    // Log more generously, now including IF flag info
+    let saved_if = (flags & 0x200) != 0; // Bit 9 is IF
+    if count < 20 || (count % 1000 == 0) || new_cpl == 3 {
+        eprintln!("[IRET #{}] cpl:{}->{} RIP={:#x} CS={:#x} saved_IF={}",
+            count, old_cpl, new_cpl, ret_ip, cs, if saved_if { 1 } else { 0 });
     }
 
     // In 64-bit mode, IRETQ ALWAYS pops RSP and SS, regardless of privilege level change.
