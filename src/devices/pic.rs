@@ -272,6 +272,12 @@ impl DualPic {
     pub fn has_pending(&self) -> bool {
         self.master.get_pending_irq().is_some()
     }
+
+    /// Get debug info about the PIC state
+    pub fn debug_info(&self) -> (u8, u8, u8, u8, u8, u8) {
+        (self.master.irr, self.master.imr, self.master.isr,
+         self.slave.irr, self.slave.imr, self.slave.isr)
+    }
 }
 
 /// Master PIC I/O device (ports 0x20-0x21)

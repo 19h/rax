@@ -315,11 +315,18 @@ impl Vmm {
                     // Timer fired - raise IRQ 0 via the PIC
                     static PIT_FIRE_COUNT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
                     let count = PIT_FIRE_COUNT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                    if count % 1000 == 0 {
-                        eprintln!("[VMM] PIT fire #{}", count);
-                    }
                     if let Ok(mut pic) = self.pic.lock() {
+                        let (m_irr, m_imr, m_isr, _, _, _) = pic.debug_info();
+                        if count < 10 || count % 1000 == 0 {
+                            eprintln!("[VMM] PIT fire #{} - before: irr={:#04x} imr={:#04x} isr={:#04x}",
+                                count, m_irr, m_imr, m_isr);
+                        }
                         pic.set_irq(0, true);
+                        let (m_irr2, _, m_isr2, _, _, _) = pic.debug_info();
+                        if count < 10 || count % 1000 == 0 {
+                            eprintln!("[VMM] PIT fire #{} - after: irr={:#04x} isr={:#04x} has_pending={}",
+                                count, m_irr2, m_isr2, pic.has_pending());
+                        }
                     }
                 }
             }
@@ -361,7 +368,21 @@ impl Vmm {
                     if pic.has_pending() {
                         if can_inject {
                             if let Some(vector) = pic.get_pending_vector() {
+                                static INJECT_COUNT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+                                let count = INJECT_COUNT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                                if count < 10 || count % 1000 == 0 {
+                                    eprintln!("[VMM] Injecting PIC vector {:#x} (count={})", vector, count);
+                                }
                                 let _ = vcpu.inject_interrupt(vector);
+                            }
+                        } else {
+                            // Log when we have pending interrupts but can't inject
+                            static PENDING_NO_IF: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+                            let count = PENDING_NO_IF.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                            if count < 10 || count % 100_000 == 0 {
+                                let (m_irr, m_imr, m_isr, s_irr, s_imr, s_isr) = pic.debug_info();
+                                eprintln!("[VMM] PIC has pending, but IF=0 (count={}) master irr={:#04x} imr={:#04x} isr={:#04x}",
+                                    count, m_irr, m_imr, m_isr);
                             }
                         }
                     }

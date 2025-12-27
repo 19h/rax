@@ -335,6 +335,11 @@ mod efer {
     pub const LMA: u64 = 1 << 10; // Long Mode Active
 }
 
+/// Linux kernel direct map virtual address base (physical memory mapped here)
+const DIRECT_MAP_BASE: u64 = 0xffff888000000000;
+/// Direct map covers up to 64TB of physical memory
+const DIRECT_MAP_END: u64 = 0xffffc87fffffffff;
+
 /// Memory access type.
 #[derive(Debug, Clone, Copy)]
 pub enum AccessType {
@@ -403,6 +408,12 @@ impl Mmu {
             code_page_bitmap: Box::new([0u8; CODE_PAGE_BITMAP_SIZE]),
             lapic: RefCell::new(InlineLapic::new()),
         }
+    }
+
+    /// Get the size of guest memory in bytes
+    pub fn memory_size(&self) -> u64 {
+        use vm_memory::{Address, GuestMemory};
+        self.memory.last_addr().raw_value() + 1
     }
 
     /// Check if an address is in the LAPIC MMIO range
@@ -545,7 +556,45 @@ impl Mmu {
         // TLB miss or write - do full page table walk with permission check
         let index = Self::tlb_index(vaddr);
         let tag = Self::tlb_tag(vaddr, sregs.cr3);
-        self.translate_slow(vaddr, access, sregs, index, tag)
+
+        // Try normal page table walk first
+        match self.translate_slow(vaddr, access, sregs, index, tag) {
+            Ok(paddr) => Ok(paddr),
+            Err(Error::PageFault { .. }) => {
+                // Page table walk failed. Check if this is a direct map access
+                // that falls outside the kernel's page tables but within our
+                // actual physical memory allocation (used for per-CPU overflow).
+                self.try_direct_map_fallback(vaddr, access)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    /// Fallback translation for direct map addresses outside kernel's page tables.
+    ///
+    /// The kernel only creates page table entries for memory reported in e820,
+    /// but we allocate extra memory for per-CPU overflow. When the kernel tries
+    /// to access per-CPU data at addresses just past the e820 range, the page
+    /// table walk fails. This function handles those accesses by directly
+    /// computing the physical address from the direct map virtual address.
+    fn try_direct_map_fallback(&self, vaddr: u64, access: AccessType) -> Result<u64> {
+        // Check if address is in the direct map region
+        if vaddr >= DIRECT_MAP_BASE && vaddr <= DIRECT_MAP_END {
+            let paddr = vaddr - DIRECT_MAP_BASE;
+
+            // Check if physical address is within our actual allocation
+            let mem_size = self.memory_size();
+            if paddr < mem_size {
+                // Allow access to memory we've allocated but kernel doesn't know about
+                return Ok(paddr);
+            }
+        }
+
+        // Not in direct map or outside our allocation - return page fault
+        Err(Error::PageFault {
+            vaddr,
+            error_code: 0,
+        })
     }
 
     /// Slow path: full page table walk (called on TLB miss)
