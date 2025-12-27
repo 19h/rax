@@ -536,7 +536,9 @@ impl Arch for X86_64Arch {
     }
 
     fn load_kernel(&self, mem: &GuestMemoryMmap, config: &VmConfig) -> Result<BootInfo> {
-        let mem_size = mem.last_addr().raw_value() + 1;
+        // Use the configured memory size (what we report to the kernel via e820),
+        // NOT the actual allocated size (which includes padding for per-CPU overflow).
+        let mem_size = config.memory.bytes();
         if mem_size <= KERNEL_LOAD_ADDR + KVM_RESERVED_SIZE {
             return Err(Error::InvalidConfig(
                 "memory is too small for kernel and reserved pages".to_string(),

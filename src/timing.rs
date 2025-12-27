@@ -37,13 +37,14 @@ pub fn elapsed_nanos() -> u64 {
     start.elapsed().as_nanos() as u64
 }
 
-/// Get the current TSC value based on wall-clock time.
-/// At 3 GHz, TSC increments 3 billion times per second.
+/// Get the current TSC value based on instruction count.
+///
+/// This provides consistent timing relative to program execution rather than wall-clock.
+/// Using 3000 cycles per instruction - optimal for delay loops.
 #[inline(always)]
 pub fn tsc() -> u64 {
-    // TSC = elapsed_nanos * CPU_FREQUENCY_HZ / 1_000_000_000
-    // Simplify: TSC = elapsed_nanos * 3 (for 3 GHz)
-    elapsed_nanos().saturating_mul(3)
+    // Each instruction is worth 3000 TSC cycles (~1000 loop iterations per 1ms delay)
+    instruction_count() * 3000
 }
 
 /// Increment the instruction counter (for profiling/debugging)
