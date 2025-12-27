@@ -93,7 +93,35 @@ impl X86_64Arch {
             "loading kernel binary"
         );
 
-        // Load at KERNEL_LOAD_ADDR
+        // Check for bzImage format by looking for "HdrS" magic at offset 0x202
+        let is_bzimage = kernel_data.len() > 0x206
+            && kernel_data[0x202..0x206] == [0x48, 0x64, 0x72, 0x53]; // "HdrS"
+
+        if is_bzimage {
+            info!("detected bzImage kernel format");
+            // Use linux-loader's BzImage loader which properly parses the setup header
+            let mut kernel_file = File::open(&kernel.kernel)?;
+            // BzImage::load(mem, kernel_offset, kernel_image, highmem_start_address)
+            // - kernel_offset: where to load the kernel (None = use code32_start from header)
+            // - highmem_start_address: start of high memory (should be 0 for full access)
+            let result = BzImage::load(
+                mem,
+                Some(GuestAddress(KERNEL_LOAD_ADDR)),  // kernel_offset
+                &mut kernel_file,
+                Some(GuestAddress(0)),  // highmem_start_address
+            ).map_err(|e| Error::KernelLoad(format!("failed to load bzImage: {}", e)))?;
+
+            info!(
+                kernel_load = format!("{:#x}", result.kernel_load.raw_value()),
+                kernel_end = format!("{:#x}", result.kernel_end),
+                has_setup_header = result.setup_header.is_some(),
+                "bzImage loaded"
+            );
+
+            return Ok((result, false, None));
+        }
+
+        // Not bzImage - load at KERNEL_LOAD_ADDR as raw binary
         mem.write_slice(&kernel_data, GuestAddress(KERNEL_LOAD_ADDR))?;
 
         let result = KernelLoaderResult {

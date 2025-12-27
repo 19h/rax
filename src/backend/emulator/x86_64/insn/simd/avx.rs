@@ -18,6 +18,7 @@ pub fn vmovdqa_load(
     vex_l: u8,
 ) -> Result<Option<VcpuExit>> {
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+
     let xmm_dst = reg as usize;
 
     if vex_l == 0 {
