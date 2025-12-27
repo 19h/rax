@@ -78,6 +78,7 @@ pub fn sysret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
     }
 
     let is_64 = ctx.rex_w();
+
     let new_rip = if is_64 {
         vcpu.regs.rcx
     } else {

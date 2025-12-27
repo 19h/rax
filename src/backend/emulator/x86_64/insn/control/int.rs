@@ -42,18 +42,20 @@ fn apply_iret_flags(vcpu: &mut X86_64Vcpu, size: u8, value: u64) -> Result<()> {
 /// This instruction invokes exception vector 3 (breakpoint exception)
 pub fn int3(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     // INT3 is a 1-byte instruction - RIP should point AFTER the INT3
+    // (it's a trap, not a fault, so RIP points to next instruction)
     vcpu.regs.rip += ctx.cursor as u64;
-    // Return #BP exception (vector 3) - this is a trap, so RIP already points after the instruction
-    Ok(Some(VcpuExit::Exception(3)))
+    // Inject #BP exception (vector 3) into the guest via IDT
+    vcpu.inject_exception(3, None)?;
+    Ok(None)
 }
 
 /// INT imm8 (0xCD) - Software interrupt
 pub fn int_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let vector = ctx.consume_u8()?;
     vcpu.regs.rip += ctx.cursor as u64;
-    // For now, just return a special exit for INT instructions
-    // Real implementation would need IDT lookup and privilege checks
-    Ok(Some(VcpuExit::Exception(vector)))
+    // Inject the software interrupt via IDT
+    vcpu.inject_exception(vector, None)?;
+    Ok(None)
 }
 
 /// INTO (0xCE) - Interrupt on Overflow
@@ -66,18 +68,17 @@ pub fn into(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
     let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
 
     if in_64bit_mode {
-        // INTO is invalid in 64-bit mode
-        return Err(Error::Emulator(format!(
-            "INTO (0xCE) is invalid in 64-bit mode at RIP={:#x}",
-            vcpu.regs.rip
-        )));
+        // INTO is invalid in 64-bit mode - inject #UD
+        vcpu.inject_exception(6, None)?;
+        return Ok(None);
     }
 
     // Check overflow flag
     if vcpu.regs.rflags & flags::bits::OF != 0 {
         // OF=1: Generate INT 4 (overflow exception)
         vcpu.regs.rip += ctx.cursor as u64;
-        Ok(Some(VcpuExit::Exception(4)))
+        vcpu.inject_exception(4, None)?;
+        Ok(None)
     } else {
         // OF=0: No interrupt, continue execution
         vcpu.regs.rip += ctx.cursor as u64;

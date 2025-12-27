@@ -138,6 +138,7 @@ pub fn mov_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     } else {
         vcpu.get_reg(rm, op_size)
     };
+
     vcpu.set_reg(reg, value, op_size);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
