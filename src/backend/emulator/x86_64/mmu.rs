@@ -560,11 +560,11 @@ impl Mmu {
         // Try normal page table walk first
         match self.translate_slow(vaddr, access, sregs, index, tag) {
             Ok(paddr) => Ok(paddr),
-            Err(Error::PageFault { .. }) => {
+            Err(Error::PageFault { vaddr, error_code }) => {
                 // Page table walk failed. Check if this is a direct map access
                 // that falls outside the kernel's page tables but within our
                 // actual physical memory allocation (used for per-CPU overflow).
-                self.try_direct_map_fallback(vaddr, access)
+                self.try_direct_map_fallback(vaddr, error_code)
             }
             Err(e) => Err(e),
         }
@@ -577,7 +577,7 @@ impl Mmu {
     /// to access per-CPU data at addresses just past the e820 range, the page
     /// table walk fails. This function handles those accesses by directly
     /// computing the physical address from the direct map virtual address.
-    fn try_direct_map_fallback(&self, vaddr: u64, access: AccessType) -> Result<u64> {
+    fn try_direct_map_fallback(&self, vaddr: u64, error_code: u64) -> Result<u64> {
         // Check if address is in the direct map region
         if vaddr >= DIRECT_MAP_BASE && vaddr <= DIRECT_MAP_END {
             let paddr = vaddr - DIRECT_MAP_BASE;
@@ -590,11 +590,9 @@ impl Mmu {
             }
         }
 
-        // Not in direct map or outside our allocation - return page fault
-        Err(Error::PageFault {
-            vaddr,
-            error_code: 0,
-        })
+        // Not in direct map or outside our allocation - return the original page fault
+        // with the error_code computed by translate_slow (includes U/S and W/R bits)
+        Err(Error::PageFault { vaddr, error_code })
     }
 
     /// Slow path: full page table walk (called on TLB miss)
@@ -619,8 +617,12 @@ impl Mmu {
         // Determine current privilege level (CPL) from CS selector
         let cpl = (sregs.cs.selector & 0x3) as u8;
         let is_user = cpl == 3;
-        // U bit (bit 2) in error code: 1 = user mode, 0 = supervisor mode
+        // Page fault error code bits:
+        // Bit 0 (P): 0 = non-present page, 1 = protection violation
+        // Bit 1 (W/R): 0 = read, 1 = write
+        // Bit 2 (U/S): 0 = supervisor, 1 = user
         let user_bit = if is_user { 0x4 } else { 0 };
+        let write_bit = if is_write { 0x2 } else { 0 };
 
         // 4-level paging: PML4 -> PDPT -> PD -> PT
         let pml4_base = sregs.cr3 & !0xFFF;
@@ -632,16 +634,24 @@ impl Mmu {
         // Read PML4 entry
         let pml4e = self.read_pte(pml4_base + pml4_index * 8)?;
         if pml4e & flags::PRESENT == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit });
+            // Debug: Log the page fault details
+            use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
+            static PML4_PF_COUNT: AtomicUsize = AtomicUsize::new(0);
+            let pf_count = PML4_PF_COUNT.fetch_add(1, AtomicOrdering::Relaxed);
+            if pf_count < 10 {
+                eprintln!("[PML4 not present] vaddr={:#x} is_write={} user_bit={:#x} write_bit={:#x} error_code={:#x}",
+                          vaddr, is_write, user_bit, write_bit, user_bit | write_bit);
+            }
+            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit });
         }
         // Check reserved bits (must be zero) - error code 0x9 = RSVD | P
         if pml4e & PTE_RSVD_MASK != 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x9 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x9 });
         }
         // Check U/S permission: if user mode, page must have USER bit set
         if is_user && pml4e & flags::USER == 0 {
             // User mode accessing supervisor page = protection violation
-            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x1 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x1 });
         }
         // Check write permission at PML4 level
         if is_write && pml4e & flags::WRITABLE == 0 {
@@ -653,15 +663,15 @@ impl Mmu {
         let pdpt_base = pml4e & 0x000F_FFFF_FFFF_F000;
         let pdpte = self.read_pte(pdpt_base + pdpt_index * 8)?;
         if pdpte & flags::PRESENT == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit });
+            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit });
         }
         // Check reserved bits
         if pdpte & PTE_RSVD_MASK != 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x9 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x9 });
         }
         // Check U/S permission
         if is_user && pdpte & flags::USER == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x1 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x1 });
         }
         // Check write permission at PDPT level
         if is_write && pdpte & flags::WRITABLE == 0 {
@@ -674,7 +684,7 @@ impl Mmu {
             // Additional reserved mask: (0x40000000 - 1) & 0x000FFFFFFFFFF000 & ~0x1000 = 0x3FFFE000
             let huge_rsvd = 0x3FFFE000u64;
             if pdpte & (PTE_RSVD_MASK | huge_rsvd) != 0 {
-                return Err(Error::PageFault { vaddr, error_code: user_bit | 0x9 });
+                return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x9 });
             }
             let page_base = pdpte & 0x000F_FFFF_C000_0000;
             // Cache in TLB
@@ -691,15 +701,15 @@ impl Mmu {
         let pd_base = pdpte & 0x000F_FFFF_FFFF_F000;
         let pde = self.read_pte(pd_base + pd_index * 8)?;
         if pde & flags::PRESENT == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit });
+            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit });
         }
         // Check reserved bits
         if pde & PTE_RSVD_MASK != 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x9 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x9 });
         }
         // Check U/S permission
         if is_user && pde & flags::USER == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x1 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x1 });
         }
         // Check write permission at PD level
         if is_write && pde & flags::WRITABLE == 0 {
@@ -712,7 +722,7 @@ impl Mmu {
             // Additional reserved mask: (0x200000 - 1) & 0x000FFFFFFFFFF000 & ~0x1000 = 0x1FE000
             let huge_rsvd = 0x1FE000u64;
             if pde & (PTE_RSVD_MASK | huge_rsvd) != 0 {
-                return Err(Error::PageFault { vaddr, error_code: user_bit | 0x9 });
+                return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x9 });
             }
             let page_base = pde & 0x000F_FFFF_FFE0_0000;
             let paddr = page_base | (vaddr & 0x1F_FFFF);
@@ -732,15 +742,15 @@ impl Mmu {
         let pt_addr = pt_base + pt_index * 8;
         let pte = self.read_pte(pt_addr)?;
         if pte & flags::PRESENT == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit });
+            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit });
         }
         // Check reserved bits
         if pte & PTE_RSVD_MASK != 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x9 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x9 });
         }
         // Check U/S permission
         if is_user && pte & flags::USER == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x1 });
+            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x1 });
         }
         // Check write permission at PT level
         if is_write && pte & flags::WRITABLE == 0 {

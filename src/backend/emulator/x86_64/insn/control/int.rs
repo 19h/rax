@@ -88,6 +88,9 @@ pub fn into(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
 
 /// IRET/IRETD/IRETQ (0xCF) - Interrupt return
 pub fn iret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    static IRET_TO_USER: AtomicUsize = AtomicUsize::new(0);
+
     let op_size = ctx.op_size;
     let old_cpl = vcpu.sregs.cs.selector & 0x3;
 
@@ -105,6 +108,13 @@ pub fn iret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
         return Err(Error::Emulator(
             "IRET privilege increase not supported".to_string(),
         ));
+    }
+
+    // Log ALL IRETs to see what's happening
+    let count = IRET_TO_USER.fetch_add(1, Ordering::Relaxed);
+    // Log more generously
+    if count < 100 || (count % 10000 == 0) || new_cpl == 3 {
+        eprintln!("[IRET #{}] cpl:{}->{} RIP={:#x} CS={:#x}", count, old_cpl, new_cpl, ret_ip, cs);
     }
 
     // In 64-bit mode, IRETQ ALWAYS pops RSP and SS, regardless of privilege level change.
