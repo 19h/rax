@@ -144,6 +144,7 @@ pub fn group5(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
                 vcpu.read_mem(addr, 8)?
             };
             let ret_addr = vcpu.regs.rip + ctx.cursor as u64;
+
             vcpu.push64(ret_addr)?;
             vcpu.regs.rip = target;
         }

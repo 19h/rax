@@ -30,6 +30,8 @@ fn get_tsc() -> u64 {
 /// Reads 64-bit TSC into EDX:EAX. Upper 32 bits of RAX and RDX are cleared.
 pub fn rdtsc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let tsc = get_tsc();
+
+
     // EDX:EAX = TSC, upper 32 bits of RAX and RDX are cleared
     vcpu.regs.rax = tsc & 0xFFFF_FFFF;
     vcpu.regs.rdx = (tsc >> 32) & 0xFFFF_FFFF;

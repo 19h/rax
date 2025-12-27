@@ -150,6 +150,7 @@ impl X86_64Vcpu {
                     // Exchange GS.base with IA32_KERNEL_GS_BASE MSR (0xC0000102)
                     let gs_base = self.sregs.gs.base;
                     let kernel_gs_base = self.kernel_gs_base;
+                    eprintln!("[SWAPGS] gs.base={:#x} <-> kernel_gs_base={:#x} RIP={:#x}", gs_base, kernel_gs_base, self.regs.rip);
                     self.sregs.gs.base = kernel_gs_base;
                     self.kernel_gs_base = gs_base;
                     self.regs.rip += ctx.cursor as u64;

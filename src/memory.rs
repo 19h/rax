@@ -28,15 +28,42 @@ pub fn align_down(value: u64, align: u64) -> u64 {
 
 pub struct GuestMemoryWrapper {
     mem: GuestMemoryMmap,
-    size: u64,
+    /// The size reported to the guest via e820
+    reported_size: u64,
+    /// The actual allocated size (includes padding for per-CPU overflow)
+    actual_size: u64,
 }
 
 impl GuestMemoryWrapper {
     pub fn new(size_bytes: u64) -> Result<Self> {
-        let size = align_up(size_bytes, PAGE_SIZE);
-        info!(mem_bytes = size, "allocating guest memory");
-        let mem = GuestMemoryMmap::from_ranges(&[(GuestAddress(0), size as usize)])?;
-        Ok(GuestMemoryWrapper { mem, size })
+        let reported_size = align_up(size_bytes, PAGE_SIZE);
+
+        // Add extra padding for per-CPU allocation that may end up slightly past
+        // the reported memory size. The Linux kernel's per-CPU allocator sometimes
+        // computes addresses that land just past the end of RAM. By allocating
+        // extra physical memory (but not reporting it to the kernel via e820),
+        // these accesses will succeed.
+        //
+        // Observed offsets past RAM:
+        // - 64GB guest: ~200MB past end
+        // - 32GB guest: ~1.5GB past end
+        // - 1GB guest: ~2GB past end
+        // Use 4GB padding as a safe margin.
+        let padding = 4 * 1024 * 1024 * 1024u64; // 4GB
+        let actual_size = align_up(reported_size + padding, PAGE_SIZE);
+
+        info!(
+            reported_bytes = reported_size,
+            actual_bytes = actual_size,
+            padding_bytes = padding,
+            "allocating guest memory with per-CPU padding"
+        );
+        let mem = GuestMemoryMmap::from_ranges(&[(GuestAddress(0), actual_size as usize)])?;
+        Ok(GuestMemoryWrapper {
+            mem,
+            reported_size,
+            actual_size,
+        })
     }
 
     #[cfg(all(feature = "kvm", target_os = "linux"))]
@@ -66,8 +93,16 @@ impl GuestMemoryWrapper {
         &self.mem
     }
 
+    /// Returns the size reported to the guest via e820.
+    /// This is less than the actual allocated size (which includes padding).
     pub fn size(&self) -> u64 {
-        self.size
+        self.reported_size
+    }
+
+    /// Returns the actual allocated size including padding.
+    #[allow(dead_code)]
+    pub fn actual_size(&self) -> u64 {
+        self.actual_size
     }
 }
 

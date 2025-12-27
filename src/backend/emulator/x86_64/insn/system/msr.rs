@@ -20,8 +20,17 @@ pub fn wrmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         0x175 => vcpu.sregs.sysenter_esp = value,    // IA32_SYSENTER_ESP
         0x176 => vcpu.sregs.sysenter_eip = value,    // IA32_SYSENTER_EIP
         0xC0000100 => vcpu.sregs.fs.base = value,    // FS.base
-        0xC0000101 => vcpu.sregs.gs.base = value,     // GS.base
-        0xC0000102 => vcpu.kernel_gs_base = value,    // KernelGSbase
+        0xC0000101 => {
+            // GS.base - used for per-CPU data access
+            // Log the write to help debug per-CPU address issues
+            if value >= 0xffff888000000000 {
+                let phys = value - 0xffff888000000000;
+                eprintln!("[WRMSR] GS.base = {:#x} (direct map -> phys {:#x}) RIP={:#x}",
+                    value, phys, vcpu.regs.rip);
+            }
+            vcpu.sregs.gs.base = value;
+        }
+        0xC0000102 => vcpu.kernel_gs_base = value,     // KernelGSbase
         _ => {}                                       // Ignore unknown MSRs
     }
     vcpu.regs.rip += ctx.cursor as u64;
