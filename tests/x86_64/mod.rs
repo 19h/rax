@@ -11,6 +11,7 @@ mod data_transfer;
 mod flags;
 mod fpu;
 mod io;
+mod lapic_integration;
 mod logic_and_bit_manipulation;
 mod logical;
 mod memory;

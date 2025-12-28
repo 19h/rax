@@ -1,4 +1,4 @@
-use crate::common::setup_vm;
+use crate::common::setup_vm_no_idt;
 use rax::cpu::{VCpu, VcpuExit};
 
 // UD - Undefined Instruction
@@ -19,7 +19,7 @@ fn test_ud2_basic() {
         0x0f, 0x0b, // UD2
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     // Should get an exception, not reach HLT
     let result = vcpu.run();
@@ -38,7 +38,7 @@ fn test_ud1_rax_rax() {
         0x0f, 0xb9, 0xc0, // UD1 EAX, EAX
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -56,7 +56,7 @@ fn test_ud1_rbx_rcx() {
         0x0f, 0xb9, 0xcb, // UD1 EBX, ECX (ModRM = 11 001 011)
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -74,7 +74,7 @@ fn test_ud1_memory_rax() {
         0x0f, 0xb9, 0x00, // UD1 EAX, [RAX]
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -92,7 +92,7 @@ fn test_ud0_rax_rax() {
         0x0f, 0xff, 0xc0, // UD0 EAX, EAX
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -110,7 +110,7 @@ fn test_ud0_rdx_rsi() {
         0x0f, 0xff, 0xf2, // UD0 EDX, ESI (ModRM = 11 110 010)
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -128,7 +128,7 @@ fn test_ud0_memory() {
         0x0f, 0xff, 0x03, // UD0 EAX, [RBX]
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -147,7 +147,7 @@ fn test_ud2_first_triggers() {
         0x0f, 0x0b, // UD2 (should not reach)
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -165,7 +165,7 @@ fn test_ud1_rdi_rsi() {
         0x0f, 0xb9, 0xf7, // UD1 EDI, ESI (ModRM = 11 110 111)
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -183,7 +183,7 @@ fn test_ud1_rbp_rsp() {
         0x0f, 0xb9, 0xec, // UD1 EBP, ESP (ModRM = 11 101 100)
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -201,7 +201,7 @@ fn test_ud0_all_bits() {
         0x0f, 0xff, 0xff, // UD0 EDI, EDI (ModRM = 11 111 111)
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -220,7 +220,7 @@ fn test_ud2_after_mov() {
         0x0f, 0x0b, // UD2
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -238,7 +238,7 @@ fn test_ud1_with_disp8() {
         0x0f, 0xb9, 0x40, 0x10, // UD1 EAX, [RAX+0x10] (ModRM = 01 000 000, disp8)
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -256,7 +256,7 @@ fn test_ud0_with_sib() {
         0x0f, 0xff, 0x04, 0x25, 0x00, 0x20, 0x00, 0x00, // UD0 with SIB
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -274,7 +274,7 @@ fn test_ud1_rex_w() {
         0x48, 0x0f, 0xb9, 0xc0, // UD1 RAX, RAX (with REX.W)
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -292,7 +292,7 @@ fn test_ud0_rex_w() {
         0x48, 0x0f, 0xff, 0xc0, // UD0 RAX, RAX (with REX.W)
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -310,7 +310,7 @@ fn test_ud2_rex_prefix() {
         0x48, 0x0f, 0x0b, // UD2 with REX.W prefix
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -328,7 +328,7 @@ fn test_ud1_r8_r9() {
         0x4d, 0x0f, 0xb9, 0xc1, // UD1 R8, R9 (REX.RB, ModRM = 11 000 001)
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -346,7 +346,7 @@ fn test_ud0_r15_r14() {
         0x4d, 0x0f, 0xff, 0xfe, // UD0 R15, R14 (REX.RB, ModRM = 11 111 110)
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -364,7 +364,7 @@ fn test_ud2_always_undefined() {
         0x0f, 0x0b, // UD2
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     // UD2 is guaranteed to always raise #UD
     let result = vcpu.run();
@@ -383,7 +383,7 @@ fn test_ud1_modrm_00() {
         0x0f, 0xb9, 0x00, // UD1 EAX, [RAX]
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -401,7 +401,7 @@ fn test_ud0_modrm_00() {
         0x0f, 0xff, 0x00, // UD0 EAX, [RAX]
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -419,7 +419,7 @@ fn test_ud1_modrm_patterns() {
         0x0f, 0xb9, 0xaa, // UD1 with ModRM = 10 101 010
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -437,7 +437,7 @@ fn test_ud0_modrm_patterns() {
         0x0f, 0xff, 0x55, // UD0 with ModRM = 01 010 101
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {
@@ -456,7 +456,7 @@ fn test_ud2_instruction_pointer_references_ud() {
         0x0f, 0x0b, // UD2 at offset 5 from start
         0xf4, // HLT (should not be reached)
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
 
     let result = vcpu.run();
     match result {

@@ -23,6 +23,15 @@ pub const DATA_ADDR: u64 = 0x2000;
 /// Default SYSCALL handler address for tests
 pub const SYSCALL_HANDLER_ADDR: u64 = 0x12000;
 
+/// Default interrupt handler address (simple IRETQ stub)
+pub const INT_HANDLER_ADDR: u64 = 0x13000;
+
+/// IDT base address
+pub const IDT_BASE: u64 = 0x11000;
+
+/// GDT base address
+pub const GDT_BASE: u64 = 0x10000;
+
 /// Create a test VM with the given code and initial register state.
 pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
     // Create 16MB of guest memory
@@ -36,10 +45,73 @@ pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Ar
     let syscall_handler = [0x48, 0x0f, 0x07, 0xf4]; // REX.W SYSRET; HLT fallback
     mem.write_slice(&syscall_handler, GuestAddress(SYSCALL_HANDLER_ADDR))
         .unwrap();
-    // Install a minimal SYSCALL handler that immediately SYSRET's.
-    let syscall_handler = [0x48, 0x0f, 0x07, 0xf4]; // REX.W SYSRET; HLT fallback
-    mem.write_slice(&syscall_handler, GuestAddress(SYSCALL_HANDLER_ADDR))
-        .unwrap();
+
+    // Install a minimal interrupt handler that does IRETQ
+    let int_handler = [0x48, 0xcf, 0xf4]; // REX.W IRET (IRETQ); HLT fallback
+    mem.write_slice(&int_handler, GuestAddress(INT_HANDLER_ADDR)).unwrap();
+
+    // Set up GDT with null descriptor (entry 0) and 64-bit code segment (entry 1, selector 0x08)
+    // GDT entry format (8 bytes):
+    //   Bytes 0-1: Limit bits 0-15 (ignored in 64-bit mode)
+    //   Bytes 2-3: Base bits 0-15 (ignored in 64-bit mode)
+    //   Byte 4: Base bits 16-23 (ignored in 64-bit mode)
+    //   Byte 5: Access byte (P=1, DPL=0, S=1, Type=0xA = code, readable)
+    //   Byte 6: Flags (L=1 for 64-bit, D=0, G=0) + Limit bits 16-19
+    //   Byte 7: Base bits 24-31 (ignored in 64-bit mode)
+    let null_descriptor = [0u8; 8];
+    let code64_descriptor: [u8; 8] = [
+        0x00, 0x00, // Limit 0-15
+        0x00, 0x00, // Base 0-15
+        0x00,       // Base 16-23
+        0x9A,       // Access: P=1, DPL=0, S=1, Type=0xA (code, readable)
+        0x20,       // Flags: L=1, D=0, G=0 + Limit 16-19 = 0
+        0x00,       // Base 24-31
+    ];
+    mem.write_slice(&null_descriptor, GuestAddress(GDT_BASE)).unwrap();
+    mem.write_slice(&code64_descriptor, GuestAddress(GDT_BASE + 8)).unwrap();
+
+    // Set up IDT entries for all 256 interrupt vectors
+    // Each IDT entry in 64-bit mode is 16 bytes:
+    //   Bytes 0-1: Offset bits 0-15
+    //   Bytes 2-3: Segment selector (0x08 for code segment)
+    //   Byte 4: IST (0)
+    //   Byte 5: Type and attributes (0x8E = present, DPL=0, 64-bit interrupt gate)
+    //   Bytes 6-7: Offset bits 16-31
+    //   Bytes 8-11: Offset bits 32-63
+    //   Bytes 12-15: Reserved (0)
+    let handler_addr = INT_HANDLER_ADDR;
+    let selector: u16 = 0x08; // Code segment selector
+    let type_attr: u8 = 0x8E; // Present, DPL=0, 64-bit interrupt gate
+
+    for vector in 0u16..256 {
+        let idt_entry_addr = IDT_BASE + (vector as u64) * 16;
+        let mut entry = [0u8; 16];
+        // Offset bits 0-15
+        entry[0] = (handler_addr & 0xFF) as u8;
+        entry[1] = ((handler_addr >> 8) & 0xFF) as u8;
+        // Segment selector
+        entry[2] = (selector & 0xFF) as u8;
+        entry[3] = ((selector >> 8) & 0xFF) as u8;
+        // IST = 0
+        entry[4] = 0;
+        // Type and attributes
+        entry[5] = type_attr;
+        // Offset bits 16-31
+        entry[6] = ((handler_addr >> 16) & 0xFF) as u8;
+        entry[7] = ((handler_addr >> 24) & 0xFF) as u8;
+        // Offset bits 32-63
+        entry[8] = ((handler_addr >> 32) & 0xFF) as u8;
+        entry[9] = ((handler_addr >> 40) & 0xFF) as u8;
+        entry[10] = ((handler_addr >> 48) & 0xFF) as u8;
+        entry[11] = ((handler_addr >> 56) & 0xFF) as u8;
+        // Reserved
+        entry[12] = 0;
+        entry[13] = 0;
+        entry[14] = 0;
+        entry[15] = 0;
+
+        mem.write_slice(&entry, GuestAddress(idt_entry_addr)).unwrap();
+    }
 
     // Create vcpu
     let mut vcpu = X86_64Vcpu::new(0, mem.clone());
@@ -68,10 +140,10 @@ pub fn setup_vm(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Ar
     sregs.cs.db = false; // Must be 0 when L=1 for 64-bit mode
     sregs.cs.selector = 0x8;
     // Initialize GDT and IDT with reasonable defaults for testing
-    sregs.gdt.base = 0x10000; // GDT at 64KB
+    sregs.gdt.base = GDT_BASE;
     sregs.gdt.limit = 0x1F;   // 4 descriptors (32 bytes - 1)
-    sregs.idt.base = 0x11000; // IDT at 68KB
-    sregs.idt.limit = 0xFF;   // 16 entries (256 bytes - 1)
+    sregs.idt.base = IDT_BASE;
+    sregs.idt.limit = 0xFFF;  // 256 entries * 16 bytes = 4096 bytes - 1
     vcpu.set_sregs(&sregs).unwrap();
 
     (vcpu, mem)
@@ -89,6 +161,52 @@ pub fn setup_vm_compat(code: &[u8], initial_regs: Option<Registers>) -> (X86_64V
 
     // Write code at address 0x1000
     mem.write_slice(code, GuestAddress(CODE_ADDR)).unwrap();
+
+    // Install a minimal interrupt handler that does IRETQ
+    // (Long mode uses 64-bit IDT format even in compatibility mode)
+    let int_handler = [0x48, 0xcf, 0xf4]; // REX.W IRET (IRETQ); HLT fallback
+    mem.write_slice(&int_handler, GuestAddress(INT_HANDLER_ADDR)).unwrap();
+
+    // Set up GDT with null descriptor (entry 0) and 64-bit code segment (entry 1, selector 0x08)
+    // The interrupt handler needs to run in 64-bit mode so REX.W prefix is recognized
+    let null_descriptor = [0u8; 8];
+    let code64_descriptor: [u8; 8] = [
+        0x00, 0x00, // Limit 0-15
+        0x00, 0x00, // Base 0-15
+        0x00,       // Base 16-23
+        0x9A,       // Access: P=1, DPL=0, S=1, Type=0xA (code, readable)
+        0x20,       // Flags: L=1, D=0, G=0 + Limit 16-19 = 0
+        0x00,       // Base 24-31
+    ];
+    mem.write_slice(&null_descriptor, GuestAddress(GDT_BASE)).unwrap();
+    mem.write_slice(&code64_descriptor, GuestAddress(GDT_BASE + 8)).unwrap();
+
+    // Set up IDT entries for all 256 interrupt vectors (64-bit format)
+    let handler_addr = INT_HANDLER_ADDR;
+    let selector: u16 = 0x08; // Code segment selector
+    let type_attr: u8 = 0x8E; // Present, DPL=0, 64-bit interrupt gate
+
+    for vector in 0u16..256 {
+        let idt_entry_addr = IDT_BASE + (vector as u64) * 16;
+        let mut entry = [0u8; 16];
+        entry[0] = (handler_addr & 0xFF) as u8;
+        entry[1] = ((handler_addr >> 8) & 0xFF) as u8;
+        entry[2] = (selector & 0xFF) as u8;
+        entry[3] = ((selector >> 8) & 0xFF) as u8;
+        entry[4] = 0; // IST
+        entry[5] = type_attr;
+        entry[6] = ((handler_addr >> 16) & 0xFF) as u8;
+        entry[7] = ((handler_addr >> 24) & 0xFF) as u8;
+        entry[8] = ((handler_addr >> 32) & 0xFF) as u8;
+        entry[9] = ((handler_addr >> 40) & 0xFF) as u8;
+        entry[10] = ((handler_addr >> 48) & 0xFF) as u8;
+        entry[11] = ((handler_addr >> 56) & 0xFF) as u8;
+        entry[12] = 0;
+        entry[13] = 0;
+        entry[14] = 0;
+        entry[15] = 0;
+        mem.write_slice(&entry, GuestAddress(idt_entry_addr)).unwrap();
+    }
 
     // Create vcpu
     let mut vcpu = X86_64Vcpu::new(0, mem.clone());
@@ -116,10 +234,46 @@ pub fn setup_vm_compat(code: &[u8], initial_regs: Option<Registers>) -> (X86_64V
     sregs.cs.db = false; // D=0 means 16-bit default operand size (use 0x66 for 32-bit)
     sregs.cs.selector = 0x8;
     // Initialize GDT and IDT
-    sregs.gdt.base = 0x10000;
+    sregs.gdt.base = GDT_BASE;
     sregs.gdt.limit = 0x1F;
-    sregs.idt.base = 0x11000;
-    sregs.idt.limit = 0xFF;
+    sregs.idt.base = IDT_BASE;
+    sregs.idt.limit = 0xFFF;  // 256 entries * 16 bytes = 4096 bytes - 1
+    vcpu.set_sregs(&sregs).unwrap();
+
+    (vcpu, mem)
+}
+
+/// Create a test VM without IDT entries.
+/// Use this for tests that verify exception behavior - without IDT entries,
+/// exceptions will return errors rather than being handled (and looping).
+pub fn setup_vm_no_idt(code: &[u8], initial_regs: Option<Registers>) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
+    let mem_size = 16 * 1024 * 1024;
+    let regions = vec![(GuestAddress(0), mem_size)];
+    let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&regions).unwrap());
+
+    mem.write_slice(code, GuestAddress(CODE_ADDR)).unwrap();
+
+    let mut vcpu = X86_64Vcpu::new(0, mem.clone());
+
+    let mut regs = initial_regs.unwrap_or_else(Registers::default);
+    regs.rip = CODE_ADDR;
+    if regs.rsp == 0 {
+        regs.rsp = STACK_ADDR;
+    }
+    regs.rflags |= 0x2;
+    vcpu.set_regs(&regs).unwrap();
+
+    let mut sregs = SystemRegisters::default();
+    sregs.cr0 = 0x00050033;
+    sregs.cr4 = 0x20;
+    sregs.efer = 0x501;
+    sregs.cs.l = true;
+    sregs.cs.db = false;
+    sregs.cs.selector = 0x8;
+    sregs.gdt.base = GDT_BASE;
+    sregs.gdt.limit = 0x1F;
+    sregs.idt.base = IDT_BASE;
+    sregs.idt.limit = 0xFF; // Small limit, no entries populated
     vcpu.set_sregs(&sregs).unwrap();
 
     (vcpu, mem)

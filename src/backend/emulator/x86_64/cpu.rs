@@ -1716,6 +1716,15 @@ impl X86_64Vcpu {
         // The segment selector from the IDT entry becomes the new CS
         self.set_sreg(1, selector);
 
+        // For 64-bit interrupt/trap gates (type 0x0E/0x0F), the handler must run in 64-bit mode
+        // Set CS.L = true to enable 64-bit mode for the handler
+        // Note: set_sreg doesn't load the GDT descriptor, so we must set this explicitly
+        let gate_type = type_attr & 0x0F;
+        if gate_type == 0x0E || gate_type == 0x0F {
+            self.sregs.cs.l = true;
+            self.sregs.cs.db = false; // D must be 0 when L=1
+        }
+
         Ok(())
     }
 }

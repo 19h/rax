@@ -1,4 +1,6 @@
 mod cpuid;
+mod mmu;
+mod page_fault;
 mod rdrand;
 mod rdseed;
 mod rdtsc;

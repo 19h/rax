@@ -377,7 +377,7 @@ fn test_multiple_pushfq_popfq() {
 #[test]
 fn test_pushf_16bit() {
     let code = [
-        0x66, 0x9c, // PUSHF (16-bit, but in 64-bit mode pushes 64-bit)
+        0x66, 0x9c, // PUSHF with 66H prefix = 16-bit push
         0xf4, // HLT
     ];
     let mut regs = Registers::default();
@@ -385,8 +385,9 @@ fn test_pushf_16bit() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // In 64-bit mode, PUSHF still pushes 64-bit value
-    assert_eq!(regs.rsp, 0x0FF8, "RSP decremented by 8");
+    // In 64-bit mode with 66H prefix, PUSHF pushes only 16 bits (RSP -= 2)
+    // Per Intel SDM: "16-bit operation is supported by using the operand-size prefix"
+    assert_eq!(regs.rsp, 0x0FFE, "RSP decremented by 2");
 }
 
 #[test]
