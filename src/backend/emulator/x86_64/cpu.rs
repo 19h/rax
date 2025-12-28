@@ -1868,8 +1868,6 @@ impl VCpu for X86_64Vcpu {
             return Ok(false);
         }
 
-        let old_rip = self.regs.rip;
-
         // Inject the external interrupt
         // External interrupts don't push an error code
         self.inject_exception(vector, None)?;
@@ -1877,6 +1875,15 @@ impl VCpu for X86_64Vcpu {
         // Clear the halted state if we were halted
         self.halted = false;
 
+        Ok(true)
+    }
+
+    fn inject_nmi(&mut self) -> Result<bool> {
+        // NMI is vector 2 and ignores IF flag
+        // TODO: Track NMI blocking (NMIs are blocked until IRET after an NMI)
+        self.inject_exception(2, None)?;
+        self.halted = false;
+        tracing::debug!("Injected NMI");
         Ok(true)
     }
 
