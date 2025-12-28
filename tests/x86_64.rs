@@ -481,6 +481,8 @@ mod x86_64_io_out;
 mod x86_64_io_outs;
 #[path = "x86_64/io/pit.rs"]
 mod x86_64_io_pit;
+#[path = "x86_64/io/serial.rs"]
+mod x86_64_io_serial;
 
 // Logic And Bit Manipulation
 #[path = "x86_64/logic_and_bit_manipulation/basic_logic/and.rs"]
