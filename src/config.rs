@@ -310,6 +310,14 @@ pub struct CliConfig {
     pub gdb_port: Option<u16>,
     /// Wait for GDB connection before starting.
     pub wait_gdb: bool,
+    /// Snapshot interval (take snapshot every N instructions, 0 = disabled)
+    pub snapshot_interval: u64,
+    /// Take snapshot at specific instruction counts (comma-separated)
+    pub snapshot_at: Vec<u64>,
+    /// Directory to save snapshots
+    pub snapshot_dir: Option<PathBuf>,
+    /// Snapshot file to resume from
+    pub resume: Option<PathBuf>,
 }
 
 #[derive(Clone, Debug)]
@@ -330,6 +338,14 @@ pub struct VmConfig {
     pub gdb_port: Option<u16>,
     /// Wait for GDB connection before starting.
     pub wait_gdb: bool,
+    /// Snapshot interval (take snapshot every N instructions, 0 = disabled)
+    pub snapshot_interval: u64,
+    /// Take snapshot at specific instruction counts
+    pub snapshot_at: Vec<u64>,
+    /// Directory to save snapshots
+    pub snapshot_dir: Option<PathBuf>,
+    /// Snapshot file to resume from
+    pub resume: Option<PathBuf>,
 }
 
 impl VmConfig {
@@ -371,6 +387,10 @@ impl VmConfig {
             trace: cli.trace,
             gdb_port: cli.gdb_port,
             wait_gdb: cli.wait_gdb,
+            snapshot_interval: cli.snapshot_interval,
+            snapshot_at: cli.snapshot_at,
+            snapshot_dir: cli.snapshot_dir,
+            resume: cli.resume,
         };
 
         config.validate()?;

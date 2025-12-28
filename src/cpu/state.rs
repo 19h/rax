@@ -1,7 +1,9 @@
 //! Backend-agnostic CPU state types.
 
+use serde::{Deserialize, Serialize};
+
 /// General-purpose registers.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Registers {
     pub rax: u64,
     pub rbx: u64,
@@ -40,7 +42,7 @@ pub struct Registers {
 }
 
 /// Segment descriptor.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Segment {
     pub base: u64,
     pub limit: u32,
@@ -57,14 +59,14 @@ pub struct Segment {
 }
 
 /// Descriptor table register (GDTR/IDTR).
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct DescriptorTable {
     pub base: u64,
     pub limit: u16,
 }
 
 /// System registers (control registers, segment registers, etc.).
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct SystemRegisters {
     pub cs: Segment,
     pub ds: Segment,
@@ -108,14 +110,14 @@ pub struct SystemRegisters {
 }
 
 /// Complete x86_64 CPU state snapshot.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct X86_64CpuState {
     pub regs: Registers,
     pub sregs: SystemRegisters,
 }
 
 /// Hexagon general and control registers.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct HexagonRegisters {
     pub r: [u32; 32],
     pub p: [bool; 4],
@@ -193,13 +195,13 @@ impl HexagonRegisters {
 }
 
 /// Complete Hexagon CPU state snapshot.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct HexagonCpuState {
     pub regs: HexagonRegisters,
 }
 
 /// Architecture-specific CPU state snapshot.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum CpuState {
     X86_64(X86_64CpuState),
     Hexagon(HexagonCpuState),

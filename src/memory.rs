@@ -148,6 +148,23 @@ impl GuestMemoryWrapper {
     pub fn actual_size(&self) -> u64 {
         self.actual_size
     }
+
+    /// Read all memory contents into a byte vector (for snapshotting).
+    /// Returns the reported_size worth of memory (excludes padding).
+    pub fn read_all(&self) -> Vec<u8> {
+        use vm_memory::Bytes;
+        let mut buf = vec![0u8; self.reported_size as usize];
+        let _ = self.mem.read_slice(&mut buf, GuestAddress(0));
+        buf
+    }
+
+    /// Write memory contents from a byte vector (for snapshot restore).
+    pub fn write_all(&self, data: &[u8]) -> Result<()> {
+        use vm_memory::Bytes;
+        let size = data.len().min(self.reported_size as usize);
+        self.mem.write_slice(&data[..size], GuestAddress(0))
+            .map_err(|e| crate::error::Error::Emulator(format!("Failed to write memory: {}", e)))
+    }
 }
 
 #[cfg(test)]

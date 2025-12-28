@@ -7,6 +7,7 @@ use rax::config::{
     VmConfig,
 };
 use rax::Result;
+use rax::snapshot::Snapshot;
 use rax::vmm::Vmm;
 use tracing_subscriber::EnvFilter;
 
@@ -49,6 +50,18 @@ struct Cli {
     /// Enable GDB protocol tracing (shows all RX/TX packets)
     #[arg(long)]
     gdb_trace: bool,
+    /// Take snapshot every N instructions (0 = disabled)
+    #[arg(long, default_value = "0")]
+    snapshot_interval: u64,
+    /// Take snapshot at specific instruction counts (comma-separated)
+    #[arg(long, value_delimiter = ',')]
+    snapshot_at: Vec<u64>,
+    /// Directory to save snapshots
+    #[arg(long)]
+    snapshot_dir: Option<PathBuf>,
+    /// Resume from snapshot file
+    #[arg(long)]
+    resume: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -86,10 +99,24 @@ fn main() -> Result<()> {
         trace: cli.trace,
         gdb_port: cli.gdb,
         wait_gdb: cli.wait_gdb,
+        snapshot_interval: cli.snapshot_interval,
+        snapshot_at: cli.snapshot_at,
+        snapshot_dir: cli.snapshot_dir,
+        resume: cli.resume,
     };
 
     let config = VmConfig::from_sources(cli_config, file_config)?;
+    let resume_path = config.resume.clone();
     let mut vmm = Vmm::new(config)?;
+
+    // Restore from snapshot if specified
+    if let Some(ref path) = resume_path {
+        tracing::info!("Loading snapshot from {:?}", path);
+        let snapshot = Snapshot::load(path)?;
+        tracing::info!("{}", snapshot.summary());
+        vmm.restore_snapshot(&snapshot)?;
+    }
+
     vmm.run()?;
 
     Ok(())
