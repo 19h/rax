@@ -65,9 +65,6 @@ impl X86_64Vcpu {
                     return Ok(None);
                 }
 
-                if count < 20 || count % 1000 == 0 {
-                    eprintln!("[UD2 #{}] RIP={:#x} - injecting #UD", count, rip);
-                }
                 // Don't advance RIP - #UD is a fault, exception points to faulting instruction
                 self.inject_exception(6, None)?; // #UD = vector 6
                 Ok(None)
