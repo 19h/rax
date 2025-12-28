@@ -1,7 +1,8 @@
 //! GDB RSP command handlers.
 
 use std::collections::HashMap;
-use std::io::Write;
+use std::io::{Read, Write};
+use std::net::TcpStream;
 use std::time::Duration;
 
 use tracing::debug;
@@ -45,11 +46,72 @@ use super::protocol::{
 };
 use super::{GdbChannels, GdbCommand, GdbResponse};
 
+/// Wait for a stop response from VMM while also checking for interrupt (0x03) from debugger.
+/// This allows Ctrl+C / pause to work during execution.
+fn wait_for_stop_or_interrupt(
+    stream: &mut TcpStream,
+    channels: &GdbChannels,
+) -> std::io::Result<GdbResponse> {
+    // Set stream to non-blocking so we can poll for interrupts
+    stream.set_nonblocking(true)?;
+
+    let mut buf = [0u8; 64];
+    loop {
+        // Check for response from VMM (non-blocking)
+        match channels.resp_rx.try_recv() {
+            Ok(resp) => {
+                // Got a response, restore blocking mode and return
+                stream.set_nonblocking(false)?;
+                return Ok(resp);
+            }
+            Err(std::sync::mpsc::TryRecvError::Empty) => {
+                // No response yet, check for interrupt from debugger
+            }
+            Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                stream.set_nonblocking(false)?;
+                return Ok(GdbResponse::Error(1));
+            }
+        }
+
+        // Check for incoming data from debugger (0x03 interrupt)
+        match stream.read(&mut buf) {
+            Ok(0) => {
+                // Connection closed
+                stream.set_nonblocking(false)?;
+                return Ok(GdbResponse::Error(1));
+            }
+            Ok(n) => {
+                // Check if any byte is 0x03 (interrupt)
+                if buf[..n].contains(&0x03) {
+                    debug!("Received interrupt (0x03) during execution");
+                    // Send interrupt command to VMM
+                    channels.cmd_tx.send(GdbCommand::Interrupt).ok();
+                    // Now wait for the stop response (blocking is fine now)
+                    stream.set_nonblocking(false)?;
+                    match channels.resp_rx.recv() {
+                        Ok(resp) => return Ok(resp),
+                        Err(_) => return Ok(GdbResponse::Error(1)),
+                    }
+                }
+                // Otherwise ignore (could be ACKs or other data we don't care about)
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                // No data available, sleep briefly to avoid busy-spinning
+                std::thread::sleep(Duration::from_millis(1));
+            }
+            Err(e) => {
+                stream.set_nonblocking(false)?;
+                return Err(e);
+            }
+        }
+    }
+}
+
 /// Handle a GDB RSP command.
 /// Returns Ok(true) to continue, Ok(false) to disconnect.
-pub fn handle_command<W: Write>(
+pub fn handle_command(
     packet: &str,
-    writer: &mut W,
+    stream: &mut TcpStream,
     channels: &GdbChannels,
     breakpoints: &mut HashMap<u64, u8>,
 ) -> std::io::Result<bool> {
@@ -60,7 +122,7 @@ pub fn handle_command<W: Write>(
     match cmd {
         // Query halt reason
         '?' => {
-            send_stop_reply(writer, 5)?; // SIGTRAP
+            send_stop_reply(stream, 5)?; // SIGTRAP
         }
 
         // Read registers
@@ -68,13 +130,13 @@ pub fn handle_command<W: Write>(
             channels.cmd_tx.send(GdbCommand::ReadRegisters).ok();
             match channels.resp_rx.recv_timeout(Duration::from_secs(5)) {
                 Ok(GdbResponse::Registers(hex)) => {
-                    send_packet(writer, &hex)?;
+                    send_packet(stream, &hex)?;
                 }
                 Ok(GdbResponse::Error(code)) => {
-                    send_error(writer, code)?;
+                    send_error(stream, code)?;
                 }
                 _ => {
-                    send_error(writer, 1)?;
+                    send_error(stream, 1)?;
                 }
             }
         }
@@ -84,14 +146,14 @@ pub fn handle_command<W: Write>(
             let data = match decode_hex(args) {
                 Some(d) => d,
                 None => {
-                    send_error(writer, 1)?;
+                    send_error(stream, 1)?;
                     return Ok(true);
                 }
             };
             channels.cmd_tx.send(GdbCommand::WriteRegisters(data)).ok();
             match channels.resp_rx.recv_timeout(Duration::from_secs(5)) {
-                Ok(GdbResponse::Ok) => send_ok(writer)?,
-                _ => send_error(writer, 1)?,
+                Ok(GdbResponse::Ok) => send_ok(stream)?,
+                _ => send_error(stream, 1)?,
             }
         }
 
@@ -100,7 +162,7 @@ pub fn handle_command<W: Write>(
             let reg_num = match usize::from_str_radix(args, 16) {
                 Ok(n) => n,
                 Err(_) => {
-                    send_error(writer, 1)?;
+                    send_error(stream, 1)?;
                     return Ok(true);
                 }
             };
@@ -110,10 +172,10 @@ pub fn handle_command<W: Write>(
                 Ok(GdbResponse::Registers(hex)) => {
                     // Extract the specific register from the full register set
                     let reg_data = extract_register(&hex, reg_num);
-                    send_packet(writer, &reg_data)?;
+                    send_packet(stream, &reg_data)?;
                 }
                 _ => {
-                    send_error(writer, 1)?;
+                    send_error(stream, 1)?;
                 }
             }
         }
@@ -123,40 +185,40 @@ pub fn handle_command<W: Write>(
             let eq_pos = match args.find('=') {
                 Some(p) => p,
                 None => {
-                    send_error(writer, 1)?;
+                    send_error(stream, 1)?;
                     return Ok(true);
                 }
             };
             let _reg_num = match usize::from_str_radix(&args[..eq_pos], 16) {
                 Ok(n) => n,
                 Err(_) => {
-                    send_error(writer, 1)?;
+                    send_error(stream, 1)?;
                     return Ok(true);
                 }
             };
             // For now, return error - single register write not fully implemented
             // Would need to read all, modify one, write all back
-            send_error(writer, 1)?;
+            send_error(stream, 1)?;
         }
 
         // Read memory
         'm' => {
             let parts: Vec<&str> = args.split(',').collect();
             if parts.len() != 2 {
-                send_error(writer, 1)?;
+                send_error(stream, 1)?;
                 return Ok(true);
             }
             let addr = match parse_addr(parts[0]) {
                 Some(a) => a,
                 None => {
-                    send_error(writer, 1)?;
+                    send_error(stream, 1)?;
                     return Ok(true);
                 }
             };
             let len = match parse_len(parts[1]) {
                 Some(l) => l,
                 None => {
-                    send_error(writer, 1)?;
+                    send_error(stream, 1)?;
                     return Ok(true);
                 }
             };
@@ -167,13 +229,13 @@ pub fn handle_command<W: Write>(
                 .ok();
             match channels.resp_rx.recv_timeout(Duration::from_secs(5)) {
                 Ok(GdbResponse::Memory(hex)) => {
-                    send_packet(writer, &hex)?;
+                    send_packet(stream, &hex)?;
                 }
                 Ok(GdbResponse::Error(code)) => {
-                    send_error(writer, code)?;
+                    send_error(stream, code)?;
                 }
                 _ => {
-                    send_error(writer, 1)?;
+                    send_error(stream, 1)?;
                 }
             }
         }
@@ -183,7 +245,7 @@ pub fn handle_command<W: Write>(
             let colon_pos = match args.find(':') {
                 Some(p) => p,
                 None => {
-                    send_error(writer, 1)?;
+                    send_error(stream, 1)?;
                     return Ok(true);
                 }
             };
@@ -192,14 +254,14 @@ pub fn handle_command<W: Write>(
 
             let parts: Vec<&str> = header.split(',').collect();
             if parts.len() != 2 {
-                send_error(writer, 1)?;
+                send_error(stream, 1)?;
                 return Ok(true);
             }
 
             let addr = match parse_addr(parts[0]) {
                 Some(a) => a,
                 None => {
-                    send_error(writer, 1)?;
+                    send_error(stream, 1)?;
                     return Ok(true);
                 }
             };
@@ -207,7 +269,7 @@ pub fn handle_command<W: Write>(
             let data = match decode_hex(hex_data) {
                 Some(d) => d,
                 None => {
-                    send_error(writer, 1)?;
+                    send_error(stream, 1)?;
                     return Ok(true);
                 }
             };
@@ -217,8 +279,8 @@ pub fn handle_command<W: Write>(
                 .send(GdbCommand::WriteMemory { addr, data })
                 .ok();
             match channels.resp_rx.recv_timeout(Duration::from_secs(5)) {
-                Ok(GdbResponse::Ok) => send_ok(writer)?,
-                _ => send_error(writer, 1)?,
+                Ok(GdbResponse::Ok) => send_ok(stream)?,
+                _ => send_error(stream, 1)?,
             }
         }
 
@@ -226,16 +288,16 @@ pub fn handle_command<W: Write>(
         'c' => {
             // Optional address argument (ignored for now)
             channels.cmd_tx.send(GdbCommand::Continue).ok();
-            // Wait for stop
-            match channels.resp_rx.recv() {
-                Ok(GdbResponse::StopReply(sig)) => {
-                    send_stop_reply(writer, sig)?;
+            // Wait for stop, also checking for interrupt (0x03) from debugger
+            match wait_for_stop_or_interrupt(stream, channels)? {
+                GdbResponse::StopReply(sig) => {
+                    send_stop_reply(stream, sig)?;
                 }
-                Ok(GdbResponse::Stopped) => {
-                    send_stop_reply(writer, 5)?; // SIGTRAP
+                GdbResponse::Stopped => {
+                    send_stop_reply(stream, 5)?; // SIGTRAP
                 }
                 _ => {
-                    send_stop_reply(writer, 5)?;
+                    send_stop_reply(stream, 5)?;
                 }
             }
         }
@@ -247,13 +309,13 @@ pub fn handle_command<W: Write>(
             // Wait for stop
             match channels.resp_rx.recv() {
                 Ok(GdbResponse::StopReply(sig)) => {
-                    send_stop_reply(writer, sig)?;
+                    send_stop_reply(stream, sig)?;
                 }
                 Ok(GdbResponse::Stopped) => {
-                    send_stop_reply(writer, 5)?; // SIGTRAP
+                    send_stop_reply(stream, 5)?; // SIGTRAP
                 }
                 _ => {
-                    send_stop_reply(writer, 5)?;
+                    send_stop_reply(stream, 5)?;
                 }
             }
         }
@@ -262,7 +324,7 @@ pub fn handle_command<W: Write>(
         'Z' | 'z' => {
             let parts: Vec<&str> = args.split(',').collect();
             if parts.len() < 2 {
-                send_error(writer, 1)?;
+                send_error(stream, 1)?;
                 return Ok(true);
             }
 
@@ -270,14 +332,14 @@ pub fn handle_command<W: Write>(
             let addr = match parse_addr(parts[1]) {
                 Some(a) => a,
                 None => {
-                    send_error(writer, 1)?;
+                    send_error(stream, 1)?;
                     return Ok(true);
                 }
             };
 
             // Only support software breakpoints (type 0)
             if bp_type != "0" {
-                send_empty(writer)?; // Unsupported
+                send_empty(stream)?; // Unsupported
                 return Ok(true);
             }
 
@@ -294,15 +356,15 @@ pub fn handle_command<W: Write>(
             }
 
             match channels.resp_rx.recv_timeout(Duration::from_secs(5)) {
-                Ok(GdbResponse::Ok) => send_ok(writer)?,
-                _ => send_error(writer, 1)?,
+                Ok(GdbResponse::Ok) => send_ok(stream)?,
+                _ => send_error(stream, 1)?,
             }
         }
 
         // Detach
         'D' => {
             channels.cmd_tx.send(GdbCommand::Detach).ok();
-            send_ok(writer)?;
+            send_ok(stream)?;
             return Ok(false);
         }
 
@@ -314,19 +376,19 @@ pub fn handle_command<W: Write>(
 
         // Query commands
         'q' => {
-            handle_query(args, writer)?;
+            handle_query(args, stream)?;
         }
 
         // Set thread (ignored - single threaded)
         'H' => {
-            send_ok(writer)?;
+            send_ok(stream)?;
         }
 
         // vCont (extended continue/step)
         'v' => {
             if args.starts_with("Cont?") {
                 // Report supported vCont actions (with thread support)
-                send_packet(writer, "vCont;c;C;s;S;t")?;
+                send_packet(stream, "vCont;c;C;s;S;t")?;
             } else if args.starts_with("Cont;") {
                 // Parse vCont actions: vCont;action[:thread];action[:thread]...
                 // Examples: vCont;s:1, vCont;c, vCont;s:-1, vCont;c:1;s:2
@@ -350,30 +412,31 @@ pub fn handle_command<W: Write>(
                 if do_step {
                     channels.cmd_tx.send(GdbCommand::Step).ok();
                     match channels.resp_rx.recv() {
-                        Ok(GdbResponse::StopReply(sig)) => send_stop_reply(writer, sig)?,
-                        _ => send_stop_reply(writer, 5)?,
+                        Ok(GdbResponse::StopReply(sig)) => send_stop_reply(stream, sig)?,
+                        _ => send_stop_reply(stream, 5)?,
                     }
                 } else if do_continue {
                     channels.cmd_tx.send(GdbCommand::Continue).ok();
-                    match channels.resp_rx.recv() {
-                        Ok(GdbResponse::StopReply(sig)) => send_stop_reply(writer, sig)?,
-                        _ => send_stop_reply(writer, 5)?,
+                    // Wait for stop, also checking for interrupt (0x03) from debugger
+                    match wait_for_stop_or_interrupt(stream, channels)? {
+                        GdbResponse::StopReply(sig) => send_stop_reply(stream, sig)?,
+                        _ => send_stop_reply(stream, 5)?,
                     }
                 } else {
-                    send_empty(writer)?;
+                    send_empty(stream)?;
                 }
             } else if args.starts_with("Stopped") {
                 // vStopped - report no more stop events
-                send_ok(writer)?;
+                send_ok(stream)?;
             } else {
-                send_empty(writer)?;
+                send_empty(stream)?;
             }
         }
 
         // Unknown command
         _ => {
             debug!(cmd = %cmd, "Unknown GDB command");
-            send_empty(writer)?;
+            send_empty(stream)?;
         }
     }
 
@@ -381,11 +444,11 @@ pub fn handle_command<W: Write>(
 }
 
 /// Handle query commands (q...).
-fn handle_query<W: Write>(args: &str, writer: &mut W) -> std::io::Result<()> {
+fn handle_query<W: Write>(args: &str, stream: &mut W) -> std::io::Result<()> {
     if args.starts_with("Supported") {
         // Report supported features including target description
         send_packet(
-            writer,
+            stream,
             "PacketSize=4096;swbreak+;vContSupported+;qXfer:features:read+",
         )?;
     } else if args.starts_with("Xfer:features:read:target.xml:") {
@@ -398,55 +461,55 @@ fn handle_query<W: Write>(args: &str, writer: &mut W) -> std::io::Result<()> {
 
         let xml = TARGET_XML;
         if offset >= xml.len() {
-            send_packet(writer, "l")?; // End of data
+            send_packet(stream, "l")?; // End of data
         } else {
             let remaining = &xml[offset..];
             // 'l' prefix means last chunk, 'm' means more data follows
             if remaining.len() <= 4096 {
-                send_packet(writer, &format!("l{}", remaining))?;
+                send_packet(stream, &format!("l{}", remaining))?;
             } else {
-                send_packet(writer, &format!("m{}", &remaining[..4096]))?;
+                send_packet(stream, &format!("m{}", &remaining[..4096]))?;
             }
         }
     } else if args.starts_with("Attached") {
         // We attached to an existing process
-        send_packet(writer, "1")?;
+        send_packet(stream, "1")?;
     } else if args.starts_with("TStatus") {
         // Tracepoint status - not supported
-        send_empty(writer)?;
+        send_empty(stream)?;
     } else if args.starts_with("fThreadInfo") {
         // First thread info query
-        send_packet(writer, "m1")?; // Thread 1
+        send_packet(stream, "m1")?; // Thread 1
     } else if args.starts_with("sThreadInfo") {
         // Subsequent thread info query
-        send_packet(writer, "l")?; // End of list
+        send_packet(stream, "l")?; // End of list
     } else if args.starts_with("C") {
         // Current thread
-        send_packet(writer, "QC1")?; // Thread 1
+        send_packet(stream, "QC1")?; // Thread 1
     } else if args.starts_with("Offsets") {
         // Section offsets - not applicable
-        send_empty(writer)?;
+        send_empty(stream)?;
     } else if args.starts_with("Symbol") {
         // Symbol lookup - not supported
-        send_ok(writer)?;
+        send_ok(stream)?;
     } else if args.starts_with("Rcmd") {
         // Remote command - not supported
-        send_ok(writer)?;
+        send_ok(stream)?;
     } else if args.starts_with("L") {
         // Thread list (older format)
-        send_packet(writer, "qM001000000000000001")?; // One thread
+        send_packet(stream, "qM001000000000000001")?; // One thread
     } else if args.starts_with("P") {
         // Get thread info - not supported
-        send_empty(writer)?;
+        send_empty(stream)?;
     } else if args.starts_with("ThreadExtraInfo") {
         // Thread extra info
         // Return hex-encoded "CPU 0"
         let info = "CPU 0";
         let hex: String = info.bytes().map(|b| format!("{:02x}", b)).collect();
-        send_packet(writer, &hex)?;
+        send_packet(stream, &hex)?;
     } else {
         debug!(query = %args, "Unknown query");
-        send_empty(writer)?;
+        send_empty(stream)?;
     }
 
     Ok(())
