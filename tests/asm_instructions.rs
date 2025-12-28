@@ -895,18 +895,18 @@ fn test_enter_basic() {
 // ===== INT3 Test =====
 
 #[test]
-fn test_int3() {
-    // INT3 should return Debug exit
+fn test_int3_no_idt() {
+    // INT3 without a valid IDT should return an error
+    // (For proper INT3 handling with IDT, see tests/x86_64/control_flow/int_into_int3.rs)
     let code = [0xCC, 0xF4]; // INT3, HLT
     let regs = Registers::default();
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
-    // Run and expect Debug exit
-    let exit = vcpu.run().unwrap();
-    match exit {
-        VcpuExit::Debug => {}, // Expected
-        other => panic!("Expected Debug exit, got {:?}", other),
-    }
+    // Run and expect error since no IDT is configured
+    let result = vcpu.run();
+    assert!(result.is_err(), "INT3 without IDT should return error");
+    let err_msg = result.unwrap_err().to_string();
+    assert!(err_msg.contains("IDT entry 3 not present"), "Error should mention missing IDT entry");
 }
 
 // ===== XLAT Test =====
