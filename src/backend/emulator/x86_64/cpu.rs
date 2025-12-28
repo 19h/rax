@@ -1022,24 +1022,7 @@ impl X86_64Vcpu {
         }
 
         // Debug: Track rep_stos_alternative progress
-        if rip == 0xffffffff8224dac0 {  // Inner loop start of rep_stos_alternative
-            use std::sync::atomic::{AtomicUsize, AtomicU64, Ordering as AtomicOrdering};
-            static LOOP_COUNT: AtomicUsize = AtomicUsize::new(0);
-            static LAST_RDI: AtomicU64 = AtomicU64::new(0);
-            static LAST_RCX: AtomicU64 = AtomicU64::new(0);
-
-            let count = LOOP_COUNT.fetch_add(1, AtomicOrdering::Relaxed);
-            let rdi = self.regs.rdi;
-            let rcx = self.regs.rcx;
-
-            let last_rdi = LAST_RDI.swap(rdi, AtomicOrdering::Relaxed);
-            let last_rcx = LAST_RCX.swap(rcx, AtomicOrdering::Relaxed);
-
-            if count < 10 || (count % 1000000 == 0) || (rdi == last_rdi && count > 10) {
-                eprintln!("[rep_stos_loop #{}] RDI={:#x} RCX={} (prev: RDI={:#x} RCX={})",
-                          count, rdi, rcx, last_rdi, last_rcx);
-            }
-        }
+        // Debug loop tracking disabled for performance
 
         // Track RIP history for debugging crashes
         {
