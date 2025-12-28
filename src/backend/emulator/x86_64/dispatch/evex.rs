@@ -28,6 +28,10 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let opcode = ctx.consume_u8()?;
 
+        // Record precise opcode key for profiling
+        #[cfg(feature = "profiling")]
+        crate::profiling::set_current_opcode_key(crate::profiling::OpcodeKey::Evex { map: mm, opcode });
+
         match mm {
             1 => self.execute_evex_0f(ctx, opcode),
             2 => self.execute_evex_0f38(ctx, opcode),

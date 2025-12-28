@@ -62,6 +62,15 @@ struct Cli {
     /// Resume from snapshot file
     #[arg(long)]
     resume: Option<PathBuf>,
+    /// Enable instruction profiling (requires --features profiling)
+    #[arg(long)]
+    profile: bool,
+    /// JSON output path for profiling results
+    #[arg(long)]
+    profile_output: Option<PathBuf>,
+    /// Live profiling stats interval (instructions, default: 10M, 0 = disabled)
+    #[arg(long)]
+    profile_interval: Option<u64>,
 }
 
 fn main() -> Result<()> {
@@ -103,10 +112,43 @@ fn main() -> Result<()> {
         snapshot_at: cli.snapshot_at,
         snapshot_dir: cli.snapshot_dir,
         resume: cli.resume,
+        profile: cli.profile,
+        profile_output: cli.profile_output,
+        profile_interval: cli.profile_interval,
     };
 
     let config = VmConfig::from_sources(cli_config, file_config)?;
     let resume_path = config.resume.clone();
+
+    // Initialize profiling if requested
+    #[cfg(feature = "profiling")]
+    if config.profile {
+        let profiling_config = rax::profiling::ProfilingConfig {
+            track_memory: true,
+            live_interval: config.profile_interval.unwrap_or(10_000_000),
+            json_path: config.profile_output.clone(),
+        };
+        rax::profiling::init(profiling_config);
+    }
+
+    #[cfg(not(feature = "profiling"))]
+    if config.profile {
+        return Err(rax::error::Error::InvalidConfig(
+            "--profile requires building with --features profiling".to_string(),
+        ));
+    }
+
+    // Set up Ctrl+C handler for graceful shutdown
+    #[cfg(feature = "profiling")]
+    {
+        ctrlc::set_handler(move || {
+            eprintln!("\n[profiling] Caught SIGINT, shutting down...");
+            rax::profiling::shutdown();
+            std::process::exit(0);
+        })
+        .expect("Error setting Ctrl+C handler");
+    }
+
     let mut vmm = Vmm::new(config)?;
 
     // Restore from snapshot if specified
@@ -118,6 +160,10 @@ fn main() -> Result<()> {
     }
 
     vmm.run()?;
+
+    // Shutdown profiling (exports JSON and prints summary)
+    #[cfg(feature = "profiling")]
+    rax::profiling::shutdown();
 
     Ok(())
 }

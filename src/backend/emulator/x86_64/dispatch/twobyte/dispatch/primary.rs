@@ -3,7 +3,6 @@
 use crate::cpu::VcpuExit;
 use crate::error::{Error, Result};
 
-use super::super::super::super::aes;
 use super::super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::super::flags;
 use super::super::super::super::insn;
@@ -15,6 +14,10 @@ impl X86_64Vcpu {
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
         let opcode2 = ctx.consume_u8()?;
+
+        // Record precise opcode key for profiling
+        #[cfg(feature = "profiling")]
+        crate::profiling::set_current_opcode_key(crate::profiling::OpcodeKey::TwoByte(opcode2));
 
         match opcode2 {
             // System

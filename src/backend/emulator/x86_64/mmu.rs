@@ -8,6 +8,9 @@ use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 use crate::cpu::SystemRegisters;
 use crate::error::{Error, Result};
 
+#[cfg(feature = "profiling")]
+use crate::profiling;
+
 use super::timing;
 
 // LAPIC constants
@@ -976,6 +979,9 @@ impl Mmu {
     /// Read a u8 from virtual address.
     #[inline(always)]
     pub fn read_u8(&mut self, vaddr: u64, sregs: &SystemRegisters) -> Result<u8> {
+        #[cfg(feature = "profiling")]
+        profiling::memory::record_read(1);
+
         let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
         let mut buf = [0u8; 1];
         self.read_phys(paddr, &mut buf)?;
@@ -985,6 +991,9 @@ impl Mmu {
     /// Read a u16 from virtual address.
     #[inline(always)]
     pub fn read_u16(&mut self, vaddr: u64, sregs: &SystemRegisters) -> Result<u16> {
+        #[cfg(feature = "profiling")]
+        profiling::memory::record_read(2);
+
         // Fast path if not crossing page boundary
         if (vaddr & 0xFFF) <= 0xFFE {
             let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
@@ -1001,6 +1010,9 @@ impl Mmu {
     /// Read a u32 from virtual address.
     #[inline(always)]
     pub fn read_u32(&mut self, vaddr: u64, sregs: &SystemRegisters) -> Result<u32> {
+        #[cfg(feature = "profiling")]
+        profiling::memory::record_read(4);
+
         // Fast path if not crossing page boundary
         if (vaddr & 0xFFF) <= 0xFFC {
             let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
@@ -1017,6 +1029,9 @@ impl Mmu {
     /// Read a u64 from virtual address.
     #[inline(always)]
     pub fn read_u64(&mut self, vaddr: u64, sregs: &SystemRegisters) -> Result<u64> {
+        #[cfg(feature = "profiling")]
+        profiling::memory::record_read(8);
+
         // Fast path if not crossing page boundary
         if (vaddr & 0xFFF) <= 0xFF8 {
             let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
@@ -1033,6 +1048,9 @@ impl Mmu {
     /// Write a u8 to virtual address.
     #[inline(always)]
     pub fn write_u8(&mut self, vaddr: u64, value: u8, sregs: &SystemRegisters) -> Result<()> {
+        #[cfg(feature = "profiling")]
+        profiling::memory::record_write(1);
+
         let paddr = self.translate(vaddr, AccessType::Write, sregs)?;
         self.write_phys(paddr, &[value])
     }
@@ -1040,6 +1058,9 @@ impl Mmu {
     /// Write a u16 to virtual address.
     #[inline(always)]
     pub fn write_u16(&mut self, vaddr: u64, value: u16, sregs: &SystemRegisters) -> Result<()> {
+        #[cfg(feature = "profiling")]
+        profiling::memory::record_write(2);
+
         if (vaddr & 0xFFF) <= 0xFFE {
             let paddr = self.translate(vaddr, AccessType::Write, sregs)?;
             self.write_phys(paddr, &value.to_le_bytes())
@@ -1051,6 +1072,9 @@ impl Mmu {
     /// Write a u32 to virtual address.
     #[inline(always)]
     pub fn write_u32(&mut self, vaddr: u64, value: u32, sregs: &SystemRegisters) -> Result<()> {
+        #[cfg(feature = "profiling")]
+        profiling::memory::record_write(4);
+
         if (vaddr & 0xFFF) <= 0xFFC {
             let paddr = self.translate(vaddr, AccessType::Write, sregs)?;
             self.write_phys(paddr, &value.to_le_bytes())
@@ -1062,6 +1086,9 @@ impl Mmu {
     /// Write a u64 to virtual address.
     #[inline(always)]
     pub fn write_u64(&mut self, vaddr: u64, value: u64, sregs: &SystemRegisters) -> Result<()> {
+        #[cfg(feature = "profiling")]
+        profiling::memory::record_write(8);
+
         if (vaddr & 0xFFF) <= 0xFF8 {
             let paddr = self.translate(vaddr, AccessType::Write, sregs)?;
             self.write_phys(paddr, &value.to_le_bytes())

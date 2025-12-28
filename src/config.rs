@@ -318,6 +318,12 @@ pub struct CliConfig {
     pub snapshot_dir: Option<PathBuf>,
     /// Snapshot file to resume from
     pub resume: Option<PathBuf>,
+    /// Enable instruction profiling
+    pub profile: bool,
+    /// JSON output path for profiling results
+    pub profile_output: Option<PathBuf>,
+    /// Live profiling stats interval (instructions)
+    pub profile_interval: Option<u64>,
 }
 
 #[derive(Clone, Debug)]
@@ -346,6 +352,12 @@ pub struct VmConfig {
     pub snapshot_dir: Option<PathBuf>,
     /// Snapshot file to resume from
     pub resume: Option<PathBuf>,
+    /// Enable instruction profiling
+    pub profile: bool,
+    /// JSON output path for profiling results
+    pub profile_output: Option<PathBuf>,
+    /// Live profiling stats interval (instructions)
+    pub profile_interval: Option<u64>,
 }
 
 impl VmConfig {
@@ -391,6 +403,9 @@ impl VmConfig {
             snapshot_at: cli.snapshot_at,
             snapshot_dir: cli.snapshot_dir,
             resume: cli.resume,
+            profile: cli.profile,
+            profile_output: cli.profile_output,
+            profile_interval: cli.profile_interval,
         };
 
         config.validate()?;

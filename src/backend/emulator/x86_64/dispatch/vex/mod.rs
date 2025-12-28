@@ -78,6 +78,10 @@ impl X86_64Vcpu {
         vvvv: u8,
         opcode: u8,
     ) -> Result<Option<VcpuExit>> {
+        // Record precise opcode key for profiling
+        #[cfg(feature = "profiling")]
+        crate::profiling::set_current_opcode_key(crate::profiling::OpcodeKey::Vex { map: m_mmmm, opcode });
+
         // Note: We allow VEX.L=1 (256-bit YMM) operations as we have implementations
         // for the common AVX instructions. The individual handlers support L=1.
         // We reject EVEX (AVX-512) separately in the EVEX dispatcher.
