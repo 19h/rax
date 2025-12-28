@@ -292,6 +292,7 @@ dependencies = [
  "goblin",
  "kvm-bindings",
  "kvm-ioctls",
+ "libc",
  "linux-loader",
  "serde",
  "thiserror",

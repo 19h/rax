@@ -11,6 +11,13 @@ use vm_memory::{GuestAddress, GuestMemoryMmap};
 
 pub const PAGE_SIZE: u64 = 4096;
 
+/// Start of the gap for KVM's TSS and identity map (must not be registered as guest memory)
+/// This is in the MMIO gap below 4GB. KVM needs space for TSS (3 pages) + identity map pages.
+/// We leave a generous gap of 1MB to be safe. Located at 3GB mark to avoid any MMIO conflicts.
+pub const KVM_TSS_IDENTITY_GAP_START: u64 = 0xC0000000; // 3GB
+/// End of the gap (exclusive) - 1MB gap
+pub const KVM_TSS_IDENTITY_GAP_END: u64 = 0xC0100000; // 3GB + 1MB
+
 pub fn align_up(value: u64, align: u64) -> u64 {
     if align == 0 {
         return value;
@@ -68,22 +75,60 @@ impl GuestMemoryWrapper {
 
     #[cfg(all(feature = "kvm", target_os = "linux"))]
     pub fn register(&self, vm_fd: &VmFd) -> Result<()> {
-        for (slot, region) in self.mem.iter().enumerate() {
+        use tracing::debug;
+
+        // Register memory up to (but not past) the KVM TSS/identity gap.
+        // KVM's vCPU creation fails with EEXIST if any memory slot is registered
+        // at addresses >= the TSS/identity map address. We leave a gap for KVM's
+        // internal structures and do NOT register memory above this gap.
+        //
+        // The backing memory above the gap is still allocated (via mmap), which
+        // allows the host to handle any overflow accesses if needed, but KVM
+        // won't try to map it as guest RAM.
+        let mut slot = 0u32;
+
+        for region in self.mem.iter() {
+            let region_start = region.start_addr().raw_value();
+            let region_end = region_start + region.len();
+            let host_base = region.as_ptr() as u64;
+
+            // Only register memory up to the gap - do NOT register anything at or above it
+            let effective_end = region_end.min(KVM_TSS_IDENTITY_GAP_START);
+
+            if region_start >= effective_end {
+                // This entire region is at or above the gap, skip it
+                debug!(
+                    region_start = format!("{:#x}", region_start),
+                    region_end = format!("{:#x}", region_end),
+                    gap_start = format!("{:#x}", KVM_TSS_IDENTITY_GAP_START),
+                    "skipping memory region at/above TSS gap"
+                );
+                continue;
+            }
+
+            let size = effective_end - region_start;
+            let host_addr = host_base;
+
             info!(
                 slot,
-                guest_start = region.start_addr().raw_value(),
-                region_len = region.len(),
+                guest_start = format!("{:#x}", region_start),
+                guest_end = format!("{:#x}", effective_end),
+                size = size,
                 "registering guest memory"
             );
-            let host_addr = region.as_ptr() as u64;
+
             let mem_region = kvm_userspace_memory_region {
-                slot: slot as u32,
-                guest_phys_addr: region.start_addr().raw_value(),
-                memory_size: region.len(),
+                slot,
+                guest_phys_addr: region_start,
+                memory_size: size,
                 userspace_addr: host_addr,
                 flags: 0,
             };
+            debug!(slot, guest_addr = format!("{:#x}", region_start), "calling set_user_memory_region");
             unsafe { vm_fd.set_user_memory_region(mem_region)? };
+            debug!(slot, "set_user_memory_region succeeded");
+
+            slot += 1;
         }
         Ok(())
     }

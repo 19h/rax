@@ -35,3 +35,6 @@ strip = true
 
 [profile.release.build-override]
 opt-level = 3
+
+[dev-dependencies]
+libc = "0.2"

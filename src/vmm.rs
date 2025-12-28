@@ -206,11 +206,14 @@ impl Vmm {
         }
         // Emulator doesn't need VM-level initialization
 
+        debug!("creating vCPUs");
         // Create vCPUs
         let mem_arc = Arc::new(guest_mem.memory().clone());
         let mut vcpus = Vec::with_capacity(config.vcpus as usize);
         for cpu_id in 0..config.vcpus {
+            debug!(cpu_id, "creating vCPU");
             let mut vcpu = vm.create_vcpu(cpu_id as u32, mem_arc.clone())?;
+            debug!(cpu_id, "created vCPU, setting initial state");
 
             // Setup initial CPU state for BSP (cpu 0)
             if cpu_id == 0 {
@@ -659,6 +662,15 @@ impl Vmm {
                     vcpu.set_single_step(true);
                 }
                 return Ok(None); // Resume execution for one instruction
+            }
+            GdbCommand::Interrupt => {
+                // Debugger requested pause (Ctrl+C / suspend)
+                self.gdb_stopped = true;
+                self.gdb_single_step = false;
+                if let Some(vcpu) = self.vcpus.get_mut(0) {
+                    vcpu.set_single_step(false);
+                }
+                let _ = channels.resp_tx.send(GdbResponse::StopReply(2)); // SIGINT
             }
             GdbCommand::ReadRegisters => {
                 let vcpu = self.vcpus.get(0)

@@ -103,12 +103,17 @@ impl KvmVm {
 impl Vm for KvmVm {
     fn create_vcpu(&self, id: u32, _mem: Arc<GuestMemoryMmap>) -> Result<Box<dyn VCpu>> {
         use kvm_bindings::KVM_MAX_CPUID_ENTRIES;
+        use tracing::debug;
 
+        debug!(id, "KvmVm::create_vcpu: calling create_vcpu");
         let vcpu_fd = self.vm_fd.create_vcpu(id as u64)?;
+        debug!(id, "KvmVm::create_vcpu: vcpu created, getting CPUID");
 
         // Set CPUID for the vCPU
         let cpuid = self.kvm.get_supported_cpuid(KVM_MAX_CPUID_ENTRIES)?;
+        debug!(id, "KvmVm::create_vcpu: setting CPUID");
         vcpu_fd.set_cpuid2(&cpuid)?;
+        debug!(id, "KvmVm::create_vcpu: done");
 
         Ok(Box::new(KvmVcpu {
             vcpu_fd,

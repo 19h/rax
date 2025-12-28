@@ -545,9 +545,17 @@ impl Arch for X86_64Arch {
             ));
         }
 
+        // Calculate reserved_start for e820 and initrd placement (within reported memory)
         let reserved_start = align_down(mem_size - KVM_RESERVED_SIZE, PAGE_SIZE);
-        let identity_map_addr = reserved_start;
-        let tss_addr = reserved_start + PAGE_SIZE;
+
+        // Place identity map and TSS addresses in the MMIO gap below 4GB.
+        // These must NOT overlap with registered guest memory slots.
+        // KVM's set_tss_address creates an internal memory slot, which fails
+        // with EEXIST if it overlaps user-registered memory.
+        // The memory registration leaves a gap at KVM_TSS_IDENTITY_GAP_START for this purpose.
+        use crate::memory::KVM_TSS_IDENTITY_GAP_START;
+        let identity_map_addr = KVM_TSS_IDENTITY_GAP_START;
+        let tss_addr = KVM_TSS_IDENTITY_GAP_START + PAGE_SIZE;
 
         let (loader_result, is_elf, elf_phys_entry) = Self::load_kernel_image(mem, config)?;
 
@@ -743,10 +751,15 @@ impl Arch for X86_64Arch {
         let boot = boot.as_x86_64().ok_or_else(|| {
             Error::InvalidConfig("expected x86_64 boot info".to_string())
         })?;
+        debug!("creating IRQ chip");
         vm.create_irq_chip()?;
+        debug!("creating PIT2");
         vm.create_pit2()?;
+        debug!(tss_addr = format!("{:#x}", boot.tss_addr), "setting TSS address");
         vm.set_tss_address(boot.tss_addr)?;
+        debug!(identity_map_addr = format!("{:#x}", boot.identity_map_addr), "setting identity map address");
         vm.set_identity_map_address(boot.identity_map_addr)?;
+        debug!("init_vm complete");
         Ok(())
     }
 
