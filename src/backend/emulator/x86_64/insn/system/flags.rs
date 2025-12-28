@@ -8,28 +8,20 @@ use super::super::super::flags;
 
 /// CLI - Clear Interrupt Flag (0xFA)
 pub fn cli(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    static CLI_COUNT: AtomicUsize = AtomicUsize::new(0);
-    let n = CLI_COUNT.fetch_add(1, Ordering::Relaxed);
-    if n < 20 || n % 1000 == 0 {
-        let old_if = (vcpu.regs.rflags & flags::bits::IF) != 0;
-        eprintln!("[CLI #{}] RIP={:#x} IF: {} -> 0", n, vcpu.regs.rip, if old_if { 1 } else { 0 });
-    }
+    use super::super::super::cpu::log_if_transition;
+    let old_if = (vcpu.regs.rflags & flags::bits::IF) != 0;
     vcpu.regs.rflags &= !flags::bits::IF;
+    log_if_transition(vcpu.regs.rip, old_if, false, "CLI");
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
 
 /// STI - Set Interrupt Flag (0xFB)
 pub fn sti(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    static STI_COUNT: AtomicUsize = AtomicUsize::new(0);
-    let n = STI_COUNT.fetch_add(1, Ordering::Relaxed);
-    if n < 20 || n % 1000 == 0 {
-        let old_if = (vcpu.regs.rflags & flags::bits::IF) != 0;
-        eprintln!("[STI #{}] RIP={:#x} IF: {} -> 1", n, vcpu.regs.rip, if old_if { 1 } else { 0 });
-    }
+    use super::super::super::cpu::log_if_transition;
+    let old_if = (vcpu.regs.rflags & flags::bits::IF) != 0;
     vcpu.regs.rflags |= flags::bits::IF;
+    log_if_transition(vcpu.regs.rip, old_if, true, "STI");
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

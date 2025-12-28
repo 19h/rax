@@ -88,8 +88,7 @@ pub fn into(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
 
 /// IRET/IRETD/IRETQ (0xCF) - Interrupt return
 pub fn iret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    static IRET_TO_USER: AtomicUsize = AtomicUsize::new(0);
+    use super::super::super::cpu::log_if_transition;
 
     let op_size = ctx.op_size;
     let old_cpl = vcpu.sregs.cs.selector & 0x3;
@@ -110,18 +109,9 @@ pub fn iret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
         ));
     }
 
-    // Log ALL IRETs to see what's happening
-    let count = IRET_TO_USER.fetch_add(1, Ordering::Relaxed);
-    // Log more generously, now including IF flag info
-    let saved_if = (flags & 0x200) != 0; // Bit 9 is IF
-    if count < 20 || (count % 1000 == 0) || new_cpl == 3 {
-        eprintln!("[IRET #{}] cpl:{}->{} RIP={:#x} CS={:#x} saved_IF={}",
-            count, old_cpl, new_cpl, ret_ip, cs, if saved_if { 1 } else { 0 });
-    }
-
     // In 64-bit mode, IRETQ ALWAYS pops RSP and SS, regardless of privilege level change.
     // In 32-bit mode, RSP/SS are only popped on privilege level change.
-    let (new_rsp, new_ss) = if in_64bit_mode || new_cpl > old_cpl {
+    let (_new_rsp, _new_ss) = if in_64bit_mode || new_cpl > old_cpl {
         let new_rsp = pop_by_size(vcpu, op_size)?;
         let new_ss = pop_by_size(vcpu, op_size)? as u16;
 
@@ -132,7 +122,18 @@ pub fn iret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
         (vcpu.regs.rsp, vcpu.sregs.ss.selector)
     };
 
+    let if_before = (vcpu.regs.rflags & 0x200) != 0;
     apply_iret_flags(vcpu, op_size, flags)?;
+    let if_after = (vcpu.regs.rflags & 0x200) != 0;
+
+    // Log when IRET should restore IF but doesn't
+    let saved_if = (flags & 0x200) != 0;
+    if saved_if && !if_after {
+        eprintln!("[IRET BUG] saved_IF=1 but IF not restored! rflags_before={:#x} flags_popped={:#x} rflags_after={:#x}",
+            if if_before { 0x200u64 } else { 0u64 }, flags, vcpu.regs.rflags);
+    }
+
+    log_if_transition(ret_ip, if_before, if_after, "IRET");
     vcpu.regs.rip = ret_ip;
     vcpu.set_sreg(1, cs); // CS is segment register 1
     Ok(None)

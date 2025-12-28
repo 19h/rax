@@ -634,14 +634,6 @@ impl Mmu {
         // Read PML4 entry
         let pml4e = self.read_pte(pml4_base + pml4_index * 8)?;
         if pml4e & flags::PRESENT == 0 {
-            // Debug: Log the page fault details
-            use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
-            static PML4_PF_COUNT: AtomicUsize = AtomicUsize::new(0);
-            let pf_count = PML4_PF_COUNT.fetch_add(1, AtomicOrdering::Relaxed);
-            if pf_count < 10 {
-                eprintln!("[PML4 not present] vaddr={:#x} is_write={} user_bit={:#x} write_bit={:#x} error_code={:#x}",
-                          vaddr, is_write, user_bit, write_bit, user_bit | write_bit);
-            }
             return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit });
         }
         // Check reserved bits (must be zero) - error code 0x9 = RSVD | P
