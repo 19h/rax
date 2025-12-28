@@ -26,6 +26,8 @@ pub enum GdbCommand {
     Continue,
     /// Single step one instruction.
     Step,
+    /// Interrupt execution (Ctrl+C from debugger).
+    Interrupt,
     /// Read all registers.
     ReadRegisters,
     /// Write all registers.
