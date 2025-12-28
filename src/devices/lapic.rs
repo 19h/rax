@@ -56,9 +56,67 @@ const TIMER_MODE_TSC_DEADLINE: u32 = 2;
 // SVR bits
 const SVR_APIC_ENABLED: u32 = 1 << 8;
 
+// ICR (Interrupt Command Register) field definitions
+const ICR_VECTOR_MASK: u64 = 0xFF;
+const ICR_DELIVERY_MODE_SHIFT: u64 = 8;
+const ICR_DELIVERY_MODE_MASK: u64 = 0x7 << ICR_DELIVERY_MODE_SHIFT;
+const ICR_DEST_MODE_LOGICAL: u64 = 1 << 11;
+const ICR_DELIVERY_STATUS: u64 = 1 << 12; // Read-only, 0 = idle, 1 = pending
+const ICR_LEVEL_ASSERT: u64 = 1 << 14;
+const ICR_TRIGGER_LEVEL: u64 = 1 << 15;
+const ICR_DEST_SHORTHAND_SHIFT: u64 = 18;
+const ICR_DEST_SHORTHAND_MASK: u64 = 0x3 << ICR_DEST_SHORTHAND_SHIFT;
+const ICR_DEST_FIELD_SHIFT: u64 = 56; // Bits 56-63 (in full 64-bit ICR)
+
+// ICR Delivery Modes
+const DELIVERY_MODE_FIXED: u64 = 0;
+const DELIVERY_MODE_LOWEST_PRIORITY: u64 = 1;
+const DELIVERY_MODE_SMI: u64 = 2;
+const DELIVERY_MODE_NMI: u64 = 4;
+const DELIVERY_MODE_INIT: u64 = 5;
+const DELIVERY_MODE_SIPI: u64 = 6; // Start-up IPI
+
+// ICR Destination Shorthands
+const DEST_SHORTHAND_NONE: u64 = 0;
+const DEST_SHORTHAND_SELF: u64 = 1;
+const DEST_SHORTHAND_ALL_INCLUDING_SELF: u64 = 2;
+const DEST_SHORTHAND_ALL_EXCLUDING_SELF: u64 = 3;
+
 /// LAPIC timer frequency (approximate - 1 GHz bus clock / 16 = ~62.5 MHz base)
 /// We'll use a simulated frequency based on real time
 const LAPIC_TIMER_FREQ_HZ: u64 = 1_000_000_000; // 1 GHz base frequency
+
+/// Represents an IPI request that needs to be delivered
+#[derive(Debug, Clone)]
+pub enum IpiRequest {
+    /// Fixed interrupt delivery - deliver vector to target CPU(s)
+    Fixed { vector: u8, target: IpiTarget },
+    /// Lowest priority - deliver to CPU with lowest priority (treated as Fixed for single CPU)
+    LowestPriority { vector: u8, target: IpiTarget },
+    /// Non-maskable interrupt
+    Nmi { target: IpiTarget },
+    /// System management interrupt
+    Smi { target: IpiTarget },
+    /// INIT - reset target CPU to wait-for-SIPI state
+    Init { target: IpiTarget },
+    /// Start-up IPI - start target CPU at specified vector * 0x1000
+    Sipi { vector: u8, target: IpiTarget },
+}
+
+/// Target specification for an IPI
+#[derive(Debug, Clone)]
+pub enum IpiTarget {
+    /// Send to self only
+    ToSelf,
+    /// Send to all CPUs including self
+    AllIncludingSelf,
+    /// Send to all CPUs excluding self
+    AllExcludingSelf,
+    /// Send to specific CPU by physical APIC ID
+    Physical(u8),
+    /// Send to CPUs matching logical destination
+    Logical { destination: u8 },
+}
 
 pub struct LocalApic {
     /// LAPIC ID (usually matches CPU ID)
@@ -105,6 +163,10 @@ pub struct LocalApic {
     timer_start: Option<Instant>,
     /// Pending timer interrupt
     timer_pending: bool,
+    /// Pending IPI request (for VMM to process)
+    pending_ipi: Option<IpiRequest>,
+    /// Pending NMI to deliver
+    nmi_pending: bool,
 }
 
 impl LocalApic {
@@ -141,6 +203,8 @@ impl LocalApic {
             timer_divide_config: 0,
             timer_start: None,
             timer_pending: false,
+            pending_ipi: None,
+            nmi_pending: false,
         }
     }
 
@@ -248,6 +312,135 @@ impl LocalApic {
     /// Check if there's a pending timer interrupt
     pub fn has_pending_timer(&self) -> bool {
         self.timer_pending
+    }
+
+    /// Get the APIC ID (bits 24-31 of the ID register)
+    pub fn apic_id(&self) -> u8 {
+        (self.id >> 24) as u8
+    }
+
+    /// Check if there's a pending NMI
+    pub fn has_pending_nmi(&self) -> bool {
+        self.nmi_pending
+    }
+
+    /// Clear pending NMI (called after delivery)
+    pub fn clear_pending_nmi(&mut self) {
+        self.nmi_pending = false;
+    }
+
+    /// Take pending IPI request (returns and clears it)
+    pub fn take_pending_ipi(&mut self) -> Option<IpiRequest> {
+        self.pending_ipi.take()
+    }
+
+    /// Check if there's a pending IPI
+    pub fn has_pending_ipi(&self) -> bool {
+        self.pending_ipi.is_some()
+    }
+
+    /// Handle IPI delivery when ICR is written.
+    /// For self-targeted IPIs, this updates local state (IRR/NMI).
+    /// For other CPUs, returns an IpiRequest for the VMM to handle.
+    fn handle_ipi(&mut self) {
+        let icr = self.icr;
+        let vector = (icr & ICR_VECTOR_MASK) as u8;
+        let delivery_mode = (icr & ICR_DELIVERY_MODE_MASK) >> ICR_DELIVERY_MODE_SHIFT;
+        let dest_mode_logical = (icr & ICR_DEST_MODE_LOGICAL) != 0;
+        let level_assert = (icr & ICR_LEVEL_ASSERT) != 0;
+        let shorthand = (icr & ICR_DEST_SHORTHAND_MASK) >> ICR_DEST_SHORTHAND_SHIFT;
+        let dest_field = ((icr >> ICR_DEST_FIELD_SHIFT) & 0xFF) as u8;
+
+        tracing::debug!(
+            "LAPIC IPI: vector={:#x}, delivery_mode={}, dest_mode={}, shorthand={}, dest={:#x}, level_assert={}",
+            vector,
+            delivery_mode,
+            if dest_mode_logical { "logical" } else { "physical" },
+            shorthand,
+            dest_field,
+            level_assert
+        );
+
+        // Determine target
+        let target = match shorthand {
+            DEST_SHORTHAND_SELF => IpiTarget::ToSelf,
+            DEST_SHORTHAND_ALL_INCLUDING_SELF => IpiTarget::AllIncludingSelf,
+            DEST_SHORTHAND_ALL_EXCLUDING_SELF => IpiTarget::AllExcludingSelf,
+            DEST_SHORTHAND_NONE => {
+                if dest_mode_logical {
+                    IpiTarget::Logical { destination: dest_field }
+                } else {
+                    IpiTarget::Physical(dest_field)
+                }
+            }
+            _ => return, // Invalid shorthand
+        };
+
+        // Check if this IPI targets self
+        let targets_self = match &target {
+            IpiTarget::ToSelf => true,
+            IpiTarget::AllIncludingSelf => true,
+            IpiTarget::AllExcludingSelf => false,
+            IpiTarget::Physical(id) => *id == self.apic_id(),
+            IpiTarget::Logical { destination } => {
+                // Check if our logical ID matches
+                // In flat model (DFR = 0xFFFFFFFF), LDR bits 24-31 are the logical ID
+                // Match if any bit in destination matches any bit in our logical ID
+                let our_logical_id = (self.ldr >> 24) as u8;
+                (destination & our_logical_id) != 0
+            }
+        };
+
+        // Handle delivery based on mode
+        match delivery_mode {
+            DELIVERY_MODE_FIXED | DELIVERY_MODE_LOWEST_PRIORITY => {
+                if targets_self {
+                    // Deliver to self immediately by setting IRR
+                    self.set_irr(vector);
+                    tracing::debug!("LAPIC: Self-IPI vector {:#x} delivered to IRR", vector);
+                }
+                // Store IPI request for VMM to deliver to other CPUs
+                if !matches!(target, IpiTarget::ToSelf) {
+                    self.pending_ipi = Some(if delivery_mode == DELIVERY_MODE_FIXED {
+                        IpiRequest::Fixed { vector, target }
+                    } else {
+                        IpiRequest::LowestPriority { vector, target }
+                    });
+                }
+            }
+            DELIVERY_MODE_NMI => {
+                if targets_self {
+                    self.nmi_pending = true;
+                    tracing::debug!("LAPIC: Self-NMI pending");
+                }
+                if !matches!(target, IpiTarget::ToSelf) {
+                    self.pending_ipi = Some(IpiRequest::Nmi { target });
+                }
+            }
+            DELIVERY_MODE_SMI => {
+                // SMI is system-level, store for VMM
+                self.pending_ipi = Some(IpiRequest::Smi { target });
+                tracing::debug!("LAPIC: SMI requested");
+            }
+            DELIVERY_MODE_INIT => {
+                // INIT resets target CPU to wait-for-SIPI state
+                // Level de-assert (level=0) is used for INIT synchronization, ignore it
+                if level_assert {
+                    self.pending_ipi = Some(IpiRequest::Init { target: target.clone() });
+                    tracing::debug!("LAPIC: INIT IPI requested");
+                } else {
+                    tracing::debug!("LAPIC: INIT level de-assert (ignored)");
+                }
+            }
+            DELIVERY_MODE_SIPI => {
+                // Start-up IPI - vector specifies start address (vector * 0x1000)
+                self.pending_ipi = Some(IpiRequest::Sipi { vector, target });
+                tracing::debug!("LAPIC: SIPI vector={:#x} (start addr={:#x})", vector, (vector as u32) * 0x1000);
+            }
+            _ => {
+                tracing::warn!("LAPIC: Unknown delivery mode {}", delivery_mode);
+            }
+        }
     }
 
     /// Get pending interrupt vector (highest priority)
@@ -428,7 +621,8 @@ impl LocalApic {
             }
             LAPIC_ICR_LOW => {
                 self.icr = (self.icr & 0xFFFFFFFF00000000) | (value as u64);
-                // TODO: Handle IPI delivery
+                // Writing to ICR_LOW triggers IPI delivery
+                self.handle_ipi();
             }
             LAPIC_ICR_HIGH => {
                 self.icr = (self.icr & 0x00000000FFFFFFFF) | ((value as u64) << 32);
