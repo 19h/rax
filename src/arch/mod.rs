@@ -1,61 +1,7 @@
 //! Architecture abstraction layer.
 
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub mod x86_64;
-
 pub mod hexagon;
-
-#[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
-pub mod x86_64 {
-    use vm_memory::GuestMemoryMmap;
-
-    use super::{Arch, BootInfo};
-    use crate::config::VmConfig;
-    use crate::cpu::CpuState;
-    use crate::devices::bus::{IoBus, MmioBus};
-    use crate::error::{Error, Result};
-
-    pub struct X86_64Arch;
-
-    impl X86_64Arch {
-        pub fn new() -> Self {
-            X86_64Arch
-        }
-
-        fn unsupported<T>() -> Result<T> {
-            Err(Error::InvalidConfig(
-                "x86_64 architecture is not supported on this host".to_string(),
-            ))
-        }
-    }
-
-    impl Arch for X86_64Arch {
-        fn name(&self) -> &'static str {
-            "x86_64"
-        }
-
-        fn setup_devices(&self, _io_bus: &mut IoBus, _mmio_bus: &mut MmioBus) -> Result<()> {
-            Self::unsupported()
-        }
-
-        fn load_kernel(&self, _mem: &GuestMemoryMmap, _config: &VmConfig) -> Result<BootInfo> {
-            Self::unsupported()
-        }
-
-        fn initial_cpu_state(
-            &self,
-            _mem: &GuestMemoryMmap,
-            _boot: &BootInfo,
-        ) -> Result<CpuState> {
-            Self::unsupported()
-        }
-
-        #[cfg(all(feature = "kvm", target_os = "linux"))]
-        fn init_vm(&self, _vm: &crate::backend::kvm::KvmVm, _boot: &BootInfo) -> Result<()> {
-            Self::unsupported()
-        }
-    }
-}
 
 use vm_memory::{GuestAddress, GuestMemoryMmap};
 

@@ -1,15 +1,96 @@
+// On x86 hosts, use linux-loader's native types
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+mod native_imports {
+    pub use linux_loader::cmdline::Cmdline;
+    pub use linux_loader::configurator::linux::LinuxBootConfigurator;
+    pub use linux_loader::configurator::BootParams;
+    pub use linux_loader::loader::bootparam::{boot_e820_entry, boot_params};
+    pub use linux_loader::loader::elf::PvhBootCapability;
+    pub use linux_loader::loader::{load_cmdline, BzImage, KernelLoaderResult};
+}
+
+// On non-x86 hosts, use our local bootparam module
+#[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+mod bootparam;
+
+#[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+mod native_imports {
+    pub use super::bootparam::{
+        BootE820Entry as boot_e820_entry, BootParams as boot_params, KernelLoaderResult,
+        PvhBootCapability, SetupHeader,
+    };
+    pub use linux_loader::cmdline::Cmdline;
+
+    // Wrapper types to match linux-loader API
+    use vm_memory::{GuestAddress, GuestMemoryMmap};
+
+    pub fn load_cmdline(
+        mem: &GuestMemoryMmap,
+        addr: GuestAddress,
+        cmdline: &Cmdline,
+    ) -> Result<(), crate::error::Error> {
+        let s = cmdline
+            .as_cstring()
+            .map_err(|e| crate::error::Error::KernelLoad(format!("cmdline error: {e}")))?;
+        super::bootparam::load_cmdline(mem, addr, s.to_str().unwrap_or(""))
+    }
+
+    pub struct BzImage;
+    impl BzImage {
+        pub fn load<F: std::io::Read + std::io::Seek>(
+            mem: &GuestMemoryMmap,
+            kernel_offset: Option<GuestAddress>,
+            kernel_file: &mut F,
+            _highmem_start: Option<GuestAddress>,
+        ) -> Result<KernelLoaderResult, crate::error::Error> {
+            use std::io::{Read, Seek, SeekFrom};
+
+            let start = kernel_offset.unwrap_or(GuestAddress(0x1000000));
+
+            // Read entire file
+            kernel_file
+                .seek(SeekFrom::Start(0))
+                .map_err(|e| crate::error::Error::Io(e))?;
+            let mut data = Vec::new();
+            kernel_file
+                .read_to_end(&mut data)
+                .map_err(|e| crate::error::Error::Io(e))?;
+
+            super::bootparam::load_bzimage_from_bytes(mem, &data, start)
+        }
+    }
+
+    // Wrapper for boot params writing
+    pub struct LinuxBootConfigurator;
+    impl LinuxBootConfigurator {
+        pub fn write_bootparams(
+            params: &BootParams,
+            mem: &GuestMemoryMmap,
+        ) -> Result<(), crate::error::Error> {
+            super::bootparam::write_boot_params(mem, &params.params, params.addr)
+        }
+    }
+
+    pub struct BootParams {
+        pub params: boot_params,
+        pub addr: GuestAddress,
+    }
+
+    impl BootParams {
+        pub fn new(params: &boot_params, addr: GuestAddress) -> Self {
+            Self {
+                params: *params,
+                addr,
+            }
+        }
+    }
+}
+
 use std::fs::File;
-use std::io::{Read, Seek};
+use std::io::Read;
 
 use goblin::elf::Elf as GoblinElf;
-
-use linux_loader::cmdline::Cmdline;
-use linux_loader::configurator::linux::LinuxBootConfigurator;
-use linux_loader::configurator::BootConfigurator;
-use linux_loader::configurator::BootParams;
-use linux_loader::loader::bootparam::{boot_e820_entry, boot_params};
-use linux_loader::loader::elf::Elf;
-use linux_loader::loader::{load_cmdline, BzImage, KernelLoader, KernelLoaderResult};
+use native_imports::*;
 use tracing::{debug, info};
 use vm_memory::{Address, Bytes, GuestAddress, GuestMemory, GuestMemoryMmap};
 
@@ -128,7 +209,7 @@ impl X86_64Arch {
             kernel_load: GuestAddress(KERNEL_LOAD_ADDR),
             kernel_end: KERNEL_LOAD_ADDR + kernel_size,
             setup_header: None,
-            pvh_boot_cap: linux_loader::loader::elf::PvhBootCapability::PvhEntryNotPresent,
+            pvh_boot_cap: PvhBootCapability::PvhEntryNotPresent,
         };
 
         // Check if it's ELF to get entry point, otherwise use load address
@@ -186,7 +267,7 @@ impl X86_64Arch {
                 kernel_load: GuestAddress(KERNEL_LOAD_ADDR),
                 kernel_end: max_phys_end,
                 setup_header: None,
-                pvh_boot_cap: linux_loader::loader::elf::PvhBootCapability::PvhEntryNotPresent,
+                pvh_boot_cap: PvhBootCapability::PvhEntryNotPresent,
             };
 
             // The ELF entry point for vmlinux. Modern kernels built with
