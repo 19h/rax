@@ -137,20 +137,7 @@ impl X86_64Vcpu {
     #[inline]
     pub(super) fn get_segment_base(&self, segment_override: Option<u8>) -> u64 {
         match segment_override {
-            Some(0x64) => {
-                // Debug: log FS-relative access in user mode
-                let cpl = self.sregs.cs.selector & 0x3;
-                if cpl == 3 {
-                    use std::sync::atomic::{AtomicUsize, Ordering};
-                    static FS_ACCESS_COUNT: AtomicUsize = AtomicUsize::new(0);
-                    let count = FS_ACCESS_COUNT.fetch_add(1, Ordering::Relaxed);
-                    if count < 5 {
-                        eprintln!("[FS access #{}] FS.base={:#x} RIP={:#x}",
-                            count, self.sregs.fs.base, self.regs.rip);
-                    }
-                }
-                self.sregs.fs.base
-            }
+            Some(0x64) => self.sregs.fs.base, // FS segment
             Some(0x65) => self.sregs.gs.base, // GS segment
             // In 64-bit mode, ES/CS/SS/DS bases are treated as 0
             _ => 0,

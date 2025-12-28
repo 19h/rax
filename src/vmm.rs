@@ -313,20 +313,8 @@ impl Vmm {
             if let Ok(mut pit) = self.pit.lock() {
                 if pit.tick() {
                     // Timer fired - raise IRQ 0 via the PIC
-                    static PIT_FIRE_COUNT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
-                    let count = PIT_FIRE_COUNT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                     if let Ok(mut pic) = self.pic.lock() {
-                        let (m_irr, m_imr, m_isr, _, _, _) = pic.debug_info();
-                        if count < 10 || count % 1000 == 0 {
-                            eprintln!("[VMM] PIT fire #{} - before: irr={:#04x} imr={:#04x} isr={:#04x}",
-                                count, m_irr, m_imr, m_isr);
-                        }
                         pic.set_irq(0, true);
-                        let (m_irr2, _, m_isr2, _, _, _) = pic.debug_info();
-                        if count < 10 || count % 1000 == 0 {
-                            eprintln!("[VMM] PIT fire #{} - after: irr={:#04x} isr={:#04x} has_pending={}",
-                                count, m_irr2, m_isr2, pic.has_pending());
-                        }
                     }
                 }
             }

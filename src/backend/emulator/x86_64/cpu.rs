@@ -20,6 +20,12 @@ static RIP_HISTORY: [AtomicU64; 16] = [
 ];
 static RIP_IDX: AtomicUsize = AtomicUsize::new(0);
 
+/// Log an IF state transition with context (disabled for performance)
+#[inline]
+pub fn log_if_transition(_rip: u64, _old_if: bool, _new_if: bool, _source: &str) {
+    // Disabled - IF flag logic verified working correctly
+}
+
 use vm_memory::GuestMemoryMmap;
 
 use super::decoder::Decoder;
@@ -1578,14 +1584,7 @@ impl X86_64Vcpu {
     /// This allows the kernel's page fault handler to run and set up page tables on demand.
     pub(super) fn inject_page_fault(&mut self, vaddr: u64, error_code: u64) -> Result<()> {
         use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
-        static PF_COUNT: AtomicUsize = AtomicUsize::new(0);
-        let count = PF_COUNT.fetch_add(1, AtomicOrdering::Relaxed);
-
-        // Log page faults to user-space addresses
-        if vaddr < 0x0000800000000000 || count < 20 {
-            eprintln!("[#PF #{}] vaddr={:#x} error_code={:#x} RIP={:#x}",
-                      count, vaddr, error_code, self.regs.rip);
-        }
+        // Page fault logging disabled for performance
 
         // Set CR2 to the faulting virtual address
         self.sregs.cr2 = vaddr;
@@ -1685,15 +1684,9 @@ impl X86_64Vcpu {
         // Trap gates (type 0xF) don't clear IF
         let gate_type = type_attr & 0x0F;
         if gate_type == 0x0E {
-            use std::sync::atomic::{AtomicUsize, Ordering};
-            static GATE_IF_CLEAR: AtomicUsize = AtomicUsize::new(0);
-            let n = GATE_IF_CLEAR.fetch_add(1, Ordering::Relaxed);
-            if n < 20 || n % 1000 == 0 {
-                let old_if = (self.regs.rflags & flags::bits::IF) != 0;
-                eprintln!("[INT_GATE #{}] vec={} saved_IF={} clearing IF, handler={:#x}",
-                    n, vector, if old_if { 1 } else { 0 }, handler_addr);
-            }
+            let old_if = (self.regs.rflags & flags::bits::IF) != 0;
             self.regs.rflags &= !flags::bits::IF;
+            log_if_transition(handler_addr, old_if, false, &format!("INT_GATE(vec={})", vector));
         }
 
         // Jump to the handler

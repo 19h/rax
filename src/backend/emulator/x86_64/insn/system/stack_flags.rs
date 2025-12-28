@@ -22,20 +22,9 @@ fn pushf_popf_op_size(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
 
 /// PUSHF (0x9C)
 pub fn pushf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    use super::super::super::flags;
-    static PUSHF_COUNT: AtomicUsize = AtomicUsize::new(0);
-    let n = PUSHF_COUNT.fetch_add(1, Ordering::Relaxed);
-
     vcpu.materialize_flags();
     let flags_val = vcpu.regs.rflags;
-    let if_set = (flags_val & flags::bits::IF) != 0;
     let op_size = pushf_popf_op_size(vcpu, ctx);
-
-    if n < 20 || n % 1000 == 0 {
-        eprintln!("[PUSHF #{}] RIP={:#x} IF={} op_size={} (pushing value: {:#x})",
-            n, vcpu.regs.rip, if if_set { 1 } else { 0 }, op_size, flags_val);
-    }
 
     match op_size {
         2 => vcpu.push16(flags_val as u16)?,
@@ -49,11 +38,6 @@ pub fn pushf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
 
 /// POPF (0x9D)
 pub fn popf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    use super::super::super::flags;
-    static POPF_COUNT: AtomicUsize = AtomicUsize::new(0);
-    let n = POPF_COUNT.fetch_add(1, Ordering::Relaxed);
-
     let op_size = pushf_popf_op_size(vcpu, ctx);
     let flags_val = match op_size {
         2 => vcpu.pop16()? as u64,
@@ -61,16 +45,8 @@ pub fn popf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
         8 => vcpu.pop64()?,
         _ => unreachable!(),
     };
-    let old_if = (vcpu.regs.rflags & flags::bits::IF) != 0;
-    let new_if = (flags_val & flags::bits::IF) != 0;
-
-    if n < 20 || n % 1000 == 0 {
-        eprintln!("[POPF #{}] RIP={:#x} IF: {} -> {} op_size={} (popped value: {:#x})",
-            n, vcpu.regs.rip, if old_if { 1 } else { 0 }, if new_if { 1 } else { 0 }, op_size, flags_val);
-    }
 
     // Apply the appropriate mask based on operand size
-    // Only update the bits that are appropriate for the operand size
     match op_size {
         2 => {
             // 16-bit POPF: only update low 16 bits (except reserved bits)
@@ -83,6 +59,7 @@ pub fn popf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
         }
         _ => unreachable!(),
     }
+
     vcpu.clear_lazy_flags();
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)

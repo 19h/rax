@@ -53,12 +53,7 @@ pub fn syscall(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
         return Err(Error::Emulator("SYSCALL requires EFER.LMA and EFER.SCE".to_string()));
     }
 
-    let count = SYSCALL_COUNT.fetch_add(1, Ordering::Relaxed);
-    let syscall_nr = vcpu.regs.rax;
-    let from_rip = vcpu.regs.rip;
-    if count < 10 {
-        eprintln!("[SYSCALL #{}] nr={} from_rip={:#x}", count, syscall_nr, from_rip);
-    }
+    let _count = SYSCALL_COUNT.fetch_add(1, Ordering::Relaxed);
 
     let next_rip = vcpu.regs.rip + ctx.cursor as u64;
     vcpu.regs.rcx = next_rip;
@@ -98,10 +93,7 @@ pub fn sysret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         (vcpu.regs.rcx as u32) as u64
     };
 
-    let count = SYSRET_COUNT.fetch_add(1, Ordering::Relaxed);
-    if count < 100 || (count % 10000 == 0) {
-        eprintln!("[SYSRET #{}] returning to user RIP={:#x} 64bit={}", count, new_rip, is_64);
-    }
+    let _count = SYSRET_COUNT.fetch_add(1, Ordering::Relaxed);
 
     vcpu.regs.rip = new_rip;
     vcpu.regs.rflags = (vcpu.regs.r11 & SYSRET_RFLAGS_MASK) | 0x2;
