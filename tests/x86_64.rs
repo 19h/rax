@@ -1579,6 +1579,10 @@ mod x86_64_system_ltr;
 mod x86_64_system_mov_cr;
 #[path = "x86_64/system/mov_dr.rs"]
 mod x86_64_system_mov_dr;
+#[path = "x86_64/system/mmu.rs"]
+mod x86_64_system_mmu;
+#[path = "x86_64/system/page_fault.rs"]
+mod x86_64_system_page_fault;
 #[path = "x86_64/system/protection_keys.rs"]
 mod x86_64_system_protection_keys;
 #[path = "x86_64/system/rdfsbase_wrfsbase.rs"]
@@ -1627,3 +1631,7 @@ mod x86_64_system_virtualization;
 mod x86_64_system_wrmsr;
 #[path = "x86_64/system/xsave_extended.rs"]
 mod x86_64_system_xsave_extended;
+
+// LAPIC integration tests
+#[path = "x86_64/lapic_integration.rs"]
+mod x86_64_lapic_integration;

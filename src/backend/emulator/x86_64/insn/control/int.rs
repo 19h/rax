@@ -68,9 +68,10 @@ pub fn into(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
     let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
 
     if in_64bit_mode {
-        // INTO is invalid in 64-bit mode - inject #UD
-        vcpu.inject_exception(6, None)?;
-        return Ok(None);
+        // INTO is invalid in 64-bit mode
+        return Err(Error::Emulator(
+            "INTO instruction is invalid in 64-bit mode".to_string(),
+        ));
     }
 
     // Check overflow flag
