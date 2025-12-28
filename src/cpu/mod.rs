@@ -82,6 +82,13 @@ pub trait VCpu: Send {
         false
     }
 
+    /// Inject a Non-Maskable Interrupt (NMI).
+    /// NMIs are delivered regardless of the IF flag.
+    /// Returns Ok(true) if delivered, Ok(false) if blocked (e.g., during NMI handling).
+    fn inject_nmi(&mut self) -> Result<bool> {
+        Ok(false)
+    }
+
     /// Enable or disable single-step mode for debugging.
     #[cfg(feature = "debug")]
     fn set_single_step(&mut self, enabled: bool) {

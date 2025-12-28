@@ -20,7 +20,7 @@ use crate::snapshot::{EmulatorState, Snapshot, SnapshotConfig};
 #[cfg(feature = "debug")]
 use crate::gdb::{self, GdbCommand, GdbResponse, VmmGdbChannels};
 use crate::devices::bus::{IoBus, IoDevice, IoRange, MmioBus, MmioRange};
-use crate::devices::lapic::{LapicDevice, LocalApic, LAPIC_BASE, LAPIC_SIZE};
+use crate::devices::lapic::{LapicDevice, LocalApic, IpiRequest, IpiTarget, LAPIC_BASE, LAPIC_SIZE};
 use crate::devices::pic::{DualPic, MasterPicDevice, SlavePicDevice};
 use crate::devices::pit::Pit;
 use crate::devices::serial::{Serial16550, SerialMmioDevice};
@@ -362,6 +362,87 @@ impl Vmm {
                         let vector = lapic.timer_vector();
                         if vcpu.inject_interrupt(vector).unwrap_or(false) {
                             lapic.clear_timer_pending();
+                        }
+                    }
+                }
+            }
+
+            // Handle LAPIC IPI delivery
+            {
+                let vcpu = self
+                    .vcpus
+                    .get_mut(0)
+                    .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
+
+                if let Ok(mut lapic) = self.lapic.lock() {
+                    // Handle pending NMI from self-IPI
+                    if lapic.has_pending_nmi() {
+                        if vcpu.inject_nmi().unwrap_or(false) {
+                            lapic.clear_pending_nmi();
+                        }
+                    }
+
+                    // Check for pending interrupts in IRR (from self-IPIs)
+                    if vcpu.can_inject_interrupt() {
+                        if let Some(vector) = lapic.get_pending_vector() {
+                            if vcpu.inject_interrupt(vector).unwrap_or(false) {
+                                lapic.ack_interrupt(vector);
+                            }
+                        }
+                    }
+
+                    // Handle IPI requests (for multi-CPU, but log for now)
+                    if let Some(ipi) = lapic.take_pending_ipi() {
+                        match ipi {
+                            IpiRequest::Fixed { vector, ref target } |
+                            IpiRequest::LowestPriority { vector, ref target } => {
+                                // For single-CPU, only AllIncludingSelf matters
+                                // (self-targeting is already handled via IRR)
+                                match target {
+                                    IpiTarget::AllIncludingSelf => {
+                                        // Already delivered to self via IRR
+                                        debug!("IPI Fixed vector {:#x} to all (self already in IRR)", vector);
+                                    }
+                                    IpiTarget::AllExcludingSelf => {
+                                        // No other CPUs in single-CPU mode
+                                        debug!("IPI Fixed vector {:#x} to all-except-self (no other CPUs)", vector);
+                                    }
+                                    _ => {
+                                        debug!("IPI Fixed vector {:#x} to {:?}", vector, target);
+                                    }
+                                }
+                            }
+                            IpiRequest::Nmi { ref target } => {
+                                match target {
+                                    IpiTarget::AllIncludingSelf => {
+                                        // Self-NMI already pending
+                                        debug!("IPI NMI to all (self already pending)");
+                                    }
+                                    IpiTarget::AllExcludingSelf => {
+                                        debug!("IPI NMI to all-except-self (no other CPUs)");
+                                    }
+                                    _ => {
+                                        debug!("IPI NMI to {:?}", target);
+                                    }
+                                }
+                            }
+                            IpiRequest::Init { ref target } => {
+                                // INIT is used to reset CPUs - primarily for SMP startup
+                                debug!("IPI INIT to {:?} (ignored in single-CPU mode)", target);
+                            }
+                            IpiRequest::Sipi { vector, ref target } => {
+                                // SIPI starts AP CPUs - not applicable for single-CPU
+                                debug!(
+                                    "IPI SIPI vector={:#x} (start addr={:#x}) to {:?} (ignored in single-CPU mode)",
+                                    vector,
+                                    (vector as u32) * 0x1000,
+                                    target
+                                );
+                            }
+                            IpiRequest::Smi { ref target } => {
+                                // SMI triggers System Management Mode
+                                debug!("IPI SMI to {:?} (SMM not implemented)", target);
+                            }
                         }
                     }
                 }
