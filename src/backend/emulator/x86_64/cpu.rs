@@ -8,6 +8,9 @@ use std::sync::Arc;
 #[cfg(feature = "trace")]
 use crate::trace;
 
+#[cfg(feature = "profiling")]
+use crate::profiling;
+
 /// Global tracker for current RIP (for debugging write watchpoints)
 pub static CURRENT_RIP: AtomicU64 = AtomicU64::new(0);
 
@@ -763,6 +766,10 @@ impl X86_64Vcpu {
         // Increment global instruction counter for timing
         super::timing::tick();
 
+        // Start profiling timer
+        #[cfg(feature = "profiling")]
+        let prof_start = profiling::begin_instruction();
+
         // Update global RIP tracker for debugging
         CURRENT_RIP.store(self.regs.rip, Ordering::Relaxed);
 
@@ -1035,7 +1042,11 @@ impl X86_64Vcpu {
         // Check decode cache for a hit (copy to avoid borrow issues)
         let cached = self.decode_cache[cache_idx];
         if cached.rip == rip {
-            // Cache hit! Fetch bytes and reconstruct context from cached decode
+            // Cache hit! Record for profiling
+            #[cfg(feature = "profiling")]
+            profiling::record_cache_hit();
+
+            // Fetch bytes and reconstruct context from cached decode
             let (bytes, bytes_len) = self.fetch()?;
 
             let mut ctx = InsnContext {
@@ -1051,10 +1062,25 @@ impl X86_64Vcpu {
                 segment_override: cached.segment_override,
                 evex: None,
             };
-            return self.trace_and_execute(cached.opcode, &mut ctx, rip);
+
+            let result = self.trace_and_execute(cached.opcode, &mut ctx, rip);
+
+            // End profiling for this instruction
+            #[cfg(feature = "profiling")]
+            {
+                // Use precise opcode key if set by dispatch, otherwise fall back to simple key
+                let key = profiling::take_current_opcode_key()
+                    .unwrap_or_else(|| profiling::build_simple_opcode_key(cached.opcode));
+                profiling::end_instruction(key, prof_start);
+            }
+
+            return result;
         }
 
         // Cache miss - do full decode
+        #[cfg(feature = "profiling")]
+        profiling::record_cache_miss();
+
         let (bytes, bytes_len) = self.fetch()?;
 
         // Decode prefixes
@@ -1095,7 +1121,18 @@ impl X86_64Vcpu {
         };
 
         // Execute instruction
-        self.trace_and_execute(opcode, &mut ctx, rip)
+        let result = self.trace_and_execute(opcode, &mut ctx, rip);
+
+        // End profiling for this instruction
+        #[cfg(feature = "profiling")]
+        {
+            // Use precise opcode key if set by dispatch, otherwise fall back to simple key
+            let key = profiling::take_current_opcode_key()
+                .unwrap_or_else(|| profiling::build_simple_opcode_key(opcode));
+            profiling::end_instruction(key, prof_start);
+        }
+
+        result
     }
 
     /// Execute instruction with optional tracing (when trace feature is enabled)

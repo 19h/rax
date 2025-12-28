@@ -17,6 +17,10 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let opcode3 = ctx.consume_u8()?;
 
+        // Record precise opcode key for profiling
+        #[cfg(feature = "profiling")]
+        crate::profiling::set_current_opcode_key(crate::profiling::OpcodeKey::ThreeByte3A(opcode3));
+
         match opcode3 {
             // ROUNDPS - Round Packed Single Precision Floating-Point Values (0x08)
             0x08 => {

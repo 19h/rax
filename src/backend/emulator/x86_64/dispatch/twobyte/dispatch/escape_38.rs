@@ -17,6 +17,10 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let opcode3 = ctx.consume_u8()?;
 
+        // Record precise opcode key for profiling
+        #[cfg(feature = "profiling")]
+        crate::profiling::set_current_opcode_key(crate::profiling::OpcodeKey::ThreeByte38(opcode3));
+
         match opcode3 {
             // ===== SSSE3 Instructions (0x00-0x0B, 0x1C-0x1E) =====
             0x00 => insn::simd::pshufb(self, ctx),
