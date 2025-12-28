@@ -103,4 +103,20 @@ pub trait VCpu: Send {
 
     /// Get vCPU ID.
     fn id(&self) -> u32;
+
+    /// Get current instruction count (for snapshotting).
+    fn instruction_count(&self) -> u64 {
+        0
+    }
+
+    /// Get extended emulator state for snapshotting.
+    /// Returns None for backends that don't support it.
+    fn get_emulator_state(&self) -> Option<crate::snapshot::EmulatorState> {
+        None
+    }
+
+    /// Set extended emulator state (for snapshot restore).
+    fn set_emulator_state(&mut self, _state: &crate::snapshot::EmulatorState) -> Result<()> {
+        Ok(())
+    }
 }

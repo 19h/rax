@@ -1687,10 +1687,9 @@ impl VCpu for X86_64Vcpu {
     fn run(&mut self) -> Result<VcpuExit> {
         let start_time = std::time::Instant::now();
         let mut insn_count: u64 = 0;
-        static TOTAL_INSN: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
         loop {
             insn_count += 1;
-            let total = TOTAL_INSN.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let total = increment_instruction_count();
             if total % 100_000_000 == 0 {
                 eprintln!("[RIP] {:#x} (insn #{})", self.regs.rip, total);
             }
@@ -1866,4 +1865,97 @@ impl VCpu for X86_64Vcpu {
             }
         }
     }
+
+    fn instruction_count(&self) -> u64 {
+        // Access the global instruction counter
+        static TOTAL_INSN_READER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        // Note: This reads from a separate static; we need to use the same one as run()
+        // For now, we'll get the count from run()'s TOTAL_INSN via a global accessor
+        get_total_instruction_count()
+    }
+
+    fn get_emulator_state(&self) -> Option<crate::snapshot::EmulatorState> {
+        use crate::snapshot::{EmulatorState, FpuSnapshot, LazyFlagsSnapshot};
+
+        let lf = self.lazy_flags.get();
+        Some(EmulatorState {
+            fpu: FpuSnapshot {
+                control_word: self.fpu.control_word,
+                status_word: self.fpu.status_word,
+                tag_word: self.fpu.tag_word,
+                data_ptr: self.fpu.data_ptr,
+                instr_ptr: self.fpu.instr_ptr,
+                last_opcode: self.fpu.last_opcode,
+                st: self.fpu.st,
+                top: self.fpu.top,
+            },
+            lazy_flags: LazyFlagsSnapshot {
+                op: match lf.op {
+                    LazyFlagOp::None => 0,
+                    LazyFlagOp::Add => 1,
+                    LazyFlagOp::Sub => 2,
+                    LazyFlagOp::Logic => 3,
+                    LazyFlagOp::Inc => 4,
+                    LazyFlagOp::Dec => 5,
+                },
+                result: lf.result,
+                src: lf.src,
+                dst: lf.dst,
+                size: lf.size,
+            },
+            kernel_gs_base: self.kernel_gs_base,
+            pkru: self.pkru,
+            halted: self.halted,
+        })
+    }
+
+    fn set_emulator_state(&mut self, state: &crate::snapshot::EmulatorState) -> Result<()> {
+        // Restore FPU state
+        self.fpu.control_word = state.fpu.control_word;
+        self.fpu.status_word = state.fpu.status_word;
+        self.fpu.tag_word = state.fpu.tag_word;
+        self.fpu.data_ptr = state.fpu.data_ptr;
+        self.fpu.instr_ptr = state.fpu.instr_ptr;
+        self.fpu.last_opcode = state.fpu.last_opcode;
+        self.fpu.st = state.fpu.st;
+        self.fpu.top = state.fpu.top;
+
+        // Restore lazy flags
+        let op = match state.lazy_flags.op {
+            0 => LazyFlagOp::None,
+            1 => LazyFlagOp::Add,
+            2 => LazyFlagOp::Sub,
+            3 => LazyFlagOp::Logic,
+            4 => LazyFlagOp::Inc,
+            5 => LazyFlagOp::Dec,
+            _ => LazyFlagOp::None,
+        };
+        self.lazy_flags.set(LazyFlags {
+            op,
+            result: state.lazy_flags.result,
+            src: state.lazy_flags.src,
+            dst: state.lazy_flags.dst,
+            size: state.lazy_flags.size,
+        });
+
+        // Restore other state
+        self.kernel_gs_base = state.kernel_gs_base;
+        self.pkru = state.pkru;
+        self.halted = state.halted;
+
+        Ok(())
+    }
+}
+
+/// Global instruction counter for snapshotting
+static GLOBAL_INSN_COUNT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Get the total instruction count
+pub fn get_total_instruction_count() -> u64 {
+    GLOBAL_INSN_COUNT.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+/// Increment the global instruction counter (called from run loop)
+pub fn increment_instruction_count() -> u64 {
+    GLOBAL_INSN_COUNT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
 }

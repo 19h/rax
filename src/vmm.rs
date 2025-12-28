@@ -14,7 +14,9 @@ use crate::backend::{self, Vm};
 #[cfg(all(feature = "kvm", target_os = "linux"))]
 use crate::config::BackendKind;
 use crate::config::VmConfig;
+use crate::backend::emulator::x86_64::get_total_instruction_count;
 use crate::cpu::{CpuState, VCpu, VcpuExit};
+use crate::snapshot::{EmulatorState, Snapshot, SnapshotConfig};
 #[cfg(feature = "debug")]
 use crate::gdb::{self, GdbCommand, GdbResponse, VmmGdbChannels};
 use crate::devices::bus::{IoBus, IoDevice, IoRange, MmioBus, MmioRange};
@@ -86,6 +88,10 @@ pub struct Vmm {
     /// Wait for GDB connection before starting.
     #[cfg(feature = "debug")]
     wait_gdb: bool,
+    /// Snapshot configuration
+    snapshot_config: Option<SnapshotConfig>,
+    /// Last instruction count when snapshot was taken
+    last_snapshot_insn: u64,
 }
 
 impl Vmm {
@@ -269,6 +275,20 @@ impl Vmm {
             gdb_breakpoints: std::collections::HashMap::new(),
             #[cfg(feature = "debug")]
             wait_gdb: config.wait_gdb,
+            snapshot_config: if config.snapshot_interval > 0 || !config.snapshot_at.is_empty() {
+                Some(SnapshotConfig {
+                    interval: config.snapshot_interval,
+                    at_instructions: config.snapshot_at.clone(),
+                    output_dir: config.snapshot_dir
+                        .as_ref()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .unwrap_or_else(|| ".".to_string()),
+                    prefix: "snapshot".to_string(),
+                })
+            } else {
+                None
+            },
+            last_snapshot_insn: 0,
         })
     }
 
@@ -426,12 +446,27 @@ impl Vmm {
                 }
             }
 
+            let exit = {
+                let vcpu = self
+                    .vcpus
+                    .get_mut(0)
+                    .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
+                vcpu.run()?
+            };
+
+            // Check if we should take a snapshot (outside vcpu borrow scope)
+            if self.snapshot_config.is_some() {
+                let insn_count = get_total_instruction_count();
+                self.maybe_snapshot(insn_count)?;
+            }
+
+            // Re-borrow vcpu for exit handling
             let vcpu = self
                 .vcpus
                 .get_mut(0)
                 .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
 
-            match vcpu.run()? {
+            match exit {
                 VcpuExit::Hlt => {
                     // HLT is normal - kernel waits for interrupts
                     continue;
@@ -630,6 +665,75 @@ impl Vmm {
 
     pub fn arch(&self) -> &dyn Arch {
         self.arch.as_ref()
+    }
+
+    /// Take a snapshot of the current VM state
+    pub fn take_snapshot(&self, insn_count: u64) -> Result<Snapshot> {
+        let vcpu = self.vcpus.get(0)
+            .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
+
+        let cpu_state = vcpu.get_state()?;
+        let emulator_state = vcpu.get_emulator_state().unwrap_or_default();
+        let memory = self.guest_mem.read_all();
+
+        Snapshot::new(insn_count, cpu_state, emulator_state, &memory)
+    }
+
+    /// Check if we should take a snapshot and do so if needed
+    fn maybe_snapshot(&mut self, insn_count: u64) -> Result<()> {
+        let should_snapshot = if let Some(ref config) = self.snapshot_config {
+            // Check interval-based snapshotting
+            if config.interval > 0 && insn_count >= self.last_snapshot_insn + config.interval {
+                true
+            } else {
+                // Check if we passed any specific instruction counts
+                config.at_instructions.iter().any(|&at| {
+                    at > self.last_snapshot_insn && at <= insn_count
+                })
+            }
+        } else {
+            false
+        };
+
+        if should_snapshot {
+            let snapshot = self.take_snapshot(insn_count)?;
+            let filename = self.snapshot_config.as_ref()
+                .map(|c| c.filename(insn_count))
+                .unwrap_or_else(|| format!("snapshot_{:012}.snap", insn_count));
+
+            info!(
+                filename = %filename,
+                insn_count = insn_count,
+                summary = %snapshot.summary(),
+                "saving snapshot"
+            );
+
+            snapshot.save(&filename)?;
+            self.last_snapshot_insn = insn_count;
+        }
+
+        Ok(())
+    }
+
+    /// Restore VM state from a snapshot
+    pub fn restore_snapshot(&mut self, snapshot: &Snapshot) -> Result<()> {
+        // Restore CPU state
+        let vcpu = self.vcpus.get_mut(0)
+            .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
+        vcpu.set_state(&snapshot.cpu_state)?;
+        vcpu.set_emulator_state(&snapshot.emulator_state)?;
+
+        // Decompress and restore memory
+        let memory = snapshot.decompress_memory()?;
+        self.guest_mem.write_all(&memory)?;
+
+        info!(
+            insn_count = snapshot.instruction_count,
+            summary = %snapshot.summary(),
+            "restored snapshot"
+        );
+
+        Ok(())
     }
 
     /// Handle a GDB command from the debug server.

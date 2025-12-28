@@ -7,6 +7,7 @@ pub mod error;
 #[cfg(feature = "debug")]
 pub mod gdb;
 pub mod memory;
+pub mod snapshot;
 pub mod timing;
 #[cfg(feature = "trace")]
 pub mod trace;

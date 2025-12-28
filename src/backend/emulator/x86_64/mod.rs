@@ -13,5 +13,5 @@ pub mod timing;
 
 mod insn;
 
-pub use cpu::X86_64Vcpu;
+pub use cpu::{get_total_instruction_count, X86_64Vcpu};
 pub use mmu::{AccessType, Mmu};
