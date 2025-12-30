@@ -15,13 +15,13 @@ use crate::profiling;
 pub static CURRENT_RIP: AtomicU64 = AtomicU64::new(0);
 
 /// Circular buffer of last 16 RIPs for debugging crashes
-static RIP_HISTORY: [AtomicU64; 16] = [
+pub static RIP_HISTORY: [AtomicU64; 16] = [
     AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0),
     AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0),
     AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0),
     AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0),
 ];
-static RIP_IDX: AtomicUsize = AtomicUsize::new(0);
+pub static RIP_IDX: AtomicUsize = AtomicUsize::new(0);
 
 /// Log an IF state transition with context (disabled for performance)
 #[inline]
@@ -730,13 +730,14 @@ impl X86_64Vcpu {
         self.mmu.mark_code_page(rip);
 
         let mut buf = [0u8; MAX_INSN_LEN];
+        let mut last_err = None;
         match self.mmu.read(rip, &mut buf, &self.sregs) {
             Ok(()) => return Ok((buf, MAX_INSN_LEN)),
             Err(Error::PageFault { vaddr, error_code }) => {
                 // Instruction fetch page fault - add instruction fetch bit to error code
                 return Err(Error::PageFault { vaddr, error_code: error_code | 0x10 });
             }
-            Err(_) => {} // Try smaller amounts
+            Err(e) => last_err = Some(e), // Try smaller amounts
         }
         // If we can't read 15 bytes, try smaller amounts
         for len in (1..MAX_INSN_LEN).rev() {
@@ -745,8 +746,13 @@ impl X86_64Vcpu {
                 Err(Error::PageFault { vaddr, error_code }) => {
                     return Err(Error::PageFault { vaddr, error_code: error_code | 0x10 });
                 }
-                Err(_) => continue,
+                Err(e) => last_err = Some(e),
             }
+        }
+        // Debug: print the actual error
+        if let Some(e) = &last_err {
+            eprintln!("[FETCH FAIL] RIP={:#x} CR3={:#x} CR0={:#x} EFER={:#x} error: {:?}",
+                rip, self.sregs.cr3, self.sregs.cr0, self.sregs.efer, e);
         }
         Err(Error::Emulator(format!(
             "failed to fetch instruction at RIP={:#x}",
@@ -1735,10 +1741,7 @@ impl VCpu for X86_64Vcpu {
         let mut insn_count: u64 = 0;
         loop {
             insn_count += 1;
-            let total = increment_instruction_count();
-            if total % 100_000_000 == 0 {
-                eprintln!("[RIP] {:#x} (insn #{})", self.regs.rip, total);
-            }
+            let _ = increment_instruction_count();
 
             // Periodically yield to VMM for interrupt handling (every ~1ms)
             if insn_count % 100_000 == 0 {

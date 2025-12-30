@@ -21,7 +21,7 @@ pub struct BootE820Entry {
 
 /// Screen info structure (matches Linux kernel struct screen_info)
 #[repr(C, packed)]
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug)]
 pub struct ScreenInfo {
     pub orig_x: u8,
     pub orig_y: u8,
@@ -37,7 +37,16 @@ pub struct ScreenInfo {
     pub orig_video_isVGA: u8,
     pub orig_video_points: u16,
     // Additional fields truncated - we only use the ones above
-    pub _pad: [u8; 32], // Padding to reach offset 0x40
+    // Linux screen_info is 0x40 bytes. Fields above total 18 bytes (0x12),
+    // so we need 46 bytes of padding to reach 0x40.
+    pub _pad: [u8; 46], // Padding to reach offset 0x40
+}
+
+impl Default for ScreenInfo {
+    fn default() -> Self {
+        // Safety: ScreenInfo is repr(C, packed) with all-zero being valid
+        unsafe { core::mem::zeroed() }
+    }
 }
 
 /// Setup header (matches Linux kernel struct setup_header at offset 0x1f1)
@@ -86,17 +95,16 @@ pub struct SetupHeader {
 }
 
 /// Boot parameters structure (matches Linux kernel struct boot_params)
+/// Layout based on Linux kernel's arch/x86/include/uapi/asm/bootparam.h
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct BootParams {
-    pub screen_info: ScreenInfo,
-    pub _pad1: [u8; 0x1c0 - 0x40],           // Padding to offset 0x1c0
-    pub e820_entries: u8,
-    pub _pad2: [u8; 0x1e8 - 0x1c1],          // Padding to offset 0x1e8
-    pub _pad_sentinel: u8,                   // Offset 0x1e8
-    pub _pad3: [u8; 0x1f1 - 0x1e9],          // Padding to offset 0x1f1
+    pub screen_info: ScreenInfo,             // Offset 0x000, size 0x40
+    pub _pad1: [u8; 0x1e8 - 0x40],            // Padding from 0x40 to 0x1e8
+    pub e820_entries: u8,                    // Offset 0x1e8
+    pub _pad2: [u8; 0x1f1 - 0x1e9],           // Padding from 0x1e9 to 0x1f1
     pub hdr: SetupHeader,                    // Offset 0x1f1
-    pub _pad4: [u8; 0x2d0 - (0x1f1 + core::mem::size_of::<SetupHeader>())],
+    pub _pad3: [u8; 0x2d0 - (0x1f1 + core::mem::size_of::<SetupHeader>())],
     pub e820_table: [BootE820Entry; 128],    // Offset 0x2d0
 }
 
