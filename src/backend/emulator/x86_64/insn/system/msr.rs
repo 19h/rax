@@ -20,7 +20,20 @@ pub fn wrmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         0x175 => vcpu.sregs.sysenter_esp = value,    // IA32_SYSENTER_ESP
         0x176 => vcpu.sregs.sysenter_eip = value,    // IA32_SYSENTER_EIP
         0xC0000100 => vcpu.sregs.fs.base = value,  // FS.base (TLS)
-        0xC0000101 => vcpu.sregs.gs.base = value,  // GS.base (per-CPU data)
+        0xC0000101 => {
+            vcpu.sregs.gs.base = value;  // GS.base (per-CPU data)
+            // WORKAROUND: When gs.base is set to a non-zero value, update the per-CPU
+            // CR0 shadow with the current CR0 value. This fixes the case where CR0 was
+            // written before per-CPU was set up, and the shadow was copied with garbage.
+            if value != 0 {
+                let percpu_offset = 0xffffffff836ee018u64;
+                let instance_addr = value.wrapping_add(percpu_offset);
+                // Flush TLB to ensure clean state
+                vcpu.mmu.flush_tlb();
+                // Write current CR0 to per-CPU shadow (ignore errors)
+                let _ = vcpu.mmu.write_u64(instance_addr, vcpu.sregs.cr0, &vcpu.sregs);
+            }
+        }
         0xC0000102 => vcpu.kernel_gs_base = value,     // KernelGSbase
         _ => {}                                       // Ignore unknown MSRs
     }

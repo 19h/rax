@@ -3,8 +3,8 @@
 # Targets:
 #   build          - Build rax library and binaries (release)
 #   build-debug    - Build rax in debug mode
-#   test           - Run all tests including x86_64-suite
-#   test-quick     - Run tests without x86_64-suite
+#   test/tests     - Run ALL tests (unit, hexagon, asm, x86_64-suite)
+#   test-quick     - Run tests without x86_64-suite (faster)
 #   microkernel    - Build the bare-metal microkernel
 #   run-microkernel- Build and run the microkernel in the emulator
 #   linux          - Fetch and build Linux kernel (uncompressed vmlinux)
@@ -19,7 +19,7 @@ LINUX_DIR     := linux/kernel/linux
 LINUX_VMLINUX := linux/vmlinux
 NPROC         := $(shell nproc 2>/dev/null || echo 4)
 
-.PHONY: all build build-debug test test-quick microkernel run-microkernel linux run-linux clean clean-linux help
+.PHONY: all build build-debug test tests test-quick microkernel run-microkernel linux run-linux clean clean-linux help
 
 # Default target
 all: build
@@ -32,9 +32,12 @@ build:
 build-debug:
 	cargo build
 
-# Run all tests including x86_64-suite (comprehensive)
+# Run all tests (unit tests, integration tests, hexagon tests, and x86_64-suite)
 test:
-	cargo test --release --features x86_64-suite
+	cargo test --release --features x86_64-suite -- --include-ignored
+
+# Alias for test
+tests: test
 
 # Run tests without the full x86_64 instruction suite (faster)
 test-quick:
@@ -100,7 +103,8 @@ help:
 	@echo ""
 	@echo "  make build           - Build rax library (release mode)"
 	@echo "  make build-debug     - Build rax library (debug mode)"
-	@echo "  make test            - Run all tests including x86_64-suite"
+	@echo "  make test            - Run ALL tests (unit, hexagon, asm, x86_64-suite)"
+	@echo "  make tests           - Alias for 'make test'"
 	@echo "  make test-quick      - Run tests without x86_64-suite (faster)"
 	@echo "  make microkernel     - Build the bare-metal microkernel binary"
 	@echo "  make run-microkernel - Build and run microkernel in emulator"
