@@ -601,6 +601,7 @@ impl Vmm {
 
                     let is_serial = port >= SERIAL_BASE && port < SERIAL_BASE + 8;
                     if is_serial {
+
                         if let Ok(mut serial) = self.serial.lock() {
                             for (i, byte) in data.iter().enumerate() {
                                 IoDevice::write(&mut *serial, port + i as u16, *byte);

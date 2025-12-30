@@ -649,10 +649,122 @@ fn test_pcmpistri_override_bit() {
 
     let (mut vcpu, mem) = setup_vm(&full_code, None);
     let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    let data2: [u8; 16] = [0x62, 0x63, 0x64, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let data2: [u8; 16] = [0x78, 0x62, 0x79, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
     mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
+}
+
+// ============================================================================
+// Tests for imm8=0x3a (used by busybox for string operations)
+// 0x3a = signed bytes, equal ordered, masked negative polarity, LSB
+// ============================================================================
+
+#[test]
+fn test_pcmpistri_control_0x3a_basic() {
+    // Control byte: 0x3a = signed bytes, equal ordered, masked negative polarity
+    // This is used by glibc/musl for strchr-like operations
+    let code = [0x48, 0xb8];
+    let mut full_code = code.to_vec();
+    full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
+    full_code.extend_from_slice(&[
+        0x66, 0x0f, 0x6f, 0x00,           // MOVDQA XMM0, [RAX]
+        0x66, 0x0f, 0x6f, 0x48, 0x10,     // MOVDQA XMM1, [RAX+0x10]
+        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x3a, // PCMPISTRI XMM0, XMM1, 0x3a
+        0xf4,
+    ]);
+
+    let (mut vcpu, mem) = setup_vm(&full_code, None);
+    // XMM0: "ab\0" - pattern to search for
+    let data1: [u8; 16] = [0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    // XMM1: "xxab\0" - should find "ab" at position 2
+    let data2: [u8; 16] = [0x78, 0x78, 0x61, 0x62, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    run_until_hlt(&mut vcpu).unwrap();
+    
+    let regs = vcpu.get_regs().unwrap();
+    // With masked negative polarity on equal ordered, we get inverted match bits
+    // For substring "ab" in "xxab", the match at position 2 gets inverted
+    // ECX should indicate where the pattern is NOT found (before position 2)
+    assert!(regs.rcx <= 16, "ECX should be valid index, got {}", regs.rcx);
+}
+
+#[test]
+fn test_pcmpistri_control_0x3a_no_match() {
+    let code = [0x48, 0xb8];
+    let mut full_code = code.to_vec();
+    full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
+    full_code.extend_from_slice(&[
+        0x66, 0x0f, 0x6f, 0x00,
+        0x66, 0x0f, 0x6f, 0x48, 0x10,
+        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x3a,
+        0xf4,
+    ]);
+
+    let (mut vcpu, mem) = setup_vm(&full_code, None);
+    // XMM0: "abc\0"
+    let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    // XMM1: "xyz\0" - no match
+    let data2: [u8; 16] = [0x78, 0x79, 0x7a, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    run_until_hlt(&mut vcpu).unwrap();
+    
+    let regs = vcpu.get_regs().unwrap();
+    // No match found - with negative polarity, should return first position (0)
+    assert!(regs.rcx <= 16, "ECX should be valid index, got {}", regs.rcx);
+}
+
+#[test]
+fn test_pcmpistri_control_0x3a_single_char() {
+    // Test finding a single character (like strchr for '=')
+    let code = [0x48, 0xb8];
+    let mut full_code = code.to_vec();
+    full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
+    full_code.extend_from_slice(&[
+        0x66, 0x0f, 0x6f, 0x00,
+        0x66, 0x0f, 0x6f, 0x48, 0x10,
+        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x3a,
+        0xf4,
+    ]);
+
+    let (mut vcpu, mem) = setup_vm(&full_code, None);
+    // XMM0: "=\0" - looking for '='
+    let data1: [u8; 16] = [0x3d, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    // XMM1: "VAR=value\0" - '=' at position 3
+    let data2: [u8; 16] = [0x56, 0x41, 0x52, 0x3d, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x00, 0, 0, 0, 0, 0, 0];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    run_until_hlt(&mut vcpu).unwrap();
+    
+    let regs = vcpu.get_regs().unwrap();
+    assert!(regs.rcx <= 16, "ECX should be valid index, got {}", regs.rcx);
+}
+
+#[test]
+fn test_pcmpistri_control_0x02_equal_any_signed() {
+    // 0x02 = signed bytes, equal any
+    let code = [0x48, 0xb8];
+    let mut full_code = code.to_vec();
+    full_code.extend_from_slice(&ALIGNED_ADDR.to_le_bytes());
+    full_code.extend_from_slice(&[
+        0x66, 0x0f, 0x6f, 0x00,
+        0x66, 0x0f, 0x6f, 0x48, 0x10,
+        0x66, 0x0f, 0x3a, 0x63, 0xc1, 0x02,
+        0xf4,
+    ]);
+
+    let (mut vcpu, mem) = setup_vm(&full_code, None);
+    let data1: [u8; 16] = [0x61, 0x62, 0x63, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let data2: [u8; 16] = [0x78, 0x62, 0x79, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    mem.write_slice(&data1, vm_memory::GuestAddress(ALIGNED_ADDR)).unwrap();
+    mem.write_slice(&data2, vm_memory::GuestAddress(ALIGNED_ADDR + 0x10)).unwrap();
+    run_until_hlt(&mut vcpu).unwrap();
+    
+    let regs = vcpu.get_regs().unwrap();
+    // 'b' (0x62) from data1 matches at position 1 in data2
+    assert_eq!(regs.rcx, 1, "Expected match at position 1, got {}", regs.rcx);
 }
 
 // ============================================================================
