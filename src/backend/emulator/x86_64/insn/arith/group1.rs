@@ -81,7 +81,16 @@ pub fn group1_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<O
         }
         7 => {
             // CMP
-            let r = (dst as u8).wrapping_sub(imm as u8) as u64;
+            let r = dst.wrapping_sub(imm);
+            // Debug: trace comparisons with CTLVAR (0x81) or CTLQUOTEMARK (0x87)
+            let imm8 = (imm & 0xFF) as u8;
+            let dst8 = (dst & 0xFF) as u8;
+            if imm8 == 0x81 || imm8 == 0x87 || dst8 == 0x81 || dst8 == 0x87 {
+                let rip = vcpu.regs.rip;
+                if rip >= 0x560000 && rip < 0x580000 {
+                    eprintln!("[CMP80] RIP={:#x} dst={:#x} imm={:#x} result={:#x}", rip, dst, imm, r);
+                }
+            }
             vcpu.set_lazy_sub(dst, imm, r, 1);
             (r, false)
         }

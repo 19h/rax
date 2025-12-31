@@ -11,7 +11,6 @@ use crate::arm::{
     Armv7Cpu, ArmMemory, Decoder, Executor, ExecResult, ExceptionType,
     ExecutionState, MemoryError, Psr, ProcessorMode,
 };
-use crate::arm::syscall::{SyscallHandler, SyscallResult};
 use crate::arm::cp15::Cp15State;
 use crate::arm::vfp::VfpState;
 use crate::cpu::{
@@ -34,10 +33,6 @@ pub struct ArmVcpu {
     vfp: VfpState,
     /// Instruction decoder.
     decoder: Decoder,
-    /// Syscall handler for Linux emulation.
-    syscall_handler: SyscallHandler,
-    /// Whether running in Linux user-mode emulation.
-    user_mode_emulation: bool,
     /// Total instructions executed.
     instructions_executed: u64,
     /// Pending I/O data for completion.
@@ -54,23 +49,9 @@ impl ArmVcpu {
             cp15: Cp15State::new(),
             vfp: VfpState::new(),
             decoder: Decoder::new_aarch32(),
-            syscall_handler: SyscallHandler::new(),
-            user_mode_emulation: false,
             instructions_executed: 0,
             pending_io: None,
         }
-    }
-    
-    /// Enable Linux user-mode emulation.
-    pub fn enable_user_mode_emulation(&mut self) {
-        self.user_mode_emulation = true;
-        // Start in User mode for user-space emulation
-        self.cpu.cpsr.mode = ProcessorMode::User as u8;
-    }
-    
-    /// Set initial program break for syscall handler.
-    pub fn set_brk(&mut self, brk: u32) {
-        self.syscall_handler.set_brk(brk);
     }
     
     /// Get reference to CPU state.
@@ -248,30 +229,6 @@ impl ArmVcpu {
                     self.cpu.regs[15] = target;
                 }
                 Ok(VcpuExit::Hlt)
-            }
-            ExecResult::Exception(ExceptionType::SupervisorCall(imm)) => {
-                if self.user_mode_emulation {
-                    // Handle as Linux syscall
-                    let syscall_result = self.syscall_handler.handle(&mut self.cpu, &mut mem_wrapper);
-                    match syscall_result {
-                        SyscallResult::Continue => {
-                            // Advance PC past SVC instruction
-                            self.cpu.regs[15] = self.cpu.regs[15].wrapping_add(insn_bytes as u32);
-                            Ok(VcpuExit::Hlt)
-                        }
-                        SyscallResult::Exit(_code) => {
-                            Ok(VcpuExit::Shutdown)
-                        }
-                        SyscallResult::NotImplemented(nr) => {
-                            Err(Error::Emulator(format!("Unimplemented syscall: {}", nr)))
-                        }
-                    }
-                } else {
-                    // Take actual exception
-                    let mut exec = Executor::new(&mut self.cpu, &mut mem_wrapper);
-                    exec.take_exception(ExceptionType::SupervisorCall(imm));
-                    Ok(VcpuExit::Hlt)
-                }
             }
             ExecResult::Exception(exception) => {
                 let mut exec = Executor::new(&mut self.cpu, &mut mem_wrapper);

@@ -17,6 +17,15 @@ pub fn cmp_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         vcpu.get_reg8(rm, has_rex) as u8
     };
     let result = dst.wrapping_sub(src) as u64;
+    
+    // Debug: trace comparisons with CTLVAR (0x81) or CTLQUOTEMARK (0x87)
+    if src == 0x81 || src == 0x87 || dst == 0x81 || dst == 0x87 {
+        let rip = vcpu.regs.rip;
+        if rip >= 0x560000 && rip < 0x580000 {
+            eprintln!("[CMP38] RIP={:#x} dst={:#x} src={:#x} result={:#x}", rip, dst, src, result);
+        }
+    }
+    
     vcpu.set_lazy_sub(dst as u64, src as u64, result, 1);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -78,6 +87,17 @@ pub fn cmp_al_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
     let imm = ctx.consume_u8()? as u64;
     let al = vcpu.regs.rax & 0xFF;
     let result = al.wrapping_sub(imm);
+    
+    // Debug: trace key comparison points in shell quote/variable expansion
+    let rip = vcpu.regs.rip;
+    // 0x567efe = CTLQUOTEMARK check (0x87)
+    // 0x567f14 = backslash check (0x5c)  
+    // 0x567f3d = CTLVAR/CTLESC check (0x81)
+    if rip == 0x567efe || rip == 0x567f14 || rip == 0x567f3d {
+        eprintln!("[CMP3C] RIP={:#x} AL={:#x} IMM={:#x} result={:#x} ZF={}", 
+                  rip, al, imm, result, result == 0);
+    }
+    
     vcpu.set_lazy_sub(al, imm, result, 1);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
