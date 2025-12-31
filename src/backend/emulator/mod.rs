@@ -76,6 +76,7 @@ impl Vm for EmulatorVm {
                 self.hexagon_isa,
                 self.hexagon_endian,
             ))),
+            _ => Err(Error::Emulator(format!("Unsupported architecture: {:?}", self.arch))),
         }
     }
 

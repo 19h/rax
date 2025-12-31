@@ -1,12 +1,27 @@
-//! Apple Hypervisor.framework backend implementation with Rosetta x86_64 support.
+//! Apple Hypervisor.framework backend implementation.
 //!
 //! This backend uses Apple's Hypervisor.framework to provide hardware-accelerated
-//! virtualization on macOS. On Apple Silicon Macs, Rosetta 2 is used for x86_64
-//! binary translation, enabling x86_64 VMs to run on ARM64 hardware.
+//! virtualization on macOS:
+//! - On Intel Macs: Native x86_64 virtualization
+//! - On Apple Silicon: Native ARM64 virtualization for AArch64 guests
+//!
+//! Note: x86_64 guests on Apple Silicon are NOT supported by HVF.
+//! Apple's Hypervisor.framework only supports guests matching the host architecture.
+//! For x86_64 emulation on Apple Silicon, use the emulator backend.
 
 mod bindings;
 mod convert;
 pub mod rosetta;
+
+// ARM64 HVF backend (Apple Silicon only)
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+mod arm64_bindings;
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+pub mod arm64;
+
+// Re-export ARM64 backend types on Apple Silicon
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+pub use arm64::{HvfArm64Backend, HvfArm64Vcpu, HvfArm64Vm};
 
 use std::any::Any;
 use std::sync::{Arc, Mutex};
@@ -31,18 +46,13 @@ pub struct HvfBackend {
 
 impl HvfBackend {
     pub fn new() -> Result<Self> {
-        // Check if Rosetta is available on Apple Silicon
-        if rosetta::is_apple_silicon() {
-            rosetta::check_rosetta_functional()?;
-            info!("HVF backend initialized with Rosetta x86_64 translation");
-        } else {
-            info!("HVF backend initialized for native x86_64");
-        }
-
-        // Check if Hypervisor.framework is available
+        // This backend only works on Intel Macs - verified at compile time via cfg
+        // Check if Hypervisor.framework is available and we have entitlements
         if let Err(msg) = bindings::hv_check_available() {
             return Err(Error::InvalidConfig(msg.to_string()));
         }
+
+        info!("HVF backend initialized for native x86_64 virtualization (Intel Mac)");
 
         Ok(HvfBackend {
             cpuid_config: CpuidConfig::default(),
@@ -52,11 +62,7 @@ impl HvfBackend {
 
 impl Backend for HvfBackend {
     fn name(&self) -> &'static str {
-        if rosetta::is_apple_silicon() {
-            "hvf-rosetta"
-        } else {
-            "hvf"
-        }
+        "hvf"
     }
 
     fn create_vm(&self) -> Result<Box<dyn Vm>> {

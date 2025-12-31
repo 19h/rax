@@ -583,6 +583,9 @@ impl Vmm {
                                 "vCPU shutdown"
                             );
                         }
+                        _ => {
+                            info!("vCPU shutdown (unsupported architecture)");
+                        }
                     }
                     break;
                 }

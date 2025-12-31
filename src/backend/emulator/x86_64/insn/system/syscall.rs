@@ -55,6 +55,14 @@ pub fn syscall(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 
     let _count = SYSCALL_COUNT.fetch_add(1, Ordering::Relaxed);
 
+    // Log fork/clone/vfork syscalls for debugging
+    let syscall_nr = vcpu.regs.rax;
+    if syscall_nr == 56 || syscall_nr == 57 || syscall_nr == 58 || syscall_nr == 435 {
+        // 56=clone, 57=fork, 58=vfork, 435=clone3
+        eprintln!("[FORK/CLONE] syscall={} (clone=56,fork=57,vfork=58,clone3=435) RIP={:#x}", 
+                  syscall_nr, vcpu.regs.rip);
+    }
+
     let next_rip = vcpu.regs.rip + ctx.cursor as u64;
     vcpu.regs.rcx = next_rip;
     vcpu.regs.r11 = vcpu.regs.rflags;

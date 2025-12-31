@@ -421,6 +421,7 @@ name = "rax"
 version = "0.1.0"
 dependencies = [
  "bincode",
+ "bitflags 2.10.0",
  "clap",
  "ctrlc",
  "goblin",
