@@ -2,6 +2,7 @@
 
 pub mod x86_64;
 pub mod hexagon;
+pub mod arm;
 
 use vm_memory::{GuestAddress, GuestMemoryMmap};
 
@@ -11,6 +12,9 @@ use crate::config::{ArchKind, VmConfig};
 use crate::cpu::CpuState;
 use crate::devices::bus::{IoBus, MmioBus};
 use crate::error::Result;
+
+// Re-export ARM boot info
+pub use arm::ArmBootInfo;
 
 /// Boot information for x86_64 kernel loading.
 pub struct X86_64BootInfo {
@@ -31,6 +35,7 @@ pub struct HexagonBootInfo {
 pub enum BootInfo {
     X86_64(X86_64BootInfo),
     Hexagon(HexagonBootInfo),
+    Arm(ArmBootInfo),
 }
 
 impl BootInfo {
@@ -38,6 +43,7 @@ impl BootInfo {
         match self {
             BootInfo::X86_64(info) => info.entry_point,
             BootInfo::Hexagon(info) => info.entry_point,
+            BootInfo::Arm(info) => info.entry_point,
         }
     }
 
@@ -51,6 +57,13 @@ impl BootInfo {
     pub fn as_hexagon(&self) -> Option<&HexagonBootInfo> {
         match self {
             BootInfo::Hexagon(info) => Some(info),
+            _ => None,
+        }
+    }
+
+    pub fn as_arm(&self) -> Option<&ArmBootInfo> {
+        match self {
+            BootInfo::Arm(info) => Some(info),
             _ => None,
         }
     }
@@ -93,5 +106,10 @@ pub fn from_kind(kind: ArchKind) -> Box<dyn Arch> {
     match kind {
         ArchKind::X86_64 => Box::new(x86_64::X86_64Arch::new()),
         ArchKind::Hexagon => Box::new(hexagon::HexagonArch::new()),
+        ArchKind::Aarch64 => Box::new(arm::Aarch64Arch::new()),
+        ArchKind::Armv7a => Box::new(arm::Armv7aArch::new()),
+        ArchKind::Armv8a32 => Box::new(arm::Armv8a32Arch::new()),
+        ArchKind::CortexM => Box::new(arm::CortexMArch::new()),
+        ArchKind::CortexR => Box::new(arm::CortexRArch::new()),
     }
 }

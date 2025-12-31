@@ -1,90 +1,48 @@
-//! Rosetta x86_64 translation support for Apple Silicon Macs.
+//! Platform detection and CPUID configuration for HVF backend.
 //!
-//! On Apple Silicon (ARM64) Macs, Rosetta 2 provides x86_64 binary translation.
-//! Apple's Hypervisor.framework supports running x86_64 VMs on Apple Silicon
-//! using Rosetta for translation.
+//! IMPORTANT: Apple's Hypervisor.framework on Apple Silicon only supports ARM64 guests.
+//! There is NO support for running x86_64 kernels on Apple Silicon via Hypervisor.framework.
 //!
-//! This module provides detection and configuration for Rosetta-based x86_64
-//! virtualization.
+//! Rosetta 2 only translates user-space binaries - it cannot translate kernel code.
+//! To run x86_64 Linux on Apple Silicon, you would need:
+//! - An ARM64 Linux VM (via Hypervisor.framework)  
+//! - Rosetta exposed via VirtioFS (VZLinuxRosettaDirectoryShare)
+//! - x86_64 userspace binaries translated by Rosetta
+//!
+//! This does NOT allow booting x86_64 kernels, which is what RAX does.
+//! Therefore, on Apple Silicon, RAX must use the software emulator backend.
+//!
+//! This module is only compiled on Intel Macs where Hypervisor.framework
+//! provides the VMX API for native x86_64 virtualization.
 
-use crate::error::{Error, Result};
-use std::process::Command;
+use crate::error::Result;
 
 /// Check if we're running on Apple Silicon (ARM64).
+/// Note: This module is only compiled on x86_64, so this always returns false.
+#[allow(dead_code)]
 pub fn is_apple_silicon() -> bool {
-    #[cfg(target_arch = "aarch64")]
-    {
-        true
-    }
-    #[cfg(not(target_arch = "aarch64"))]
-    {
-        false
-    }
+    cfg!(target_arch = "aarch64")
 }
 
 /// Check if we're running on Intel Mac.
+/// Note: This module is only compiled on x86_64, so this always returns true.
 pub fn is_intel_mac() -> bool {
-    #[cfg(target_arch = "x86_64")]
-    {
-        true
-    }
-    #[cfg(not(target_arch = "x86_64"))]
-    {
-        false
-    }
+    cfg!(target_arch = "x86_64")
 }
 
-/// Check if Rosetta 2 is installed on this system.
-///
-/// Rosetta is required for x86_64 virtualization on Apple Silicon.
-pub fn is_rosetta_installed() -> bool {
-    // Check if the Rosetta runtime exists
-    std::path::Path::new("/Library/Apple/usr/libexec/oah/libRosettaRuntime").exists()
-        || std::path::Path::new("/usr/libexec/rosetta/oahd").exists()
+/// Verify HVF is available on this Intel Mac.
+/// On Intel Macs, we use native VMX virtualization via Hypervisor.framework.
+pub fn check_hvf_available() -> Result<()> {
+    // On Intel Macs, HVF uses VMX which is always available if the
+    // Hypervisor.framework entitlement is present. The actual check
+    // is done in bindings::hv_check_available().
+    Ok(())
 }
 
-/// Check if Rosetta can translate x86_64 code.
-///
-/// This performs an actual check by trying to run a simple x86_64 binary.
-pub fn check_rosetta_functional() -> Result<()> {
-    if !is_apple_silicon() {
-        // On Intel Macs, we don't need Rosetta
-        return Ok(());
-    }
-
-    if !is_rosetta_installed() {
-        return Err(Error::InvalidConfig(
-            "Rosetta 2 is not installed. Install it with: softwareupdate --install-rosetta"
-                .to_string(),
-        ));
-    }
-
-    // Try to verify Rosetta works by checking if we can run arch command
-    match Command::new("arch")
-        .args(["-x86_64", "true"])
-        .output()
-    {
-        Ok(output) if output.status.success() => Ok(()),
-        Ok(_) => Err(Error::InvalidConfig(
-            "Rosetta 2 is installed but x86_64 translation is not working".to_string(),
-        )),
-        Err(e) => Err(Error::InvalidConfig(format!(
-            "Failed to verify Rosetta 2: {}",
-            e
-        ))),
-    }
-}
-
-/// Get the VM creation flags for x86_64 emulation.
-///
-/// On Apple Silicon, we need to specify flags to enable x86_64 guest support.
-/// The HV_VM_DEFAULT flag (0) works for native architecture.
-/// For Rosetta/x86_64 on ARM, Apple's private APIs may be needed.
+/// Get the VM creation flags for x86_64 virtualization.
+/// On Intel Macs, we use the default flags for VMX-based virtualization.
 pub fn get_vm_creation_flags() -> u64 {
-    // Standard VM creation with default flags
-    // Apple's Hypervisor.framework handles the Rosetta integration internally
-    // when creating x86_64 vCPUs on Apple Silicon
-    0
+    0 // HV_VM_DEFAULT
 }
 
 /// CPUID configuration for x86_64 guests.

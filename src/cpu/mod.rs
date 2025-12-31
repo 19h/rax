@@ -7,6 +7,9 @@ pub mod state;
 
 pub use exit::VcpuExit;
 pub use state::{
+    Aarch32CpuState, Aarch32Registers, Aarch32SystemRegisters,
+    Aarch64CpuState, Aarch64Registers, Aarch64SystemRegisters,
+    CortexMCpuState, CortexMRegisters, CortexMSystemRegisters,
     CpuState, DescriptorTable, HexagonCpuState, HexagonRegisters, Registers, Segment,
     SystemRegisters, X86_64CpuState,
 };
