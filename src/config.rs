@@ -34,6 +34,8 @@ impl Default for ArchKind {
 pub enum BackendKind {
     Kvm,
     Emulator,
+    /// Apple Hypervisor.framework with Rosetta for x86_64 emulation (macOS only)
+    Hvf,
 }
 
 impl Default for BackendKind {
@@ -42,7 +44,17 @@ impl Default for BackendKind {
         {
             BackendKind::Kvm
         }
-        #[cfg(not(target_os = "linux"))]
+        // Intel Mac - use HVF for hardware virtualization
+        #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+        {
+            BackendKind::Hvf
+        }
+        // Apple Silicon - HVF can't run x86_64 guests, use emulator
+        #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+        {
+            BackendKind::Emulator
+        }
+        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
         {
             BackendKind::Emulator
         }
@@ -441,6 +453,16 @@ impl VmConfig {
         if self.arch == ArchKind::Hexagon && self.backend == BackendKind::Kvm {
             return Err(Error::InvalidConfig(
                 "hexagon is only supported with the emulator backend".to_string(),
+            ));
+        }
+        if self.arch == ArchKind::Hexagon && self.backend == BackendKind::Hvf {
+            return Err(Error::InvalidConfig(
+                "hexagon is only supported with the emulator backend".to_string(),
+            ));
+        }
+        if self.backend == BackendKind::Hvf && self.arch != ArchKind::X86_64 {
+            return Err(Error::InvalidConfig(
+                "HVF backend only supports x86_64 architecture".to_string(),
             ));
         }
         if self.arch == ArchKind::Hexagon {

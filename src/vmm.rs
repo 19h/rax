@@ -10,8 +10,13 @@ use vm_memory::Bytes;
 use crate::arch::{self, Arch, BootInfo};
 #[cfg(all(feature = "kvm", target_os = "linux"))]
 use crate::backend::kvm::KvmVm;
+#[cfg(all(feature = "hvf", target_os = "macos", target_arch = "x86_64"))]
+use crate::backend::hvf::HvfVm;
 use crate::backend::{self, Vm};
-#[cfg(all(feature = "kvm", target_os = "linux"))]
+#[cfg(any(
+    all(feature = "kvm", target_os = "linux"),
+    all(feature = "hvf", target_os = "macos", target_arch = "x86_64")
+))]
 use crate::config::BackendKind;
 use crate::config::VmConfig;
 use crate::backend::emulator::x86_64::get_total_instruction_count;
@@ -134,6 +139,15 @@ impl Vmm {
                 .downcast_ref::<KvmVm>()
                 .ok_or_else(|| Error::InvalidConfig("expected KVM VM".to_string()))?;
             guest_mem.register(kvm_vm.vm_fd())?;
+        }
+        #[cfg(all(feature = "hvf", target_os = "macos", target_arch = "x86_64"))]
+        if matches!(config.backend, BackendKind::Hvf) {
+            use crate::backend::hvf::HvfVm;
+            let hvf_vm = vm
+                .as_any()
+                .downcast_ref::<HvfVm>()
+                .ok_or_else(|| Error::InvalidConfig("expected HVF VM".to_string()))?;
+            hvf_vm.register_memory(&guest_mem)?;
         }
         // Emulator accesses memory directly, no registration needed
 

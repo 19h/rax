@@ -7,6 +7,10 @@ pub mod emulator;
 #[cfg(all(feature = "kvm", target_os = "linux"))]
 pub mod kvm;
 
+// HVF backend only works on Intel Macs - Apple Silicon doesn't support x86_64 VM guests
+#[cfg(all(feature = "hvf", target_os = "macos", target_arch = "x86_64"))]
+pub mod hvf;
+
 use std::any::Any;
 use std::sync::Arc;
 
@@ -62,5 +66,25 @@ pub fn create(config: &VmConfig) -> Result<Box<dyn Backend>> {
             config.hexagon_isa,
             config.hexagon_endian,
         ))),
+        #[cfg(all(feature = "hvf", target_os = "macos", target_arch = "x86_64"))]
+        BackendKind::Hvf => {
+            if config.arch != ArchKind::X86_64 {
+                return Err(Error::InvalidConfig(
+                    "HVF backend only supports x86_64".to_string(),
+                ));
+            }
+            Ok(Box::new(hvf::HvfBackend::new()?))
+        }
+        // Apple Silicon (ARM64) - HVF cannot run x86_64 guests
+        #[cfg(all(feature = "hvf", target_os = "macos", target_arch = "aarch64"))]
+        BackendKind::Hvf => Err(Error::InvalidConfig(
+            "HVF backend cannot run x86_64 guests on Apple Silicon. \
+             Apple's Hypervisor.framework only supports ARM64 guests on ARM64 hosts. \
+             Use --backend emulator for x86_64 emulation on Apple Silicon.".to_string(),
+        )),
+        #[cfg(not(all(feature = "hvf", target_os = "macos")))]
+        BackendKind::Hvf => Err(Error::InvalidConfig(
+            "HVF backend not available (requires macOS with --features hvf)".to_string(),
+        )),
     }
 }
