@@ -767,6 +767,11 @@ impl Vmm {
     /// Check if we should take a snapshot and do so if needed
     fn maybe_snapshot(&mut self, insn_count: u64) -> Result<()> {
         let should_snapshot = if let Some(ref config) = self.snapshot_config {
+            // Debug: print instruction count periodically
+            if insn_count % 1_000_000_000 == 0 {
+                eprintln!("[SNAPSHOT] insn_count={} interval={} at={:?}", 
+                    insn_count, config.interval, config.at_instructions);
+            }
             // Check interval-based snapshotting
             if config.interval > 0 && insn_count >= self.last_snapshot_insn + config.interval {
                 true
