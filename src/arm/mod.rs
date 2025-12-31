@@ -5,6 +5,7 @@
 //! - Execution state management (ARM, Thumb, AArch32, AArch64)
 //! - System register encoding/decoding for CP15 and AArch64
 //! - Feature flags for optional extensions
+//! - Instruction decoding for all ARM execution states
 //!
 //! # Architecture Hierarchy
 //!
@@ -15,7 +16,24 @@
 //!
 //! Each profile has multiple architecture versions (v6, v7, v8, v9) with
 //! different mandatory and optional features.
+//!
+//! # Instruction Decoder
+//!
+//! The decoder module provides comprehensive instruction decoding for:
+//! - AArch64 (A64): 64-bit ARM instructions
+//! - AArch32 (A32): 32-bit ARM instructions
+//! - Thumb (T16): 16-bit compact instructions
+//! - Thumb-2 (T32): Mixed 16/32-bit instructions
+//!
+//! ```ignore
+//! use rax::arm::decoder::{Decoder, DecodedInsn};
+//!
+//! let decoder = Decoder::new_aarch64();
+//! let insn = decoder.decode(&[0x20, 0x00, 0x80, 0xd2]).unwrap(); // mov x0, #1
+//! println!("{}: {:?}", insn.mnemonic, insn.operands);
+//! ```
 
+pub mod decoder;
 pub mod features;
 pub mod isa;
 pub mod state;
@@ -25,3 +43,4 @@ pub use features::*;
 pub use isa::*;
 pub use state::*;
 pub use sysreg::{Aarch64SysReg, Cp15Encoding, Aarch64SysRegEncoding};
+pub use decoder::{Decoder, DecodedInsn, DecodeError, Mnemonic, Condition};
