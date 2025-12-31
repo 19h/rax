@@ -13,6 +13,25 @@ pub fn scasb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     } else {
         1
     };
+    
+    // Debug: trace REPNE SCASB looking for 0x87 (CTLQUOTEMARK)
+    let al = vcpu.regs.rax & 0xFF;
+    if ctx.rep_prefix == Some(0xF2) && al == 0x87 && 
+       vcpu.regs.rdi >= 0x30000000 && vcpu.regs.rdi < 0x50000000 {
+        let rip = vcpu.regs.rip;
+        eprintln!("[SCASB] RIP={:#x} RDI={:#x} AL={:#x} RCX={}", rip, vcpu.regs.rdi, al, vcpu.regs.rcx);
+        // Dump first 32 bytes at RDI
+        let mut dump = String::new();
+        for i in 0..32u64 {
+            if let Ok(b) = vcpu.mmu.read_u8(vcpu.regs.rdi.wrapping_add(i), &vcpu.sregs) {
+                dump.push_str(&format!("{:02x} ", b));
+            } else {
+                dump.push_str("?? ");
+            }
+        }
+        eprintln!("  RDI dump: {}", dump);
+    }
+    
     for _ in 0..count {
         if ctx.rep_prefix.is_some() && vcpu.regs.rcx == 0 {
             break;

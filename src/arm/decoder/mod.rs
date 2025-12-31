@@ -432,6 +432,8 @@ pub enum Mnemonic {
     CBNZ,
     TBZ,
     TBNZ,
+    TBB,   // Table Branch Byte (Thumb-2)
+    TBH,   // Table Branch Halfword (Thumb-2)
 
     // =========================================================================
     // Load/Store - Single Register
@@ -725,6 +727,12 @@ pub enum Mnemonic {
     BTI,
 
     // =========================================================================
+    // Saturation Instructions (ARMv6+)
+    // =========================================================================
+    SSAT,  // Signed Saturate
+    USAT,  // Unsigned Saturate
+
+    // =========================================================================
     // Miscellaneous
     // =========================================================================
     SETF8,
@@ -896,6 +904,8 @@ impl Mnemonic {
             Mnemonic::CBNZ => "cbnz",
             Mnemonic::TBZ => "tbz",
             Mnemonic::TBNZ => "tbnz",
+            Mnemonic::TBB => "tbb",
+            Mnemonic::TBH => "tbh",
 
             // Load/Store single
             Mnemonic::LDR => "ldr",
@@ -1149,6 +1159,10 @@ impl Mnemonic {
 
             // BTI
             Mnemonic::BTI => "bti",
+
+            // Saturation
+            Mnemonic::SSAT => "ssat",
+            Mnemonic::USAT => "usat",
 
             // Misc
             Mnemonic::SETF8 => "setf8",

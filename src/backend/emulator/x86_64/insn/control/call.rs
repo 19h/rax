@@ -63,6 +63,10 @@ pub fn call_rel32(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
     let disp = ctx.consume_u32()? as i32 as i64;
     let ret_addr = vcpu.regs.rip + ctx.cursor as u64;
     let target = (vcpu.regs.rip as i64 + ctx.cursor as i64 + disp) as u64;
+    
+    // Debug: trace calls for shell debugging
+    // (tracing removed for now)
+    
     vcpu.push64(ret_addr)?;
     vcpu.regs.rip = target;
     Ok(None)

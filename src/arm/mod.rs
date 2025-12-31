@@ -33,14 +33,22 @@
 //! println!("{}: {:?}", insn.mnemonic, insn.operands);
 //! ```
 
+pub mod cp15;
 pub mod decoder;
+pub mod execution;
 pub mod features;
+pub mod instructions;
 pub mod isa;
 pub mod state;
 pub mod sysreg;
+pub mod vfp;
 
 pub use features::*;
 pub use isa::*;
 pub use state::*;
 pub use sysreg::{Aarch64SysReg, Cp15Encoding, Aarch64SysRegEncoding};
 pub use decoder::{Decoder, DecodedInsn, DecodeError, Mnemonic, Condition};
+pub use execution::{
+    Armv7Cpu, Psr, ProcessorMode, ArmMemory, MemoryError, FlatMemory,
+};
+pub use instructions::{Executor, ExecResult, ExceptionType};
