@@ -16,3 +16,5 @@ target/
 *.o
 *.bin
 *.elf
+
+.DS_Store
