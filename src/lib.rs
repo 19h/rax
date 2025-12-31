@@ -1,4 +1,5 @@
 pub mod arch;
+pub mod arm;
 pub mod backend;
 pub mod config;
 pub mod cpu;
