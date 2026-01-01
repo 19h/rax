@@ -23,3 +23,4 @@ pub mod load_store;
 pub mod multiply;
 pub mod system;
 pub mod execution;
+pub mod aarch64;

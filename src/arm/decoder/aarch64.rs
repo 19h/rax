@@ -1711,12 +1711,50 @@ impl Aarch64Decoder {
         let op2 = (raw >> 19) & 0xF;
         let op3 = (raw >> 10) & 0x1FF;
 
-        // SIMD/FP has many subcategories
-        // For now, decode common scalar FP operations
+        // Bits [31:30] = Q:U for many SIMD ops
+        let q = (raw >> 30) & 1;
+        let u = (raw >> 29) & 1;
 
-        if op0 & 0x5 == 0x1 && op1 == 0 {
-            // Scalar FP
+        // SIMD three-same: [31:30]=Qx, [28:24]=0111x, [21]=1, [15:11]=opcode
+        // Encoding: 0_Q_U_01110_size_1_Rm_opcode_1_Rn_Rd
+        if (raw >> 24) & 0x1F == 0b01110 && (raw >> 21) & 1 == 1 && (raw >> 10) & 1 == 1 {
+            return Self::decode_simd_three_same(raw, q, u);
+        }
+
+        // SIMD two-reg misc: [31:30]=Qx, [28:24]=0111x, [21:17]=10000, [16:12]=opcode
+        if (raw >> 24) & 0x1F == 0b01110 && (raw >> 17) & 0x1F == 0b10000 {
+            return Self::decode_simd_two_reg_misc(raw, q, u);
+        }
+
+        // SIMD across lanes: [31:30]=Qx, [28:24]=0111x, [21:17]=11000
+        if (raw >> 24) & 0x1F == 0b01110 && (raw >> 17) & 0x1F == 0b11000 {
+            return Self::decode_simd_across_lanes(raw, q, u);
+        }
+
+        // SIMD scalar pairwise: [31:30]=01, [28:24]=11110
+        if (raw >> 30) & 0x3 == 0b01 && (raw >> 24) & 0x1F == 0b11110 {
+            return Self::decode_simd_scalar_pairwise(raw);
+        }
+
+        // SIMD copy (DUP, MOV, INS): [31:30]=0x, [28:24]=01110, [21]=0
+        if (raw >> 24) & 0x1F == 0b01110 && (raw >> 21) & 1 == 0 {
+            return Self::decode_simd_copy(raw, q);
+        }
+
+        // Advanced SIMD scalar three-same: [31:30]=01, [28:24]=11110
+        // Advanced SIMD scalar two-reg misc: similar encoding
+        if (raw >> 30) & 0x3 == 0b01 && (raw >> 24) & 0x1F == 0b11110 {
+            return Self::decode_simd_scalar_three(raw, u);
+        }
+
+        // Scalar FP data-processing: [31:30]=00, [28:24]=11110
+        if (raw >> 30) & 0x3 == 0b00 && (raw >> 24) & 0x1F == 0b11110 {
             return Self::decode_scalar_fp(raw);
+        }
+
+        // SIMD load/store: various encodings
+        if (raw >> 24) & 0x1F == 0b01100 || (raw >> 24) & 0x1F == 0b01101 {
+            return Self::decode_simd_ldst(raw, q);
         }
 
         Ok(DecodedInsn::new(
@@ -1725,6 +1763,337 @@ impl Aarch64Decoder {
             raw,
             4,
         ))
+    }
+
+    /// Decode SIMD three-same register instructions.
+    fn decode_simd_three_same(raw: u32, q: u32, u: u32) -> Result<DecodedInsn, DecodeError> {
+        let size = (raw >> 22) & 0x3;
+        let opcode = (raw >> 11) & 0x1F;
+        let rm = ((raw >> 16) & 0x1F) as u8;
+        let rn = ((raw >> 5) & 0x1F) as u8;
+        let rd = (raw & 0x1F) as u8;
+
+        let vec_size = if q == 1 { FpRegSize::Q } else { FpRegSize::D };
+        let fp_reg = |num| {
+            Operand::FpReg(FpRegister {
+                num,
+                size: vec_size,
+            })
+        };
+
+        let mnemonic = match (u, opcode) {
+            // Integer operations
+            (0, 0b00000) => Mnemonic::VADD, // SHADD actually, simplified
+            (0, 0b00001) => Mnemonic::VADD, // SQADD
+            (0, 0b00010) => Mnemonic::VSUB, // SRHADD
+            (0, 0b00100) => Mnemonic::VSUB, // SHSUB
+            (0, 0b00110) => Mnemonic::VMAX, // SMAX
+            (0, 0b00111) => Mnemonic::VMIN, // SMIN
+            (0, 0b10000) => Mnemonic::VADD, // ADD
+            (0, 0b10001) => Mnemonic::VMLA, // CMTST
+            (0, 0b10011) => Mnemonic::VMUL, // MUL
+            (0, 0b10100) => Mnemonic::VMAX, // SMAXP
+            (0, 0b10101) => Mnemonic::VMIN, // SMINP
+            (0, 0b10111) => Mnemonic::VADD, // ADDP
+
+            (1, 0b00000) => Mnemonic::VADD, // UHADD
+            (1, 0b00001) => Mnemonic::VADD, // UQADD
+            (1, 0b00010) => Mnemonic::VSUB, // URHADD
+            (1, 0b00100) => Mnemonic::VSUB, // UHSUB
+            (1, 0b00110) => Mnemonic::VMAX, // UMAX
+            (1, 0b00111) => Mnemonic::VMIN, // UMIN
+            (1, 0b10000) => Mnemonic::VSUB, // SUB
+            (1, 0b10001) => Mnemonic::VCMP, // CMEQ
+            (1, 0b10100) => Mnemonic::VMAX, // UMAXP
+            (1, 0b10101) => Mnemonic::VMIN, // UMINP
+
+            // Logical operations
+            (0, 0b00011) if size == 0b00 => Mnemonic::VAND,
+            (0, 0b00011) if size == 0b01 => Mnemonic::VBIC,
+            (0, 0b00011) if size == 0b10 => Mnemonic::VORR,
+            (0, 0b00011) if size == 0b11 => Mnemonic::VEOR, // ORN actually
+
+            (1, 0b00011) if size == 0b00 => Mnemonic::VEOR,
+            (1, 0b00011) if size == 0b01 => Mnemonic::VBIC, // BSL
+            (1, 0b00011) if size == 0b10 => Mnemonic::VORR, // BIT
+            (1, 0b00011) if size == 0b11 => Mnemonic::VORR, // BIF
+
+            // FP operations (size bit 0 = single, bit 1 = double when Q=1)
+            (0, 0b11000) => Mnemonic::FADD, // FMAXNM
+            (0, 0b11001) => Mnemonic::FMLA, // FMLA
+            (0, 0b11010) => Mnemonic::FADD, // FADD
+            (0, 0b11011) => Mnemonic::FMUL, // FMULX
+            (0, 0b11100) => Mnemonic::FCMP, // FCMEQ
+            (0, 0b11110) => Mnemonic::FMAX, // FMAX
+            (0, 0b11111) => Mnemonic::FADD, // FRECPS
+
+            (1, 0b11000) => Mnemonic::FSUB, // FMINNM
+            (1, 0b11001) => Mnemonic::FMLS, // FMLS
+            (1, 0b11010) => Mnemonic::FSUB, // FSUB
+            (1, 0b11101) => Mnemonic::FMUL, // FMUL
+            (1, 0b11110) => Mnemonic::FMIN, // FMIN
+            (1, 0b11111) => Mnemonic::FDIV, // FDIV (or FRSQRTS)
+
+            _ => Mnemonic::UNKNOWN,
+        };
+
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            .with_operand(fp_reg(rd))
+            .with_operand(fp_reg(rn))
+            .with_operand(fp_reg(rm)))
+    }
+
+    /// Decode SIMD two-register miscellaneous instructions.
+    fn decode_simd_two_reg_misc(raw: u32, q: u32, u: u32) -> Result<DecodedInsn, DecodeError> {
+        let size = (raw >> 22) & 0x3;
+        let opcode = (raw >> 12) & 0x1F;
+        let rn = ((raw >> 5) & 0x1F) as u8;
+        let rd = (raw & 0x1F) as u8;
+
+        let vec_size = if q == 1 { FpRegSize::Q } else { FpRegSize::D };
+        let fp_reg = |num| {
+            Operand::FpReg(FpRegister {
+                num,
+                size: vec_size,
+            })
+        };
+
+        let mnemonic = match (u, opcode) {
+            // Integer unary
+            (0, 0b00000) => Mnemonic::VNEG, // REV64
+            (0, 0b00001) => Mnemonic::VNEG, // REV16
+            (0, 0b00101) => Mnemonic::VNEG, // CNT
+            (0, 0b01000) => Mnemonic::VCMP, // CMGT #0
+            (0, 0b01001) => Mnemonic::VCMP, // CMEQ #0
+            (0, 0b01010) => Mnemonic::VCMP, // CMLT #0
+            (0, 0b01011) => Mnemonic::VABS, // ABS
+            (0, 0b10100) => Mnemonic::VCMP, // CLS
+
+            (1, 0b00000) => Mnemonic::VNEG, // REV32
+            (1, 0b00101) => Mnemonic::VMVN, // NOT / MVN
+            (1, 0b01000) => Mnemonic::VCMP, // CMGE #0
+            (1, 0b01001) => Mnemonic::VCMP, // CMLE #0
+            (1, 0b01011) => Mnemonic::VNEG, // NEG
+            (1, 0b10100) => Mnemonic::VCMP, // CLZ
+
+            // FP unary
+            (0, 0b01100) => Mnemonic::FCMP,   // FCMGT #0
+            (0, 0b01101) => Mnemonic::FCMP,   // FCMEQ #0
+            (0, 0b01110) => Mnemonic::FCMP,   // FCMLT #0
+            (0, 0b01111) => Mnemonic::FABS,   // FABS
+            (0, 0b11000) => Mnemonic::FRINT,  // FRINTN
+            (0, 0b11001) => Mnemonic::FRINT,  // FRINTM
+            (0, 0b11010) => Mnemonic::FCVT,   // FCVTNS
+            (0, 0b11011) => Mnemonic::FCVT,   // FCVTMS
+            (0, 0b11100) => Mnemonic::FCVT,   // FCVTAS
+            (0, 0b11101) => Mnemonic::SCVTF,  // SCVTF
+            (0, 0b11111) => Mnemonic::VRECPE, // FRECPE
+
+            (1, 0b01100) => Mnemonic::FCMP,    // FCMGE #0
+            (1, 0b01101) => Mnemonic::FCMP,    // FCMLE #0
+            (1, 0b01111) => Mnemonic::FNEG,    // FNEG
+            (1, 0b11000) => Mnemonic::FRINT,   // FRINTP
+            (1, 0b11001) => Mnemonic::FRINT,   // FRINTZ
+            (1, 0b11010) => Mnemonic::FCVT,    // FCVTPS
+            (1, 0b11011) => Mnemonic::FCVTZS,  // FCVTZS
+            (1, 0b11101) => Mnemonic::UCVTF,   // UCVTF
+            (1, 0b11111) => Mnemonic::VRSQRTE, // FRSQRTE
+            (1, 0b10111) => Mnemonic::FSQRT,   // FSQRT
+
+            _ => Mnemonic::UNKNOWN,
+        };
+
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            .with_operand(fp_reg(rd))
+            .with_operand(fp_reg(rn)))
+    }
+
+    /// Decode SIMD across-lanes instructions (reduction).
+    fn decode_simd_across_lanes(raw: u32, q: u32, u: u32) -> Result<DecodedInsn, DecodeError> {
+        let size = (raw >> 22) & 0x3;
+        let opcode = (raw >> 12) & 0x1F;
+        let rn = ((raw >> 5) & 0x1F) as u8;
+        let rd = (raw & 0x1F) as u8;
+
+        let vec_size = if q == 1 { FpRegSize::Q } else { FpRegSize::D };
+        let scalar_size = match size {
+            0b00 => FpRegSize::B,
+            0b01 => FpRegSize::H,
+            0b10 => FpRegSize::S,
+            0b11 => FpRegSize::D,
+            _ => FpRegSize::S,
+        };
+
+        let mnemonic = match (u, opcode) {
+            (0, 0b00011) => Mnemonic::SADDV, // SADDLV
+            (0, 0b01010) => Mnemonic::SMAXV, // SMAXV
+            (0, 0b11010) => Mnemonic::SMINV, // SMINV
+            (0, 0b11011) => Mnemonic::VADD,  // ADDV
+
+            (1, 0b00011) => Mnemonic::UADDV, // UADDLV
+            (1, 0b01010) => Mnemonic::UMAXV, // UMAXV
+            (1, 0b11010) => Mnemonic::UMINV, // UMINV
+
+            // FP across lanes
+            (0, 0b01100) => Mnemonic::FMAXNM, // FMAXNMV
+            (0, 0b01111) => Mnemonic::FMAX,   // FMAXV
+            (1, 0b01100) => Mnemonic::FMINNM, // FMINNMV
+            (1, 0b01111) => Mnemonic::FMIN,   // FMINV
+
+            _ => Mnemonic::UNKNOWN,
+        };
+
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            .with_operand(Operand::FpReg(FpRegister {
+                num: rd,
+                size: scalar_size,
+            }))
+            .with_operand(Operand::FpReg(FpRegister {
+                num: rn,
+                size: vec_size,
+            })))
+    }
+
+    /// Decode SIMD scalar pairwise instructions.
+    fn decode_simd_scalar_pairwise(raw: u32) -> Result<DecodedInsn, DecodeError> {
+        let u = (raw >> 29) & 1;
+        let size = (raw >> 22) & 0x3;
+        let opcode = (raw >> 12) & 0x1F;
+        let rn = ((raw >> 5) & 0x1F) as u8;
+        let rd = (raw & 0x1F) as u8;
+
+        let fp_size = if size & 1 == 0 {
+            FpRegSize::S
+        } else {
+            FpRegSize::D
+        };
+        let fp_reg = |num| Operand::FpReg(FpRegister { num, size: fp_size });
+
+        let mnemonic = match (u, opcode) {
+            (0, 0b01100) => Mnemonic::FMAXNM, // FMAXNMP
+            (0, 0b01101) => Mnemonic::FADD,   // FADDP
+            (0, 0b01111) => Mnemonic::FMAX,   // FMAXP
+            (1, 0b01100) => Mnemonic::FMINNM, // FMINNMP
+            (1, 0b01111) => Mnemonic::FMIN,   // FMINP
+            _ => Mnemonic::UNKNOWN,
+        };
+
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            .with_operand(fp_reg(rd))
+            .with_operand(fp_reg(rn)))
+    }
+
+    /// Decode SIMD copy instructions (DUP, MOV, INS).
+    fn decode_simd_copy(raw: u32, q: u32) -> Result<DecodedInsn, DecodeError> {
+        let op = (raw >> 29) & 1;
+        let imm5 = (raw >> 16) & 0x1F;
+        let imm4 = (raw >> 11) & 0xF;
+        let rn = ((raw >> 5) & 0x1F) as u8;
+        let rd = (raw & 0x1F) as u8;
+
+        let vec_size = if q == 1 { FpRegSize::Q } else { FpRegSize::D };
+
+        // Determine element size from imm5
+        let (esize, idx) = if imm5 & 1 != 0 {
+            (FpRegSize::B, (imm5 >> 1) as u8)
+        } else if imm5 & 2 != 0 {
+            (FpRegSize::H, (imm5 >> 2) as u8)
+        } else if imm5 & 4 != 0 {
+            (FpRegSize::S, (imm5 >> 3) as u8)
+        } else if imm5 & 8 != 0 {
+            (FpRegSize::D, (imm5 >> 4) as u8)
+        } else {
+            (FpRegSize::B, 0)
+        };
+
+        let mnemonic = match (op, imm4) {
+            (0, 0b0000) => Mnemonic::VDUP, // DUP (element)
+            (0, 0b0001) => Mnemonic::VDUP, // DUP (general)
+            (0, 0b0101) => Mnemonic::VMOV, // SMOV
+            (0, 0b0111) => Mnemonic::VMOV, // UMOV
+            (1, _) => Mnemonic::VMOV,      // INS (general or element)
+            _ => Mnemonic::UNKNOWN,
+        };
+
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            .with_operand(Operand::FpReg(FpRegister {
+                num: rd,
+                size: vec_size,
+            }))
+            .with_operand(Operand::FpReg(FpRegister {
+                num: rn,
+                size: esize,
+            })))
+    }
+
+    /// Decode SIMD scalar three-same instructions.
+    fn decode_simd_scalar_three(raw: u32, u: u32) -> Result<DecodedInsn, DecodeError> {
+        let size = (raw >> 22) & 0x3;
+        let opcode = (raw >> 11) & 0x1F;
+        let rm = ((raw >> 16) & 0x1F) as u8;
+        let rn = ((raw >> 5) & 0x1F) as u8;
+        let rd = (raw & 0x1F) as u8;
+
+        let fp_size = if size & 1 == 0 {
+            FpRegSize::S
+        } else {
+            FpRegSize::D
+        };
+        let fp_reg = |num| Operand::FpReg(FpRegister { num, size: fp_size });
+
+        let mnemonic = match (u, opcode) {
+            // Scalar FP
+            (0, 0b11010) => Mnemonic::FADD,
+            (0, 0b11011) => Mnemonic::FMUL,
+            (0, 0b11110) => Mnemonic::FMAX,
+            (0, 0b11111) => Mnemonic::FMIN,
+
+            (1, 0b11010) => Mnemonic::FSUB,
+            (1, 0b11101) => Mnemonic::FMUL,
+            (1, 0b11111) => Mnemonic::FDIV,
+
+            _ => Mnemonic::UNKNOWN,
+        };
+
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            .with_operand(fp_reg(rd))
+            .with_operand(fp_reg(rn))
+            .with_operand(fp_reg(rm)))
+    }
+
+    /// Decode SIMD load/store instructions.
+    fn decode_simd_ldst(raw: u32, q: u32) -> Result<DecodedInsn, DecodeError> {
+        let l = (raw >> 22) & 1; // 1=load, 0=store
+        let opcode = (raw >> 12) & 0xF;
+        let rn = ((raw >> 5) & 0x1F) as u8;
+        let rt = (raw & 0x1F) as u8;
+
+        let vec_size = if q == 1 { FpRegSize::Q } else { FpRegSize::D };
+
+        let mnemonic = if l == 1 {
+            match opcode {
+                0b0000 | 0b0010 => Mnemonic::VLD1,
+                0b0100 | 0b0110 => Mnemonic::VLD2,
+                0b0001 | 0b0011 => Mnemonic::VLD3,
+                0b0101 | 0b0111 => Mnemonic::VLD4,
+                _ => Mnemonic::VLDR,
+            }
+        } else {
+            match opcode {
+                0b0000 | 0b0010 => Mnemonic::VST1,
+                0b0100 | 0b0110 => Mnemonic::VST2,
+                0b0001 | 0b0011 => Mnemonic::VST3,
+                0b0101 | 0b0111 => Mnemonic::VST4,
+                _ => Mnemonic::VSTR,
+            }
+        };
+
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            .with_operand(Operand::FpReg(FpRegister {
+                num: rt,
+                size: vec_size,
+            }))
+            .with_operand(Operand::Mem(MemOperand::base(Register::x(rn)))))
     }
 
     fn decode_scalar_fp(raw: u32) -> Result<DecodedInsn, DecodeError> {
@@ -1779,15 +2148,385 @@ impl Aarch64Decoder {
     // SVE
     // =========================================================================
 
+    /// Decode SVE (Scalable Vector Extension) instructions.
+    ///
+    /// SVE encoding space: bits[28:25] = 0010
+    /// Further classification by bits[24:21] and other fields.
     fn decode_sve(raw: u32) -> Result<DecodedInsn, DecodeError> {
-        // SVE instructions - basic placeholder
-        // Full SVE decoding would be extensive
-        Ok(DecodedInsn::new(
-            Mnemonic::UNKNOWN,
-            ExecutionState::Aarch64,
-            raw,
-            4,
-        ))
+        // Extract primary classification bits
+        let op0 = (raw >> 29) & 0x7; // bits[31:29]
+        let op1 = (raw >> 23) & 0x3; // bits[24:23]
+        let op2 = (raw >> 17) & 0x1F; // bits[21:17]
+        let op3 = (raw >> 10) & 0x3F; // bits[15:10]
+
+        // Common register fields
+        let zd = (raw & 0x1F) as u8;
+        let zn = ((raw >> 5) & 0x1F) as u8;
+        let zm = ((raw >> 16) & 0x1F) as u8;
+        let pg = ((raw >> 10) & 0x7) as u8; // predicate register (3 bits)
+        let size = (raw >> 22) & 0x3; // element size
+
+        // Create SVE register operands
+        let sve_z = |num| Operand::Reg(Register::sve_z(num));
+        let sve_p = |num| Operand::Reg(Register::sve_p(num));
+
+        match op0 {
+            // Integer multiply-add predicated
+            0b000 if (op1 & 0x2) == 0 && (op2 & 0x10) == 0 && (op3 & 0x20) != 0 => {
+                let op = (raw >> 13) & 1;
+                let mnemonic = match op {
+                    0 => Mnemonic::SVE_MLA,
+                    1 => Mnemonic::SVE_MLS,
+                    _ => unreachable!(),
+                };
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_z(zd))
+                    .with_operand(sve_p(pg))
+                    .with_operand(sve_z(zn))
+                    .with_operand(sve_z(zm)))
+            }
+
+            // Integer predicated binary operations
+            0b000 if (op1 & 0x2) == 0 && (op2 & 0x10) == 0 && (op3 & 0x38) == 0 => {
+                let opc = (raw >> 16) & 0x7;
+                let mnemonic = match opc {
+                    0b000 => Mnemonic::SVE_ADD,
+                    0b001 => Mnemonic::SVE_SUB,
+                    0b011 => Mnemonic::SVE_SUBR,
+                    _ => Mnemonic::UNKNOWN,
+                };
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_z(zd))
+                    .with_operand(sve_p(pg))
+                    .with_operand(sve_z(zn)))
+            }
+
+            // Integer min/max predicated
+            0b000 if (op1 & 0x2) == 0 && (op2 & 0x18) == 0x08 => {
+                let opc = (raw >> 17) & 0x3;
+                let u = (raw >> 16) & 1;
+                let mnemonic = match (opc, u) {
+                    (0b00, 0) => Mnemonic::SVE_SMAX,
+                    (0b00, 1) => Mnemonic::SVE_UMAX,
+                    (0b01, 0) => Mnemonic::SVE_SMIN,
+                    (0b01, 1) => Mnemonic::SVE_UMIN,
+                    (0b10, 0) => Mnemonic::SVE_SABD,
+                    (0b10, 1) => Mnemonic::SVE_UABD,
+                    _ => Mnemonic::UNKNOWN,
+                };
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_z(zd))
+                    .with_operand(sve_p(pg))
+                    .with_operand(sve_z(zm)))
+            }
+
+            // Integer multiply/divide predicated
+            0b000 if (op1 & 0x2) == 0 && (op2 & 0x18) == 0x10 => {
+                let h = (raw >> 17) & 1;
+                let u = (raw >> 16) & 1;
+                let mnemonic = match (h, u) {
+                    (0, 0) => Mnemonic::SVE_MUL,
+                    (1, 0) => Mnemonic::SVE_SMULH,
+                    (1, 1) => Mnemonic::SVE_UMULH,
+                    _ => Mnemonic::UNKNOWN,
+                };
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_z(zd))
+                    .with_operand(sve_p(pg))
+                    .with_operand(sve_z(zm)))
+            }
+
+            // Integer divide predicated
+            0b000 if (op1 & 0x2) == 0 && (op2 & 0x18) == 0x14 => {
+                let r = (raw >> 17) & 1;
+                let u = (raw >> 16) & 1;
+                let mnemonic = match (r, u) {
+                    (0, 0) => Mnemonic::SVE_SDIV,
+                    (0, 1) => Mnemonic::SVE_UDIV,
+                    _ => Mnemonic::UNKNOWN,
+                };
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_z(zd))
+                    .with_operand(sve_p(pg))
+                    .with_operand(sve_z(zm)))
+            }
+
+            // Logical predicated
+            0b000 if (op1 & 0x2) == 0 && (op2 & 0x18) == 0x18 => {
+                let opc = (raw >> 16) & 0x7;
+                let mnemonic = match opc {
+                    0b000 => Mnemonic::SVE_ORR,
+                    0b001 => Mnemonic::SVE_EOR,
+                    0b010 => Mnemonic::SVE_AND,
+                    0b011 => Mnemonic::SVE_BIC,
+                    _ => Mnemonic::UNKNOWN,
+                };
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_z(zd))
+                    .with_operand(sve_p(pg))
+                    .with_operand(sve_z(zm)))
+            }
+
+            // Unpredicated arithmetic
+            0b000 if op1 == 0b01 => {
+                let opc = (raw >> 10) & 0x7;
+                let mnemonic = match opc {
+                    0b000 => Mnemonic::SVE_ADD,
+                    0b001 => Mnemonic::SVE_SUB,
+                    0b100 => Mnemonic::SVE_MUL, // sqadd actually, simplified
+                    _ => Mnemonic::UNKNOWN,
+                };
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_z(zd))
+                    .with_operand(sve_z(zn))
+                    .with_operand(sve_z(zm)))
+            }
+
+            // Predicate operations
+            0b001 if op1 == 0b00 => {
+                // While instructions
+                let lt = (raw >> 4) & 1;
+                let sf = (raw >> 12) & 1;
+                let mnemonic = if lt == 1 {
+                    Mnemonic::SVE_WHILELT
+                } else {
+                    Mnemonic::SVE_WHILELE
+                };
+                let pd = (raw & 0xF) as u8;
+                let rn = ((raw >> 5) & 0x1F) as u8;
+                let rm = ((raw >> 16) & 0x1F) as u8;
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_p(pd))
+                    .with_operand(Operand::Reg(if sf == 1 {
+                        Register::x(rn)
+                    } else {
+                        Register::w(rn)
+                    }))
+                    .with_operand(Operand::Reg(if sf == 1 {
+                        Register::x(rm)
+                    } else {
+                        Register::w(rm)
+                    })))
+            }
+
+            // PTRUE/PFALSE
+            0b001 if op1 == 0b01 && (op3 & 0x30) == 0x10 => {
+                let s = (raw >> 16) & 1;
+                let mnemonic = if s == 0 {
+                    Mnemonic::SVE_PTRUE
+                } else {
+                    Mnemonic::SVE_PFALSE
+                };
+                let pd = (raw & 0xF) as u8;
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_p(pd)))
+            }
+
+            // DUP/SEL/MOV
+            0b000 if op1 == 0b10 => {
+                let mnemonic = Mnemonic::SVE_DUP;
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_z(zd))
+                    .with_operand(sve_z(zn)))
+            }
+
+            // INDEX
+            0b000 if op1 == 0b11 && (op2 & 0x10) == 0 => {
+                let mnemonic = Mnemonic::SVE_INDEX;
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_z(zd))
+                    .with_operand(Operand::Reg(Register::x(zn)))
+                    .with_operand(Operand::Reg(Register::x(zm))))
+            }
+
+            // Count/Inc/Dec
+            0b000 if op1 == 0b11 && (op2 & 0x18) == 0x10 => {
+                let opc = (raw >> 16) & 0x7;
+                let mnemonic = match opc {
+                    0b000 => Mnemonic::SVE_CNTB,
+                    0b001 => Mnemonic::SVE_CNTH,
+                    0b010 => Mnemonic::SVE_CNTW,
+                    0b011 => Mnemonic::SVE_CNTD,
+                    _ => Mnemonic::UNKNOWN,
+                };
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(Operand::Reg(Register::x(zd))))
+            }
+
+            // Permute - ZIP/UZP/TRN
+            0b000 if op1 == 0b10 && (op3 & 0x30) == 0x00 => {
+                let opc = (raw >> 10) & 0x7;
+                let mnemonic = match opc {
+                    0b000 => Mnemonic::SVE_ZIP1,
+                    0b001 => Mnemonic::SVE_ZIP2,
+                    0b010 => Mnemonic::SVE_UZP1,
+                    0b011 => Mnemonic::SVE_UZP2,
+                    0b100 => Mnemonic::SVE_TRN1,
+                    0b101 => Mnemonic::SVE_TRN2,
+                    _ => Mnemonic::UNKNOWN,
+                };
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_z(zd))
+                    .with_operand(sve_z(zn))
+                    .with_operand(sve_z(zm)))
+            }
+
+            // REV
+            0b000 if op1 == 0b10 && (op3 & 0x38) == 0x18 => {
+                let opc = (raw >> 16) & 0x3;
+                let mnemonic = match opc {
+                    0b00 => Mnemonic::SVE_REV,
+                    0b01 => Mnemonic::SVE_REVB,
+                    0b10 => Mnemonic::SVE_REVH,
+                    0b11 => Mnemonic::SVE_REVW,
+                    _ => Mnemonic::UNKNOWN,
+                };
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_z(zd))
+                    .with_operand(sve_z(zn)))
+            }
+
+            // Load/Store contiguous
+            0b100 | 0b101 | 0b110 | 0b111 => Self::decode_sve_ldst(raw),
+
+            // FP arithmetic predicated
+            0b011 if (op1 & 0x2) == 0 => {
+                let opc = (raw >> 16) & 0xF;
+                let mnemonic = match opc {
+                    0b0000 => Mnemonic::SVE_FADD,
+                    0b0001 => Mnemonic::SVE_FSUB,
+                    0b0010 => Mnemonic::SVE_FMUL,
+                    0b0011 => Mnemonic::SVE_FDIV,
+                    0b0100 => Mnemonic::SVE_FMIN,
+                    0b0101 => Mnemonic::SVE_FMAX,
+                    0b1000 => Mnemonic::SVE_FABS,
+                    0b1001 => Mnemonic::SVE_FNEG,
+                    0b1010 => Mnemonic::SVE_FSQRT,
+                    _ => Mnemonic::UNKNOWN,
+                };
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_z(zd))
+                    .with_operand(sve_p(pg))
+                    .with_operand(sve_z(zn)))
+            }
+
+            // FP multiply-add predicated
+            0b011 if op1 == 0b01 => {
+                let op = (raw >> 13) & 1;
+                let mnemonic = match op {
+                    0 => Mnemonic::SVE_FMLA,
+                    1 => Mnemonic::SVE_FMLS,
+                    _ => unreachable!(),
+                };
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(sve_z(zd))
+                    .with_operand(sve_p(pg))
+                    .with_operand(sve_z(zn))
+                    .with_operand(sve_z(zm)))
+            }
+
+            // Reduction operations
+            0b000 if (op1 & 0x2) == 0x2 && (op3 & 0x20) != 0 => {
+                let opc = (raw >> 16) & 0x7;
+                let u = (raw >> 19) & 1;
+                let mnemonic = match (opc, u) {
+                    (0b000, 0) => Mnemonic::SVE_SADDV,
+                    (0b000, 1) => Mnemonic::SVE_UADDV,
+                    (0b001, 0) => Mnemonic::SVE_SMAXV,
+                    (0b001, 1) => Mnemonic::SVE_UMAXV,
+                    (0b010, 0) => Mnemonic::SVE_SMINV,
+                    (0b010, 1) => Mnemonic::SVE_UMINV,
+                    (0b011, _) => Mnemonic::SVE_ANDV,
+                    (0b100, _) => Mnemonic::SVE_ORV,
+                    (0b101, _) => Mnemonic::SVE_EORV,
+                    _ => Mnemonic::UNKNOWN,
+                };
+                let vd = zd; // destination is a scalar V register
+                Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(Operand::FpReg(FpRegister {
+                        num: vd,
+                        size: FpRegSize::D,
+                    }))
+                    .with_operand(sve_p(pg))
+                    .with_operand(sve_z(zn)))
+            }
+
+            // RDVL - read vector length
+            0b000 if op1 == 0b11 && op2 == 0x1F && (op3 & 0x3E) == 0x10 => {
+                let rd = zd;
+                let imm6 = ((raw >> 5) & 0x3F) as i8;
+                // Sign extend
+                let imm = if imm6 & 0x20 != 0 {
+                    imm6 as i64 | !0x3F
+                } else {
+                    imm6 as i64
+                };
+                Ok(
+                    DecodedInsn::new(Mnemonic::SVE_RDVL, ExecutionState::Aarch64, raw, 4)
+                        .with_operand(Operand::Reg(Register::x(rd)))
+                        .with_operand(Operand::Imm(Immediate::new(imm))),
+                )
+            }
+
+            // Fallback for unrecognized patterns
+            _ => Ok(DecodedInsn::new(
+                Mnemonic::UNKNOWN,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            )),
+        }
+    }
+
+    /// Decode SVE load/store instructions.
+    fn decode_sve_ldst(raw: u32) -> Result<DecodedInsn, DecodeError> {
+        let op0 = (raw >> 29) & 0x7;
+        let msz = (raw >> 23) & 0x3; // memory element size
+        let opc = (raw >> 21) & 0x3;
+
+        let zt = (raw & 0x1F) as u8;
+        let rn = ((raw >> 5) & 0x1F) as u8;
+        let pg = ((raw >> 10) & 0x7) as u8;
+
+        let sve_z = |num| Operand::Reg(Register::sve_z(num));
+        let sve_p = |num| Operand::Reg(Register::sve_p(num));
+
+        // Determine if load or store and element size
+        let is_load = (op0 & 0x1) == 0;
+
+        let mnemonic = if is_load {
+            match msz {
+                0b00 => Mnemonic::SVE_LD1B,
+                0b01 => Mnemonic::SVE_LD1H,
+                0b10 => Mnemonic::SVE_LD1W,
+                0b11 => Mnemonic::SVE_LD1D,
+                _ => Mnemonic::SVE_LD1,
+            }
+        } else {
+            match msz {
+                0b00 => Mnemonic::SVE_ST1B,
+                0b01 => Mnemonic::SVE_ST1H,
+                0b10 => Mnemonic::SVE_ST1W,
+                0b11 => Mnemonic::SVE_ST1D,
+                _ => Mnemonic::SVE_ST1,
+            }
+        };
+
+        // Extract immediate offset if present
+        let imm4 = ((raw >> 16) & 0xF) as i64;
+        let offset = if imm4 & 0x8 != 0 {
+            imm4 | !0xF // sign extend
+        } else {
+            imm4
+        };
+
+        Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            .with_operand(sve_z(zt))
+            .with_operand(sve_p(pg))
+            .with_operand(Operand::Mem(MemOperand::base_offset(
+                Register::x(rn),
+                offset * (1 << msz), // scale by element size
+            ))))
     }
 }
 

@@ -169,6 +169,22 @@ pub struct AArch64Cpu {
     fpsr: u32,
 
     // =========================================================================
+    // SVE (Scalable Vector Extension)
+    // =========================================================================
+    /// SVE Vector Length in bits (must be multiple of 128, min 128, max 2048).
+    /// For simplicity, we use VL=128 which makes Z registers equivalent to V registers.
+    sve_vl: u16,
+
+    /// SVE Predicate registers P0-P15.
+    /// Each bit corresponds to one byte of the vector (VL/8 bits per predicate).
+    /// For VL=128: 16 bits, VL=256: 32 bits, etc.
+    /// We use u32 to support up to VL=256.
+    sve_p: [u32; 16],
+
+    /// First-fault register (FFR) - special predicate for first-fault loads.
+    sve_ffr: u32,
+
+    // =========================================================================
     // System Registers
     // =========================================================================
     /// All system registers.
@@ -272,6 +288,11 @@ impl AArch64Cpu {
             v: [0; NUM_SIMD_REGS],
             fpcr: 0,
             fpsr: 0,
+
+            // SVE: Default VL=128 bits (16 bytes)
+            sve_vl: 128,
+            sve_p: [0; 16],
+            sve_ffr: 0,
 
             sysregs: SystemRegisters::new(),
             mmu: Mmu::new(),
@@ -624,8 +645,8 @@ impl AArch64Cpu {
             // Unallocated
             0b0001 | 0b0011 => Err(ArmError::UndefinedInstruction(insn)),
 
-            // SVE (not implemented yet)
-            0b0010 => Err(ArmError::Unimplemented("SVE instructions".to_string())),
+            // SVE (Scalable Vector Extension)
+            0b0010 => self.exec_sve(insn),
 
             // Data Processing - Immediate
             0b1000 | 0b1001 => self.exec_dp_imm(insn),
@@ -1452,11 +1473,479 @@ impl AArch64Cpu {
             return Ok(CpuExit::Continue);
         }
 
+        // SCVTF/UCVTF - Signed/Unsigned integer to floating-point
+        // Encoding: 0_sf_0_11110_type_1_00_opcode_000000_Rn_Rd
+        // opcode: 010=SCVTF, 011=UCVTF
+        if (insn >> 24) & 0x7F == 0b0011110
+            && (insn >> 21) & 1 == 1
+            && (insn >> 17) & 0x3 == 0b00
+            && (insn >> 10) & 0x3F == 0
+        {
+            let sf = (insn >> 31) & 1;
+            let fp_type = (insn >> 22) & 0x3;
+            let opcode = (insn >> 16) & 0x7;
+            let rn = ((insn >> 5) & 0x1F) as u8;
+            let rd = (insn & 0x1F) as u8;
+
+            let is_double = fp_type == 0b01;
+            let is_signed = (opcode & 1) == 0;
+
+            let int_val = if sf == 1 {
+                self.get_x(rn)
+            } else {
+                self.get_w(rn) as u64
+            };
+
+            if is_double {
+                let result = if is_signed {
+                    if sf == 1 {
+                        (int_val as i64) as f64
+                    } else {
+                        (int_val as i32) as f64
+                    }
+                } else {
+                    if sf == 1 {
+                        int_val as f64
+                    } else {
+                        (int_val as u32) as f64
+                    }
+                };
+                self.v[rd as usize] = result.to_bits() as u128;
+            } else {
+                let result = if is_signed {
+                    if sf == 1 {
+                        (int_val as i64) as f32
+                    } else {
+                        (int_val as i32) as f32
+                    }
+                } else {
+                    if sf == 1 {
+                        int_val as f32
+                    } else {
+                        (int_val as u32) as f32
+                    }
+                };
+                self.v[rd as usize] = result.to_bits() as u128;
+            }
+
+            return Ok(CpuExit::Continue);
+        }
+
+        // FCVTZS/FCVTZU - Floating-point to signed/unsigned integer with round toward zero
+        // Encoding: 0_sf_0_11110_type_1_11_opcode_000000_Rn_Rd
+        // opcode: 000=FCVTNS, 001=FCVTNU, 010=SCVTF, 011=UCVTF,
+        //         100=FCVTAS, 101=FCVTAU, 110=FMOV, 111=FMOV
+        //         type=0x: 000=FCVTMS/FCVTMU, 001=FCVTZS/FCVTZU, 010=FCVTPS/FCVTPU
+        if (insn >> 24) & 0x7F == 0b0011110
+            && (insn >> 21) & 1 == 1
+            && (insn >> 17) & 0x3 == 0b11
+            && (insn >> 10) & 0x3F == 0
+        {
+            let sf = (insn >> 31) & 1;
+            let fp_type = (insn >> 22) & 0x3;
+            let opcode = (insn >> 16) & 0x7;
+            let rn = ((insn >> 5) & 0x1F) as u8;
+            let rd = (insn & 0x1F) as u8;
+
+            let is_double = fp_type == 0b01;
+            let is_signed = (opcode & 1) == 0;
+
+            // Get the floating point value
+            let (result_signed, result_unsigned): (i64, u64) = if is_double {
+                let fp_val = f64::from_bits(self.v[rn as usize] as u64);
+                let truncated = fp_val.trunc();
+
+                if is_signed {
+                    let result = if sf == 1 {
+                        truncated as i64
+                    } else {
+                        (truncated as i32) as i64
+                    };
+                    (result, result as u64)
+                } else {
+                    let result = if sf == 1 {
+                        truncated as u64
+                    } else {
+                        (truncated as u32) as u64
+                    };
+                    (result as i64, result)
+                }
+            } else {
+                let fp_val = f32::from_bits(self.v[rn as usize] as u32);
+                let truncated = fp_val.trunc();
+
+                if is_signed {
+                    let result = if sf == 1 {
+                        truncated as i64
+                    } else {
+                        (truncated as i32) as i64
+                    };
+                    (result, result as u64)
+                } else {
+                    let result = if sf == 1 {
+                        truncated as u64
+                    } else {
+                        (truncated as u32) as u64
+                    };
+                    (result as i64, result)
+                }
+            };
+
+            if sf == 1 {
+                self.set_x(
+                    rd,
+                    if is_signed {
+                        result_signed as u64
+                    } else {
+                        result_unsigned
+                    },
+                );
+            } else {
+                self.set_w(
+                    rd,
+                    if is_signed {
+                        result_signed as u32
+                    } else {
+                        result_unsigned as u32
+                    },
+                );
+            }
+
+            return Ok(CpuExit::Continue);
+        }
+
+        // Advanced SIMD three-same
+        // Encoding: 0_Q_U_01110_size_1_Rm_opcode_1_Rn_Rd
+        if (insn >> 24) & 0x1F == 0b01110 && (insn >> 21) & 1 == 1 && (insn >> 10) & 1 == 1 {
+            return self.exec_simd_three_same(insn);
+        }
+
+        // Advanced SIMD two-reg misc
+        // Encoding: 0_Q_U_01110_size_10000_opcode_10_Rn_Rd
+        if (insn >> 24) & 0x1F == 0b01110
+            && (insn >> 17) & 0x1F == 0b10000
+            && (insn >> 10) & 0x3 == 0b10
+        {
+            return self.exec_simd_two_reg(insn);
+        }
+
         // If we get here, it's an unimplemented SIMD/FP instruction
         Err(ArmError::Unimplemented(format!(
             "SIMD/FP insn 0x{:08x}",
             insn
         )))
+    }
+
+    /// Execute SIMD three-same register instructions.
+    fn exec_simd_three_same(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let q = (insn >> 30) & 1;
+        let u = (insn >> 29) & 1;
+        let size = (insn >> 22) & 0x3;
+        let opcode = (insn >> 11) & 0x1F;
+        let rm = ((insn >> 16) & 0x1F) as usize;
+        let rn = ((insn >> 5) & 0x1F) as usize;
+        let rd = (insn & 0x1F) as usize;
+
+        let esize = 1usize << size;
+        let datasize = if q == 1 { 16 } else { 8 };
+        let elements = datasize / esize;
+
+        let src1 = self.v[rn].to_le_bytes();
+        let src2 = self.v[rm].to_le_bytes();
+        let mut dst = [0u8; 16];
+
+        for e in 0..elements {
+            let offset = e * esize;
+
+            match esize {
+                1 => {
+                    let a = src1[offset];
+                    let b = src2[offset];
+                    dst[offset] = match (u, opcode) {
+                        (0, 0b10000) => a.wrapping_add(b), // ADD
+                        (1, 0b10000) => a.wrapping_sub(b), // SUB
+                        (0, 0b00011) => a & b,             // AND
+                        (1, 0b00011) => a ^ b,             // EOR
+                        _ => a,
+                    };
+                }
+                2 => {
+                    let a = u16::from_le_bytes([src1[offset], src1[offset + 1]]);
+                    let b = u16::from_le_bytes([src2[offset], src2[offset + 1]]);
+                    let result = match (u, opcode) {
+                        (0, 0b10000) => a.wrapping_add(b),
+                        (1, 0b10000) => a.wrapping_sub(b),
+                        (0, 0b10011) => a.wrapping_mul(b), // MUL
+                        (0, 0b00011) => a & b,
+                        (1, 0b00011) => a ^ b,
+                        _ => a,
+                    };
+                    let bytes = result.to_le_bytes();
+                    dst[offset..offset + 2].copy_from_slice(&bytes);
+                }
+                4 => {
+                    // Could be integer or FP depending on opcode
+                    if opcode >= 0b11000 {
+                        // FP operations
+                        let a = f32::from_le_bytes([
+                            src1[offset],
+                            src1[offset + 1],
+                            src1[offset + 2],
+                            src1[offset + 3],
+                        ]);
+                        let b = f32::from_le_bytes([
+                            src2[offset],
+                            src2[offset + 1],
+                            src2[offset + 2],
+                            src2[offset + 3],
+                        ]);
+                        let result = match (u, opcode) {
+                            (0, 0b11010) => a + b,    // FADD
+                            (1, 0b11010) => a - b,    // FSUB
+                            (0, 0b11011) => a * b,    // FMUL
+                            (1, 0b11111) => a / b,    // FDIV
+                            (0, 0b11110) => a.max(b), // FMAX
+                            (1, 0b11110) => a.min(b), // FMIN
+                            _ => a,
+                        };
+                        let bytes = result.to_le_bytes();
+                        dst[offset..offset + 4].copy_from_slice(&bytes);
+                    } else {
+                        // Integer operations
+                        let a = u32::from_le_bytes([
+                            src1[offset],
+                            src1[offset + 1],
+                            src1[offset + 2],
+                            src1[offset + 3],
+                        ]);
+                        let b = u32::from_le_bytes([
+                            src2[offset],
+                            src2[offset + 1],
+                            src2[offset + 2],
+                            src2[offset + 3],
+                        ]);
+                        let result = match (u, opcode) {
+                            (0, 0b10000) => a.wrapping_add(b),
+                            (1, 0b10000) => a.wrapping_sub(b),
+                            (0, 0b10011) => a.wrapping_mul(b),
+                            (0, 0b00011) => a & b,
+                            (1, 0b00011) => a ^ b,
+                            _ => a,
+                        };
+                        let bytes = result.to_le_bytes();
+                        dst[offset..offset + 4].copy_from_slice(&bytes);
+                    }
+                }
+                8 => {
+                    if opcode >= 0b11000 {
+                        // FP double
+                        let a = f64::from_le_bytes([
+                            src1[offset],
+                            src1[offset + 1],
+                            src1[offset + 2],
+                            src1[offset + 3],
+                            src1[offset + 4],
+                            src1[offset + 5],
+                            src1[offset + 6],
+                            src1[offset + 7],
+                        ]);
+                        let b = f64::from_le_bytes([
+                            src2[offset],
+                            src2[offset + 1],
+                            src2[offset + 2],
+                            src2[offset + 3],
+                            src2[offset + 4],
+                            src2[offset + 5],
+                            src2[offset + 6],
+                            src2[offset + 7],
+                        ]);
+                        let result = match (u, opcode) {
+                            (0, 0b11010) => a + b,
+                            (1, 0b11010) => a - b,
+                            (0, 0b11011) => a * b,
+                            (1, 0b11111) => a / b,
+                            (0, 0b11110) => a.max(b),
+                            (1, 0b11110) => a.min(b),
+                            _ => a,
+                        };
+                        let bytes = result.to_le_bytes();
+                        dst[offset..offset + 8].copy_from_slice(&bytes);
+                    } else {
+                        // Integer 64-bit
+                        let a = u64::from_le_bytes([
+                            src1[offset],
+                            src1[offset + 1],
+                            src1[offset + 2],
+                            src1[offset + 3],
+                            src1[offset + 4],
+                            src1[offset + 5],
+                            src1[offset + 6],
+                            src1[offset + 7],
+                        ]);
+                        let b = u64::from_le_bytes([
+                            src2[offset],
+                            src2[offset + 1],
+                            src2[offset + 2],
+                            src2[offset + 3],
+                            src2[offset + 4],
+                            src2[offset + 5],
+                            src2[offset + 6],
+                            src2[offset + 7],
+                        ]);
+                        let result = match (u, opcode) {
+                            (0, 0b10000) => a.wrapping_add(b),
+                            (1, 0b10000) => a.wrapping_sub(b),
+                            (0, 0b00011) => a & b,
+                            (1, 0b00011) => a ^ b,
+                            _ => a,
+                        };
+                        let bytes = result.to_le_bytes();
+                        dst[offset..offset + 8].copy_from_slice(&bytes);
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        self.v[rd] = u128::from_le_bytes(dst);
+        Ok(CpuExit::Continue)
+    }
+
+    /// Execute SIMD two-register miscellaneous instructions.
+    fn exec_simd_two_reg(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let q = (insn >> 30) & 1;
+        let u = (insn >> 29) & 1;
+        let size = (insn >> 22) & 0x3;
+        let opcode = (insn >> 12) & 0x1F;
+        let rn = ((insn >> 5) & 0x1F) as usize;
+        let rd = (insn & 0x1F) as usize;
+
+        let esize = 1usize << size;
+        let datasize = if q == 1 { 16 } else { 8 };
+        let elements = datasize / esize;
+
+        let src = self.v[rn].to_le_bytes();
+        let mut dst = [0u8; 16];
+
+        for e in 0..elements {
+            let offset = e * esize;
+
+            match esize {
+                1 => {
+                    let a = src[offset];
+                    dst[offset] = match (u, opcode) {
+                        (1, 0b00101) => !a, // NOT
+                        (0, 0b01011) => {
+                            if (a as i8) < 0 {
+                                a.wrapping_neg()
+                            } else {
+                                a
+                            }
+                        } // ABS
+                        (1, 0b01011) => a.wrapping_neg(), // NEG
+                        _ => a,
+                    };
+                }
+                2 => {
+                    let a = i16::from_le_bytes([src[offset], src[offset + 1]]);
+                    let result = match (u, opcode) {
+                        (0, 0b01011) => a.abs() as u16,
+                        (1, 0b01011) => a.wrapping_neg() as u16,
+                        _ => a as u16,
+                    };
+                    let bytes = result.to_le_bytes();
+                    dst[offset..offset + 2].copy_from_slice(&bytes);
+                }
+                4 => {
+                    if opcode >= 0b01100 && opcode <= 0b11111 {
+                        // FP unary
+                        let a = f32::from_le_bytes([
+                            src[offset],
+                            src[offset + 1],
+                            src[offset + 2],
+                            src[offset + 3],
+                        ]);
+                        let result = match (u, opcode) {
+                            (0, 0b01111) => a.abs(),   // FABS
+                            (1, 0b01111) => -a,        // FNEG
+                            (1, 0b10111) => a.sqrt(),  // FSQRT
+                            (0, 0b11000) => a.round(), // FRINTN
+                            (1, 0b11000) => a.ceil(),  // FRINTP
+                            (0, 0b11001) => a.floor(), // FRINTM
+                            (1, 0b11001) => a.trunc(), // FRINTZ
+                            _ => a,
+                        };
+                        let bytes = result.to_le_bytes();
+                        dst[offset..offset + 4].copy_from_slice(&bytes);
+                    } else {
+                        // Integer
+                        let a = i32::from_le_bytes([
+                            src[offset],
+                            src[offset + 1],
+                            src[offset + 2],
+                            src[offset + 3],
+                        ]);
+                        let result = match (u, opcode) {
+                            (0, 0b01011) => a.abs() as u32,
+                            (1, 0b01011) => a.wrapping_neg() as u32,
+                            (1, 0b00101) => !(a as u32),
+                            _ => a as u32,
+                        };
+                        let bytes = result.to_le_bytes();
+                        dst[offset..offset + 4].copy_from_slice(&bytes);
+                    }
+                }
+                8 => {
+                    if opcode >= 0b01100 {
+                        // FP double
+                        let a = f64::from_le_bytes([
+                            src[offset],
+                            src[offset + 1],
+                            src[offset + 2],
+                            src[offset + 3],
+                            src[offset + 4],
+                            src[offset + 5],
+                            src[offset + 6],
+                            src[offset + 7],
+                        ]);
+                        let result = match (u, opcode) {
+                            (0, 0b01111) => a.abs(),
+                            (1, 0b01111) => -a,
+                            (1, 0b10111) => a.sqrt(),
+                            (0, 0b11000) => a.round(),
+                            (1, 0b11000) => a.ceil(),
+                            (0, 0b11001) => a.floor(),
+                            (1, 0b11001) => a.trunc(),
+                            _ => a,
+                        };
+                        let bytes = result.to_le_bytes();
+                        dst[offset..offset + 8].copy_from_slice(&bytes);
+                    } else {
+                        let a = i64::from_le_bytes([
+                            src[offset],
+                            src[offset + 1],
+                            src[offset + 2],
+                            src[offset + 3],
+                            src[offset + 4],
+                            src[offset + 5],
+                            src[offset + 6],
+                            src[offset + 7],
+                        ]);
+                        let result = match (u, opcode) {
+                            (0, 0b01011) => a.abs() as u64,
+                            (1, 0b01011) => a.wrapping_neg() as u64,
+                            _ => a as u64,
+                        };
+                        let bytes = result.to_le_bytes();
+                        dst[offset..offset + 8].copy_from_slice(&bytes);
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        self.v[rd] = u128::from_le_bytes(dst);
+        Ok(CpuExit::Continue)
     }
 
     // FP helper functions
@@ -1506,6 +1995,808 @@ impl AArch64Cpu {
 
     fn fp_nmul_f64(&self, a: f64, b: f64) -> f64 {
         -(a * b)
+    }
+
+    // =========================================================================
+    // SVE (Scalable Vector Extension) Execution
+    // =========================================================================
+
+    /// Execute SVE instruction.
+    fn exec_sve(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        // Check if SVE is enabled (CPACR_EL1.ZEN)
+        let cpacr = self.sysregs.el1.cpacr;
+        let zen = (cpacr >> 16) & 0x3;
+
+        if self.current_el == 0 && zen != 0x3 {
+            return Ok(CpuExit::Undefined(insn));
+        }
+        if self.current_el == 1 && zen == 0x0 {
+            return Ok(CpuExit::Undefined(insn));
+        }
+
+        // Extract primary classification bits
+        let op0 = (insn >> 29) & 0x7;
+        let op1 = (insn >> 23) & 0x3;
+        let op2 = (insn >> 17) & 0x1F;
+        let op3 = (insn >> 10) & 0x3F;
+
+        // Common register fields
+        let zd = (insn & 0x1F) as usize;
+        let zn = ((insn >> 5) & 0x1F) as usize;
+        let zm = ((insn >> 16) & 0x1F) as usize;
+        let pg = ((insn >> 10) & 0x7) as usize;
+        let size = (insn >> 22) & 0x3;
+
+        // Element size in bytes
+        let esize = 1usize << size; // 1, 2, 4, or 8 bytes
+
+        match op0 {
+            // Integer predicated binary operations
+            0b000 if (op1 & 0x2) == 0 && (op2 & 0x10) == 0 => {
+                self.exec_sve_int_pred(insn, zd, zn, zm, pg, esize)
+            }
+
+            // Unpredicated arithmetic
+            0b000 if op1 == 0b01 => self.exec_sve_int_unpred(insn, zd, zn, zm, esize),
+
+            // Predicate operations (WHILE, PTRUE, etc.)
+            0b001 => self.exec_sve_pred_ops(insn),
+
+            // DUP/MOV/INDEX
+            0b000 if op1 == 0b10 || op1 == 0b11 => self.exec_sve_permute(insn, zd, zn, zm, esize),
+
+            // FP predicated operations
+            0b011 => self.exec_sve_fp_pred(insn, zd, zn, zm, pg, esize),
+
+            // Load/Store
+            0b100 | 0b101 | 0b110 | 0b111 => self.exec_sve_ldst(insn),
+
+            _ => Err(ArmError::Unimplemented(format!(
+                "SVE op0={:03b} op1={:02b}",
+                op0, op1
+            ))),
+        }
+    }
+
+    /// Execute SVE integer predicated operations.
+    fn exec_sve_int_pred(
+        &mut self,
+        insn: u32,
+        zd: usize,
+        zn: usize,
+        _zm: usize,
+        pg: usize,
+        esize: usize,
+    ) -> Result<CpuExit, ArmError> {
+        let opc = (insn >> 16) & 0x7;
+        let pred = self.sve_p[pg];
+
+        // Number of elements in VL=128
+        let elements = 16 / esize;
+
+        // Get source and destination as byte arrays
+        let src = self.v[zn].to_le_bytes();
+        let zm_idx = ((insn >> 16) & 0x1F) as usize;
+        let src2 = self.v[zm_idx].to_le_bytes();
+        let mut dst = self.v[zd].to_le_bytes();
+
+        for e in 0..elements {
+            // Check predicate bit for this element
+            let pred_bit = (pred >> e) & 1;
+            if pred_bit == 0 {
+                continue; // Skip inactive elements
+            }
+
+            let offset = e * esize;
+            match esize {
+                1 => {
+                    let a = src[offset];
+                    let b = src2[offset];
+                    let result = match opc {
+                        0b000 => a.wrapping_add(b),
+                        0b001 => a.wrapping_sub(b),
+                        0b011 => b.wrapping_sub(a), // SUBR
+                        _ => a,
+                    };
+                    dst[offset] = result;
+                }
+                2 => {
+                    let a = u16::from_le_bytes([src[offset], src[offset + 1]]);
+                    let b = u16::from_le_bytes([src2[offset], src2[offset + 1]]);
+                    let result = match opc {
+                        0b000 => a.wrapping_add(b),
+                        0b001 => a.wrapping_sub(b),
+                        0b011 => b.wrapping_sub(a),
+                        _ => a,
+                    };
+                    let bytes = result.to_le_bytes();
+                    dst[offset] = bytes[0];
+                    dst[offset + 1] = bytes[1];
+                }
+                4 => {
+                    let a = u32::from_le_bytes([
+                        src[offset],
+                        src[offset + 1],
+                        src[offset + 2],
+                        src[offset + 3],
+                    ]);
+                    let b = u32::from_le_bytes([
+                        src2[offset],
+                        src2[offset + 1],
+                        src2[offset + 2],
+                        src2[offset + 3],
+                    ]);
+                    let result = match opc {
+                        0b000 => a.wrapping_add(b),
+                        0b001 => a.wrapping_sub(b),
+                        0b011 => b.wrapping_sub(a),
+                        _ => a,
+                    };
+                    let bytes = result.to_le_bytes();
+                    dst[offset..offset + 4].copy_from_slice(&bytes);
+                }
+                8 => {
+                    let a = u64::from_le_bytes([
+                        src[offset],
+                        src[offset + 1],
+                        src[offset + 2],
+                        src[offset + 3],
+                        src[offset + 4],
+                        src[offset + 5],
+                        src[offset + 6],
+                        src[offset + 7],
+                    ]);
+                    let b = u64::from_le_bytes([
+                        src2[offset],
+                        src2[offset + 1],
+                        src2[offset + 2],
+                        src2[offset + 3],
+                        src2[offset + 4],
+                        src2[offset + 5],
+                        src2[offset + 6],
+                        src2[offset + 7],
+                    ]);
+                    let result = match opc {
+                        0b000 => a.wrapping_add(b),
+                        0b001 => a.wrapping_sub(b),
+                        0b011 => b.wrapping_sub(a),
+                        _ => a,
+                    };
+                    let bytes = result.to_le_bytes();
+                    dst[offset..offset + 8].copy_from_slice(&bytes);
+                }
+                _ => {}
+            }
+        }
+
+        self.v[zd] = u128::from_le_bytes(dst);
+        Ok(CpuExit::Continue)
+    }
+
+    /// Execute SVE integer unpredicated operations.
+    fn exec_sve_int_unpred(
+        &mut self,
+        insn: u32,
+        zd: usize,
+        zn: usize,
+        zm: usize,
+        esize: usize,
+    ) -> Result<CpuExit, ArmError> {
+        let opc = (insn >> 10) & 0x7;
+        let elements = 16 / esize;
+
+        let src = self.v[zn].to_le_bytes();
+        let src2 = self.v[zm].to_le_bytes();
+        let mut dst = [0u8; 16];
+
+        for e in 0..elements {
+            let offset = e * esize;
+            match esize {
+                1 => {
+                    let a = src[offset];
+                    let b = src2[offset];
+                    dst[offset] = match opc {
+                        0b000 => a.wrapping_add(b),
+                        0b001 => a.wrapping_sub(b),
+                        _ => a,
+                    };
+                }
+                2 => {
+                    let a = u16::from_le_bytes([src[offset], src[offset + 1]]);
+                    let b = u16::from_le_bytes([src2[offset], src2[offset + 1]]);
+                    let result = match opc {
+                        0b000 => a.wrapping_add(b),
+                        0b001 => a.wrapping_sub(b),
+                        _ => a,
+                    };
+                    let bytes = result.to_le_bytes();
+                    dst[offset] = bytes[0];
+                    dst[offset + 1] = bytes[1];
+                }
+                4 => {
+                    let a = u32::from_le_bytes([
+                        src[offset],
+                        src[offset + 1],
+                        src[offset + 2],
+                        src[offset + 3],
+                    ]);
+                    let b = u32::from_le_bytes([
+                        src2[offset],
+                        src2[offset + 1],
+                        src2[offset + 2],
+                        src2[offset + 3],
+                    ]);
+                    let result = match opc {
+                        0b000 => a.wrapping_add(b),
+                        0b001 => a.wrapping_sub(b),
+                        _ => a,
+                    };
+                    let bytes = result.to_le_bytes();
+                    dst[offset..offset + 4].copy_from_slice(&bytes);
+                }
+                8 => {
+                    let a = u64::from_le_bytes([
+                        src[offset],
+                        src[offset + 1],
+                        src[offset + 2],
+                        src[offset + 3],
+                        src[offset + 4],
+                        src[offset + 5],
+                        src[offset + 6],
+                        src[offset + 7],
+                    ]);
+                    let b = u64::from_le_bytes([
+                        src2[offset],
+                        src2[offset + 1],
+                        src2[offset + 2],
+                        src2[offset + 3],
+                        src2[offset + 4],
+                        src2[offset + 5],
+                        src2[offset + 6],
+                        src2[offset + 7],
+                    ]);
+                    let result = match opc {
+                        0b000 => a.wrapping_add(b),
+                        0b001 => a.wrapping_sub(b),
+                        _ => a,
+                    };
+                    let bytes = result.to_le_bytes();
+                    dst[offset..offset + 8].copy_from_slice(&bytes);
+                }
+                _ => {}
+            }
+        }
+
+        self.v[zd] = u128::from_le_bytes(dst);
+        Ok(CpuExit::Continue)
+    }
+
+    /// Execute SVE predicate operations (PTRUE, PFALSE, WHILE, etc.).
+    fn exec_sve_pred_ops(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let op1 = (insn >> 23) & 0x3;
+        let op3 = (insn >> 10) & 0x3F;
+
+        match op1 {
+            // WHILE instructions
+            0b00 => {
+                let lt = (insn >> 4) & 1;
+                let sf = (insn >> 12) & 1;
+                let pd = (insn & 0xF) as usize;
+                let rn = ((insn >> 5) & 0x1F) as u8;
+                let rm = ((insn >> 16) & 0x1F) as u8;
+                let size = (insn >> 22) & 0x3;
+
+                let op1_val = if sf == 1 {
+                    self.get_x(rn) as i64
+                } else {
+                    self.get_w(rn) as i32 as i64
+                };
+                let op2_val = if sf == 1 {
+                    self.get_x(rm) as i64
+                } else {
+                    self.get_w(rm) as i32 as i64
+                };
+
+                let esize = 1usize << size;
+                let elements = 16 / esize;
+                let mut pred = 0u32;
+
+                for e in 0..elements {
+                    let idx = op1_val.wrapping_add(e as i64);
+                    let active = if lt == 1 {
+                        idx < op2_val // WHILELT
+                    } else {
+                        idx <= op2_val // WHILELE
+                    };
+                    if active {
+                        pred |= 1 << e;
+                    }
+                }
+
+                self.sve_p[pd] = pred;
+
+                // Update condition flags based on predicate result
+                let all_false = pred == 0;
+                let last = ((pred >> (elements - 1)) & 1) != 0;
+                self.set_n(!all_false && !last);
+                self.set_z(all_false);
+                self.set_c(!all_false);
+                self.set_v(false);
+
+                Ok(CpuExit::Continue)
+            }
+
+            // PTRUE/PFALSE
+            0b01 if (op3 & 0x30) == 0x10 => {
+                let s = (insn >> 16) & 1;
+                let pd = (insn & 0xF) as usize;
+                let size = (insn >> 22) & 0x3;
+                let pattern = (insn >> 5) & 0x1F;
+
+                let esize = 1usize << size;
+                let elements = 16 / esize;
+
+                if s == 1 {
+                    // PFALSE
+                    self.sve_p[pd] = 0;
+                } else {
+                    // PTRUE - set active elements based on pattern
+                    let active_count = match pattern {
+                        0b00000 => 1, // POW2
+                        0b00001..=0b00111 => (pattern as usize).min(elements),
+                        0b11101 => elements / 4,
+                        0b11110 => elements / 2,
+                        0b11111 => elements, // ALL
+                        _ => elements,
+                    };
+                    let mut pred = 0u32;
+                    for e in 0..active_count.min(elements) {
+                        pred |= 1 << e;
+                    }
+                    self.sve_p[pd] = pred;
+                }
+
+                Ok(CpuExit::Continue)
+            }
+
+            _ => Err(ArmError::Unimplemented(format!(
+                "SVE predicate op1={:02b} op3={:06b}",
+                op1, op3
+            ))),
+        }
+    }
+
+    /// Execute SVE permute operations (DUP, INDEX, REV, etc.).
+    fn exec_sve_permute(
+        &mut self,
+        insn: u32,
+        zd: usize,
+        zn: usize,
+        zm: usize,
+        esize: usize,
+    ) -> Result<CpuExit, ArmError> {
+        let op1 = (insn >> 23) & 0x3;
+        let op3 = (insn >> 10) & 0x3F;
+
+        match op1 {
+            // INDEX
+            0b11 if (insn >> 17) & 0xF == 0 => {
+                let rn = ((insn >> 5) & 0x1F) as u8;
+                let rm = ((insn >> 16) & 0x1F) as u8;
+                let elements = 16 / esize;
+
+                let start = self.get_x(rn) as i64;
+                let incr = self.get_x(rm) as i64;
+
+                let mut dst = [0u8; 16];
+                for e in 0..elements {
+                    let val = start.wrapping_add((e as i64).wrapping_mul(incr));
+                    let offset = e * esize;
+                    match esize {
+                        1 => dst[offset] = val as u8,
+                        2 => {
+                            let bytes = (val as u16).to_le_bytes();
+                            dst[offset..offset + 2].copy_from_slice(&bytes);
+                        }
+                        4 => {
+                            let bytes = (val as u32).to_le_bytes();
+                            dst[offset..offset + 4].copy_from_slice(&bytes);
+                        }
+                        8 => {
+                            let bytes = (val as u64).to_le_bytes();
+                            dst[offset..offset + 8].copy_from_slice(&bytes);
+                        }
+                        _ => {}
+                    }
+                }
+                self.v[zd] = u128::from_le_bytes(dst);
+                Ok(CpuExit::Continue)
+            }
+
+            // DUP (scalar)
+            0b10 if (op3 & 0x3E) == 0x20 => {
+                let rn = ((insn >> 5) & 0x1F) as u8;
+                let val = self.get_x(rn);
+                let elements = 16 / esize;
+
+                let mut dst = [0u8; 16];
+                for e in 0..elements {
+                    let offset = e * esize;
+                    match esize {
+                        1 => dst[offset] = val as u8,
+                        2 => {
+                            let bytes = (val as u16).to_le_bytes();
+                            dst[offset..offset + 2].copy_from_slice(&bytes);
+                        }
+                        4 => {
+                            let bytes = (val as u32).to_le_bytes();
+                            dst[offset..offset + 4].copy_from_slice(&bytes);
+                        }
+                        8 => {
+                            let bytes = val.to_le_bytes();
+                            dst[offset..offset + 8].copy_from_slice(&bytes);
+                        }
+                        _ => {}
+                    }
+                }
+                self.v[zd] = u128::from_le_bytes(dst);
+                Ok(CpuExit::Continue)
+            }
+
+            // ZIP/UZP/TRN
+            0b10 if (op3 & 0x30) == 0x00 => {
+                let opc = (insn >> 10) & 0x7;
+                let elements = 16 / esize;
+                let src1 = self.v[zn].to_le_bytes();
+                let src2 = self.v[zm].to_le_bytes();
+                let mut dst = [0u8; 16];
+
+                match opc {
+                    // ZIP1 - interleave lower halves
+                    0b000 => {
+                        let half = elements / 2;
+                        for e in 0..half {
+                            for b in 0..esize {
+                                dst[e * 2 * esize + b] = src1[e * esize + b];
+                                dst[(e * 2 + 1) * esize + b] = src2[e * esize + b];
+                            }
+                        }
+                    }
+                    // ZIP2 - interleave upper halves
+                    0b001 => {
+                        let half = elements / 2;
+                        for e in 0..half {
+                            let src_off = (half + e) * esize;
+                            for b in 0..esize {
+                                dst[e * 2 * esize + b] = src1[src_off + b];
+                                dst[(e * 2 + 1) * esize + b] = src2[src_off + b];
+                            }
+                        }
+                    }
+                    // UZP1 - even elements
+                    0b010 => {
+                        let half = elements / 2;
+                        for e in 0..half {
+                            for b in 0..esize {
+                                dst[e * esize + b] = src1[e * 2 * esize + b];
+                                dst[(half + e) * esize + b] = src2[e * 2 * esize + b];
+                            }
+                        }
+                    }
+                    // UZP2 - odd elements
+                    0b011 => {
+                        let half = elements / 2;
+                        for e in 0..half {
+                            for b in 0..esize {
+                                dst[e * esize + b] = src1[(e * 2 + 1) * esize + b];
+                                dst[(half + e) * esize + b] = src2[(e * 2 + 1) * esize + b];
+                            }
+                        }
+                    }
+                    // TRN1 - transpose even elements
+                    0b100 => {
+                        for e in 0..elements / 2 {
+                            for b in 0..esize {
+                                dst[e * 2 * esize + b] = src1[e * 2 * esize + b];
+                                dst[(e * 2 + 1) * esize + b] = src2[e * 2 * esize + b];
+                            }
+                        }
+                    }
+                    // TRN2 - transpose odd elements
+                    0b101 => {
+                        for e in 0..elements / 2 {
+                            for b in 0..esize {
+                                dst[e * 2 * esize + b] = src1[(e * 2 + 1) * esize + b];
+                                dst[(e * 2 + 1) * esize + b] = src2[(e * 2 + 1) * esize + b];
+                            }
+                        }
+                    }
+                    _ => {
+                        return Err(ArmError::Unimplemented(format!(
+                            "SVE ZIP/UZP/TRN opc={}",
+                            opc
+                        )))
+                    }
+                }
+
+                self.v[zd] = u128::from_le_bytes(dst);
+                Ok(CpuExit::Continue)
+            }
+
+            // REV
+            0b10 if (op3 & 0x38) == 0x18 => {
+                let elements = 16 / esize;
+                let src = self.v[zn].to_le_bytes();
+                let mut dst = [0u8; 16];
+
+                for e in 0..elements {
+                    let src_e = elements - 1 - e;
+                    for b in 0..esize {
+                        dst[e * esize + b] = src[src_e * esize + b];
+                    }
+                }
+
+                self.v[zd] = u128::from_le_bytes(dst);
+                Ok(CpuExit::Continue)
+            }
+
+            // RDVL - read vector length
+            0b11 if (insn >> 17) & 0x1F == 0x1F && (op3 & 0x3E) == 0x10 => {
+                let rd = (insn & 0x1F) as u8;
+                let imm6 = ((insn >> 5) & 0x3F) as i64;
+                let imm = if imm6 & 0x20 != 0 { imm6 | !0x3F } else { imm6 };
+                // VL in bytes
+                let vl_bytes = (self.sve_vl / 8) as i64;
+                let result = (vl_bytes * imm) as u64;
+                self.set_x(rd, result);
+                Ok(CpuExit::Continue)
+            }
+
+            // CNTx - count elements
+            0b11 if (insn >> 17) & 0x18 == 0x10 => {
+                let rd = (insn & 0x1F) as u8;
+                let opc = (insn >> 16) & 0x7;
+                let pattern = (insn >> 5) & 0x1F;
+                let imm4 = ((insn >> 16) & 0xF) as u64;
+
+                let esize_bits = match opc {
+                    0b000 => 8,  // CNTB
+                    0b001 => 16, // CNTH
+                    0b010 => 32, // CNTW
+                    0b011 => 64, // CNTD
+                    _ => 8,
+                };
+
+                let elements = (self.sve_vl as u64) / esize_bits;
+                let count = match pattern {
+                    0b11111 => elements, // ALL
+                    _ => elements,
+                };
+
+                self.set_x(rd, count * imm4.max(1));
+                Ok(CpuExit::Continue)
+            }
+
+            _ => Err(ArmError::Unimplemented(format!(
+                "SVE permute op1={:02b} op3={:06b}",
+                op1, op3
+            ))),
+        }
+    }
+
+    /// Execute SVE FP predicated operations.
+    fn exec_sve_fp_pred(
+        &mut self,
+        insn: u32,
+        zd: usize,
+        zn: usize,
+        zm: usize,
+        pg: usize,
+        esize: usize,
+    ) -> Result<CpuExit, ArmError> {
+        let opc = (insn >> 16) & 0xF;
+        let pred = self.sve_p[pg];
+        let elements = 16 / esize;
+
+        let src = self.v[zn].to_le_bytes();
+        let src2 = self.v[zm].to_le_bytes();
+        let mut dst = self.v[zd].to_le_bytes();
+
+        for e in 0..elements {
+            if (pred >> e) & 1 == 0 {
+                continue;
+            }
+
+            let offset = e * esize;
+            match esize {
+                4 => {
+                    // Single precision
+                    let a = f32::from_le_bytes([
+                        src[offset],
+                        src[offset + 1],
+                        src[offset + 2],
+                        src[offset + 3],
+                    ]);
+                    let b = f32::from_le_bytes([
+                        src2[offset],
+                        src2[offset + 1],
+                        src2[offset + 2],
+                        src2[offset + 3],
+                    ]);
+
+                    let result = match opc {
+                        0b0000 => a + b,    // FADD
+                        0b0001 => a - b,    // FSUB
+                        0b0010 => a * b,    // FMUL
+                        0b0011 => a / b,    // FDIV
+                        0b0100 => a.min(b), // FMIN
+                        0b0101 => a.max(b), // FMAX
+                        0b1000 => a.abs(),  // FABS (unary)
+                        0b1001 => -a,       // FNEG (unary)
+                        0b1010 => a.sqrt(), // FSQRT (unary)
+                        _ => a,
+                    };
+
+                    let bytes = result.to_le_bytes();
+                    dst[offset..offset + 4].copy_from_slice(&bytes);
+                }
+                8 => {
+                    // Double precision
+                    let a = f64::from_le_bytes([
+                        src[offset],
+                        src[offset + 1],
+                        src[offset + 2],
+                        src[offset + 3],
+                        src[offset + 4],
+                        src[offset + 5],
+                        src[offset + 6],
+                        src[offset + 7],
+                    ]);
+                    let b = f64::from_le_bytes([
+                        src2[offset],
+                        src2[offset + 1],
+                        src2[offset + 2],
+                        src2[offset + 3],
+                        src2[offset + 4],
+                        src2[offset + 5],
+                        src2[offset + 6],
+                        src2[offset + 7],
+                    ]);
+
+                    let result = match opc {
+                        0b0000 => a + b,
+                        0b0001 => a - b,
+                        0b0010 => a * b,
+                        0b0011 => a / b,
+                        0b0100 => a.min(b),
+                        0b0101 => a.max(b),
+                        0b1000 => a.abs(),
+                        0b1001 => -a,
+                        0b1010 => a.sqrt(),
+                        _ => a,
+                    };
+
+                    let bytes = result.to_le_bytes();
+                    dst[offset..offset + 8].copy_from_slice(&bytes);
+                }
+                _ => {}
+            }
+        }
+
+        self.v[zd] = u128::from_le_bytes(dst);
+        Ok(CpuExit::Continue)
+    }
+
+    /// Execute SVE load/store instructions.
+    fn exec_sve_ldst(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let op0 = (insn >> 29) & 0x7;
+        let msz = (insn >> 23) & 0x3;
+        let is_load = (op0 & 0x1) == 0;
+
+        let zt = (insn & 0x1F) as usize;
+        let rn = ((insn >> 5) & 0x1F) as u8;
+        let pg = ((insn >> 10) & 0x7) as usize;
+
+        let esize = 1usize << msz;
+        let elements = 16 / esize;
+        let pred = self.sve_p[pg];
+
+        // Get base address
+        let base = if rn == 31 {
+            self.current_sp()
+        } else {
+            self.get_x(rn)
+        };
+
+        // Get immediate offset (scaled by VL)
+        let imm4 = ((insn >> 16) & 0xF) as i64;
+        let offset = if imm4 & 0x8 != 0 {
+            (imm4 | !0xF) * 16 // Sign extend and scale by VL bytes
+        } else {
+            imm4 * 16
+        };
+
+        let address = (base as i64 + offset) as u64;
+
+        if is_load {
+            let mut dst = [0u8; 16];
+            for e in 0..elements {
+                if (pred >> e) & 1 == 0 {
+                    continue; // Skip inactive elements (zeroing)
+                }
+
+                let elem_addr = address + (e * esize) as u64;
+                let pa = self.translate_address(elem_addr, false, false)?;
+
+                match esize {
+                    1 => {
+                        dst[e] = self.memory.read_u8(pa)?;
+                    }
+                    2 => {
+                        let val = self.memory.read_u16(pa)?;
+                        let bytes = val.to_le_bytes();
+                        dst[e * 2..e * 2 + 2].copy_from_slice(&bytes);
+                    }
+                    4 => {
+                        let val = self.memory.read_u32(pa)?;
+                        let bytes = val.to_le_bytes();
+                        dst[e * 4..e * 4 + 4].copy_from_slice(&bytes);
+                    }
+                    8 => {
+                        let val = self.memory.read_u64(pa)?;
+                        let bytes = val.to_le_bytes();
+                        dst[e * 8..e * 8 + 8].copy_from_slice(&bytes);
+                    }
+                    _ => {}
+                }
+            }
+            self.v[zt] = u128::from_le_bytes(dst);
+        } else {
+            let src = self.v[zt].to_le_bytes();
+            for e in 0..elements {
+                if (pred >> e) & 1 == 0 {
+                    continue; // Skip inactive elements
+                }
+
+                let elem_addr = address + (e * esize) as u64;
+                let pa = self.translate_address(elem_addr, true, false)?;
+
+                match esize {
+                    1 => {
+                        self.memory.write_u8(pa, src[e])?;
+                    }
+                    2 => {
+                        let val = u16::from_le_bytes([src[e * 2], src[e * 2 + 1]]);
+                        self.memory.write_u16(pa, val)?;
+                    }
+                    4 => {
+                        let val = u32::from_le_bytes([
+                            src[e * 4],
+                            src[e * 4 + 1],
+                            src[e * 4 + 2],
+                            src[e * 4 + 3],
+                        ]);
+                        self.memory.write_u32(pa, val)?;
+                    }
+                    8 => {
+                        let val = u64::from_le_bytes([
+                            src[e * 8],
+                            src[e * 8 + 1],
+                            src[e * 8 + 2],
+                            src[e * 8 + 3],
+                            src[e * 8 + 4],
+                            src[e * 8 + 5],
+                            src[e * 8 + 6],
+                            src[e * 8 + 7],
+                        ]);
+                        self.memory.write_u64(pa, val)?;
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        Ok(CpuExit::Continue)
     }
 
     // =========================================================================
