@@ -205,16 +205,8 @@ impl Aarch32Decoder {
             let rm = (raw & 0xF) as u8;
             return Ok(
                 DecodedInsn::new(Mnemonic::CLZ, ExecutionState::Aarch32, raw, 4)
-                    .with_operand(Operand::Reg(Register {
-                        num: rd,
-                        is_64bit: false,
-                        is_sp: false,
-                    }))
-                    .with_operand(Operand::Reg(Register {
-                        num: rm,
-                        is_64bit: false,
-                        is_sp: false,
-                    })),
+                    .with_operand(Operand::Reg(Register::raw(rd, false, false)))
+                    .with_operand(Operand::Reg(Register::raw(rm, false, false))),
             );
         }
 
@@ -250,27 +242,15 @@ impl Aarch32Decoder {
         }
 
         if writes_rd {
-            insn = insn.with_operand(Operand::Reg(Register {
-                num: rd,
-                is_64bit: false,
-                is_sp: false,
-            }));
+            insn = insn.with_operand(Operand::Reg(Register::raw(rd, false, false)));
         }
 
         if uses_rn {
-            insn = insn.with_operand(Operand::Reg(Register {
-                num: rn,
-                is_64bit: false,
-                is_sp: false,
-            }));
+            insn = insn.with_operand(Operand::Reg(Register::raw(rn, false, false)));
         }
 
         // Add shifted register operand
-        let rm_reg = Register {
-            num: rm,
-            is_64bit: false,
-            is_sp: false,
-        };
+        let rm_reg = Register::raw(rm, false, false);
 
         if shift_imm == 0 && shift_type == ShiftType::LSL {
             insn = insn.with_operand(Operand::Reg(rm_reg));
@@ -328,19 +308,11 @@ impl Aarch32Decoder {
         }
 
         if writes_rd {
-            insn = insn.with_operand(Operand::Reg(Register {
-                num: rd,
-                is_64bit: false,
-                is_sp: false,
-            }));
+            insn = insn.with_operand(Operand::Reg(Register::raw(rd, false, false)));
         }
 
         if uses_rn {
-            insn = insn.with_operand(Operand::Reg(Register {
-                num: rn,
-                is_64bit: false,
-                is_sp: false,
-            }));
+            insn = insn.with_operand(Operand::Reg(Register::raw(rn, false, false)));
         }
 
         insn = insn.with_operand(Operand::Imm(Immediate::new(imm)));
@@ -376,11 +348,7 @@ impl Aarch32Decoder {
 
         Ok(
             DecodedInsn::new(Mnemonic::BX, ExecutionState::Aarch32, raw, 4).with_operand(
-                Operand::Reg(Register {
-                    num: rm,
-                    is_64bit: false,
-                    is_sp: false,
-                }),
+                Operand::Reg(Register::raw(rm, false, false)),
             ),
         )
     }
@@ -390,11 +358,7 @@ impl Aarch32Decoder {
 
         Ok(
             DecodedInsn::new(Mnemonic::BLX, ExecutionState::Aarch32, raw, 4).with_operand(
-                Operand::Reg(Register {
-                    num: rm,
-                    is_64bit: false,
-                    is_sp: false,
-                }),
+                Operand::Reg(Register::raw(rm, false, false)),
             ),
         )
     }
@@ -466,11 +430,7 @@ impl Aarch32Decoder {
         }
 
         for reg_num in operands {
-            insn = insn.with_operand(Operand::Reg(Register {
-                num: reg_num,
-                is_64bit: false,
-                is_sp: false,
-            }));
+            insn = insn.with_operand(Operand::Reg(Register::raw(reg_num, false, false)));
         }
 
         Ok(insn)
@@ -505,18 +465,10 @@ impl Aarch32Decoder {
             let rm = (raw & 0xF) as u8;
 
             if shift_imm == 0 && shift_type == ShiftType::LSL {
-                MemOffset::Reg(Register {
-                    num: rm,
-                    is_64bit: false,
-                    is_sp: false,
-                })
+                MemOffset::Reg(Register::raw(rm, false, false))
             } else {
                 MemOffset::ShiftedReg(ShiftedRegister::new(
-                    Register {
-                        num: rm,
-                        is_64bit: false,
-                        is_sp: false,
-                    },
+                    Register::raw(rm, false, false),
                     shift_type,
                     shift_imm,
                 ))
@@ -535,21 +487,13 @@ impl Aarch32Decoder {
         };
 
         let mem = MemOperand {
-            base: Register {
-                num: rn,
-                is_64bit: false,
-                is_sp: false,
-            },
+            base: Register::raw(rn, false, false),
             offset,
             mode,
         };
 
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch32, raw, 4)
-            .with_operand(Operand::Reg(Register {
-                num: rt,
-                is_64bit: false,
-                is_sp: false,
-            }))
+            .with_operand(Operand::Reg(Register::raw(rt, false, false)))
             .with_operand(Operand::Mem(mem)))
     }
 
@@ -578,11 +522,7 @@ impl Aarch32Decoder {
             let offset_val = if u == 1 { imm8 } else { -imm8 };
             MemOffset::Imm(offset_val)
         } else {
-            MemOffset::Reg(Register {
-                num: rm_or_imm,
-                is_64bit: false,
-                is_sp: false,
-            })
+            MemOffset::Reg(Register::raw(rm_or_imm, false, false))
         };
 
         let mode = match (p, w) {
@@ -592,21 +532,13 @@ impl Aarch32Decoder {
         };
 
         let mem = MemOperand {
-            base: Register {
-                num: rn,
-                is_64bit: false,
-                is_sp: false,
-            },
+            base: Register::raw(rn, false, false),
             offset,
             mode,
         };
 
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch32, raw, 4)
-            .with_operand(Operand::Reg(Register {
-                num: rt,
-                is_64bit: false,
-                is_sp: false,
-            }))
+            .with_operand(Operand::Reg(Register::raw(rt, false, false)))
             .with_operand(Operand::Mem(mem)))
     }
 
@@ -651,11 +583,7 @@ impl Aarch32Decoder {
 
         // Add base register (not for PUSH/POP)
         if !is_push_pop {
-            let base = Register {
-                num: rn,
-                is_64bit: false,
-                is_sp: false,
-            };
+            let base = Register::raw(rn, false, false);
             insn = insn.with_operand(Operand::Reg(base));
         }
 
@@ -724,11 +652,7 @@ impl Aarch32Decoder {
             Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch32, raw, 4)
                 .with_operand(Operand::Imm(Immediate::new(cp_num as i64)))
                 .with_operand(Operand::Imm(Immediate::new(op1 as i64)))
-                .with_operand(Operand::Reg(Register {
-                    num: rt,
-                    is_64bit: false,
-                    is_sp: false,
-                }))
+                .with_operand(Operand::Reg(Register::raw(rt, false, false)))
                 .with_operand(Operand::Imm(Immediate::new(crn as i64)))
                 .with_operand(Operand::Imm(Immediate::new(crm as i64)))
                 .with_operand(Operand::Imm(Immediate::new(op2 as i64))))
@@ -758,16 +682,8 @@ impl Aarch32Decoder {
         if op1 == 0b10110 && op2 == 0b001 {
             return Ok(
                 DecodedInsn::new(Mnemonic::CLZ, ExecutionState::Aarch32, raw, 4)
-                    .with_operand(Operand::Reg(Register {
-                        num: rd,
-                        is_64bit: false,
-                        is_sp: false,
-                    }))
-                    .with_operand(Operand::Reg(Register {
-                        num: rm,
-                        is_64bit: false,
-                        is_sp: false,
-                    })),
+                    .with_operand(Operand::Reg(Register::raw(rd, false, false)))
+                    .with_operand(Operand::Reg(Register::raw(rm, false, false))),
             );
         }
 
@@ -780,32 +696,16 @@ impl Aarch32Decoder {
             };
 
             return Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch32, raw, 4)
-                .with_operand(Operand::Reg(Register {
-                    num: rd,
-                    is_64bit: false,
-                    is_sp: false,
-                }))
-                .with_operand(Operand::Reg(Register {
-                    num: rm,
-                    is_64bit: false,
-                    is_sp: false,
-                })));
+                .with_operand(Operand::Reg(Register::raw(rd, false, false)))
+                .with_operand(Operand::Reg(Register::raw(rm, false, false))));
         }
 
         // RBIT
         if op1 == 0b01111 && op2 == 0b001 {
             return Ok(
                 DecodedInsn::new(Mnemonic::RBIT, ExecutionState::Aarch32, raw, 4)
-                    .with_operand(Operand::Reg(Register {
-                        num: rd,
-                        is_64bit: false,
-                        is_sp: false,
-                    }))
-                    .with_operand(Operand::Reg(Register {
-                        num: rm,
-                        is_64bit: false,
-                        is_sp: false,
-                    })),
+                    .with_operand(Operand::Reg(Register::raw(rd, false, false)))
+                    .with_operand(Operand::Reg(Register::raw(rm, false, false))),
             );
         }
 

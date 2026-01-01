@@ -35,8 +35,22 @@ pub enum Operand {
     VecArrangement(VectorArrangement),
 }
 
+/// Register kind for distinguishing different register types.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum RegisterKind {
+    /// General purpose register (X/W).
+    #[default]
+    Gpr,
+    /// Stack pointer.
+    Sp,
+    /// SVE Z (scalable vector) register.
+    SveZ,
+    /// SVE P (predicate) register.
+    SveP,
+}
+
 /// General-purpose register.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub struct Register {
     /// Register number (0-30 for X0-X30/W0-W30, 31 for SP/ZR).
     pub num: u8,
@@ -44,15 +58,40 @@ pub struct Register {
     pub is_64bit: bool,
     /// Whether this is the stack pointer (when num=31).
     pub is_sp: bool,
+    /// Register kind for SVE support (default: Gpr).
+    #[allow(dead_code)]
+    pub kind: RegisterKind,
 }
 
 impl Register {
+    /// Create an AArch32 register (32-bit, GPR).
+    /// This is a convenience function for the AArch32 decoder.
+    pub fn arm32(num: u8) -> Self {
+        Register {
+            num: num & 0xF,
+            is_64bit: false,
+            is_sp: num == 13,
+            kind: RegisterKind::Gpr,
+        }
+    }
+
+    /// Create a raw register with the given properties.
+    pub fn raw(num: u8, is_64bit: bool, is_sp: bool) -> Self {
+        Register {
+            num,
+            is_64bit,
+            is_sp,
+            kind: RegisterKind::Gpr,
+        }
+    }
+
     /// Create a 64-bit X register.
     pub fn x(num: u8) -> Self {
         Register {
             num: num & 0x1F,
             is_64bit: true,
             is_sp: false,
+            kind: RegisterKind::Gpr,
         }
     }
 
@@ -62,6 +101,7 @@ impl Register {
             num: num & 0x1F,
             is_64bit: false,
             is_sp: false,
+            kind: RegisterKind::Gpr,
         }
     }
 
@@ -71,6 +111,7 @@ impl Register {
             num: 31,
             is_64bit,
             is_sp: true,
+            kind: RegisterKind::Sp,
         }
     }
 
@@ -80,6 +121,7 @@ impl Register {
             num: 31,
             is_64bit,
             is_sp: false,
+            kind: RegisterKind::Gpr,
         }
     }
 
@@ -92,6 +134,7 @@ impl Register {
                 num,
                 is_64bit,
                 is_sp: false,
+                kind: RegisterKind::Gpr,
             }
         }
     }
@@ -102,37 +145,81 @@ impl Register {
             num: num & 0x1F,
             is_64bit,
             is_sp: false,
+            kind: RegisterKind::Gpr,
         }
+    }
+
+    /// Create an SVE Z (scalable vector) register.
+    pub fn sve_z(num: u8) -> Self {
+        Register {
+            num: num & 0x1F,
+            is_64bit: true,
+            is_sp: false,
+            kind: RegisterKind::SveZ,
+        }
+    }
+
+    /// Create an SVE P (predicate) register.
+    pub fn sve_p(num: u8) -> Self {
+        Register {
+            num: num & 0xF, // Only 16 predicate registers
+            is_64bit: true,
+            is_sp: false,
+            kind: RegisterKind::SveP,
+        }
+    }
+
+    /// Check if this is an SVE Z register.
+    pub fn is_sve_z(&self) -> bool {
+        self.kind == RegisterKind::SveZ
+    }
+
+    /// Check if this is an SVE P register.
+    pub fn is_sve_p(&self) -> bool {
+        self.kind == RegisterKind::SveP
     }
 
     /// Get the register name.
     pub fn name(&self) -> String {
-        if self.num == 31 {
-            if self.is_sp {
+        match self.kind {
+            RegisterKind::SveZ => format!("z{}", self.num),
+            RegisterKind::SveP => format!("p{}", self.num),
+            RegisterKind::Sp => {
                 if self.is_64bit {
                     "sp".to_string()
                 } else {
                     "wsp".to_string()
                 }
-            } else {
-                if self.is_64bit {
-                    "xzr".to_string()
-                } else {
-                    "wzr".to_string()
-                }
             }
-        } else {
-            if self.is_64bit {
-                format!("x{}", self.num)
-            } else {
-                format!("w{}", self.num)
+            RegisterKind::Gpr => {
+                if self.num == 31 {
+                    if self.is_sp {
+                        if self.is_64bit {
+                            "sp".to_string()
+                        } else {
+                            "wsp".to_string()
+                        }
+                    } else {
+                        if self.is_64bit {
+                            "xzr".to_string()
+                        } else {
+                            "wzr".to_string()
+                        }
+                    }
+                } else {
+                    if self.is_64bit {
+                        format!("x{}", self.num)
+                    } else {
+                        format!("w{}", self.num)
+                    }
+                }
             }
         }
     }
 
     /// Check if this is the zero register.
     pub fn is_zero_reg(&self) -> bool {
-        self.num == 31 && !self.is_sp
+        self.num == 31 && !self.is_sp && self.kind == RegisterKind::Gpr
     }
 }
 
@@ -324,6 +411,11 @@ impl MemOperand {
             offset: MemOffset::Imm(offset),
             mode: AddressingMode::Offset,
         }
+    }
+
+    /// Alias for imm_offset - create a memory operand with base and offset.
+    pub fn base_offset(base: Register, offset: i64) -> Self {
+        Self::imm_offset(base, offset)
     }
 
     /// Create a pre-indexed memory operand.

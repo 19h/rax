@@ -1381,11 +1381,7 @@ impl ThumbDecoder {
 
     /// Create a low register (r0-r7).
     fn low_reg(num: u8) -> Register {
-        Register {
-            num: num & 0x7,
-            is_64bit: false,
-            is_sp: false,
-        }
+        Register::raw(num & 0x7, false, false)
     }
 
     /// Create any register (r0-r15).
@@ -1393,11 +1389,7 @@ impl ThumbDecoder {
         if num == 13 {
             Register::sp(false)
         } else {
-            Register {
-                num: num & 0xF,
-                is_64bit: false,
-                is_sp: false,
-            }
+            Register::raw(num & 0xF, false, false)
         }
     }
 }
