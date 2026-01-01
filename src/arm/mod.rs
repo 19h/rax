@@ -33,6 +33,7 @@
 //! println!("{}: {:?}", insn.mnemonic, insn.operands);
 //! ```
 
+pub mod aarch64;
 pub mod cortex_m;
 pub mod cp15;
 pub mod cpu_trait;
@@ -67,3 +68,10 @@ pub use memory::{
 
 // Re-export Cortex-M subsystem
 pub use cortex_m::{CortexMCpu, CortexMVariant, Nvic, Scb, SysTick};
+
+// Re-export AArch64 subsystem
+pub use aarch64::{
+    AArch64Config, AArch64Cpu, ExceptionClass, ExceptionType as Aarch64ExceptionType, Gic,
+    GicConfig, GicVersion, Mmu, MmuConfig, SyndromeRegister, SystemRegisterBank, SystemRegisters,
+    TranslationFault, TranslationGranule, TranslationRegime,
+};
