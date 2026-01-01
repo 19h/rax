@@ -13,16 +13,6 @@ pub fn movsb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     } else {
         1
     };
-    
-    // Debug: trace REP MOVSB copying to shell heap area
-    let rip = vcpu.regs.rip;
-    let rdi_start = vcpu.regs.rdi;
-    if ctx.rep_prefix.is_some() && count > 0 && count < 100 && 
-       rdi_start >= 0x3f000000 && rdi_start < 0x40000000 {
-        eprintln!("[MOVSB] RIP={:#x} RSI={:#x} RDI={:#x} RCX={} copying...", 
-                  rip, vcpu.regs.rsi, rdi_start, count);
-    }
-    
     for _ in 0..count {
         if ctx.rep_prefix.is_some() && vcpu.regs.rcx == 0 {
             break;
@@ -53,17 +43,6 @@ pub fn movs(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
     } else {
         1
     };
-    
-    // Debug: trace REP MOVS copying to shell heap area  
-    let rip = vcpu.regs.rip;
-    let rdi_start = vcpu.regs.rdi;
-    if ctx.rep_prefix.is_some() && count > 0 && count < 100 &&
-       rdi_start >= 0x30000000 && rdi_start < 0x50000000 {
-        eprintln!("[MOVS{}] RIP={:#x} RSI={:#x} RDI={:#x} RCX={}", 
-                  if op_size == 8 { "Q" } else if op_size == 4 { "D" } else { "W" },
-                  rip, vcpu.regs.rsi, rdi_start, count);
-    }
-    
     for _ in 0..count {
         if ctx.rep_prefix.is_some() && vcpu.regs.rcx == 0 {
             break;

@@ -91,6 +91,8 @@ impl X86_64Vcpu {
                     // XTEST (0x0F 0x01 0xD6) - Test if in transactional execution
                     ctx.consume_u8()?; // consume modrm
                                        // TSX not supported, ZF=1 (not in transaction)
+                    // Clear lazy flags before setting ZF directly
+                    self.clear_lazy_flags();
                     self.regs.rflags |= flags::bits::ZF;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
@@ -98,6 +100,8 @@ impl X86_64Vcpu {
                 0xCA => {
                     // CLAC (0x0F 0x01 0xCA) - Clear AC flag
                     ctx.consume_u8()?; // consume modrm
+                    // Note: AC is not a lazy flag, but clear for consistency
+                    self.clear_lazy_flags();
                     self.regs.rflags &= !flags::bits::AC;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
@@ -105,6 +109,8 @@ impl X86_64Vcpu {
                 0xCB => {
                     // STAC (0x0F 0x01 0xCB) - Set AC flag
                     ctx.consume_u8()?; // consume modrm
+                    // Note: AC is not a lazy flag, but clear for consistency
+                    self.clear_lazy_flags();
                     self.regs.rflags |= flags::bits::AC;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)

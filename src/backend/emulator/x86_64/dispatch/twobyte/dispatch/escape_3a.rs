@@ -890,6 +890,7 @@ impl X86_64Vcpu {
 
                 let result =
                     self.pcmpxstrx(dst_lo, dst_hi, src_lo, src_hi, len1, len2, imm8, false)?;
+
                 self.regs.rcx = result as u64;
                 self.regs.rip += ctx.cursor as u64;
                 Ok(None)
@@ -1129,6 +1130,9 @@ impl X86_64Vcpu {
         // SF = any byte/word of src1 is null (len1 < num_elements)
         // OF = int_res2[0]
         // AF = 0, PF = 0
+        // CRITICAL: Clear lazy flags before setting flags directly to prevent
+        // materialize_flags() from overwriting our flag settings
+        self.clear_lazy_flags();
         use super::super::super::super::flags::bits;
         self.regs.rflags &= !(bits::CF | bits::ZF | bits::SF | bits::OF | bits::AF | bits::PF);
         if int_res2 != 0 {
