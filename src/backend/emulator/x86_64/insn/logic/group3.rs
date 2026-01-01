@@ -30,6 +30,7 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
             };
             let imm = ctx.consume_u8()? as u64;
             let result = dst & imm;
+
             vcpu.set_lazy_logic(result, 1);
         }
         2 => {

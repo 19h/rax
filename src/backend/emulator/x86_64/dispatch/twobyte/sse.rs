@@ -1006,6 +1006,8 @@ impl X86_64Vcpu {
         let xmm_dst = reg as usize;
 
         // Clear OF, SF, AF flags; set ZF, PF, CF based on comparison
+        // Clear lazy flags before setting flags directly
+        self.clear_lazy_flags();
         self.regs.rflags &= !(flags::bits::OF | flags::bits::SF | flags::bits::AF);
 
         if ctx.operand_size_override {
@@ -1703,6 +1705,8 @@ impl X86_64Vcpu {
         }
 
         // Set CF=1 (success), clear OF, SF, ZF, AF, PF
+        // Clear lazy flags BEFORE setting flags directly
+        self.clear_lazy_flags();
         self.regs.rflags &= !(flags::bits::CF
             | flags::bits::OF
             | flags::bits::SF
@@ -1710,7 +1714,6 @@ impl X86_64Vcpu {
             | flags::bits::AF
             | flags::bits::PF);
         self.regs.rflags |= flags::bits::CF;
-        self.clear_lazy_flags();
 
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
@@ -1761,6 +1764,8 @@ impl X86_64Vcpu {
         }
 
         // Set CF=1 (success), clear OF, SF, ZF, AF, PF
+        // Clear lazy flags BEFORE setting flags directly
+        self.clear_lazy_flags();
         self.regs.rflags &= !(flags::bits::CF
             | flags::bits::OF
             | flags::bits::SF
@@ -1768,7 +1773,6 @@ impl X86_64Vcpu {
             | flags::bits::AF
             | flags::bits::PF);
         self.regs.rflags |= flags::bits::CF;
-        self.clear_lazy_flags();
 
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
@@ -1810,6 +1814,9 @@ impl X86_64Vcpu {
                 "CMPXCHG8B/16B requires memory operand".to_string(),
             ));
         }
+
+        // Clear lazy flags before setting ZF directly
+        self.clear_lazy_flags();
 
         if ctx.rex_w() {
             // CMPXCHG16B - Compare EDX:EAX with m128, if equal set m128 to ECX:EBX
