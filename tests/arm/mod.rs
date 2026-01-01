@@ -14,13 +14,12 @@
 //! - system: SVC, MRS, NOP, CPS
 //! - execution: Integration tests for instruction execution
 
-pub mod common;
 pub mod arithmetic;
-pub mod logical;
 pub mod bitwise;
 pub mod branch;
+pub mod common;
+pub mod execution;
 pub mod load_store;
+pub mod logical;
 pub mod multiply;
 pub mod system;
-pub mod execution;
-pub mod aarch64;

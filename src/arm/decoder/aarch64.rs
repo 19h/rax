@@ -2814,4 +2814,101 @@ mod tests {
         assert_eq!(insn.mnemonic, Mnemonic::BCC);
         assert_eq!(insn.cond, Some(Condition::EQ));
     }
+
+    // =========================================================================
+    // ADR/ADRP - PC-relative addressing (ASL compliance tests)
+    // ASL Reference: arch_decode.asl PC-rel addressing
+    // Encoding: op (bit 31), immlo (bits 30:29), 10000 (bits 28:24),
+    //           immhi (bits 23:5), Rd (bits 4:0)
+    // =========================================================================
+
+    #[test]
+    fn test_adr_basic() {
+        // ADR X0, #0x40 (bit 31 = 0 means ADR)
+        // Encoding: 0 00 10000 0000000000000100 00000 = 0x10000800
+        let insn = decode_bytes(&[0x00, 0x08, 0x00, 0x10]).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::ADR);
+        assert_eq!(insn.state, ExecutionState::Aarch64);
+    }
+
+    #[test]
+    fn test_adr_different_register() {
+        // ADR X15, #0x40
+        let insn = decode_bytes(&[0x0f, 0x08, 0x00, 0x10]).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::ADR);
+        // Check destination register is X15
+        if let Some(Operand::Reg(reg)) = insn.operands.first() {
+            assert_eq!(reg.num, 15);
+            assert!(reg.is_64bit);
+        } else {
+            panic!("Expected register operand");
+        }
+    }
+
+    #[test]
+    fn test_adr_negative_offset() {
+        // ADR X0, #-4 (negative offset uses sign-extended immediate)
+        // Encoding: op=0, immlo=11, 10000, immhi=1111111111111111111, rd=00000
+        // op(31)=0, immlo(30:29)=11, 10000(28:24), immhi(23:5)=all 1s, rd(4:0)=0
+        // = 0 11 10000 1111111111111111111 00000
+        // = 0111_0000_1111_1111_1111_1111_1110_0000
+        // = 0x70FFFFE0
+        let insn = decode_bytes(&[0xe0, 0xff, 0xff, 0x70]).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::ADR);
+        // Check the label is negative
+        if let Some(Operand::Label(offset)) = insn.operands.get(1) {
+            assert!(*offset < 0, "Expected negative offset, got {}", offset);
+        } else {
+            panic!("Expected label operand");
+        }
+    }
+
+    #[test]
+    fn test_adrp_basic() {
+        // ADRP X0, #0x1000 (bit 31 = 1 means ADRP)
+        // Encoding: 1 00 10000 0000000000000001 00000 = 0x90000020
+        let insn = decode_bytes(&[0x20, 0x00, 0x00, 0x90]).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::ADRP);
+        assert_eq!(insn.state, ExecutionState::Aarch64);
+    }
+
+    #[test]
+    fn test_adrp_different_register() {
+        // ADRP X30, #0x1000
+        let insn = decode_bytes(&[0x3e, 0x00, 0x00, 0x90]).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::ADRP);
+        // Check destination register is X30
+        if let Some(Operand::Reg(reg)) = insn.operands.first() {
+            assert_eq!(reg.num, 30);
+            assert!(reg.is_64bit);
+        } else {
+            panic!("Expected register operand");
+        }
+    }
+
+    #[test]
+    fn test_adrp_page_aligned() {
+        // ADRP produces 4KB page-aligned addresses (imm << 12)
+        // ADRP X0, #0x2000 -> label should be 0x2000 (page 2)
+        let insn = decode_bytes(&[0x40, 0x00, 0x00, 0x90]).unwrap();
+        assert_eq!(insn.mnemonic, Mnemonic::ADRP);
+        if let Some(Operand::Label(offset)) = insn.operands.get(1) {
+            // The offset should be a multiple of 4096 (page size)
+            assert_eq!(*offset % 4096, 0);
+        }
+    }
+
+    #[test]
+    fn test_adr_vs_adrp_bit31_difference() {
+        // Same encoding except bit 31 - should produce different mnemonics
+        // Base encoding with immlo=0, immhi=1, rd=0
+
+        // ADR: bit 31 = 0 -> 0x10000020
+        let adr_insn = decode_bytes(&[0x20, 0x00, 0x00, 0x10]).unwrap();
+        assert_eq!(adr_insn.mnemonic, Mnemonic::ADR);
+
+        // ADRP: bit 31 = 1 -> 0x90000020
+        let adrp_insn = decode_bytes(&[0x20, 0x00, 0x00, 0x90]).unwrap();
+        assert_eq!(adrp_insn.mnemonic, Mnemonic::ADRP);
+    }
 }
