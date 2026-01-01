@@ -18,3 +18,7 @@ target/
 *.elf
 
 .DS_Store
+
+/tools/asl-parser/asl
+/tools/asl-parser/asl-parsed
+/tools/asl-parser/xml
