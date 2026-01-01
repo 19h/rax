@@ -3,11 +3,8 @@
 //! This module decodes Thumb instructions, which are either 16 or 32 bits wide.
 //! 32-bit Thumb-2 instructions are encoded as two halfwords.
 
+use super::{operand::*, Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
 use crate::arm::ExecutionState;
-use super::{
-    Condition, DecodedInsn, DecodeError, Mnemonic, ShiftType,
-    operand::*,
-};
 
 /// Thumb instruction decoder.
 pub struct ThumbDecoder;
@@ -24,7 +21,7 @@ impl ThumbDecoder {
     /// Decode a 16-bit Thumb instruction.
     pub fn decode_16bit(raw: u16) -> Result<DecodedInsn, DecodeError> {
         let op = raw >> 10;
-        
+
         match op {
             // Shift (immediate), add, subtract, move, and compare
             0b000000..=0b001111 => Self::decode_shift_add_sub_mov_cmp(raw),
@@ -35,11 +32,11 @@ impl ThumbDecoder {
             // Load from literal pool (PC-relative)
             0b01001_0 | 0b01001_1 => Self::decode_ldr_literal(raw),
             // Load/store single data item
-            0b0101_00..=0b0101_11 | 
-            0b0110_00..=0b0110_11 |
-            0b0111_00..=0b0111_11 |
-            0b1000_00..=0b1000_11 |
-            0b1001_00..=0b1001_11 => Self::decode_load_store(raw),
+            0b0101_00..=0b0101_11
+            | 0b0110_00..=0b0110_11
+            | 0b0111_00..=0b0111_11
+            | 0b1000_00..=0b1000_11
+            | 0b1001_00..=0b1001_11 => Self::decode_load_store(raw),
             // Generate PC-relative address (ADR)
             0b10100_0 | 0b10100_1 => Self::decode_adr(raw),
             // Generate SP-relative address (ADD SP)
@@ -53,7 +50,12 @@ impl ThumbDecoder {
             0b1101_00..=0b1101_11 => Self::decode_cond_branch_svc(raw),
             // Unconditional branch
             0b11100_0 | 0b11100_1 => Self::decode_uncond_branch(raw),
-            _ => Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Thumb, raw as u32, 2)),
+            _ => Ok(DecodedInsn::new(
+                Mnemonic::UNKNOWN,
+                ExecutionState::Thumb,
+                raw as u32,
+                2,
+            )),
         }
     }
 
@@ -63,11 +65,11 @@ impl ThumbDecoder {
     pub fn decode_32bit(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let hw1 = (raw >> 16) as u16;
         let hw2 = raw as u16;
-        
+
         let op1 = (hw1 >> 11) & 0x3;
         let op2 = (hw1 >> 4) & 0x7F;
         let op = (hw2 >> 15) & 1;
-        
+
         match op1 {
             0b01 => {
                 // Load/store multiple, load/store dual, table branch
@@ -111,10 +113,20 @@ impl ThumbDecoder {
                     // Store single data item
                     Self::decode_32bit_store(raw)
                 } else {
-                    Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Thumb2, raw, 4))
+                    Ok(DecodedInsn::new(
+                        Mnemonic::UNKNOWN,
+                        ExecutionState::Thumb2,
+                        raw,
+                        4,
+                    ))
                 }
             }
-            _ => Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Thumb2, raw, 4)),
+            _ => Ok(DecodedInsn::new(
+                Mnemonic::UNKNOWN,
+                ExecutionState::Thumb2,
+                raw,
+                4,
+            )),
         }
     }
 
@@ -127,16 +139,20 @@ impl ThumbDecoder {
         // Bits [15:14] = 00
         // Bits [13:11] determine the major category
         let op_major = (raw >> 11) & 0x7;
-        
+
         match op_major {
             // 000: LSL (immediate)
             0b000 => {
                 let imm5 = ((raw >> 6) & 0x1F) as u8;
                 let rm = ((raw >> 3) & 0x7) as u8;
                 let rd = (raw & 0x7) as u8;
-                
+
                 // LSL with imm5=0 is MOV alias
-                let mnemonic = if imm5 == 0 { Mnemonic::MOVS } else { Mnemonic::LSLS };
+                let mnemonic = if imm5 == 0 {
+                    Mnemonic::MOVS
+                } else {
+                    Mnemonic::LSLS
+                };
                 let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2);
                 insn.sets_flags = true;
                 insn = insn.with_operand(Operand::Reg(Self::low_reg(rd)));
@@ -151,10 +167,11 @@ impl ThumbDecoder {
                 let imm5 = ((raw >> 6) & 0x1F) as u8;
                 let rm = ((raw >> 3) & 0x7) as u8;
                 let rd = (raw & 0x7) as u8;
-                
+
                 let shift_amt = if imm5 == 0 { 32 } else { imm5 as i64 };
-                
-                let mut insn = DecodedInsn::new(Mnemonic::LSRS, ExecutionState::Thumb, raw as u32, 2);
+
+                let mut insn =
+                    DecodedInsn::new(Mnemonic::LSRS, ExecutionState::Thumb, raw as u32, 2);
                 insn.sets_flags = true;
                 insn = insn.with_operand(Operand::Reg(Self::low_reg(rd)));
                 insn = insn.with_operand(Operand::Reg(Self::low_reg(rm)));
@@ -166,10 +183,11 @@ impl ThumbDecoder {
                 let imm5 = ((raw >> 6) & 0x1F) as u8;
                 let rm = ((raw >> 3) & 0x7) as u8;
                 let rd = (raw & 0x7) as u8;
-                
+
                 let shift_amt = if imm5 == 0 { 32 } else { imm5 as i64 };
-                
-                let mut insn = DecodedInsn::new(Mnemonic::ASRS, ExecutionState::Thumb, raw as u32, 2);
+
+                let mut insn =
+                    DecodedInsn::new(Mnemonic::ASRS, ExecutionState::Thumb, raw as u32, 2);
                 insn.sets_flags = true;
                 insn = insn.with_operand(Operand::Reg(Self::low_reg(rd)));
                 insn = insn.with_operand(Operand::Reg(Self::low_reg(rm)));
@@ -178,18 +196,22 @@ impl ThumbDecoder {
             }
             // 011: ADD/SUB (register or 3-bit immediate)
             0b011 => {
-                let i = (raw >> 10) & 1;  // 0 = register, 1 = immediate
-                let op_bit = (raw >> 9) & 1;  // 0 = ADD, 1 = SUB
+                let i = (raw >> 10) & 1; // 0 = register, 1 = immediate
+                let op_bit = (raw >> 9) & 1; // 0 = ADD, 1 = SUB
                 let rn = ((raw >> 3) & 0x7) as u8;
                 let rd = (raw & 0x7) as u8;
-                
-                let mnemonic = if op_bit == 0 { Mnemonic::ADDS } else { Mnemonic::SUBS };
-                
+
+                let mnemonic = if op_bit == 0 {
+                    Mnemonic::ADDS
+                } else {
+                    Mnemonic::SUBS
+                };
+
                 let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2);
                 insn.sets_flags = true;
                 insn = insn.with_operand(Operand::Reg(Self::low_reg(rd)));
                 insn = insn.with_operand(Operand::Reg(Self::low_reg(rn)));
-                
+
                 if i == 0 {
                     // Register variant
                     let rm = ((raw >> 6) & 0x7) as u8;
@@ -205,8 +227,9 @@ impl ThumbDecoder {
             0b100 => {
                 let rd = ((raw >> 8) & 0x7) as u8;
                 let imm8 = (raw & 0xFF) as i64;
-                
-                let mut insn = DecodedInsn::new(Mnemonic::MOVS, ExecutionState::Thumb, raw as u32, 2);
+
+                let mut insn =
+                    DecodedInsn::new(Mnemonic::MOVS, ExecutionState::Thumb, raw as u32, 2);
                 insn.sets_flags = true;
                 insn = insn.with_operand(Operand::Reg(Self::low_reg(rd)));
                 insn = insn.with_operand(Operand::Imm(Immediate::new(imm8)));
@@ -216,8 +239,9 @@ impl ThumbDecoder {
             0b101 => {
                 let rn = ((raw >> 8) & 0x7) as u8;
                 let imm8 = (raw & 0xFF) as i64;
-                
-                let mut insn = DecodedInsn::new(Mnemonic::CMP, ExecutionState::Thumb, raw as u32, 2);
+
+                let mut insn =
+                    DecodedInsn::new(Mnemonic::CMP, ExecutionState::Thumb, raw as u32, 2);
                 insn.sets_flags = true;
                 insn = insn.with_operand(Operand::Reg(Self::low_reg(rn)));
                 insn = insn.with_operand(Operand::Imm(Immediate::new(imm8)));
@@ -227,8 +251,9 @@ impl ThumbDecoder {
             0b110 => {
                 let rdn = ((raw >> 8) & 0x7) as u8;
                 let imm8 = (raw & 0xFF) as i64;
-                
-                let mut insn = DecodedInsn::new(Mnemonic::ADDS, ExecutionState::Thumb, raw as u32, 2);
+
+                let mut insn =
+                    DecodedInsn::new(Mnemonic::ADDS, ExecutionState::Thumb, raw as u32, 2);
                 insn.sets_flags = true;
                 insn = insn.with_operand(Operand::Reg(Self::low_reg(rdn)));
                 insn = insn.with_operand(Operand::Reg(Self::low_reg(rdn)));
@@ -239,15 +264,21 @@ impl ThumbDecoder {
             0b111 => {
                 let rdn = ((raw >> 8) & 0x7) as u8;
                 let imm8 = (raw & 0xFF) as i64;
-                
-                let mut insn = DecodedInsn::new(Mnemonic::SUBS, ExecutionState::Thumb, raw as u32, 2);
+
+                let mut insn =
+                    DecodedInsn::new(Mnemonic::SUBS, ExecutionState::Thumb, raw as u32, 2);
                 insn.sets_flags = true;
                 insn = insn.with_operand(Operand::Reg(Self::low_reg(rdn)));
                 insn = insn.with_operand(Operand::Reg(Self::low_reg(rdn)));
                 insn = insn.with_operand(Operand::Imm(Immediate::new(imm8)));
                 Ok(insn)
             }
-            _ => Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Thumb, raw as u32, 2)),
+            _ => Ok(DecodedInsn::new(
+                Mnemonic::UNKNOWN,
+                ExecutionState::Thumb,
+                raw as u32,
+                2,
+            )),
         }
     }
 
@@ -255,7 +286,7 @@ impl ThumbDecoder {
         let op = (raw >> 6) & 0xF;
         let rm = ((raw >> 3) & 0x7) as u8;
         let rdn = (raw & 0x7) as u8;
-        
+
         let (mnemonic, uses_rd_as_rn) = match op {
             0b0000 => (Mnemonic::ANDS, true),
             0b0001 => (Mnemonic::EORS, true),
@@ -275,10 +306,10 @@ impl ThumbDecoder {
             0b1111 => (Mnemonic::MVNS, false),
             _ => unreachable!(),
         };
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2);
         insn.sets_flags = true;
-        
+
         match op {
             // TST, CMP, CMN - no destination
             0b1000 | 0b1010 | 0b1011 => {
@@ -310,32 +341,35 @@ impl ThumbDecoder {
                 insn = insn.with_operand(Operand::Reg(Self::low_reg(rm)));
             }
         }
-        
+
         Ok(insn)
     }
 
     fn decode_special_data_branch(raw: u16) -> Result<DecodedInsn, DecodeError> {
         let op = (raw >> 6) & 0xF;
-        
+
         match op {
             // ADD (register) - high registers
             0b0000..=0b0011 => {
                 let dn = (raw >> 7) & 1;
                 let rm = ((raw >> 3) & 0xF) as u8;
                 let rdn = (((dn << 3) as u8) | (raw & 0x7) as u8);
-                
-                Ok(DecodedInsn::new(Mnemonic::ADD, ExecutionState::Thumb, raw as u32, 2)
-                    .with_operand(Operand::Reg(Self::any_reg(rdn)))
-                    .with_operand(Operand::Reg(Self::any_reg(rdn)))
-                    .with_operand(Operand::Reg(Self::any_reg(rm))))
+
+                Ok(
+                    DecodedInsn::new(Mnemonic::ADD, ExecutionState::Thumb, raw as u32, 2)
+                        .with_operand(Operand::Reg(Self::any_reg(rdn)))
+                        .with_operand(Operand::Reg(Self::any_reg(rdn)))
+                        .with_operand(Operand::Reg(Self::any_reg(rm))),
+                )
             }
             // CMP (register) - high registers
             0b0101 | 0b0110 | 0b0111 => {
                 let n = (raw >> 7) & 1;
                 let rm = ((raw >> 3) & 0xF) as u8;
                 let rn = (((n << 3) as u8) | (raw & 0x7) as u8);
-                
-                let mut insn = DecodedInsn::new(Mnemonic::CMP, ExecutionState::Thumb, raw as u32, 2);
+
+                let mut insn =
+                    DecodedInsn::new(Mnemonic::CMP, ExecutionState::Thumb, raw as u32, 2);
                 insn.sets_flags = true;
                 insn = insn.with_operand(Operand::Reg(Self::any_reg(rn)));
                 insn = insn.with_operand(Operand::Reg(Self::any_reg(rm)));
@@ -346,26 +380,37 @@ impl ThumbDecoder {
                 let d = (raw >> 7) & 1;
                 let rm = ((raw >> 3) & 0xF) as u8;
                 let rd = (((d << 3) as u8) | (raw & 0x7) as u8);
-                
-                Ok(DecodedInsn::new(Mnemonic::MOV, ExecutionState::Thumb, raw as u32, 2)
-                    .with_operand(Operand::Reg(Self::any_reg(rd)))
-                    .with_operand(Operand::Reg(Self::any_reg(rm))))
+
+                Ok(
+                    DecodedInsn::new(Mnemonic::MOV, ExecutionState::Thumb, raw as u32, 2)
+                        .with_operand(Operand::Reg(Self::any_reg(rd)))
+                        .with_operand(Operand::Reg(Self::any_reg(rm))),
+                )
             }
             // BX
             0b1100 | 0b1101 => {
                 let rm = ((raw >> 3) & 0xF) as u8;
-                
-                Ok(DecodedInsn::new(Mnemonic::BX, ExecutionState::Thumb, raw as u32, 2)
-                    .with_operand(Operand::Reg(Self::any_reg(rm))))
+
+                Ok(
+                    DecodedInsn::new(Mnemonic::BX, ExecutionState::Thumb, raw as u32, 2)
+                        .with_operand(Operand::Reg(Self::any_reg(rm))),
+                )
             }
             // BLX (register)
             0b1110 | 0b1111 => {
                 let rm = ((raw >> 3) & 0xF) as u8;
-                
-                Ok(DecodedInsn::new(Mnemonic::BLX, ExecutionState::Thumb, raw as u32, 2)
-                    .with_operand(Operand::Reg(Self::any_reg(rm))))
+
+                Ok(
+                    DecodedInsn::new(Mnemonic::BLX, ExecutionState::Thumb, raw as u32, 2)
+                        .with_operand(Operand::Reg(Self::any_reg(rm))),
+                )
             }
-            _ => Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Thumb, raw as u32, 2)),
+            _ => Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Thumb,
+                raw as u32,
+                2,
+            )),
         }
     }
 
@@ -373,17 +418,19 @@ impl ThumbDecoder {
         let rt = ((raw >> 8) & 0x7) as u8;
         let imm8 = (raw & 0xFF) as i64;
         let offset = imm8 << 2;
-        
+
         // LDR Rt, [PC, #offset]
-        Ok(DecodedInsn::new(Mnemonic::LDR, ExecutionState::Thumb, raw as u32, 2)
-            .with_operand(Operand::Reg(Self::low_reg(rt)))
-            .with_operand(Operand::Label(offset)))
+        Ok(
+            DecodedInsn::new(Mnemonic::LDR, ExecutionState::Thumb, raw as u32, 2)
+                .with_operand(Operand::Reg(Self::low_reg(rt)))
+                .with_operand(Operand::Label(offset)),
+        )
     }
 
     fn decode_load_store(raw: u16) -> Result<DecodedInsn, DecodeError> {
         let op_a = (raw >> 12) & 0xF;
         let op_b = (raw >> 9) & 0x7;
-        
+
         match (op_a, op_b) {
             // STR (register)
             (0b0101, 0b000) => Self::decode_ls_reg(raw, Mnemonic::STR),
@@ -417,7 +464,12 @@ impl ThumbDecoder {
             (0b1001, _) if op_b & 0b100 == 0 => Self::decode_ls_sp_relative(raw, false),
             // LDR (immediate, T2) - SP relative
             (0b1001, _) if op_b & 0b100 != 0 => Self::decode_ls_sp_relative(raw, true),
-            _ => Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Thumb, raw as u32, 2)),
+            _ => Ok(DecodedInsn::new(
+                Mnemonic::UNKNOWN,
+                ExecutionState::Thumb,
+                raw as u32,
+                2,
+            )),
         }
     }
 
@@ -425,16 +477,18 @@ impl ThumbDecoder {
         let rm = ((raw >> 6) & 0x7) as u8;
         let rn = ((raw >> 3) & 0x7) as u8;
         let rt = (raw & 0x7) as u8;
-        
+
         let mem = MemOperand {
             base: Self::low_reg(rn),
             offset: MemOffset::Reg(Self::low_reg(rm)),
             mode: AddressingMode::Offset,
         };
-        
-        Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
-            .with_operand(Operand::Reg(Self::low_reg(rt)))
-            .with_operand(Operand::Mem(mem)))
+
+        Ok(
+            DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
+                .with_operand(Operand::Reg(Self::low_reg(rt)))
+                .with_operand(Operand::Mem(mem)),
+        )
     }
 
     fn decode_ls_imm_word(raw: u16, is_load: bool) -> Result<DecodedInsn, DecodeError> {
@@ -442,24 +496,42 @@ impl ThumbDecoder {
         let rn = ((raw >> 3) & 0x7) as u8;
         let rt = (raw & 0x7) as u8;
         let offset = imm5 << 2;
-        
-        let mnemonic = if is_load { Mnemonic::LDR } else { Mnemonic::STR };
-        
-        Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
-            .with_operand(Operand::Reg(Self::low_reg(rt)))
-            .with_operand(Operand::Mem(MemOperand::imm_offset(Self::low_reg(rn), offset))))
+
+        let mnemonic = if is_load {
+            Mnemonic::LDR
+        } else {
+            Mnemonic::STR
+        };
+
+        Ok(
+            DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
+                .with_operand(Operand::Reg(Self::low_reg(rt)))
+                .with_operand(Operand::Mem(MemOperand::imm_offset(
+                    Self::low_reg(rn),
+                    offset,
+                ))),
+        )
     }
 
     fn decode_ls_imm_byte(raw: u16, is_load: bool) -> Result<DecodedInsn, DecodeError> {
         let imm5 = ((raw >> 6) & 0x1F) as i64;
         let rn = ((raw >> 3) & 0x7) as u8;
         let rt = (raw & 0x7) as u8;
-        
-        let mnemonic = if is_load { Mnemonic::LDRB } else { Mnemonic::STRB };
-        
-        Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
-            .with_operand(Operand::Reg(Self::low_reg(rt)))
-            .with_operand(Operand::Mem(MemOperand::imm_offset(Self::low_reg(rn), imm5))))
+
+        let mnemonic = if is_load {
+            Mnemonic::LDRB
+        } else {
+            Mnemonic::STRB
+        };
+
+        Ok(
+            DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
+                .with_operand(Operand::Reg(Self::low_reg(rt)))
+                .with_operand(Operand::Mem(MemOperand::imm_offset(
+                    Self::low_reg(rn),
+                    imm5,
+                ))),
+        )
     }
 
     fn decode_ls_imm_halfword(raw: u16, is_load: bool) -> Result<DecodedInsn, DecodeError> {
@@ -467,66 +539,90 @@ impl ThumbDecoder {
         let rn = ((raw >> 3) & 0x7) as u8;
         let rt = (raw & 0x7) as u8;
         let offset = imm5 << 1;
-        
-        let mnemonic = if is_load { Mnemonic::LDRH } else { Mnemonic::STRH };
-        
-        Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
-            .with_operand(Operand::Reg(Self::low_reg(rt)))
-            .with_operand(Operand::Mem(MemOperand::imm_offset(Self::low_reg(rn), offset))))
+
+        let mnemonic = if is_load {
+            Mnemonic::LDRH
+        } else {
+            Mnemonic::STRH
+        };
+
+        Ok(
+            DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
+                .with_operand(Operand::Reg(Self::low_reg(rt)))
+                .with_operand(Operand::Mem(MemOperand::imm_offset(
+                    Self::low_reg(rn),
+                    offset,
+                ))),
+        )
     }
 
     fn decode_ls_sp_relative(raw: u16, is_load: bool) -> Result<DecodedInsn, DecodeError> {
         let rt = ((raw >> 8) & 0x7) as u8;
         let imm8 = (raw & 0xFF) as i64;
         let offset = imm8 << 2;
-        
-        let mnemonic = if is_load { Mnemonic::LDR } else { Mnemonic::STR };
-        
+
+        let mnemonic = if is_load {
+            Mnemonic::LDR
+        } else {
+            Mnemonic::STR
+        };
+
         // SP is r13
-        Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
-            .with_operand(Operand::Reg(Self::low_reg(rt)))
-            .with_operand(Operand::Mem(MemOperand::imm_offset(Register::sp(false), offset))))
+        Ok(
+            DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
+                .with_operand(Operand::Reg(Self::low_reg(rt)))
+                .with_operand(Operand::Mem(MemOperand::imm_offset(
+                    Register::sp(false),
+                    offset,
+                ))),
+        )
     }
 
     fn decode_adr(raw: u16) -> Result<DecodedInsn, DecodeError> {
         let rd = ((raw >> 8) & 0x7) as u8;
         let imm8 = (raw & 0xFF) as i64;
         let offset = imm8 << 2;
-        
+
         // ADR Rd, label (actually ADD Rd, PC, #offset)
-        Ok(DecodedInsn::new(Mnemonic::ADD, ExecutionState::Thumb, raw as u32, 2)
-            .with_operand(Operand::Reg(Self::low_reg(rd)))
-            .with_operand(Operand::Label(offset)))
+        Ok(
+            DecodedInsn::new(Mnemonic::ADD, ExecutionState::Thumb, raw as u32, 2)
+                .with_operand(Operand::Reg(Self::low_reg(rd)))
+                .with_operand(Operand::Label(offset)),
+        )
     }
 
     fn decode_add_sp(raw: u16) -> Result<DecodedInsn, DecodeError> {
         let rd = ((raw >> 8) & 0x7) as u8;
         let imm8 = (raw & 0xFF) as i64;
         let offset = imm8 << 2;
-        
+
         // ADD Rd, SP, #imm
-        Ok(DecodedInsn::new(Mnemonic::ADD, ExecutionState::Thumb, raw as u32, 2)
-            .with_operand(Operand::Reg(Self::low_reg(rd)))
-            .with_operand(Operand::Reg(Register::sp(false)))
-            .with_operand(Operand::Imm(Immediate::new(offset))))
+        Ok(
+            DecodedInsn::new(Mnemonic::ADD, ExecutionState::Thumb, raw as u32, 2)
+                .with_operand(Operand::Reg(Self::low_reg(rd)))
+                .with_operand(Operand::Reg(Register::sp(false)))
+                .with_operand(Operand::Imm(Immediate::new(offset))),
+        )
     }
 
     fn decode_miscellaneous(raw: u16) -> Result<DecodedInsn, DecodeError> {
         // Miscellaneous 16-bit: bits [15:12] = 1011, bits [11:8] = opcode
         let op = (raw >> 8) & 0xF;
-        
+
         match op {
             // 0000: ADD/SUB SP
             0b0000 => {
                 let s = (raw >> 7) & 1;
                 let imm7 = (raw & 0x7F) as i64;
                 let offset = imm7 << 2;
-                
+
                 let mnemonic = if s == 0 { Mnemonic::ADD } else { Mnemonic::SUB };
-                Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
-                    .with_operand(Operand::Reg(Register::sp(false)))
-                    .with_operand(Operand::Reg(Register::sp(false)))
-                    .with_operand(Operand::Imm(Immediate::new(offset))))
+                Ok(
+                    DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
+                        .with_operand(Operand::Reg(Register::sp(false)))
+                        .with_operand(Operand::Reg(Register::sp(false)))
+                        .with_operand(Operand::Imm(Immediate::new(offset))),
+                )
             }
             // 0001: CBZ (forward reference only)
             0b0001 | 0b0011 => {
@@ -534,18 +630,24 @@ impl ThumbDecoder {
                 let imm5 = (raw >> 3) & 0x1F;
                 let rn = (raw & 0x7) as u8;
                 let imm = ((i << 6) | (imm5 << 1)) as i64;
-                
-                let mnemonic = if op == 0b0001 { Mnemonic::CBZ } else { Mnemonic::CBZ };
-                Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
-                    .with_operand(Operand::Reg(Self::low_reg(rn)))
-                    .with_operand(Operand::Imm(Immediate::new(imm))))
+
+                let mnemonic = if op == 0b0001 {
+                    Mnemonic::CBZ
+                } else {
+                    Mnemonic::CBZ
+                };
+                Ok(
+                    DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
+                        .with_operand(Operand::Reg(Self::low_reg(rn)))
+                        .with_operand(Operand::Imm(Immediate::new(imm))),
+                )
             }
             // 0010: SXTH, SXTB, UXTH, UXTB
             0b0010 => {
                 let rm = ((raw >> 3) & 0x7) as u8;
                 let rd = (raw & 0x7) as u8;
                 let op2 = (raw >> 6) & 0x3;
-                
+
                 let mnemonic = match op2 {
                     0b00 => Mnemonic::SXTH,
                     0b01 => Mnemonic::SXTB,
@@ -553,18 +655,22 @@ impl ThumbDecoder {
                     0b11 => Mnemonic::UXTB,
                     _ => unreachable!(),
                 };
-                
-                Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
-                    .with_operand(Operand::Reg(Self::low_reg(rd)))
-                    .with_operand(Operand::Reg(Self::low_reg(rm))))
+
+                Ok(
+                    DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
+                        .with_operand(Operand::Reg(Self::low_reg(rd)))
+                        .with_operand(Operand::Reg(Self::low_reg(rm))),
+                )
             }
             // 0100, 0101: PUSH
             0b0100 | 0b0101 => {
                 let m = (raw >> 8) & 1;
                 let reg_list = ((raw & 0xFF) | ((m as u16) << 14)) as u16;
-                
-                Ok(DecodedInsn::new(Mnemonic::PUSH, ExecutionState::Thumb, raw as u32, 2)
-                    .with_operand(Operand::RegList(RegisterList::from_mask(reg_list))))
+
+                Ok(
+                    DecodedInsn::new(Mnemonic::PUSH, ExecutionState::Thumb, raw as u32, 2)
+                        .with_operand(Operand::RegList(RegisterList::from_mask(reg_list))),
+                )
             }
             // 1001: CBNZ
             0b1001 | 0b1011 => {
@@ -572,53 +678,66 @@ impl ThumbDecoder {
                 let imm5 = (raw >> 3) & 0x1F;
                 let rn = (raw & 0x7) as u8;
                 let imm = ((i << 6) | (imm5 << 1)) as i64;
-                
-                Ok(DecodedInsn::new(Mnemonic::CBNZ, ExecutionState::Thumb, raw as u32, 2)
-                    .with_operand(Operand::Reg(Self::low_reg(rn)))
-                    .with_operand(Operand::Imm(Immediate::new(imm))))
+
+                Ok(
+                    DecodedInsn::new(Mnemonic::CBNZ, ExecutionState::Thumb, raw as u32, 2)
+                        .with_operand(Operand::Reg(Self::low_reg(rn)))
+                        .with_operand(Operand::Imm(Immediate::new(imm))),
+                )
             }
             // 1010: REV, REV16, REVSH
             0b1010 => {
                 let rm = ((raw >> 3) & 0x7) as u8;
                 let rd = (raw & 0x7) as u8;
                 let op2 = (raw >> 6) & 0x3;
-                
+
                 let mnemonic = match op2 {
                     0b00 => Mnemonic::REV,
                     0b01 => Mnemonic::REV16,
                     0b11 => Mnemonic::REVSH,
                     _ => Mnemonic::UNDEFINED,
                 };
-                
-                Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
-                    .with_operand(Operand::Reg(Self::low_reg(rd)))
-                    .with_operand(Operand::Reg(Self::low_reg(rm))))
+
+                Ok(
+                    DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
+                        .with_operand(Operand::Reg(Self::low_reg(rd)))
+                        .with_operand(Operand::Reg(Self::low_reg(rm))),
+                )
             }
             // 1100, 1101: POP
             0b1100 | 0b1101 => {
                 let p = (raw >> 8) & 1;
                 let reg_list = ((raw & 0xFF) | ((p as u16) << 15)) as u16;
-                
-                Ok(DecodedInsn::new(Mnemonic::POP, ExecutionState::Thumb, raw as u32, 2)
-                    .with_operand(Operand::RegList(RegisterList::from_mask(reg_list))))
+
+                Ok(
+                    DecodedInsn::new(Mnemonic::POP, ExecutionState::Thumb, raw as u32, 2)
+                        .with_operand(Operand::RegList(RegisterList::from_mask(reg_list))),
+                )
             }
             // 1110: BKPT
             0b1110 => {
                 let imm8 = (raw & 0xFF) as i64;
-                
-                Ok(DecodedInsn::new(Mnemonic::BKPT, ExecutionState::Thumb, raw as u32, 2)
-                    .with_operand(Operand::Imm(Immediate::new(imm8))))
+
+                Ok(
+                    DecodedInsn::new(Mnemonic::BKPT, ExecutionState::Thumb, raw as u32, 2)
+                        .with_operand(Operand::Imm(Immediate::new(imm8))),
+                )
             }
             // 1111: If-Then/Hints
             0b1111 => {
                 let op_a = (raw >> 4) & 0xF;
                 let op_b = raw & 0xF;
-                
+
                 if op_a != 0 {
                     // IT instruction
-                    return Ok(DecodedInsn::new(Mnemonic::IT, ExecutionState::Thumb, raw as u32, 2));
+                    return Ok(DecodedInsn::new(
+                        Mnemonic::IT,
+                        ExecutionState::Thumb,
+                        raw as u32,
+                        2,
+                    ));
                 }
-                
+
                 let mnemonic = match op_b {
                     0b0000 => Mnemonic::NOP,
                     0b0001 => Mnemonic::YIELD,
@@ -627,76 +746,98 @@ impl ThumbDecoder {
                     0b0100 => Mnemonic::SEV,
                     _ => Mnemonic::HINT,
                 };
-                
-                Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2))
+
+                Ok(DecodedInsn::new(
+                    mnemonic,
+                    ExecutionState::Thumb,
+                    raw as u32,
+                    2,
+                ))
             }
-            _ => Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Thumb, raw as u32, 2)),
+            _ => Ok(DecodedInsn::new(
+                Mnemonic::UNKNOWN,
+                ExecutionState::Thumb,
+                raw as u32,
+                2,
+            )),
         }
     }
 
     fn decode_stm(raw: u16) -> Result<DecodedInsn, DecodeError> {
         let rn = ((raw >> 8) & 0x7) as u8;
         let reg_list = (raw & 0xFF) as u16;
-        
-        Ok(DecodedInsn::new(Mnemonic::STMIA, ExecutionState::Thumb, raw as u32, 2)
-            .with_operand(Operand::Reg(Self::low_reg(rn)))
-            .with_operand(Operand::RegList(RegisterList::from_mask(reg_list))))
+
+        Ok(
+            DecodedInsn::new(Mnemonic::STMIA, ExecutionState::Thumb, raw as u32, 2)
+                .with_operand(Operand::Reg(Self::low_reg(rn)))
+                .with_operand(Operand::RegList(RegisterList::from_mask(reg_list))),
+        )
     }
 
     fn decode_ldm(raw: u16) -> Result<DecodedInsn, DecodeError> {
         let rn = ((raw >> 8) & 0x7) as u8;
         let reg_list = (raw & 0xFF) as u16;
-        
-        Ok(DecodedInsn::new(Mnemonic::LDMIA, ExecutionState::Thumb, raw as u32, 2)
-            .with_operand(Operand::Reg(Self::low_reg(rn)))
-            .with_operand(Operand::RegList(RegisterList::from_mask(reg_list))))
+
+        Ok(
+            DecodedInsn::new(Mnemonic::LDMIA, ExecutionState::Thumb, raw as u32, 2)
+                .with_operand(Operand::Reg(Self::low_reg(rn)))
+                .with_operand(Operand::RegList(RegisterList::from_mask(reg_list))),
+        )
     }
 
     fn decode_cond_branch_svc(raw: u16) -> Result<DecodedInsn, DecodeError> {
         let op = (raw >> 8) & 0xF;
-        
+
         if op == 0b1110 {
             // UDF
             let imm8 = (raw & 0xFF) as i64;
-            return Ok(DecodedInsn::new(Mnemonic::UDF, ExecutionState::Thumb, raw as u32, 2)
-                .with_operand(Operand::Imm(Immediate::new(imm8))));
+            return Ok(
+                DecodedInsn::new(Mnemonic::UDF, ExecutionState::Thumb, raw as u32, 2)
+                    .with_operand(Operand::Imm(Immediate::new(imm8))),
+            );
         }
-        
+
         if op == 0b1111 {
             // SVC
             let imm8 = (raw & 0xFF) as i64;
-            return Ok(DecodedInsn::new(Mnemonic::SVC, ExecutionState::Thumb, raw as u32, 2)
-                .with_operand(Operand::Imm(Immediate::new(imm8))));
+            return Ok(
+                DecodedInsn::new(Mnemonic::SVC, ExecutionState::Thumb, raw as u32, 2)
+                    .with_operand(Operand::Imm(Immediate::new(imm8))),
+            );
         }
-        
+
         // Conditional branch
         let cond = Condition::from_bits(op as u8);
         let imm8 = (raw & 0xFF) as i64;
-        
+
         // Sign extend and shift
         let offset = if imm8 & (1 << 7) != 0 {
             (imm8 | !0xFF) << 1
         } else {
             imm8 << 1
         };
-        
-        Ok(DecodedInsn::new(Mnemonic::BCC, ExecutionState::Thumb, raw as u32, 2)
-            .with_cond(cond)
-            .with_operand(Operand::Label(offset)))
+
+        Ok(
+            DecodedInsn::new(Mnemonic::BCC, ExecutionState::Thumb, raw as u32, 2)
+                .with_cond(cond)
+                .with_operand(Operand::Label(offset)),
+        )
     }
 
     fn decode_uncond_branch(raw: u16) -> Result<DecodedInsn, DecodeError> {
         let imm11 = (raw & 0x7FF) as i64;
-        
+
         // Sign extend and shift
         let offset = if imm11 & (1 << 10) != 0 {
             (imm11 | !0x7FF) << 1
         } else {
             imm11 << 1
         };
-        
-        Ok(DecodedInsn::new(Mnemonic::B, ExecutionState::Thumb, raw as u32, 2)
-            .with_operand(Operand::Label(offset)))
+
+        Ok(
+            DecodedInsn::new(Mnemonic::B, ExecutionState::Thumb, raw as u32, 2)
+                .with_operand(Operand::Label(offset)),
+        )
     }
 
     // =========================================================================
@@ -708,9 +849,13 @@ impl ThumbDecoder {
         let w = (raw >> 21) & 1;
         let rn = ((raw >> 16) & 0xF) as u8;
         let reg_list = (raw & 0xFFFF) as u16;
-        
-        let mnemonic = if l == 1 { Mnemonic::LDMIA } else { Mnemonic::STMDB };
-        
+
+        let mnemonic = if l == 1 {
+            Mnemonic::LDMIA
+        } else {
+            Mnemonic::STMDB
+        };
+
         // Check for PUSH/POP aliases
         let mnemonic = if rn == 13 && w == 1 {
             if l == 1 {
@@ -721,117 +866,223 @@ impl ThumbDecoder {
         } else {
             mnemonic
         };
-        
+
         let is_push_pop = matches!(mnemonic, Mnemonic::PUSH | Mnemonic::POP);
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Thumb2, raw, 4);
-        
+
         if !is_push_pop {
             insn = insn.with_operand(Operand::Reg(Self::any_reg(rn)));
         }
-        
+
         insn = insn.with_operand(Operand::RegList(RegisterList::from_mask(reg_list)));
-        
+
         Ok(insn)
     }
 
     fn decode_32bit_load_store_dual(raw: u32) -> Result<DecodedInsn, DecodeError> {
-        Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Thumb2, raw, 4))
+        Ok(DecodedInsn::new(
+            Mnemonic::UNKNOWN,
+            ExecutionState::Thumb2,
+            raw,
+            4,
+        ))
     }
 
     fn decode_32bit_data_processing(raw: u32) -> Result<DecodedInsn, DecodeError> {
-        Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Thumb2, raw, 4))
+        Ok(DecodedInsn::new(
+            Mnemonic::UNKNOWN,
+            ExecutionState::Thumb2,
+            raw,
+            4,
+        ))
     }
 
     fn decode_32bit_dp_modified_imm(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let hw1 = (raw >> 16) as u16;
         let hw2 = raw as u16;
-        
+
         let op = (hw1 >> 5) & 0xF;
         let rn = (hw1 & 0xF) as u8;
         let s = (hw1 >> 4) & 1;
         let rd = ((hw2 >> 8) & 0xF) as u8;
-        
+
         // Decode modified immediate
         let i = (hw1 >> 10) & 1;
         let imm3 = (hw2 >> 12) & 0x7;
         let imm8 = (hw2 & 0xFF) as u32;
         let imm12 = ((i as u32) << 11) | ((imm3 as u32) << 8) | imm8;
         let imm = Self::decode_thumb_modified_imm(imm12);
-        
+
         let (mnemonic, uses_rn, writes_rd) = match op {
             0b0000 => {
                 if rd == 15 && s == 1 {
                     (Mnemonic::TST, true, false)
                 } else {
-                    (if s == 1 { Mnemonic::ANDS } else { Mnemonic::AND }, true, true)
+                    (
+                        if s == 1 {
+                            Mnemonic::ANDS
+                        } else {
+                            Mnemonic::AND
+                        },
+                        true,
+                        true,
+                    )
                 }
             }
-            0b0001 => (if s == 1 { Mnemonic::BICS } else { Mnemonic::BIC }, true, true),
+            0b0001 => (
+                if s == 1 {
+                    Mnemonic::BICS
+                } else {
+                    Mnemonic::BIC
+                },
+                true,
+                true,
+            ),
             0b0010 => {
                 if rn == 15 {
-                    (if s == 1 { Mnemonic::MOVS } else { Mnemonic::MOV }, false, true)
+                    (
+                        if s == 1 {
+                            Mnemonic::MOVS
+                        } else {
+                            Mnemonic::MOV
+                        },
+                        false,
+                        true,
+                    )
                 } else {
-                    (if s == 1 { Mnemonic::ORRS } else { Mnemonic::ORR }, true, true)
+                    (
+                        if s == 1 {
+                            Mnemonic::ORRS
+                        } else {
+                            Mnemonic::ORR
+                        },
+                        true,
+                        true,
+                    )
                 }
             }
             0b0011 => {
                 if rn == 15 {
-                    (if s == 1 { Mnemonic::MVNS } else { Mnemonic::MVN }, false, true)
+                    (
+                        if s == 1 {
+                            Mnemonic::MVNS
+                        } else {
+                            Mnemonic::MVN
+                        },
+                        false,
+                        true,
+                    )
                 } else {
-                    (if s == 1 { Mnemonic::ORNS } else { Mnemonic::ORN }, true, true)
+                    (
+                        if s == 1 {
+                            Mnemonic::ORNS
+                        } else {
+                            Mnemonic::ORN
+                        },
+                        true,
+                        true,
+                    )
                 }
             }
             0b0100 => {
                 if rd == 15 && s == 1 {
                     (Mnemonic::TEQ, true, false)
                 } else {
-                    (if s == 1 { Mnemonic::EORS } else { Mnemonic::EOR }, true, true)
+                    (
+                        if s == 1 {
+                            Mnemonic::EORS
+                        } else {
+                            Mnemonic::EOR
+                        },
+                        true,
+                        true,
+                    )
                 }
             }
             0b1000 => {
                 if rd == 15 && s == 1 {
                     (Mnemonic::CMN, true, false)
                 } else {
-                    (if s == 1 { Mnemonic::ADDS } else { Mnemonic::ADD }, true, true)
+                    (
+                        if s == 1 {
+                            Mnemonic::ADDS
+                        } else {
+                            Mnemonic::ADD
+                        },
+                        true,
+                        true,
+                    )
                 }
             }
-            0b1010 => (if s == 1 { Mnemonic::ADCS } else { Mnemonic::ADC }, true, true),
-            0b1011 => (if s == 1 { Mnemonic::SBCS } else { Mnemonic::SBC }, true, true),
+            0b1010 => (
+                if s == 1 {
+                    Mnemonic::ADCS
+                } else {
+                    Mnemonic::ADC
+                },
+                true,
+                true,
+            ),
+            0b1011 => (
+                if s == 1 {
+                    Mnemonic::SBCS
+                } else {
+                    Mnemonic::SBC
+                },
+                true,
+                true,
+            ),
             0b1101 => {
                 if rd == 15 && s == 1 {
                     (Mnemonic::CMP, true, false)
                 } else {
-                    (if s == 1 { Mnemonic::SUBS } else { Mnemonic::SUB }, true, true)
+                    (
+                        if s == 1 {
+                            Mnemonic::SUBS
+                        } else {
+                            Mnemonic::SUB
+                        },
+                        true,
+                        true,
+                    )
                 }
             }
-            0b1110 => (if s == 1 { Mnemonic::RSBS } else { Mnemonic::RSB }, true, true),
+            0b1110 => (
+                if s == 1 {
+                    Mnemonic::RSBS
+                } else {
+                    Mnemonic::RSB
+                },
+                true,
+                true,
+            ),
             _ => (Mnemonic::UNKNOWN, false, false),
         };
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Thumb2, raw, 4);
-        
+
         if s == 1 && writes_rd {
             insn.sets_flags = true;
         }
-        
+
         if writes_rd {
             insn = insn.with_operand(Operand::Reg(Self::any_reg(rd)));
         }
-        
+
         if uses_rn {
             insn = insn.with_operand(Operand::Reg(Self::any_reg(rn)));
         }
-        
+
         insn = insn.with_operand(Operand::Imm(Immediate::new(imm as i64)));
-        
+
         Ok(insn)
     }
 
     fn decode_thumb_modified_imm(imm12: u32) -> u32 {
         let imm8 = imm12 & 0xFF;
         let ctrl = imm12 >> 8;
-        
+
         if ctrl < 4 {
             // Replicated patterns
             match ctrl {
@@ -851,10 +1102,10 @@ impl ThumbDecoder {
     fn decode_32bit_branch_misc(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let hw1 = (raw >> 16) as u16;
         let hw2 = raw as u16;
-        
+
         let op1 = (hw1 >> 4) & 0x7F;
         let op2 = (hw2 >> 12) & 0x7;
-        
+
         // Conditional branch
         if op2 & 0x5 == 0 && op1 & 0x38 != 0x38 {
             let s = (hw1 >> 10) & 1;
@@ -863,22 +1114,27 @@ impl ThumbDecoder {
             let j1 = (hw2 >> 13) & 1;
             let j2 = (hw2 >> 11) & 1;
             let imm11 = hw2 & 0x7FF;
-            
-            let imm = ((s as u32) << 20) | ((j2 as u32) << 19) | ((j1 as u32) << 18) |
-                     ((imm6 as u32) << 12) | ((imm11 as u32) << 1);
-            
+
+            let imm = ((s as u32) << 20)
+                | ((j2 as u32) << 19)
+                | ((j1 as u32) << 18)
+                | ((imm6 as u32) << 12)
+                | ((imm11 as u32) << 1);
+
             // Sign extend
             let offset = if s == 1 {
                 (imm | 0xFFE0_0000) as i32
             } else {
                 imm as i32
             } as i64;
-            
-            return Ok(DecodedInsn::new(Mnemonic::BCC, ExecutionState::Thumb2, raw, 4)
-                .with_cond(Condition::from_bits(cond))
-                .with_operand(Operand::Label(offset)));
+
+            return Ok(
+                DecodedInsn::new(Mnemonic::BCC, ExecutionState::Thumb2, raw, 4)
+                    .with_cond(Condition::from_bits(cond))
+                    .with_operand(Operand::Label(offset)),
+            );
         }
-        
+
         // Unconditional branch (B.W, BL, BLX)
         // BL:  hw2[15:14] = 11, hw2[12] = 1 → op2 = x1x where bit 0 = 1
         // BLX: hw2[15:14] = 11, hw2[12] = 0 → op2 = x0x where bit 0 = 0
@@ -889,22 +1145,25 @@ impl ThumbDecoder {
             let j1 = (hw2 >> 13) & 1;
             let j2 = (hw2 >> 11) & 1;
             let imm11 = hw2 & 0x7FF;
-            let link_bit = (hw2 >> 14) & 1;  // L bit
-            let exchange_bit = (hw2 >> 12) & 1;  // For BLX, this is 0
-            
+            let link_bit = (hw2 >> 14) & 1; // L bit
+            let exchange_bit = (hw2 >> 12) & 1; // For BLX, this is 0
+
             let i1 = !((j1 ^ s) & 1) & 1;
             let i2 = !((j2 ^ s) & 1) & 1;
-            
-            let imm = ((s as u32) << 24) | ((i1 as u32) << 23) | ((i2 as u32) << 22) |
-                     ((imm10 as u32) << 12) | ((imm11 as u32) << 1);
-            
+
+            let imm = ((s as u32) << 24)
+                | ((i1 as u32) << 23)
+                | ((i2 as u32) << 22)
+                | ((imm10 as u32) << 12)
+                | ((imm11 as u32) << 1);
+
             // Sign extend
             let offset = if s == 1 {
                 (imm | 0xFE00_0000) as i32
             } else {
                 imm as i32
             } as i64;
-            
+
             let mnemonic = if link_bit == 1 && exchange_bit == 0 {
                 Mnemonic::BLX
             } else if link_bit == 1 {
@@ -912,17 +1171,17 @@ impl ThumbDecoder {
             } else {
                 Mnemonic::B
             };
-            
+
             return Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb2, raw, 4)
                 .with_operand(Operand::Label(offset)));
         }
-        
+
         // MSR, MRS, hints, misc control
         if op1 == 0x38 && op2 == 0 {
             // Hints
             let op1 = (hw2 >> 8) & 0xFF;
             let op2 = hw2 & 0xFF;
-            
+
             let mnemonic = match (op1, op2) {
                 (0, 0) => Mnemonic::NOP,
                 (0, 1) => Mnemonic::YIELD,
@@ -931,58 +1190,68 @@ impl ThumbDecoder {
                 (0, 4) => Mnemonic::SEV,
                 _ => Mnemonic::HINT,
             };
-            
+
             return Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb2, raw, 4));
         }
-        
-        Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Thumb2, raw, 4))
+
+        Ok(DecodedInsn::new(
+            Mnemonic::UNKNOWN,
+            ExecutionState::Thumb2,
+            raw,
+            4,
+        ))
     }
 
     fn decode_32bit_dp_register(raw: u32) -> Result<DecodedInsn, DecodeError> {
-        Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Thumb2, raw, 4))
+        Ok(DecodedInsn::new(
+            Mnemonic::UNKNOWN,
+            ExecutionState::Thumb2,
+            raw,
+            4,
+        ))
     }
 
     fn decode_32bit_multiply(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let hw1 = (raw >> 16) as u16;
         let hw2 = raw as u16;
-        
+
         let op1 = (hw1 >> 4) & 0x7;
         let op2 = (hw2 >> 4) & 0x3;
         let rn = (hw1 & 0xF) as u8;
         let ra = ((hw2 >> 12) & 0xF) as u8;
         let rd = ((hw2 >> 8) & 0xF) as u8;
         let rm = (hw2 & 0xF) as u8;
-        
+
         let mnemonic = match (op1, op2) {
             (0b000, 0b00) if ra != 15 => Mnemonic::MLA,
             (0b000, 0b00) if ra == 15 => Mnemonic::MUL,
             (0b000, 0b01) => Mnemonic::MLS,
             _ => Mnemonic::UNKNOWN,
         };
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Thumb2, raw, 4)
             .with_operand(Operand::Reg(Self::any_reg(rd)))
             .with_operand(Operand::Reg(Self::any_reg(rn)))
             .with_operand(Operand::Reg(Self::any_reg(rm)));
-        
+
         if mnemonic == Mnemonic::MLA || mnemonic == Mnemonic::MLS {
             insn = insn.with_operand(Operand::Reg(Self::any_reg(ra)));
         }
-        
+
         Ok(insn)
     }
 
     fn decode_32bit_long_multiply_divide(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let hw1 = (raw >> 16) as u16;
         let hw2 = raw as u16;
-        
+
         let op1 = (hw1 >> 4) & 0x7;
         let op2 = (hw2 >> 4) & 0xF;
         let rn = (hw1 & 0xF) as u8;
         let rd_lo = ((hw2 >> 12) & 0xF) as u8;
         let rd_hi = ((hw2 >> 8) & 0xF) as u8;
         let rm = (hw2 & 0xF) as u8;
-        
+
         let mnemonic = match (op1, op2) {
             (0b000, 0b0000) => Mnemonic::SMULL,
             (0b001, 0b1111) => Mnemonic::SDIV,
@@ -992,98 +1261,118 @@ impl ThumbDecoder {
             (0b110, 0b0000) => Mnemonic::UMLAL,
             _ => Mnemonic::UNKNOWN,
         };
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Thumb2, raw, 4);
-        
+
         match mnemonic {
             Mnemonic::SDIV | Mnemonic::UDIV => {
-                insn = insn.with_operand(Operand::Reg(Self::any_reg(rd_hi))) // Actually Rd
+                insn = insn
+                    .with_operand(Operand::Reg(Self::any_reg(rd_hi))) // Actually Rd
                     .with_operand(Operand::Reg(Self::any_reg(rn)))
                     .with_operand(Operand::Reg(Self::any_reg(rm)));
             }
             Mnemonic::SMULL | Mnemonic::UMULL | Mnemonic::SMLAL | Mnemonic::UMLAL => {
-                insn = insn.with_operand(Operand::Reg(Self::any_reg(rd_lo)))
+                insn = insn
+                    .with_operand(Operand::Reg(Self::any_reg(rd_lo)))
                     .with_operand(Operand::Reg(Self::any_reg(rd_hi)))
                     .with_operand(Operand::Reg(Self::any_reg(rn)))
                     .with_operand(Operand::Reg(Self::any_reg(rm)));
             }
             _ => {}
         }
-        
+
         Ok(insn)
     }
 
     fn decode_32bit_load_byte(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let hw1 = (raw >> 16) as u16;
         let hw2 = raw as u16;
-        
+
         let rn = (hw1 & 0xF) as u8;
         let rt = ((hw2 >> 12) & 0xF) as u8;
         let imm12 = (hw2 & 0xFFF) as i64;
-        
+
         let op1 = (hw1 >> 7) & 0x3;
         let sign = (hw1 >> 8) & 1;
-        
+
         let mnemonic = match sign {
             0 => Mnemonic::LDRB,
             _ => Mnemonic::LDRSB,
         };
-        
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb2, raw, 4)
             .with_operand(Operand::Reg(Self::any_reg(rt)))
-            .with_operand(Operand::Mem(MemOperand::imm_offset(Self::any_reg(rn), imm12))))
+            .with_operand(Operand::Mem(MemOperand::imm_offset(
+                Self::any_reg(rn),
+                imm12,
+            ))))
     }
 
     fn decode_32bit_load_halfword(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let hw1 = (raw >> 16) as u16;
         let hw2 = raw as u16;
-        
+
         let rn = (hw1 & 0xF) as u8;
         let rt = ((hw2 >> 12) & 0xF) as u8;
         let imm12 = (hw2 & 0xFFF) as i64;
-        
+
         let sign = (hw1 >> 8) & 1;
-        
-        let mnemonic = if sign == 1 { Mnemonic::LDRSH } else { Mnemonic::LDRH };
-        
+
+        let mnemonic = if sign == 1 {
+            Mnemonic::LDRSH
+        } else {
+            Mnemonic::LDRH
+        };
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb2, raw, 4)
             .with_operand(Operand::Reg(Self::any_reg(rt)))
-            .with_operand(Operand::Mem(MemOperand::imm_offset(Self::any_reg(rn), imm12))))
+            .with_operand(Operand::Mem(MemOperand::imm_offset(
+                Self::any_reg(rn),
+                imm12,
+            ))))
     }
 
     fn decode_32bit_load_word(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let hw1 = (raw >> 16) as u16;
         let hw2 = raw as u16;
-        
+
         let rn = (hw1 & 0xF) as u8;
         let rt = ((hw2 >> 12) & 0xF) as u8;
         let imm12 = (hw2 & 0xFFF) as i64;
-        
-        Ok(DecodedInsn::new(Mnemonic::LDR, ExecutionState::Thumb2, raw, 4)
-            .with_operand(Operand::Reg(Self::any_reg(rt)))
-            .with_operand(Operand::Mem(MemOperand::imm_offset(Self::any_reg(rn), imm12))))
+
+        Ok(
+            DecodedInsn::new(Mnemonic::LDR, ExecutionState::Thumb2, raw, 4)
+                .with_operand(Operand::Reg(Self::any_reg(rt)))
+                .with_operand(Operand::Mem(MemOperand::imm_offset(
+                    Self::any_reg(rn),
+                    imm12,
+                ))),
+        )
     }
 
     fn decode_32bit_store(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let hw1 = (raw >> 16) as u16;
         let hw2 = raw as u16;
-        
+
         let rn = (hw1 & 0xF) as u8;
         let rt = ((hw2 >> 12) & 0xF) as u8;
         let imm12 = (hw2 & 0xFFF) as i64;
-        
+
         let size = (hw1 >> 5) & 0x3;
-        
+
         let mnemonic = match size {
             0b00 => Mnemonic::STRB,
             0b01 => Mnemonic::STRH,
             0b10 => Mnemonic::STR,
             _ => Mnemonic::UNKNOWN,
         };
-        
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb2, raw, 4)
             .with_operand(Operand::Reg(Self::any_reg(rt)))
-            .with_operand(Operand::Mem(MemOperand::imm_offset(Self::any_reg(rn), imm12))))
+            .with_operand(Operand::Mem(MemOperand::imm_offset(
+                Self::any_reg(rn),
+                imm12,
+            ))))
     }
 
     // =========================================================================
@@ -1135,7 +1424,7 @@ mod tests {
         // 16-bit instructions
         assert!(!ThumbDecoder::is_32bit_instruction(0x4600)); // MOV r0, r0
         assert!(!ThumbDecoder::is_32bit_instruction(0xB500)); // PUSH {LR}
-        
+
         // 32-bit instructions
         assert!(ThumbDecoder::is_32bit_instruction(0xF000)); // 0b11110...
         assert!(ThumbDecoder::is_32bit_instruction(0xE800)); // 0b11101...

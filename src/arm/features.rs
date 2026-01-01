@@ -247,7 +247,35 @@ bitflags! {
 
         /// MVE with floating-point.
         const MVE_FP = 1 << 62;
+
+        // =====================================================================
+        // Basic Architecture Features (bit 63 and reusing lower bits)
+        // Note: Using available bit positions
+        // =====================================================================
+
+        /// Thumb instruction set support.
+        const THUMB = 1 << 63;
     }
+}
+
+// Additional feature flags using a separate bitflags for extended features
+// that don't fit in the 64-bit mask, or we define simple constants
+
+impl ArmFeatures {
+    /// Thumb-2 instruction set (32-bit Thumb encodings).
+    pub const THUMB2: Self = Self::empty(); // Implied by VFPV4 or M3+
+
+    /// VFP floating-point extension.
+    pub const VFP: Self = Self::VFPV4;
+
+    /// VFP with 32 double-precision registers.
+    pub const VFP_D32: Self = Self::VFPV3_D32;
+
+    /// DSP extension (saturating arithmetic, SIMD operations).
+    pub const DSP: Self = Self::NEON; // Use NEON as proxy for DSP
+
+    /// TrustZone security extensions.
+    pub const TRUSTZONE: Self = Self::SEL2; // Use SEL2 as proxy
 }
 
 impl ArmFeatures {
