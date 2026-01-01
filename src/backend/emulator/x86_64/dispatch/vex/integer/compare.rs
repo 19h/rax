@@ -303,6 +303,9 @@ impl X86_64Vcpu {
             andn_result |= (src1_hi2 & !src2_hi2) | (src1_hi3 & !src2_hi3);
         }
 
+        // Clear lazy flags before setting flags directly
+        self.clear_lazy_flags();
+        
         // Clear AF, OF, PF, SF and set ZF/CF as defined by PTEST/VPTEST.
         self.regs.rflags &= !(flags::bits::AF
             | flags::bits::OF
