@@ -33,22 +33,37 @@
 //! println!("{}: {:?}", insn.mnemonic, insn.operands);
 //! ```
 
+pub mod cortex_m;
 pub mod cp15;
+pub mod cpu_trait;
 pub mod decoder;
 pub mod execution;
 pub mod features;
 pub mod instructions;
 pub mod isa;
+pub mod memory;
 pub mod state;
 pub mod sysreg;
 pub mod vfp;
 
+pub use decoder::{Condition, DecodeError, DecodedInsn, Decoder, Mnemonic};
+pub use execution::{Armv7Cpu, ProcessorMode, Psr};
 pub use features::*;
+pub use instructions::{ExceptionType, ExecResult, Executor};
 pub use isa::*;
 pub use state::*;
-pub use sysreg::{Aarch64SysReg, Cp15Encoding, Aarch64SysRegEncoding};
-pub use decoder::{Decoder, DecodedInsn, DecodeError, Mnemonic, Condition};
-pub use execution::{
-    Armv7Cpu, Psr, ProcessorMode, ArmMemory, MemoryError, FlatMemory,
+pub use sysreg::{Aarch64SysReg, Aarch64SysRegEncoding, Cp15Encoding};
+
+// Re-export unified CPU trait and memory subsystem
+pub use cpu_trait::{
+    AccessType, ArmCpu, ArmError, ArmException, ArmProfile, ArmVersion, CpuExit, DebugEvent,
+    MemoryFaultInfo, MemoryFaultType, ProcessorState, WatchpointKind,
 };
-pub use instructions::{Executor, ExecResult, ExceptionType};
+pub use memory::{
+    AccessPermission, ArmMemory, BarrierKind, ExclusiveMonitor, FlatMemory, MemResult,
+    MemoryAttributes, MemoryError, MemoryRegion, MemoryRegionType, MmioHandler, Mpu, MpuRegion,
+    MpuRegionAttr, MpuType, StandardMemory,
+};
+
+// Re-export Cortex-M subsystem
+pub use cortex_m::{CortexMCpu, CortexMVariant, Nvic, Scb, SysTick};

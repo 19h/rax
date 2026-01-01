@@ -15,22 +15,22 @@
 //!
 //! ```ignore
 //! use rax::arm::decoder::{Decoder, DecodedInsn};
-//! 
+//!
 //! let decoder = Decoder::new_aarch64();
 //! let insn = decoder.decode(&[0x20, 0x00, 0x80, 0xd2]); // mov x0, #1
 //! ```
 
-pub mod aarch64;
 pub mod aarch32;
-pub mod thumb;
+pub mod aarch64;
 pub mod operand;
+pub mod thumb;
 
 use crate::arm::ExecutionState;
 
-pub use aarch64::Aarch64Decoder;
 pub use aarch32::Aarch32Decoder;
-pub use thumb::ThumbDecoder;
+pub use aarch64::Aarch64Decoder;
 pub use operand::*;
+pub use thumb::ThumbDecoder;
 
 /// Condition codes for conditional execution.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -427,13 +427,13 @@ pub enum Mnemonic {
     RET,
     ERET,
     DRPS,
-    BCC,   // Generic conditional branch (uses cond field)
+    BCC, // Generic conditional branch (uses cond field)
     CBZ,
     CBNZ,
     TBZ,
     TBNZ,
-    TBB,   // Table Branch Byte (Thumb-2)
-    TBH,   // Table Branch Halfword (Thumb-2)
+    TBB, // Table Branch Byte (Thumb-2)
+    TBH, // Table Branch Halfword (Thumb-2)
 
     // =========================================================================
     // Load/Store - Single Register
@@ -557,7 +557,7 @@ pub enum Mnemonic {
     // =========================================================================
     // Exception Generation
     // =========================================================================
-    SWI,  // Legacy name for SVC
+    SWI, // Legacy name for SVC
     BKPT,
 
     // =========================================================================
@@ -729,8 +729,8 @@ pub enum Mnemonic {
     // =========================================================================
     // Saturation Instructions (ARMv6+)
     // =========================================================================
-    SSAT,  // Signed Saturate
-    USAT,  // Unsigned Saturate
+    SSAT, // Signed Saturate
+    USAT, // Unsigned Saturate
 
     // =========================================================================
     // Miscellaneous
@@ -1254,7 +1254,7 @@ impl Decoder {
                     return Err(DecodeError::InsufficientBytes);
                 }
                 let hw1 = u16::from_le_bytes([bytes[0], bytes[1]]);
-                
+
                 // Check if this is a 32-bit Thumb instruction
                 if ThumbDecoder::is_32bit_instruction(hw1) {
                     if bytes.len() < 4 {

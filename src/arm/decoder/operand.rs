@@ -2,7 +2,7 @@
 //!
 //! This module defines the various operand types used in ARM instructions.
 
-use super::{ShiftType, ExtendType};
+use super::{ExtendType, ShiftType};
 
 /// An instruction operand.
 #[derive(Clone, Debug, PartialEq)]
@@ -109,9 +109,17 @@ impl Register {
     pub fn name(&self) -> String {
         if self.num == 31 {
             if self.is_sp {
-                if self.is_64bit { "sp".to_string() } else { "wsp".to_string() }
+                if self.is_64bit {
+                    "sp".to_string()
+                } else {
+                    "wsp".to_string()
+                }
             } else {
-                if self.is_64bit { "xzr".to_string() } else { "wzr".to_string() }
+                if self.is_64bit {
+                    "xzr".to_string()
+                } else {
+                    "wzr".to_string()
+                }
             }
         } else {
             if self.is_64bit {
@@ -161,8 +169,8 @@ impl Aarch32Register {
             8 => "r8",
             9 => "r9",
             10 => "r10",
-            11 => "r11",  // Also fp
-            12 => "r12",  // Also ip
+            11 => "r11", // Also fp
+            12 => "r12", // Also ip
             13 => "sp",
             14 => "lr",
             15 => "pc",

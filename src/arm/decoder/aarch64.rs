@@ -3,11 +3,8 @@
 //! This module decodes 64-bit ARM instructions (AArch64/A64).
 //! All A64 instructions are 32 bits wide.
 
+use super::{operand::*, Condition, DecodeError, DecodedInsn, ExtendType, Mnemonic, ShiftType};
 use crate::arm::ExecutionState;
-use super::{
-    Condition, DecodedInsn, DecodeError, Mnemonic, ShiftType, ExtendType,
-    operand::*,
-};
 
 /// AArch64 instruction decoder.
 pub struct Aarch64Decoder;
@@ -18,36 +15,51 @@ impl Aarch64Decoder {
         // Extract top-level opcode bits for classification
         // A64 encoding uses bits [28:25] as the main encoding group
         let op0 = (raw >> 25) & 0xF;
-        
+
         match op0 {
             // 0b0000: Reserved / unallocated
             0b0000 => Self::decode_reserved(raw),
-            
+
             // 0b0001: Unallocated
-            0b0001 => Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4)),
-            
+            0b0001 => Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            )),
+
             // 0b0010: SVE encodings
             0b0010 => Self::decode_sve(raw),
-            
+
             // 0b0011: Unallocated
-            0b0011 => Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4)),
-            
+            0b0011 => Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            )),
+
             // 0b100x: Data processing - immediate
             0b1000 | 0b1001 => Self::decode_dp_imm(raw),
-            
+
             // 0b101x: Branch, exception generation, and system
             0b1010 | 0b1011 => Self::decode_branch_sys(raw),
-            
+
             // 0b1100, 0b1110: Loads and stores
             0b0100 | 0b0110 | 0b1100 | 0b1110 => Self::decode_load_store(raw),
-            
+
             // 0b0101, 0b1101: Data processing - register
             0b0101 | 0b1101 => Self::decode_dp_reg(raw),
-            
+
             // 0b0111, 0b1111: Data processing - SIMD and FP
             0b0111 | 0b1111 => Self::decode_simd_fp(raw),
-            
-            _ => Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Aarch64, raw, 4)),
+
+            _ => Ok(DecodedInsn::new(
+                Mnemonic::UNKNOWN,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            )),
         }
     }
 
@@ -58,10 +70,17 @@ impl Aarch64Decoder {
     fn decode_reserved(raw: u32) -> Result<DecodedInsn, DecodeError> {
         // UDF is encoded with all zeros in specific fields
         if raw == 0 {
-            return Ok(DecodedInsn::new(Mnemonic::UDF, ExecutionState::Aarch64, raw, 4)
-                .with_operand(Operand::Imm(Immediate::new(0))));
+            return Ok(
+                DecodedInsn::new(Mnemonic::UDF, ExecutionState::Aarch64, raw, 4)
+                    .with_operand(Operand::Imm(Immediate::new(0))),
+            );
         }
-        Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4))
+        Ok(DecodedInsn::new(
+            Mnemonic::UNDEFINED,
+            ExecutionState::Aarch64,
+            raw,
+            4,
+        ))
     }
 
     // =========================================================================
@@ -70,7 +89,7 @@ impl Aarch64Decoder {
 
     fn decode_dp_imm(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let op0 = (raw >> 23) & 0x7;
-        
+
         match op0 {
             // PC-rel addressing
             0b000 | 0b001 => Self::decode_pc_rel(raw),
@@ -91,7 +110,12 @@ impl Aarch64Decoder {
                 if op0 == 0b100 {
                     Self::decode_logical_imm(raw)
                 } else {
-                    Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Aarch64, raw, 4))
+                    Ok(DecodedInsn::new(
+                        Mnemonic::UNKNOWN,
+                        ExecutionState::Aarch64,
+                        raw,
+                        4,
+                    ))
                 }
             }
         }
@@ -102,7 +126,7 @@ impl Aarch64Decoder {
         let immlo = (raw >> 29) & 0x3;
         let immhi = (raw >> 5) & 0x7FFFF;
         let rd = (raw & 0x1F) as u8;
-        
+
         let imm = ((immhi << 2) | immlo) as i64;
         // Sign extend 21-bit value
         let imm = if imm & (1 << 20) != 0 {
@@ -110,10 +134,14 @@ impl Aarch64Decoder {
         } else {
             imm
         };
-        
-        let mnemonic = if op == 0 { Mnemonic::ADD } else { Mnemonic::ADD }; // ADRP
+
+        let mnemonic = if op == 0 {
+            Mnemonic::ADD
+        } else {
+            Mnemonic::ADD
+        }; // ADRP
         let label = if op == 0 { imm } else { imm << 12 };
-        
+
         // For ADR/ADRP, we'll use a special representation
         let insn = if op == 0 {
             DecodedInsn::new(Mnemonic::ADD, ExecutionState::Aarch64, raw, 4)
@@ -125,7 +153,7 @@ impl Aarch64Decoder {
                 .with_operand(Operand::Reg(Register::x(rd)))
                 .with_operand(Operand::Label(label))
         };
-        
+
         Ok(insn)
     }
 
@@ -137,10 +165,10 @@ impl Aarch64Decoder {
         let imm12 = ((raw >> 10) & 0xFFF) as i64;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        
+
         let is_64bit = sf == 1;
         let shift = if sh == 1 { 12 } else { 0 };
-        
+
         // Determine mnemonic
         let mnemonic = match (op, s) {
             (0, 0) => Mnemonic::ADD,
@@ -149,7 +177,7 @@ impl Aarch64Decoder {
             (1, 1) => Mnemonic::SUBS,
             _ => unreachable!(),
         };
-        
+
         // Check for aliases
         // CMN is ADDS with Rd = XZR/WZR
         // CMP is SUBS with Rd = XZR/WZR
@@ -163,22 +191,22 @@ impl Aarch64Decoder {
         } else {
             (mnemonic, false)
         };
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4);
-        
+
         if s == 1 {
             insn.sets_flags = true;
         }
-        
+
         if !skip_rd {
             // For ADD/SUB, Rd can be SP
             insn = insn.with_operand(Operand::Reg(Register::with_sp(rd, is_64bit)));
         }
-        
+
         // Rn can be SP for ADD/SUB immediate
         insn = insn.with_operand(Operand::Reg(Register::with_sp(rn, is_64bit)));
         insn = insn.with_operand(Operand::Imm(Immediate::shifted(imm12, shift)));
-        
+
         Ok(insn)
     }
 
@@ -186,18 +214,27 @@ impl Aarch64Decoder {
         // MTE instructions: ADDG, SUBG
         let op = (raw >> 30) & 1;
         let s = (raw >> 29) & 1;
-        
+
         if s == 1 {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
-        let mnemonic = if op == 0 { Mnemonic::ADDG } else { Mnemonic::SUBG };
-        
+
+        let mnemonic = if op == 0 {
+            Mnemonic::ADDG
+        } else {
+            Mnemonic::SUBG
+        };
+
         let uimm6 = ((raw >> 16) & 0x3F) as i64;
         let uimm4 = ((raw >> 10) & 0xF) as i64;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Reg(Register::with_sp(rd, true)))
             .with_operand(Operand::Reg(Register::with_sp(rn, true)))
@@ -213,14 +250,19 @@ impl Aarch64Decoder {
         let imms = ((raw >> 10) & 0x3F) as u8;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        
+
         let is_64bit = sf == 1;
-        
+
         // For 32-bit, N must be 0
         if !is_64bit && n == 1 {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         let mnemonic = match opc {
             0b00 => Mnemonic::AND,
             0b01 => Mnemonic::ORR,
@@ -228,10 +270,10 @@ impl Aarch64Decoder {
             0b11 => Mnemonic::ANDS,
             _ => unreachable!(),
         };
-        
+
         // Decode bitmask immediate
         let imm = Self::decode_bitmask_imm(n as u8, imms, immr, is_64bit);
-        
+
         // Check for aliases
         // TST is ANDS with Rd = XZR/WZR
         // MOV (bitmask immediate) is ORR with Rn = XZR/WZR
@@ -242,13 +284,13 @@ impl Aarch64Decoder {
         } else {
             (mnemonic, false)
         };
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4);
-        
+
         if opc == 0b11 {
             insn.sets_flags = true;
         }
-        
+
         if !skip_rd {
             // For logical immediate, Rd can be SP only for AND/ORR/EOR (not ANDS)
             if opc != 0b11 {
@@ -257,13 +299,13 @@ impl Aarch64Decoder {
                 insn = insn.with_operand(Operand::Reg(Register::with_zr(rd, is_64bit)));
             }
         }
-        
+
         if mnemonic != Mnemonic::MOV {
             insn = insn.with_operand(Operand::Reg(Register::with_zr(rn, is_64bit)));
         }
-        
+
         insn = insn.with_operand(Operand::Imm(Immediate::new(imm as i64)));
-        
+
         Ok(insn)
     }
 
@@ -274,17 +316,20 @@ impl Aarch64Decoder {
         } else {
             // Find highest bit set in ~imms
             let not_imms = !imms & 0x3F;
-            (0..6).rev().find(|&i| (not_imms >> i) & 1 == 1).unwrap_or(0)
+            (0..6)
+                .rev()
+                .find(|&i| (not_imms >> i) & 1 == 1)
+                .unwrap_or(0)
         };
-        
+
         let levels = (1u64 << len) - 1;
         let s = (imms as u64) & levels;
         let r = (immr as u64) & levels;
         let esize = 1u64 << len;
-        
+
         // Create the basic pattern
         let welem = (1u64 << (s + 1)) - 1;
-        
+
         // Rotate right
         let pattern = if r == 0 {
             welem
@@ -292,7 +337,7 @@ impl Aarch64Decoder {
             let mask = (1u64 << esize) - 1;
             ((welem >> r) | (welem << (esize - r))) & mask
         };
-        
+
         // Replicate the pattern
         let mut result = pattern;
         let mut pos = esize;
@@ -300,11 +345,11 @@ impl Aarch64Decoder {
             result |= pattern << pos;
             pos += esize;
         }
-        
+
         if !is_64bit {
             result &= 0xFFFFFFFF;
         }
-        
+
         result
     }
 
@@ -314,23 +359,35 @@ impl Aarch64Decoder {
         let hw = ((raw >> 21) & 0x3) as u8;
         let imm16 = ((raw >> 5) & 0xFFFF) as i64;
         let rd = (raw & 0x1F) as u8;
-        
+
         let is_64bit = sf == 1;
-        
+
         // For 32-bit, hw must be 0 or 1
         if !is_64bit && hw >= 2 {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         let mnemonic = match opc {
             0b00 => Mnemonic::MOVN,
             0b10 => Mnemonic::MOVZ,
             0b11 => Mnemonic::MOVK,
-            _ => return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4)),
+            _ => {
+                return Ok(DecodedInsn::new(
+                    Mnemonic::UNDEFINED,
+                    ExecutionState::Aarch64,
+                    raw,
+                    4,
+                ))
+            }
         };
-        
+
         let shift = hw * 16;
-        
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Reg(Register::with_zr(rd, is_64bit)))
             .with_operand(Operand::Imm(Immediate::shifted(imm16, shift))))
@@ -344,29 +401,41 @@ impl Aarch64Decoder {
         let imms = ((raw >> 10) & 0x3F) as u8;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        
+
         let is_64bit = sf == 1;
-        
+
         // sf and N must match
         if sf != n {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         let base_mnemonic = match opc {
             0b00 => Mnemonic::SBFM,
             0b01 => Mnemonic::BFI, // Actually BFM, but we'll determine alias
             0b10 => Mnemonic::UBFM,
-            _ => return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4)),
+            _ => {
+                return Ok(DecodedInsn::new(
+                    Mnemonic::UNDEFINED,
+                    ExecutionState::Aarch64,
+                    raw,
+                    4,
+                ))
+            }
         };
-        
+
         // Determine aliases based on immr/imms values
         let reg_size = if is_64bit { 64 } else { 32 };
-        
+
         let mnemonic = match opc {
             0b00 => {
                 // SBFM aliases
                 if imms == (reg_size - 1) as u8 {
-                    Mnemonic::ASR  // ASR when imms == regsize-1
+                    Mnemonic::ASR // ASR when imms == regsize-1
                 } else if imms < immr {
                     Mnemonic::SBFIZ
                 } else if immr == 0 {
@@ -383,7 +452,7 @@ impl Aarch64Decoder {
             0b01 => {
                 // BFM aliases
                 if rn == 31 {
-                    Mnemonic::BFC  // BFC when Rn == WZR/XZR
+                    Mnemonic::BFC // BFC when Rn == WZR/XZR
                 } else if imms < immr {
                     Mnemonic::BFI
                 } else {
@@ -393,9 +462,9 @@ impl Aarch64Decoder {
             0b10 => {
                 // UBFM aliases
                 if imms == (reg_size - 1) as u8 {
-                    Mnemonic::LSR  // LSR when imms == regsize-1
+                    Mnemonic::LSR // LSR when imms == regsize-1
                 } else if imms + 1 == immr {
-                    Mnemonic::LSL  // LSL when imms+1 == immr
+                    Mnemonic::LSL // LSL when imms+1 == immr
                 } else if imms < immr {
                     Mnemonic::UBFIZ
                 } else if immr == 0 {
@@ -410,7 +479,7 @@ impl Aarch64Decoder {
             }
             _ => base_mnemonic,
         };
-        
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Reg(Register::with_zr(rd, is_64bit)))
             .with_operand(Operand::Reg(Register::with_zr(rn, is_64bit)))
@@ -425,36 +494,46 @@ impl Aarch64Decoder {
         let imms = ((raw >> 10) & 0x3F) as u8;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        
+
         let is_64bit = sf == 1;
-        
+
         // sf and N must match
         if sf != n {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         // For 32-bit, imms must be < 32
         if !is_64bit && imms >= 32 {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         // ROR is EXTR when Rn == Rm
         let mnemonic = if rn == rm {
             Mnemonic::ROR
         } else {
             Mnemonic::EXTR
         };
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Reg(Register::with_zr(rd, is_64bit)))
             .with_operand(Operand::Reg(Register::with_zr(rn, is_64bit)));
-        
+
         if mnemonic == Mnemonic::EXTR {
             insn = insn.with_operand(Operand::Reg(Register::with_zr(rm, is_64bit)));
         }
-        
+
         insn = insn.with_operand(Operand::Imm(Immediate::new(imms as i64)));
-        
+
         Ok(insn)
     }
 
@@ -465,8 +544,8 @@ impl Aarch64Decoder {
     fn decode_branch_sys(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let op0 = (raw >> 29) & 0x7;
         let op1 = (raw >> 22) & 0x7F;
-        let op_bit25 = (raw >> 25) & 0x1;  // Bit 25 distinguishes CBZ/CBNZ from TBZ/TBNZ
-        
+        let op_bit25 = (raw >> 25) & 0x1; // Bit 25 distinguishes CBZ/CBNZ from TBZ/TBNZ
+
         match op0 {
             // Unconditional branch (immediate)
             0b000 | 0b100 => Self::decode_uncond_branch_imm(raw),
@@ -491,26 +570,36 @@ impl Aarch64Decoder {
                     0xD5 if (raw >> 22) & 1 == 0 => Self::decode_system(raw),
                     // Unconditional branch (register): 1101 011x = 0xD6/0xD7
                     0xD6 | 0xD7 => Self::decode_uncond_branch_reg(raw),
-                    _ => Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Aarch64, raw, 4)),
+                    _ => Ok(DecodedInsn::new(
+                        Mnemonic::UNKNOWN,
+                        ExecutionState::Aarch64,
+                        raw,
+                        4,
+                    )),
                 }
             }
-            _ => Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Aarch64, raw, 4)),
+            _ => Ok(DecodedInsn::new(
+                Mnemonic::UNKNOWN,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            )),
         }
     }
 
     fn decode_uncond_branch_imm(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let op = (raw >> 31) & 1;
         let imm26 = (raw & 0x3FFFFFF) as i64;
-        
+
         // Sign extend 26-bit offset
         let offset = if imm26 & (1 << 25) != 0 {
             (imm26 | !0x3FFFFFF) << 2
         } else {
             imm26 << 2
         };
-        
+
         let mnemonic = if op == 0 { Mnemonic::B } else { Mnemonic::BL };
-        
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Label(offset)))
     }
@@ -520,18 +609,22 @@ impl Aarch64Decoder {
         let op = (raw >> 24) & 1;
         let imm19 = ((raw >> 5) & 0x7FFFF) as i64;
         let rt = (raw & 0x1F) as u8;
-        
+
         let is_64bit = sf == 1;
-        
+
         // Sign extend 19-bit offset
         let offset = if imm19 & (1 << 18) != 0 {
             (imm19 | !0x7FFFF) << 2
         } else {
             imm19 << 2
         };
-        
-        let mnemonic = if op == 0 { Mnemonic::CBZ } else { Mnemonic::CBNZ };
-        
+
+        let mnemonic = if op == 0 {
+            Mnemonic::CBZ
+        } else {
+            Mnemonic::CBNZ
+        };
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Reg(Register::with_zr(rt, is_64bit)))
             .with_operand(Operand::Label(offset)))
@@ -543,19 +636,23 @@ impl Aarch64Decoder {
         let b40 = ((raw >> 19) & 0x1F) as u8;
         let imm14 = ((raw >> 5) & 0x3FFF) as i64;
         let rt = (raw & 0x1F) as u8;
-        
+
         let bit_pos = (b5 << 5) as u8 | b40;
         let is_64bit = b5 == 1;
-        
+
         // Sign extend 14-bit offset
         let offset = if imm14 & (1 << 13) != 0 {
             (imm14 | !0x3FFF) << 2
         } else {
             imm14 << 2
         };
-        
-        let mnemonic = if op == 0 { Mnemonic::TBZ } else { Mnemonic::TBNZ };
-        
+
+        let mnemonic = if op == 0 {
+            Mnemonic::TBZ
+        } else {
+            Mnemonic::TBNZ
+        };
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Reg(Register::with_zr(rt, is_64bit)))
             .with_operand(Operand::Imm(Immediate::new(bit_pos as i64)))
@@ -567,40 +664,47 @@ impl Aarch64Decoder {
         let imm19 = ((raw >> 5) & 0x7FFFF) as i64;
         let o0 = (raw >> 4) & 1;
         let cond = (raw & 0xF) as u8;
-        
+
         if o1 != 0 || o0 != 0 {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         // Sign extend 19-bit offset
         let offset = if imm19 & (1 << 18) != 0 {
             (imm19 | !0x7FFFF) << 2
         } else {
             imm19 << 2
         };
-        
-        Ok(DecodedInsn::new(Mnemonic::BCC, ExecutionState::Aarch64, raw, 4)
-            .with_cond(Condition::from_bits(cond))
-            .with_operand(Operand::Label(offset)))
+
+        Ok(
+            DecodedInsn::new(Mnemonic::BCC, ExecutionState::Aarch64, raw, 4)
+                .with_cond(Condition::from_bits(cond))
+                .with_operand(Operand::Label(offset)),
+        )
     }
 
     fn decode_exception(raw: u32) -> Result<DecodedInsn, DecodeError> {
         let opc = (raw >> 21) & 0x7;
         let imm16 = ((raw >> 5) & 0xFFFF) as i64;
         let ll = raw & 0x3;
-        
+
         let mnemonic = match (opc, ll) {
             (0b000, 0b01) => Mnemonic::SVC,
             (0b000, 0b10) => Mnemonic::HVC,
             (0b000, 0b11) => Mnemonic::SMC,
             (0b001, 0b00) => Mnemonic::BRK,
             (0b010, 0b00) => Mnemonic::HLT,
-            (0b101, 0b01) => Mnemonic::UDF,  // DCPS1
-            (0b101, 0b10) => Mnemonic::UDF,  // DCPS2
-            (0b101, 0b11) => Mnemonic::UDF,  // DCPS3
+            (0b101, 0b01) => Mnemonic::UDF, // DCPS1
+            (0b101, 0b10) => Mnemonic::UDF, // DCPS2
+            (0b101, 0b11) => Mnemonic::UDF, // DCPS3
             _ => Mnemonic::UNDEFINED,
         };
-        
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Imm(Immediate::new(imm16))))
     }
@@ -613,35 +717,47 @@ impl Aarch64Decoder {
         let crm = ((raw >> 8) & 0xF) as u8;
         let op2 = ((raw >> 5) & 0x7) as u8;
         let rt = (raw & 0x1F) as u8;
-        
+
         // Hints: op0 = 0, op1 = 3, CRn = 2, Rt = 31
         if op0 == 0 && op1 == 3 && crn == 2 && rt == 31 {
             return Self::decode_hint_barrier(raw, op1, crm, op2, rt);
         }
-        
+
         // Barriers: op0 = 0, op1 = 3, CRn = 3, Rt = 31
         if op0 == 0 && op1 == 3 && crn == 3 && rt == 31 {
             return Self::decode_barrier(raw, crm, op2);
         }
-        
+
         // MSR/MRS (op0 >= 2)
         if op0 >= 2 {
-            let sysreg = ((op0 as u16) << 14) | ((op1 as u16) << 11) | 
-                        ((crn as u16) << 7) | ((crm as u16) << 3) | (op2 as u16);
-            
+            let sysreg = ((op0 as u16) << 14)
+                | ((op1 as u16) << 11)
+                | ((crn as u16) << 7)
+                | ((crm as u16) << 3)
+                | (op2 as u16);
+
             if l == 0 {
                 // MSR
-                Ok(DecodedInsn::new(Mnemonic::MSR, ExecutionState::Aarch64, raw, 4)
-                    .with_operand(Operand::SysReg(sysreg))
-                    .with_operand(Operand::Reg(Register::with_zr(rt, true))))
+                Ok(
+                    DecodedInsn::new(Mnemonic::MSR, ExecutionState::Aarch64, raw, 4)
+                        .with_operand(Operand::SysReg(sysreg))
+                        .with_operand(Operand::Reg(Register::with_zr(rt, true))),
+                )
             } else {
                 // MRS
-                Ok(DecodedInsn::new(Mnemonic::MRS, ExecutionState::Aarch64, raw, 4)
-                    .with_operand(Operand::Reg(Register::with_zr(rt, true)))
-                    .with_operand(Operand::SysReg(sysreg)))
+                Ok(
+                    DecodedInsn::new(Mnemonic::MRS, ExecutionState::Aarch64, raw, 4)
+                        .with_operand(Operand::Reg(Register::with_zr(rt, true)))
+                        .with_operand(Operand::SysReg(sysreg)),
+                )
             }
         } else {
-            Ok(DecodedInsn::new(Mnemonic::SYS, ExecutionState::Aarch64, raw, 4))
+            Ok(DecodedInsn::new(
+                Mnemonic::SYS,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ))
         }
     }
 
@@ -651,14 +767,14 @@ impl Aarch64Decoder {
         let v = (raw >> 26) & 1;
         let imm19 = ((raw >> 5) & 0x7FFFF) as i64;
         let rt = (raw & 0x1F) as u8;
-        
+
         // Sign extend 19-bit offset
         let offset = if imm19 & (1 << 18) != 0 {
             (imm19 | !0x7FFFF) << 2
         } else {
             imm19 << 2
         };
-        
+
         let (mnemonic, is_64bit) = match (opc, v) {
             (0b00, 0) => (Mnemonic::LDR, false),  // LDR Wt
             (0b01, 0) => (Mnemonic::LDR, true),   // LDR Xt
@@ -668,7 +784,7 @@ impl Aarch64Decoder {
             (0b10, 1) => (Mnemonic::LDR, true),   // LDR Qt (SIMD)
             _ => (Mnemonic::UNKNOWN, true),
         };
-        
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Reg(Register::with_zr(rt, is_64bit)))
             .with_operand(Operand::Label(offset)))
@@ -682,17 +798,28 @@ impl Aarch64Decoder {
             0b110 => Mnemonic::ISB,
             _ => Mnemonic::UNKNOWN,
         };
-        
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Barrier(BarrierOption::from_bits(crm))))
     }
 
-    fn decode_hint_barrier(raw: u32, _op1: u8, crm: u8, op2: u8, rt: u8) -> Result<DecodedInsn, DecodeError> {
+    fn decode_hint_barrier(
+        raw: u32,
+        _op1: u8,
+        crm: u8,
+        op2: u8,
+        rt: u8,
+    ) -> Result<DecodedInsn, DecodeError> {
         // NOP, YIELD, WFE, WFI, SEV, SEVL, etc.
         if rt != 31 {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         let mnemonic = match (crm, op2) {
             (0b0000, 0b000) => Mnemonic::NOP,
             (0b0000, 0b001) => Mnemonic::YIELD,
@@ -700,11 +827,11 @@ impl Aarch64Decoder {
             (0b0000, 0b011) => Mnemonic::WFI,
             (0b0000, 0b100) => Mnemonic::SEV,
             (0b0000, 0b101) => Mnemonic::SEVL,
-            (0b0010, 0b000) => Mnemonic::NOP,  // ESB
-            (0b0010, 0b001) => Mnemonic::NOP,  // PSB CSYNC
-            (0b0010, 0b010) => Mnemonic::NOP,  // TSB CSYNC
+            (0b0010, 0b000) => Mnemonic::NOP, // ESB
+            (0b0010, 0b001) => Mnemonic::NOP, // PSB CSYNC
+            (0b0010, 0b010) => Mnemonic::NOP, // TSB CSYNC
             (0b0010, 0b100) => Mnemonic::CFINV,
-            (0b0011, 0b000) => Mnemonic::NOP,  // PACISP
+            (0b0011, 0b000) => Mnemonic::NOP, // PACISP
             (0b0011, 0b010) => Mnemonic::BTI,
             (0b0100, _) => {
                 // BTI with targets
@@ -717,7 +844,7 @@ impl Aarch64Decoder {
             }
             _ => Mnemonic::HINT,
         };
-        
+
         if mnemonic == Mnemonic::HINT {
             let imm = (crm << 3) | op2;
             Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
@@ -733,11 +860,16 @@ impl Aarch64Decoder {
         let op3 = (raw >> 10) & 0x3F;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let op4 = raw & 0x1F;
-        
+
         if op2 != 0x1F {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         let mnemonic = match (opc, op3, op4) {
             (0b0000, 0b000000, 0b00000) => Mnemonic::BR,
             (0b0001, 0b000000, 0b00000) => Mnemonic::BLR,
@@ -753,18 +885,23 @@ impl Aarch64Decoder {
             (0b0010, 0b000011, 0b11111) => Mnemonic::RETAB,
             _ => Mnemonic::UNDEFINED,
         };
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4);
-        
+
         // Add register operand for most variants
         match mnemonic {
-            Mnemonic::BR | Mnemonic::BLR | Mnemonic::RET | 
-            Mnemonic::BRAA | Mnemonic::BRAB | Mnemonic::BLRAA | Mnemonic::BLRAB => {
+            Mnemonic::BR
+            | Mnemonic::BLR
+            | Mnemonic::RET
+            | Mnemonic::BRAA
+            | Mnemonic::BRAB
+            | Mnemonic::BLRAA
+            | Mnemonic::BLRAB => {
                 insn = insn.with_operand(Operand::Reg(Register::x(rn)));
             }
             _ => {}
         }
-        
+
         Ok(insn)
     }
 
@@ -776,13 +913,13 @@ impl Aarch64Decoder {
         // AArch64 load/store encoding uses multiple bits for dispatch
         // bits [29:27] gives the major category
         let op_cat = (raw >> 27) & 0x7;
-        
+
         // Check for load/store pair: bits [29:27] = 101
         // This needs to come before the 0b101 match for register!
         if op_cat == 0b101 {
             return Self::decode_load_store_pair(raw);
         }
-        
+
         match op_cat {
             // 0b000, 0b010: Exclusive, atomic, ordered
             0b000 | 0b010 => Self::decode_load_store_exclusive(raw),
@@ -792,7 +929,12 @@ impl Aarch64Decoder {
             0b100 | 0b110 => Self::decode_load_store_register(raw),
             // 0b111: Load/store register unsigned offset
             0b111 => Self::decode_load_store_register(raw),
-            _ => Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Aarch64, raw, 4)),
+            _ => Ok(DecodedInsn::new(
+                Mnemonic::UNKNOWN,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            )),
         }
     }
 
@@ -806,12 +948,12 @@ impl Aarch64Decoder {
         let rt2 = ((raw >> 10) & 0x1F) as u8;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rt = (raw & 0x1F) as u8;
-        
+
         let is_64bit = size == 0b11;
         let is_pair = o1 == 1;
         let is_acquire = o2 == 1;
         let is_release = o0 == 1;
-        
+
         let mnemonic = match (l, is_pair, is_acquire, is_release, size) {
             // Load exclusive
             (1, false, false, false, 0b00) => Mnemonic::LDXRB,
@@ -845,22 +987,22 @@ impl Aarch64Decoder {
             (0, true, false, true, _) => Mnemonic::STLXP,
             _ => Mnemonic::UNKNOWN,
         };
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4);
-        
+
         // For store exclusive, Rs comes first
         if l == 0 && !is_release {
             insn = insn.with_operand(Operand::Reg(Register::w(rs)));
         }
-        
+
         insn = insn.with_operand(Operand::Reg(Register::with_zr(rt, is_64bit)));
-        
+
         if is_pair {
             insn = insn.with_operand(Operand::Reg(Register::with_zr(rt2, is_64bit)));
         }
-        
+
         insn = insn.with_operand(Operand::Mem(MemOperand::base(Register::with_sp(rn, true))));
-        
+
         Ok(insn)
     }
 
@@ -873,29 +1015,25 @@ impl Aarch64Decoder {
         let rt2 = ((raw >> 10) & 0x1F) as u8;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rt = (raw & 0x1F) as u8;
-        
+
         // Sign extend 7-bit immediate
         let imm7 = if imm7 & (1 << 6) != 0 {
             imm7 | !0x7F
         } else {
             imm7
         };
-        
-        let scale = if v == 0 {
-            2 + (opc >> 1)
-        } else {
-            2 + opc
-        };
+
+        let scale = if v == 0 { 2 + (opc >> 1) } else { 2 + opc };
         let offset = imm7 << scale;
-        
+
         let is_64bit = opc & 1 == 1 || (opc == 0b10);
-        
+
         let mnemonic = match (l, v, mode, opc) {
             // Integer load pair
             (1, 0, _, 0b00) => Mnemonic::LDP,
             (1, 0, _, 0b01) => Mnemonic::LDPSW,
             (1, 0, _, 0b10) => Mnemonic::LDP,
-            // Integer store pair  
+            // Integer store pair
             (0, 0, _, _) => Mnemonic::STP,
             // Non-temporal
             (1, 0, 0b00, _) => Mnemonic::LDNP,
@@ -905,20 +1043,20 @@ impl Aarch64Decoder {
             (0, 1, _, _) => Mnemonic::STP,
             _ => Mnemonic::UNKNOWN,
         };
-        
+
         let addr_mode = match mode {
             0b01 => AddressingMode::PostIndex,
             0b10 => AddressingMode::Offset,
             0b11 => AddressingMode::PreIndex,
             _ => AddressingMode::Offset,
         };
-        
+
         let mem = MemOperand {
             base: Register::with_sp(rn, true),
             offset: MemOffset::Imm(offset),
             mode: addr_mode,
         };
-        
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Reg(Register::with_zr(rt, is_64bit)))
             .with_operand(Operand::Reg(Register::with_zr(rt2, is_64bit)))
@@ -931,18 +1069,18 @@ impl Aarch64Decoder {
         let opc = (raw >> 22) & 0x3;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rt = (raw & 0x1F) as u8;
-        
+
         // Determine if unsigned offset or other addressing mode
         let op2 = (raw >> 10) & 0x3;
         let op3 = (raw >> 21) & 1;
-        
+
         let is_unsigned_imm = op3 == 1;
-        
+
         let (mnemonic, is_64bit) = match (size, v, opc) {
             // Byte
             (0b00, 0, 0b00) => (Mnemonic::STRB, false),
             (0b00, 0, 0b01) => (Mnemonic::LDRB, false),
-            (0b00, 0, 0b10) => (Mnemonic::LDRSB, true),  // 64-bit sign-extend
+            (0b00, 0, 0b10) => (Mnemonic::LDRSB, true), // 64-bit sign-extend
             (0b00, 0, 0b11) => (Mnemonic::LDRSB, false), // 32-bit sign-extend
             // Halfword
             (0b01, 0, 0b00) => (Mnemonic::STRH, false),
@@ -967,7 +1105,7 @@ impl Aarch64Decoder {
             }
             _ => (Mnemonic::UNKNOWN, false),
         };
-        
+
         let mem = if is_unsigned_imm {
             let imm12 = ((raw >> 10) & 0xFFF) as i64;
             let scale = size as i64;
@@ -980,7 +1118,7 @@ impl Aarch64Decoder {
             } else {
                 imm9
             };
-            
+
             match op2 {
                 0b00 => MemOperand::imm_offset(Register::with_sp(rn, true), imm9),
                 0b01 => MemOperand::post_index(Register::with_sp(rn, true), imm9),
@@ -988,7 +1126,7 @@ impl Aarch64Decoder {
                 _ => MemOperand::base(Register::with_sp(rn, true)),
             }
         };
-        
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Reg(Register::with_zr(rt, is_64bit)))
             .with_operand(Operand::Mem(mem)))
@@ -1002,7 +1140,7 @@ impl Aarch64Decoder {
         let op0 = (raw >> 30) & 1;
         let op1 = (raw >> 28) & 1;
         let op2 = (raw >> 21) & 0xF;
-        
+
         if op1 == 0 {
             // Logical shifted register, add/sub shifted register, add/sub extended register
             // Logical: op2 = 0xxx (bit 24 = 0)
@@ -1015,7 +1153,12 @@ impl Aarch64Decoder {
             } else if (op2 & 0x9) == 0x9 {
                 Self::decode_add_sub_extended_reg(raw)
             } else {
-                Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Aarch64, raw, 4))
+                Ok(DecodedInsn::new(
+                    Mnemonic::UNKNOWN,
+                    ExecutionState::Aarch64,
+                    raw,
+                    4,
+                ))
             }
         } else {
             // Data processing (3 source), data processing (2 source), etc.
@@ -1034,7 +1177,12 @@ impl Aarch64Decoder {
                 // Data processing (3 source)
                 Self::decode_dp_3_source(raw)
             } else {
-                Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Aarch64, raw, 4))
+                Ok(DecodedInsn::new(
+                    Mnemonic::UNKNOWN,
+                    ExecutionState::Aarch64,
+                    raw,
+                    4,
+                ))
             }
         }
     }
@@ -1048,14 +1196,19 @@ impl Aarch64Decoder {
         let imm6 = ((raw >> 10) & 0x3F) as u8;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        
+
         let is_64bit = sf == 1;
-        
+
         // For 32-bit, imm6 must be < 32
         if !is_64bit && imm6 >= 32 {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         let mnemonic = match (opc, n) {
             (0b00, 0) => Mnemonic::AND,
             (0b00, 1) => Mnemonic::BIC,
@@ -1067,7 +1220,7 @@ impl Aarch64Decoder {
             (0b11, 1) => Mnemonic::BICS,
             _ => unreachable!(),
         };
-        
+
         // Check for aliases
         // MOV is ORR with Rn = XZR/WZR and shift = 0
         // MVN is ORN with Rn = XZR/WZR
@@ -1081,21 +1234,21 @@ impl Aarch64Decoder {
         } else {
             (mnemonic, false, false)
         };
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4);
-        
+
         if opc == 0b11 {
             insn.sets_flags = true;
         }
-        
+
         if !skip_rd {
             insn = insn.with_operand(Operand::Reg(Register::with_zr(rd, is_64bit)));
         }
-        
+
         if !skip_rn {
             insn = insn.with_operand(Operand::Reg(Register::with_zr(rn, is_64bit)));
         }
-        
+
         if imm6 == 0 && shift == ShiftType::LSL {
             insn = insn.with_operand(Operand::Reg(Register::with_zr(rm, is_64bit)));
         } else {
@@ -1105,7 +1258,7 @@ impl Aarch64Decoder {
                 imm6,
             )));
         }
-        
+
         Ok(insn)
     }
 
@@ -1118,19 +1271,29 @@ impl Aarch64Decoder {
         let imm6 = ((raw >> 10) & 0x3F) as u8;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        
+
         let is_64bit = sf == 1;
-        
+
         // ROR is not allowed
         if shift == ShiftType::ROR {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         // For 32-bit, imm6 must be < 32
         if !is_64bit && imm6 >= 32 {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         let mnemonic = match (op, s) {
             (0, 0) => Mnemonic::ADD,
             (0, 1) => Mnemonic::ADDS,
@@ -1138,7 +1301,7 @@ impl Aarch64Decoder {
             (1, 1) => Mnemonic::SUBS,
             _ => unreachable!(),
         };
-        
+
         // Check for aliases
         // NEG is SUB with Rn = XZR/WZR
         // NEGS is SUBS with Rn = XZR/WZR
@@ -1159,21 +1322,21 @@ impl Aarch64Decoder {
         } else {
             (mnemonic, false, false)
         };
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4);
-        
+
         if s == 1 {
             insn.sets_flags = true;
         }
-        
+
         if !skip_rd {
             insn = insn.with_operand(Operand::Reg(Register::with_zr(rd, is_64bit)));
         }
-        
+
         if !skip_rn {
             insn = insn.with_operand(Operand::Reg(Register::with_zr(rn, is_64bit)));
         }
-        
+
         if imm6 == 0 && shift == ShiftType::LSL {
             insn = insn.with_operand(Operand::Reg(Register::with_zr(rm, is_64bit)));
         } else {
@@ -1183,7 +1346,7 @@ impl Aarch64Decoder {
                 imm6,
             )));
         }
-        
+
         Ok(insn)
     }
 
@@ -1196,14 +1359,19 @@ impl Aarch64Decoder {
         let imm3 = ((raw >> 10) & 0x7) as u8;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        
+
         let is_64bit = sf == 1;
-        
+
         // imm3 must be <= 4
         if imm3 > 4 {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         let mnemonic = match (op, s) {
             (0, 0) => Mnemonic::ADD,
             (0, 1) => Mnemonic::ADDS,
@@ -1211,7 +1379,7 @@ impl Aarch64Decoder {
             (1, 1) => Mnemonic::SUBS,
             _ => unreachable!(),
         };
-        
+
         // Check for CMP/CMN aliases
         let (mnemonic, skip_rd) = if s == 1 && rd == 31 {
             if op == 0 {
@@ -1222,27 +1390,27 @@ impl Aarch64Decoder {
         } else {
             (mnemonic, false)
         };
-        
+
         let extend_type = ExtendType::from_bits(option);
         let rm_is_64bit = option & 0x3 == 0x3;
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4);
-        
+
         if s == 1 {
             insn.sets_flags = true;
         }
-        
+
         if !skip_rd {
             insn = insn.with_operand(Operand::Reg(Register::with_sp(rd, is_64bit)));
         }
-        
+
         insn = insn.with_operand(Operand::Reg(Register::with_sp(rn, is_64bit)));
         insn = insn.with_operand(Operand::ExtendedReg(ExtendedRegister::new(
             Register::with_zr(rm, rm_is_64bit),
             extend_type,
             imm3,
         )));
-        
+
         Ok(insn)
     }
 
@@ -1253,9 +1421,9 @@ impl Aarch64Decoder {
         let rm = ((raw >> 16) & 0x1F) as u8;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        
+
         let is_64bit = sf == 1;
-        
+
         let mnemonic = match (op, s) {
             (0, 0) => Mnemonic::ADC,
             (0, 1) => Mnemonic::ADCS,
@@ -1263,7 +1431,7 @@ impl Aarch64Decoder {
             (1, 1) => Mnemonic::SBCS,
             _ => unreachable!(),
         };
-        
+
         // NGC is SBC with Rn = XZR
         // NGCS is SBCS with Rn = XZR
         let (mnemonic, skip_rn) = if op == 1 && rn == 31 {
@@ -1275,21 +1443,21 @@ impl Aarch64Decoder {
         } else {
             (mnemonic, false)
         };
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4);
-        
+
         if s == 1 {
             insn.sets_flags = true;
         }
-        
+
         insn = insn.with_operand(Operand::Reg(Register::with_zr(rd, is_64bit)));
-        
+
         if !skip_rn {
             insn = insn.with_operand(Operand::Reg(Register::with_zr(rn, is_64bit)));
         }
-        
+
         insn = insn.with_operand(Operand::Reg(Register::with_zr(rm, is_64bit)));
-        
+
         Ok(insn)
     }
 
@@ -1303,26 +1471,35 @@ impl Aarch64Decoder {
         let rn = ((raw >> 5) & 0x1F) as u8;
         let nzcv = (raw & 0xF) as u8;
         let is_imm = (raw >> 11) & 1 == 1;
-        
+
         if o2 != 0 || o3 != 0 {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         let is_64bit = sf == 1;
-        let mnemonic = if op == 0 { Mnemonic::CCMN } else { Mnemonic::CCMP };
-        
+        let mnemonic = if op == 0 {
+            Mnemonic::CCMN
+        } else {
+            Mnemonic::CCMP
+        };
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Reg(Register::with_zr(rn, is_64bit)));
-        
+
         if is_imm {
             insn = insn.with_operand(Operand::Imm(Immediate::new(rm_or_imm as i64)));
         } else {
             insn = insn.with_operand(Operand::Reg(Register::with_zr(rm_or_imm, is_64bit)));
         }
-        
+
         insn = insn.with_operand(Operand::Imm(Immediate::new(nzcv as i64)));
         insn = insn.with_operand(Operand::Cond(Condition::from_bits(cond)));
-        
+
         Ok(insn)
     }
 
@@ -1335,21 +1512,33 @@ impl Aarch64Decoder {
         let op2 = (raw >> 10) & 0x3;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        
+
         if s != 0 {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         let is_64bit = sf == 1;
-        
+
         let mnemonic = match (op, op2) {
             (0, 0b00) => Mnemonic::CSEL,
             (0, 0b01) => Mnemonic::CSINC,
             (1, 0b00) => Mnemonic::CSINV,
             (1, 0b01) => Mnemonic::CSNEG,
-            _ => return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4)),
+            _ => {
+                return Ok(DecodedInsn::new(
+                    Mnemonic::UNDEFINED,
+                    ExecutionState::Aarch64,
+                    raw,
+                    4,
+                ))
+            }
         };
-        
+
         // Check for aliases
         // CSET is CSINC with Rn = Rm = XZR and inverted condition
         // CSETM is CSINV with Rn = Rm = XZR and inverted condition
@@ -1372,22 +1561,22 @@ impl Aarch64Decoder {
         } else {
             mnemonic
         };
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Reg(Register::with_zr(rd, is_64bit)));
-        
+
         // For CSET/CSETM, don't add Rn/Rm
         if !(rn == 31 && rm == 31 && (op, op2) == (0, 0b01) || (op, op2) == (1, 0b00)) {
             insn = insn.with_operand(Operand::Reg(Register::with_zr(rn, is_64bit)));
-            
+
             // For CINC/CINV/CNEG, don't add Rm (it's same as Rn)
             if !(rn == rm && matches!(mnemonic, Mnemonic::CINC | Mnemonic::CINV | Mnemonic::CNEG)) {
                 insn = insn.with_operand(Operand::Reg(Register::with_zr(rm, is_64bit)));
             }
         }
-        
+
         insn = insn.with_operand(Operand::Cond(Condition::from_bits(cond)));
-        
+
         Ok(insn)
     }
 
@@ -1398,13 +1587,18 @@ impl Aarch64Decoder {
         let opcode = (raw >> 10) & 0x3F;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        
+
         if s != 0 {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         let is_64bit = sf == 1;
-        
+
         let mnemonic = match opcode {
             0b000010 => Mnemonic::UDIV,
             0b000011 => Mnemonic::SDIV,
@@ -1413,13 +1607,13 @@ impl Aarch64Decoder {
             0b001010 => Mnemonic::ASR,
             0b001011 => Mnemonic::ROR,
             // CRC32
-            0b010000 => Mnemonic::UNKNOWN, // CRC32B
-            0b010001 => Mnemonic::UNKNOWN, // CRC32H
-            0b010010 => Mnemonic::UNKNOWN, // CRC32W
+            0b010000 => Mnemonic::UNKNOWN,             // CRC32B
+            0b010001 => Mnemonic::UNKNOWN,             // CRC32H
+            0b010010 => Mnemonic::UNKNOWN,             // CRC32W
             0b010011 if is_64bit => Mnemonic::UNKNOWN, // CRC32X
-            0b010100 => Mnemonic::UNKNOWN, // CRC32CB
-            0b010101 => Mnemonic::UNKNOWN, // CRC32CH
-            0b010110 => Mnemonic::UNKNOWN, // CRC32CW
+            0b010100 => Mnemonic::UNKNOWN,             // CRC32CB
+            0b010101 => Mnemonic::UNKNOWN,             // CRC32CH
+            0b010110 => Mnemonic::UNKNOWN,             // CRC32CW
             0b010111 if is_64bit => Mnemonic::UNKNOWN, // CRC32CX
             // Subp
             0b000000 if is_64bit => Mnemonic::UNKNOWN, // SUBP
@@ -1431,7 +1625,7 @@ impl Aarch64Decoder {
             0b001100 if is_64bit => Mnemonic::PACGA,
             _ => Mnemonic::UNKNOWN,
         };
-        
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Reg(Register::with_zr(rd, is_64bit)))
             .with_operand(Operand::Reg(Register::with_zr(rn, is_64bit)))
@@ -1447,13 +1641,18 @@ impl Aarch64Decoder {
         let ra = ((raw >> 10) & 0x1F) as u8;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        
+
         if op54 != 0 {
-            return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4));
+            return Ok(DecodedInsn::new(
+                Mnemonic::UNDEFINED,
+                ExecutionState::Aarch64,
+                raw,
+                4,
+            ));
         }
-        
+
         let is_64bit = sf == 1;
-        
+
         let mnemonic = match (sf, op31, o0) {
             (_, 0b000, 0) => Mnemonic::MADD,
             (_, 0b000, 1) => Mnemonic::MSUB,
@@ -1465,7 +1664,7 @@ impl Aarch64Decoder {
             (1, 0b110, 0) => Mnemonic::UMULH,
             _ => Mnemonic::UNDEFINED,
         };
-        
+
         // Check for MUL/MNEG aliases
         // MUL is MADD with Ra = XZR
         // MNEG is MSUB with Ra = XZR
@@ -1480,26 +1679,32 @@ impl Aarch64Decoder {
         } else {
             (mnemonic, false)
         };
-        
+
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(Operand::Reg(Register::with_zr(rd, is_64bit)));
-        
+
         // For long multiplies, Rn and Rm are 32-bit
-        let src_64bit = if matches!(mnemonic, Mnemonic::SMADDL | Mnemonic::SMSUBL | 
-                                              Mnemonic::UMADDL | Mnemonic::UMSUBL |
-                                              Mnemonic::SMULL | Mnemonic::UMULL) {
+        let src_64bit = if matches!(
+            mnemonic,
+            Mnemonic::SMADDL
+                | Mnemonic::SMSUBL
+                | Mnemonic::UMADDL
+                | Mnemonic::UMSUBL
+                | Mnemonic::SMULL
+                | Mnemonic::UMULL
+        ) {
             false
         } else {
             is_64bit
         };
-        
+
         insn = insn.with_operand(Operand::Reg(Register::with_zr(rn, src_64bit)));
         insn = insn.with_operand(Operand::Reg(Register::with_zr(rm, src_64bit)));
-        
+
         if !skip_ra {
             insn = insn.with_operand(Operand::Reg(Register::with_zr(ra, is_64bit)));
         }
-        
+
         Ok(insn)
     }
 
@@ -1512,16 +1717,21 @@ impl Aarch64Decoder {
         let op1 = (raw >> 23) & 0x3;
         let op2 = (raw >> 19) & 0xF;
         let op3 = (raw >> 10) & 0x1FF;
-        
+
         // SIMD/FP has many subcategories
         // For now, decode common scalar FP operations
-        
+
         if op0 & 0x5 == 0x1 && op1 == 0 {
             // Scalar FP
             return Self::decode_scalar_fp(raw);
         }
-        
-        Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Aarch64, raw, 4))
+
+        Ok(DecodedInsn::new(
+            Mnemonic::UNKNOWN,
+            ExecutionState::Aarch64,
+            raw,
+            4,
+        ))
     }
 
     fn decode_scalar_fp(raw: u32) -> Result<DecodedInsn, DecodeError> {
@@ -1530,17 +1740,24 @@ impl Aarch64Decoder {
         let ptype = (raw >> 22) & 0x3;
         let rn = ((raw >> 5) & 0x1F) as u8;
         let rd = (raw & 0x1F) as u8;
-        
+
         let fp_size = match ptype {
             0b00 => FpRegSize::S,
             0b01 => FpRegSize::D,
             0b11 => FpRegSize::H,
-            _ => return Ok(DecodedInsn::new(Mnemonic::UNDEFINED, ExecutionState::Aarch64, raw, 4)),
+            _ => {
+                return Ok(DecodedInsn::new(
+                    Mnemonic::UNDEFINED,
+                    ExecutionState::Aarch64,
+                    raw,
+                    4,
+                ))
+            }
         };
-        
+
         // Get opcode bits for determining operation
         let opcode = (raw >> 10) & 0x3F;
-        
+
         // Common FP operations
         let mnemonic = match opcode & 0xF {
             0b0000 => Mnemonic::FMOV,
@@ -1557,9 +1774,9 @@ impl Aarch64Decoder {
             0b1111 => Mnemonic::FRINTI,
             _ => Mnemonic::UNKNOWN,
         };
-        
+
         let fp_reg = |num, size| Operand::FpReg(FpRegister { num, size });
-        
+
         Ok(DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
             .with_operand(fp_reg(rd, fp_size))
             .with_operand(fp_reg(rn, fp_size)))
@@ -1572,7 +1789,12 @@ impl Aarch64Decoder {
     fn decode_sve(raw: u32) -> Result<DecodedInsn, DecodeError> {
         // SVE instructions - basic placeholder
         // Full SVE decoding would be extensive
-        Ok(DecodedInsn::new(Mnemonic::UNKNOWN, ExecutionState::Aarch64, raw, 4))
+        Ok(DecodedInsn::new(
+            Mnemonic::UNKNOWN,
+            ExecutionState::Aarch64,
+            raw,
+            4,
+        ))
     }
 }
 
@@ -1847,7 +2069,7 @@ mod tests {
         // ADD W0, W1, W2: 0b020020
         let insn = decode_bytes(&[0x20, 0x00, 0x02, 0x0b]).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::ADD);
-        
+
         if let Some(Operand::Reg(reg)) = insn.operands.first() {
             assert!(!reg.is_64bit);
         }

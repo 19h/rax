@@ -71,10 +71,10 @@ pub fn add_with_carry(x: u32, y: u32, carry_in: u32) -> (u32, bool, bool) {
     let unsigned_sum = (x as u64) + (y as u64) + (carry_in as u64);
     let signed_sum = (x as i32 as i64) + (y as i32 as i64) + (carry_in as i64);
     let result = unsigned_sum as u32;
-    
+
     let carry_out = result as u64 != unsigned_sum;
     let overflow = result as i32 as i64 != signed_sum;
-    
+
     (result, carry_out, overflow)
 }
 
@@ -130,11 +130,15 @@ pub fn shift_c(value: u32, shift_type: ShiftType, amount: u32, carry_in: bool) -
     if amount == 0 {
         return (value, carry_in);
     }
-    
+
     match shift_type {
         ShiftType::LSL => {
             if amount >= 32 {
-                let carry = if amount == 32 { (value & 1) != 0 } else { false };
+                let carry = if amount == 32 {
+                    (value & 1) != 0
+                } else {
+                    false
+                };
                 (0, carry)
             } else {
                 let extended = (value as u64) << amount;
@@ -144,7 +148,11 @@ pub fn shift_c(value: u32, shift_type: ShiftType, amount: u32, carry_in: bool) -
         }
         ShiftType::LSR => {
             if amount >= 32 {
-                let carry = if amount == 32 { (value >> 31) != 0 } else { false };
+                let carry = if amount == 32 {
+                    (value >> 31) != 0
+                } else {
+                    false
+                };
                 (0, carry)
             } else {
                 let carry = ((value >> (amount - 1)) & 1) != 0;
@@ -164,11 +172,7 @@ pub fn shift_c(value: u32, shift_type: ShiftType, amount: u32, carry_in: bool) -
         }
         ShiftType::ROR => {
             let m = amount % 32;
-            let result = if m == 0 {
-                value
-            } else {
-                value.rotate_right(m)
-            };
+            let result = if m == 0 { value } else { value.rotate_right(m) };
             let carry = (result >> 31) != 0;
             (result, carry)
         }
@@ -219,7 +223,7 @@ pub fn decode_imm_shift(shift_type_bits: u8, imm5: u8) -> (ShiftType, u8) {
 pub fn expand_imm_c(imm12: u32, carry_in: bool) -> (u32, bool) {
     let unrotated = imm12 & 0xFF;
     let rotation = ((imm12 >> 8) & 0xF) * 2;
-    
+
     if rotation == 0 {
         (unrotated, carry_in)
     } else {
@@ -270,12 +274,12 @@ impl ProcessorMode {
             _ => None,
         }
     }
-    
+
     /// Check if mode is privileged.
     pub fn is_privileged(self) -> bool {
         self != ProcessorMode::User
     }
-    
+
     /// Check if mode has SPSR.
     pub fn has_spsr(self) -> bool {
         !matches!(self, ProcessorMode::User | ProcessorMode::System)
@@ -304,7 +308,7 @@ pub struct BankedRegisters {
     pub regs_abt: [u32; 2],
     /// Undefined mode R13-R14
     pub regs_und: [u32; 2],
-    
+
     /// Saved PSRs
     pub spsr_fiq: u32,
     pub spsr_irq: u32,
@@ -320,21 +324,21 @@ pub struct BankedRegisters {
 
 /// CPSR/SPSR bit positions.
 pub mod psr {
-    pub const N: u32 = 31;  // Negative
-    pub const Z: u32 = 30;  // Zero
-    pub const C: u32 = 29;  // Carry
-    pub const V: u32 = 28;  // Overflow
-    pub const Q: u32 = 27;  // Saturation
+    pub const N: u32 = 31; // Negative
+    pub const Z: u32 = 30; // Zero
+    pub const C: u32 = 29; // Carry
+    pub const V: u32 = 28; // Overflow
+    pub const Q: u32 = 27; // Saturation
     pub const IT_HI: u32 = 26; // IT state high bits (26:25)
-    pub const J: u32 = 24;  // Jazelle
+    pub const J: u32 = 24; // Jazelle
     pub const GE: u32 = 16; // Greater-than-or-Equal (19:16)
-    pub const E: u32 = 9;   // Endianness
-    pub const A: u32 = 8;   // Async abort disable
-    pub const I: u32 = 7;   // IRQ disable
-    pub const F: u32 = 6;   // FIQ disable
-    pub const T: u32 = 5;   // Thumb state
-    pub const M: u32 = 0;   // Mode (4:0)
-    
+    pub const E: u32 = 9; // Endianness
+    pub const A: u32 = 8; // Async abort disable
+    pub const I: u32 = 7; // IRQ disable
+    pub const F: u32 = 6; // FIQ disable
+    pub const T: u32 = 5; // Thumb state
+    pub const M: u32 = 0; // Mode (4:0)
+
     pub const N_MASK: u32 = 1 << N;
     pub const Z_MASK: u32 = 1 << Z;
     pub const C_MASK: u32 = 1 << C;
@@ -370,7 +374,7 @@ impl Psr {
         let it_lo = ((value >> 25) & 3) as u8;
         let it_hi = ((value >> 10) & 0x3F) as u8;
         let it_state = (it_hi << 2) | it_lo;
-        
+
         Psr {
             n: (value >> 31) != 0,
             z: ((value >> 30) & 1) != 0,
@@ -386,37 +390,57 @@ impl Psr {
             it_state,
         }
     }
-    
+
     pub fn to_u32(&self) -> u32 {
         let mut value = self.mode as u32;
-        if self.t { value |= 1 << 5; }
-        if self.f { value |= 1 << 6; }
-        if self.i { value |= 1 << 7; }
-        if self.a { value |= 1 << 8; }
-        if self.e { value |= 1 << 9; }
+        if self.t {
+            value |= 1 << 5;
+        }
+        if self.f {
+            value |= 1 << 6;
+        }
+        if self.i {
+            value |= 1 << 7;
+        }
+        if self.a {
+            value |= 1 << 8;
+        }
+        if self.e {
+            value |= 1 << 9;
+        }
         // IT state bits: IT[7:2] in 15:10, IT[1:0] in 26:25
         let it_lo = self.it_state & 3;
         let it_hi = (self.it_state >> 2) & 0x3F;
         value |= (it_lo as u32) << 25;
         value |= (it_hi as u32) << 10;
-        if self.q { value |= 1 << 27; }
-        if self.v { value |= 1 << 28; }
-        if self.c { value |= 1 << 29; }
-        if self.z { value |= 1 << 30; }
-        if self.n { value |= 1 << 31; }
+        if self.q {
+            value |= 1 << 27;
+        }
+        if self.v {
+            value |= 1 << 28;
+        }
+        if self.c {
+            value |= 1 << 29;
+        }
+        if self.z {
+            value |= 1 << 30;
+        }
+        if self.n {
+            value |= 1 << 31;
+        }
         value
     }
-    
+
     /// Check if currently in an IT block.
     pub fn in_it_block(&self) -> bool {
         (self.it_state & 0x0F) != 0
     }
-    
+
     /// Check if this is the last instruction in an IT block.
     pub fn last_in_it_block(&self) -> bool {
         (self.it_state & 0x0F) == 0x08
     }
-    
+
     /// Get the condition code for the current IT instruction.
     /// Returns the condition that should be evaluated for this instruction.
     pub fn it_condition(&self) -> u8 {
@@ -432,7 +456,7 @@ impl Psr {
             base_cond
         }
     }
-    
+
     /// Advance IT state after executing an instruction.
     /// This shifts the mask left and clears IT state when mask becomes 0.
     pub fn advance_it_state(&mut self) {
@@ -448,7 +472,7 @@ impl Psr {
             }
         }
     }
-    
+
     /// Set IT state from IT instruction (firstcond[3:0], mask[3:0]).
     pub fn set_it_state(&mut self, firstcond: u8, mask: u8) {
         // IT state = firstcond[3:0] : mask[3:0]
@@ -494,7 +518,7 @@ pub fn condition_passed(cond: u8, n: bool, z: bool, c: bool, v: bool) -> bool {
         7 => true,           // AL
         _ => unreachable!(),
     };
-    
+
     // Odd conditions (except 15) invert the result
     if (cond & 1) != 0 && cond != 0xF {
         !result
@@ -568,12 +592,12 @@ pub struct Armv7Cpu {
     pub regs: [u32; 16],
     /// Current Program Status Register
     pub cpsr: Psr,
-    
+
     // Banked registers per mode
     /// User mode R13-R14
-    pub regs_usr: [u32; 2],  // SP, LR
+    pub regs_usr: [u32; 2], // SP, LR
     /// FIQ mode R8-R14
-    pub regs_fiq: [u32; 7],  // R8-R14
+    pub regs_fiq: [u32; 7], // R8-R14
     /// IRQ mode R13-R14
     pub regs_irq: [u32; 2],
     /// Supervisor mode R13-R14
@@ -584,7 +608,7 @@ pub struct Armv7Cpu {
     pub regs_abt: [u32; 2],
     /// Undefined mode R13-R14
     pub regs_und: [u32; 2],
-    
+
     // Saved Program Status Registers
     pub spsr_fiq: Psr,
     pub spsr_irq: Psr,
@@ -592,13 +616,13 @@ pub struct Armv7Cpu {
     pub spsr_mon: Psr,
     pub spsr_abt: Psr,
     pub spsr_und: Psr,
-    
+
     // Execution state
     /// Pending branch target (None if no branch)
     pub branch_to: Option<u32>,
     /// Whether CPU is halted (WFI)
     pub is_halted: bool,
-    
+
     // Shifter output (set by shift operations)
     pub carry_out: bool,
     pub overflow: bool,
@@ -640,13 +664,13 @@ impl Armv7Cpu {
         cpu.cpsr.f = true;
         cpu
     }
-    
+
     /// Get PC value for instruction execution (PC + 8 due to pipeline).
     #[inline]
     pub fn get_pc(&self) -> u32 {
         self.regs[15].wrapping_add(8)
     }
-    
+
     /// Get register value, handling PC specially.
     #[inline]
     pub fn reg(&self, i: usize) -> u32 {
@@ -656,7 +680,7 @@ impl Armv7Cpu {
             self.regs[i]
         }
     }
-    
+
     /// Set register value. Writing to PC sets branch_to instead.
     #[inline]
     pub fn set_reg(&mut self, i: usize, value: u32) {
@@ -666,18 +690,17 @@ impl Armv7Cpu {
             self.regs[i] = value;
         }
     }
-    
+
     /// Check if current mode is privileged.
     pub fn is_privileged(&self) -> bool {
         self.cpsr.mode != ProcessorMode::User as u8
     }
-    
+
     /// Check if in User or System mode (no SPSR).
     pub fn is_user_or_system(&self) -> bool {
-        self.cpsr.mode == ProcessorMode::User as u8 ||
-        self.cpsr.mode == ProcessorMode::System as u8
+        self.cpsr.mode == ProcessorMode::User as u8 || self.cpsr.mode == ProcessorMode::System as u8
     }
-    
+
     /// Get the current mode's SPSR.
     pub fn get_current_spsr(&self) -> Option<&Psr> {
         match ProcessorMode::from_bits(self.cpsr.mode) {
@@ -690,7 +713,7 @@ impl Armv7Cpu {
             _ => None, // User and System don't have SPSR
         }
     }
-    
+
     /// Get mutable reference to current mode's SPSR.
     pub fn get_current_spsr_mut(&mut self) -> Option<&mut Psr> {
         match ProcessorMode::from_bits(self.cpsr.mode) {
@@ -703,7 +726,7 @@ impl Armv7Cpu {
             _ => None,
         }
     }
-    
+
     /// Save current registers to banked storage for mode switch.
     pub fn save_to_banked(&mut self, mode: ProcessorMode) {
         match mode {
@@ -738,7 +761,7 @@ impl Armv7Cpu {
             }
         }
     }
-    
+
     /// Restore registers from banked storage for mode switch.
     pub fn restore_from_banked(&mut self, mode: ProcessorMode) {
         match mode {
@@ -773,26 +796,26 @@ impl Armv7Cpu {
             }
         }
     }
-    
+
     /// Change processor mode, handling register banking.
     pub fn change_mode(&mut self, new_mode: ProcessorMode) {
-        let old_mode = ProcessorMode::from_bits(self.cpsr.mode)
-            .unwrap_or(ProcessorMode::Supervisor);
-        
+        let old_mode =
+            ProcessorMode::from_bits(self.cpsr.mode).unwrap_or(ProcessorMode::Supervisor);
+
         if old_mode == new_mode {
             return;
         }
-        
+
         // Save current registers
         self.save_to_banked(old_mode);
-        
+
         // Update mode
         self.cpsr.mode = new_mode as u8;
-        
+
         // Restore new mode's registers
         self.restore_from_banked(new_mode);
     }
-    
+
     /// Set APSR flags from result.
     ///
     /// For logical operations, use `set_overflow = false`.
@@ -805,7 +828,7 @@ impl Armv7Cpu {
             self.cpsr.v = self.overflow;
         }
     }
-    
+
     /// Perform add with carry, updating carry_out and overflow.
     pub fn add_with_carry(&mut self, x: u32, y: u32, carry_in: bool) -> u32 {
         let (result, carry, overflow) = add_with_carry(x, y, carry_in as u32);
@@ -813,19 +836,19 @@ impl Armv7Cpu {
         self.overflow = overflow;
         result
     }
-    
+
     /// Perform shift with carry, updating carry_out.
     pub fn shift_c(&mut self, value: u32, shift_type: ShiftType, amount: u32) -> u32 {
         let (result, carry) = shift_c(value, shift_type, amount, self.cpsr.c);
         self.carry_out = carry;
         result
     }
-    
+
     /// Advance PC by instruction size (4 for ARM, 2/4 for Thumb).
     pub fn advance_pc(&mut self, size: u32) {
         self.regs[15] = self.regs[15].wrapping_add(size);
     }
-    
+
     /// Apply pending branch if any.
     pub fn apply_branch(&mut self) {
         if let Some(target) = self.branch_to.take() {
@@ -845,22 +868,22 @@ impl Armv7Cpu {
 pub trait ArmMemory {
     /// Read a 32-bit word from address (must be word-aligned).
     fn read_word(&self, addr: u32) -> Result<u32, MemoryError>;
-    
+
     /// Write a 32-bit word to address (must be word-aligned).
     fn write_word(&mut self, addr: u32, value: u32) -> Result<(), MemoryError>;
-    
+
     /// Read a 16-bit halfword from address (must be halfword-aligned).
     fn read_halfword(&self, addr: u32) -> Result<u16, MemoryError>;
-    
+
     /// Write a 16-bit halfword to address (must be halfword-aligned).
     fn write_halfword(&mut self, addr: u32, value: u16) -> Result<(), MemoryError>;
-    
+
     /// Read a byte from address.
     fn read_byte(&self, addr: u32) -> Result<u8, MemoryError>;
-    
+
     /// Write a byte to address.
     fn write_byte(&mut self, addr: u32, value: u8) -> Result<(), MemoryError>;
-    
+
     /// Check if unaligned access is allowed.
     fn allows_unaligned(&self) -> bool {
         true
@@ -910,7 +933,7 @@ impl FlatMemory {
             base,
         }
     }
-    
+
     fn translate(&self, addr: u32) -> Option<usize> {
         if addr >= self.base && addr < self.base + self.data.len() as u32 {
             Some((addr - self.base) as usize)
@@ -933,7 +956,7 @@ impl ArmMemory for FlatMemory {
             self.data[offset + 3],
         ]))
     }
-    
+
     fn write_word(&mut self, addr: u32, value: u32) -> Result<(), MemoryError> {
         let offset = self.translate(addr).ok_or(MemoryError::OutOfBounds(addr))?;
         if offset + 4 > self.data.len() {
@@ -943,7 +966,7 @@ impl ArmMemory for FlatMemory {
         self.data[offset..offset + 4].copy_from_slice(&bytes);
         Ok(())
     }
-    
+
     fn read_halfword(&self, addr: u32) -> Result<u16, MemoryError> {
         let offset = self.translate(addr).ok_or(MemoryError::OutOfBounds(addr))?;
         if offset + 2 > self.data.len() {
@@ -954,7 +977,7 @@ impl ArmMemory for FlatMemory {
             self.data[offset + 1],
         ]))
     }
-    
+
     fn write_halfword(&mut self, addr: u32, value: u16) -> Result<(), MemoryError> {
         let offset = self.translate(addr).ok_or(MemoryError::OutOfBounds(addr))?;
         if offset + 2 > self.data.len() {
@@ -964,12 +987,12 @@ impl ArmMemory for FlatMemory {
         self.data[offset..offset + 2].copy_from_slice(&bytes);
         Ok(())
     }
-    
+
     fn read_byte(&self, addr: u32) -> Result<u8, MemoryError> {
         let offset = self.translate(addr).ok_or(MemoryError::OutOfBounds(addr))?;
         Ok(self.data[offset])
     }
-    
+
     fn write_byte(&mut self, addr: u32, value: u8) -> Result<(), MemoryError> {
         let offset = self.translate(addr).ok_or(MemoryError::OutOfBounds(addr))?;
         self.data[offset] = value;
@@ -992,25 +1015,25 @@ mod tests {
         assert_eq!(r, 8);
         assert!(!c);
         assert!(!v);
-        
+
         // Carry out
         let (r, c, v) = add_with_carry(0xFFFFFFFF, 1, 0);
         assert_eq!(r, 0);
         assert!(c);
         assert!(!v);
-        
+
         // Overflow (positive + positive = negative)
         let (r, c, v) = add_with_carry(0x7FFFFFFF, 1, 0);
         assert_eq!(r, 0x80000000);
         assert!(!c);
         assert!(v);
-        
+
         // Subtraction via NOT + 1
         let (r, c, v) = add_with_carry(10, !5u32, 1);
         assert_eq!(r, 5);
         assert!(c); // No borrow = carry set
         assert!(!v);
-        
+
         // Subtraction with borrow
         let (r, c, v) = add_with_carry(3, !5u32, 1);
         assert_eq!(r, 0xFFFFFFFE); // -2
@@ -1023,11 +1046,11 @@ mod tests {
         let (r, c) = shift_c(0x12345678, ShiftType::LSL, 4, false);
         assert_eq!(r, 0x23456780);
         assert!(c); // Bit 28 was 1
-        
+
         let (r, c) = shift_c(0x80000000, ShiftType::LSL, 1, false);
         assert_eq!(r, 0);
         assert!(c);
-        
+
         // No shift
         let (r, c) = shift_c(0x12345678, ShiftType::LSL, 0, true);
         assert_eq!(r, 0x12345678);
@@ -1039,7 +1062,7 @@ mod tests {
         let (r, c) = shift_c(0x12345678, ShiftType::LSR, 4, false);
         assert_eq!(r, 0x01234567);
         assert!(c); // Bit 3 was 1
-        
+
         let (r, c) = shift_c(0x80000000, ShiftType::LSR, 32, false);
         assert_eq!(r, 0);
         assert!(c); // Bit 31 was 1
@@ -1050,7 +1073,7 @@ mod tests {
         let (r, c) = shift_c(0x80000000, ShiftType::ASR, 4, false);
         assert_eq!(r, 0xF8000000);
         assert!(!c);
-        
+
         let (r, c) = shift_c(0x80000000, ShiftType::ASR, 32, false);
         assert_eq!(r, 0xFFFFFFFF);
         assert!(c);
@@ -1068,7 +1091,7 @@ mod tests {
         let (r, c) = shift_c(0x80000001, ShiftType::RRX, 1, true);
         assert_eq!(r, 0xC0000000); // Carry in -> bit 31, original bit 0 was 1
         assert!(c); // Original bit 0
-        
+
         let (r, c) = shift_c(0x80000000, ShiftType::RRX, 1, false);
         assert_eq!(r, 0x40000000);
         assert!(!c);
@@ -1080,7 +1103,7 @@ mod tests {
         let (r, c) = expand_imm_c(0x0FF, false);
         assert_eq!(r, 0xFF);
         assert!(!c);
-        
+
         // Rotation by 8 (rot field = 4)
         let (r, c) = expand_imm_c(0x4FF, false);
         assert_eq!(r, 0xFF000000);
@@ -1092,20 +1115,20 @@ mod tests {
         // EQ: Z=1
         assert!(condition_passed(0b0000, false, true, false, false));
         assert!(!condition_passed(0b0000, false, false, false, false));
-        
+
         // NE: Z=0
         assert!(condition_passed(0b0001, false, false, false, false));
         assert!(!condition_passed(0b0001, false, true, false, false));
-        
+
         // GE: N=V
         assert!(condition_passed(0b1010, true, false, false, true));
         assert!(condition_passed(0b1010, false, false, false, false));
         assert!(!condition_passed(0b1010, true, false, false, false));
-        
+
         // GT: Z=0 && N=V
         assert!(condition_passed(0b1100, false, false, false, false));
         assert!(!condition_passed(0b1100, false, true, false, false)); // Z=1
-        
+
         // AL: always
         assert!(condition_passed(0b1110, false, false, false, false));
     }
@@ -1135,7 +1158,7 @@ mod tests {
         assert!(psr.i);
         assert!(psr.f);
         assert_eq!(psr.mode, 0x13);
-        
+
         let reconstructed = psr.to_u32();
         assert_eq!(reconstructed, original);
     }

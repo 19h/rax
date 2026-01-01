@@ -31,13 +31,13 @@ pub struct VfpState {
     /// 64-bit floating-point registers (D0-D31).
     /// S registers are accessed as low/high 32 bits of D registers.
     pub dregs: [u64; 32],
-    
+
     /// Floating-Point Status and Control Register.
     pub fpscr: Fpscr,
-    
+
     /// Floating-Point Exception Register (VFPv3+).
     pub fpexc: u32,
-    
+
     /// Media and VFP Feature Registers.
     pub mvfr0: u32,
     pub mvfr1: u32,
@@ -63,12 +63,12 @@ impl VfpState {
     pub fn new() -> Self {
         Self::default()
     }
-    
+
     /// Check if VFP is enabled.
     pub fn is_enabled(&self) -> bool {
         (self.fpexc & 0x4000_0000) != 0
     }
-    
+
     /// Read a single-precision register (S0-S31).
     pub fn read_s(&self, reg: u8) -> f32 {
         let dreg = (reg / 2) as usize;
@@ -80,7 +80,7 @@ impl VfpState {
         };
         f32::from_bits(bits)
     }
-    
+
     /// Write a single-precision register (S0-S31).
     pub fn write_s(&mut self, reg: u8, value: f32) {
         let dreg = (reg / 2) as usize;
@@ -92,7 +92,7 @@ impl VfpState {
             self.dregs[dreg] = (self.dregs[dreg] & 0xFFFF_FFFF_0000_0000) | bits;
         }
     }
-    
+
     /// Read a single-precision register as raw bits.
     pub fn read_s_bits(&self, reg: u8) -> u32 {
         let dreg = (reg / 2) as usize;
@@ -103,7 +103,7 @@ impl VfpState {
             self.dregs[dreg] as u32
         }
     }
-    
+
     /// Write a single-precision register as raw bits.
     pub fn write_s_bits(&mut self, reg: u8, bits: u32) {
         let dreg = (reg / 2) as usize;
@@ -114,33 +114,33 @@ impl VfpState {
             self.dregs[dreg] = (self.dregs[dreg] & 0xFFFF_FFFF_0000_0000) | (bits as u64);
         }
     }
-    
+
     /// Read a double-precision register (D0-D31).
     pub fn read_d(&self, reg: u8) -> f64 {
         f64::from_bits(self.dregs[reg as usize])
     }
-    
+
     /// Write a double-precision register (D0-D31).
     pub fn write_d(&mut self, reg: u8, value: f64) {
         self.dregs[reg as usize] = value.to_bits();
     }
-    
+
     /// Read a double-precision register as raw bits.
     pub fn read_d_bits(&self, reg: u8) -> u64 {
         self.dregs[reg as usize]
     }
-    
+
     /// Write a double-precision register as raw bits.
     pub fn write_d_bits(&mut self, reg: u8, bits: u64) {
         self.dregs[reg as usize] = bits;
     }
-    
+
     /// Read a quadword register (Q0-Q15) as two 64-bit values.
     pub fn read_q(&self, reg: u8) -> (u64, u64) {
         let dreg = (reg * 2) as usize;
         (self.dregs[dreg], self.dregs[dreg + 1])
     }
-    
+
     /// Write a quadword register (Q0-Q15) from two 64-bit values.
     pub fn write_q(&mut self, reg: u8, low: u64, high: u64) {
         let dreg = (reg * 2) as usize;
@@ -175,32 +175,32 @@ impl Fpscr {
     pub fn from_bits(bits: u32) -> Self {
         Self { bits }
     }
-    
+
     /// Get raw bits.
     pub fn bits(&self) -> u32 {
         self.bits
     }
-    
+
     /// Negative flag.
     pub fn n(&self) -> bool {
         (self.bits & (1 << 31)) != 0
     }
-    
+
     /// Zero flag.
     pub fn z(&self) -> bool {
         (self.bits & (1 << 30)) != 0
     }
-    
+
     /// Carry flag.
     pub fn c(&self) -> bool {
         (self.bits & (1 << 29)) != 0
     }
-    
+
     /// Overflow flag.
     pub fn v(&self) -> bool {
         (self.bits & (1 << 28)) != 0
     }
-    
+
     /// Set condition flags.
     pub fn set_nzcv(&mut self, n: bool, z: bool, c: bool, v: bool) {
         self.bits = (self.bits & 0x0FFF_FFFF)
@@ -209,12 +209,12 @@ impl Fpscr {
             | ((c as u32) << 29)
             | ((v as u32) << 28);
     }
-    
+
     /// Flush-to-zero mode.
     pub fn fz(&self) -> bool {
         (self.bits & (1 << 24)) != 0
     }
-    
+
     /// Set flush-to-zero mode.
     pub fn set_fz(&mut self, fz: bool) {
         if fz {
@@ -223,12 +223,12 @@ impl Fpscr {
             self.bits &= !(1 << 24);
         }
     }
-    
+
     /// Default NaN mode.
     pub fn dn(&self) -> bool {
         (self.bits & (1 << 25)) != 0
     }
-    
+
     /// Set default NaN mode.
     pub fn set_dn(&mut self, dn: bool) {
         if dn {
@@ -237,7 +237,7 @@ impl Fpscr {
             self.bits &= !(1 << 25);
         }
     }
-    
+
     /// Rounding mode (0=RN, 1=RP, 2=RM, 3=RZ).
     pub fn rmode(&self) -> RoundingMode {
         match (self.bits >> 22) & 3 {
@@ -248,17 +248,17 @@ impl Fpscr {
             _ => unreachable!(),
         }
     }
-    
+
     /// Set rounding mode.
     pub fn set_rmode(&mut self, mode: RoundingMode) {
         self.bits = (self.bits & !(3 << 22)) | ((mode as u32) << 22);
     }
-    
+
     /// Invalid operation cumulative flag (IOC).
     pub fn ioc(&self) -> bool {
         (self.bits & 1) != 0
     }
-    
+
     /// Set invalid operation cumulative flag.
     pub fn set_ioc(&mut self, ioc: bool) {
         if ioc {
@@ -267,12 +267,12 @@ impl Fpscr {
             self.bits &= !1;
         }
     }
-    
+
     /// Division by zero cumulative flag (DZC).
     pub fn dzc(&self) -> bool {
         (self.bits & (1 << 1)) != 0
     }
-    
+
     /// Set division by zero cumulative flag.
     pub fn set_dzc(&mut self, dzc: bool) {
         if dzc {
@@ -281,12 +281,12 @@ impl Fpscr {
             self.bits &= !(1 << 1);
         }
     }
-    
+
     /// Overflow cumulative flag (OFC).
     pub fn ofc(&self) -> bool {
         (self.bits & (1 << 2)) != 0
     }
-    
+
     /// Set overflow cumulative flag.
     pub fn set_ofc(&mut self, ofc: bool) {
         if ofc {
@@ -295,12 +295,12 @@ impl Fpscr {
             self.bits &= !(1 << 2);
         }
     }
-    
+
     /// Underflow cumulative flag (UFC).
     pub fn ufc(&self) -> bool {
         (self.bits & (1 << 3)) != 0
     }
-    
+
     /// Set underflow cumulative flag.
     pub fn set_ufc(&mut self, ufc: bool) {
         if ufc {
@@ -309,12 +309,12 @@ impl Fpscr {
             self.bits &= !(1 << 3);
         }
     }
-    
+
     /// Inexact cumulative flag (IXC).
     pub fn ixc(&self) -> bool {
         (self.bits & (1 << 4)) != 0
     }
-    
+
     /// Set inexact cumulative flag.
     pub fn set_ixc(&mut self, ixc: bool) {
         if ixc {
@@ -323,12 +323,12 @@ impl Fpscr {
             self.bits &= !(1 << 4);
         }
     }
-    
+
     /// Input denormal cumulative flag (IDC).
     pub fn idc(&self) -> bool {
         (self.bits & (1 << 7)) != 0
     }
-    
+
     /// Set input denormal cumulative flag.
     pub fn set_idc(&mut self, idc: bool) {
         if idc {
@@ -725,7 +725,7 @@ impl NeonSize {
             NeonSize::D64 => 1,
         }
     }
-    
+
     /// Size in bits.
     pub fn bits(&self) -> u32 {
         match self {
@@ -867,129 +867,129 @@ pub fn vdup(scalar: u64, size: NeonSize) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_vfp_state_s_registers() {
         let mut vfp = VfpState::new();
-        
+
         // Write to S0 (low half of D0)
         vfp.write_s(0, 1.5);
         assert_eq!(vfp.read_s(0), 1.5);
-        
+
         // Write to S1 (high half of D0)
         vfp.write_s(1, 2.5);
         assert_eq!(vfp.read_s(1), 2.5);
-        
+
         // S0 should be unchanged
         assert_eq!(vfp.read_s(0), 1.5);
     }
-    
+
     #[test]
     fn test_vfp_state_d_registers() {
         let mut vfp = VfpState::new();
-        
+
         vfp.write_d(0, 3.14159);
         assert_eq!(vfp.read_d(0), 3.14159);
-        
+
         vfp.write_d(15, -2.71828);
         assert_eq!(vfp.read_d(15), -2.71828);
     }
-    
+
     #[test]
     fn test_vfp_state_q_registers() {
         let mut vfp = VfpState::new();
-        
+
         vfp.write_q(0, 0x1234_5678_9ABC_DEF0, 0xFEDC_BA98_7654_3210);
         let (low, high) = vfp.read_q(0);
         assert_eq!(low, 0x1234_5678_9ABC_DEF0);
         assert_eq!(high, 0xFEDC_BA98_7654_3210);
     }
-    
+
     #[test]
     fn test_fpscr_flags() {
         let mut fpscr = Fpscr::default();
-        
+
         fpscr.set_nzcv(true, false, true, false);
         assert!(fpscr.n());
         assert!(!fpscr.z());
         assert!(fpscr.c());
         assert!(!fpscr.v());
-        
+
         fpscr.set_nzcv(false, true, false, true);
         assert!(!fpscr.n());
         assert!(fpscr.z());
         assert!(!fpscr.c());
         assert!(fpscr.v());
     }
-    
+
     #[test]
     fn test_fpscr_rounding_mode() {
         let mut fpscr = Fpscr::default();
-        
+
         fpscr.set_rmode(RoundingMode::RoundZero);
         assert_eq!(fpscr.rmode(), RoundingMode::RoundZero);
-        
+
         fpscr.set_rmode(RoundingMode::RoundPlusInf);
         assert_eq!(fpscr.rmode(), RoundingMode::RoundPlusInf);
     }
-    
+
     #[test]
     fn test_vadd_f32() {
         let mut fpscr = Fpscr::default();
         assert_eq!(vadd_f32(1.0, 2.0, &mut fpscr), 3.0);
         assert_eq!(vadd_f32(-1.5, 2.5, &mut fpscr), 1.0);
     }
-    
+
     #[test]
     fn test_vsub_f32() {
         let mut fpscr = Fpscr::default();
         assert_eq!(vsub_f32(5.0, 3.0, &mut fpscr), 2.0);
         assert_eq!(vsub_f32(1.0, 2.0, &mut fpscr), -1.0);
     }
-    
+
     #[test]
     fn test_vmul_f32() {
         let mut fpscr = Fpscr::default();
         assert_eq!(vmul_f32(3.0, 4.0, &mut fpscr), 12.0);
         assert_eq!(vmul_f32(-2.0, 3.0, &mut fpscr), -6.0);
     }
-    
+
     #[test]
     fn test_vdiv_f32() {
         let mut fpscr = Fpscr::default();
         assert_eq!(vdiv_f32(10.0, 2.0, &mut fpscr), 5.0);
         assert!(!fpscr.dzc());
-        
+
         // Division by zero
         let _ = vdiv_f32(1.0, 0.0, &mut fpscr);
         assert!(fpscr.dzc());
     }
-    
+
     #[test]
     fn test_vcmp_f32() {
         let mut fpscr = Fpscr::default();
-        
+
         // Equal
         vcmp_f32(1.0, 1.0, &mut fpscr);
         assert!(fpscr.z());
         assert!(fpscr.c());
         assert!(!fpscr.n());
         assert!(!fpscr.v());
-        
+
         // Less than
         vcmp_f32(1.0, 2.0, &mut fpscr);
         assert!(!fpscr.z());
         assert!(!fpscr.c());
         assert!(fpscr.n());
         assert!(!fpscr.v());
-        
+
         // Greater than
         vcmp_f32(3.0, 2.0, &mut fpscr);
         assert!(!fpscr.z());
         assert!(fpscr.c());
         assert!(!fpscr.n());
         assert!(!fpscr.v());
-        
+
         // NaN
         vcmp_f32(f32::NAN, 1.0, &mut fpscr);
         assert!(!fpscr.z());
@@ -997,20 +997,20 @@ mod tests {
         assert!(!fpscr.n());
         assert!(fpscr.v());
     }
-    
+
     #[test]
     fn test_vcvt_f32_s32() {
         assert_eq!(vcvt_f32_s32(42), 42.0);
         assert_eq!(vcvt_f32_s32(-100), -100.0);
     }
-    
+
     #[test]
     fn test_vcvt_s32_f32() {
         let mut fpscr = Fpscr::default();
         assert_eq!(vcvt_s32_f32(42.7, &mut fpscr), 42);
         assert_eq!(vcvt_s32_f32(-3.9, &mut fpscr), -3);
     }
-    
+
     #[test]
     fn test_neon_vadd_i() {
         // 8-bit elements
@@ -1018,35 +1018,35 @@ mod tests {
         let b = 0x0101010101010101u64;
         let result = vadd_i(a, b, NeonSize::B8);
         assert_eq!(result, 0x0203040506070809u64);
-        
+
         // 32-bit elements
         let a = 0x0000000100000002u64;
         let b = 0x0000000300000004u64;
         let result = vadd_i(a, b, NeonSize::S32);
         assert_eq!(result, 0x0000000400000006u64);
     }
-    
+
     #[test]
     fn test_neon_bitwise() {
         let a = 0xFFFF_0000_FFFF_0000u64;
         let b = 0xFF00_FF00_FF00_FF00u64;
-        
+
         assert_eq!(vand(a, b), 0xFF00_0000_FF00_0000u64);
         assert_eq!(vorr(a, b), 0xFFFF_FF00_FFFF_FF00u64);
         assert_eq!(veor(a, b), 0x00FF_FF00_00FF_FF00u64);
         assert_eq!(vbic(a, b), 0x00FF_0000_00FF_0000u64);
     }
-    
+
     #[test]
     fn test_vdup() {
         // Duplicate byte
         let result = vdup(0x42, NeonSize::B8);
         assert_eq!(result, 0x4242_4242_4242_4242u64);
-        
+
         // Duplicate halfword
         let result = vdup(0x1234, NeonSize::H16);
         assert_eq!(result, 0x1234_1234_1234_1234u64);
-        
+
         // Duplicate word
         let result = vdup(0xDEAD_BEEF, NeonSize::S32);
         assert_eq!(result, 0xDEAD_BEEF_DEAD_BEEFu64);

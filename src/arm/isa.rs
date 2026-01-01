@@ -3,8 +3,8 @@
 //! This module provides hierarchical ISA selection following ARM's architecture:
 //! Profile -> Version -> Extensions
 
-use serde::Deserialize;
 use clap::ValueEnum;
+use serde::Deserialize;
 
 // =============================================================================
 // ARM Profiles
@@ -225,7 +225,7 @@ impl ArmVersion {
     pub fn supports_thumb2(&self) -> bool {
         match self {
             ArmVersion::V6 => false,
-            ArmVersion::V6M => false, // Only subset
+            ArmVersion::V6M => false,         // Only subset
             ArmVersion::V8MBaseline => false, // Only subset
             _ => true,
         }
@@ -520,26 +520,30 @@ impl ArmCpuConfig {
     /// Check if a specific execution state is supported.
     pub fn supports_state(&self, state: ExecutionState) -> bool {
         match state {
-            ExecutionState::Arm => self.supported_states.contains(SupportedExecutionStates::ARM),
-            ExecutionState::Thumb => {
-                self.supported_states.contains(SupportedExecutionStates::THUMB)
-            }
-            ExecutionState::Thumb2 => {
-                self.supported_states.contains(SupportedExecutionStates::THUMB2)
-            }
-            ExecutionState::Aarch32 => {
-                self.supported_states.contains(SupportedExecutionStates::AARCH32)
-            }
-            ExecutionState::Aarch64 => {
-                self.supported_states.contains(SupportedExecutionStates::AARCH64)
-            }
+            ExecutionState::Arm => self
+                .supported_states
+                .contains(SupportedExecutionStates::ARM),
+            ExecutionState::Thumb => self
+                .supported_states
+                .contains(SupportedExecutionStates::THUMB),
+            ExecutionState::Thumb2 => self
+                .supported_states
+                .contains(SupportedExecutionStates::THUMB2),
+            ExecutionState::Aarch32 => self
+                .supported_states
+                .contains(SupportedExecutionStates::AARCH32),
+            ExecutionState::Aarch64 => self
+                .supported_states
+                .contains(SupportedExecutionStates::AARCH64),
         }
     }
 
     /// Validate the configuration for consistency.
     pub fn validate(&self) -> Result<(), &'static str> {
         // Check that supported states match version capabilities
-        if self.supported_states.contains(SupportedExecutionStates::AARCH64)
+        if self
+            .supported_states
+            .contains(SupportedExecutionStates::AARCH64)
             && !self.version.supports_aarch64()
         {
             return Err("AArch64 not supported by this version");
@@ -796,7 +800,10 @@ mod tests {
     #[test]
     fn mode_decoding() {
         assert_eq!(Aarch32Mode::from_bits(0b10000), Some(Aarch32Mode::User));
-        assert_eq!(Aarch32Mode::from_bits(0b10011), Some(Aarch32Mode::Supervisor));
+        assert_eq!(
+            Aarch32Mode::from_bits(0b10011),
+            Some(Aarch32Mode::Supervisor)
+        );
         assert_eq!(Aarch32Mode::from_bits(0b00000), None);
     }
 
