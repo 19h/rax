@@ -1,21 +1,18 @@
 ////////////////////////////////////////////////////////////////////////
 // Proprietary Notice
-//
-//     This document is protected by copyright and other related rights
+// This document is protected by copyright and other related rights
 // and the practice or implementation of the information contained in
 // this document may be protected by one or more patents or pending
 // patent applications. No part of this document may be reproduced in any
 // form by any means without the express prior written permission of
-// Arm. No license, express or implied, by estoppel or otherwise to
+// Arm.No license, express or implied, by estoppel or otherwise to
 // any intellectual property rights is granted by this document unless
 // specifically stated.
-//
-//     Your access to the information in this document is conditional upon
+// Your access to the information in this document is conditional upon
 // your acceptance that you will not use or permit others to use the
 // information for the purposes of determining whether implementations
 // infringe any third party patents.
-//
-//     THIS DOCUMENT IS PROVIDED "AS IS". ARM PROVIDES NO REPRESENTATIONS
+// THIS DOCUMENT IS PROVIDED “AS IS”. ARM PROVIDES NO REPRESENTATIONS
 // AND NO WARRANTIES, EXPRESS, IMPLIED OR STATUTORY, INCLUDING, WITHOUT
 // LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY, SATISFACTORY
 // QUALITY, NON-INFRINGEMENT OR FITNESS FOR A PARTICULAR PURPOSE WITH
@@ -23,28 +20,24 @@
 // representation with respect to, and has undertaken no analysis to
 // identify or understand the scope and content of, patents, copyrights,
 // trade secrets, or other rights.
-//
-//     This document may include technical inaccuracies or typographical
+// This document may include technical inaccuracies or typographical
 // errors.
-//
-//     TO THE EXTENT NOT PROHIBITED BY LAW, IN NO EVENT WILL ARM BE
+// TO THE EXTENT NOT PROHIBITED BY LAW, IN NO EVENT WILL ARM BE
 // LIABLE FOR ANY DAMAGES, INCLUDING WITHOUT LIMITATION ANY DIRECT,
 // INDIRECT, SPECIAL, INCIDENTAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES,
 // HOWEVER CAUSED AND REGARDLESS OF THE THEORY OF LIABILITY, ARISING OUT
 // OF ANY USE OF THIS DOCUMENT, EVEN IF ARM HAS BEEN ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGES.
-//
-//     This document consists solely of commercial items. You shall be
+// This document consists solely of commercial items. You shall be
 // responsible for ensuring that any use, duplication or disclosure of
 // this document complies fully with any relevant export laws and
 // regulations to assure that this document or any portion thereof is not
 // exported, directly or indirectly, in violation of such export
-// laws. Use of the word "partner" in reference to Arm's customers is not
+// laws. Use of the word “partner” in reference to Arm’s customers is not
 // intended to create or refer to any partnership relationship with any
 // other company. Arm may make changes to this document at any time and
 // without notice.
-//
-//     If any of the provisions contained in these terms conflict with
+// If any of the provisions contained in these terms conflict with
 // any of the provisions of any click through or signed written agreement
 // covering this document with Arm, then the click through or signed
 // written agreement prevails over and supersedes the conflicting
@@ -52,22 +45,16 @@
 // languages for convenience, and you agree that if there is any conflict
 // between the English version of this document and any translation, the
 // terms of the English version of the Agreement shall prevail.
-//
-//     The Arm corporate logo and words marked with (R) or (TM)(TM)
+// The Arm corporate logo and words marked with ® or ™™
 // are registered trademarks or trademarks of Arm Limited (or its
 // subsidiaries) in the US and/or elsewhere. All rights reserved.  Other
 // brands and names mentioned in this document may be the trademarks of
-// their respective owners. Please follow Arm's trademark usage
-// guidelines at
-// http://www.arm.com/company/policies/trademarks.
-//
-//     Copyright (C) 2018 Arm Limited (or its affiliates). All rights reserved.
-//
-//     Arm Limited. Company 02557590 registered in England.
-//
-//     110 Fulbourn Road, Cambridge, England CB1 9NJ.
-//
-//     LES-PRE-20349
+// their respective owners. Please follow Arm’s trademark usage
+// guidelines athttp://www.arm.com/company/policies/trademarks.
+// Copyright © 2018 Arm Limited (or its affiliates). All rights reserved.
+// Arm Limited. Company 02557590 registered in England.
+// 110 Fulbourn Road, Cambridge, England CB1 9NJ.
+// LES-PRE-20349
 ////////////////////////////////////////////////////////////////////////
 
 __instruction LDNT1D_Z.P.BR_Contiguous
@@ -62948,10 +62935,6 @@ __instruction aarch32_UHSAX_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0111xxxx xxxxxxxx 0101xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -62979,14 +62962,6 @@ __instruction aarch32_TSB_A
         __field cond 28 +: 4
         __opcode 'xxxx0011 00100000 xxxxxxxx 00010010'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if !HaveSelfHostedTrace() then EndOfInstruction(); // Instruction executes as NOP
             if cond != '1110' then UNPREDICTABLE;              // ESB must be encoded with AL condition
@@ -62995,12 +62970,6 @@ __instruction aarch32_TSB_A
         __instruction_set T32
         __opcode '11110011 1010xxxx 10x0x000 00010010'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '0'
         __decode
             if !HaveSelfHostedTrace() then EndOfInstruction(); // Instruction executes as NOP
             if InITBlock() then UNPREDICTABLE;
@@ -63080,12 +63049,6 @@ __instruction aarch32_MRS_br_AS
         __field M 8 +: 1
         __opcode 'xxxx0001 0x00xxxx xxxxxx1x 0000xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             d = UInt(Rd);  read_spsr = (R == '1');
             if d == 15 then UNPREDICTABLE;
@@ -63099,13 +63062,6 @@ __instruction aarch32_MRS_br_AS
         __field M 4 +: 1
         __opcode '11110011 111xxxxx 10x0xxxx xx1xxxxx'
         __guard TRUE
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             d = UInt(Rd);  read_spsr = (R == '1');
             if d == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -63166,17 +63122,6 @@ __instruction aarch32_MRS_AS
         __field Rd 12 +: 4
         __opcode 'xxxx0001 0x00xxxx xxxxxx0x 0000xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 8 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             d = UInt(Rd);  read_spsr = (R == '1');
             if d == 15 then UNPREDICTABLE;
@@ -63187,18 +63132,6 @@ __instruction aarch32_MRS_AS
         __field Rd 8 +: 4
         __opcode '11110011 111xxxxx 10x0xxxx xx0xxxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 4 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             d = UInt(Rd);  read_spsr = (R == '1');
             if d == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -63275,10 +63208,6 @@ __instruction aarch32_QDSUB_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0110xxxx xxxxxxxx 0101xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -63372,29 +63301,33 @@ __instruction aarch32_LDR_i_A
 
     __execute
         if CurrentInstrSet() == InstrSet_A32 then
-            offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
-            address = if index then offset_addr else R[n];
-            data = MemU[address,4];
-            if wback then R[n] = offset_addr;
-            if t == 15 then
-                if address<1:0> == '00' then
-                    LoadWritePC(data);
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+                address = if index then offset_addr else R[n];
+                data = MemU[address,4];
+                if wback then R[n] = offset_addr;
+                if t == 15 then
+                    if address<1:0> == '00' then
+                        LoadWritePC(data);
+                    else
+                        UNPREDICTABLE;
                 else
-                    UNPREDICTABLE;
-            else
-                R[t] = data;
+                    R[t] = data;
         else
-            offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
-            address = if index then offset_addr else R[n];
-            data = MemU[address,4];
-            if wback then R[n] = offset_addr;
-            if t == 15 then
-                if address<1:0> == '00' then
-                    LoadWritePC(data);
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+                address = if index then offset_addr else R[n];
+                data = MemU[address,4];
+                if wback then R[n] = offset_addr;
+                if t == 15 then
+                    if address<1:0> == '00' then
+                        LoadWritePC(data);
+                    else
+                        UNPREDICTABLE;
                 else
-                    UNPREDICTABLE;
-            else
-                R[t] = data;
+                    R[t] = data;
 
 __instruction aarch32_STLH_A
     __encoding aarch32_STLH_A1_A
@@ -63404,12 +63337,6 @@ __instruction aarch32_STLH_A
         __field Rt 0 +: 4
         __opcode 'xxxx0001 1110xxxx xxxxxx00 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
         __decode
             t = UInt(Rt); n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -63420,14 +63347,6 @@ __instruction aarch32_STLH_A
         __field Rt 12 +: 4
         __opcode '11101000 1100xxxx xxxxxxxx 1001xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt); n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -63493,8 +63412,6 @@ __instruction aarch32_STLEXH_A
         __field Rt 0 +: 4
         __opcode 'xxxx0001 1110xxxx xxxxxx10 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
         __decode
             d = UInt(Rd);  t = UInt(Rt);  n = UInt(Rn);
             if d == 15 || t == 15 || n == 15 then UNPREDICTABLE;
@@ -63507,10 +63424,6 @@ __instruction aarch32_STLEXH_A
         __field Rd 0 +: 4
         __opcode '11101000 1100xxxx xxxxxxxx 1101xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  t = UInt(Rt);  n = UInt(Rn);
             if d == 15 || t == 15 || n == 15 then UNPREDICTABLE;
@@ -63534,7 +63447,7 @@ __instruction aarch32_VLDM_A
         __field W 21 +: 1
         __field Rn 16 +: 4
         __field Vd 12 +: 4
-        __field imm8 0 +: 8
+        __field imm8 1 +: 0
         __opcode 'xxxx110x xxx1xxxx xxxx1011 xxxxxxx0'
         __guard cond != '1111'
         __decode
@@ -63579,7 +63492,7 @@ __instruction aarch32_VLDM_A
         __field W 21 +: 1
         __field Rn 16 +: 4
         __field Vd 12 +: 4
-        __field imm8 0 +: 8
+        __field imm8 1 +: 0
         __opcode '1110110x xxx1xxxx xxxx1011 xxxxxxx0'
         __guard TRUE
         __decode
@@ -63637,10 +63550,6 @@ __instruction aarch32_TST_rr_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0001xxxx xxxxxxxx 0xx1xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
         __decode
             n = UInt(Rn);  m = UInt(Rm);  s = UInt(Rs);
             shift_t = DecodeRegShift(type1);
@@ -63757,22 +63666,6 @@ __instruction aarch32_RFE_AS
         __field Rn 16 +: 4
         __opcode '1111100x x0x1xxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '0'
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 4 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             n = UInt(Rn);
             wback = (W == '1');  increment = (U == '1');  wordhigher = (P == U);
@@ -63784,22 +63677,6 @@ __instruction aarch32_RFE_AS
         __field Rn 16 +: 4
         __opcode '11101000 00x1xxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 4 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             n = UInt(Rn);  wback = (W == '1');  increment = FALSE;  wordhigher = FALSE;
             if n == 15 then UNPREDICTABLE;
@@ -63811,22 +63688,6 @@ __instruction aarch32_RFE_AS
         __field Rn 16 +: 4
         __opcode '11101001 10x1xxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 4 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             n = UInt(Rn);  wback = (W == '1');  increment = TRUE;  wordhigher = FALSE;
             if n == 15 then UNPREDICTABLE;
@@ -63998,8 +63859,6 @@ __instruction aarch32_STREX_A
         __field Rt 0 +: 4
         __opcode 'xxxx0001 1000xxxx xxxxxx11 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
         __decode
             d = UInt(Rd);  t = UInt(Rt);  n = UInt(Rn);  imm32 = Zeros(32); // Zero offset
             if d == 15 || t == 15 || n == 15 then UNPREDICTABLE;
@@ -64032,14 +63891,6 @@ __instruction aarch32_SEVL_A
         __field cond 28 +: 4
         __opcode 'xxxx0011 00100000 xxxxxxxx 00000101'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             // No additional decoding required
 
@@ -64054,12 +63905,6 @@ __instruction aarch32_SEVL_A
         __instruction_set T32
         __opcode '11110011 1010xxxx 10x0x000 00000101'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '0'
         __decode
             // No additional decoding required
 
@@ -64252,10 +64097,6 @@ __instruction aarch32_TEQ_i_A
         __field imm12 0 +: 12
         __opcode 'xxxx0011 0011xxxx xxxxxxxx xxxxxxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
         __decode
             n = UInt(Rn);
             (imm32, carry) = A32ExpandImm_C(imm12, PSTATE.C);
@@ -64416,7 +64257,6 @@ __instruction aarch32_LDRSBT_A
         __opcode 'xxxx0000 x111xxxx xxxxxxxx 1101xxxx'
         __guard cond != '1111'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  postindex = TRUE;  add = (U == '1');
             register_form = FALSE;  imm32 = ZeroExtend(imm4H:imm4L, 32);
             if t == 15 || n == 15 || n == t then UNPREDICTABLE;
@@ -64430,12 +64270,7 @@ __instruction aarch32_LDRSBT_A
         __field Rm 0 +: 4
         __opcode 'xxxx0000 x011xxxx xxxxxxxx 1101xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  m = UInt(Rm);  postindex = TRUE;  add = (U == '1');
             register_form = TRUE;
             if t == 15 || n == 15 || n == t || m == 15 then UNPREDICTABLE;
@@ -64448,13 +64283,14 @@ __instruction aarch32_LDRSBT_A
         __opcode '11111001 0001xxxx xxxx1110 xxxxxxxx'
         __guard TRUE
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             if Rn == '1111' then SEE "LDRSB (literal)";
             t = UInt(Rt);  n = UInt(Rn);  postindex = FALSE;  add = TRUE;
             register_form = FALSE;  imm32 = ZeroExtend(imm8, 32);
             if t == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
 
     __execute __conditional
+        if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
+        EncodingSpecificOperations();
         offset = if register_form then R[m] else imm32;
         offset_addr = if add then (R[n] + offset) else (R[n] - offset);
         address = if postindex then R[n] else offset_addr;
@@ -64635,8 +64471,6 @@ __instruction aarch32_SXTB_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 10101111 xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  rotation = UInt(rotate:'000');
             if d == 15 || m == 15 then UNPREDICTABLE;
@@ -64657,7 +64491,6 @@ __instruction aarch32_SXTB_A
         __field Rm 0 +: 4
         __opcode '11111010 01001111 1111xxxx 1xxxxxxx'
         __guard TRUE
-        __unpredictable_unless 6 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  rotation = UInt(rotate:'000');
             if d == 15 || m == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -64726,18 +64559,6 @@ __instruction aarch32_SMC_AS
         __field imm4 0 +: 4
         __opcode 'xxxx0001 0110xxxx xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '0'
-        __unpredictable_unless 18 == '0'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '0'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             // imm4 is for assembly/disassembly only and is ignored by hardware
 
@@ -64746,18 +64567,6 @@ __instruction aarch32_SMC_AS
         __field imm4 16 +: 4
         __opcode '11110111 1111xxxx 1000xxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 4 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             // imm4 is for assembly/disassembly only and is ignored by hardware
             if InITBlock() && !LastInITBlock() then UNPREDICTABLE;
@@ -64843,10 +64652,6 @@ __instruction aarch32_VMOV_rs_A
         __field opc2 5 +: 2
         __opcode 'xxxx1110 0xx0xxxx xxxx1011 xxx1xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             case opc1:opc2 of
                 when '1xxx'  advsimd = TRUE;  esize = 8;  index = UInt(opc1<0>:opc2);
@@ -64865,10 +64670,6 @@ __instruction aarch32_VMOV_rs_A
         __field opc2 5 +: 2
         __opcode '11101110 0xx0xxxx xxxx1011 xxx1xxxx'
         __guard TRUE
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             case opc1:opc2 of
                 when '1xxx'  advsimd = TRUE;  esize = 8;  index = UInt(opc1<0>:opc2);
@@ -64891,10 +64692,6 @@ __instruction aarch32_SADD8_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0001xxxx xxxxxxxx 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -65094,16 +64891,19 @@ __instruction aarch32_VCGE_r_A
                 when '1' esize = 16; elements = 4;
             d = UInt(D:Vd);  n = UInt(N:Vn);  m = UInt(M:Vm);  regs = if Q == '0' then 1 else 2;
 
-    __execute __conditional
-        CheckAdvSIMDEnabled();
-        for r = 0 to regs-1
-            for e = 0 to elements-1
-                op1 = Elem[D[n+r],e,esize];  op2 = Elem[D[m+r],e,esize];
-                case type1 of
-                    when VCGEtype_signed    test_passed = (SInt(op1) >= SInt(op2));
-                    when VCGEtype_unsigned  test_passed = (UInt(op1) >= UInt(op2));
-                    when VCGEtype_fp        test_passed = FPCompareGE(op1, op2, StandardFPSCRValue());
-                Elem[D[d+r],e,esize] = if test_passed then Ones(esize) else Zeros(esize);
+    __execute
+        enumeration VCGEtype {VCGEtype_signed, VCGEtype_unsigned, VCGEtype_fp};
+        
+        if ConditionPassed() then
+            EncodingSpecificOperations();  CheckAdvSIMDEnabled();
+            for r = 0 to regs-1
+                for e = 0 to elements-1
+                    op1 = Elem[D[n+r],e,esize];  op2 = Elem[D[m+r],e,esize];
+                    case type1 of
+                        when VCGEtype_signed    test_passed = (SInt(op1) >= SInt(op2));
+                        when VCGEtype_unsigned  test_passed = (UInt(op1) >= UInt(op2));
+                        when VCGEtype_fp        test_passed = FPCompareGE(op1, op2, StandardFPSCRValue());
+                    Elem[D[d+r],e,esize] = if test_passed then Ones(esize) else Zeros(esize);
 
 __instruction aarch32_VCVTB_A
     __encoding aarch32_VCVTB_T1A1_A
@@ -65465,10 +65265,6 @@ __instruction aarch32_MVN_i_A
         __field imm12 0 +: 12
         __opcode 'xxxx0011 111xxxxx xxxxxxxx xxxxxxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '0'
-        __unpredictable_unless 18 == '0'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '0'
         __decode
             d = UInt(Rd);  setflags = (S == '1');
             (imm32, carry) = A32ExpandImm_C(imm12, PSTATE.C);
@@ -65582,13 +65378,16 @@ __instruction aarch32_VBIF_A
             if op == '11' then operation = VBitOps_VBIF;
             d = UInt(D:Vd);  n = UInt(N:Vn);  m = UInt(M:Vm);  regs = if Q == '0' then 1 else 2;
 
-    __execute __conditional
-        CheckAdvSIMDEnabled();
-        for r = 0 to regs-1
-            case operation of
-                when VBitOps_VBIF  D[d+r] = (D[d+r] AND D[m+r]) OR (D[n+r] AND NOT(D[m+r]));
-                when VBitOps_VBIT  D[d+r] = (D[n+r] AND D[m+r]) OR (D[d+r] AND NOT(D[m+r]));
-                when VBitOps_VBSL  D[d+r] = (D[n+r] AND D[d+r]) OR (D[m+r] AND NOT(D[d+r]));
+    __execute
+        enumeration VBitOps {VBitOps_VBIF, VBitOps_VBIT, VBitOps_VBSL};
+        
+        if ConditionPassed() then
+            EncodingSpecificOperations();  CheckAdvSIMDEnabled();
+            for r = 0 to regs-1
+                case operation of
+                    when VBitOps_VBIF  D[d+r] = (D[d+r] AND D[m+r]) OR (D[n+r] AND NOT(D[m+r]));
+                    when VBitOps_VBIT  D[d+r] = (D[n+r] AND D[m+r]) OR (D[d+r] AND NOT(D[m+r]));
+                    when VBitOps_VBSL  D[d+r] = (D[n+r] AND D[d+r]) OR (D[m+r] AND NOT(D[d+r]));
 
 __instruction aarch32_VTBL_A
     __encoding aarch32_VTBL_T1A1_A
@@ -65652,10 +65451,6 @@ __instruction aarch32_USAT16_A
         __field Rn 0 +: 4
         __opcode 'xxxx0110 1110xxxx xxxxxxxx 0011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  saturate_to = UInt(sat_imm);
             if d == 15 || n == 15 then UNPREDICTABLE;
@@ -65667,9 +65462,6 @@ __instruction aarch32_USAT16_A
         __field sat_imm 0 +: 4
         __opcode '11110x11 1010xxxx 0000xxxx 00xxxxxx'
         __guard TRUE
-        __unpredictable_unless 26 == '0'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 4 == '0'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  saturate_to = UInt(sat_imm);
             if d == 15 || n == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -65887,10 +65679,6 @@ __instruction aarch32_UQSUB8_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0110xxxx xxxxxxxx 1111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -66201,18 +65989,6 @@ __instruction aarch32_BXJ_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0010xxxx xxxxxxxx 0010xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             m = UInt(Rm);
             if m == 15 then UNPREDICTABLE;
@@ -66222,19 +65998,6 @@ __instruction aarch32_BXJ_A
         __field Rm 16 +: 4
         __opcode '11110011 1100xxxx 10x0xxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 4 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             m = UInt(Rm);
             if m == 15 then UNPREDICTABLE;  // Armv8-A removes UNPREDICTABLE for R13
@@ -66594,10 +66357,6 @@ __instruction aarch32_LDRSB_r_A
         __field Rm 0 +: 4
         __opcode 'xxxx000x x0x1xxxx xxxxxxxx 1101xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if P == '0' && W == '1' then SEE "LDRSBT";
             t = UInt(Rt);  n = UInt(Rn);  m = UInt(Rm);
@@ -66683,21 +66442,6 @@ __instruction aarch32_SETPAN_A
         __field imm1 9 +: 1
         __opcode '11110001 0001xxxx xxxxxxxx 0000xxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '0'
-        __unpredictable_unless 18 == '0'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '0'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 8 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             if !HavePANExt() then UNDEFINED;
             value = imm1;
@@ -66707,10 +66451,6 @@ __instruction aarch32_SETPAN_A
         __field imm1 19 +: 1
         __opcode '10110110 000xxxxx 00000000 00000000'
         __guard TRUE
-        __unpredictable_unless 20 == '1'
-        __unpredictable_unless 18 == '0'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '0'
         __decode
             if InITBlock() then UNPREDICTABLE;
             if !HavePANExt() then UNDEFINED;
@@ -66823,10 +66563,6 @@ __instruction aarch32_QDADD_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0100xxxx xxxxxxxx 0101xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -66856,14 +66592,6 @@ __instruction aarch32_REVSH_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 1111xxxx xxxxxxxx 1011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  m = UInt(Rm);
             if d == 15 || m == 15 then UNPREDICTABLE;
@@ -66905,10 +66633,6 @@ __instruction aarch32_PLD_r_A
         __field Rm 0 +: 4
         __opcode '11110111 xx01xxxx xxxxxxxx xxx0xxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
         __decode
             n = UInt(Rn);  m = UInt(Rm);  add = (U == '1');  is_pldw = (R == '0');
             (shift_t, shift_n) = DecodeImmShift(type1, imm5);
@@ -66948,10 +66672,6 @@ __instruction aarch32_VDUP_r_A
         __field E 5 +: 1
         __opcode 'xxxx1110 1xx0xxxx xxxx1011 x0x1xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             if Q == '1' && Vd<0> == '1' then UNDEFINED;
             d = UInt(D:Vd);  t = UInt(Rt);  regs = if Q == '0' then 1 else 2;
@@ -66972,10 +66692,6 @@ __instruction aarch32_VDUP_r_A
         __field E 5 +: 1
         __opcode '11101110 1xx0xxxx xxxx1011 x0x1xxxx'
         __guard TRUE
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             if Q == '1' && Vd<0> == '1' then UNDEFINED;
             d = UInt(D:Vd);  t = UInt(Rt);  regs = if Q == '0' then 1 else 2;
@@ -67030,7 +66746,6 @@ __instruction aarch32_EOR_r_A
         __field Rm 0 +: 4
         __opcode '11101010 100xxxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             if Rd == '1111' && S == '1' then SEE "TEQ (register)";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  setflags = (S == '1');
@@ -67065,9 +66780,6 @@ __instruction aarch32_CRC32_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0xx0xxxx xxxxxx1x 0100xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if ! HaveCRCExt() then UNDEFINED;
             d = UInt(Rd); n = UInt(Rn); m = UInt(Rm);
@@ -67366,13 +67078,16 @@ __instruction aarch32_VBIF_A
             if op == '11' then operation = VBitOps_VBIF;
             d = UInt(D:Vd);  n = UInt(N:Vn);  m = UInt(M:Vm);  regs = if Q == '0' then 1 else 2;
 
-    __execute __conditional
-        CheckAdvSIMDEnabled();
-        for r = 0 to regs-1
-            case operation of
-                when VBitOps_VBIF  D[d+r] = (D[d+r] AND D[m+r]) OR (D[n+r] AND NOT(D[m+r]));
-                when VBitOps_VBIT  D[d+r] = (D[n+r] AND D[m+r]) OR (D[d+r] AND NOT(D[m+r]));
-                when VBitOps_VBSL  D[d+r] = (D[n+r] AND D[d+r]) OR (D[m+r] AND NOT(D[d+r]));
+    __execute
+        enumeration VBitOps {VBitOps_VBIF, VBitOps_VBIT, VBitOps_VBSL};
+        
+        if ConditionPassed() then
+            EncodingSpecificOperations();  CheckAdvSIMDEnabled();
+            for r = 0 to regs-1
+                case operation of
+                    when VBitOps_VBIF  D[d+r] = (D[d+r] AND D[m+r]) OR (D[n+r] AND NOT(D[m+r]));
+                    when VBitOps_VBIT  D[d+r] = (D[n+r] AND D[m+r]) OR (D[d+r] AND NOT(D[m+r]));
+                    when VBitOps_VBSL  D[d+r] = (D[n+r] AND D[d+r]) OR (D[m+r] AND NOT(D[d+r]));
 
 __instruction aarch32_STR_i_A
     __encoding aarch32_STR_i_A1_A
@@ -67445,15 +67160,19 @@ __instruction aarch32_STR_i_A
 
     __execute
         if CurrentInstrSet() == InstrSet_A32 then
-            offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
-            address = if index then offset_addr else R[n];
-            MemU[address,4] = if t == 15 then PCStoreValue() else R[t];
-            if wback then R[n] = offset_addr;
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+                address = if index then offset_addr else R[n];
+                MemU[address,4] = if t == 15 then PCStoreValue() else R[t];
+                if wback then R[n] = offset_addr;
         else
-            offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
-            address = if index then offset_addr else R[n];
-            MemU[address,4] = R[t];
-            if wback then R[n] = offset_addr;
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+                address = if index then offset_addr else R[n];
+                MemU[address,4] = R[t];
+                if wback then R[n] = offset_addr;
 
 __instruction aarch32_ISB_A
     __encoding aarch32_ISB_A1_A
@@ -67461,18 +67180,6 @@ __instruction aarch32_ISB_A
         __field option 0 +: 4
         __opcode '11110101 0111xxxx xxxxxxxx 0110xxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             // No additional decoding required
 
@@ -67481,15 +67188,6 @@ __instruction aarch32_ISB_A
         __field option 0 +: 4
         __opcode '11110011 1011xxxx 10x0xxxx 0110xxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             // No additional decoding required
 
@@ -67625,10 +67323,6 @@ __instruction aarch32_UHADD8_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0111xxxx xxxxxxxx 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -67740,7 +67434,7 @@ __instruction aarch32_MCRR_A
         __field cond 28 +: 4
         __field Rt2 16 +: 4
         __field Rt 12 +: 4
-        __field coproc 8 +: 4
+        __field coproc 9 +: 0
         __field opc1 4 +: 4
         __field CRm 0 +: 4
         __opcode 'xxxx1100 0100xxxx xxxx111x xxxxxxxx'
@@ -67754,7 +67448,7 @@ __instruction aarch32_MCRR_A
         __instruction_set T32
         __field Rt2 16 +: 4
         __field Rt 12 +: 4
-        __field coproc 8 +: 4
+        __field coproc 9 +: 0
         __field opc1 4 +: 4
         __field CRm 0 +: 4
         __opcode '11101100 0100xxxx xxxx111x xxxxxxxx'
@@ -67777,10 +67471,6 @@ __instruction aarch32_QADD16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0010xxxx xxxxxxxx 0001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -67812,12 +67502,6 @@ __instruction aarch32_VMOV_s_A
         __field N 7 +: 1
         __opcode 'xxxx1110 000xxxxx xxxx1010 xxx1xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             to_arm_register = (op == '1');  t = UInt(Rt);  n = UInt(Vn:N);
             if t == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -67830,12 +67514,6 @@ __instruction aarch32_VMOV_s_A
         __field N 7 +: 1
         __opcode '11101110 000xxxxx xxxx1010 xxx1xxxx'
         __guard TRUE
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             to_arm_register = (op == '1');  t = UInt(Rt);  n = UInt(Vn:N);
             if t == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -67855,12 +67533,6 @@ __instruction aarch32_LDREX_A
         __field Rt 12 +: 4
         __opcode 'xxxx0001 1001xxxx xxxxxx11 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  n = UInt(Rn);  imm32 = Zeros(32); // Zero offset
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -67872,10 +67544,6 @@ __instruction aarch32_LDREX_A
         __field imm8 0 +: 8
         __opcode '11101000 0101xxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             t = UInt(Rt);  n = UInt(Rn);  imm32 = ZeroExtend(imm8:'00', 32);
             if t == 15 || n == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -68042,7 +67710,7 @@ __instruction aarch32_VLDM_A
         __field W 21 +: 1
         __field Rn 16 +: 4
         __field Vd 12 +: 4
-        __field imm8 0 +: 8
+        __field imm8 1 +: 0
         __opcode 'xxxx110x xxx1xxxx xxxx1011 xxxxxxx1'
         __guard cond != '1111'
         __decode
@@ -68065,7 +67733,7 @@ __instruction aarch32_VLDM_A
         __field W 21 +: 1
         __field Rn 16 +: 4
         __field Vd 12 +: 4
-        __field imm8 0 +: 8
+        __field imm8 1 +: 0
         __opcode '1110110x xxx1xxxx xxxx1011 xxxxxxx1'
         __guard TRUE
         __decode
@@ -68190,10 +67858,6 @@ __instruction aarch32_USAX_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0101xxxx xxxxxxxx 0101xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -68341,14 +68005,6 @@ __instruction aarch32_DBG_A
         __field option 0 +: 4
         __opcode 'xxxx0011 00100000 xxxxxxxx 1111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             // DBG executes as a NOP. The 'option' field is ignored
 
@@ -68357,12 +68013,6 @@ __instruction aarch32_DBG_A
         __field option 0 +: 4
         __opcode '11110011 1010xxxx 10x0x000 1111xxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '0'
         __decode
             // DBG executes as a NOP. The 'option' field is ignored
 
@@ -68422,7 +68072,7 @@ __instruction aarch32_MRC_A
         __field opc1 21 +: 3
         __field CRn 16 +: 4
         __field Rt 12 +: 4
-        __field coproc 8 +: 4
+        __field coproc 9 +: 0
         __field opc2 5 +: 3
         __field CRm 0 +: 4
         __opcode 'xxxx1110 xxx1xxxx xxxx111x xxx1xxxx'
@@ -68436,7 +68086,7 @@ __instruction aarch32_MRC_A
         __field opc1 21 +: 3
         __field CRn 16 +: 4
         __field Rt 12 +: 4
-        __field coproc 8 +: 4
+        __field coproc 9 +: 0
         __field opc2 5 +: 3
         __field CRm 0 +: 4
         __opcode '11101110 xxx1xxxx xxxx111x xxx1xxxx'
@@ -68496,13 +68146,16 @@ __instruction aarch32_VBIF_A
             if op == '11' then operation = VBitOps_VBIF;
             d = UInt(D:Vd);  n = UInt(N:Vn);  m = UInt(M:Vm);  regs = if Q == '0' then 1 else 2;
 
-    __execute __conditional
-        CheckAdvSIMDEnabled();
-        for r = 0 to regs-1
-            case operation of
-                when VBitOps_VBIF  D[d+r] = (D[d+r] AND D[m+r]) OR (D[n+r] AND NOT(D[m+r]));
-                when VBitOps_VBIT  D[d+r] = (D[n+r] AND D[m+r]) OR (D[d+r] AND NOT(D[m+r]));
-                when VBitOps_VBSL  D[d+r] = (D[n+r] AND D[d+r]) OR (D[m+r] AND NOT(D[d+r]));
+    __execute
+        enumeration VBitOps {VBitOps_VBIF, VBitOps_VBIT, VBitOps_VBSL};
+        
+        if ConditionPassed() then
+            EncodingSpecificOperations();  CheckAdvSIMDEnabled();
+            for r = 0 to regs-1
+                case operation of
+                    when VBitOps_VBIF  D[d+r] = (D[d+r] AND D[m+r]) OR (D[n+r] AND NOT(D[m+r]));
+                    when VBitOps_VBIT  D[d+r] = (D[n+r] AND D[m+r]) OR (D[d+r] AND NOT(D[m+r]));
+                    when VBitOps_VBSL  D[d+r] = (D[n+r] AND D[d+r]) OR (D[m+r] AND NOT(D[d+r]));
 
 __instruction aarch32_VDUP_s_A
     __encoding aarch32_VDUP_s_T1A1_A
@@ -68556,14 +68209,6 @@ __instruction aarch32_YIELD_A
         __field cond 28 +: 4
         __opcode 'xxxx0011 00100000 xxxxxxxx 00000001'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             // No additional decoding required
 
@@ -68578,12 +68223,6 @@ __instruction aarch32_YIELD_A
         __instruction_set T32
         __opcode '11110011 1010xxxx 10x0x000 00000001'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '0'
         __decode
             // No additional decoding required
 
@@ -68601,13 +68240,6 @@ __instruction aarch32_CPS_AS
         __field mode 0 +: 5
         __opcode '11110001 0000xxx0 xxxxxxxx xx0xxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
         __decode
             if mode != '00000' && M == '0' then UNPREDICTABLE;
             if (imod<1> == '1' && A:I:F == '000') || (imod<1> == '0' && A:I:F != '000') then UNPREDICTABLE;
@@ -68623,7 +68255,6 @@ __instruction aarch32_CPS_AS
         __field F 16 +: 1
         __opcode '10110110 011xxxxx 00000000 00000000'
         __guard TRUE
-        __unpredictable_unless 19 == '0'
         __decode
             if A:I:F == '000' then UNPREDICTABLE;
             enable = (im == '0');  disable = (im == '1');  changemode = FALSE;
@@ -68640,12 +68271,6 @@ __instruction aarch32_CPS_AS
         __field mode 0 +: 5
         __opcode '11110011 1010xxxx 10x0xxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '0'
         __decode
             if imod == '00' && M == '0' then SEE "Hint instructions";
             if mode != '00000' && M == '0' then UNPREDICTABLE;
@@ -68656,6 +68281,7 @@ __instruction aarch32_CPS_AS
 
     __execute
         if CurrentInstrSet() == InstrSet_A32 then
+            EncodingSpecificOperations();
             if PSTATE.EL != EL0 then
                 if enable then
                     if affectA then PSTATE.A = '0';
@@ -68669,6 +68295,7 @@ __instruction aarch32_CPS_AS
                     // AArch32.WriteModeByInstr() sets PSTATE.IL to 1 if this is an illegal mode change.
                     AArch32.WriteModeByInstr(mode);
         else
+            EncodingSpecificOperations();
             if PSTATE.EL != EL0 then
                 if enable then
                     if affectA then PSTATE.A = '0';
@@ -68975,18 +68602,6 @@ __instruction aarch32_BX_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0010xxxx xxxxxxxx 0001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             m = UInt(Rm);
 
@@ -68995,9 +68610,6 @@ __instruction aarch32_BX_A
         __field Rm 19 +: 4
         __opcode '01000111 0xxxxxxx 00000000 00000000'
         __guard TRUE
-        __unpredictable_unless 18 == '0'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '0'
         __decode
             m = UInt(Rm);
             if InITBlock() && !LastInITBlock() then UNPREDICTABLE;
@@ -69207,7 +68819,6 @@ __instruction aarch32_ADD_SP_r_A
         __field Rm 0 +: 4
         __opcode '11101011 000x1101 xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             if Rd == '1111' && S == '1' then SEE "CMN (register)";
             d = UInt(Rd);  m = UInt(Rm);  setflags = (S == '1');
@@ -69264,8 +68875,8 @@ __instruction aarch32_SHA256SU1_A
             d = UInt(D:Vd); n = UInt(N:Vn); m = UInt(M:Vm);
 
     __execute __conditional
-        CheckCryptoEnabled32();
         bits(128) result;
+        EncodingSpecificOperations(); CheckCryptoEnabled32();
         X = Q[d>>1]; Y = Q[n>>1]; Z = Q[m>>1];
         T0 = Z<31:0> : Y<127:32>;
         
@@ -69543,15 +69154,6 @@ __instruction aarch32_SUB_i_A
         __field imm8 0 +: 8
         __opcode '11110011 1101xxxx 10x0xxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             if Rn == '1110' && IsZero(imm8) then SEE "ERET";
             d = 15;  n = UInt(Rn);  setflags = TRUE;  imm32 = ZeroExtend(imm8, 32);
@@ -69659,7 +69261,6 @@ __instruction aarch32_SBC_r_A
         __field Rm 0 +: 4
         __opcode '11101011 011xxxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  setflags = (S == '1');
             (shift_t, shift_n) = DecodeImmShift(type1, imm3:imm2);
@@ -69933,8 +69534,6 @@ __instruction aarch32_UXTAH_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 1111xxxx xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if Rn == '1111' then SEE "UXTH";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  rotation = UInt(rotate:'000');
@@ -69948,7 +69547,6 @@ __instruction aarch32_UXTAH_A
         __field Rm 0 +: 4
         __opcode '11111010 0001xxxx 1111xxxx 1xxxxxxx'
         __guard TRUE
-        __unpredictable_unless 6 == '0'
         __decode
             if Rn == '1111' then SEE "UXTH";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  rotation = UInt(rotate:'000');
@@ -70119,10 +69717,6 @@ __instruction aarch32_CMN_i_A
         __field imm12 0 +: 12
         __opcode 'xxxx0011 0111xxxx xxxxxxxx xxxxxxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
         __decode
             n = UInt(Rn);  imm32 = A32ExpandImm(imm12);
 
@@ -70214,8 +69808,8 @@ __instruction aarch32_SHA256SU0_A
             d = UInt(D:Vd); m = UInt(M:Vm);
 
     __execute __conditional
-        CheckCryptoEnabled32();
         bits(128) result;
+        EncodingSpecificOperations(); CheckCryptoEnabled32();
         X = Q[d>>1]; Y = Q[m>>1];
         T = Y<31:0> : X<127:32>;
         for e = 0 to 3
@@ -70235,10 +69829,6 @@ __instruction aarch32_MOV_r_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 101xxxxx xxxxxxxx xxx0xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '0'
-        __unpredictable_unless 18 == '0'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  setflags = (S == '1');
             (shift_t, shift_n) = DecodeImmShift(type1, imm5);
@@ -70278,7 +69868,6 @@ __instruction aarch32_MOV_r_A
         __field Rm 0 +: 4
         __opcode '11101010 010x1111 xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  setflags = (S == '1');
             (shift_t, shift_n) = DecodeImmShift(type1, imm3:imm2);
@@ -70309,8 +69898,6 @@ __instruction aarch32_SXTB16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 10001111 xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  rotation = UInt(rotate:'000');
             if d == 15 || m == 15 then UNPREDICTABLE;
@@ -70322,7 +69909,6 @@ __instruction aarch32_SXTB16_A
         __field Rm 0 +: 4
         __opcode '11111010 00101111 1111xxxx 1xxxxxxx'
         __guard TRUE
-        __unpredictable_unless 6 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  rotation = UInt(rotate:'000');
             if d == 15 || m == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -70396,10 +69982,6 @@ __instruction aarch32_VMOV_sr_A
         __field opc2 5 +: 2
         __opcode 'xxxx1110 xxx1xxxx xxxx1011 xxx1xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             case U:opc1:opc2 of
                 when 'x1xxx'  advsimd = TRUE;  esize = 8;  index = UInt(opc1<0>:opc2);
@@ -70420,10 +70002,6 @@ __instruction aarch32_VMOV_sr_A
         __field opc2 5 +: 2
         __opcode '11101110 xxx1xxxx xxxx1011 xxx1xxxx'
         __guard TRUE
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             case U:opc1:opc2 of
                 when 'x1xxx'  advsimd = TRUE;  esize = 8;  index = UInt(opc1<0>:opc2);
@@ -70557,7 +70135,6 @@ __instruction aarch32_BIC_r_A
         __field Rm 0 +: 4
         __opcode '11101010 001xxxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  setflags = (S == '1');
             (shift_t, shift_n) = DecodeImmShift(type1, imm3:imm2);
@@ -70694,12 +70271,6 @@ __instruction aarch32_LDREXB_A
         __field Rt 12 +: 4
         __opcode 'xxxx0001 1101xxxx xxxxxx11 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -70710,14 +70281,6 @@ __instruction aarch32_LDREXB_A
         __field Rt 12 +: 4
         __opcode '11101000 1101xxxx xxxxxxxx 0100xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -70771,27 +70334,30 @@ __instruction aarch32_VNMLA_A
                 when '10' esize = 32; d = UInt(Vd:D); n = UInt(Vn:N); m = UInt(Vm:M);
                 when '11' esize = 64; d = UInt(D:Vd); n = UInt(N:Vn); m = UInt(M:Vm);
 
-    __execute __conditional
-        CheckVFPEnabled(TRUE);
-        case esize of
-            when 16
-                product16 = FPMul(S[n]<15:0>, S[m]<15:0>, FPSCR);
-                case type1 of
-                    when VFPNegMul_VNMLA  S[d] = Zeros(16) : FPAdd(FPNeg(S[d]<15:0>), FPNeg(product16), FPSCR);
-                    when VFPNegMul_VNMLS  S[d] = Zeros(16) : FPAdd(FPNeg(S[d]<15:0>), product16, FPSCR);
-                    when VFPNegMul_VNMUL  S[d] = Zeros(16) : FPNeg(product16);
-            when 32
-                product32 = FPMul(S[n], S[m], FPSCR);
-                case type1 of
-                    when VFPNegMul_VNMLA  S[d] = FPAdd(FPNeg(S[d]), FPNeg(product32), FPSCR);
-                    when VFPNegMul_VNMLS  S[d] = FPAdd(FPNeg(S[d]), product32, FPSCR);
-                    when VFPNegMul_VNMUL  S[d] = FPNeg(product32);
-            when 64
-                product64 = FPMul(D[n], D[m], FPSCR);
-                case type1 of
-                    when VFPNegMul_VNMLA  D[d] = FPAdd(FPNeg(D[d]), FPNeg(product64), FPSCR);
-                    when VFPNegMul_VNMLS  D[d] = FPAdd(FPNeg(D[d]), product64, FPSCR);
-                    when VFPNegMul_VNMUL  D[d] = FPNeg(product64);
+    __execute
+        enumeration VFPNegMul {VFPNegMul_VNMLA, VFPNegMul_VNMLS, VFPNegMul_VNMUL};
+        
+        if ConditionPassed() then
+            EncodingSpecificOperations();  CheckVFPEnabled(TRUE);
+            case esize of
+                when 16
+                    product16 = FPMul(S[n]<15:0>, S[m]<15:0>, FPSCR);
+                    case type1 of
+                        when VFPNegMul_VNMLA  S[d] = Zeros(16) : FPAdd(FPNeg(S[d]<15:0>), FPNeg(product16), FPSCR);
+                        when VFPNegMul_VNMLS  S[d] = Zeros(16) : FPAdd(FPNeg(S[d]<15:0>), product16, FPSCR);
+                        when VFPNegMul_VNMUL  S[d] = Zeros(16) : FPNeg(product16);
+                when 32
+                    product32 = FPMul(S[n], S[m], FPSCR);
+                    case type1 of
+                        when VFPNegMul_VNMLA  S[d] = FPAdd(FPNeg(S[d]), FPNeg(product32), FPSCR);
+                        when VFPNegMul_VNMLS  S[d] = FPAdd(FPNeg(S[d]), product32, FPSCR);
+                        when VFPNegMul_VNMUL  S[d] = FPNeg(product32);
+                when 64
+                    product64 = FPMul(D[n], D[m], FPSCR);
+                    case type1 of
+                        when VFPNegMul_VNMLA  D[d] = FPAdd(FPNeg(D[d]), FPNeg(product64), FPSCR);
+                        when VFPNegMul_VNMLS  D[d] = FPAdd(FPNeg(D[d]), product64, FPSCR);
+                        when VFPNegMul_VNMUL  D[d] = FPNeg(product64);
 
 __instruction aarch32_LDRH_r_A
     __encoding aarch32_LDRH_r_A1_A
@@ -70805,10 +70371,6 @@ __instruction aarch32_LDRH_r_A
         __field Rm 0 +: 4
         __opcode 'xxxx000x x0x1xxxx xxxxxxxx 1011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if P == '0' && W == '1' then SEE "LDRHT";
             t = UInt(Rt);  n = UInt(Rn);  m = UInt(Rm);
@@ -70901,10 +70463,6 @@ __instruction aarch32_QSAX_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0010xxxx xxxxxxxx 0101xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -70935,10 +70493,6 @@ __instruction aarch32_SHADD8_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0011xxxx xxxxxxxx 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -71084,7 +70638,6 @@ __instruction aarch32_SUB_SP_r_A
         __field Rm 0 +: 4
         __opcode '11101011 101x1101 xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             if Rd == '1111' && S == '1' then SEE "CMP (register)";
             d = UInt(Rd);  m = UInt(Rm);  setflags = (S == '1');
@@ -71114,8 +70667,6 @@ __instruction aarch32_SXTAB_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 1010xxxx xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if Rn == '1111' then SEE "SXTB";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  rotation = UInt(rotate:'000');
@@ -71129,7 +70680,6 @@ __instruction aarch32_SXTAB_A
         __field Rm 0 +: 4
         __opcode '11111010 0100xxxx 1111xxxx 1xxxxxxx'
         __guard TRUE
-        __unpredictable_unless 6 == '0'
         __decode
             if Rn == '1111' then SEE "SXTB";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  rotation = UInt(rotate:'000');
@@ -71213,7 +70763,6 @@ __instruction aarch32_LDRSHT_A
         __opcode 'xxxx0000 x111xxxx xxxxxxxx 1111xxxx'
         __guard cond != '1111'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  postindex = TRUE;  add = (U == '1');
             register_form = FALSE;  imm32 = ZeroExtend(imm4H:imm4L, 32);
             if t == 15 || n == 15 || n == t then UNPREDICTABLE;
@@ -71227,12 +70776,7 @@ __instruction aarch32_LDRSHT_A
         __field Rm 0 +: 4
         __opcode 'xxxx0000 x011xxxx xxxxxxxx 1111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  m = UInt(Rm);  postindex = TRUE;  add = (U == '1');
             register_form = TRUE;
             if t == 15 || n == 15 || n == t || m == 15 then UNPREDICTABLE;
@@ -71245,13 +70789,14 @@ __instruction aarch32_LDRSHT_A
         __opcode '11111001 0011xxxx xxxx1110 xxxxxxxx'
         __guard TRUE
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             if Rn == '1111' then SEE "LDRSH (literal)";
             t = UInt(Rt);  n = UInt(Rn);  postindex = FALSE;  add = TRUE;
             register_form = FALSE;  imm32 = ZeroExtend(imm8, 32);
             if t == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
 
     __execute __conditional
+        if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
+        EncodingSpecificOperations();
         offset = if register_form then R[m] else imm32;
         offset_addr = if add then (R[n] + offset) else (R[n] - offset);
         address = if postindex then R[n] else offset_addr;
@@ -71265,14 +70810,6 @@ __instruction aarch32_CSDB_A
         __field cond 28 +: 4
         __opcode 'xxxx0011 00100000 xxxxxxxx 00010100'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if cond != '1110' then UNPREDICTABLE;      // CSDB must be encoded with AL condition
 
@@ -71280,12 +70817,6 @@ __instruction aarch32_CSDB_A
         __instruction_set T32
         __opcode '11110011 1010xxxx 10x0x000 00010100'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '0'
         __decode
             if InITBlock() then UNPREDICTABLE;
 
@@ -71508,14 +71039,6 @@ __instruction aarch32_RBIT_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 1111xxxx xxxxxxxx 0011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  m = UInt(Rm);
             if d == 15 || m == 15 then UNPREDICTABLE;
@@ -71644,14 +71167,6 @@ __instruction aarch32_CLZ_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0110xxxx xxxxxxxx 0001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  m = UInt(Rm);
             if d == 15 || m == 15 then UNPREDICTABLE;
@@ -71778,10 +71293,6 @@ __instruction aarch32_CMP_i_A
         __field imm12 0 +: 12
         __opcode 'xxxx0011 0101xxxx xxxxxxxx xxxxxxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
         __decode
             n = UInt(Rn);  imm32 = A32ExpandImm(imm12);
 
@@ -71938,8 +71449,6 @@ __instruction aarch32_STREXH_A
         __field Rt 0 +: 4
         __opcode 'xxxx0001 1110xxxx xxxxxx11 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
         __decode
             d = UInt(Rd);  t = UInt(Rt);  n = UInt(Rn);
             if d == 15 || t == 15 || n == 15 then UNPREDICTABLE;
@@ -71952,10 +71461,6 @@ __instruction aarch32_STREXH_A
         __field Rd 0 +: 4
         __opcode '11101000 1100xxxx xxxxxxxx 0101xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  t = UInt(Rt);  n = UInt(Rn);
             if d == 15 || t == 15 || n == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -72082,8 +71587,6 @@ __instruction aarch32_UXTB_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 11101111 xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  rotation = UInt(rotate:'000');
             if d == 15 || m == 15 then UNPREDICTABLE;
@@ -72104,7 +71607,6 @@ __instruction aarch32_UXTB_A
         __field Rm 0 +: 4
         __opcode '11111010 01011111 1111xxxx 1xxxxxxx'
         __guard TRUE
-        __unpredictable_unless 6 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  rotation = UInt(rotate:'000');
             if d == 15 || m == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -72118,18 +71620,6 @@ __instruction aarch32_PSSBB_A
         __instruction_set A32
         __opcode '11110101 0111xxxx xxxxxxxx 01000100'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             // No additional decoding required
 
@@ -72137,15 +71627,6 @@ __instruction aarch32_PSSBB_A
         __instruction_set T32
         __opcode '11110011 1011xxxx 10x0xxxx 01000100'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             if InITBlock() then UNPREDICTABLE;
 
@@ -72219,10 +71700,6 @@ __instruction aarch32_TST_i_A
         __field imm12 0 +: 12
         __opcode 'xxxx0011 0001xxxx xxxxxxxx xxxxxxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
         __decode
             n = UInt(Rn);
             (imm32, carry) = A32ExpandImm_C(imm12, PSTATE.C);
@@ -72255,13 +71732,6 @@ __instruction aarch32_VMSR_AS
         __field Rt 12 +: 4
         __opcode 'xxxx1110 1110xxxx xxxx1010 xxx1xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             t = UInt(Rt);
             if reg != '000x' && reg != '1000' then UNPREDICTABLE;
@@ -72273,13 +71743,6 @@ __instruction aarch32_VMSR_AS
         __field Rt 12 +: 4
         __opcode '11101110 1110xxxx xxxx1010 xxx1xxxx'
         __guard TRUE
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             t = UInt(Rt);
             if reg != '000x' && reg != '1000' then UNPREDICTABLE;
@@ -72365,12 +71828,6 @@ __instruction aarch32_LDAEXH_A
         __field Rt 12 +: 4
         __opcode 'xxxx0001 1111xxxx xxxxxx10 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -72381,14 +71838,6 @@ __instruction aarch32_LDAEXH_A
         __field Rt 12 +: 4
         __opcode '11101000 1101xxxx xxxxxxxx 1101xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -72456,8 +71905,6 @@ __instruction aarch32_UXTB16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 11001111 xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  rotation = UInt(rotate:'000');
             if d == 15 || m == 15 then UNPREDICTABLE;
@@ -72469,7 +71916,6 @@ __instruction aarch32_UXTB16_A
         __field Rm 0 +: 4
         __opcode '11111010 00111111 1111xxxx 1xxxxxxx'
         __guard TRUE
-        __unpredictable_unless 6 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  rotation = UInt(rotate:'000');
             if d == 15 || m == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -72754,22 +72200,6 @@ __instruction aarch32_SB_A
         __instruction_set A32
         __opcode '11110101 0111xxxx xxxxxxxx 0111xxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             // No additional decoding required
 
@@ -72777,19 +72207,6 @@ __instruction aarch32_SB_A
         __instruction_set T32
         __opcode '11110011 1011xxxx 10x0xxxx 0111xxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             if InITBlock() then UNPREDICTABLE;
 
@@ -72901,10 +72318,6 @@ __instruction aarch32_SHASX_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0011xxxx xxxxxxxx 0011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -72934,12 +72347,6 @@ __instruction aarch32_LDREXD_A
         __field Rt 12 +: 4
         __opcode 'xxxx0001 1011xxxx xxxxxx11 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  t2 = t + 1;  n = UInt(Rn);
             if Rt<0> == '1' || t2 == 15 || n == 15 then UNPREDICTABLE;
@@ -72951,10 +72358,6 @@ __instruction aarch32_LDREXD_A
         __field Rt2 8 +: 4
         __opcode '11101000 1101xxxx xxxxxxxx 0111xxxx'
         __guard TRUE
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  t2 = UInt(Rt2);  n = UInt(Rn);
             if t == 15 || t2 == 15 || t == t2 || n == 15 then UNPREDICTABLE;
@@ -73193,10 +72596,6 @@ __instruction aarch32_SEL_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 1000xxxx xxxxxxxx 1011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -73460,10 +72859,6 @@ __instruction aarch32_QSUB16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0010xxxx xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -73494,10 +72889,6 @@ __instruction aarch32_UQASX_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0110xxxx xxxxxxxx 0011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -73528,13 +72919,6 @@ __instruction aarch32_MSR_r_AS
         __field Rn 0 +: 4
         __opcode 'xxxx0001 0x10xxxx xxxxxx0x 0000xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             n = UInt(Rn);  write_spsr = (R == '1');
             if mask == '0000' then UNPREDICTABLE;
@@ -73547,14 +72931,6 @@ __instruction aarch32_MSR_r_AS
         __field mask 8 +: 4
         __opcode '11110011 100xxxxx 10x0xxxx xx0xxxxx'
         __guard TRUE
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 4 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             n = UInt(Rn);  write_spsr = (R == '1');
             if mask == '0000' then UNPREDICTABLE;
@@ -73622,14 +72998,6 @@ __instruction aarch32_WFE_A
         __field cond 28 +: 4
         __opcode 'xxxx0011 00100000 xxxxxxxx 00000010'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             // No additional decoding required
 
@@ -73644,12 +73012,6 @@ __instruction aarch32_WFE_A
         __instruction_set T32
         __opcode '11110011 1010xxxx 10x0x000 00000010'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '0'
         __decode
             // No additional decoding required
 
@@ -73801,15 +73163,19 @@ __instruction aarch32_LDRB_i_A
 
     __execute
         if CurrentInstrSet() == InstrSet_A32 then
-            offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
-            address = if index then offset_addr else R[n];
-            R[t] = ZeroExtend(MemU[address,1], 32);
-            if wback then R[n] = offset_addr;
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+                address = if index then offset_addr else R[n];
+                R[t] = ZeroExtend(MemU[address,1], 32);
+                if wback then R[n] = offset_addr;
         else
-            offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
-            address = if index then offset_addr else R[n];
-            R[t] = ZeroExtend(MemU[address,1], 32);
-            if wback then R[n] = offset_addr;
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+                address = if index then offset_addr else R[n];
+                R[t] = ZeroExtend(MemU[address,1], 32);
+                if wback then R[n] = offset_addr;
 
 __instruction aarch32_STLEX_A
     __encoding aarch32_STLEX_A1_A
@@ -73820,8 +73186,6 @@ __instruction aarch32_STLEX_A
         __field Rt 0 +: 4
         __opcode 'xxxx0001 1000xxxx xxxxxx10 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
         __decode
             d = UInt(Rd);  t = UInt(Rt);  n = UInt(Rn);
             if d == 15 || t == 15 || n == 15 then UNPREDICTABLE;
@@ -73834,10 +73198,6 @@ __instruction aarch32_STLEX_A
         __field Rd 0 +: 4
         __opcode '11101000 1100xxxx xxxxxxxx 1110xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  t = UInt(Rt);  n = UInt(Rn);
             if d == 15 || t == 15 || n == 15 then UNPREDICTABLE;
@@ -73904,13 +73264,6 @@ __instruction aarch32_VMRS_AS
         __field Rt 12 +: 4
         __opcode 'xxxx1110 1111xxxx xxxx1010 xxx1xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             t = UInt(Rt);
             if !(reg IN {'000x', '0101', '011x', '1000'}) then UNPREDICTABLE;
@@ -73922,13 +73275,6 @@ __instruction aarch32_VMRS_AS
         __field Rt 12 +: 4
         __opcode '11101110 1111xxxx xxxx1010 xxx1xxxx'
         __guard TRUE
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             t = UInt(Rt);
             if !(reg IN {'000x', '0101', '011x', '1000'}) then UNPREDICTABLE;
@@ -73964,7 +73310,7 @@ __instruction aarch32_VSTM_A
         __field W 21 +: 1
         __field Rn 16 +: 4
         __field Vd 12 +: 4
-        __field imm8 0 +: 8
+        __field imm8 1 +: 0
         __opcode 'xxxx110x xxx0xxxx xxxx1011 xxxxxxx1'
         __guard cond != '1111'
         __decode
@@ -73987,7 +73333,7 @@ __instruction aarch32_VSTM_A
         __field W 21 +: 1
         __field Rn 16 +: 4
         __field Vd 12 +: 4
-        __field imm8 0 +: 8
+        __field imm8 1 +: 0
         __opcode '1110110x xxx0xxxx xxxx1011 xxxxxxx1'
         __guard TRUE
         __decode
@@ -74135,10 +73481,6 @@ __instruction aarch32_QADD8_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0010xxxx xxxxxxxx 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -74309,12 +73651,6 @@ __instruction aarch32_LDAH_A
         __field Rt 12 +: 4
         __opcode 'xxxx0001 1111xxxx xxxxxx00 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -74325,14 +73661,6 @@ __instruction aarch32_LDAH_A
         __field Rt 12 +: 4
         __opcode '11101000 1101xxxx xxxxxxxx 1001xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -74350,21 +73678,6 @@ __instruction aarch32_SRS_AS
         __field mode 0 +: 5
         __opcode '1111100x x1x0xxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '1'
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
         __decode
             wback = (W == '1');  increment = (U == '1');  wordhigher = (P == U);
 
@@ -74374,21 +73687,6 @@ __instruction aarch32_SRS_AS
         __field mode 0 +: 5
         __opcode '11101000 00x0xxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
         __decode
             wback = (W == '1');  increment = FALSE;  wordhigher = FALSE;
 
@@ -74398,73 +73696,62 @@ __instruction aarch32_SRS_AS
         __field mode 0 +: 5
         __opcode '11101001 10x0xxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
         __decode
             wback = (W == '1');  increment = TRUE;  wordhigher = FALSE;
 
     __execute
         if CurrentInstrSet() == InstrSet_A32 then
-            if PSTATE.EL == EL2 then          // UNDEFINED at EL2
-                UNDEFINED;
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                if PSTATE.EL == EL2 then          // UNDEFINED at EL2
+                    UNDEFINED;
             
-            // Check for UNPREDICTABLE cases. The definition of UNPREDICTABLE does not permit these
-            // to be security holes
-            if PSTATE.M IN {M32_User,M32_System} then
-                UNPREDICTABLE;
-            elsif mode == M32_Hyp then        // Check for attempt to access Hyp mode SP
-                UNPREDICTABLE;
-            elsif mode == M32_Monitor then    // Check for attempt to access Monitor mode SP
-                if !HaveEL(EL3) || !IsSecure()  then
+                // Check for UNPREDICTABLE cases. The definition of UNPREDICTABLE does not permit these
+                // to be security holes
+                if PSTATE.M IN {M32_User,M32_System} then
                     UNPREDICTABLE;
-                elsif !ELUsingAArch32(EL3) then
-                    AArch64.MonitorModeTrap();
-            elsif BadMode(mode) then
-                UNPREDICTABLE;
+                elsif mode == M32_Hyp then        // Check for attempt to access Hyp mode SP
+                    UNPREDICTABLE;
+                elsif mode == M32_Monitor then    // Check for attempt to access Monitor mode SP
+                    if !HaveEL(EL3) || !IsSecure()  then
+                        UNPREDICTABLE;
+                    elsif !ELUsingAArch32(EL3) then
+                        AArch64.MonitorModeTrap();
+                elsif BadMode(mode) then
+                    UNPREDICTABLE;
             
-            base = Rmode[13,mode];
-            address = if increment then base else base-8;
-            if wordhigher then address = address+4;
-            MemA[address,4]   = LR;
-            MemA[address+4,4] = SPSR[];
-            if wback then Rmode[13,mode] = if increment then base+8 else base-8;
+                base = Rmode[13,mode];
+                address = if increment then base else base-8;
+                if wordhigher then address = address+4;
+                MemA[address,4]   = LR;
+                MemA[address+4,4] = SPSR[];
+                if wback then Rmode[13,mode] = if increment then base+8 else base-8;
         else
-            if PSTATE.EL == EL2 then          // UNDEFINED at EL2
-                UNDEFINED;
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                if PSTATE.EL == EL2 then          // UNDEFINED at EL2
+                    UNDEFINED;
             
-            // Check for UNPREDICTABLE cases. The definition of UNPREDICTABLE does not permit these
-            // to be security holes
-            if PSTATE.M IN {M32_User,M32_System} then
-                UNPREDICTABLE;
-            elsif mode == M32_Hyp then        // Check for attempt to access Hyp mode SP
-                UNPREDICTABLE;
-            elsif mode == M32_Monitor then    // Check for attempt to access Monitor mode SP
-                if !HaveEL(EL3) || !IsSecure()  then
+                // Check for UNPREDICTABLE cases. The definition of UNPREDICTABLE does not permit these
+                // to be security holes
+                if PSTATE.M IN {M32_User,M32_System} then
                     UNPREDICTABLE;
-                elsif !ELUsingAArch32(EL3) then
-                    AArch64.MonitorModeTrap();
-            elsif BadMode(mode) then
-                UNPREDICTABLE;
+                elsif mode == M32_Hyp then        // Check for attempt to access Hyp mode SP
+                    UNPREDICTABLE;
+                elsif mode == M32_Monitor then    // Check for attempt to access Monitor mode SP
+                    if !HaveEL(EL3) || !IsSecure()  then
+                        UNPREDICTABLE;
+                    elsif !ELUsingAArch32(EL3) then
+                        AArch64.MonitorModeTrap();
+                elsif BadMode(mode) then
+                    UNPREDICTABLE;
             
-            base = Rmode[13,mode];
-            address = if increment then base else base-8;
-            if wordhigher then address = address+4;
-            MemA[address,4]   = LR;
-            MemA[address+4,4] = SPSR[];
-            if wback then Rmode[13,mode] = if increment then base+8 else base-8;
+                base = Rmode[13,mode];
+                address = if increment then base else base-8;
+                if wordhigher then address = address+4;
+                MemA[address,4]   = LR;
+                MemA[address+4,4] = SPSR[];
+                if wback then Rmode[13,mode] = if increment then base+8 else base-8;
 
 __instruction aarch32_AND_rr_A
     __encoding aarch32_AND_rr_A1_A
@@ -74542,10 +73829,6 @@ __instruction aarch32_SSAX_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0001xxxx xxxxxxxx 0101xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -74858,21 +74141,25 @@ __instruction aarch32_ADD_i_A
 
     __execute
         if CurrentInstrSet() == InstrSet_A32 then
-            (result, nzcv) = AddWithCarry(R[n], imm32, '0');
-            if d == 15 then          // Can only occur for A32 encoding
-                if setflags then
-                    ALUExceptionReturn(result);
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                (result, nzcv) = AddWithCarry(R[n], imm32, '0');
+                if d == 15 then          // Can only occur for A32 encoding
+                    if setflags then
+                        ALUExceptionReturn(result);
+                    else
+                        ALUWritePC(result);
                 else
-                    ALUWritePC(result);
-            else
+                    R[d] = result;
+                    if setflags then
+                        PSTATE.<N,Z,C,V> = nzcv;
+        else
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                (result, nzcv) = AddWithCarry(R[n], imm32, '0');
                 R[d] = result;
                 if setflags then
                     PSTATE.<N,Z,C,V> = nzcv;
-        else
-            (result, nzcv) = AddWithCarry(R[n], imm32, '0');
-            R[d] = result;
-            if setflags then
-                PSTATE.<N,Z,C,V> = nzcv;
 
 __instruction aarch32_STRH_i_A
     __encoding aarch32_STRH_i_A1_A
@@ -74937,15 +74224,19 @@ __instruction aarch32_STRH_i_A
 
     __execute
         if CurrentInstrSet() == InstrSet_A32 then
-            offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
-            address = if index then offset_addr else R[n];
-            MemU[address,2] = R[t]<15:0>;
-            if wback then R[n] = offset_addr;
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+                address = if index then offset_addr else R[n];
+                MemU[address,2] = R[t]<15:0>;
+                if wback then R[n] = offset_addr;
         else
-            offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
-            address = if index then offset_addr else R[n];
-            MemU[address,2] = R[t]<15:0>;
-            if wback then R[n] = offset_addr;
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+                address = if index then offset_addr else R[n];
+                MemU[address,2] = R[t]<15:0>;
+                if wback then R[n] = offset_addr;
 
 __instruction aarch32_SSAT16_A
     __encoding aarch32_SSAT16_A1_A
@@ -74956,10 +74247,6 @@ __instruction aarch32_SSAT16_A
         __field Rn 0 +: 4
         __opcode 'xxxx0110 1010xxxx xxxxxxxx 0011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  saturate_to = UInt(sat_imm)+1;
             if d == 15 || n == 15 then UNPREDICTABLE;
@@ -74971,9 +74258,6 @@ __instruction aarch32_SSAT16_A
         __field sat_imm 0 +: 4
         __opcode '11110x11 0010xxxx 0000xxxx 00xxxxxx'
         __guard TRUE
-        __unpredictable_unless 26 == '0'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 4 == '0'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  saturate_to = UInt(sat_imm)+1;
             if d == 15 || n == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -74992,22 +74276,6 @@ __instruction aarch32_ERET_AS
         __field cond 28 +: 4
         __opcode 'xxxx0001 0110xxxx xxxxxxxx 0110xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '0'
-        __unpredictable_unless 18 == '0'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '0'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '0'
         __decode
             // No additional decoding required
 
@@ -75015,11 +74283,6 @@ __instruction aarch32_ERET_AS
         __instruction_set T32
         __opcode '11110011 11011110 10x0xxxx 00000000'
         __guard TRUE
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             if InITBlock() && !LastInITBlock() then UNPREDICTABLE;
 
@@ -75041,10 +74304,6 @@ __instruction aarch32_MOV_rr_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 101xxxxx xxxxxxxx 0xx1xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '0'
-        __unpredictable_unless 18 == '0'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  s = UInt(Rs);
             setflags = (S == '1');  shift_t = DecodeRegShift(type1);
@@ -75139,10 +74398,6 @@ __instruction aarch32_USUB8_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0101xxxx xxxxxxxx 1111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -75184,10 +74439,6 @@ __instruction aarch32_STRD_r_A
         __field Rm 0 +: 4
         __opcode 'xxxx000x x0x0xxxx xxxxxxxx 1111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if Rt<0> == '1' then UNPREDICTABLE;
             t = UInt(Rt);  t2 = t+1;  n = UInt(Rn);  m = UInt(Rm);
@@ -75283,8 +74534,6 @@ __instruction aarch32_BFI_A
         __field msb 0 +: 5
         __opcode '11110x11 0110xxxx 0xxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 26 == '0'
-        __unpredictable_unless 5 == '0'
         __decode
             if Rn == '1111' then SEE "BFC";
             d = UInt(Rd);  n = UInt(Rn);  msbit = UInt(msb);  lsbit = UInt(imm3:imm2);
@@ -75379,10 +74628,6 @@ __instruction aarch32_PLI_i_A
         __field imm12 0 +: 12
         __opcode '11110100 x101xxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
         __decode
             n = UInt(Rn);  imm32 = ZeroExtend(imm12, 32);  add = (U == '1');
 
@@ -75769,18 +75014,6 @@ __instruction aarch32_SSBB_A
         __instruction_set A32
         __opcode '11110101 0111xxxx xxxxxxxx 01000000'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             // No additional decoding required
 
@@ -75788,15 +75021,6 @@ __instruction aarch32_SSBB_A
         __instruction_set T32
         __opcode '11110011 1011xxxx 10x0xxxx 01000000'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             if InITBlock() then UNPREDICTABLE;
 
@@ -76220,8 +75444,6 @@ __instruction aarch32_LDRD_l_A
         __field imm4L 0 +: 4
         __opcode 'xxxx000x x1x01111 xxxxxxxx 1101xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 24 == '1'
-        __unpredictable_unless 21 == '0'
         __decode
             if Rt<0> == '1' then UNPREDICTABLE;
             t = UInt(Rt);  t2 = t+1;  imm32 = ZeroExtend(imm4H:imm4L, 32);  add = (U == '1');
@@ -76438,10 +75660,6 @@ __instruction aarch32_CMP_rr_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0101xxxx xxxxxxxx 0xx1xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
         __decode
             n = UInt(Rn);  m = UInt(Rm);  s = UInt(Rs);
             shift_t = DecodeRegShift(type1);
@@ -76479,8 +75697,6 @@ __instruction aarch32_SSAT_A
         __field sat_imm 0 +: 5
         __opcode '11110x11 00x0xxxx 0xxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 26 == '0'
-        __unpredictable_unless 5 == '0'
         __decode
             if sh == '1' && (imm3:imm2) == '00000' then SEE "SSAT16";
             d = UInt(Rd);  n = UInt(Rn);  saturate_to = UInt(sat_imm)+1;
@@ -76555,10 +75771,6 @@ __instruction aarch32_SASX_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0001xxxx xxxxxxxx 0011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -76697,8 +75909,6 @@ __instruction aarch32_STREXB_A
         __field Rt 0 +: 4
         __opcode 'xxxx0001 1100xxxx xxxxxx11 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
         __decode
             d = UInt(Rd);  t = UInt(Rt);  n = UInt(Rn);
             if d == 15 || t == 15 || n == 15 then UNPREDICTABLE;
@@ -76711,10 +75921,6 @@ __instruction aarch32_STREXB_A
         __field Rd 0 +: 4
         __opcode '11101000 1100xxxx xxxxxxxx 0100xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  t = UInt(Rt);  n = UInt(Rn);
             if d == 15 || t == 15 || n == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -76780,7 +75986,6 @@ __instruction aarch32_ADD_r_A
         __field Rm 0 +: 4
         __opcode '11101011 000xxxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             if Rd == '1111' && S == '1' then SEE "CMN (register)";
             if Rn == '1101' then SEE "ADD (SP plus register)";
@@ -76811,8 +76016,6 @@ __instruction aarch32_UXTH_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 11111111 xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  rotation = UInt(rotate:'000');
             if d == 15 || m == 15 then UNPREDICTABLE;
@@ -76833,7 +76036,6 @@ __instruction aarch32_UXTH_A
         __field Rm 0 +: 4
         __opcode '11111010 00011111 1111xxxx 1xxxxxxx'
         __guard TRUE
-        __unpredictable_unless 6 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  rotation = UInt(rotate:'000');
             if d == 15 || m == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -76854,10 +76056,6 @@ __instruction aarch32_STRH_r_A
         __field Rm 0 +: 4
         __opcode 'xxxx000x x0x0xxxx xxxxxxxx 1011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if P == '0' && W == '1' then SEE "STRHT";
             t = UInt(Rt);  n = UInt(Rn);  m = UInt(Rm);
@@ -76994,10 +76192,6 @@ __instruction aarch32_QSUB_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0010xxxx xxxxxxxx 0101xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -77029,9 +76223,6 @@ __instruction aarch32_CRC32_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0xx0xxxx xxxxxx0x 0100xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if ! HaveCRCExt() then UNDEFINED;
             d = UInt(Rd); n = UInt(Rn); m = UInt(Rm);
@@ -77133,10 +76324,6 @@ __instruction aarch32_PLI_r_A
         __field Rm 0 +: 4
         __opcode '11110110 x101xxxx xxxxxxxx xxx0xxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
         __decode
             n = UInt(Rn);  m = UInt(Rm);  add = (U == '1');
             (shift_t, shift_n) = DecodeImmShift(type1, imm5);
@@ -77220,10 +76407,6 @@ __instruction aarch32_UHSUB16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0111xxxx xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -77309,12 +76492,6 @@ __instruction aarch32_LDAEXB_A
         __field Rt 12 +: 4
         __opcode 'xxxx0001 1101xxxx xxxxxx10 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -77325,14 +76502,6 @@ __instruction aarch32_LDAEXB_A
         __field Rt 12 +: 4
         __opcode '11101000 1101xxxx xxxxxxxx 1100xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -77869,18 +77038,6 @@ __instruction aarch32_DSB_A
         __field option 0 +: 4
         __opcode '11110101 0111xxxx xxxxxxxx 0100xxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             // No additional decoding required
 
@@ -77889,15 +77046,6 @@ __instruction aarch32_DSB_A
         __field option 0 +: 4
         __opcode '11110011 1011xxxx 10x0xxxx 0100xxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             // No additional decoding required
 
@@ -77937,12 +77085,6 @@ __instruction aarch32_LDREXH_A
         __field Rt 12 +: 4
         __opcode 'xxxx0001 1111xxxx xxxxxx11 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -77953,14 +77095,6 @@ __instruction aarch32_LDREXH_A
         __field Rt 12 +: 4
         __opcode '11101000 1101xxxx xxxxxxxx 0101xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -78141,27 +77275,30 @@ __instruction aarch32_VNMLA_A
                 when '10' esize = 32; d = UInt(Vd:D); n = UInt(Vn:N); m = UInt(Vm:M);
                 when '11' esize = 64; d = UInt(D:Vd); n = UInt(N:Vn); m = UInt(M:Vm);
 
-    __execute __conditional
-        CheckVFPEnabled(TRUE);
-        case esize of
-            when 16
-                product16 = FPMul(S[n]<15:0>, S[m]<15:0>, FPSCR);
-                case type1 of
-                    when VFPNegMul_VNMLA  S[d] = Zeros(16) : FPAdd(FPNeg(S[d]<15:0>), FPNeg(product16), FPSCR);
-                    when VFPNegMul_VNMLS  S[d] = Zeros(16) : FPAdd(FPNeg(S[d]<15:0>), product16, FPSCR);
-                    when VFPNegMul_VNMUL  S[d] = Zeros(16) : FPNeg(product16);
-            when 32
-                product32 = FPMul(S[n], S[m], FPSCR);
-                case type1 of
-                    when VFPNegMul_VNMLA  S[d] = FPAdd(FPNeg(S[d]), FPNeg(product32), FPSCR);
-                    when VFPNegMul_VNMLS  S[d] = FPAdd(FPNeg(S[d]), product32, FPSCR);
-                    when VFPNegMul_VNMUL  S[d] = FPNeg(product32);
-            when 64
-                product64 = FPMul(D[n], D[m], FPSCR);
-                case type1 of
-                    when VFPNegMul_VNMLA  D[d] = FPAdd(FPNeg(D[d]), FPNeg(product64), FPSCR);
-                    when VFPNegMul_VNMLS  D[d] = FPAdd(FPNeg(D[d]), product64, FPSCR);
-                    when VFPNegMul_VNMUL  D[d] = FPNeg(product64);
+    __execute
+        enumeration VFPNegMul {VFPNegMul_VNMLA, VFPNegMul_VNMLS, VFPNegMul_VNMUL};
+        
+        if ConditionPassed() then
+            EncodingSpecificOperations();  CheckVFPEnabled(TRUE);
+            case esize of
+                when 16
+                    product16 = FPMul(S[n]<15:0>, S[m]<15:0>, FPSCR);
+                    case type1 of
+                        when VFPNegMul_VNMLA  S[d] = Zeros(16) : FPAdd(FPNeg(S[d]<15:0>), FPNeg(product16), FPSCR);
+                        when VFPNegMul_VNMLS  S[d] = Zeros(16) : FPAdd(FPNeg(S[d]<15:0>), product16, FPSCR);
+                        when VFPNegMul_VNMUL  S[d] = Zeros(16) : FPNeg(product16);
+                when 32
+                    product32 = FPMul(S[n], S[m], FPSCR);
+                    case type1 of
+                        when VFPNegMul_VNMLA  S[d] = FPAdd(FPNeg(S[d]), FPNeg(product32), FPSCR);
+                        when VFPNegMul_VNMLS  S[d] = FPAdd(FPNeg(S[d]), product32, FPSCR);
+                        when VFPNegMul_VNMUL  S[d] = FPNeg(product32);
+                when 64
+                    product64 = FPMul(D[n], D[m], FPSCR);
+                    case type1 of
+                        when VFPNegMul_VNMLA  D[d] = FPAdd(FPNeg(D[d]), FPNeg(product64), FPSCR);
+                        when VFPNegMul_VNMLS  D[d] = FPAdd(FPNeg(D[d]), product64, FPSCR);
+                        when VFPNegMul_VNMUL  D[d] = FPNeg(product64);
 
 __instruction aarch32_UQADD16_A
     __encoding aarch32_UQADD16_A1_A
@@ -78172,10 +77309,6 @@ __instruction aarch32_UQADD16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0110xxxx xxxxxxxx 0001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -78205,14 +77338,6 @@ __instruction aarch32_TBB_A
         __field Rm 0 +: 4
         __opcode '11101000 1101xxxx xxxxxxxx 000xxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             n = UInt(Rn);  m = UInt(Rm);  is_tbh = (H == '1');
             if m == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -78234,10 +77359,6 @@ __instruction aarch32_SADD16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0001xxxx xxxxxxxx 0001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -78445,10 +77566,6 @@ __instruction aarch32_UQSAX_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0110xxxx xxxxxxxx 0101xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -78480,8 +77597,6 @@ __instruction aarch32_SXTAH_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 1011xxxx xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if Rn == '1111' then SEE "SXTH";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  rotation = UInt(rotate:'000');
@@ -78495,7 +77610,6 @@ __instruction aarch32_SXTAH_A
         __field Rm 0 +: 4
         __opcode '11111010 0000xxxx 1111xxxx 1xxxxxxx'
         __guard TRUE
-        __unpredictable_unless 6 == '0'
         __decode
             if Rn == '1111' then SEE "SXTH";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  rotation = UInt(rotate:'000');
@@ -78515,7 +77629,7 @@ __instruction aarch32_VSTM_A
         __field W 21 +: 1
         __field Rn 16 +: 4
         __field Vd 12 +: 4
-        __field imm8 0 +: 8
+        __field imm8 1 +: 0
         __opcode 'xxxx110x xxx0xxxx xxxx1011 xxxxxxx0'
         __guard cond != '1111'
         __decode
@@ -78560,7 +77674,7 @@ __instruction aarch32_VSTM_A
         __field W 21 +: 1
         __field Rn 16 +: 4
         __field Vd 12 +: 4
-        __field imm8 0 +: 8
+        __field imm8 1 +: 0
         __opcode '1110110x xxx0xxxx xxxx1011 xxxxxxx0'
         __guard TRUE
         __decode
@@ -78618,10 +77732,6 @@ __instruction aarch32_MSR_i_AS
         __field imm12 0 +: 12
         __opcode 'xxxx0011 0x10xxxx xxxxxxxx xxxxxxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
         __decode
             if mask == '0000' && R == '0' then SEE "Related encodings";
             imm32 = A32ExpandImm(imm12);  write_spsr = (R == '1');
@@ -78832,7 +77942,6 @@ __instruction aarch32_STRBT_A
         __opcode 'xxxx0100 x110xxxx xxxxxxxx xxxxxxxx'
         __guard cond != '1111'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  postindex = TRUE;  add = (U == '1');
             register_form = FALSE;  imm32 = ZeroExtend(imm12, 32);
             if t == 15 || n == 15 || n == t then UNPREDICTABLE;
@@ -78849,7 +77958,6 @@ __instruction aarch32_STRBT_A
         __opcode 'xxxx0110 x110xxxx xxxxxxxx xxx0xxxx'
         __guard cond != '1111'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  m = UInt(Rm);  postindex = TRUE;  add = (U == '1');
             register_form = TRUE;  (shift_t, shift_n) = DecodeImmShift(type1, imm5);
             if t == 15 || n == 15 || n == t || m == 15 then UNPREDICTABLE;
@@ -78862,13 +77970,14 @@ __instruction aarch32_STRBT_A
         __opcode '11111000 0000xxxx xxxx1110 xxxxxxxx'
         __guard TRUE
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             if Rn == '1111' then UNDEFINED;
             t = UInt(Rt);  n = UInt(Rn);  postindex = FALSE;  add = TRUE;
             register_form = FALSE;  imm32 = ZeroExtend(imm8, 32);
             if t == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
 
     __execute __conditional
+        if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
+        EncodingSpecificOperations();
         offset = if register_form then Shift(R[m], shift_t, shift_n, PSTATE.C) else imm32;
         offset_addr = if add then (R[n] + offset) else (R[n] - offset);
         address = if postindex then R[n] else offset_addr;
@@ -78881,14 +77990,6 @@ __instruction aarch32_WFI_A
         __field cond 28 +: 4
         __opcode 'xxxx0011 00100000 xxxxxxxx 00000011'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             // No additional decoding required
 
@@ -78903,12 +78004,6 @@ __instruction aarch32_WFI_A
         __instruction_set T32
         __opcode '11110011 1010xxxx 10x0x000 00000011'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '0'
         __decode
             // No additional decoding required
 
@@ -78962,7 +78057,6 @@ __instruction aarch32_ORR_r_A
         __field Rm 0 +: 4
         __opcode '11101010 010xxxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             if Rn == '1111' then SEE "Related encodings";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  setflags = (S == '1');
@@ -79155,12 +78249,6 @@ __instruction aarch32_LDA_A
         __field Rt 12 +: 4
         __opcode 'xxxx0001 1001xxxx xxxxxx00 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt); n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -79171,14 +78259,6 @@ __instruction aarch32_LDA_A
         __field Rt 12 +: 4
         __opcode '11101000 1101xxxx xxxxxxxx 1010xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt); n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -79193,14 +78273,6 @@ __instruction aarch32_SEV_A
         __field cond 28 +: 4
         __opcode 'xxxx0011 00100000 xxxxxxxx 00000100'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             // No additional decoding required
 
@@ -79215,12 +78287,6 @@ __instruction aarch32_SEV_A
         __instruction_set T32
         __opcode '11110011 1010xxxx 10x0x000 00000100'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '0'
         __decode
             // No additional decoding required
 
@@ -79266,7 +78332,7 @@ __instruction aarch32_MCR_A
         __field opc1 21 +: 3
         __field CRn 16 +: 4
         __field Rt 12 +: 4
-        __field coproc 8 +: 4
+        __field coproc 9 +: 0
         __field opc2 5 +: 3
         __field CRm 0 +: 4
         __opcode 'xxxx1110 xxx0xxxx xxxx111x xxx1xxxx'
@@ -79280,7 +78346,7 @@ __instruction aarch32_MCR_A
         __field opc1 21 +: 3
         __field CRn 16 +: 4
         __field Rt 12 +: 4
-        __field coproc 8 +: 4
+        __field coproc 9 +: 0
         __field opc2 5 +: 3
         __field CRm 0 +: 4
         __opcode '11101110 xxx0xxxx xxxx111x xxx1xxxx'
@@ -79303,10 +78369,6 @@ __instruction aarch32_MVN_rr_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 111xxxxx xxxxxxxx 0xx1xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '0'
-        __unpredictable_unless 18 == '0'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  s = UInt(Rs);
             setflags = (S == '1');  shift_t = DecodeRegShift(type1);
@@ -79332,10 +78394,6 @@ __instruction aarch32_SHSUB8_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0011xxxx xxxxxxxx 1111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -79385,8 +78443,6 @@ __instruction aarch32_UBFX_A
         __field widthm1 0 +: 5
         __opcode '11110x11 1100xxxx 0xxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 26 == '0'
-        __unpredictable_unless 5 == '0'
         __decode
             d = UInt(Rd);  n = UInt(Rn);
             lsbit = UInt(imm3:imm2);  widthminus1 = UInt(widthm1);
@@ -79408,10 +78464,6 @@ __instruction aarch32_SHSUB16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0011xxxx xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -79443,10 +78495,6 @@ __instruction aarch32_TEQ_rr_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0011xxxx xxxxxxxx 0xx1xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
         __decode
             n = UInt(Rn);  m = UInt(Rm);  s = UInt(Rs);
             shift_t = DecodeRegShift(type1);
@@ -79470,10 +78518,6 @@ __instruction aarch32_UADD8_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0101xxxx xxxxxxxx 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -79548,10 +78592,6 @@ __instruction aarch32_MUL_A
         __field Rn 0 +: 4
         __opcode 'xxxx0000 000xxxxx xxxxxxxx 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  setflags = (S == '1');
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -79632,27 +78672,30 @@ __instruction aarch32_VNMLA_A
                 when '10' esize = 32; d = UInt(Vd:D); n = UInt(Vn:N); m = UInt(Vm:M);
                 when '11' esize = 64; d = UInt(D:Vd); n = UInt(N:Vn); m = UInt(M:Vm);
 
-    __execute __conditional
-        CheckVFPEnabled(TRUE);
-        case esize of
-            when 16
-                product16 = FPMul(S[n]<15:0>, S[m]<15:0>, FPSCR);
-                case type1 of
-                    when VFPNegMul_VNMLA  S[d] = Zeros(16) : FPAdd(FPNeg(S[d]<15:0>), FPNeg(product16), FPSCR);
-                    when VFPNegMul_VNMLS  S[d] = Zeros(16) : FPAdd(FPNeg(S[d]<15:0>), product16, FPSCR);
-                    when VFPNegMul_VNMUL  S[d] = Zeros(16) : FPNeg(product16);
-            when 32
-                product32 = FPMul(S[n], S[m], FPSCR);
-                case type1 of
-                    when VFPNegMul_VNMLA  S[d] = FPAdd(FPNeg(S[d]), FPNeg(product32), FPSCR);
-                    when VFPNegMul_VNMLS  S[d] = FPAdd(FPNeg(S[d]), product32, FPSCR);
-                    when VFPNegMul_VNMUL  S[d] = FPNeg(product32);
-            when 64
-                product64 = FPMul(D[n], D[m], FPSCR);
-                case type1 of
-                    when VFPNegMul_VNMLA  D[d] = FPAdd(FPNeg(D[d]), FPNeg(product64), FPSCR);
-                    when VFPNegMul_VNMLS  D[d] = FPAdd(FPNeg(D[d]), product64, FPSCR);
-                    when VFPNegMul_VNMUL  D[d] = FPNeg(product64);
+    __execute
+        enumeration VFPNegMul {VFPNegMul_VNMLA, VFPNegMul_VNMLS, VFPNegMul_VNMUL};
+        
+        if ConditionPassed() then
+            EncodingSpecificOperations();  CheckVFPEnabled(TRUE);
+            case esize of
+                when 16
+                    product16 = FPMul(S[n]<15:0>, S[m]<15:0>, FPSCR);
+                    case type1 of
+                        when VFPNegMul_VNMLA  S[d] = Zeros(16) : FPAdd(FPNeg(S[d]<15:0>), FPNeg(product16), FPSCR);
+                        when VFPNegMul_VNMLS  S[d] = Zeros(16) : FPAdd(FPNeg(S[d]<15:0>), product16, FPSCR);
+                        when VFPNegMul_VNMUL  S[d] = Zeros(16) : FPNeg(product16);
+                when 32
+                    product32 = FPMul(S[n], S[m], FPSCR);
+                    case type1 of
+                        when VFPNegMul_VNMLA  S[d] = FPAdd(FPNeg(S[d]), FPNeg(product32), FPSCR);
+                        when VFPNegMul_VNMLS  S[d] = FPAdd(FPNeg(S[d]), product32, FPSCR);
+                        when VFPNegMul_VNMUL  S[d] = FPNeg(product32);
+                when 64
+                    product64 = FPMul(D[n], D[m], FPSCR);
+                    case type1 of
+                        when VFPNegMul_VNMLA  D[d] = FPAdd(FPNeg(D[d]), FPNeg(product64), FPSCR);
+                        when VFPNegMul_VNMLS  D[d] = FPAdd(FPNeg(D[d]), product64, FPSCR);
+                        when VFPNegMul_VNMUL  D[d] = FPNeg(product64);
 
 __instruction aarch32_CMP_r_A
     __encoding aarch32_CMP_r_A1_A
@@ -79664,10 +78707,6 @@ __instruction aarch32_CMP_r_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0101xxxx xxxxxxxx xxx0xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
         __decode
             n = UInt(Rn);  m = UInt(Rm);
             (shift_t, shift_n) = DecodeImmShift(type1, imm5);
@@ -79704,7 +78743,6 @@ __instruction aarch32_CMP_r_A
         __field Rm 0 +: 4
         __opcode '11101011 1011xxxx xxxx1111 xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             n = UInt(Rn);  m = UInt(Rm);
             (shift_t, shift_n) = DecodeImmShift(type1, imm3:imm2);
@@ -79789,8 +78827,6 @@ __instruction aarch32_STREXD_A
         __field Rt 0 +: 4
         __opcode 'xxxx0001 1010xxxx xxxxxx11 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
         __decode
             d = UInt(Rd);  t = UInt(Rt);  t2 = t+1;  n = UInt(Rn);
             if d == 15 || Rt<0> == '1' || t2 == 15 || n == 15 then UNPREDICTABLE;
@@ -80089,12 +79125,6 @@ __instruction aarch32_MSR_br_AS
         __field Rn 0 +: 4
         __opcode 'xxxx0001 0x10xxxx xxxxxx1x 0000xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
         __decode
             n = UInt(Rn);  write_spsr = (R == '1');
             if n == 15 then UNPREDICTABLE;
@@ -80108,13 +79138,6 @@ __instruction aarch32_MSR_br_AS
         __field M 4 +: 1
         __opcode '11110011 100xxxxx 10x0xxxx xx1xxxxx'
         __guard TRUE
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             n = UInt(Rn);  write_spsr = (R == '1');
             if n == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -80176,10 +79199,6 @@ __instruction aarch32_QADD_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0000xxxx xxxxxxxx 0101xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -80210,10 +79229,6 @@ __instruction aarch32_TST_r_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0001xxxx xxxxxxxx xxx0xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
         __decode
             n = UInt(Rn);  m = UInt(Rm);
             (shift_t, shift_n) = DecodeImmShift(type1, imm5);
@@ -80237,7 +79252,6 @@ __instruction aarch32_TST_r_A
         __field Rm 0 +: 4
         __opcode '11101010 0001xxxx xxxx1111 xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             n = UInt(Rn);  m = UInt(Rm);
             (shift_t, shift_n) = DecodeImmShift(type1, imm3:imm2);
@@ -80348,8 +79362,6 @@ __instruction aarch32_BFC_A
         __field msb 0 +: 5
         __opcode '11110x11 01101111 0xxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 26 == '0'
-        __unpredictable_unless 5 == '0'
         __decode
             d = UInt(Rd);  msbit = UInt(msb);  lsbit = UInt(imm3:imm2);
             if d == 15 then UNPREDICTABLE;  // Armv8-A removes UNPREDICTABLE for R13
@@ -80369,12 +79381,6 @@ __instruction aarch32_LDAEXD_A
         __field Rt 12 +: 4
         __opcode 'xxxx0001 1011xxxx xxxxxx10 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  t2 = t + 1;  n = UInt(Rn);
             if Rt<0> == '1' || t2 == 15 || n == 15 then UNPREDICTABLE;
@@ -80386,10 +79392,6 @@ __instruction aarch32_LDAEXD_A
         __field Rt2 8 +: 4
         __opcode '11101000 1101xxxx xxxxxxxx 1111xxxx'
         __guard TRUE
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  t2 = UInt(Rt2);  n = UInt(Rn);
             if t == 15 || t2 == 15 || t == t2 || n == 15 then UNPREDICTABLE;
@@ -80465,15 +79467,19 @@ __instruction aarch32_STRB_i_A
 
     __execute
         if CurrentInstrSet() == InstrSet_A32 then
-            offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
-            address = if index then offset_addr else R[n];
-            MemU[address,1] = R[t]<7:0>;
-            if wback then R[n] = offset_addr;
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+                address = if index then offset_addr else R[n];
+                MemU[address,1] = R[t]<7:0>;
+                if wback then R[n] = offset_addr;
         else
-            offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
-            address = if index then offset_addr else R[n];
-            MemU[address,1] = R[t]<7:0>;
-            if wback then R[n] = offset_addr;
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+                address = if index then offset_addr else R[n];
+                MemU[address,1] = R[t]<7:0>;
+                if wback then R[n] = offset_addr;
 
 __instruction aarch32_VLD1_a_A
     __encoding aarch32_VLD1_a_T1A1_A
@@ -80716,10 +79722,6 @@ __instruction aarch32_SHSAX_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0011xxxx xxxxxxxx 0101xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -80768,7 +79770,6 @@ __instruction aarch32_RSB_r_A
         __field Rm 0 +: 4
         __opcode '11101011 110xxxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  setflags = (S == '1');
             (shift_t, shift_n) = DecodeImmShift(type1, imm3:imm2);
@@ -80850,7 +79851,6 @@ __instruction aarch32_STRT_A
         __opcode 'xxxx0100 x010xxxx xxxxxxxx xxxxxxxx'
         __guard cond != '1111'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  postindex = TRUE;  add = (U == '1');
             register_form = FALSE;  imm32 = ZeroExtend(imm12, 32);
             if n == 15 || n == t then UNPREDICTABLE;
@@ -80867,7 +79867,6 @@ __instruction aarch32_STRT_A
         __opcode 'xxxx0110 x010xxxx xxxxxxxx xxx0xxxx'
         __guard cond != '1111'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  m = UInt(Rm);  postindex = TRUE;  add = (U == '1');
             register_form = TRUE;  (shift_t, shift_n) = DecodeImmShift(type1, imm5);
             if n == 15 || n == t || m == 15 then UNPREDICTABLE;
@@ -80880,13 +79879,14 @@ __instruction aarch32_STRT_A
         __opcode '11111000 0100xxxx xxxx1110 xxxxxxxx'
         __guard TRUE
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             if Rn == '1111' then UNDEFINED;
             t = UInt(Rt);  n = UInt(Rn);  postindex = FALSE;  add = TRUE;
             register_form = FALSE;  imm32 = ZeroExtend(imm8, 32);
             if t == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
 
     __execute __conditional
+        if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
+        EncodingSpecificOperations();
         offset = if register_form then Shift(R[m], shift_t, shift_n, PSTATE.C) else imm32;
         offset_addr = if add then (R[n] + offset) else (R[n] - offset);
         address = if postindex then R[n] else offset_addr;
@@ -81082,10 +80082,6 @@ __instruction aarch32_QSUB8_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0010xxxx xxxxxxxx 1111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -81302,17 +80298,21 @@ __instruction aarch32_LDRH_i_A
 
     __execute
         if CurrentInstrSet() == InstrSet_A32 then
-            offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
-            address = if index then offset_addr else R[n];
-            data = MemU[address,2];
-            if wback then R[n] = offset_addr;
-            R[t] = ZeroExtend(data, 32);
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+                address = if index then offset_addr else R[n];
+                data = MemU[address,2];
+                if wback then R[n] = offset_addr;
+                R[t] = ZeroExtend(data, 32);
         else
-            offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
-            address = if index then offset_addr else R[n];
-            data = MemU[address,2];
-            if wback then R[n] = offset_addr;
-            R[t] = ZeroExtend(data, 32);
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+                address = if index then offset_addr else R[n];
+                data = MemU[address,2];
+                if wback then R[n] = offset_addr;
+                R[t] = ZeroExtend(data, 32);
 
 __instruction aarch32_VMLA_s_A
     __encoding aarch32_VMLA_s_T2A2_A
@@ -81423,10 +80423,6 @@ __instruction aarch32_QASX_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0010xxxx xxxxxxxx 0011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -81603,10 +80599,6 @@ __instruction aarch32_USUB16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0101xxxx xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -81669,10 +80661,6 @@ __instruction aarch32_UDIV_A
         __field Rn 0 +: 4
         __opcode 'xxxx0111 0011xxxx xxxxxxxx 0001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  a = UInt(Ra);
             if d == 15 || n == 15 || m == 15 || a != 15 then UNPREDICTABLE;
@@ -81685,10 +80673,6 @@ __instruction aarch32_UDIV_A
         __field Rm 0 +: 4
         __opcode '11111011 1011xxxx xxxxxxxx 1111xxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  a = UInt(Ra);
             if d == 15 || n == 15 || m == 15 || a != 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -81751,7 +80735,6 @@ __instruction aarch32_LDRBT_A
         __opcode 'xxxx0100 x111xxxx xxxxxxxx xxxxxxxx'
         __guard cond != '1111'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  postindex = TRUE;  add = (U == '1');
             register_form = FALSE;  imm32 = ZeroExtend(imm12, 32);
             if t == 15 || n == 15 || n == t then UNPREDICTABLE;
@@ -81768,7 +80751,6 @@ __instruction aarch32_LDRBT_A
         __opcode 'xxxx0110 x111xxxx xxxxxxxx xxx0xxxx'
         __guard cond != '1111'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  m = UInt(Rm);  postindex = TRUE;  add = (U == '1');
             register_form = TRUE;  (shift_t, shift_n) = DecodeImmShift(type1, imm5);
             if t == 15 || n == 15 || n == t || m == 15 then UNPREDICTABLE;
@@ -81781,13 +80763,14 @@ __instruction aarch32_LDRBT_A
         __opcode '11111000 0001xxxx xxxx1110 xxxxxxxx'
         __guard TRUE
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             if Rn == '1111' then SEE "LDRB (literal)";
             t = UInt(Rt);  n = UInt(Rn);  postindex = FALSE;  add = TRUE;
             register_form = FALSE;  imm32 = ZeroExtend(imm8, 32);
             if t == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
 
     __execute __conditional
+        if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
+        EncodingSpecificOperations();
         offset = if register_form then Shift(R[m], shift_t, shift_n, PSTATE.C) else imm32;
         offset_addr = if add then (R[n] + offset) else (R[n] - offset);
         address = if postindex then R[n] else offset_addr;
@@ -81935,11 +80918,6 @@ __instruction aarch32_VCMP_A
         __field E 7 +: 1
         __opcode 'xxxx1110 1x110101 xxxx10xx 11x0xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             if size == '00' || (size == '01' && !HaveFP16Ext()) then UNDEFINED;
             if size == '01' && cond != '1110' then UNPREDICTABLE;
@@ -81976,11 +80954,6 @@ __instruction aarch32_VCMP_A
         __field E 7 +: 1
         __opcode '11101110 1x110101 xxxx10xx 11x0xxxx'
         __guard TRUE
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             if size == '00' || (size == '01' && !HaveFP16Ext()) then UNDEFINED;
             if size == '01' && InITBlock()  then UNPREDICTABLE;
@@ -82124,12 +81097,6 @@ __instruction aarch32_LDAB_A
         __field Rt 12 +: 4
         __opcode 'xxxx0001 1101xxxx xxxxxx00 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt); n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -82140,14 +81107,6 @@ __instruction aarch32_LDAB_A
         __field Rt 12 +: 4
         __opcode '11101000 1101xxxx xxxxxxxx 1000xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt); n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -82168,10 +81127,6 @@ __instruction aarch32_LDRD_r_A
         __field Rm 0 +: 4
         __opcode 'xxxx000x x0x0xxxx xxxxxxxx 1101xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if Rt<0> == '1' then UNPREDICTABLE;
             t = UInt(Rt);  t2 = t+1;  n = UInt(Rn);  m = UInt(Rm);
@@ -82808,8 +81763,6 @@ __instruction aarch32_SBFX_A
         __field widthm1 0 +: 5
         __opcode '11110x11 0100xxxx 0xxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 26 == '0'
-        __unpredictable_unless 5 == '0'
         __decode
             d = UInt(Rd);  n = UInt(Rn);
             lsbit = UInt(imm3:imm2);  widthminus1 = UInt(widthm1);
@@ -82832,7 +81785,6 @@ __instruction aarch32_STM_u_AS
         __field register_list 0 +: 16
         __opcode 'xxxx100x x1x0xxxx xxxxxxxx xxxxxxxx'
         __guard cond != '1111'
-        __unpredictable_unless 21 == '0'
         __decode
             n = UInt(Rn);  registers = register_list;  increment = (U == '1');  wordhigher = (P == U);
             if n == 15 || BitCount(registers) < 1 then UNPREDICTABLE;
@@ -83124,10 +82076,6 @@ __instruction aarch32_LDRSH_r_A
         __field Rm 0 +: 4
         __opcode 'xxxx000x x0x1xxxx xxxxxxxx 1111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if P == '0' && W == '1' then SEE "LDRSHT";
             t = UInt(Rt);  n = UInt(Rn);  m = UInt(Rm);
@@ -83250,7 +82198,6 @@ __instruction aarch32_SUB_r_A
         __field Rm 0 +: 4
         __opcode '11101011 101xxxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             if Rd == '1111' && S == '1' then SEE "CMP (register)";
             if Rn == '1101' then SEE "SUB (SP minus register)";
@@ -83315,10 +82262,6 @@ __instruction aarch32_UHADD16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0111xxxx xxxxxxxx 0001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -83415,7 +82358,6 @@ __instruction aarch32_PKH_A
         __field Rm 0 +: 4
         __opcode '11101010 1100xxxx xxxxxxxx xxx0xxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             if S == '1' || T == '1' then UNDEFINED;
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  tbform = (tb == '1');
@@ -83437,10 +82379,6 @@ __instruction aarch32_CMN_r_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0111xxxx xxxxxxxx xxx0xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
         __decode
             n = UInt(Rn);  m = UInt(Rm);
             (shift_t, shift_n) = DecodeImmShift(type1, imm5);
@@ -83464,7 +82402,6 @@ __instruction aarch32_CMN_r_A
         __field Rm 0 +: 4
         __opcode '11101011 0001xxxx xxxx1111 xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             n = UInt(Rn);  m = UInt(Rm);
             (shift_t, shift_n) = DecodeImmShift(type1, imm3:imm2);
@@ -83559,18 +82496,6 @@ __instruction aarch32_BLX_r_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0010xxxx xxxxxxxx 0011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             m = UInt(Rm);
             if m == 15 then UNPREDICTABLE;
@@ -83580,9 +82505,6 @@ __instruction aarch32_BLX_r_A
         __field Rm 19 +: 4
         __opcode '01000111 1xxxxxxx 00000000 00000000'
         __guard TRUE
-        __unpredictable_unless 18 == '0'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '0'
         __decode
             m = UInt(Rm);
             if m == 15 then UNPREDICTABLE;
@@ -83606,14 +82528,6 @@ __instruction aarch32_REV_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 1011xxxx xxxxxxxx 0011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  m = UInt(Rm);
             if d == 15 || m == 15 then UNPREDICTABLE;
@@ -83656,8 +82570,6 @@ __instruction aarch32_SXTAB16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 1000xxxx xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if Rn == '1111' then SEE "SXTB16";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  rotation = UInt(rotate:'000');
@@ -83671,7 +82583,6 @@ __instruction aarch32_SXTAB16_A
         __field Rm 0 +: 4
         __opcode '11111010 0010xxxx 1111xxxx 1xxxxxxx'
         __guard TRUE
-        __unpredictable_unless 6 == '0'
         __decode
             if Rn == '1111' then SEE "SXTB16";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  rotation = UInt(rotate:'000');
@@ -83813,20 +82724,6 @@ __instruction aarch32_SETEND_A
         __field E 9 +: 1
         __opcode '11110001 0000xxx1 xxxxxxxx 0000xxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '0'
-        __unpredictable_unless 18 == '0'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 8 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             set_bigend = (E == '1');
 
@@ -83835,10 +82732,6 @@ __instruction aarch32_SETEND_A
         __field E 19 +: 1
         __opcode '10110110 010xxxxx 00000000 00000000'
         __guard TRUE
-        __unpredictable_unless 20 == '1'
-        __unpredictable_unless 18 == '0'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '0'
         __decode
             set_bigend = (E == '1');
             if InITBlock() then UNPREDICTABLE;
@@ -83856,10 +82749,6 @@ __instruction aarch32_MOV_i_A
         __field imm12 0 +: 12
         __opcode 'xxxx0011 101xxxxx xxxxxxxx xxxxxxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '0'
-        __unpredictable_unless 18 == '0'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '0'
         __decode
             d = UInt(Rd);  setflags = (S == '1');  (imm32, carry) = A32ExpandImm_C(imm12, PSTATE.C);
 
@@ -83982,10 +82871,6 @@ __instruction aarch32_UQADD8_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0110xxxx xxxxxxxx 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -84130,10 +83015,6 @@ __instruction aarch32_PLD_i_A
         __field imm12 0 +: 12
         __opcode '11110101 xx01xxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
         __decode
             if Rn == '1111' then SEE "PLD (literal)";
             n = UInt(Rn);  imm32 = ZeroExtend(imm12, 32);  add = (U == '1');  is_pldw = (R == '0');
@@ -84280,10 +83161,6 @@ __instruction aarch32_UQSUB16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0110xxxx xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -84316,10 +83193,6 @@ __instruction aarch32_SMULBB_A
         __field Rn 0 +: 4
         __opcode 'xxxx0001 0110xxxx xxxxxxxx 1xx0xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             n_high = (N == '1');  m_high = (M == '1');
@@ -84490,8 +83363,6 @@ __instruction aarch32_STLEXB_A
         __field Rt 0 +: 4
         __opcode 'xxxx0001 1100xxxx xxxxxx10 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
         __decode
             d = UInt(Rd);  t = UInt(Rt);  n = UInt(Rn);
             if d == 15 || t == 15 || n == 15 then UNPREDICTABLE;
@@ -84504,10 +83375,6 @@ __instruction aarch32_STLEXB_A
         __field Rd 0 +: 4
         __opcode '11101000 1100xxxx xxxxxxxx 1100xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  t = UInt(Rt);  n = UInt(Rn);
             if d == 15 || t == 15 || n == 15 then UNPREDICTABLE;
@@ -84529,12 +83396,6 @@ __instruction aarch32_STLB_A
         __field Rt 0 +: 4
         __opcode 'xxxx0001 1100xxxx xxxxxx00 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
         __decode
             t = UInt(Rt); n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -84545,14 +83406,6 @@ __instruction aarch32_STLB_A
         __field Rt 12 +: 4
         __opcode '11101000 1100xxxx xxxxxxxx 1000xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt); n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -84664,10 +83517,6 @@ __instruction aarch32_CMN_rr_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0111xxxx xxxxxxxx 0xx1xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
         __decode
             n = UInt(Rn);  m = UInt(Rm);  s = UInt(Rs);
             shift_t = DecodeRegShift(type1);
@@ -84688,10 +83537,6 @@ __instruction aarch32_SSUB16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0001xxxx xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -84745,11 +83590,6 @@ __instruction aarch32_VCMP_A
         __field E 7 +: 1
         __opcode 'xxxx1110 1x110101 xxxx10xx 01x0xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             if size == '00' || (size == '01' && !HaveFP16Ext()) then UNDEFINED;
             if size == '01' && cond != '1110' then UNPREDICTABLE;
@@ -84786,11 +83626,6 @@ __instruction aarch32_VCMP_A
         __field E 7 +: 1
         __opcode '11101110 1x110101 xxxx10xx 01x0xxxx'
         __guard TRUE
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             if size == '00' || (size == '01' && !HaveFP16Ext()) then UNDEFINED;
             if size == '01' && InITBlock()  then UNPREDICTABLE;
@@ -84948,16 +83783,19 @@ __instruction aarch32_VCGT_r_A
                 when '1' esize = 16; elements = 4;
             d = UInt(D:Vd);  n = UInt(N:Vn);  m = UInt(M:Vm);  regs = if Q == '0' then 1 else 2;
 
-    __execute __conditional
-        CheckAdvSIMDEnabled();
-        for r = 0 to regs-1
-            for e = 0 to elements-1
-                op1 = Elem[D[n+r],e,esize];  op2 = Elem[D[m+r],e,esize];
-                case type1 of
-                    when VCGTtype_signed    test_passed = (SInt(op1) > SInt(op2));
-                    when VCGTtype_unsigned  test_passed = (UInt(op1) > UInt(op2));
-                    when VCGTtype_fp        test_passed = FPCompareGT(op1, op2, StandardFPSCRValue());
-                Elem[D[d+r],e,esize] = if test_passed then Ones(esize) else Zeros(esize);
+    __execute
+        enumeration VCGTtype {VCGTtype_signed, VCGTtype_unsigned, VCGTtype_fp};
+        
+        if ConditionPassed() then
+            EncodingSpecificOperations();  CheckAdvSIMDEnabled();
+            for r = 0 to regs-1
+                for e = 0 to elements-1
+                    op1 = Elem[D[n+r],e,esize];  op2 = Elem[D[m+r],e,esize];
+                    case type1 of
+                        when VCGTtype_signed    test_passed = (SInt(op1) > SInt(op2));
+                        when VCGTtype_unsigned  test_passed = (UInt(op1) > UInt(op2));
+                        when VCGTtype_fp        test_passed = FPCompareGT(op1, op2, StandardFPSCRValue());
+                    Elem[D[d+r],e,esize] = if test_passed then Ones(esize) else Zeros(esize);
 
 __instruction aarch32_VMOV_h_A
     __encoding aarch32_VMOV_h_A1_A
@@ -84969,12 +83807,6 @@ __instruction aarch32_VMOV_h_A
         __field N 7 +: 1
         __opcode 'xxxx1110 000xxxxx xxxx1001 xxx1xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             if !HaveFP16Ext() then UNDEFINED;
             if cond != '1110' then UNPREDICTABLE;
@@ -84989,12 +83821,6 @@ __instruction aarch32_VMOV_h_A
         __field N 7 +: 1
         __opcode '11101110 000xxxxx xxxx1001 xxx1xxxx'
         __guard TRUE
-        __unpredictable_unless 6 == '0'
-        __unpredictable_unless 5 == '0'
-        __unpredictable_unless 3 == '0'
-        __unpredictable_unless 2 == '0'
-        __unpredictable_unless 1 == '0'
-        __unpredictable_unless 0 == '0'
         __decode
             if !HaveFP16Ext() then UNDEFINED;
             if InITBlock() then UNPREDICTABLE;
@@ -85017,10 +83843,6 @@ __instruction aarch32_SSUB8_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0001xxxx xxxxxxxx 1111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -85056,14 +83878,6 @@ __instruction aarch32_NOP_A
         __field cond 28 +: 4
         __opcode 'xxxx0011 00100000 xxxxxxxx 00000000'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             // No additional decoding required
 
@@ -85078,12 +83892,6 @@ __instruction aarch32_NOP_A
         __instruction_set T32
         __opcode '11110011 1010xxxx 10x0x000 00000000'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '0'
         __decode
             // No additional decoding required
 
@@ -85127,7 +83935,6 @@ __instruction aarch32_AND_r_A
         __field Rm 0 +: 4
         __opcode '11101010 000xxxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             if Rd == '1111' && S == '1' then SEE "TST (register)";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  setflags = (S == '1');
@@ -85181,8 +83988,6 @@ __instruction aarch32_VMOV_i_A
         __field imm4L 0 +: 4
         __opcode 'xxxx1110 1x11xxxx xxxx10xx x0x0xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 5 == '0'
         __decode
             if FPSCR.Len != '000' || FPSCR.Stride != '00' then UNDEFINED;
             if size == '00' || (size == '01' && !HaveFP16Ext()) then UNDEFINED;
@@ -85281,8 +84086,6 @@ __instruction aarch32_VMOV_i_A
         __field imm4L 0 +: 4
         __opcode '11101110 1x11xxxx xxxx10xx x0x0xxxx'
         __guard TRUE
-        __unpredictable_unless 7 == '0'
-        __unpredictable_unless 5 == '0'
         __decode
             if FPSCR.Len != '000' || FPSCR.Stride != '00' then UNDEFINED;
             if size == '00' || (size == '01' && !HaveFP16Ext()) then UNDEFINED;
@@ -85370,10 +84173,6 @@ __instruction aarch32_UASX_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0101xxxx xxxxxxxx 0011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -85423,8 +84222,6 @@ __instruction aarch32_USAT_A
         __field sat_imm 0 +: 5
         __opcode '11110x11 10x0xxxx 0xxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 26 == '0'
-        __unpredictable_unless 5 == '0'
         __decode
             if sh == '1' && (imm3:imm2) == '00000' then SEE "USAT16";
             d = UInt(Rd);  n = UInt(Rn);  saturate_to = UInt(sat_imm);
@@ -85444,14 +84241,6 @@ __instruction aarch32_ESB_A
         __field cond 28 +: 4
         __opcode 'xxxx0011 00100000 xxxxxxxx 00010000'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if !HaveRASExt() then EndOfInstruction();  // Instruction executes as NOP
             if cond != '1110' then UNPREDICTABLE;      // ESB must be encoded with AL condition
@@ -85460,12 +84249,6 @@ __instruction aarch32_ESB_A
         __instruction_set T32
         __opcode '11110011 1010xxxx 10x0x000 00010000'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '0'
         __decode
             if !HaveRASExt() then EndOfInstruction();  // Instruction executes as NOP
             if InITBlock() then UNPREDICTABLE;
@@ -85489,7 +84272,6 @@ __instruction aarch32_STRHT_A
         __opcode 'xxxx0000 x110xxxx xxxxxxxx 1011xxxx'
         __guard cond != '1111'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  postindex = TRUE;  add = (U == '1');
             register_form = FALSE;  imm32 = ZeroExtend(imm4H:imm4L, 32);
             if t == 15 || n == 15 || n == t then UNPREDICTABLE;
@@ -85503,12 +84285,7 @@ __instruction aarch32_STRHT_A
         __field Rm 0 +: 4
         __opcode 'xxxx0000 x010xxxx xxxxxxxx 1011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  m = UInt(Rm);  postindex = TRUE;  add = (U == '1');
             register_form = TRUE;
             if t == 15 || n == 15 || n == t || m == 15 then UNPREDICTABLE;
@@ -85521,13 +84298,14 @@ __instruction aarch32_STRHT_A
         __opcode '11111000 0010xxxx xxxx1110 xxxxxxxx'
         __guard TRUE
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             if Rn == '1111' then UNDEFINED;
             t = UInt(Rt);  n = UInt(Rn);  postindex = FALSE;  add = TRUE;
             register_form = FALSE;  imm32 = ZeroExtend(imm8, 32);
             if t == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
 
     __execute __conditional
+        if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
+        EncodingSpecificOperations();
         offset = if register_form then R[m] else imm32;
         offset_addr = if add then (R[n] + offset) else (R[n] - offset);
         address = if postindex then R[n] else offset_addr;
@@ -85906,10 +84684,6 @@ __instruction aarch32_SMULWB_A
         __field Rn 0 +: 4
         __opcode 'xxxx0001 0010xxxx xxxxxxxx 1x10xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  m_high = (M == '1');
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -85941,8 +84715,6 @@ __instruction aarch32_SXTH_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 10111111 xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  rotation = UInt(rotate:'000');
             if d == 15 || m == 15 then UNPREDICTABLE;
@@ -85963,7 +84735,6 @@ __instruction aarch32_SXTH_A
         __field Rm 0 +: 4
         __opcode '11111010 00001111 1111xxxx 1xxxxxxx'
         __guard TRUE
-        __unpredictable_unless 6 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  rotation = UInt(rotate:'000');
             if d == 15 || m == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -86017,7 +84788,7 @@ __instruction aarch32_MRRC_A
         __field cond 28 +: 4
         __field Rt2 16 +: 4
         __field Rt 12 +: 4
-        __field coproc 8 +: 4
+        __field coproc 9 +: 0
         __field opc1 4 +: 4
         __field CRm 0 +: 4
         __opcode 'xxxx1100 0101xxxx xxxx111x xxxxxxxx'
@@ -86030,7 +84801,7 @@ __instruction aarch32_MRRC_A
         __instruction_set T32
         __field Rt2 16 +: 4
         __field Rt 12 +: 4
-        __field coproc 8 +: 4
+        __field coproc 9 +: 0
         __field opc1 4 +: 4
         __field CRm 0 +: 4
         __opcode '11101100 0101xxxx xxxx111x xxxxxxxx'
@@ -86348,8 +85119,6 @@ __instruction aarch32_UXTAB16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 1100xxxx xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if Rn == '1111' then SEE "UXTB16";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  rotation = UInt(rotate:'000');
@@ -86363,7 +85132,6 @@ __instruction aarch32_UXTAB16_A
         __field Rm 0 +: 4
         __opcode '11111010 0011xxxx 1111xxxx 1xxxxxxx'
         __guard TRUE
-        __unpredictable_unless 6 == '0'
         __decode
             if Rn == '1111' then SEE "UXTB16";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  rotation = UInt(rotate:'000');
@@ -86381,11 +85149,6 @@ __instruction aarch32_PLD_l_A
         __field imm12 0 +: 12
         __opcode '11110101 xx011111 xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 22 == '1'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
         __decode
             imm32 = ZeroExtend(imm12, 32);  add = (U == '1');
 
@@ -86395,7 +85158,6 @@ __instruction aarch32_PLD_l_A
         __field imm12 0 +: 12
         __opcode '11111000 x0x11111 1111xxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 21 == '0'
         __decode
             imm32 = ZeroExtend(imm12, 32);  add = (U == '1');
 
@@ -86450,10 +85212,6 @@ __instruction aarch32_MVN_r_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 111xxxxx xxxxxxxx xxx0xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '0'
-        __unpredictable_unless 18 == '0'
-        __unpredictable_unless 17 == '0'
-        __unpredictable_unless 16 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  setflags = (S == '1');
             (shift_t, shift_n) = DecodeImmShift(type1, imm5);
@@ -86478,7 +85236,6 @@ __instruction aarch32_MVN_r_A
         __field Rm 0 +: 4
         __opcode '11101010 011x1111 xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             d = UInt(Rd);  m = UInt(Rm);  setflags = (S == '1');
             (shift_t, shift_n) = DecodeImmShift(type1, imm3:imm2);
@@ -86509,10 +85266,6 @@ __instruction aarch32_SHADD16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0011xxxx xxxxxxxx 0001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -86601,12 +85354,6 @@ __instruction aarch32_LDAEX_A
         __field Rt 12 +: 4
         __opcode 'xxxx0001 1001xxxx xxxxxx10 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -86617,14 +85364,6 @@ __instruction aarch32_LDAEX_A
         __field Rt 12 +: 4
         __opcode '11101000 1101xxxx xxxxxxxx 1110xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt);  n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -86644,7 +85383,6 @@ __instruction aarch32_LDM_u_AS
         __field register_list 0 +: 15
         __opcode 'xxxx100x x1x1xxxx 0xxxxxxx xxxxxxxx'
         __guard cond != '1111'
-        __unpredictable_unless 21 == '0'
         __decode
             n = UInt(Rn);  registers = register_list;  increment = (U == '1');  wordhigher = (P == U);
             if n == 15 || BitCount(registers) < 1 then UNPREDICTABLE;
@@ -87251,8 +85989,6 @@ __instruction aarch32_UXTAB_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 1110xxxx xxxxxxxx 0111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             if Rn == '1111' then SEE "UXTB";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  rotation = UInt(rotate:'000');
@@ -87266,7 +86002,6 @@ __instruction aarch32_UXTAB_A
         __field Rm 0 +: 4
         __opcode '11111010 0101xxxx 1111xxxx 1xxxxxxx'
         __guard TRUE
-        __unpredictable_unless 6 == '0'
         __decode
             if Rn == '1111' then SEE "UXTB";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  rotation = UInt(rotate:'000');
@@ -87323,7 +86058,6 @@ __instruction aarch32_ORN_r_A
         __field Rm 0 +: 4
         __opcode '11101010 011xxxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             if Rn == '1111' then SEE "MVN (register)";
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  setflags = (S == '1');
@@ -87351,7 +86085,6 @@ __instruction aarch32_LDRT_A
         __opcode 'xxxx0100 x011xxxx xxxxxxxx xxxxxxxx'
         __guard cond != '1111'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  postindex = TRUE;  add = (U == '1');
             register_form = FALSE;  imm32 = ZeroExtend(imm12, 32);
             if t == 15 || n == 15 || n == t then UNPREDICTABLE;
@@ -87368,7 +86101,6 @@ __instruction aarch32_LDRT_A
         __opcode 'xxxx0110 x011xxxx xxxxxxxx xxx0xxxx'
         __guard cond != '1111'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  m = UInt(Rm);  postindex = TRUE;  add = (U == '1');
             register_form = TRUE;  (shift_t, shift_n) = DecodeImmShift(type1, imm5);
             if t == 15 || n == 15 || n == t || m == 15 then UNPREDICTABLE;
@@ -87381,13 +86113,14 @@ __instruction aarch32_LDRT_A
         __opcode '11111000 0101xxxx xxxx1110 xxxxxxxx'
         __guard TRUE
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             if Rn == '1111' then SEE "LDR (literal)";
             t = UInt(Rt);  n = UInt(Rn);  postindex = FALSE;  add = TRUE;
             register_form = FALSE;  imm32 = ZeroExtend(imm8, 32);
             if t == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
 
     __execute __conditional
+        if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
+        EncodingSpecificOperations();
         offset = if register_form then Shift(R[m], shift_t, shift_n, PSTATE.C) else imm32;
         offset_addr = if add then (R[n] + offset) else (R[n] - offset);
         address = if postindex then R[n] else offset_addr;
@@ -87430,10 +86163,6 @@ __instruction aarch32_SDIV_A
         __field Rn 0 +: 4
         __opcode 'xxxx0111 0001xxxx xxxxxxxx 0001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  a = UInt(Ra);
             if d == 15 || n == 15 || m == 15 || a != 15 then UNPREDICTABLE;
@@ -87446,10 +86175,6 @@ __instruction aarch32_SDIV_A
         __field Rm 0 +: 4
         __opcode '11111011 1001xxxx xxxxxxxx 1111xxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  a = UInt(Ra);
             if d == 15 || n == 15 || m == 15 || a != 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
@@ -87667,12 +86392,6 @@ __instruction aarch32_STL_A
         __field Rt 0 +: 4
         __opcode 'xxxx0001 1000xxxx xxxxxx00 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
         __decode
             t = UInt(Rt); n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -87683,14 +86402,6 @@ __instruction aarch32_STL_A
         __field Rt 12 +: 4
         __opcode '11101000 1100xxxx xxxxxxxx 1010xxxx'
         __guard TRUE
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             t = UInt(Rt); n = UInt(Rn);
             if t == 15 || n == 15 then UNPREDICTABLE;
@@ -87827,10 +86538,6 @@ __instruction aarch32_UHASX_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0111xxxx xxxxxxxx 0011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -88056,8 +86763,6 @@ __instruction aarch32_STLEXD_A
         __field Rt 0 +: 4
         __opcode 'xxxx0001 1010xxxx xxxxxx10 1001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
         __decode
             d = UInt(Rd);  t = UInt(Rt);  t2 = t+1;  n = UInt(Rn);
             if d == 15 || Rt<0> == '1' || t2 == 15 || n == 15 then UNPREDICTABLE;
@@ -88094,14 +86799,6 @@ __instruction aarch32_REV16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 1011xxxx xxxxxxxx 1011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  m = UInt(Rm);
             if d == 15 || m == 15 then UNPREDICTABLE;
@@ -88184,30 +86881,34 @@ __instruction aarch32_LDR_r_A
 
     __execute
         if CurrentInstrSet() == InstrSet_A32 then
-            offset = Shift(R[m], shift_t, shift_n, PSTATE.C);
-            offset_addr = if add then (R[n] + offset) else (R[n] - offset);
-            address = if index then offset_addr else R[n];
-            data = MemU[address,4];
-            if wback then R[n] = offset_addr;
-            if t == 15 then
-                if address<1:0> == '00' then
-                    LoadWritePC(data);
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                offset = Shift(R[m], shift_t, shift_n, PSTATE.C);
+                offset_addr = if add then (R[n] + offset) else (R[n] - offset);
+                address = if index then offset_addr else R[n];
+                data = MemU[address,4];
+                if wback then R[n] = offset_addr;
+                if t == 15 then
+                    if address<1:0> == '00' then
+                        LoadWritePC(data);
+                    else
+                        UNPREDICTABLE;
                 else
-                    UNPREDICTABLE;
-            else
-                R[t] = data;
+                    R[t] = data;
         else
-            offset = Shift(R[m], shift_t, shift_n, PSTATE.C);
-            offset_addr = (R[n] + offset);
-            address = offset_addr;
-            data = MemU[address,4];
-            if t == 15 then
-                if address<1:0> == '00' then
-                    LoadWritePC(data);
+            if ConditionPassed() then
+                EncodingSpecificOperations();
+                offset = Shift(R[m], shift_t, shift_n, PSTATE.C);
+                offset_addr = (R[n] + offset);
+                address = offset_addr;
+                data = MemU[address,4];
+                if t == 15 then
+                    if address<1:0> == '00' then
+                        LoadWritePC(data);
+                    else
+                        UNPREDICTABLE;
                 else
-                    UNPREDICTABLE;
-            else
-                R[t] = data;
+                    R[t] = data;
 
 __instruction aarch32_UADD16_A
     __encoding aarch32_UADD16_A1_A
@@ -88218,10 +86919,6 @@ __instruction aarch32_UADD16_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0101xxxx xxxxxxxx 0001xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
@@ -88282,7 +86979,6 @@ __instruction aarch32_ADC_r_A
         __field Rm 0 +: 4
         __opcode '11101011 010xxxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);  setflags = (S == '1');
             (shift_t, shift_n) = DecodeImmShift(type1, imm3:imm2);
@@ -88331,22 +87027,6 @@ __instruction aarch32_CLREX_A
         __instruction_set A32
         __opcode '11110101 0111xxxx xxxxxxxx 0001xxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             // No additional decoding required
 
@@ -88354,19 +87034,6 @@ __instruction aarch32_CLREX_A
         __instruction_set T32
         __opcode '11110011 1011xxxx 10x0xxxx 0010xxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
-        __unpredictable_unless 3 == '1'
-        __unpredictable_unless 2 == '1'
-        __unpredictable_unless 1 == '1'
-        __unpredictable_unless 0 == '1'
         __decode
             // No additional decoding required
 
@@ -88884,10 +87551,6 @@ __instruction aarch32_TEQ_r_A
         __field Rm 0 +: 4
         __opcode 'xxxx0001 0011xxxx xxxxxxxx xxx0xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 15 == '0'
-        __unpredictable_unless 14 == '0'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 12 == '0'
         __decode
             n = UInt(Rn);  m = UInt(Rm);
             (shift_t, shift_n) = DecodeImmShift(type1, imm5);
@@ -88901,7 +87564,6 @@ __instruction aarch32_TEQ_r_A
         __field Rm 0 +: 4
         __opcode '11101010 1001xxxx xxxx1111 xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             n = UInt(Rn);  m = UInt(Rm);
             (shift_t, shift_n) = DecodeImmShift(type1, imm3:imm2);
@@ -88927,7 +87589,6 @@ __instruction aarch32_LDRHT_A
         __opcode 'xxxx0000 x111xxxx xxxxxxxx 1011xxxx'
         __guard cond != '1111'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  postindex = TRUE;  add = (U == '1');
             register_form = FALSE;  imm32 = ZeroExtend(imm4H:imm4L, 32);
             if t == 15 || n == 15 || n == t then UNPREDICTABLE;
@@ -88941,12 +87602,7 @@ __instruction aarch32_LDRHT_A
         __field Rm 0 +: 4
         __opcode 'xxxx0000 x011xxxx xxxxxxxx 1011xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             t = UInt(Rt);  n = UInt(Rn);  m = UInt(Rm);  postindex = TRUE;  add = (U == '1');
             register_form = TRUE;
             if t == 15 || n == 15 || n == t || m == 15 then UNPREDICTABLE;
@@ -88959,13 +87615,14 @@ __instruction aarch32_LDRHT_A
         __opcode '11111000 0011xxxx xxxx1110 xxxxxxxx'
         __guard TRUE
         __decode
-            if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
             if Rn == '1111' then SEE "LDRH (literal)";
             t = UInt(Rt);  n = UInt(Rn);  postindex = FALSE;  add = TRUE;
             register_form = FALSE;  imm32 = ZeroExtend(imm8, 32);
             if t == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
 
     __execute __conditional
+        if PSTATE.EL == EL2 then UNPREDICTABLE;               // Hyp mode
+        EncodingSpecificOperations();
         offset = if register_form then R[m] else imm32;
         offset_addr = if add then (R[n] + offset) else (R[n] - offset);
         address = if postindex then R[n] else offset_addr;
@@ -89070,18 +87727,6 @@ __instruction aarch32_DMB_A
         __field option 0 +: 4
         __opcode '11110101 0111xxxx xxxxxxxx 0101xxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 15 == '1'
-        __unpredictable_unless 14 == '1'
-        __unpredictable_unless 13 == '1'
-        __unpredictable_unless 12 == '1'
-        __unpredictable_unless 11 == '0'
-        __unpredictable_unless 10 == '0'
-        __unpredictable_unless 9 == '0'
-        __unpredictable_unless 8 == '0'
         __decode
             // No additional decoding required
 
@@ -89090,15 +87735,6 @@ __instruction aarch32_DMB_A
         __field option 0 +: 4
         __opcode '11110011 1011xxxx 10x0xxxx 0101xxxx'
         __guard TRUE
-        __unpredictable_unless 19 == '1'
-        __unpredictable_unless 18 == '1'
-        __unpredictable_unless 17 == '1'
-        __unpredictable_unless 16 == '1'
-        __unpredictable_unless 13 == '0'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             // No additional decoding required
 
@@ -89195,7 +87831,6 @@ __instruction aarch32_STM_A
         __field register_list 0 +: 14
         __opcode '11101000 10x0xxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             n = UInt(Rn);  registers = P:M:register_list;  wback = (W == '1');
             if n == 15 || BitCount(registers) < 2 then UNPREDICTABLE;
@@ -89289,7 +87924,6 @@ __instruction aarch32_STMDB_A
         __field register_list 0 +: 14
         __opcode '11101001 00x0xxxx xxxxxxxx xxxxxxxx'
         __guard TRUE
-        __unpredictable_unless 15 == '0'
         __decode
             n = UInt(Rn);  registers = P:M:register_list;  wback = (W == '1');
             if n == 15 || BitCount(registers) < 2 then UNPREDICTABLE;
@@ -89319,10 +87953,6 @@ __instruction aarch32_UHSUB8_A
         __field Rm 0 +: 4
         __opcode 'xxxx0110 0111xxxx xxxxxxxx 1111xxxx'
         __guard cond != '1111'
-        __unpredictable_unless 11 == '1'
-        __unpredictable_unless 10 == '1'
-        __unpredictable_unless 9 == '1'
-        __unpredictable_unless 8 == '1'
         __decode
             d = UInt(Rd);  n = UInt(Rn);  m = UInt(Rm);
             if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
