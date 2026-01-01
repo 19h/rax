@@ -336,6 +336,14 @@ pub enum Mnemonic {
     TEQ,
 
     // =========================================================================
+    // Data Processing - Address Calculation
+    // =========================================================================
+    /// ADR - Form PC-relative address
+    ADR,
+    /// ADRP - Form PC-relative address to 4KB page
+    ADRP,
+
+    // =========================================================================
     // Data Processing - Move
     // =========================================================================
     MOV,
@@ -822,6 +830,10 @@ impl Mnemonic {
             Mnemonic::MVNS => "mvns",
             Mnemonic::TST => "tst",
             Mnemonic::TEQ => "teq",
+
+            // Address calculation
+            Mnemonic::ADR => "adr",
+            Mnemonic::ADRP => "adrp",
 
             // Move
             Mnemonic::MOV => "mov",

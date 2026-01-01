@@ -135,24 +135,17 @@ impl Aarch64Decoder {
             imm
         };
 
-        let mnemonic = if op == 0 {
-            Mnemonic::ADD
+        // ADR: op=0, forms PC + imm
+        // ADRP: op=1, forms (PC & ~0xFFF) + (imm << 12)
+        let (mnemonic, label) = if op == 0 {
+            (Mnemonic::ADR, imm)
         } else {
-            Mnemonic::ADD
-        }; // ADRP
-        let label = if op == 0 { imm } else { imm << 12 };
-
-        // For ADR/ADRP, we'll use a special representation
-        let insn = if op == 0 {
-            DecodedInsn::new(Mnemonic::ADD, ExecutionState::Aarch64, raw, 4)
-                .with_operand(Operand::Reg(Register::x(rd)))
-                .with_operand(Operand::Label(label))
-        } else {
-            // ADRP - page-relative
-            DecodedInsn::new(Mnemonic::ADD, ExecutionState::Aarch64, raw, 4)
-                .with_operand(Operand::Reg(Register::x(rd)))
-                .with_operand(Operand::Label(label))
+            (Mnemonic::ADRP, imm << 12)
         };
+
+        let insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch64, raw, 4)
+            .with_operand(Operand::Reg(Register::x(rd)))
+            .with_operand(Operand::Label(label));
 
         Ok(insn)
     }
