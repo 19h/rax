@@ -16,6 +16,7 @@ mod logic_and_bit_manipulation;
 mod logical;
 mod memory;
 mod misc;
+mod regressions;
 mod rotate;
 mod segment;
 mod simd;
