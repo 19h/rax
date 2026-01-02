@@ -20,12 +20,17 @@ use crate::generated::test_helpers::*;
 fn test_aarch64_integer_pac_strip_dp_1src_field_d_0_min_4000_dac14000() {
     // Encoding: 0xDAC14000
     // Test aarch64_integer_pac_strip_dp_1src field D = 0 (Min)
-    // Fields: D=0, Rd=0, Rn=0
+    // Fields: Rn=0, D=0, Rd=0
     let encoding: u32 = 0xDAC14000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -36,12 +41,17 @@ fn test_aarch64_integer_pac_strip_dp_1src_field_d_0_min_4000_dac14000() {
 fn test_aarch64_integer_pac_strip_dp_1src_field_d_1_max_4000_dac14400() {
     // Encoding: 0xDAC14400
     // Test aarch64_integer_pac_strip_dp_1src field D = 1 (Max)
-    // Fields: D=1, Rd=0, Rn=0
+    // Fields: D=1, Rn=0, Rd=0
     let encoding: u32 = 0xDAC14400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -52,12 +62,17 @@ fn test_aarch64_integer_pac_strip_dp_1src_field_d_1_max_4000_dac14400() {
 fn test_aarch64_integer_pac_strip_dp_1src_field_rn_0_min_4000_dac14000() {
     // Encoding: 0xDAC14000
     // Test aarch64_integer_pac_strip_dp_1src field Rn = 0 (Min)
-    // Fields: Rd=0, D=0, Rn=0
+    // Fields: D=0, Rn=0, Rd=0
     let encoding: u32 = 0xDAC14000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -68,12 +83,17 @@ fn test_aarch64_integer_pac_strip_dp_1src_field_rn_0_min_4000_dac14000() {
 fn test_aarch64_integer_pac_strip_dp_1src_field_rn_1_poweroftwo_4000_dac14020() {
     // Encoding: 0xDAC14020
     // Test aarch64_integer_pac_strip_dp_1src field Rn = 1 (PowerOfTwo)
-    // Fields: Rn=1, Rd=0, D=0
+    // Fields: D=0, Rn=1, Rd=0
     let encoding: u32 = 0xDAC14020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -84,12 +104,17 @@ fn test_aarch64_integer_pac_strip_dp_1src_field_rn_1_poweroftwo_4000_dac14020() 
 fn test_aarch64_integer_pac_strip_dp_1src_field_rn_30_poweroftwominusone_4000_dac143c0() {
     // Encoding: 0xDAC143C0
     // Test aarch64_integer_pac_strip_dp_1src field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=30, Rd=0, D=0
+    // Fields: D=0, Rd=0, Rn=30
     let encoding: u32 = 0xDAC143C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -100,12 +125,17 @@ fn test_aarch64_integer_pac_strip_dp_1src_field_rn_30_poweroftwominusone_4000_da
 fn test_aarch64_integer_pac_strip_dp_1src_field_rn_31_max_4000_dac143e0() {
     // Encoding: 0xDAC143E0
     // Test aarch64_integer_pac_strip_dp_1src field Rn = 31 (Max)
-    // Fields: Rd=0, Rn=31, D=0
+    // Fields: Rd=0, D=0, Rn=31
     let encoding: u32 = 0xDAC143E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -121,7 +151,12 @@ fn test_aarch64_integer_pac_strip_dp_1src_field_rd_0_min_4000_dac14000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -132,12 +167,17 @@ fn test_aarch64_integer_pac_strip_dp_1src_field_rd_0_min_4000_dac14000() {
 fn test_aarch64_integer_pac_strip_dp_1src_field_rd_1_poweroftwo_4000_dac14001() {
     // Encoding: 0xDAC14001
     // Test aarch64_integer_pac_strip_dp_1src field Rd = 1 (PowerOfTwo)
-    // Fields: Rd=1, D=0, Rn=0
+    // Fields: D=0, Rn=0, Rd=1
     let encoding: u32 = 0xDAC14001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -148,12 +188,17 @@ fn test_aarch64_integer_pac_strip_dp_1src_field_rd_1_poweroftwo_4000_dac14001() 
 fn test_aarch64_integer_pac_strip_dp_1src_field_rd_30_poweroftwominusone_4000_dac1401e() {
     // Encoding: 0xDAC1401E
     // Test aarch64_integer_pac_strip_dp_1src field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=30, D=0, Rn=0
+    // Fields: D=0, Rn=0, Rd=30
     let encoding: u32 = 0xDAC1401E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -164,12 +209,17 @@ fn test_aarch64_integer_pac_strip_dp_1src_field_rd_30_poweroftwominusone_4000_da
 fn test_aarch64_integer_pac_strip_dp_1src_field_rd_31_max_4000_dac1401f() {
     // Encoding: 0xDAC1401F
     // Test aarch64_integer_pac_strip_dp_1src field Rd = 31 (Max)
-    // Fields: Rd=31, Rn=0, D=0
+    // Fields: Rd=31, D=0, Rn=0
     let encoding: u32 = 0xDAC1401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -180,12 +230,17 @@ fn test_aarch64_integer_pac_strip_dp_1src_field_rd_31_max_4000_dac1401f() {
 fn test_aarch64_integer_pac_strip_dp_1src_combo_0_4000_dac14000() {
     // Encoding: 0xDAC14000
     // Test aarch64_integer_pac_strip_dp_1src field combination: D=0, Rn=0, Rd=0
-    // Fields: Rn=0, D=0, Rd=0
+    // Fields: D=0, Rd=0, Rn=0
     let encoding: u32 = 0xDAC14000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -193,15 +248,21 @@ fn test_aarch64_integer_pac_strip_dp_1src_combo_0_4000_dac14000() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_pac_strip_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_16384_dac143e0() {
+fn test_aarch64_integer_pac_strip_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_16384_dac143e0(
+) {
     // Encoding: 0xDAC143E0
     // Test aarch64_integer_pac_strip_dp_1src special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: D=0, Rn=31, Rd=0
+    // Fields: D=0, Rd=0, Rn=31
     let encoding: u32 = 0xDAC143E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -209,15 +270,21 @@ fn test_aarch64_integer_pac_strip_dp_1src_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_pac_strip_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_16384_dac1401f() {
+fn test_aarch64_integer_pac_strip_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_16384_dac1401f(
+) {
     // Encoding: 0xDAC1401F
     // Test aarch64_integer_pac_strip_dp_1src special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rn=0, D=0, Rd=31
+    // Fields: D=0, Rn=0, Rd=31
     let encoding: u32 = 0xDAC1401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -228,12 +295,16 @@ fn test_aarch64_integer_pac_strip_dp_1src_special_rd_31_zero_register_xzr_wzr_re
 fn test_aarch64_integer_pac_strip_dp_1src_invalid_0_4000_dac14000() {
     // Encoding: 0xDAC14000
     // Test aarch64_integer_pac_strip_dp_1src invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HavePACExt" }, args: [] } }
-    // Fields: Rd=0, D=0, Rn=0
+    // Fields: D=0, Rd=0, Rn=0
     let encoding: u32 = 0xDAC14000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -249,7 +320,11 @@ fn test_aarch64_integer_pac_strip_dp_1src_invalid_1_4000_dac14000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -260,12 +335,16 @@ fn test_aarch64_integer_pac_strip_dp_1src_invalid_1_4000_dac14000() {
 fn test_aarch64_integer_pac_strip_dp_1src_invalid_2_4000_dac14000() {
     // Encoding: 0xDAC14000
     // Test aarch64_integer_pac_strip_dp_1src invalid encoding: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "n" }), rhs: LitInt(31) }
-    // Fields: Rn=0, D=0, Rd=0
+    // Fields: Rn=0, Rd=0, D=0
     let encoding: u32 = 0xDAC14000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -276,12 +355,16 @@ fn test_aarch64_integer_pac_strip_dp_1src_invalid_2_4000_dac14000() {
 fn test_aarch64_integer_pac_strip_dp_1src_invalid_3_4000_dac14000() {
     // Encoding: 0xDAC14000
     // Test aarch64_integer_pac_strip_dp_1src invalid encoding: Unconditional UNDEFINED
-    // Fields: D=0, Rd=0, Rn=0
+    // Fields: Rd=0, D=0, Rn=0
     let encoding: u32 = 0xDAC14000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_hint
@@ -296,7 +379,12 @@ fn test_aarch64_integer_pac_strip_hint_basic_encoding_d50320ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_strip_dp_1src
@@ -372,12 +460,17 @@ fn test_aarch64_integer_pac_strip_hint_reg_write_0_d50320ff() {
 fn test_aarch64_integer_pac_pacga_dp_2src_field_rm_0_min_3000_9ac03000() {
     // Encoding: 0x9AC03000
     // Test aarch64_integer_pac_pacga_dp_2src field Rm = 0 (Min)
-    // Fields: Rm=0, Rn=0, Rd=0
+    // Fields: Rd=0, Rm=0, Rn=0
     let encoding: u32 = 0x9AC03000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -388,12 +481,17 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rm_0_min_3000_9ac03000() {
 fn test_aarch64_integer_pac_pacga_dp_2src_field_rm_1_poweroftwo_3000_9ac13000() {
     // Encoding: 0x9AC13000
     // Test aarch64_integer_pac_pacga_dp_2src field Rm = 1 (PowerOfTwo)
-    // Fields: Rd=0, Rn=0, Rm=1
+    // Fields: Rd=0, Rm=1, Rn=0
     let encoding: u32 = 0x9AC13000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -409,7 +507,12 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rm_30_poweroftwominusone_3000_9a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -420,12 +523,17 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rm_30_poweroftwominusone_3000_9a
 fn test_aarch64_integer_pac_pacga_dp_2src_field_rm_31_max_3000_9adf3000() {
     // Encoding: 0x9ADF3000
     // Test aarch64_integer_pac_pacga_dp_2src field Rm = 31 (Max)
-    // Fields: Rn=0, Rm=31, Rd=0
+    // Fields: Rm=31, Rn=0, Rd=0
     let encoding: u32 = 0x9ADF3000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -436,12 +544,17 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rm_31_max_3000_9adf3000() {
 fn test_aarch64_integer_pac_pacga_dp_2src_field_rn_0_min_3000_9ac03000() {
     // Encoding: 0x9AC03000
     // Test aarch64_integer_pac_pacga_dp_2src field Rn = 0 (Min)
-    // Fields: Rn=0, Rd=0, Rm=0
+    // Fields: Rn=0, Rm=0, Rd=0
     let encoding: u32 = 0x9AC03000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -452,12 +565,17 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rn_0_min_3000_9ac03000() {
 fn test_aarch64_integer_pac_pacga_dp_2src_field_rn_1_poweroftwo_3000_9ac03020() {
     // Encoding: 0x9AC03020
     // Test aarch64_integer_pac_pacga_dp_2src field Rn = 1 (PowerOfTwo)
-    // Fields: Rm=0, Rn=1, Rd=0
+    // Fields: Rn=1, Rm=0, Rd=0
     let encoding: u32 = 0x9AC03020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -473,7 +591,12 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rn_30_poweroftwominusone_3000_9a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -484,12 +607,17 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rn_30_poweroftwominusone_3000_9a
 fn test_aarch64_integer_pac_pacga_dp_2src_field_rn_31_max_3000_9ac033e0() {
     // Encoding: 0x9AC033E0
     // Test aarch64_integer_pac_pacga_dp_2src field Rn = 31 (Max)
-    // Fields: Rm=0, Rd=0, Rn=31
+    // Fields: Rn=31, Rm=0, Rd=0
     let encoding: u32 = 0x9AC033E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -500,12 +628,17 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rn_31_max_3000_9ac033e0() {
 fn test_aarch64_integer_pac_pacga_dp_2src_field_rd_0_min_3000_9ac03000() {
     // Encoding: 0x9AC03000
     // Test aarch64_integer_pac_pacga_dp_2src field Rd = 0 (Min)
-    // Fields: Rm=0, Rd=0, Rn=0
+    // Fields: Rd=0, Rm=0, Rn=0
     let encoding: u32 = 0x9AC03000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -516,12 +649,17 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rd_0_min_3000_9ac03000() {
 fn test_aarch64_integer_pac_pacga_dp_2src_field_rd_1_poweroftwo_3000_9ac03001() {
     // Encoding: 0x9AC03001
     // Test aarch64_integer_pac_pacga_dp_2src field Rd = 1 (PowerOfTwo)
-    // Fields: Rd=1, Rn=0, Rm=0
+    // Fields: Rm=0, Rn=0, Rd=1
     let encoding: u32 = 0x9AC03001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -532,12 +670,17 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rd_1_poweroftwo_3000_9ac03001() 
 fn test_aarch64_integer_pac_pacga_dp_2src_field_rd_30_poweroftwominusone_3000_9ac0301e() {
     // Encoding: 0x9AC0301E
     // Test aarch64_integer_pac_pacga_dp_2src field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rm=0, Rd=30
+    // Fields: Rd=30, Rn=0, Rm=0
     let encoding: u32 = 0x9AC0301E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -553,7 +696,12 @@ fn test_aarch64_integer_pac_pacga_dp_2src_field_rd_31_max_3000_9ac0301f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -569,7 +717,12 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_0_3000_9ac03000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -577,7 +730,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_combo_0_3000_9ac03000() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_pac_pacga_dp_2src_special_rn_31_stack_pointer_sp_may_require_alignment_12288_9ac033e0() {
+fn test_aarch64_integer_pac_pacga_dp_2src_special_rn_31_stack_pointer_sp_may_require_alignment_12288_9ac033e0(
+) {
     // Encoding: 0x9AC033E0
     // Test aarch64_integer_pac_pacga_dp_2src special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rd=0, Rm=0, Rn=31
@@ -585,7 +739,12 @@ fn test_aarch64_integer_pac_pacga_dp_2src_special_rn_31_stack_pointer_sp_may_req
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -593,15 +752,21 @@ fn test_aarch64_integer_pac_pacga_dp_2src_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_pac_pacga_dp_2src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_12288_9ac0301f() {
+fn test_aarch64_integer_pac_pacga_dp_2src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_12288_9ac0301f(
+) {
     // Encoding: 0x9AC0301F
     // Test aarch64_integer_pac_pacga_dp_2src special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rd=31, Rm=0, Rn=0
+    // Fields: Rn=0, Rd=31, Rm=0
     let encoding: u32 = 0x9AC0301F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -612,12 +777,16 @@ fn test_aarch64_integer_pac_pacga_dp_2src_special_rd_31_zero_register_xzr_wzr_re
 fn test_aarch64_integer_pac_pacga_dp_2src_invalid_0_3000_9ac03000() {
     // Encoding: 0x9AC03000
     // Test aarch64_integer_pac_pacga_dp_2src invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HavePACExt" }, args: [] } }
-    // Fields: Rd=0, Rm=0, Rn=0
+    // Fields: Rm=0, Rd=0, Rn=0
     let encoding: u32 = 0x9AC03000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -633,7 +802,11 @@ fn test_aarch64_integer_pac_pacga_dp_2src_invalid_1_3000_9ac03000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -663,8 +836,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_umulh_oracle_1_9bc27c20() {
     // Test UMULH: large value * 2 - produces high bits (oracle)
     // Encoding: 0x9BC27C20
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x2);
     set_x(&mut cpu, 1, 0x8000000000000000);
+    set_x(&mut cpu, 2, 0x2);
     let encoding: u32 = 0x9BC27C20;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -681,13 +854,17 @@ fn test_aarch64_integer_pac_pacga_dp_2src_umulh_oracle_2_9bc27c20() {
     // Test UMULH: max * max unsigned (oracle)
     // Encoding: 0x9BC27C20
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x9BC27C20;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFFE, "X0 should be 0xFFFFFFFFFFFFFFFE");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFFFFE,
+        "X0 should be 0xFFFFFFFFFFFFFFFE"
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -699,13 +876,17 @@ fn test_aarch64_integer_pac_pacga_dp_2src_umulh_oracle_3_9bc27c20() {
     // Test UMULH: max positive * max positive (oracle)
     // Encoding: 0x9BC27C20
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x7FFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x7FFFFFFFFFFFFFFF);
     let encoding: u32 = 0x9BC27C20;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0x3FFFFFFFFFFFFFFF, "X0 should be 0x3FFFFFFFFFFFFFFF");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0x3FFFFFFFFFFFFFFF,
+        "X0 should be 0x3FFFFFFFFFFFFFFF"
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacga_dp_2src
@@ -717,8 +898,8 @@ fn test_aarch64_integer_pac_pacga_dp_2src_umulh_oracle_4_9bc27c20() {
     // Test UMULH: 2^32 * 2^32 (oracle)
     // Encoding: 0x9BC27C20
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x100000000);
     set_x(&mut cpu, 2, 0x100000000);
+    set_x(&mut cpu, 1, 0x100000000);
     let encoding: u32 = 0x9BC27C20;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -799,12 +980,17 @@ fn test_aarch64_integer_pac_pacga_dp_2src_zr_rd_9ac0301f() {
 fn test_aarch64_integer_pac_pacda_dp_1src_field_z_0_min_800_dac10800() {
     // Encoding: 0xDAC10800
     // Test aarch64_integer_pac_pacda_dp_1src field Z = 0 (Min)
-    // Fields: Z=0, Rn=0, Rd=0
+    // Fields: Rn=0, Rd=0, Z=0
     let encoding: u32 = 0xDAC10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -820,7 +1006,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_z_1_max_800_dac12800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -831,12 +1022,17 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_z_1_max_800_dac12800() {
 fn test_aarch64_integer_pac_pacda_dp_1src_field_rn_0_min_800_dac10800() {
     // Encoding: 0xDAC10800
     // Test aarch64_integer_pac_pacda_dp_1src field Rn = 0 (Min)
-    // Fields: Rn=0, Z=0, Rd=0
+    // Fields: Rn=0, Rd=0, Z=0
     let encoding: u32 = 0xDAC10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -847,12 +1043,17 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rn_0_min_800_dac10800() {
 fn test_aarch64_integer_pac_pacda_dp_1src_field_rn_1_poweroftwo_800_dac10820() {
     // Encoding: 0xDAC10820
     // Test aarch64_integer_pac_pacda_dp_1src field Rn = 1 (PowerOfTwo)
-    // Fields: Z=0, Rd=0, Rn=1
+    // Fields: Rn=1, Rd=0, Z=0
     let encoding: u32 = 0xDAC10820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -868,7 +1069,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rn_30_poweroftwominusone_800_dac
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -879,12 +1085,17 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rn_30_poweroftwominusone_800_dac
 fn test_aarch64_integer_pac_pacda_dp_1src_field_rn_31_max_800_dac10be0() {
     // Encoding: 0xDAC10BE0
     // Test aarch64_integer_pac_pacda_dp_1src field Rn = 31 (Max)
-    // Fields: Rd=0, Z=0, Rn=31
+    // Fields: Rn=31, Rd=0, Z=0
     let encoding: u32 = 0xDAC10BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -895,12 +1106,17 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rn_31_max_800_dac10be0() {
 fn test_aarch64_integer_pac_pacda_dp_1src_field_rd_0_min_800_dac10800() {
     // Encoding: 0xDAC10800
     // Test aarch64_integer_pac_pacda_dp_1src field Rd = 0 (Min)
-    // Fields: Rn=0, Z=0, Rd=0
+    // Fields: Rn=0, Rd=0, Z=0
     let encoding: u32 = 0xDAC10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -911,12 +1127,17 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rd_0_min_800_dac10800() {
 fn test_aarch64_integer_pac_pacda_dp_1src_field_rd_1_poweroftwo_800_dac10801() {
     // Encoding: 0xDAC10801
     // Test aarch64_integer_pac_pacda_dp_1src field Rd = 1 (PowerOfTwo)
-    // Fields: Rd=1, Z=0, Rn=0
+    // Fields: Rn=0, Rd=1, Z=0
     let encoding: u32 = 0xDAC10801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -932,7 +1153,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rd_30_poweroftwominusone_800_dac
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -943,12 +1169,17 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rd_30_poweroftwominusone_800_dac
 fn test_aarch64_integer_pac_pacda_dp_1src_field_rd_31_max_800_dac1081f() {
     // Encoding: 0xDAC1081F
     // Test aarch64_integer_pac_pacda_dp_1src field Rd = 31 (Max)
-    // Fields: Rn=0, Rd=31, Z=0
+    // Fields: Z=0, Rn=0, Rd=31
     let encoding: u32 = 0xDAC1081F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -959,12 +1190,17 @@ fn test_aarch64_integer_pac_pacda_dp_1src_field_rd_31_max_800_dac1081f() {
 fn test_aarch64_integer_pac_pacda_dp_1src_combo_0_800_dac10800() {
     // Encoding: 0xDAC10800
     // Test aarch64_integer_pac_pacda_dp_1src field combination: Z=0, Rn=0, Rd=0
-    // Fields: Z=0, Rd=0, Rn=0
+    // Fields: Rd=0, Z=0, Rn=0
     let encoding: u32 = 0xDAC10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -972,7 +1208,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_combo_0_800_dac10800() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_pac_pacda_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_2048_dac10be0() {
+fn test_aarch64_integer_pac_pacda_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_2048_dac10be0(
+) {
     // Encoding: 0xDAC10BE0
     // Test aarch64_integer_pac_pacda_dp_1src special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Z=0, Rn=31, Rd=0
@@ -980,7 +1217,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_special_rn_31_stack_pointer_sp_may_req
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -988,7 +1230,8 @@ fn test_aarch64_integer_pac_pacda_dp_1src_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_pac_pacda_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_2048_dac1081f() {
+fn test_aarch64_integer_pac_pacda_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_2048_dac1081f(
+) {
     // Encoding: 0xDAC1081F
     // Test aarch64_integer_pac_pacda_dp_1src special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Rd=31, Rn=0, Z=0
@@ -996,7 +1239,12 @@ fn test_aarch64_integer_pac_pacda_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -1007,12 +1255,16 @@ fn test_aarch64_integer_pac_pacda_dp_1src_special_rd_31_zero_register_xzr_wzr_re
 fn test_aarch64_integer_pac_pacda_dp_1src_invalid_0_800_dac10800() {
     // Encoding: 0xDAC10800
     // Test aarch64_integer_pac_pacda_dp_1src invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HavePACExt" }, args: [] } }
-    // Fields: Rn=0, Rd=0, Z=0
+    // Fields: Z=0, Rd=0, Rn=0
     let encoding: u32 = 0xDAC10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -1023,12 +1275,16 @@ fn test_aarch64_integer_pac_pacda_dp_1src_invalid_0_800_dac10800() {
 fn test_aarch64_integer_pac_pacda_dp_1src_invalid_1_800_dac10800() {
     // Encoding: 0xDAC10800
     // Test aarch64_integer_pac_pacda_dp_1src invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, Z=0, Rd=0
+    // Fields: Z=0, Rn=0, Rd=0
     let encoding: u32 = 0xDAC10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -1039,12 +1295,16 @@ fn test_aarch64_integer_pac_pacda_dp_1src_invalid_1_800_dac10800() {
 fn test_aarch64_integer_pac_pacda_dp_1src_invalid_2_800_dac10800() {
     // Encoding: 0xDAC10800
     // Test aarch64_integer_pac_pacda_dp_1src invalid encoding: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "n" }), rhs: LitInt(31) }
-    // Fields: Rn=0, Z=0, Rd=0
+    // Fields: Rd=0, Z=0, Rn=0
     let encoding: u32 = 0xDAC10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -1055,12 +1315,16 @@ fn test_aarch64_integer_pac_pacda_dp_1src_invalid_2_800_dac10800() {
 fn test_aarch64_integer_pac_pacda_dp_1src_invalid_3_800_dac10800() {
     // Encoding: 0xDAC10800
     // Test aarch64_integer_pac_pacda_dp_1src invalid encoding: Unconditional UNDEFINED
-    // Fields: Z=0, Rd=0, Rn=0
+    // Fields: Z=0, Rn=0, Rd=0
     let encoding: u32 = 0xDAC10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacda_dp_1src
@@ -1136,12 +1400,17 @@ fn test_aarch64_integer_pac_pacda_dp_1src_zr_rd_dac1081f() {
 fn test_aarch64_integer_pac_autib_dp_1src_field_z_0_min_1400_dac11400() {
     // Encoding: 0xDAC11400
     // Test aarch64_integer_pac_autib_dp_1src field Z = 0 (Min)
-    // Fields: Z=0, Rn=0, Rd=0
+    // Fields: Rn=0, Rd=0, Z=0
     let encoding: u32 = 0xDAC11400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1152,12 +1421,17 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_z_0_min_1400_dac11400() {
 fn test_aarch64_integer_pac_autib_dp_1src_field_z_1_max_1400_dac13400() {
     // Encoding: 0xDAC13400
     // Test aarch64_integer_pac_autib_dp_1src field Z = 1 (Max)
-    // Fields: Z=1, Rn=0, Rd=0
+    // Fields: Rd=0, Z=1, Rn=0
     let encoding: u32 = 0xDAC13400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1168,12 +1442,17 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_z_1_max_1400_dac13400() {
 fn test_aarch64_integer_pac_autib_dp_1src_field_rn_0_min_1400_dac11400() {
     // Encoding: 0xDAC11400
     // Test aarch64_integer_pac_autib_dp_1src field Rn = 0 (Min)
-    // Fields: Z=0, Rd=0, Rn=0
+    // Fields: Rn=0, Rd=0, Z=0
     let encoding: u32 = 0xDAC11400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1184,12 +1463,17 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rn_0_min_1400_dac11400() {
 fn test_aarch64_integer_pac_autib_dp_1src_field_rn_1_poweroftwo_1400_dac11420() {
     // Encoding: 0xDAC11420
     // Test aarch64_integer_pac_autib_dp_1src field Rn = 1 (PowerOfTwo)
-    // Fields: Z=0, Rn=1, Rd=0
+    // Fields: Rn=1, Z=0, Rd=0
     let encoding: u32 = 0xDAC11420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1200,12 +1484,17 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rn_1_poweroftwo_1400_dac11420() 
 fn test_aarch64_integer_pac_autib_dp_1src_field_rn_30_poweroftwominusone_1400_dac117c0() {
     // Encoding: 0xDAC117C0
     // Test aarch64_integer_pac_autib_dp_1src field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=30, Rd=0, Z=0
+    // Fields: Z=0, Rd=0, Rn=30
     let encoding: u32 = 0xDAC117C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1216,12 +1505,17 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rn_30_poweroftwominusone_1400_da
 fn test_aarch64_integer_pac_autib_dp_1src_field_rn_31_max_1400_dac117e0() {
     // Encoding: 0xDAC117E0
     // Test aarch64_integer_pac_autib_dp_1src field Rn = 31 (Max)
-    // Fields: Z=0, Rn=31, Rd=0
+    // Fields: Rd=0, Z=0, Rn=31
     let encoding: u32 = 0xDAC117E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1237,7 +1531,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rd_0_min_1400_dac11400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1248,12 +1547,17 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rd_0_min_1400_dac11400() {
 fn test_aarch64_integer_pac_autib_dp_1src_field_rd_1_poweroftwo_1400_dac11401() {
     // Encoding: 0xDAC11401
     // Test aarch64_integer_pac_autib_dp_1src field Rd = 1 (PowerOfTwo)
-    // Fields: Rn=0, Z=0, Rd=1
+    // Fields: Rd=1, Z=0, Rn=0
     let encoding: u32 = 0xDAC11401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1269,7 +1573,12 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rd_30_poweroftwominusone_1400_da
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1280,12 +1589,17 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rd_30_poweroftwominusone_1400_da
 fn test_aarch64_integer_pac_autib_dp_1src_field_rd_31_max_1400_dac1141f() {
     // Encoding: 0xDAC1141F
     // Test aarch64_integer_pac_autib_dp_1src field Rd = 31 (Max)
-    // Fields: Rd=31, Z=0, Rn=0
+    // Fields: Rn=0, Rd=31, Z=0
     let encoding: u32 = 0xDAC1141F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1296,12 +1610,17 @@ fn test_aarch64_integer_pac_autib_dp_1src_field_rd_31_max_1400_dac1141f() {
 fn test_aarch64_integer_pac_autib_dp_1src_combo_0_1400_dac11400() {
     // Encoding: 0xDAC11400
     // Test aarch64_integer_pac_autib_dp_1src field combination: Z=0, Rn=0, Rd=0
-    // Fields: Z=0, Rn=0, Rd=0
+    // Fields: Z=0, Rd=0, Rn=0
     let encoding: u32 = 0xDAC11400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1309,15 +1628,21 @@ fn test_aarch64_integer_pac_autib_dp_1src_combo_0_1400_dac11400() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_pac_autib_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_5120_dac117e0() {
+fn test_aarch64_integer_pac_autib_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_5120_dac117e0(
+) {
     // Encoding: 0xDAC117E0
     // Test aarch64_integer_pac_autib_dp_1src special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rn=31, Rd=0, Z=0
+    // Fields: Z=0, Rn=31, Rd=0
     let encoding: u32 = 0xDAC117E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1325,15 +1650,21 @@ fn test_aarch64_integer_pac_autib_dp_1src_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_pac_autib_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_5120_dac1141f() {
+fn test_aarch64_integer_pac_autib_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_5120_dac1141f(
+) {
     // Encoding: 0xDAC1141F
     // Test aarch64_integer_pac_autib_dp_1src special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Z=0, Rn=0, Rd=31
+    // Fields: Rn=0, Rd=31, Z=0
     let encoding: u32 = 0xDAC1141F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1344,12 +1675,16 @@ fn test_aarch64_integer_pac_autib_dp_1src_special_rd_31_zero_register_xzr_wzr_re
 fn test_aarch64_integer_pac_autib_dp_1src_invalid_0_1400_dac11400() {
     // Encoding: 0xDAC11400
     // Test aarch64_integer_pac_autib_dp_1src invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HavePACExt" }, args: [] } }
-    // Fields: Rn=0, Z=0, Rd=0
+    // Fields: Rn=0, Rd=0, Z=0
     let encoding: u32 = 0xDAC11400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1360,12 +1695,16 @@ fn test_aarch64_integer_pac_autib_dp_1src_invalid_0_1400_dac11400() {
 fn test_aarch64_integer_pac_autib_dp_1src_invalid_1_1400_dac11400() {
     // Encoding: 0xDAC11400
     // Test aarch64_integer_pac_autib_dp_1src invalid encoding: Unconditional UNDEFINED
-    // Fields: Z=0, Rd=0, Rn=0
+    // Fields: Z=0, Rn=0, Rd=0
     let encoding: u32 = 0xDAC11400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1376,12 +1715,16 @@ fn test_aarch64_integer_pac_autib_dp_1src_invalid_1_1400_dac11400() {
 fn test_aarch64_integer_pac_autib_dp_1src_invalid_2_1400_dac11400() {
     // Encoding: 0xDAC11400
     // Test aarch64_integer_pac_autib_dp_1src invalid encoding: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "n" }), rhs: LitInt(31) }
-    // Fields: Rd=0, Rn=0, Z=0
+    // Fields: Rn=0, Z=0, Rd=0
     let encoding: u32 = 0xDAC11400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1397,7 +1740,11 @@ fn test_aarch64_integer_pac_autib_dp_1src_invalid_3_1400_dac11400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_hint
@@ -1408,12 +1755,17 @@ fn test_aarch64_integer_pac_autib_dp_1src_invalid_3_1400_dac11400() {
 fn test_aarch64_integer_pac_autib_hint_field_crm_0_min_201f_d503201f() {
     // Encoding: 0xD503201F
     // Test aarch64_integer_pac_autib_hint field CRm = 0 (Min)
-    // Fields: op2=0, CRm=0
+    // Fields: CRm=0, op2=0
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_hint
@@ -1424,12 +1776,17 @@ fn test_aarch64_integer_pac_autib_hint_field_crm_0_min_201f_d503201f() {
 fn test_aarch64_integer_pac_autib_hint_field_crm_1_poweroftwo_201f_d503211f() {
     // Encoding: 0xD503211F
     // Test aarch64_integer_pac_autib_hint field CRm = 1 (PowerOfTwo)
-    // Fields: CRm=1, op2=0
+    // Fields: op2=0, CRm=1
     let encoding: u32 = 0xD503211F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_hint
@@ -1445,7 +1802,12 @@ fn test_aarch64_integer_pac_autib_hint_field_crm_7_poweroftwominusone_201f_d5032
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_hint
@@ -1461,7 +1823,12 @@ fn test_aarch64_integer_pac_autib_hint_field_crm_15_max_201f_d5032f1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_hint
@@ -1472,12 +1839,17 @@ fn test_aarch64_integer_pac_autib_hint_field_crm_15_max_201f_d5032f1f() {
 fn test_aarch64_integer_pac_autib_hint_field_op2_0_min_201f_d503201f() {
     // Encoding: 0xD503201F
     // Test aarch64_integer_pac_autib_hint field op2 = 0 (Min)
-    // Fields: CRm=0, op2=0
+    // Fields: op2=0, CRm=0
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_hint
@@ -1488,12 +1860,17 @@ fn test_aarch64_integer_pac_autib_hint_field_op2_0_min_201f_d503201f() {
 fn test_aarch64_integer_pac_autib_hint_field_op2_1_poweroftwo_201f_d503203f() {
     // Encoding: 0xD503203F
     // Test aarch64_integer_pac_autib_hint field op2 = 1 (PowerOfTwo)
-    // Fields: op2=1, CRm=0
+    // Fields: CRm=0, op2=1
     let encoding: u32 = 0xD503203F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_hint
@@ -1509,7 +1886,12 @@ fn test_aarch64_integer_pac_autib_hint_field_op2_7_max_201f_d50320ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_hint
@@ -1520,12 +1902,17 @@ fn test_aarch64_integer_pac_autib_hint_field_op2_7_max_201f_d50320ff() {
 fn test_aarch64_integer_pac_autib_hint_combo_0_201f_d503201f() {
     // Encoding: 0xD503201F
     // Test aarch64_integer_pac_autib_hint field combination: CRm=0, op2=0
-    // Fields: CRm=0, op2=0
+    // Fields: op2=0, CRm=0
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autib_dp_1src
@@ -1631,12 +2018,17 @@ fn test_aarch64_integer_pac_autib_hint_reg_write_1_d503201f() {
 fn test_aarch64_integer_pac_pacdb_dp_1src_field_z_0_min_c00_dac10c00() {
     // Encoding: 0xDAC10C00
     // Test aarch64_integer_pac_pacdb_dp_1src field Z = 0 (Min)
-    // Fields: Z=0, Rd=0, Rn=0
+    // Fields: Rn=0, Z=0, Rd=0
     let encoding: u32 = 0xDAC10C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1647,12 +2039,17 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_z_0_min_c00_dac10c00() {
 fn test_aarch64_integer_pac_pacdb_dp_1src_field_z_1_max_c00_dac12c00() {
     // Encoding: 0xDAC12C00
     // Test aarch64_integer_pac_pacdb_dp_1src field Z = 1 (Max)
-    // Fields: Rd=0, Z=1, Rn=0
+    // Fields: Z=1, Rn=0, Rd=0
     let encoding: u32 = 0xDAC12C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1663,12 +2060,17 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_z_1_max_c00_dac12c00() {
 fn test_aarch64_integer_pac_pacdb_dp_1src_field_rn_0_min_c00_dac10c00() {
     // Encoding: 0xDAC10C00
     // Test aarch64_integer_pac_pacdb_dp_1src field Rn = 0 (Min)
-    // Fields: Rd=0, Rn=0, Z=0
+    // Fields: Rd=0, Z=0, Rn=0
     let encoding: u32 = 0xDAC10C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1679,12 +2081,17 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rn_0_min_c00_dac10c00() {
 fn test_aarch64_integer_pac_pacdb_dp_1src_field_rn_1_poweroftwo_c00_dac10c20() {
     // Encoding: 0xDAC10C20
     // Test aarch64_integer_pac_pacdb_dp_1src field Rn = 1 (PowerOfTwo)
-    // Fields: Rn=1, Rd=0, Z=0
+    // Fields: Rd=0, Rn=1, Z=0
     let encoding: u32 = 0xDAC10C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1700,7 +2107,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rn_30_poweroftwominusone_c00_dac
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1716,7 +2128,12 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rn_31_max_c00_dac10fe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1727,12 +2144,17 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rn_31_max_c00_dac10fe0() {
 fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_0_min_c00_dac10c00() {
     // Encoding: 0xDAC10C00
     // Test aarch64_integer_pac_pacdb_dp_1src field Rd = 0 (Min)
-    // Fields: Z=0, Rn=0, Rd=0
+    // Fields: Rn=0, Z=0, Rd=0
     let encoding: u32 = 0xDAC10C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1743,12 +2165,17 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_0_min_c00_dac10c00() {
 fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_1_poweroftwo_c00_dac10c01() {
     // Encoding: 0xDAC10C01
     // Test aarch64_integer_pac_pacdb_dp_1src field Rd = 1 (PowerOfTwo)
-    // Fields: Z=0, Rd=1, Rn=0
+    // Fields: Rd=1, Z=0, Rn=0
     let encoding: u32 = 0xDAC10C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1759,12 +2186,17 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_1_poweroftwo_c00_dac10c01() {
 fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_30_poweroftwominusone_c00_dac10c1e() {
     // Encoding: 0xDAC10C1E
     // Test aarch64_integer_pac_pacdb_dp_1src field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=30, Z=0, Rn=0
+    // Fields: Rn=0, Z=0, Rd=30
     let encoding: u32 = 0xDAC10C1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1775,12 +2207,17 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_30_poweroftwominusone_c00_dac
 fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_31_max_c00_dac10c1f() {
     // Encoding: 0xDAC10C1F
     // Test aarch64_integer_pac_pacdb_dp_1src field Rd = 31 (Max)
-    // Fields: Rn=0, Rd=31, Z=0
+    // Fields: Rd=31, Z=0, Rn=0
     let encoding: u32 = 0xDAC10C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1791,12 +2228,17 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_field_rd_31_max_c00_dac10c1f() {
 fn test_aarch64_integer_pac_pacdb_dp_1src_combo_0_c00_dac10c00() {
     // Encoding: 0xDAC10C00
     // Test aarch64_integer_pac_pacdb_dp_1src field combination: Z=0, Rn=0, Rd=0
-    // Fields: Rd=0, Rn=0, Z=0
+    // Fields: Rd=0, Z=0, Rn=0
     let encoding: u32 = 0xDAC10C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1804,15 +2246,21 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_combo_0_c00_dac10c00() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_pac_pacdb_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_3072_dac10fe0() {
+fn test_aarch64_integer_pac_pacdb_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_3072_dac10fe0(
+) {
     // Encoding: 0xDAC10FE0
     // Test aarch64_integer_pac_pacdb_dp_1src special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rd=0, Z=0, Rn=31
+    // Fields: Rd=0, Rn=31, Z=0
     let encoding: u32 = 0xDAC10FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1820,15 +2268,21 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_pac_pacdb_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_3072_dac10c1f() {
+fn test_aarch64_integer_pac_pacdb_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_3072_dac10c1f(
+) {
     // Encoding: 0xDAC10C1F
     // Test aarch64_integer_pac_pacdb_dp_1src special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Z=0, Rd=31, Rn=0
+    // Fields: Z=0, Rn=0, Rd=31
     let encoding: u32 = 0xDAC10C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1839,12 +2293,16 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_special_rd_31_zero_register_xzr_wzr_re
 fn test_aarch64_integer_pac_pacdb_dp_1src_invalid_0_c00_dac10c00() {
     // Encoding: 0xDAC10C00
     // Test aarch64_integer_pac_pacdb_dp_1src invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HavePACExt" }, args: [] } }
-    // Fields: Rn=0, Rd=0, Z=0
+    // Fields: Rd=0, Z=0, Rn=0
     let encoding: u32 = 0xDAC10C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1855,12 +2313,16 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_invalid_0_c00_dac10c00() {
 fn test_aarch64_integer_pac_pacdb_dp_1src_invalid_1_c00_dac10c00() {
     // Encoding: 0xDAC10C00
     // Test aarch64_integer_pac_pacdb_dp_1src invalid encoding: Unconditional UNDEFINED
-    // Fields: Rd=0, Z=0, Rn=0
+    // Fields: Rn=0, Rd=0, Z=0
     let encoding: u32 = 0xDAC10C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1871,12 +2333,16 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_invalid_1_c00_dac10c00() {
 fn test_aarch64_integer_pac_pacdb_dp_1src_invalid_2_c00_dac10c00() {
     // Encoding: 0xDAC10C00
     // Test aarch64_integer_pac_pacdb_dp_1src invalid encoding: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "n" }), rhs: LitInt(31) }
-    // Fields: Rn=0, Z=0, Rd=0
+    // Fields: Z=0, Rd=0, Rn=0
     let encoding: u32 = 0xDAC10C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1887,12 +2353,16 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_invalid_2_c00_dac10c00() {
 fn test_aarch64_integer_pac_pacdb_dp_1src_invalid_3_c00_dac10c00() {
     // Encoding: 0xDAC10C00
     // Test aarch64_integer_pac_pacdb_dp_1src invalid encoding: Unconditional UNDEFINED
-    // Fields: Z=0, Rd=0, Rn=0
+    // Fields: Rn=0, Z=0, Rd=0
     let encoding: u32 = 0xDAC10C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacdb_dp_1src
@@ -1968,12 +2438,17 @@ fn test_aarch64_integer_pac_pacdb_dp_1src_zr_rd_dac10c1f() {
 fn test_aarch64_integer_pac_autia_dp_1src_field_z_0_min_1000_dac11000() {
     // Encoding: 0xDAC11000
     // Test aarch64_integer_pac_autia_dp_1src field Z = 0 (Min)
-    // Fields: Z=0, Rn=0, Rd=0
+    // Fields: Rn=0, Z=0, Rd=0
     let encoding: u32 = 0xDAC11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -1984,12 +2459,17 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_z_0_min_1000_dac11000() {
 fn test_aarch64_integer_pac_autia_dp_1src_field_z_1_max_1000_dac13000() {
     // Encoding: 0xDAC13000
     // Test aarch64_integer_pac_autia_dp_1src field Z = 1 (Max)
-    // Fields: Z=1, Rn=0, Rd=0
+    // Fields: Rd=0, Z=1, Rn=0
     let encoding: u32 = 0xDAC13000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2000,12 +2480,17 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_z_1_max_1000_dac13000() {
 fn test_aarch64_integer_pac_autia_dp_1src_field_rn_0_min_1000_dac11000() {
     // Encoding: 0xDAC11000
     // Test aarch64_integer_pac_autia_dp_1src field Rn = 0 (Min)
-    // Fields: Rd=0, Z=0, Rn=0
+    // Fields: Z=0, Rd=0, Rn=0
     let encoding: u32 = 0xDAC11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2016,12 +2501,17 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rn_0_min_1000_dac11000() {
 fn test_aarch64_integer_pac_autia_dp_1src_field_rn_1_poweroftwo_1000_dac11020() {
     // Encoding: 0xDAC11020
     // Test aarch64_integer_pac_autia_dp_1src field Rn = 1 (PowerOfTwo)
-    // Fields: Rd=0, Z=0, Rn=1
+    // Fields: Z=0, Rn=1, Rd=0
     let encoding: u32 = 0xDAC11020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2032,12 +2522,17 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rn_1_poweroftwo_1000_dac11020() 
 fn test_aarch64_integer_pac_autia_dp_1src_field_rn_30_poweroftwominusone_1000_dac113c0() {
     // Encoding: 0xDAC113C0
     // Test aarch64_integer_pac_autia_dp_1src field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=30, Rd=0, Z=0
+    // Fields: Z=0, Rd=0, Rn=30
     let encoding: u32 = 0xDAC113C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2048,12 +2543,17 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rn_30_poweroftwominusone_1000_da
 fn test_aarch64_integer_pac_autia_dp_1src_field_rn_31_max_1000_dac113e0() {
     // Encoding: 0xDAC113E0
     // Test aarch64_integer_pac_autia_dp_1src field Rn = 31 (Max)
-    // Fields: Rn=31, Rd=0, Z=0
+    // Fields: Rd=0, Rn=31, Z=0
     let encoding: u32 = 0xDAC113E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2064,12 +2564,17 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rn_31_max_1000_dac113e0() {
 fn test_aarch64_integer_pac_autia_dp_1src_field_rd_0_min_1000_dac11000() {
     // Encoding: 0xDAC11000
     // Test aarch64_integer_pac_autia_dp_1src field Rd = 0 (Min)
-    // Fields: Rd=0, Rn=0, Z=0
+    // Fields: Z=0, Rn=0, Rd=0
     let encoding: u32 = 0xDAC11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2080,12 +2585,17 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rd_0_min_1000_dac11000() {
 fn test_aarch64_integer_pac_autia_dp_1src_field_rd_1_poweroftwo_1000_dac11001() {
     // Encoding: 0xDAC11001
     // Test aarch64_integer_pac_autia_dp_1src field Rd = 1 (PowerOfTwo)
-    // Fields: Rn=0, Rd=1, Z=0
+    // Fields: Z=0, Rn=0, Rd=1
     let encoding: u32 = 0xDAC11001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2096,12 +2606,17 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rd_1_poweroftwo_1000_dac11001() 
 fn test_aarch64_integer_pac_autia_dp_1src_field_rd_30_poweroftwominusone_1000_dac1101e() {
     // Encoding: 0xDAC1101E
     // Test aarch64_integer_pac_autia_dp_1src field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rd=30, Z=0
+    // Fields: Z=0, Rn=0, Rd=30
     let encoding: u32 = 0xDAC1101E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2112,12 +2627,17 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rd_30_poweroftwominusone_1000_da
 fn test_aarch64_integer_pac_autia_dp_1src_field_rd_31_max_1000_dac1101f() {
     // Encoding: 0xDAC1101F
     // Test aarch64_integer_pac_autia_dp_1src field Rd = 31 (Max)
-    // Fields: Z=0, Rd=31, Rn=0
+    // Fields: Rd=31, Z=0, Rn=0
     let encoding: u32 = 0xDAC1101F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2128,12 +2648,17 @@ fn test_aarch64_integer_pac_autia_dp_1src_field_rd_31_max_1000_dac1101f() {
 fn test_aarch64_integer_pac_autia_dp_1src_combo_0_1000_dac11000() {
     // Encoding: 0xDAC11000
     // Test aarch64_integer_pac_autia_dp_1src field combination: Z=0, Rn=0, Rd=0
-    // Fields: Rn=0, Rd=0, Z=0
+    // Fields: Z=0, Rd=0, Rn=0
     let encoding: u32 = 0xDAC11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2141,15 +2666,21 @@ fn test_aarch64_integer_pac_autia_dp_1src_combo_0_1000_dac11000() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_pac_autia_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_4096_dac113e0() {
+fn test_aarch64_integer_pac_autia_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_4096_dac113e0(
+) {
     // Encoding: 0xDAC113E0
     // Test aarch64_integer_pac_autia_dp_1src special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rn=31, Z=0, Rd=0
+    // Fields: Rd=0, Z=0, Rn=31
     let encoding: u32 = 0xDAC113E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2157,15 +2688,21 @@ fn test_aarch64_integer_pac_autia_dp_1src_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_pac_autia_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_4096_dac1101f() {
+fn test_aarch64_integer_pac_autia_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_4096_dac1101f(
+) {
     // Encoding: 0xDAC1101F
     // Test aarch64_integer_pac_autia_dp_1src special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Z=0, Rn=0, Rd=31
+    // Fields: Rn=0, Z=0, Rd=31
     let encoding: u32 = 0xDAC1101F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2176,12 +2713,16 @@ fn test_aarch64_integer_pac_autia_dp_1src_special_rd_31_zero_register_xzr_wzr_re
 fn test_aarch64_integer_pac_autia_dp_1src_invalid_0_1000_dac11000() {
     // Encoding: 0xDAC11000
     // Test aarch64_integer_pac_autia_dp_1src invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HavePACExt" }, args: [] } }
-    // Fields: Rd=0, Z=0, Rn=0
+    // Fields: Z=0, Rn=0, Rd=0
     let encoding: u32 = 0xDAC11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2192,12 +2733,16 @@ fn test_aarch64_integer_pac_autia_dp_1src_invalid_0_1000_dac11000() {
 fn test_aarch64_integer_pac_autia_dp_1src_invalid_1_1000_dac11000() {
     // Encoding: 0xDAC11000
     // Test aarch64_integer_pac_autia_dp_1src invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, Z=0, Rd=0
+    // Fields: Z=0, Rn=0, Rd=0
     let encoding: u32 = 0xDAC11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2208,12 +2753,16 @@ fn test_aarch64_integer_pac_autia_dp_1src_invalid_1_1000_dac11000() {
 fn test_aarch64_integer_pac_autia_dp_1src_invalid_2_1000_dac11000() {
     // Encoding: 0xDAC11000
     // Test aarch64_integer_pac_autia_dp_1src invalid encoding: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "n" }), rhs: LitInt(31) }
-    // Fields: Z=0, Rn=0, Rd=0
+    // Fields: Rd=0, Z=0, Rn=0
     let encoding: u32 = 0xDAC11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2224,12 +2773,16 @@ fn test_aarch64_integer_pac_autia_dp_1src_invalid_2_1000_dac11000() {
 fn test_aarch64_integer_pac_autia_dp_1src_invalid_3_1000_dac11000() {
     // Encoding: 0xDAC11000
     // Test aarch64_integer_pac_autia_dp_1src invalid encoding: Unconditional UNDEFINED
-    // Fields: Rd=0, Rn=0, Z=0
+    // Fields: Z=0, Rd=0, Rn=0
     let encoding: u32 = 0xDAC11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_hint
@@ -2240,12 +2793,17 @@ fn test_aarch64_integer_pac_autia_dp_1src_invalid_3_1000_dac11000() {
 fn test_aarch64_integer_pac_autia_hint_field_crm_0_min_201f_d503201f() {
     // Encoding: 0xD503201F
     // Test aarch64_integer_pac_autia_hint field CRm = 0 (Min)
-    // Fields: op2=0, CRm=0
+    // Fields: CRm=0, op2=0
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_hint
@@ -2261,7 +2819,12 @@ fn test_aarch64_integer_pac_autia_hint_field_crm_1_poweroftwo_201f_d503211f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_hint
@@ -2277,7 +2840,12 @@ fn test_aarch64_integer_pac_autia_hint_field_crm_7_poweroftwominusone_201f_d5032
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_hint
@@ -2293,7 +2861,12 @@ fn test_aarch64_integer_pac_autia_hint_field_crm_15_max_201f_d5032f1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_hint
@@ -2304,12 +2877,17 @@ fn test_aarch64_integer_pac_autia_hint_field_crm_15_max_201f_d5032f1f() {
 fn test_aarch64_integer_pac_autia_hint_field_op2_0_min_201f_d503201f() {
     // Encoding: 0xD503201F
     // Test aarch64_integer_pac_autia_hint field op2 = 0 (Min)
-    // Fields: op2=0, CRm=0
+    // Fields: CRm=0, op2=0
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_hint
@@ -2320,12 +2898,17 @@ fn test_aarch64_integer_pac_autia_hint_field_op2_0_min_201f_d503201f() {
 fn test_aarch64_integer_pac_autia_hint_field_op2_1_poweroftwo_201f_d503203f() {
     // Encoding: 0xD503203F
     // Test aarch64_integer_pac_autia_hint field op2 = 1 (PowerOfTwo)
-    // Fields: op2=1, CRm=0
+    // Fields: CRm=0, op2=1
     let encoding: u32 = 0xD503203F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_hint
@@ -2341,7 +2924,12 @@ fn test_aarch64_integer_pac_autia_hint_field_op2_7_max_201f_d50320ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_hint
@@ -2357,7 +2945,12 @@ fn test_aarch64_integer_pac_autia_hint_combo_0_201f_d503201f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autia_dp_1src
@@ -2463,12 +3056,17 @@ fn test_aarch64_integer_pac_autia_hint_reg_write_1_d503201f() {
 fn test_aarch64_integer_pac_autdb_dp_1src_field_z_0_min_1c00_dac11c00() {
     // Encoding: 0xDAC11C00
     // Test aarch64_integer_pac_autdb_dp_1src field Z = 0 (Min)
-    // Fields: Rd=0, Z=0, Rn=0
+    // Fields: Rn=0, Z=0, Rd=0
     let encoding: u32 = 0xDAC11C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2479,12 +3077,17 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_z_0_min_1c00_dac11c00() {
 fn test_aarch64_integer_pac_autdb_dp_1src_field_z_1_max_1c00_dac13c00() {
     // Encoding: 0xDAC13C00
     // Test aarch64_integer_pac_autdb_dp_1src field Z = 1 (Max)
-    // Fields: Rd=0, Z=1, Rn=0
+    // Fields: Z=1, Rn=0, Rd=0
     let encoding: u32 = 0xDAC13C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2500,7 +3103,12 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rn_0_min_1c00_dac11c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2511,12 +3119,17 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rn_0_min_1c00_dac11c00() {
 fn test_aarch64_integer_pac_autdb_dp_1src_field_rn_1_poweroftwo_1c00_dac11c20() {
     // Encoding: 0xDAC11C20
     // Test aarch64_integer_pac_autdb_dp_1src field Rn = 1 (PowerOfTwo)
-    // Fields: Z=0, Rn=1, Rd=0
+    // Fields: Rd=0, Z=0, Rn=1
     let encoding: u32 = 0xDAC11C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2527,12 +3140,17 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rn_1_poweroftwo_1c00_dac11c20() 
 fn test_aarch64_integer_pac_autdb_dp_1src_field_rn_30_poweroftwominusone_1c00_dac11fc0() {
     // Encoding: 0xDAC11FC0
     // Test aarch64_integer_pac_autdb_dp_1src field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=0, Z=0, Rn=30
+    // Fields: Z=0, Rn=30, Rd=0
     let encoding: u32 = 0xDAC11FC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2543,12 +3161,17 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rn_30_poweroftwominusone_1c00_da
 fn test_aarch64_integer_pac_autdb_dp_1src_field_rn_31_max_1c00_dac11fe0() {
     // Encoding: 0xDAC11FE0
     // Test aarch64_integer_pac_autdb_dp_1src field Rn = 31 (Max)
-    // Fields: Rd=0, Rn=31, Z=0
+    // Fields: Rn=31, Rd=0, Z=0
     let encoding: u32 = 0xDAC11FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2564,7 +3187,12 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_0_min_1c00_dac11c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2575,12 +3203,17 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_0_min_1c00_dac11c00() {
 fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_1_poweroftwo_1c00_dac11c01() {
     // Encoding: 0xDAC11C01
     // Test aarch64_integer_pac_autdb_dp_1src field Rd = 1 (PowerOfTwo)
-    // Fields: Z=0, Rn=0, Rd=1
+    // Fields: Rd=1, Z=0, Rn=0
     let encoding: u32 = 0xDAC11C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2591,12 +3224,17 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_1_poweroftwo_1c00_dac11c01() 
 fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_30_poweroftwominusone_1c00_dac11c1e() {
     // Encoding: 0xDAC11C1E
     // Test aarch64_integer_pac_autdb_dp_1src field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Z=0, Rd=30
+    // Fields: Z=0, Rd=30, Rn=0
     let encoding: u32 = 0xDAC11C1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2607,12 +3245,17 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_30_poweroftwominusone_1c00_da
 fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_31_max_1c00_dac11c1f() {
     // Encoding: 0xDAC11C1F
     // Test aarch64_integer_pac_autdb_dp_1src field Rd = 31 (Max)
-    // Fields: Rn=0, Z=0, Rd=31
+    // Fields: Z=0, Rd=31, Rn=0
     let encoding: u32 = 0xDAC11C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2623,12 +3266,17 @@ fn test_aarch64_integer_pac_autdb_dp_1src_field_rd_31_max_1c00_dac11c1f() {
 fn test_aarch64_integer_pac_autdb_dp_1src_combo_0_1c00_dac11c00() {
     // Encoding: 0xDAC11C00
     // Test aarch64_integer_pac_autdb_dp_1src field combination: Z=0, Rn=0, Rd=0
-    // Fields: Rn=0, Rd=0, Z=0
+    // Fields: Z=0, Rd=0, Rn=0
     let encoding: u32 = 0xDAC11C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2636,15 +3284,21 @@ fn test_aarch64_integer_pac_autdb_dp_1src_combo_0_1c00_dac11c00() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_pac_autdb_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_7168_dac11fe0() {
+fn test_aarch64_integer_pac_autdb_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_7168_dac11fe0(
+) {
     // Encoding: 0xDAC11FE0
     // Test aarch64_integer_pac_autdb_dp_1src special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rn=31, Rd=0, Z=0
+    // Fields: Rd=0, Rn=31, Z=0
     let encoding: u32 = 0xDAC11FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2652,15 +3306,21 @@ fn test_aarch64_integer_pac_autdb_dp_1src_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_pac_autdb_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_7168_dac11c1f() {
+fn test_aarch64_integer_pac_autdb_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_7168_dac11c1f(
+) {
     // Encoding: 0xDAC11C1F
     // Test aarch64_integer_pac_autdb_dp_1src special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rn=0, Rd=31, Z=0
+    // Fields: Rd=31, Z=0, Rn=0
     let encoding: u32 = 0xDAC11C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2671,12 +3331,16 @@ fn test_aarch64_integer_pac_autdb_dp_1src_special_rd_31_zero_register_xzr_wzr_re
 fn test_aarch64_integer_pac_autdb_dp_1src_invalid_0_1c00_dac11c00() {
     // Encoding: 0xDAC11C00
     // Test aarch64_integer_pac_autdb_dp_1src invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HavePACExt" }, args: [] } }
-    // Fields: Rd=0, Z=0, Rn=0
+    // Fields: Rd=0, Rn=0, Z=0
     let encoding: u32 = 0xDAC11C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2687,12 +3351,16 @@ fn test_aarch64_integer_pac_autdb_dp_1src_invalid_0_1c00_dac11c00() {
 fn test_aarch64_integer_pac_autdb_dp_1src_invalid_1_1c00_dac11c00() {
     // Encoding: 0xDAC11C00
     // Test aarch64_integer_pac_autdb_dp_1src invalid encoding: Unconditional UNDEFINED
-    // Fields: Rd=0, Z=0, Rn=0
+    // Fields: Z=0, Rd=0, Rn=0
     let encoding: u32 = 0xDAC11C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2703,12 +3371,16 @@ fn test_aarch64_integer_pac_autdb_dp_1src_invalid_1_1c00_dac11c00() {
 fn test_aarch64_integer_pac_autdb_dp_1src_invalid_2_1c00_dac11c00() {
     // Encoding: 0xDAC11C00
     // Test aarch64_integer_pac_autdb_dp_1src invalid encoding: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "n" }), rhs: LitInt(31) }
-    // Fields: Rd=0, Rn=0, Z=0
+    // Fields: Rd=0, Z=0, Rn=0
     let encoding: u32 = 0xDAC11C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2719,12 +3391,16 @@ fn test_aarch64_integer_pac_autdb_dp_1src_invalid_2_1c00_dac11c00() {
 fn test_aarch64_integer_pac_autdb_dp_1src_invalid_3_1c00_dac11c00() {
     // Encoding: 0xDAC11C00
     // Test aarch64_integer_pac_autdb_dp_1src invalid encoding: Unconditional UNDEFINED
-    // Fields: Rd=0, Z=0, Rn=0
+    // Fields: Z=0, Rn=0, Rd=0
     let encoding: u32 = 0xDAC11C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autdb_dp_1src
@@ -2805,7 +3481,12 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_z_0_min_0_dac10000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -2816,12 +3497,17 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_z_0_min_0_dac10000() {
 fn test_aarch64_integer_pac_pacia_dp_1src_field_z_1_max_0_dac12000() {
     // Encoding: 0xDAC12000
     // Test aarch64_integer_pac_pacia_dp_1src field Z = 1 (Max)
-    // Fields: Z=1, Rn=0, Rd=0
+    // Fields: Z=1, Rd=0, Rn=0
     let encoding: u32 = 0xDAC12000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -2832,12 +3518,17 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_z_1_max_0_dac12000() {
 fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_0_min_0_dac10000() {
     // Encoding: 0xDAC10000
     // Test aarch64_integer_pac_pacia_dp_1src field Rn = 0 (Min)
-    // Fields: Z=0, Rd=0, Rn=0
+    // Fields: Rd=0, Z=0, Rn=0
     let encoding: u32 = 0xDAC10000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -2848,12 +3539,17 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_0_min_0_dac10000() {
 fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_1_poweroftwo_0_dac10020() {
     // Encoding: 0xDAC10020
     // Test aarch64_integer_pac_pacia_dp_1src field Rn = 1 (PowerOfTwo)
-    // Fields: Rn=1, Rd=0, Z=0
+    // Fields: Z=0, Rn=1, Rd=0
     let encoding: u32 = 0xDAC10020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -2864,12 +3560,17 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_1_poweroftwo_0_dac10020() {
 fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_30_poweroftwominusone_0_dac103c0() {
     // Encoding: 0xDAC103C0
     // Test aarch64_integer_pac_pacia_dp_1src field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=0, Z=0, Rn=30
+    // Fields: Rn=30, Z=0, Rd=0
     let encoding: u32 = 0xDAC103C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -2880,12 +3581,17 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_30_poweroftwominusone_0_dac10
 fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_31_max_0_dac103e0() {
     // Encoding: 0xDAC103E0
     // Test aarch64_integer_pac_pacia_dp_1src field Rn = 31 (Max)
-    // Fields: Rd=0, Z=0, Rn=31
+    // Fields: Rn=31, Rd=0, Z=0
     let encoding: u32 = 0xDAC103E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -2896,12 +3602,17 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rn_31_max_0_dac103e0() {
 fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_0_min_0_dac10000() {
     // Encoding: 0xDAC10000
     // Test aarch64_integer_pac_pacia_dp_1src field Rd = 0 (Min)
-    // Fields: Rd=0, Z=0, Rn=0
+    // Fields: Rn=0, Z=0, Rd=0
     let encoding: u32 = 0xDAC10000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -2912,12 +3623,17 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_0_min_0_dac10000() {
 fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_1_poweroftwo_0_dac10001() {
     // Encoding: 0xDAC10001
     // Test aarch64_integer_pac_pacia_dp_1src field Rd = 1 (PowerOfTwo)
-    // Fields: Rn=0, Rd=1, Z=0
+    // Fields: Rd=1, Z=0, Rn=0
     let encoding: u32 = 0xDAC10001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -2928,12 +3644,17 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_1_poweroftwo_0_dac10001() {
 fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_30_poweroftwominusone_0_dac1001e() {
     // Encoding: 0xDAC1001E
     // Test aarch64_integer_pac_pacia_dp_1src field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rd=30, Z=0
+    // Fields: Z=0, Rn=0, Rd=30
     let encoding: u32 = 0xDAC1001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -2944,12 +3665,17 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_30_poweroftwominusone_0_dac10
 fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_31_max_0_dac1001f() {
     // Encoding: 0xDAC1001F
     // Test aarch64_integer_pac_pacia_dp_1src field Rd = 31 (Max)
-    // Fields: Rd=31, Z=0, Rn=0
+    // Fields: Z=0, Rd=31, Rn=0
     let encoding: u32 = 0xDAC1001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -2960,12 +3686,17 @@ fn test_aarch64_integer_pac_pacia_dp_1src_field_rd_31_max_0_dac1001f() {
 fn test_aarch64_integer_pac_pacia_dp_1src_combo_0_0_dac10000() {
     // Encoding: 0xDAC10000
     // Test aarch64_integer_pac_pacia_dp_1src field combination: Z=0, Rn=0, Rd=0
-    // Fields: Rd=0, Rn=0, Z=0
+    // Fields: Rd=0, Z=0, Rn=0
     let encoding: u32 = 0xDAC10000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -2973,15 +3704,21 @@ fn test_aarch64_integer_pac_pacia_dp_1src_combo_0_0_dac10000() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_pac_pacia_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_0_dac103e0() {
+fn test_aarch64_integer_pac_pacia_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_0_dac103e0(
+) {
     // Encoding: 0xDAC103E0
     // Test aarch64_integer_pac_pacia_dp_1src special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rd=0, Rn=31, Z=0
+    // Fields: Rn=31, Rd=0, Z=0
     let encoding: u32 = 0xDAC103E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -2989,15 +3726,21 @@ fn test_aarch64_integer_pac_pacia_dp_1src_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_pac_pacia_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_dac1001f() {
+fn test_aarch64_integer_pac_pacia_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_dac1001f(
+) {
     // Encoding: 0xDAC1001F
     // Test aarch64_integer_pac_pacia_dp_1src special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rd=31, Z=0, Rn=0
+    // Fields: Rn=0, Z=0, Rd=31
     let encoding: u32 = 0xDAC1001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -3008,12 +3751,16 @@ fn test_aarch64_integer_pac_pacia_dp_1src_special_rd_31_zero_register_xzr_wzr_re
 fn test_aarch64_integer_pac_pacia_dp_1src_invalid_0_0_dac10000() {
     // Encoding: 0xDAC10000
     // Test aarch64_integer_pac_pacia_dp_1src invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HavePACExt" }, args: [] } }
-    // Fields: Z=0, Rd=0, Rn=0
+    // Fields: Z=0, Rn=0, Rd=0
     let encoding: u32 = 0xDAC10000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -3029,7 +3776,11 @@ fn test_aarch64_integer_pac_pacia_dp_1src_invalid_1_0_dac10000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -3045,7 +3796,11 @@ fn test_aarch64_integer_pac_pacia_dp_1src_invalid_2_0_dac10000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -3056,12 +3811,16 @@ fn test_aarch64_integer_pac_pacia_dp_1src_invalid_2_0_dac10000() {
 fn test_aarch64_integer_pac_pacia_dp_1src_invalid_3_0_dac10000() {
     // Encoding: 0xDAC10000
     // Test aarch64_integer_pac_pacia_dp_1src invalid encoding: Unconditional UNDEFINED
-    // Fields: Z=0, Rn=0, Rd=0
+    // Fields: Rn=0, Rd=0, Z=0
     let encoding: u32 = 0xDAC10000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_hint
@@ -3072,12 +3831,17 @@ fn test_aarch64_integer_pac_pacia_dp_1src_invalid_3_0_dac10000() {
 fn test_aarch64_integer_pac_pacia_hint_field_crm_0_min_201f_d503201f() {
     // Encoding: 0xD503201F
     // Test aarch64_integer_pac_pacia_hint field CRm = 0 (Min)
-    // Fields: CRm=0, op2=0
+    // Fields: op2=0, CRm=0
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_hint
@@ -3093,7 +3857,12 @@ fn test_aarch64_integer_pac_pacia_hint_field_crm_1_poweroftwo_201f_d503211f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_hint
@@ -3109,7 +3878,12 @@ fn test_aarch64_integer_pac_pacia_hint_field_crm_7_poweroftwominusone_201f_d5032
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_hint
@@ -3120,12 +3894,17 @@ fn test_aarch64_integer_pac_pacia_hint_field_crm_7_poweroftwominusone_201f_d5032
 fn test_aarch64_integer_pac_pacia_hint_field_crm_15_max_201f_d5032f1f() {
     // Encoding: 0xD5032F1F
     // Test aarch64_integer_pac_pacia_hint field CRm = 15 (Max)
-    // Fields: op2=0, CRm=15
+    // Fields: CRm=15, op2=0
     let encoding: u32 = 0xD5032F1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_hint
@@ -3136,12 +3915,17 @@ fn test_aarch64_integer_pac_pacia_hint_field_crm_15_max_201f_d5032f1f() {
 fn test_aarch64_integer_pac_pacia_hint_field_op2_0_min_201f_d503201f() {
     // Encoding: 0xD503201F
     // Test aarch64_integer_pac_pacia_hint field op2 = 0 (Min)
-    // Fields: op2=0, CRm=0
+    // Fields: CRm=0, op2=0
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_hint
@@ -3157,7 +3941,12 @@ fn test_aarch64_integer_pac_pacia_hint_field_op2_1_poweroftwo_201f_d503203f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_hint
@@ -3173,7 +3962,12 @@ fn test_aarch64_integer_pac_pacia_hint_field_op2_7_max_201f_d50320ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_hint
@@ -3184,12 +3978,17 @@ fn test_aarch64_integer_pac_pacia_hint_field_op2_7_max_201f_d50320ff() {
 fn test_aarch64_integer_pac_pacia_hint_combo_0_201f_d503201f() {
     // Encoding: 0xD503201F
     // Test aarch64_integer_pac_pacia_hint field combination: CRm=0, op2=0
-    // Fields: op2=0, CRm=0
+    // Fields: CRm=0, op2=0
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacia_dp_1src
@@ -3295,12 +4094,17 @@ fn test_aarch64_integer_pac_pacia_hint_reg_write_1_d503201f() {
 fn test_aarch64_integer_pac_autda_dp_1src_field_z_0_min_1800_dac11800() {
     // Encoding: 0xDAC11800
     // Test aarch64_integer_pac_autda_dp_1src field Z = 0 (Min)
-    // Fields: Rd=0, Rn=0, Z=0
+    // Fields: Z=0, Rd=0, Rn=0
     let encoding: u32 = 0xDAC11800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3311,12 +4115,17 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_z_0_min_1800_dac11800() {
 fn test_aarch64_integer_pac_autda_dp_1src_field_z_1_max_1800_dac13800() {
     // Encoding: 0xDAC13800
     // Test aarch64_integer_pac_autda_dp_1src field Z = 1 (Max)
-    // Fields: Rn=0, Rd=0, Z=1
+    // Fields: Rd=0, Rn=0, Z=1
     let encoding: u32 = 0xDAC13800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3327,12 +4136,17 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_z_1_max_1800_dac13800() {
 fn test_aarch64_integer_pac_autda_dp_1src_field_rn_0_min_1800_dac11800() {
     // Encoding: 0xDAC11800
     // Test aarch64_integer_pac_autda_dp_1src field Rn = 0 (Min)
-    // Fields: Rn=0, Rd=0, Z=0
+    // Fields: Z=0, Rd=0, Rn=0
     let encoding: u32 = 0xDAC11800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3343,12 +4157,17 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rn_0_min_1800_dac11800() {
 fn test_aarch64_integer_pac_autda_dp_1src_field_rn_1_poweroftwo_1800_dac11820() {
     // Encoding: 0xDAC11820
     // Test aarch64_integer_pac_autda_dp_1src field Rn = 1 (PowerOfTwo)
-    // Fields: Rd=0, Z=0, Rn=1
+    // Fields: Z=0, Rn=1, Rd=0
     let encoding: u32 = 0xDAC11820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3359,12 +4178,17 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rn_1_poweroftwo_1800_dac11820() 
 fn test_aarch64_integer_pac_autda_dp_1src_field_rn_30_poweroftwominusone_1800_dac11bc0() {
     // Encoding: 0xDAC11BC0
     // Test aarch64_integer_pac_autda_dp_1src field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=30, Z=0, Rd=0
+    // Fields: Z=0, Rd=0, Rn=30
     let encoding: u32 = 0xDAC11BC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3375,12 +4199,17 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rn_30_poweroftwominusone_1800_da
 fn test_aarch64_integer_pac_autda_dp_1src_field_rn_31_max_1800_dac11be0() {
     // Encoding: 0xDAC11BE0
     // Test aarch64_integer_pac_autda_dp_1src field Rn = 31 (Max)
-    // Fields: Rd=0, Rn=31, Z=0
+    // Fields: Rn=31, Rd=0, Z=0
     let encoding: u32 = 0xDAC11BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3391,12 +4220,17 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rn_31_max_1800_dac11be0() {
 fn test_aarch64_integer_pac_autda_dp_1src_field_rd_0_min_1800_dac11800() {
     // Encoding: 0xDAC11800
     // Test aarch64_integer_pac_autda_dp_1src field Rd = 0 (Min)
-    // Fields: Rn=0, Rd=0, Z=0
+    // Fields: Z=0, Rd=0, Rn=0
     let encoding: u32 = 0xDAC11800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3407,12 +4241,17 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rd_0_min_1800_dac11800() {
 fn test_aarch64_integer_pac_autda_dp_1src_field_rd_1_poweroftwo_1800_dac11801() {
     // Encoding: 0xDAC11801
     // Test aarch64_integer_pac_autda_dp_1src field Rd = 1 (PowerOfTwo)
-    // Fields: Rd=1, Rn=0, Z=0
+    // Fields: Z=0, Rn=0, Rd=1
     let encoding: u32 = 0xDAC11801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3423,12 +4262,17 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rd_1_poweroftwo_1800_dac11801() 
 fn test_aarch64_integer_pac_autda_dp_1src_field_rd_30_poweroftwominusone_1800_dac1181e() {
     // Encoding: 0xDAC1181E
     // Test aarch64_integer_pac_autda_dp_1src field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Z=0, Rn=0, Rd=30
+    // Fields: Rn=0, Z=0, Rd=30
     let encoding: u32 = 0xDAC1181E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3439,12 +4283,17 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rd_30_poweroftwominusone_1800_da
 fn test_aarch64_integer_pac_autda_dp_1src_field_rd_31_max_1800_dac1181f() {
     // Encoding: 0xDAC1181F
     // Test aarch64_integer_pac_autda_dp_1src field Rd = 31 (Max)
-    // Fields: Rn=0, Rd=31, Z=0
+    // Fields: Rd=31, Z=0, Rn=0
     let encoding: u32 = 0xDAC1181F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3455,12 +4304,17 @@ fn test_aarch64_integer_pac_autda_dp_1src_field_rd_31_max_1800_dac1181f() {
 fn test_aarch64_integer_pac_autda_dp_1src_combo_0_1800_dac11800() {
     // Encoding: 0xDAC11800
     // Test aarch64_integer_pac_autda_dp_1src field combination: Z=0, Rn=0, Rd=0
-    // Fields: Z=0, Rd=0, Rn=0
+    // Fields: Rn=0, Z=0, Rd=0
     let encoding: u32 = 0xDAC11800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3468,15 +4322,21 @@ fn test_aarch64_integer_pac_autda_dp_1src_combo_0_1800_dac11800() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_pac_autda_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_6144_dac11be0() {
+fn test_aarch64_integer_pac_autda_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_6144_dac11be0(
+) {
     // Encoding: 0xDAC11BE0
     // Test aarch64_integer_pac_autda_dp_1src special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Z=0, Rn=31, Rd=0
+    // Fields: Rn=31, Z=0, Rd=0
     let encoding: u32 = 0xDAC11BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3484,7 +4344,8 @@ fn test_aarch64_integer_pac_autda_dp_1src_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_pac_autda_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_6144_dac1181f() {
+fn test_aarch64_integer_pac_autda_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_6144_dac1181f(
+) {
     // Encoding: 0xDAC1181F
     // Test aarch64_integer_pac_autda_dp_1src special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
     // Fields: Z=0, Rn=0, Rd=31
@@ -3492,7 +4353,12 @@ fn test_aarch64_integer_pac_autda_dp_1src_special_rd_31_zero_register_xzr_wzr_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3503,12 +4369,16 @@ fn test_aarch64_integer_pac_autda_dp_1src_special_rd_31_zero_register_xzr_wzr_re
 fn test_aarch64_integer_pac_autda_dp_1src_invalid_0_1800_dac11800() {
     // Encoding: 0xDAC11800
     // Test aarch64_integer_pac_autda_dp_1src invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HavePACExt" }, args: [] } }
-    // Fields: Rd=0, Z=0, Rn=0
+    // Fields: Rd=0, Rn=0, Z=0
     let encoding: u32 = 0xDAC11800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3519,12 +4389,16 @@ fn test_aarch64_integer_pac_autda_dp_1src_invalid_0_1800_dac11800() {
 fn test_aarch64_integer_pac_autda_dp_1src_invalid_1_1800_dac11800() {
     // Encoding: 0xDAC11800
     // Test aarch64_integer_pac_autda_dp_1src invalid encoding: Unconditional UNDEFINED
-    // Fields: Z=0, Rd=0, Rn=0
+    // Fields: Z=0, Rn=0, Rd=0
     let encoding: u32 = 0xDAC11800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3535,12 +4409,16 @@ fn test_aarch64_integer_pac_autda_dp_1src_invalid_1_1800_dac11800() {
 fn test_aarch64_integer_pac_autda_dp_1src_invalid_2_1800_dac11800() {
     // Encoding: 0xDAC11800
     // Test aarch64_integer_pac_autda_dp_1src invalid encoding: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "n" }), rhs: LitInt(31) }
-    // Fields: Z=0, Rn=0, Rd=0
+    // Fields: Rn=0, Rd=0, Z=0
     let encoding: u32 = 0xDAC11800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3551,12 +4429,16 @@ fn test_aarch64_integer_pac_autda_dp_1src_invalid_2_1800_dac11800() {
 fn test_aarch64_integer_pac_autda_dp_1src_invalid_3_1800_dac11800() {
     // Encoding: 0xDAC11800
     // Test aarch64_integer_pac_autda_dp_1src invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, Z=0, Rd=0
+    // Fields: Rd=0, Rn=0, Z=0
     let encoding: u32 = 0xDAC11800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_autda_dp_1src
@@ -3632,12 +4514,17 @@ fn test_aarch64_integer_pac_autda_dp_1src_zr_rd_dac1181f() {
 fn test_aarch64_integer_pac_pacib_dp_1src_field_z_0_min_400_dac10400() {
     // Encoding: 0xDAC10400
     // Test aarch64_integer_pac_pacib_dp_1src field Z = 0 (Min)
-    // Fields: Rn=0, Z=0, Rd=0
+    // Fields: Z=0, Rn=0, Rd=0
     let encoding: u32 = 0xDAC10400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3648,12 +4535,17 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_z_0_min_400_dac10400() {
 fn test_aarch64_integer_pac_pacib_dp_1src_field_z_1_max_400_dac12400() {
     // Encoding: 0xDAC12400
     // Test aarch64_integer_pac_pacib_dp_1src field Z = 1 (Max)
-    // Fields: Rd=0, Z=1, Rn=0
+    // Fields: Z=1, Rn=0, Rd=0
     let encoding: u32 = 0xDAC12400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3669,7 +4561,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_0_min_400_dac10400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3680,12 +4577,17 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_0_min_400_dac10400() {
 fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_1_poweroftwo_400_dac10420() {
     // Encoding: 0xDAC10420
     // Test aarch64_integer_pac_pacib_dp_1src field Rn = 1 (PowerOfTwo)
-    // Fields: Rn=1, Rd=0, Z=0
+    // Fields: Rd=0, Rn=1, Z=0
     let encoding: u32 = 0xDAC10420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3696,12 +4598,17 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_1_poweroftwo_400_dac10420() {
 fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_30_poweroftwominusone_400_dac107c0() {
     // Encoding: 0xDAC107C0
     // Test aarch64_integer_pac_pacib_dp_1src field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Z=0, Rd=0, Rn=30
+    // Fields: Rd=0, Z=0, Rn=30
     let encoding: u32 = 0xDAC107C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3712,12 +4619,17 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_30_poweroftwominusone_400_dac
 fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_31_max_400_dac107e0() {
     // Encoding: 0xDAC107E0
     // Test aarch64_integer_pac_pacib_dp_1src field Rn = 31 (Max)
-    // Fields: Z=0, Rn=31, Rd=0
+    // Fields: Rd=0, Z=0, Rn=31
     let encoding: u32 = 0xDAC107E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3728,12 +4640,17 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rn_31_max_400_dac107e0() {
 fn test_aarch64_integer_pac_pacib_dp_1src_field_rd_0_min_400_dac10400() {
     // Encoding: 0xDAC10400
     // Test aarch64_integer_pac_pacib_dp_1src field Rd = 0 (Min)
-    // Fields: Z=0, Rn=0, Rd=0
+    // Fields: Rn=0, Z=0, Rd=0
     let encoding: u32 = 0xDAC10400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3744,12 +4661,17 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rd_0_min_400_dac10400() {
 fn test_aarch64_integer_pac_pacib_dp_1src_field_rd_1_poweroftwo_400_dac10401() {
     // Encoding: 0xDAC10401
     // Test aarch64_integer_pac_pacib_dp_1src field Rd = 1 (PowerOfTwo)
-    // Fields: Rd=1, Rn=0, Z=0
+    // Fields: Rn=0, Rd=1, Z=0
     let encoding: u32 = 0xDAC10401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3765,7 +4687,12 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rd_30_poweroftwominusone_400_dac
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3776,12 +4703,17 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rd_30_poweroftwominusone_400_dac
 fn test_aarch64_integer_pac_pacib_dp_1src_field_rd_31_max_400_dac1041f() {
     // Encoding: 0xDAC1041F
     // Test aarch64_integer_pac_pacib_dp_1src field Rd = 31 (Max)
-    // Fields: Z=0, Rn=0, Rd=31
+    // Fields: Rn=0, Z=0, Rd=31
     let encoding: u32 = 0xDAC1041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3792,12 +4724,17 @@ fn test_aarch64_integer_pac_pacib_dp_1src_field_rd_31_max_400_dac1041f() {
 fn test_aarch64_integer_pac_pacib_dp_1src_combo_0_400_dac10400() {
     // Encoding: 0xDAC10400
     // Test aarch64_integer_pac_pacib_dp_1src field combination: Z=0, Rn=0, Rd=0
-    // Fields: Rn=0, Rd=0, Z=0
+    // Fields: Z=0, Rn=0, Rd=0
     let encoding: u32 = 0xDAC10400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3805,15 +4742,21 @@ fn test_aarch64_integer_pac_pacib_dp_1src_combo_0_400_dac10400() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_pac_pacib_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_1024_dac107e0() {
+fn test_aarch64_integer_pac_pacib_dp_1src_special_rn_31_stack_pointer_sp_may_require_alignment_1024_dac107e0(
+) {
     // Encoding: 0xDAC107E0
     // Test aarch64_integer_pac_pacib_dp_1src special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Z=0, Rn=31, Rd=0
+    // Fields: Rd=0, Z=0, Rn=31
     let encoding: u32 = 0xDAC107E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3821,15 +4764,21 @@ fn test_aarch64_integer_pac_pacib_dp_1src_special_rn_31_stack_pointer_sp_may_req
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_pac_pacib_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_dac1041f() {
+fn test_aarch64_integer_pac_pacib_dp_1src_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_dac1041f(
+) {
     // Encoding: 0xDAC1041F
     // Test aarch64_integer_pac_pacib_dp_1src special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rn=0, Rd=31, Z=0
+    // Fields: Z=0, Rd=31, Rn=0
     let encoding: u32 = 0xDAC1041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3840,12 +4789,16 @@ fn test_aarch64_integer_pac_pacib_dp_1src_special_rd_31_zero_register_xzr_wzr_re
 fn test_aarch64_integer_pac_pacib_dp_1src_invalid_0_400_dac10400() {
     // Encoding: 0xDAC10400
     // Test aarch64_integer_pac_pacib_dp_1src invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HavePACExt" }, args: [] } }
-    // Fields: Z=0, Rn=0, Rd=0
+    // Fields: Rd=0, Z=0, Rn=0
     let encoding: u32 = 0xDAC10400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3861,7 +4814,11 @@ fn test_aarch64_integer_pac_pacib_dp_1src_invalid_1_400_dac10400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3872,12 +4829,16 @@ fn test_aarch64_integer_pac_pacib_dp_1src_invalid_1_400_dac10400() {
 fn test_aarch64_integer_pac_pacib_dp_1src_invalid_2_400_dac10400() {
     // Encoding: 0xDAC10400
     // Test aarch64_integer_pac_pacib_dp_1src invalid encoding: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "n" }), rhs: LitInt(31) }
-    // Fields: Rd=0, Z=0, Rn=0
+    // Fields: Z=0, Rn=0, Rd=0
     let encoding: u32 = 0xDAC10400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -3888,12 +4849,16 @@ fn test_aarch64_integer_pac_pacib_dp_1src_invalid_2_400_dac10400() {
 fn test_aarch64_integer_pac_pacib_dp_1src_invalid_3_400_dac10400() {
     // Encoding: 0xDAC10400
     // Test aarch64_integer_pac_pacib_dp_1src invalid encoding: Unconditional UNDEFINED
-    // Fields: Rd=0, Z=0, Rn=0
+    // Fields: Z=0, Rn=0, Rd=0
     let encoding: u32 = 0xDAC10400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_hint
@@ -3909,7 +4874,12 @@ fn test_aarch64_integer_pac_pacib_hint_field_crm_0_min_201f_d503201f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_hint
@@ -3925,7 +4895,12 @@ fn test_aarch64_integer_pac_pacib_hint_field_crm_1_poweroftwo_201f_d503211f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_hint
@@ -3936,12 +4911,17 @@ fn test_aarch64_integer_pac_pacib_hint_field_crm_1_poweroftwo_201f_d503211f() {
 fn test_aarch64_integer_pac_pacib_hint_field_crm_7_poweroftwominusone_201f_d503271f() {
     // Encoding: 0xD503271F
     // Test aarch64_integer_pac_pacib_hint field CRm = 7 (PowerOfTwoMinusOne)
-    // Fields: op2=0, CRm=7
+    // Fields: CRm=7, op2=0
     let encoding: u32 = 0xD503271F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_hint
@@ -3952,12 +4932,17 @@ fn test_aarch64_integer_pac_pacib_hint_field_crm_7_poweroftwominusone_201f_d5032
 fn test_aarch64_integer_pac_pacib_hint_field_crm_15_max_201f_d5032f1f() {
     // Encoding: 0xD5032F1F
     // Test aarch64_integer_pac_pacib_hint field CRm = 15 (Max)
-    // Fields: op2=0, CRm=15
+    // Fields: CRm=15, op2=0
     let encoding: u32 = 0xD5032F1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_hint
@@ -3973,7 +4958,12 @@ fn test_aarch64_integer_pac_pacib_hint_field_op2_0_min_201f_d503201f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_hint
@@ -3984,12 +4974,17 @@ fn test_aarch64_integer_pac_pacib_hint_field_op2_0_min_201f_d503201f() {
 fn test_aarch64_integer_pac_pacib_hint_field_op2_1_poweroftwo_201f_d503203f() {
     // Encoding: 0xD503203F
     // Test aarch64_integer_pac_pacib_hint field op2 = 1 (PowerOfTwo)
-    // Fields: op2=1, CRm=0
+    // Fields: CRm=0, op2=1
     let encoding: u32 = 0xD503203F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_hint
@@ -4000,12 +4995,17 @@ fn test_aarch64_integer_pac_pacib_hint_field_op2_1_poweroftwo_201f_d503203f() {
 fn test_aarch64_integer_pac_pacib_hint_field_op2_7_max_201f_d50320ff() {
     // Encoding: 0xD50320FF
     // Test aarch64_integer_pac_pacib_hint field op2 = 7 (Max)
-    // Fields: CRm=0, op2=7
+    // Fields: op2=7, CRm=0
     let encoding: u32 = 0xD50320FF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_hint
@@ -4016,12 +5016,17 @@ fn test_aarch64_integer_pac_pacib_hint_field_op2_7_max_201f_d50320ff() {
 fn test_aarch64_integer_pac_pacib_hint_combo_0_201f_d503201f() {
     // Encoding: 0xD503201F
     // Test aarch64_integer_pac_pacib_hint field combination: CRm=0, op2=0
-    // Fields: op2=0, CRm=0
+    // Fields: CRm=0, op2=0
     let encoding: u32 = 0xD503201F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_pac_pacib_dp_1src
@@ -4114,4 +5119,3 @@ fn test_aarch64_integer_pac_pacib_hint_reg_write_1_d503201f() {
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
 }
-

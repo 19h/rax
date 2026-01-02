@@ -20,12 +20,17 @@ use crate::generated::test_helpers::*;
 fn test_fcmeq_p_p_z0_field_size_0_min_2000_65122000() {
     // Encoding: 0x65122000
     // Test FCMEQ_P.P.Z0__ field size = 0 (Min)
-    // Fields: Zn=0, size=0, Pg=0, Pd=0
+    // Fields: size=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x65122000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -36,12 +41,17 @@ fn test_fcmeq_p_p_z0_field_size_0_min_2000_65122000() {
 fn test_fcmeq_p_p_z0_field_size_1_poweroftwo_2000_65522000() {
     // Encoding: 0x65522000
     // Test FCMEQ_P.P.Z0__ field size = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zn=0, Pg=0, size=1
+    // Fields: Pd=0, size=1, Pg=0, Zn=0
     let encoding: u32 = 0x65522000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -52,12 +62,17 @@ fn test_fcmeq_p_p_z0_field_size_1_poweroftwo_2000_65522000() {
 fn test_fcmeq_p_p_z0_field_size_2_poweroftwo_2000_65922000() {
     // Encoding: 0x65922000
     // Test FCMEQ_P.P.Z0__ field size = 2 (PowerOfTwo)
-    // Fields: size=2, Zn=0, Pg=0, Pd=0
+    // Fields: Pd=0, size=2, Pg=0, Zn=0
     let encoding: u32 = 0x65922000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -68,12 +83,17 @@ fn test_fcmeq_p_p_z0_field_size_2_poweroftwo_2000_65922000() {
 fn test_fcmeq_p_p_z0_field_size_3_max_2000_65d22000() {
     // Encoding: 0x65D22000
     // Test FCMEQ_P.P.Z0__ field size = 3 (Max)
-    // Fields: Pg=0, Pd=0, size=3, Zn=0
+    // Fields: Pd=0, Pg=0, Zn=0, size=3
     let encoding: u32 = 0x65D22000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -84,12 +104,17 @@ fn test_fcmeq_p_p_z0_field_size_3_max_2000_65d22000() {
 fn test_fcmeq_p_p_z0_field_pg_0_min_2000_65122000() {
     // Encoding: 0x65122000
     // Test FCMEQ_P.P.Z0__ field Pg = 0 (Min)
-    // Fields: Pg=0, Zn=0, Pd=0, size=0
+    // Fields: Pd=0, Zn=0, size=0, Pg=0
     let encoding: u32 = 0x65122000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -100,12 +125,17 @@ fn test_fcmeq_p_p_z0_field_pg_0_min_2000_65122000() {
 fn test_fcmeq_p_p_z0_field_pg_1_poweroftwo_2000_65122400() {
     // Encoding: 0x65122400
     // Test FCMEQ_P.P.Z0__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pg=1, size=0, Pd=0, Zn=0
+    // Fields: Zn=0, Pg=1, Pd=0, size=0
     let encoding: u32 = 0x65122400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -116,12 +146,17 @@ fn test_fcmeq_p_p_z0_field_pg_1_poweroftwo_2000_65122400() {
 fn test_fcmeq_p_p_z0_field_zn_0_min_2000_65122000() {
     // Encoding: 0x65122000
     // Test FCMEQ_P.P.Z0__ field Zn = 0 (Min)
-    // Fields: Pg=0, size=0, Zn=0, Pd=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x65122000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -132,12 +167,17 @@ fn test_fcmeq_p_p_z0_field_zn_0_min_2000_65122000() {
 fn test_fcmeq_p_p_z0_field_zn_1_poweroftwo_2000_65122020() {
     // Encoding: 0x65122020
     // Test FCMEQ_P.P.Z0__ field Zn = 1 (PowerOfTwo)
-    // Fields: Pd=0, Pg=0, Zn=1, size=0
+    // Fields: size=0, Pg=0, Zn=1, Pd=0
     let encoding: u32 = 0x65122020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -148,12 +188,17 @@ fn test_fcmeq_p_p_z0_field_zn_1_poweroftwo_2000_65122020() {
 fn test_fcmeq_p_p_z0_field_zn_30_poweroftwominusone_2000_651223c0() {
     // Encoding: 0x651223C0
     // Test FCMEQ_P.P.Z0__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, size=0, Pg=0, Zn=30
+    // Fields: size=0, Zn=30, Pd=0, Pg=0
     let encoding: u32 = 0x651223C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -164,12 +209,17 @@ fn test_fcmeq_p_p_z0_field_zn_30_poweroftwominusone_2000_651223c0() {
 fn test_fcmeq_p_p_z0_field_zn_31_max_2000_651223e0() {
     // Encoding: 0x651223E0
     // Test FCMEQ_P.P.Z0__ field Zn = 31 (Max)
-    // Fields: size=0, Pg=0, Pd=0, Zn=31
+    // Fields: Pd=0, Pg=0, size=0, Zn=31
     let encoding: u32 = 0x651223E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -180,12 +230,17 @@ fn test_fcmeq_p_p_z0_field_zn_31_max_2000_651223e0() {
 fn test_fcmeq_p_p_z0_field_pd_0_min_2000_65122000() {
     // Encoding: 0x65122000
     // Test FCMEQ_P.P.Z0__ field Pd = 0 (Min)
-    // Fields: Pd=0, Pg=0, size=0, Zn=0
+    // Fields: Zn=0, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x65122000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -196,12 +251,17 @@ fn test_fcmeq_p_p_z0_field_pd_0_min_2000_65122000() {
 fn test_fcmeq_p_p_z0_field_pd_1_poweroftwo_2000_65122001() {
     // Encoding: 0x65122001
     // Test FCMEQ_P.P.Z0__ field Pd = 1 (PowerOfTwo)
-    // Fields: size=0, Pd=1, Zn=0, Pg=0
+    // Fields: Zn=0, Pd=1, Pg=0, size=0
     let encoding: u32 = 0x65122001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -212,12 +272,17 @@ fn test_fcmeq_p_p_z0_field_pd_1_poweroftwo_2000_65122001() {
 fn test_fcmeq_p_p_z0_combo_0_2000_65122000() {
     // Encoding: 0x65122000
     // Test FCMEQ_P.P.Z0__ field combination: size=0, Pg=0, Zn=0, Pd=0
-    // Fields: Zn=0, Pg=0, Pd=0, size=0
+    // Fields: size=0, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x65122000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -228,12 +293,17 @@ fn test_fcmeq_p_p_z0_combo_0_2000_65122000() {
 fn test_fcmeq_p_p_z0_special_size_0_size_variant_0_8192_65122000() {
     // Encoding: 0x65122000
     // Test FCMEQ_P.P.Z0__ special value size = 0 (Size variant 0)
-    // Fields: Zn=0, Pg=0, Pd=0, size=0
+    // Fields: Zn=0, Pd=0, Pg=0, size=0
     let encoding: u32 = 0x65122000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -244,12 +314,17 @@ fn test_fcmeq_p_p_z0_special_size_0_size_variant_0_8192_65122000() {
 fn test_fcmeq_p_p_z0_special_size_1_size_variant_1_8192_65522000() {
     // Encoding: 0x65522000
     // Test FCMEQ_P.P.Z0__ special value size = 1 (Size variant 1)
-    // Fields: size=1, Pg=0, Pd=0, Zn=0
+    // Fields: Pd=0, Pg=0, Zn=0, size=1
     let encoding: u32 = 0x65522000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -260,12 +335,17 @@ fn test_fcmeq_p_p_z0_special_size_1_size_variant_1_8192_65522000() {
 fn test_fcmeq_p_p_z0_special_size_2_size_variant_2_8192_65922000() {
     // Encoding: 0x65922000
     // Test FCMEQ_P.P.Z0__ special value size = 2 (Size variant 2)
-    // Fields: Pd=0, Zn=0, size=2, Pg=0
+    // Fields: size=2, Pd=0, Zn=0, Pg=0
     let encoding: u32 = 0x65922000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -276,12 +356,17 @@ fn test_fcmeq_p_p_z0_special_size_2_size_variant_2_8192_65922000() {
 fn test_fcmeq_p_p_z0_special_size_3_size_variant_3_8192_65d22000() {
     // Encoding: 0x65D22000
     // Test FCMEQ_P.P.Z0__ special value size = 3 (Size variant 3)
-    // Fields: size=3, Pg=0, Zn=0, Pd=0
+    // Fields: Pd=0, size=3, Pg=0, Zn=0
     let encoding: u32 = 0x65D22000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -297,7 +382,11 @@ fn test_fcmeq_p_p_z0_invalid_0_2000_65122000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -308,12 +397,16 @@ fn test_fcmeq_p_p_z0_invalid_0_2000_65122000() {
 fn test_fcmeq_p_p_z0_invalid_1_2000_65122000() {
     // Encoding: 0x65122000
     // Test FCMEQ_P.P.Z0__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zn=0, Pd=0, size=0, Pg=0
+    // Fields: size=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x65122000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -324,12 +417,16 @@ fn test_fcmeq_p_p_z0_invalid_1_2000_65122000() {
 fn test_fcmeq_p_p_z0_invalid_2_2000_65122000() {
     // Encoding: 0x65122000
     // Test FCMEQ_P.P.Z0__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([false, false]) }
-    // Fields: Zn=0, size=0, Pd=0, Pg=0
+    // Fields: size=0, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x65122000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -340,12 +437,16 @@ fn test_fcmeq_p_p_z0_invalid_2_2000_65122000() {
 fn test_fcmeq_p_p_z0_invalid_3_2000_65122000() {
     // Encoding: 0x65122000
     // Test FCMEQ_P.P.Z0__ invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, Pd=0, Pg=0, Zn=0
+    // Fields: size=0, Pd=0, Zn=0, Pg=0
     let encoding: u32 = 0x65122000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -356,12 +457,17 @@ fn test_fcmeq_p_p_z0_invalid_3_2000_65122000() {
 fn test_fcmgt_p_p_z0_field_size_0_min_2010_65102010() {
     // Encoding: 0x65102010
     // Test FCMGT_P.P.Z0__ field size = 0 (Min)
-    // Fields: size=0, Pg=0, Pd=0, Zn=0
+    // Fields: Pd=0, size=0, Pg=0, Zn=0
     let encoding: u32 = 0x65102010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -372,12 +478,17 @@ fn test_fcmgt_p_p_z0_field_size_0_min_2010_65102010() {
 fn test_fcmgt_p_p_z0_field_size_1_poweroftwo_2010_65502010() {
     // Encoding: 0x65502010
     // Test FCMGT_P.P.Z0__ field size = 1 (PowerOfTwo)
-    // Fields: size=1, Zn=0, Pd=0, Pg=0
+    // Fields: Pg=0, Zn=0, size=1, Pd=0
     let encoding: u32 = 0x65502010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -393,7 +504,12 @@ fn test_fcmgt_p_p_z0_field_size_2_poweroftwo_2010_65902010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -404,12 +520,17 @@ fn test_fcmgt_p_p_z0_field_size_2_poweroftwo_2010_65902010() {
 fn test_fcmgt_p_p_z0_field_size_3_max_2010_65d02010() {
     // Encoding: 0x65D02010
     // Test FCMGT_P.P.Z0__ field size = 3 (Max)
-    // Fields: Pd=0, Zn=0, Pg=0, size=3
+    // Fields: Zn=0, Pg=0, size=3, Pd=0
     let encoding: u32 = 0x65D02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -420,12 +541,17 @@ fn test_fcmgt_p_p_z0_field_size_3_max_2010_65d02010() {
 fn test_fcmgt_p_p_z0_field_pg_0_min_2010_65102010() {
     // Encoding: 0x65102010
     // Test FCMGT_P.P.Z0__ field Pg = 0 (Min)
-    // Fields: Zn=0, Pd=0, Pg=0, size=0
+    // Fields: Pg=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x65102010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -436,12 +562,17 @@ fn test_fcmgt_p_p_z0_field_pg_0_min_2010_65102010() {
 fn test_fcmgt_p_p_z0_field_pg_1_poweroftwo_2010_65102410() {
     // Encoding: 0x65102410
     // Test FCMGT_P.P.Z0__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pg=1, Zn=0, Pd=0, size=0
+    // Fields: Zn=0, Pg=1, Pd=0, size=0
     let encoding: u32 = 0x65102410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -452,12 +583,17 @@ fn test_fcmgt_p_p_z0_field_pg_1_poweroftwo_2010_65102410() {
 fn test_fcmgt_p_p_z0_field_zn_0_min_2010_65102010() {
     // Encoding: 0x65102010
     // Test FCMGT_P.P.Z0__ field Zn = 0 (Min)
-    // Fields: Zn=0, Pd=0, Pg=0, size=0
+    // Fields: size=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x65102010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -468,12 +604,17 @@ fn test_fcmgt_p_p_z0_field_zn_0_min_2010_65102010() {
 fn test_fcmgt_p_p_z0_field_zn_1_poweroftwo_2010_65102030() {
     // Encoding: 0x65102030
     // Test FCMGT_P.P.Z0__ field Zn = 1 (PowerOfTwo)
-    // Fields: size=0, Pd=0, Pg=0, Zn=1
+    // Fields: Pd=0, size=0, Zn=1, Pg=0
     let encoding: u32 = 0x65102030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -484,12 +625,17 @@ fn test_fcmgt_p_p_z0_field_zn_1_poweroftwo_2010_65102030() {
 fn test_fcmgt_p_p_z0_field_zn_30_poweroftwominusone_2010_651023d0() {
     // Encoding: 0x651023D0
     // Test FCMGT_P.P.Z0__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, Zn=30, Pd=0, size=0
+    // Fields: Pd=0, size=0, Zn=30, Pg=0
     let encoding: u32 = 0x651023D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -500,12 +646,17 @@ fn test_fcmgt_p_p_z0_field_zn_30_poweroftwominusone_2010_651023d0() {
 fn test_fcmgt_p_p_z0_field_zn_31_max_2010_651023f0() {
     // Encoding: 0x651023F0
     // Test FCMGT_P.P.Z0__ field Zn = 31 (Max)
-    // Fields: Zn=31, Pd=0, Pg=0, size=0
+    // Fields: Pg=0, size=0, Zn=31, Pd=0
     let encoding: u32 = 0x651023F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -516,12 +667,17 @@ fn test_fcmgt_p_p_z0_field_zn_31_max_2010_651023f0() {
 fn test_fcmgt_p_p_z0_field_pd_0_min_2010_65102010() {
     // Encoding: 0x65102010
     // Test FCMGT_P.P.Z0__ field Pd = 0 (Min)
-    // Fields: Pg=0, Pd=0, size=0, Zn=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x65102010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -532,12 +688,17 @@ fn test_fcmgt_p_p_z0_field_pd_0_min_2010_65102010() {
 fn test_fcmgt_p_p_z0_field_pd_1_poweroftwo_2010_65102011() {
     // Encoding: 0x65102011
     // Test FCMGT_P.P.Z0__ field Pd = 1 (PowerOfTwo)
-    // Fields: Pg=0, Zn=0, Pd=1, size=0
+    // Fields: Pd=1, Zn=0, Pg=0, size=0
     let encoding: u32 = 0x65102011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -548,12 +709,17 @@ fn test_fcmgt_p_p_z0_field_pd_1_poweroftwo_2010_65102011() {
 fn test_fcmgt_p_p_z0_combo_0_2010_65102010() {
     // Encoding: 0x65102010
     // Test FCMGT_P.P.Z0__ field combination: size=0, Pg=0, Zn=0, Pd=0
-    // Fields: Zn=0, size=0, Pd=0, Pg=0
+    // Fields: Pd=0, size=0, Zn=0, Pg=0
     let encoding: u32 = 0x65102010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -564,12 +730,17 @@ fn test_fcmgt_p_p_z0_combo_0_2010_65102010() {
 fn test_fcmgt_p_p_z0_special_size_0_size_variant_0_8208_65102010() {
     // Encoding: 0x65102010
     // Test FCMGT_P.P.Z0__ special value size = 0 (Size variant 0)
-    // Fields: Pg=0, Zn=0, size=0, Pd=0
+    // Fields: Pd=0, Zn=0, Pg=0, size=0
     let encoding: u32 = 0x65102010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -580,12 +751,17 @@ fn test_fcmgt_p_p_z0_special_size_0_size_variant_0_8208_65102010() {
 fn test_fcmgt_p_p_z0_special_size_1_size_variant_1_8208_65502010() {
     // Encoding: 0x65502010
     // Test FCMGT_P.P.Z0__ special value size = 1 (Size variant 1)
-    // Fields: Pg=0, size=1, Zn=0, Pd=0
+    // Fields: Pg=0, Pd=0, size=1, Zn=0
     let encoding: u32 = 0x65502010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -596,12 +772,17 @@ fn test_fcmgt_p_p_z0_special_size_1_size_variant_1_8208_65502010() {
 fn test_fcmgt_p_p_z0_special_size_2_size_variant_2_8208_65902010() {
     // Encoding: 0x65902010
     // Test FCMGT_P.P.Z0__ special value size = 2 (Size variant 2)
-    // Fields: Zn=0, Pg=0, size=2, Pd=0
+    // Fields: Pg=0, Pd=0, size=2, Zn=0
     let encoding: u32 = 0x65902010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -612,12 +793,17 @@ fn test_fcmgt_p_p_z0_special_size_2_size_variant_2_8208_65902010() {
 fn test_fcmgt_p_p_z0_special_size_3_size_variant_3_8208_65d02010() {
     // Encoding: 0x65D02010
     // Test FCMGT_P.P.Z0__ special value size = 3 (Size variant 3)
-    // Fields: Pd=0, Pg=0, Zn=0, size=3
+    // Fields: size=3, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x65D02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -628,12 +814,16 @@ fn test_fcmgt_p_p_z0_special_size_3_size_variant_3_8208_65d02010() {
 fn test_fcmgt_p_p_z0_invalid_0_2010_65102010() {
     // Encoding: 0x65102010
     // Test FCMGT_P.P.Z0__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: size=0, Zn=0, Pg=0, Pd=0
+    // Fields: Pd=0, size=0, Zn=0, Pg=0
     let encoding: u32 = 0x65102010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -644,12 +834,16 @@ fn test_fcmgt_p_p_z0_invalid_0_2010_65102010() {
 fn test_fcmgt_p_p_z0_invalid_1_2010_65102010() {
     // Encoding: 0x65102010
     // Test FCMGT_P.P.Z0__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pd=0, Zn=0, size=0, Pg=0
+    // Fields: size=0, Zn=0, Pg=0, Pd=0
     let encoding: u32 = 0x65102010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -660,12 +854,16 @@ fn test_fcmgt_p_p_z0_invalid_1_2010_65102010() {
 fn test_fcmgt_p_p_z0_invalid_2_2010_65102010() {
     // Encoding: 0x65102010
     // Test FCMGT_P.P.Z0__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([false, false]) }
-    // Fields: Pg=0, size=0, Pd=0, Zn=0
+    // Fields: Pd=0, size=0, Zn=0, Pg=0
     let encoding: u32 = 0x65102010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.Z0__
@@ -676,12 +874,16 @@ fn test_fcmgt_p_p_z0_invalid_2_2010_65102010() {
 fn test_fcmgt_p_p_z0_invalid_3_2010_65102010() {
     // Encoding: 0x65102010
     // Test FCMGT_P.P.Z0__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pd=0, Pg=0, size=0, Zn=0
+    // Fields: Pg=0, size=0, Pd=0, Zn=0
     let encoding: u32 = 0x65102010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -692,12 +894,17 @@ fn test_fcmgt_p_p_z0_invalid_3_2010_65102010() {
 fn test_fcmge_p_p_z0_field_size_0_min_2000_65102000() {
     // Encoding: 0x65102000
     // Test FCMGE_P.P.Z0__ field size = 0 (Min)
-    // Fields: Pd=0, Zn=0, Pg=0, size=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x65102000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -708,12 +915,17 @@ fn test_fcmge_p_p_z0_field_size_0_min_2000_65102000() {
 fn test_fcmge_p_p_z0_field_size_1_poweroftwo_2000_65502000() {
     // Encoding: 0x65502000
     // Test FCMGE_P.P.Z0__ field size = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pg=0, size=1, Pd=0
+    // Fields: Pd=0, size=1, Pg=0, Zn=0
     let encoding: u32 = 0x65502000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -724,12 +936,17 @@ fn test_fcmge_p_p_z0_field_size_1_poweroftwo_2000_65502000() {
 fn test_fcmge_p_p_z0_field_size_2_poweroftwo_2000_65902000() {
     // Encoding: 0x65902000
     // Test FCMGE_P.P.Z0__ field size = 2 (PowerOfTwo)
-    // Fields: size=2, Zn=0, Pg=0, Pd=0
+    // Fields: Zn=0, size=2, Pd=0, Pg=0
     let encoding: u32 = 0x65902000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -740,12 +957,17 @@ fn test_fcmge_p_p_z0_field_size_2_poweroftwo_2000_65902000() {
 fn test_fcmge_p_p_z0_field_size_3_max_2000_65d02000() {
     // Encoding: 0x65D02000
     // Test FCMGE_P.P.Z0__ field size = 3 (Max)
-    // Fields: Zn=0, Pg=0, size=3, Pd=0
+    // Fields: Pg=0, Zn=0, size=3, Pd=0
     let encoding: u32 = 0x65D02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -756,12 +978,17 @@ fn test_fcmge_p_p_z0_field_size_3_max_2000_65d02000() {
 fn test_fcmge_p_p_z0_field_pg_0_min_2000_65102000() {
     // Encoding: 0x65102000
     // Test FCMGE_P.P.Z0__ field Pg = 0 (Min)
-    // Fields: Pg=0, Pd=0, size=0, Zn=0
+    // Fields: Pd=0, Pg=0, size=0, Zn=0
     let encoding: u32 = 0x65102000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -772,12 +999,17 @@ fn test_fcmge_p_p_z0_field_pg_0_min_2000_65102000() {
 fn test_fcmge_p_p_z0_field_pg_1_poweroftwo_2000_65102400() {
     // Encoding: 0x65102400
     // Test FCMGE_P.P.Z0__ field Pg = 1 (PowerOfTwo)
-    // Fields: Zn=0, size=0, Pg=1, Pd=0
+    // Fields: Zn=0, Pg=1, Pd=0, size=0
     let encoding: u32 = 0x65102400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -788,12 +1020,17 @@ fn test_fcmge_p_p_z0_field_pg_1_poweroftwo_2000_65102400() {
 fn test_fcmge_p_p_z0_field_zn_0_min_2000_65102000() {
     // Encoding: 0x65102000
     // Test FCMGE_P.P.Z0__ field Zn = 0 (Min)
-    // Fields: Pg=0, Pd=0, size=0, Zn=0
+    // Fields: Zn=0, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x65102000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -809,7 +1046,12 @@ fn test_fcmge_p_p_z0_field_zn_1_poweroftwo_2000_65102020() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -820,12 +1062,17 @@ fn test_fcmge_p_p_z0_field_zn_1_poweroftwo_2000_65102020() {
 fn test_fcmge_p_p_z0_field_zn_30_poweroftwominusone_2000_651023c0() {
     // Encoding: 0x651023C0
     // Test FCMGE_P.P.Z0__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, size=0, Pg=0, Zn=30
+    // Fields: Pd=0, Zn=30, size=0, Pg=0
     let encoding: u32 = 0x651023C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -836,12 +1083,17 @@ fn test_fcmge_p_p_z0_field_zn_30_poweroftwominusone_2000_651023c0() {
 fn test_fcmge_p_p_z0_field_zn_31_max_2000_651023e0() {
     // Encoding: 0x651023E0
     // Test FCMGE_P.P.Z0__ field Zn = 31 (Max)
-    // Fields: size=0, Pg=0, Pd=0, Zn=31
+    // Fields: Pg=0, Pd=0, Zn=31, size=0
     let encoding: u32 = 0x651023E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -852,12 +1104,17 @@ fn test_fcmge_p_p_z0_field_zn_31_max_2000_651023e0() {
 fn test_fcmge_p_p_z0_field_pd_0_min_2000_65102000() {
     // Encoding: 0x65102000
     // Test FCMGE_P.P.Z0__ field Pd = 0 (Min)
-    // Fields: Zn=0, Pg=0, Pd=0, size=0
+    // Fields: Pg=0, size=0, Pd=0, Zn=0
     let encoding: u32 = 0x65102000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -868,12 +1125,17 @@ fn test_fcmge_p_p_z0_field_pd_0_min_2000_65102000() {
 fn test_fcmge_p_p_z0_field_pd_1_poweroftwo_2000_65102001() {
     // Encoding: 0x65102001
     // Test FCMGE_P.P.Z0__ field Pd = 1 (PowerOfTwo)
-    // Fields: Pg=0, Pd=1, size=0, Zn=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=1
     let encoding: u32 = 0x65102001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -884,12 +1146,17 @@ fn test_fcmge_p_p_z0_field_pd_1_poweroftwo_2000_65102001() {
 fn test_fcmge_p_p_z0_combo_0_2000_65102000() {
     // Encoding: 0x65102000
     // Test FCMGE_P.P.Z0__ field combination: size=0, Pg=0, Zn=0, Pd=0
-    // Fields: Pd=0, size=0, Pg=0, Zn=0
+    // Fields: Pd=0, size=0, Zn=0, Pg=0
     let encoding: u32 = 0x65102000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -900,12 +1167,17 @@ fn test_fcmge_p_p_z0_combo_0_2000_65102000() {
 fn test_fcmge_p_p_z0_special_size_0_size_variant_0_8192_65102000() {
     // Encoding: 0x65102000
     // Test FCMGE_P.P.Z0__ special value size = 0 (Size variant 0)
-    // Fields: size=0, Zn=0, Pg=0, Pd=0
+    // Fields: size=0, Pd=0, Zn=0, Pg=0
     let encoding: u32 = 0x65102000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -916,12 +1188,17 @@ fn test_fcmge_p_p_z0_special_size_0_size_variant_0_8192_65102000() {
 fn test_fcmge_p_p_z0_special_size_1_size_variant_1_8192_65502000() {
     // Encoding: 0x65502000
     // Test FCMGE_P.P.Z0__ special value size = 1 (Size variant 1)
-    // Fields: size=1, Pg=0, Zn=0, Pd=0
+    // Fields: size=1, Zn=0, Pg=0, Pd=0
     let encoding: u32 = 0x65502000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -932,12 +1209,17 @@ fn test_fcmge_p_p_z0_special_size_1_size_variant_1_8192_65502000() {
 fn test_fcmge_p_p_z0_special_size_2_size_variant_2_8192_65902000() {
     // Encoding: 0x65902000
     // Test FCMGE_P.P.Z0__ special value size = 2 (Size variant 2)
-    // Fields: size=2, Pg=0, Pd=0, Zn=0
+    // Fields: Pg=0, size=2, Zn=0, Pd=0
     let encoding: u32 = 0x65902000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -948,12 +1230,17 @@ fn test_fcmge_p_p_z0_special_size_2_size_variant_2_8192_65902000() {
 fn test_fcmge_p_p_z0_special_size_3_size_variant_3_8192_65d02000() {
     // Encoding: 0x65D02000
     // Test FCMGE_P.P.Z0__ special value size = 3 (Size variant 3)
-    // Fields: Zn=0, size=3, Pg=0, Pd=0
+    // Fields: Pd=0, Zn=0, size=3, Pg=0
     let encoding: u32 = 0x65D02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -964,12 +1251,16 @@ fn test_fcmge_p_p_z0_special_size_3_size_variant_3_8192_65d02000() {
 fn test_fcmge_p_p_z0_invalid_0_2000_65102000() {
     // Encoding: 0x65102000
     // Test FCMGE_P.P.Z0__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pd=0, Pg=0, size=0, Zn=0
+    // Fields: Pd=0, Pg=0, Zn=0, size=0
     let encoding: u32 = 0x65102000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -980,12 +1271,16 @@ fn test_fcmge_p_p_z0_invalid_0_2000_65102000() {
 fn test_fcmge_p_p_z0_invalid_1_2000_65102000() {
     // Encoding: 0x65102000
     // Test FCMGE_P.P.Z0__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zn=0, size=0, Pg=0, Pd=0
+    // Fields: Pd=0, Pg=0, size=0, Zn=0
     let encoding: u32 = 0x65102000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -996,12 +1291,16 @@ fn test_fcmge_p_p_z0_invalid_1_2000_65102000() {
 fn test_fcmge_p_p_z0_invalid_2_2000_65102000() {
     // Encoding: 0x65102000
     // Test FCMGE_P.P.Z0__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([false, false]) }
-    // Fields: Pd=0, size=0, Pg=0, Zn=0
+    // Fields: Zn=0, size=0, Pd=0, Pg=0
     let encoding: u32 = 0x65102000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.Z0__
@@ -1012,12 +1311,16 @@ fn test_fcmge_p_p_z0_invalid_2_2000_65102000() {
 fn test_fcmge_p_p_z0_invalid_3_2000_65102000() {
     // Encoding: 0x65102000
     // Test FCMGE_P.P.Z0__ invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, Pg=0, Zn=0, Pd=0
+    // Fields: Pg=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x65102000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1028,12 +1331,17 @@ fn test_fcmge_p_p_z0_invalid_3_2000_65102000() {
 fn test_fcmlt_p_p_z0_field_size_0_min_2000_65112000() {
     // Encoding: 0x65112000
     // Test FCMLT_P.P.Z0__ field size = 0 (Min)
-    // Fields: Zn=0, Pd=0, size=0, Pg=0
+    // Fields: size=0, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x65112000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1044,12 +1352,17 @@ fn test_fcmlt_p_p_z0_field_size_0_min_2000_65112000() {
 fn test_fcmlt_p_p_z0_field_size_1_poweroftwo_2000_65512000() {
     // Encoding: 0x65512000
     // Test FCMLT_P.P.Z0__ field size = 1 (PowerOfTwo)
-    // Fields: size=1, Pg=0, Zn=0, Pd=0
+    // Fields: Zn=0, Pg=0, size=1, Pd=0
     let encoding: u32 = 0x65512000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1060,12 +1373,17 @@ fn test_fcmlt_p_p_z0_field_size_1_poweroftwo_2000_65512000() {
 fn test_fcmlt_p_p_z0_field_size_2_poweroftwo_2000_65912000() {
     // Encoding: 0x65912000
     // Test FCMLT_P.P.Z0__ field size = 2 (PowerOfTwo)
-    // Fields: size=2, Zn=0, Pg=0, Pd=0
+    // Fields: Zn=0, Pd=0, size=2, Pg=0
     let encoding: u32 = 0x65912000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1076,12 +1394,17 @@ fn test_fcmlt_p_p_z0_field_size_2_poweroftwo_2000_65912000() {
 fn test_fcmlt_p_p_z0_field_size_3_max_2000_65d12000() {
     // Encoding: 0x65D12000
     // Test FCMLT_P.P.Z0__ field size = 3 (Max)
-    // Fields: Pd=0, Zn=0, size=3, Pg=0
+    // Fields: size=3, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x65D12000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1092,12 +1415,17 @@ fn test_fcmlt_p_p_z0_field_size_3_max_2000_65d12000() {
 fn test_fcmlt_p_p_z0_field_pg_0_min_2000_65112000() {
     // Encoding: 0x65112000
     // Test FCMLT_P.P.Z0__ field Pg = 0 (Min)
-    // Fields: Pg=0, Zn=0, Pd=0, size=0
+    // Fields: Pd=0, Pg=0, size=0, Zn=0
     let encoding: u32 = 0x65112000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1108,12 +1436,17 @@ fn test_fcmlt_p_p_z0_field_pg_0_min_2000_65112000() {
 fn test_fcmlt_p_p_z0_field_pg_1_poweroftwo_2000_65112400() {
     // Encoding: 0x65112400
     // Test FCMLT_P.P.Z0__ field Pg = 1 (PowerOfTwo)
-    // Fields: size=0, Pg=1, Zn=0, Pd=0
+    // Fields: Zn=0, size=0, Pg=1, Pd=0
     let encoding: u32 = 0x65112400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1124,12 +1457,17 @@ fn test_fcmlt_p_p_z0_field_pg_1_poweroftwo_2000_65112400() {
 fn test_fcmlt_p_p_z0_field_zn_0_min_2000_65112000() {
     // Encoding: 0x65112000
     // Test FCMLT_P.P.Z0__ field Zn = 0 (Min)
-    // Fields: Pd=0, Pg=0, size=0, Zn=0
+    // Fields: Zn=0, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x65112000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1140,12 +1478,17 @@ fn test_fcmlt_p_p_z0_field_zn_0_min_2000_65112000() {
 fn test_fcmlt_p_p_z0_field_zn_1_poweroftwo_2000_65112020() {
     // Encoding: 0x65112020
     // Test FCMLT_P.P.Z0__ field Zn = 1 (PowerOfTwo)
-    // Fields: Zn=1, Pd=0, size=0, Pg=0
+    // Fields: size=0, Pd=0, Pg=0, Zn=1
     let encoding: u32 = 0x65112020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1156,12 +1499,17 @@ fn test_fcmlt_p_p_z0_field_zn_1_poweroftwo_2000_65112020() {
 fn test_fcmlt_p_p_z0_field_zn_30_poweroftwominusone_2000_651123c0() {
     // Encoding: 0x651123C0
     // Test FCMLT_P.P.Z0__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Pd=0, Zn=30, Pg=0
+    // Fields: Pg=0, size=0, Pd=0, Zn=30
     let encoding: u32 = 0x651123C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1172,12 +1520,17 @@ fn test_fcmlt_p_p_z0_field_zn_30_poweroftwominusone_2000_651123c0() {
 fn test_fcmlt_p_p_z0_field_zn_31_max_2000_651123e0() {
     // Encoding: 0x651123E0
     // Test FCMLT_P.P.Z0__ field Zn = 31 (Max)
-    // Fields: size=0, Zn=31, Pg=0, Pd=0
+    // Fields: Zn=31, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x651123E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1188,12 +1541,17 @@ fn test_fcmlt_p_p_z0_field_zn_31_max_2000_651123e0() {
 fn test_fcmlt_p_p_z0_field_pd_0_min_2000_65112000() {
     // Encoding: 0x65112000
     // Test FCMLT_P.P.Z0__ field Pd = 0 (Min)
-    // Fields: Pd=0, size=0, Pg=0, Zn=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x65112000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1204,12 +1562,17 @@ fn test_fcmlt_p_p_z0_field_pd_0_min_2000_65112000() {
 fn test_fcmlt_p_p_z0_field_pd_1_poweroftwo_2000_65112001() {
     // Encoding: 0x65112001
     // Test FCMLT_P.P.Z0__ field Pd = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pg=0, size=0, Pd=1
+    // Fields: size=0, Pd=1, Zn=0, Pg=0
     let encoding: u32 = 0x65112001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1220,12 +1583,17 @@ fn test_fcmlt_p_p_z0_field_pd_1_poweroftwo_2000_65112001() {
 fn test_fcmlt_p_p_z0_combo_0_2000_65112000() {
     // Encoding: 0x65112000
     // Test FCMLT_P.P.Z0__ field combination: size=0, Pg=0, Zn=0, Pd=0
-    // Fields: Pg=0, size=0, Zn=0, Pd=0
+    // Fields: size=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x65112000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1236,12 +1604,17 @@ fn test_fcmlt_p_p_z0_combo_0_2000_65112000() {
 fn test_fcmlt_p_p_z0_special_size_0_size_variant_0_8192_65112000() {
     // Encoding: 0x65112000
     // Test FCMLT_P.P.Z0__ special value size = 0 (Size variant 0)
-    // Fields: Pg=0, Zn=0, size=0, Pd=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x65112000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1252,12 +1625,17 @@ fn test_fcmlt_p_p_z0_special_size_0_size_variant_0_8192_65112000() {
 fn test_fcmlt_p_p_z0_special_size_1_size_variant_1_8192_65512000() {
     // Encoding: 0x65512000
     // Test FCMLT_P.P.Z0__ special value size = 1 (Size variant 1)
-    // Fields: Pd=0, Zn=0, size=1, Pg=0
+    // Fields: size=1, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x65512000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1268,12 +1646,17 @@ fn test_fcmlt_p_p_z0_special_size_1_size_variant_1_8192_65512000() {
 fn test_fcmlt_p_p_z0_special_size_2_size_variant_2_8192_65912000() {
     // Encoding: 0x65912000
     // Test FCMLT_P.P.Z0__ special value size = 2 (Size variant 2)
-    // Fields: Pg=0, Pd=0, Zn=0, size=2
+    // Fields: Pg=0, Zn=0, size=2, Pd=0
     let encoding: u32 = 0x65912000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1284,12 +1667,17 @@ fn test_fcmlt_p_p_z0_special_size_2_size_variant_2_8192_65912000() {
 fn test_fcmlt_p_p_z0_special_size_3_size_variant_3_8192_65d12000() {
     // Encoding: 0x65D12000
     // Test FCMLT_P.P.Z0__ special value size = 3 (Size variant 3)
-    // Fields: size=3, Pg=0, Zn=0, Pd=0
+    // Fields: Pg=0, size=3, Zn=0, Pd=0
     let encoding: u32 = 0x65D12000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1300,12 +1688,16 @@ fn test_fcmlt_p_p_z0_special_size_3_size_variant_3_8192_65d12000() {
 fn test_fcmlt_p_p_z0_invalid_0_2000_65112000() {
     // Encoding: 0x65112000
     // Test FCMLT_P.P.Z0__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Zn=0, size=0, Pd=0, Pg=0
+    // Fields: Zn=0, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x65112000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1316,12 +1708,16 @@ fn test_fcmlt_p_p_z0_invalid_0_2000_65112000() {
 fn test_fcmlt_p_p_z0_invalid_1_2000_65112000() {
     // Encoding: 0x65112000
     // Test FCMLT_P.P.Z0__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, Zn=0, size=0, Pd=0
+    // Fields: Zn=0, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x65112000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1332,12 +1728,16 @@ fn test_fcmlt_p_p_z0_invalid_1_2000_65112000() {
 fn test_fcmlt_p_p_z0_invalid_2_2000_65112000() {
     // Encoding: 0x65112000
     // Test FCMLT_P.P.Z0__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([false, false]) }
-    // Fields: Zn=0, Pg=0, Pd=0, size=0
+    // Fields: Pg=0, Pd=0, size=0, Zn=0
     let encoding: u32 = 0x65112000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLT_P.P.Z0__
@@ -1348,12 +1748,16 @@ fn test_fcmlt_p_p_z0_invalid_2_2000_65112000() {
 fn test_fcmlt_p_p_z0_invalid_3_2000_65112000() {
     // Encoding: 0x65112000
     // Test FCMLT_P.P.Z0__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pd=0, Zn=0, size=0, Pg=0
+    // Fields: size=0, Pd=0, Zn=0, Pg=0
     let encoding: u32 = 0x65112000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1364,12 +1768,17 @@ fn test_fcmlt_p_p_z0_invalid_3_2000_65112000() {
 fn test_fcmle_p_p_z0_field_size_0_min_2010_65112010() {
     // Encoding: 0x65112010
     // Test FCMLE_P.P.Z0__ field size = 0 (Min)
-    // Fields: Pd=0, size=0, Zn=0, Pg=0
+    // Fields: size=0, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x65112010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1380,12 +1789,17 @@ fn test_fcmle_p_p_z0_field_size_0_min_2010_65112010() {
 fn test_fcmle_p_p_z0_field_size_1_poweroftwo_2010_65512010() {
     // Encoding: 0x65512010
     // Test FCMLE_P.P.Z0__ field size = 1 (PowerOfTwo)
-    // Fields: size=1, Zn=0, Pg=0, Pd=0
+    // Fields: size=1, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x65512010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1396,12 +1810,17 @@ fn test_fcmle_p_p_z0_field_size_1_poweroftwo_2010_65512010() {
 fn test_fcmle_p_p_z0_field_size_2_poweroftwo_2010_65912010() {
     // Encoding: 0x65912010
     // Test FCMLE_P.P.Z0__ field size = 2 (PowerOfTwo)
-    // Fields: Pg=0, Zn=0, Pd=0, size=2
+    // Fields: size=2, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x65912010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1412,12 +1831,17 @@ fn test_fcmle_p_p_z0_field_size_2_poweroftwo_2010_65912010() {
 fn test_fcmle_p_p_z0_field_size_3_max_2010_65d12010() {
     // Encoding: 0x65D12010
     // Test FCMLE_P.P.Z0__ field size = 3 (Max)
-    // Fields: Pd=0, Pg=0, size=3, Zn=0
+    // Fields: Pg=0, Zn=0, Pd=0, size=3
     let encoding: u32 = 0x65D12010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1428,12 +1852,17 @@ fn test_fcmle_p_p_z0_field_size_3_max_2010_65d12010() {
 fn test_fcmle_p_p_z0_field_pg_0_min_2010_65112010() {
     // Encoding: 0x65112010
     // Test FCMLE_P.P.Z0__ field Pg = 0 (Min)
-    // Fields: Pd=0, Zn=0, Pg=0, size=0
+    // Fields: Zn=0, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x65112010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1444,12 +1873,17 @@ fn test_fcmle_p_p_z0_field_pg_0_min_2010_65112010() {
 fn test_fcmle_p_p_z0_field_pg_1_poweroftwo_2010_65112410() {
     // Encoding: 0x65112410
     // Test FCMLE_P.P.Z0__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zn=0, Pg=1, size=0
+    // Fields: size=0, Pg=1, Pd=0, Zn=0
     let encoding: u32 = 0x65112410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1465,7 +1899,12 @@ fn test_fcmle_p_p_z0_field_zn_0_min_2010_65112010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1476,12 +1915,17 @@ fn test_fcmle_p_p_z0_field_zn_0_min_2010_65112010() {
 fn test_fcmle_p_p_z0_field_zn_1_poweroftwo_2010_65112030() {
     // Encoding: 0x65112030
     // Test FCMLE_P.P.Z0__ field Zn = 1 (PowerOfTwo)
-    // Fields: size=0, Zn=1, Pg=0, Pd=0
+    // Fields: Pg=0, Pd=0, Zn=1, size=0
     let encoding: u32 = 0x65112030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1492,12 +1936,17 @@ fn test_fcmle_p_p_z0_field_zn_1_poweroftwo_2010_65112030() {
 fn test_fcmle_p_p_z0_field_zn_30_poweroftwominusone_2010_651123d0() {
     // Encoding: 0x651123D0
     // Test FCMLE_P.P.Z0__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Zn=30, Pg=0, Pd=0
+    // Fields: size=0, Pd=0, Pg=0, Zn=30
     let encoding: u32 = 0x651123D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1508,12 +1957,17 @@ fn test_fcmle_p_p_z0_field_zn_30_poweroftwominusone_2010_651123d0() {
 fn test_fcmle_p_p_z0_field_zn_31_max_2010_651123f0() {
     // Encoding: 0x651123F0
     // Test FCMLE_P.P.Z0__ field Zn = 31 (Max)
-    // Fields: Pg=0, Pd=0, size=0, Zn=31
+    // Fields: Zn=31, Pg=0, size=0, Pd=0
     let encoding: u32 = 0x651123F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1524,12 +1978,17 @@ fn test_fcmle_p_p_z0_field_zn_31_max_2010_651123f0() {
 fn test_fcmle_p_p_z0_field_pd_0_min_2010_65112010() {
     // Encoding: 0x65112010
     // Test FCMLE_P.P.Z0__ field Pd = 0 (Min)
-    // Fields: Pg=0, size=0, Zn=0, Pd=0
+    // Fields: size=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x65112010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1540,12 +1999,17 @@ fn test_fcmle_p_p_z0_field_pd_0_min_2010_65112010() {
 fn test_fcmle_p_p_z0_field_pd_1_poweroftwo_2010_65112011() {
     // Encoding: 0x65112011
     // Test FCMLE_P.P.Z0__ field Pd = 1 (PowerOfTwo)
-    // Fields: Pg=0, Zn=0, Pd=1, size=0
+    // Fields: Zn=0, size=0, Pg=0, Pd=1
     let encoding: u32 = 0x65112011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1556,12 +2020,17 @@ fn test_fcmle_p_p_z0_field_pd_1_poweroftwo_2010_65112011() {
 fn test_fcmle_p_p_z0_combo_0_2010_65112010() {
     // Encoding: 0x65112010
     // Test FCMLE_P.P.Z0__ field combination: size=0, Pg=0, Zn=0, Pd=0
-    // Fields: Zn=0, Pd=0, Pg=0, size=0
+    // Fields: Zn=0, Pg=0, Pd=0, size=0
     let encoding: u32 = 0x65112010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1572,12 +2041,17 @@ fn test_fcmle_p_p_z0_combo_0_2010_65112010() {
 fn test_fcmle_p_p_z0_special_size_0_size_variant_0_8208_65112010() {
     // Encoding: 0x65112010
     // Test FCMLE_P.P.Z0__ special value size = 0 (Size variant 0)
-    // Fields: Pg=0, Zn=0, Pd=0, size=0
+    // Fields: Zn=0, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x65112010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1588,12 +2062,17 @@ fn test_fcmle_p_p_z0_special_size_0_size_variant_0_8208_65112010() {
 fn test_fcmle_p_p_z0_special_size_1_size_variant_1_8208_65512010() {
     // Encoding: 0x65512010
     // Test FCMLE_P.P.Z0__ special value size = 1 (Size variant 1)
-    // Fields: size=1, Zn=0, Pg=0, Pd=0
+    // Fields: Zn=0, Pg=0, Pd=0, size=1
     let encoding: u32 = 0x65512010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1604,12 +2083,17 @@ fn test_fcmle_p_p_z0_special_size_1_size_variant_1_8208_65512010() {
 fn test_fcmle_p_p_z0_special_size_2_size_variant_2_8208_65912010() {
     // Encoding: 0x65912010
     // Test FCMLE_P.P.Z0__ special value size = 2 (Size variant 2)
-    // Fields: Pd=0, Pg=0, size=2, Zn=0
+    // Fields: size=2, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x65912010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1620,12 +2104,17 @@ fn test_fcmle_p_p_z0_special_size_2_size_variant_2_8208_65912010() {
 fn test_fcmle_p_p_z0_special_size_3_size_variant_3_8208_65d12010() {
     // Encoding: 0x65D12010
     // Test FCMLE_P.P.Z0__ special value size = 3 (Size variant 3)
-    // Fields: size=3, Pg=0, Zn=0, Pd=0
+    // Fields: size=3, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x65D12010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1636,12 +2125,16 @@ fn test_fcmle_p_p_z0_special_size_3_size_variant_3_8208_65d12010() {
 fn test_fcmle_p_p_z0_invalid_0_2010_65112010() {
     // Encoding: 0x65112010
     // Test FCMLE_P.P.Z0__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pg=0, Pd=0, Zn=0, size=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x65112010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1652,12 +2145,16 @@ fn test_fcmle_p_p_z0_invalid_0_2010_65112010() {
 fn test_fcmle_p_p_z0_invalid_1_2010_65112010() {
     // Encoding: 0x65112010
     // Test FCMLE_P.P.Z0__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pd=0, Pg=0, Zn=0, size=0
+    // Fields: Zn=0, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x65112010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1668,12 +2165,16 @@ fn test_fcmle_p_p_z0_invalid_1_2010_65112010() {
 fn test_fcmle_p_p_z0_invalid_2_2010_65112010() {
     // Encoding: 0x65112010
     // Test FCMLE_P.P.Z0__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([false, false]) }
-    // Fields: Pg=0, Pd=0, Zn=0, size=0
+    // Fields: Pd=0, size=0, Zn=0, Pg=0
     let encoding: u32 = 0x65112010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLE_P.P.Z0__
@@ -1684,12 +2185,16 @@ fn test_fcmle_p_p_z0_invalid_2_2010_65112010() {
 fn test_fcmle_p_p_z0_invalid_3_2010_65112010() {
     // Encoding: 0x65112010
     // Test FCMLE_P.P.Z0__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zn=0, size=0, Pd=0, Pg=0
+    // Fields: size=0, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x65112010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1700,12 +2205,17 @@ fn test_fcmle_p_p_z0_invalid_3_2010_65112010() {
 fn test_fcmne_p_p_z0_field_size_0_min_2000_65132000() {
     // Encoding: 0x65132000
     // Test FCMNE_P.P.Z0__ field size = 0 (Min)
-    // Fields: Pg=0, Zn=0, size=0, Pd=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x65132000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1716,12 +2226,17 @@ fn test_fcmne_p_p_z0_field_size_0_min_2000_65132000() {
 fn test_fcmne_p_p_z0_field_size_1_poweroftwo_2000_65532000() {
     // Encoding: 0x65532000
     // Test FCMNE_P.P.Z0__ field size = 1 (PowerOfTwo)
-    // Fields: Pd=0, size=1, Zn=0, Pg=0
+    // Fields: Zn=0, size=1, Pd=0, Pg=0
     let encoding: u32 = 0x65532000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1732,12 +2247,17 @@ fn test_fcmne_p_p_z0_field_size_1_poweroftwo_2000_65532000() {
 fn test_fcmne_p_p_z0_field_size_2_poweroftwo_2000_65932000() {
     // Encoding: 0x65932000
     // Test FCMNE_P.P.Z0__ field size = 2 (PowerOfTwo)
-    // Fields: Pd=0, Zn=0, Pg=0, size=2
+    // Fields: Zn=0, size=2, Pg=0, Pd=0
     let encoding: u32 = 0x65932000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1748,12 +2268,17 @@ fn test_fcmne_p_p_z0_field_size_2_poweroftwo_2000_65932000() {
 fn test_fcmne_p_p_z0_field_size_3_max_2000_65d32000() {
     // Encoding: 0x65D32000
     // Test FCMNE_P.P.Z0__ field size = 3 (Max)
-    // Fields: Pd=0, Zn=0, Pg=0, size=3
+    // Fields: Pg=0, Pd=0, Zn=0, size=3
     let encoding: u32 = 0x65D32000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1764,12 +2289,17 @@ fn test_fcmne_p_p_z0_field_size_3_max_2000_65d32000() {
 fn test_fcmne_p_p_z0_field_pg_0_min_2000_65132000() {
     // Encoding: 0x65132000
     // Test FCMNE_P.P.Z0__ field Pg = 0 (Min)
-    // Fields: Zn=0, Pd=0, Pg=0, size=0
+    // Fields: size=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x65132000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1780,12 +2310,17 @@ fn test_fcmne_p_p_z0_field_pg_0_min_2000_65132000() {
 fn test_fcmne_p_p_z0_field_pg_1_poweroftwo_2000_65132400() {
     // Encoding: 0x65132400
     // Test FCMNE_P.P.Z0__ field Pg = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pg=1, Pd=0, size=0
+    // Fields: size=0, Pg=1, Zn=0, Pd=0
     let encoding: u32 = 0x65132400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1796,12 +2331,17 @@ fn test_fcmne_p_p_z0_field_pg_1_poweroftwo_2000_65132400() {
 fn test_fcmne_p_p_z0_field_zn_0_min_2000_65132000() {
     // Encoding: 0x65132000
     // Test FCMNE_P.P.Z0__ field Zn = 0 (Min)
-    // Fields: Pg=0, Zn=0, size=0, Pd=0
+    // Fields: Pd=0, Zn=0, Pg=0, size=0
     let encoding: u32 = 0x65132000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1812,12 +2352,17 @@ fn test_fcmne_p_p_z0_field_zn_0_min_2000_65132000() {
 fn test_fcmne_p_p_z0_field_zn_1_poweroftwo_2000_65132020() {
     // Encoding: 0x65132020
     // Test FCMNE_P.P.Z0__ field Zn = 1 (PowerOfTwo)
-    // Fields: Zn=1, Pg=0, size=0, Pd=0
+    // Fields: Zn=1, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x65132020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1828,12 +2373,17 @@ fn test_fcmne_p_p_z0_field_zn_1_poweroftwo_2000_65132020() {
 fn test_fcmne_p_p_z0_field_zn_30_poweroftwominusone_2000_651323c0() {
     // Encoding: 0x651323C0
     // Test FCMNE_P.P.Z0__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, size=0, Pg=0, Zn=30
+    // Fields: size=0, Pg=0, Zn=30, Pd=0
     let encoding: u32 = 0x651323C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1844,12 +2394,17 @@ fn test_fcmne_p_p_z0_field_zn_30_poweroftwominusone_2000_651323c0() {
 fn test_fcmne_p_p_z0_field_zn_31_max_2000_651323e0() {
     // Encoding: 0x651323E0
     // Test FCMNE_P.P.Z0__ field Zn = 31 (Max)
-    // Fields: size=0, Pg=0, Zn=31, Pd=0
+    // Fields: Pg=0, Pd=0, Zn=31, size=0
     let encoding: u32 = 0x651323E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1860,12 +2415,17 @@ fn test_fcmne_p_p_z0_field_zn_31_max_2000_651323e0() {
 fn test_fcmne_p_p_z0_field_pd_0_min_2000_65132000() {
     // Encoding: 0x65132000
     // Test FCMNE_P.P.Z0__ field Pd = 0 (Min)
-    // Fields: Pg=0, Zn=0, Pd=0, size=0
+    // Fields: Zn=0, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x65132000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1876,12 +2436,17 @@ fn test_fcmne_p_p_z0_field_pd_0_min_2000_65132000() {
 fn test_fcmne_p_p_z0_field_pd_1_poweroftwo_2000_65132001() {
     // Encoding: 0x65132001
     // Test FCMNE_P.P.Z0__ field Pd = 1 (PowerOfTwo)
-    // Fields: Pg=0, Zn=0, size=0, Pd=1
+    // Fields: Pg=0, Zn=0, Pd=1, size=0
     let encoding: u32 = 0x65132001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1892,12 +2457,17 @@ fn test_fcmne_p_p_z0_field_pd_1_poweroftwo_2000_65132001() {
 fn test_fcmne_p_p_z0_combo_0_2000_65132000() {
     // Encoding: 0x65132000
     // Test FCMNE_P.P.Z0__ field combination: size=0, Pg=0, Zn=0, Pd=0
-    // Fields: Pd=0, Zn=0, size=0, Pg=0
+    // Fields: Pg=0, Pd=0, size=0, Zn=0
     let encoding: u32 = 0x65132000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1908,12 +2478,17 @@ fn test_fcmne_p_p_z0_combo_0_2000_65132000() {
 fn test_fcmne_p_p_z0_special_size_0_size_variant_0_8192_65132000() {
     // Encoding: 0x65132000
     // Test FCMNE_P.P.Z0__ special value size = 0 (Size variant 0)
-    // Fields: Pg=0, Zn=0, Pd=0, size=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x65132000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1924,12 +2499,17 @@ fn test_fcmne_p_p_z0_special_size_0_size_variant_0_8192_65132000() {
 fn test_fcmne_p_p_z0_special_size_1_size_variant_1_8192_65532000() {
     // Encoding: 0x65532000
     // Test FCMNE_P.P.Z0__ special value size = 1 (Size variant 1)
-    // Fields: Pd=0, size=1, Pg=0, Zn=0
+    // Fields: Zn=0, size=1, Pg=0, Pd=0
     let encoding: u32 = 0x65532000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1940,12 +2520,17 @@ fn test_fcmne_p_p_z0_special_size_1_size_variant_1_8192_65532000() {
 fn test_fcmne_p_p_z0_special_size_2_size_variant_2_8192_65932000() {
     // Encoding: 0x65932000
     // Test FCMNE_P.P.Z0__ special value size = 2 (Size variant 2)
-    // Fields: size=2, Zn=0, Pd=0, Pg=0
+    // Fields: size=2, Pd=0, Zn=0, Pg=0
     let encoding: u32 = 0x65932000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1956,12 +2541,17 @@ fn test_fcmne_p_p_z0_special_size_2_size_variant_2_8192_65932000() {
 fn test_fcmne_p_p_z0_special_size_3_size_variant_3_8192_65d32000() {
     // Encoding: 0x65D32000
     // Test FCMNE_P.P.Z0__ special value size = 3 (Size variant 3)
-    // Fields: Pg=0, size=3, Pd=0, Zn=0
+    // Fields: Zn=0, size=3, Pd=0, Pg=0
     let encoding: u32 = 0x65D32000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1972,12 +2562,16 @@ fn test_fcmne_p_p_z0_special_size_3_size_variant_3_8192_65d32000() {
 fn test_fcmne_p_p_z0_invalid_0_2000_65132000() {
     // Encoding: 0x65132000
     // Test FCMNE_P.P.Z0__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: size=0, Zn=0, Pd=0, Pg=0
+    // Fields: Pg=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x65132000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -1988,12 +2582,16 @@ fn test_fcmne_p_p_z0_invalid_0_2000_65132000() {
 fn test_fcmne_p_p_z0_invalid_1_2000_65132000() {
     // Encoding: 0x65132000
     // Test FCMNE_P.P.Z0__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, Zn=0, Pd=0, size=0
+    // Fields: size=0, Zn=0, Pg=0, Pd=0
     let encoding: u32 = 0x65132000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -2004,12 +2602,16 @@ fn test_fcmne_p_p_z0_invalid_1_2000_65132000() {
 fn test_fcmne_p_p_z0_invalid_2_2000_65132000() {
     // Encoding: 0x65132000
     // Test FCMNE_P.P.Z0__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([false, false]) }
-    // Fields: Zn=0, Pg=0, Pd=0, size=0
+    // Fields: size=0, Pd=0, Zn=0, Pg=0
     let encoding: u32 = 0x65132000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.Z0__
@@ -2020,12 +2622,16 @@ fn test_fcmne_p_p_z0_invalid_2_2000_65132000() {
 fn test_fcmne_p_p_z0_invalid_3_2000_65132000() {
     // Encoding: 0x65132000
     // Test FCMNE_P.P.Z0__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, Zn=0, size=0, Pd=0
+    // Fields: Pg=0, Pd=0, size=0, Zn=0
     let encoding: u32 = 0x65132000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.Z0__
@@ -2130,12 +2736,17 @@ fn test_fcmne_p_p_z0_reg_write_0_65132000() {
 fn test_cmpeq_p_p_zi_field_size_0_min_8000_25008000() {
     // Encoding: 0x25008000
     // Test CMPEQ_P.P.ZI__ field size = 0 (Min)
-    // Fields: Zn=0, size=0, imm5=0, Pd=0, Pg=0
+    // Fields: imm5=0, Pg=0, Zn=0, size=0, Pd=0
     let encoding: u32 = 0x25008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2146,12 +2757,17 @@ fn test_cmpeq_p_p_zi_field_size_0_min_8000_25008000() {
 fn test_cmpeq_p_p_zi_field_size_1_poweroftwo_8000_25408000() {
     // Encoding: 0x25408000
     // Test CMPEQ_P.P.ZI__ field size = 1 (PowerOfTwo)
-    // Fields: Pg=0, imm5=0, Zn=0, Pd=0, size=1
+    // Fields: Pg=0, imm5=0, Zn=0, size=1, Pd=0
     let encoding: u32 = 0x25408000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2162,12 +2778,17 @@ fn test_cmpeq_p_p_zi_field_size_1_poweroftwo_8000_25408000() {
 fn test_cmpeq_p_p_zi_field_size_2_poweroftwo_8000_25808000() {
     // Encoding: 0x25808000
     // Test CMPEQ_P.P.ZI__ field size = 2 (PowerOfTwo)
-    // Fields: Pd=0, Zn=0, imm5=0, size=2, Pg=0
+    // Fields: size=2, imm5=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x25808000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2178,12 +2799,17 @@ fn test_cmpeq_p_p_zi_field_size_2_poweroftwo_8000_25808000() {
 fn test_cmpeq_p_p_zi_field_size_3_max_8000_25c08000() {
     // Encoding: 0x25C08000
     // Test CMPEQ_P.P.ZI__ field size = 3 (Max)
-    // Fields: size=3, Pd=0, Pg=0, Zn=0, imm5=0
+    // Fields: imm5=0, Pg=0, Pd=0, Zn=0, size=3
     let encoding: u32 = 0x25C08000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2194,12 +2820,17 @@ fn test_cmpeq_p_p_zi_field_size_3_max_8000_25c08000() {
 fn test_cmpeq_p_p_zi_field_imm5_0_zero_8000_25008000() {
     // Encoding: 0x25008000
     // Test CMPEQ_P.P.ZI__ field imm5 = 0 (Zero)
-    // Fields: imm5=0, size=0, Zn=0, Pd=0, Pg=0
+    // Fields: Zn=0, Pd=0, imm5=0, Pg=0, size=0
     let encoding: u32 = 0x25008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2210,12 +2841,17 @@ fn test_cmpeq_p_p_zi_field_imm5_0_zero_8000_25008000() {
 fn test_cmpeq_p_p_zi_field_imm5_1_poweroftwo_8000_25018000() {
     // Encoding: 0x25018000
     // Test CMPEQ_P.P.ZI__ field imm5 = 1 (PowerOfTwo)
-    // Fields: Pg=0, Zn=0, imm5=1, size=0, Pd=0
+    // Fields: imm5=1, Pg=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x25018000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2226,12 +2862,17 @@ fn test_cmpeq_p_p_zi_field_imm5_1_poweroftwo_8000_25018000() {
 fn test_cmpeq_p_p_zi_field_imm5_3_poweroftwominusone_8000_25038000() {
     // Encoding: 0x25038000
     // Test CMPEQ_P.P.ZI__ field imm5 = 3 (PowerOfTwoMinusOne)
-    // Fields: imm5=3, size=0, Pg=0, Zn=0, Pd=0
+    // Fields: Zn=0, imm5=3, Pg=0, Pd=0, size=0
     let encoding: u32 = 0x25038000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2242,12 +2883,17 @@ fn test_cmpeq_p_p_zi_field_imm5_3_poweroftwominusone_8000_25038000() {
 fn test_cmpeq_p_p_zi_field_imm5_4_poweroftwo_8000_25048000() {
     // Encoding: 0x25048000
     // Test CMPEQ_P.P.ZI__ field imm5 = 4 (PowerOfTwo)
-    // Fields: Pg=0, Pd=0, imm5=4, size=0, Zn=0
+    // Fields: Pg=0, size=0, Pd=0, imm5=4, Zn=0
     let encoding: u32 = 0x25048000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2258,12 +2904,17 @@ fn test_cmpeq_p_p_zi_field_imm5_4_poweroftwo_8000_25048000() {
 fn test_cmpeq_p_p_zi_field_imm5_7_poweroftwominusone_8000_25078000() {
     // Encoding: 0x25078000
     // Test CMPEQ_P.P.ZI__ field imm5 = 7 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, size=0, Pg=0, Pd=0, imm5=7
+    // Fields: Zn=0, Pg=0, size=0, Pd=0, imm5=7
     let encoding: u32 = 0x25078000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2274,12 +2925,17 @@ fn test_cmpeq_p_p_zi_field_imm5_7_poweroftwominusone_8000_25078000() {
 fn test_cmpeq_p_p_zi_field_imm5_8_poweroftwo_8000_25088000() {
     // Encoding: 0x25088000
     // Test CMPEQ_P.P.ZI__ field imm5 = 8 (PowerOfTwo)
-    // Fields: Pg=0, size=0, imm5=8, Zn=0, Pd=0
+    // Fields: size=0, Zn=0, Pd=0, imm5=8, Pg=0
     let encoding: u32 = 0x25088000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2290,12 +2946,17 @@ fn test_cmpeq_p_p_zi_field_imm5_8_poweroftwo_8000_25088000() {
 fn test_cmpeq_p_p_zi_field_imm5_15_poweroftwominusone_8000_250f8000() {
     // Encoding: 0x250F8000
     // Test CMPEQ_P.P.ZI__ field imm5 = 15 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, Pg=0, size=0, imm5=15, Zn=0
+    // Fields: Pg=0, Pd=0, size=0, Zn=0, imm5=15
     let encoding: u32 = 0x250F8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2306,12 +2967,17 @@ fn test_cmpeq_p_p_zi_field_imm5_15_poweroftwominusone_8000_250f8000() {
 fn test_cmpeq_p_p_zi_field_imm5_16_poweroftwo_8000_25108000() {
     // Encoding: 0x25108000
     // Test CMPEQ_P.P.ZI__ field imm5 = 16 (PowerOfTwo)
-    // Fields: size=0, Zn=0, Pd=0, Pg=0, imm5=16
+    // Fields: Pg=0, size=0, imm5=16, Zn=0, Pd=0
     let encoding: u32 = 0x25108000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2322,12 +2988,17 @@ fn test_cmpeq_p_p_zi_field_imm5_16_poweroftwo_8000_25108000() {
 fn test_cmpeq_p_p_zi_field_imm5_31_max_8000_251f8000() {
     // Encoding: 0x251F8000
     // Test CMPEQ_P.P.ZI__ field imm5 = 31 (Max)
-    // Fields: Pd=0, Pg=0, size=0, imm5=31, Zn=0
+    // Fields: imm5=31, Pg=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x251F8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2338,12 +3009,17 @@ fn test_cmpeq_p_p_zi_field_imm5_31_max_8000_251f8000() {
 fn test_cmpeq_p_p_zi_field_pg_0_min_8000_25008000() {
     // Encoding: 0x25008000
     // Test CMPEQ_P.P.ZI__ field Pg = 0 (Min)
-    // Fields: size=0, imm5=0, Pg=0, Zn=0, Pd=0
+    // Fields: imm5=0, size=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x25008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2354,12 +3030,17 @@ fn test_cmpeq_p_p_zi_field_pg_0_min_8000_25008000() {
 fn test_cmpeq_p_p_zi_field_pg_1_poweroftwo_8000_25008400() {
     // Encoding: 0x25008400
     // Test CMPEQ_P.P.ZI__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pd=0, size=0, Zn=0, Pg=1, imm5=0
+    // Fields: imm5=0, Zn=0, Pd=0, Pg=1, size=0
     let encoding: u32 = 0x25008400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2370,12 +3051,17 @@ fn test_cmpeq_p_p_zi_field_pg_1_poweroftwo_8000_25008400() {
 fn test_cmpeq_p_p_zi_field_zn_0_min_8000_25008000() {
     // Encoding: 0x25008000
     // Test CMPEQ_P.P.ZI__ field Zn = 0 (Min)
-    // Fields: imm5=0, Zn=0, Pg=0, Pd=0, size=0
+    // Fields: Pg=0, size=0, imm5=0, Zn=0, Pd=0
     let encoding: u32 = 0x25008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2386,12 +3072,17 @@ fn test_cmpeq_p_p_zi_field_zn_0_min_8000_25008000() {
 fn test_cmpeq_p_p_zi_field_zn_1_poweroftwo_8000_25008020() {
     // Encoding: 0x25008020
     // Test CMPEQ_P.P.ZI__ field Zn = 1 (PowerOfTwo)
-    // Fields: size=0, imm5=0, Pg=0, Zn=1, Pd=0
+    // Fields: Pg=0, Zn=1, imm5=0, size=0, Pd=0
     let encoding: u32 = 0x25008020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2402,12 +3093,17 @@ fn test_cmpeq_p_p_zi_field_zn_1_poweroftwo_8000_25008020() {
 fn test_cmpeq_p_p_zi_field_zn_30_poweroftwominusone_8000_250083c0() {
     // Encoding: 0x250083C0
     // Test CMPEQ_P.P.ZI__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: imm5=0, Pg=0, Pd=0, size=0, Zn=30
+    // Fields: Pd=0, size=0, Pg=0, imm5=0, Zn=30
     let encoding: u32 = 0x250083C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2418,12 +3114,17 @@ fn test_cmpeq_p_p_zi_field_zn_30_poweroftwominusone_8000_250083c0() {
 fn test_cmpeq_p_p_zi_field_zn_31_max_8000_250083e0() {
     // Encoding: 0x250083E0
     // Test CMPEQ_P.P.ZI__ field Zn = 31 (Max)
-    // Fields: size=0, imm5=0, Zn=31, Pd=0, Pg=0
+    // Fields: size=0, Pd=0, Zn=31, imm5=0, Pg=0
     let encoding: u32 = 0x250083E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2434,12 +3135,17 @@ fn test_cmpeq_p_p_zi_field_zn_31_max_8000_250083e0() {
 fn test_cmpeq_p_p_zi_field_pd_0_min_8000_25008000() {
     // Encoding: 0x25008000
     // Test CMPEQ_P.P.ZI__ field Pd = 0 (Min)
-    // Fields: Pd=0, imm5=0, Pg=0, size=0, Zn=0
+    // Fields: Pg=0, Zn=0, size=0, Pd=0, imm5=0
     let encoding: u32 = 0x25008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2450,12 +3156,17 @@ fn test_cmpeq_p_p_zi_field_pd_0_min_8000_25008000() {
 fn test_cmpeq_p_p_zi_field_pd_1_poweroftwo_8000_25008001() {
     // Encoding: 0x25008001
     // Test CMPEQ_P.P.ZI__ field Pd = 1 (PowerOfTwo)
-    // Fields: Zn=0, imm5=0, Pg=0, Pd=1, size=0
+    // Fields: Pd=1, imm5=0, size=0, Pg=0, Zn=0
     let encoding: u32 = 0x25008001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2466,12 +3177,17 @@ fn test_cmpeq_p_p_zi_field_pd_1_poweroftwo_8000_25008001() {
 fn test_cmpeq_p_p_zi_combo_0_8000_25008000() {
     // Encoding: 0x25008000
     // Test CMPEQ_P.P.ZI__ field combination: size=0, imm5=0, Pg=0, Zn=0, Pd=0
-    // Fields: Pg=0, Zn=0, Pd=0, imm5=0, size=0
+    // Fields: Zn=0, imm5=0, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x25008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2482,12 +3198,17 @@ fn test_cmpeq_p_p_zi_combo_0_8000_25008000() {
 fn test_cmpeq_p_p_zi_special_size_0_size_variant_0_32768_25008000() {
     // Encoding: 0x25008000
     // Test CMPEQ_P.P.ZI__ special value size = 0 (Size variant 0)
-    // Fields: Pg=0, size=0, Zn=0, imm5=0, Pd=0
+    // Fields: Pg=0, Pd=0, size=0, Zn=0, imm5=0
     let encoding: u32 = 0x25008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2498,12 +3219,17 @@ fn test_cmpeq_p_p_zi_special_size_0_size_variant_0_32768_25008000() {
 fn test_cmpeq_p_p_zi_special_size_1_size_variant_1_32768_25408000() {
     // Encoding: 0x25408000
     // Test CMPEQ_P.P.ZI__ special value size = 1 (Size variant 1)
-    // Fields: Zn=0, imm5=0, Pd=0, size=1, Pg=0
+    // Fields: Zn=0, size=1, Pd=0, imm5=0, Pg=0
     let encoding: u32 = 0x25408000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2514,12 +3240,17 @@ fn test_cmpeq_p_p_zi_special_size_1_size_variant_1_32768_25408000() {
 fn test_cmpeq_p_p_zi_special_size_2_size_variant_2_32768_25808000() {
     // Encoding: 0x25808000
     // Test CMPEQ_P.P.ZI__ special value size = 2 (Size variant 2)
-    // Fields: Pd=0, imm5=0, Zn=0, Pg=0, size=2
+    // Fields: Zn=0, Pg=0, imm5=0, size=2, Pd=0
     let encoding: u32 = 0x25808000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2530,12 +3261,17 @@ fn test_cmpeq_p_p_zi_special_size_2_size_variant_2_32768_25808000() {
 fn test_cmpeq_p_p_zi_special_size_3_size_variant_3_32768_25c08000() {
     // Encoding: 0x25C08000
     // Test CMPEQ_P.P.ZI__ special value size = 3 (Size variant 3)
-    // Fields: imm5=0, Pd=0, Pg=0, Zn=0, size=3
+    // Fields: imm5=0, Pg=0, Zn=0, size=3, Pd=0
     let encoding: u32 = 0x25C08000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2546,12 +3282,16 @@ fn test_cmpeq_p_p_zi_special_size_3_size_variant_3_32768_25c08000() {
 fn test_cmpeq_p_p_zi_invalid_0_8000_25008000() {
     // Encoding: 0x25008000
     // Test CMPEQ_P.P.ZI__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: imm5=0, size=0, Pg=0, Zn=0, Pd=0
+    // Fields: Pg=0, imm5=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x25008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -2562,12 +3302,16 @@ fn test_cmpeq_p_p_zi_invalid_0_8000_25008000() {
 fn test_cmpeq_p_p_zi_invalid_1_8000_25008000() {
     // Encoding: 0x25008000
     // Test CMPEQ_P.P.ZI__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zn=0, Pd=0, imm5=0, size=0, Pg=0
+    // Fields: size=0, Zn=0, Pd=0, imm5=0, Pg=0
     let encoding: u32 = 0x25008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2578,12 +3322,17 @@ fn test_cmpeq_p_p_zi_invalid_1_8000_25008000() {
 fn test_cmpgt_p_p_zi_field_size_0_min_10_25000010() {
     // Encoding: 0x25000010
     // Test CMPGT_P.P.ZI__ field size = 0 (Min)
-    // Fields: imm5=0, Pd=0, size=0, Pg=0, Zn=0
+    // Fields: Zn=0, Pd=0, imm5=0, Pg=0, size=0
     let encoding: u32 = 0x25000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2594,12 +3343,17 @@ fn test_cmpgt_p_p_zi_field_size_0_min_10_25000010() {
 fn test_cmpgt_p_p_zi_field_size_1_poweroftwo_10_25400010() {
     // Encoding: 0x25400010
     // Test CMPGT_P.P.ZI__ field size = 1 (PowerOfTwo)
-    // Fields: Pg=0, size=1, imm5=0, Pd=0, Zn=0
+    // Fields: Zn=0, imm5=0, Pd=0, size=1, Pg=0
     let encoding: u32 = 0x25400010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2610,12 +3364,17 @@ fn test_cmpgt_p_p_zi_field_size_1_poweroftwo_10_25400010() {
 fn test_cmpgt_p_p_zi_field_size_2_poweroftwo_10_25800010() {
     // Encoding: 0x25800010
     // Test CMPGT_P.P.ZI__ field size = 2 (PowerOfTwo)
-    // Fields: Pg=0, Pd=0, Zn=0, size=2, imm5=0
+    // Fields: Zn=0, Pd=0, Pg=0, size=2, imm5=0
     let encoding: u32 = 0x25800010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2626,12 +3385,17 @@ fn test_cmpgt_p_p_zi_field_size_2_poweroftwo_10_25800010() {
 fn test_cmpgt_p_p_zi_field_size_3_max_10_25c00010() {
     // Encoding: 0x25C00010
     // Test CMPGT_P.P.ZI__ field size = 3 (Max)
-    // Fields: Pd=0, size=3, Pg=0, imm5=0, Zn=0
+    // Fields: imm5=0, size=3, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x25C00010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2642,12 +3406,17 @@ fn test_cmpgt_p_p_zi_field_size_3_max_10_25c00010() {
 fn test_cmpgt_p_p_zi_field_imm5_0_zero_10_25000010() {
     // Encoding: 0x25000010
     // Test CMPGT_P.P.ZI__ field imm5 = 0 (Zero)
-    // Fields: imm5=0, size=0, Zn=0, Pd=0, Pg=0
+    // Fields: imm5=0, Pd=0, size=0, Zn=0, Pg=0
     let encoding: u32 = 0x25000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2658,12 +3427,17 @@ fn test_cmpgt_p_p_zi_field_imm5_0_zero_10_25000010() {
 fn test_cmpgt_p_p_zi_field_imm5_1_poweroftwo_10_25010010() {
     // Encoding: 0x25010010
     // Test CMPGT_P.P.ZI__ field imm5 = 1 (PowerOfTwo)
-    // Fields: Zn=0, size=0, Pg=0, Pd=0, imm5=1
+    // Fields: Zn=0, Pd=0, size=0, Pg=0, imm5=1
     let encoding: u32 = 0x25010010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2674,12 +3448,17 @@ fn test_cmpgt_p_p_zi_field_imm5_1_poweroftwo_10_25010010() {
 fn test_cmpgt_p_p_zi_field_imm5_3_poweroftwominusone_10_25030010() {
     // Encoding: 0x25030010
     // Test CMPGT_P.P.ZI__ field imm5 = 3 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, imm5=3, Pd=0, Pg=0, size=0
+    // Fields: Zn=0, Pg=0, imm5=3, Pd=0, size=0
     let encoding: u32 = 0x25030010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2690,12 +3469,17 @@ fn test_cmpgt_p_p_zi_field_imm5_3_poweroftwominusone_10_25030010() {
 fn test_cmpgt_p_p_zi_field_imm5_4_poweroftwo_10_25040010() {
     // Encoding: 0x25040010
     // Test CMPGT_P.P.ZI__ field imm5 = 4 (PowerOfTwo)
-    // Fields: size=0, Zn=0, imm5=4, Pg=0, Pd=0
+    // Fields: imm5=4, Zn=0, size=0, Pd=0, Pg=0
     let encoding: u32 = 0x25040010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2706,12 +3490,17 @@ fn test_cmpgt_p_p_zi_field_imm5_4_poweroftwo_10_25040010() {
 fn test_cmpgt_p_p_zi_field_imm5_7_poweroftwominusone_10_25070010() {
     // Encoding: 0x25070010
     // Test CMPGT_P.P.ZI__ field imm5 = 7 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, Zn=0, Pd=0, size=0, imm5=7
+    // Fields: size=0, imm5=7, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x25070010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2722,12 +3511,17 @@ fn test_cmpgt_p_p_zi_field_imm5_7_poweroftwominusone_10_25070010() {
 fn test_cmpgt_p_p_zi_field_imm5_8_poweroftwo_10_25080010() {
     // Encoding: 0x25080010
     // Test CMPGT_P.P.ZI__ field imm5 = 8 (PowerOfTwo)
-    // Fields: Pd=0, size=0, Pg=0, imm5=8, Zn=0
+    // Fields: size=0, imm5=8, Pd=0, Zn=0, Pg=0
     let encoding: u32 = 0x25080010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2738,12 +3532,17 @@ fn test_cmpgt_p_p_zi_field_imm5_8_poweroftwo_10_25080010() {
 fn test_cmpgt_p_p_zi_field_imm5_15_poweroftwominusone_10_250f0010() {
     // Encoding: 0x250F0010
     // Test CMPGT_P.P.ZI__ field imm5 = 15 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, imm5=15, Pd=0, size=0, Pg=0
+    // Fields: Zn=0, imm5=15, Pg=0, Pd=0, size=0
     let encoding: u32 = 0x250F0010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2754,12 +3553,17 @@ fn test_cmpgt_p_p_zi_field_imm5_15_poweroftwominusone_10_250f0010() {
 fn test_cmpgt_p_p_zi_field_imm5_16_poweroftwo_10_25100010() {
     // Encoding: 0x25100010
     // Test CMPGT_P.P.ZI__ field imm5 = 16 (PowerOfTwo)
-    // Fields: Zn=0, imm5=16, size=0, Pd=0, Pg=0
+    // Fields: size=0, Zn=0, imm5=16, Pg=0, Pd=0
     let encoding: u32 = 0x25100010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2770,12 +3574,17 @@ fn test_cmpgt_p_p_zi_field_imm5_16_poweroftwo_10_25100010() {
 fn test_cmpgt_p_p_zi_field_imm5_31_max_10_251f0010() {
     // Encoding: 0x251F0010
     // Test CMPGT_P.P.ZI__ field imm5 = 31 (Max)
-    // Fields: Pd=0, Zn=0, size=0, imm5=31, Pg=0
+    // Fields: size=0, Pg=0, Pd=0, Zn=0, imm5=31
     let encoding: u32 = 0x251F0010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2786,12 +3595,17 @@ fn test_cmpgt_p_p_zi_field_imm5_31_max_10_251f0010() {
 fn test_cmpgt_p_p_zi_field_pg_0_min_10_25000010() {
     // Encoding: 0x25000010
     // Test CMPGT_P.P.ZI__ field Pg = 0 (Min)
-    // Fields: imm5=0, Pd=0, Zn=0, Pg=0, size=0
+    // Fields: size=0, imm5=0, Zn=0, Pg=0, Pd=0
     let encoding: u32 = 0x25000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2802,12 +3616,17 @@ fn test_cmpgt_p_p_zi_field_pg_0_min_10_25000010() {
 fn test_cmpgt_p_p_zi_field_pg_1_poweroftwo_10_25000410() {
     // Encoding: 0x25000410
     // Test CMPGT_P.P.ZI__ field Pg = 1 (PowerOfTwo)
-    // Fields: imm5=0, Pg=1, Zn=0, Pd=0, size=0
+    // Fields: size=0, imm5=0, Pd=0, Zn=0, Pg=1
     let encoding: u32 = 0x25000410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2818,12 +3637,17 @@ fn test_cmpgt_p_p_zi_field_pg_1_poweroftwo_10_25000410() {
 fn test_cmpgt_p_p_zi_field_zn_0_min_10_25000010() {
     // Encoding: 0x25000010
     // Test CMPGT_P.P.ZI__ field Zn = 0 (Min)
-    // Fields: Pd=0, imm5=0, Zn=0, Pg=0, size=0
+    // Fields: Zn=0, size=0, imm5=0, Pg=0, Pd=0
     let encoding: u32 = 0x25000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2834,12 +3658,17 @@ fn test_cmpgt_p_p_zi_field_zn_0_min_10_25000010() {
 fn test_cmpgt_p_p_zi_field_zn_1_poweroftwo_10_25000030() {
     // Encoding: 0x25000030
     // Test CMPGT_P.P.ZI__ field Zn = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zn=1, size=0, Pg=0, imm5=0
+    // Fields: Pd=0, Pg=0, Zn=1, size=0, imm5=0
     let encoding: u32 = 0x25000030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2850,12 +3679,17 @@ fn test_cmpgt_p_p_zi_field_zn_1_poweroftwo_10_25000030() {
 fn test_cmpgt_p_p_zi_field_zn_30_poweroftwominusone_10_250003d0() {
     // Encoding: 0x250003D0
     // Test CMPGT_P.P.ZI__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, imm5=0, Zn=30, size=0, Pd=0
+    // Fields: Zn=30, size=0, Pd=0, imm5=0, Pg=0
     let encoding: u32 = 0x250003D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2866,12 +3700,17 @@ fn test_cmpgt_p_p_zi_field_zn_30_poweroftwominusone_10_250003d0() {
 fn test_cmpgt_p_p_zi_field_zn_31_max_10_250003f0() {
     // Encoding: 0x250003F0
     // Test CMPGT_P.P.ZI__ field Zn = 31 (Max)
-    // Fields: size=0, Pg=0, Zn=31, imm5=0, Pd=0
+    // Fields: Pg=0, imm5=0, size=0, Zn=31, Pd=0
     let encoding: u32 = 0x250003F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2882,12 +3721,17 @@ fn test_cmpgt_p_p_zi_field_zn_31_max_10_250003f0() {
 fn test_cmpgt_p_p_zi_field_pd_0_min_10_25000010() {
     // Encoding: 0x25000010
     // Test CMPGT_P.P.ZI__ field Pd = 0 (Min)
-    // Fields: size=0, imm5=0, Pg=0, Zn=0, Pd=0
+    // Fields: size=0, imm5=0, Zn=0, Pg=0, Pd=0
     let encoding: u32 = 0x25000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2898,12 +3742,17 @@ fn test_cmpgt_p_p_zi_field_pd_0_min_10_25000010() {
 fn test_cmpgt_p_p_zi_field_pd_1_poweroftwo_10_25000011() {
     // Encoding: 0x25000011
     // Test CMPGT_P.P.ZI__ field Pd = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pd=1, imm5=0, Pg=0, size=0
+    // Fields: size=0, Zn=0, Pd=1, imm5=0, Pg=0
     let encoding: u32 = 0x25000011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2914,12 +3763,17 @@ fn test_cmpgt_p_p_zi_field_pd_1_poweroftwo_10_25000011() {
 fn test_cmpgt_p_p_zi_combo_0_10_25000010() {
     // Encoding: 0x25000010
     // Test CMPGT_P.P.ZI__ field combination: size=0, imm5=0, Pg=0, Zn=0, Pd=0
-    // Fields: Pg=0, imm5=0, Zn=0, size=0, Pd=0
+    // Fields: Pg=0, Zn=0, Pd=0, size=0, imm5=0
     let encoding: u32 = 0x25000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2930,12 +3784,17 @@ fn test_cmpgt_p_p_zi_combo_0_10_25000010() {
 fn test_cmpgt_p_p_zi_special_size_0_size_variant_0_16_25000010() {
     // Encoding: 0x25000010
     // Test CMPGT_P.P.ZI__ special value size = 0 (Size variant 0)
-    // Fields: Pd=0, imm5=0, Pg=0, size=0, Zn=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0, imm5=0
     let encoding: u32 = 0x25000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2946,12 +3805,17 @@ fn test_cmpgt_p_p_zi_special_size_0_size_variant_0_16_25000010() {
 fn test_cmpgt_p_p_zi_special_size_1_size_variant_1_16_25400010() {
     // Encoding: 0x25400010
     // Test CMPGT_P.P.ZI__ special value size = 1 (Size variant 1)
-    // Fields: Zn=0, Pd=0, imm5=0, Pg=0, size=1
+    // Fields: Zn=0, size=1, imm5=0, Pg=0, Pd=0
     let encoding: u32 = 0x25400010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2962,12 +3826,17 @@ fn test_cmpgt_p_p_zi_special_size_1_size_variant_1_16_25400010() {
 fn test_cmpgt_p_p_zi_special_size_2_size_variant_2_16_25800010() {
     // Encoding: 0x25800010
     // Test CMPGT_P.P.ZI__ special value size = 2 (Size variant 2)
-    // Fields: imm5=0, size=2, Pg=0, Zn=0, Pd=0
+    // Fields: Zn=0, Pd=0, Pg=0, size=2, imm5=0
     let encoding: u32 = 0x25800010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2978,12 +3847,17 @@ fn test_cmpgt_p_p_zi_special_size_2_size_variant_2_16_25800010() {
 fn test_cmpgt_p_p_zi_special_size_3_size_variant_3_16_25c00010() {
     // Encoding: 0x25C00010
     // Test CMPGT_P.P.ZI__ special value size = 3 (Size variant 3)
-    // Fields: Pd=0, Pg=0, size=3, imm5=0, Zn=0
+    // Fields: size=3, Pg=0, Zn=0, Pd=0, imm5=0
     let encoding: u32 = 0x25C00010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -2994,12 +3868,16 @@ fn test_cmpgt_p_p_zi_special_size_3_size_variant_3_16_25c00010() {
 fn test_cmpgt_p_p_zi_invalid_0_10_25000010() {
     // Encoding: 0x25000010
     // Test CMPGT_P.P.ZI__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: imm5=0, Pd=0, Pg=0, size=0, Zn=0
+    // Fields: Pd=0, Pg=0, size=0, imm5=0, Zn=0
     let encoding: u32 = 0x25000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZI__
@@ -3010,12 +3888,16 @@ fn test_cmpgt_p_p_zi_invalid_0_10_25000010() {
 fn test_cmpgt_p_p_zi_invalid_1_10_25000010() {
     // Encoding: 0x25000010
     // Test CMPGT_P.P.ZI__ invalid encoding: Unconditional UNDEFINED
-    // Fields: imm5=0, Zn=0, size=0, Pg=0, Pd=0
+    // Fields: Pg=0, size=0, Pd=0, Zn=0, imm5=0
     let encoding: u32 = 0x25000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3026,12 +3908,17 @@ fn test_cmpgt_p_p_zi_invalid_1_10_25000010() {
 fn test_cmpge_p_p_zi_field_size_0_min_0_25000000() {
     // Encoding: 0x25000000
     // Test CMPGE_P.P.ZI__ field size = 0 (Min)
-    // Fields: Pd=0, Pg=0, size=0, imm5=0, Zn=0
+    // Fields: Pd=0, Pg=0, size=0, Zn=0, imm5=0
     let encoding: u32 = 0x25000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3042,12 +3929,17 @@ fn test_cmpge_p_p_zi_field_size_0_min_0_25000000() {
 fn test_cmpge_p_p_zi_field_size_1_poweroftwo_0_25400000() {
     // Encoding: 0x25400000
     // Test CMPGE_P.P.ZI__ field size = 1 (PowerOfTwo)
-    // Fields: Pg=0, Zn=0, imm5=0, size=1, Pd=0
+    // Fields: Pg=0, imm5=0, Zn=0, Pd=0, size=1
     let encoding: u32 = 0x25400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3058,12 +3950,17 @@ fn test_cmpge_p_p_zi_field_size_1_poweroftwo_0_25400000() {
 fn test_cmpge_p_p_zi_field_size_2_poweroftwo_0_25800000() {
     // Encoding: 0x25800000
     // Test CMPGE_P.P.ZI__ field size = 2 (PowerOfTwo)
-    // Fields: Pd=0, Zn=0, imm5=0, size=2, Pg=0
+    // Fields: imm5=0, Pg=0, size=2, Zn=0, Pd=0
     let encoding: u32 = 0x25800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3074,12 +3971,17 @@ fn test_cmpge_p_p_zi_field_size_2_poweroftwo_0_25800000() {
 fn test_cmpge_p_p_zi_field_size_3_max_0_25c00000() {
     // Encoding: 0x25C00000
     // Test CMPGE_P.P.ZI__ field size = 3 (Max)
-    // Fields: Zn=0, Pg=0, size=3, imm5=0, Pd=0
+    // Fields: size=3, imm5=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x25C00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3090,12 +3992,17 @@ fn test_cmpge_p_p_zi_field_size_3_max_0_25c00000() {
 fn test_cmpge_p_p_zi_field_imm5_0_zero_0_25000000() {
     // Encoding: 0x25000000
     // Test CMPGE_P.P.ZI__ field imm5 = 0 (Zero)
-    // Fields: imm5=0, Zn=0, size=0, Pg=0, Pd=0
+    // Fields: Pg=0, size=0, imm5=0, Pd=0, Zn=0
     let encoding: u32 = 0x25000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3106,12 +4013,17 @@ fn test_cmpge_p_p_zi_field_imm5_0_zero_0_25000000() {
 fn test_cmpge_p_p_zi_field_imm5_1_poweroftwo_0_25010000() {
     // Encoding: 0x25010000
     // Test CMPGE_P.P.ZI__ field imm5 = 1 (PowerOfTwo)
-    // Fields: Pg=0, size=0, Pd=0, imm5=1, Zn=0
+    // Fields: Zn=0, size=0, imm5=1, Pg=0, Pd=0
     let encoding: u32 = 0x25010000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3122,12 +4034,17 @@ fn test_cmpge_p_p_zi_field_imm5_1_poweroftwo_0_25010000() {
 fn test_cmpge_p_p_zi_field_imm5_3_poweroftwominusone_0_25030000() {
     // Encoding: 0x25030000
     // Test CMPGE_P.P.ZI__ field imm5 = 3 (PowerOfTwoMinusOne)
-    // Fields: imm5=3, Pg=0, Pd=0, Zn=0, size=0
+    // Fields: imm5=3, Pd=0, Zn=0, size=0, Pg=0
     let encoding: u32 = 0x25030000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3138,12 +4055,17 @@ fn test_cmpge_p_p_zi_field_imm5_3_poweroftwominusone_0_25030000() {
 fn test_cmpge_p_p_zi_field_imm5_4_poweroftwo_0_25040000() {
     // Encoding: 0x25040000
     // Test CMPGE_P.P.ZI__ field imm5 = 4 (PowerOfTwo)
-    // Fields: Pg=0, imm5=4, Zn=0, Pd=0, size=0
+    // Fields: Zn=0, Pd=0, size=0, Pg=0, imm5=4
     let encoding: u32 = 0x25040000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3154,12 +4076,17 @@ fn test_cmpge_p_p_zi_field_imm5_4_poweroftwo_0_25040000() {
 fn test_cmpge_p_p_zi_field_imm5_7_poweroftwominusone_0_25070000() {
     // Encoding: 0x25070000
     // Test CMPGE_P.P.ZI__ field imm5 = 7 (PowerOfTwoMinusOne)
-    // Fields: imm5=7, Zn=0, Pg=0, Pd=0, size=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0, imm5=7
     let encoding: u32 = 0x25070000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3170,12 +4097,17 @@ fn test_cmpge_p_p_zi_field_imm5_7_poweroftwominusone_0_25070000() {
 fn test_cmpge_p_p_zi_field_imm5_8_poweroftwo_0_25080000() {
     // Encoding: 0x25080000
     // Test CMPGE_P.P.ZI__ field imm5 = 8 (PowerOfTwo)
-    // Fields: Pd=0, size=0, Zn=0, imm5=8, Pg=0
+    // Fields: Zn=0, Pd=0, size=0, imm5=8, Pg=0
     let encoding: u32 = 0x25080000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3186,12 +4118,17 @@ fn test_cmpge_p_p_zi_field_imm5_8_poweroftwo_0_25080000() {
 fn test_cmpge_p_p_zi_field_imm5_15_poweroftwominusone_0_250f0000() {
     // Encoding: 0x250F0000
     // Test CMPGE_P.P.ZI__ field imm5 = 15 (PowerOfTwoMinusOne)
-    // Fields: imm5=15, Pg=0, Zn=0, Pd=0, size=0
+    // Fields: Pg=0, imm5=15, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x250F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3202,12 +4139,17 @@ fn test_cmpge_p_p_zi_field_imm5_15_poweroftwominusone_0_250f0000() {
 fn test_cmpge_p_p_zi_field_imm5_16_poweroftwo_0_25100000() {
     // Encoding: 0x25100000
     // Test CMPGE_P.P.ZI__ field imm5 = 16 (PowerOfTwo)
-    // Fields: imm5=16, size=0, Zn=0, Pd=0, Pg=0
+    // Fields: imm5=16, Pd=0, Pg=0, size=0, Zn=0
     let encoding: u32 = 0x25100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3218,12 +4160,17 @@ fn test_cmpge_p_p_zi_field_imm5_16_poweroftwo_0_25100000() {
 fn test_cmpge_p_p_zi_field_imm5_31_max_0_251f0000() {
     // Encoding: 0x251F0000
     // Test CMPGE_P.P.ZI__ field imm5 = 31 (Max)
-    // Fields: Zn=0, Pd=0, size=0, Pg=0, imm5=31
+    // Fields: Pd=0, Zn=0, imm5=31, size=0, Pg=0
     let encoding: u32 = 0x251F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3234,12 +4181,17 @@ fn test_cmpge_p_p_zi_field_imm5_31_max_0_251f0000() {
 fn test_cmpge_p_p_zi_field_pg_0_min_0_25000000() {
     // Encoding: 0x25000000
     // Test CMPGE_P.P.ZI__ field Pg = 0 (Min)
-    // Fields: Pg=0, imm5=0, Zn=0, Pd=0, size=0
+    // Fields: Pg=0, imm5=0, size=0, Pd=0, Zn=0
     let encoding: u32 = 0x25000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3250,12 +4202,17 @@ fn test_cmpge_p_p_zi_field_pg_0_min_0_25000000() {
 fn test_cmpge_p_p_zi_field_pg_1_poweroftwo_0_25000400() {
     // Encoding: 0x25000400
     // Test CMPGE_P.P.ZI__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pd=0, size=0, Zn=0, imm5=0, Pg=1
+    // Fields: size=0, Pd=0, Zn=0, Pg=1, imm5=0
     let encoding: u32 = 0x25000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3266,12 +4223,17 @@ fn test_cmpge_p_p_zi_field_pg_1_poweroftwo_0_25000400() {
 fn test_cmpge_p_p_zi_field_zn_0_min_0_25000000() {
     // Encoding: 0x25000000
     // Test CMPGE_P.P.ZI__ field Zn = 0 (Min)
-    // Fields: Zn=0, size=0, Pd=0, imm5=0, Pg=0
+    // Fields: imm5=0, Zn=0, Pd=0, Pg=0, size=0
     let encoding: u32 = 0x25000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3282,12 +4244,17 @@ fn test_cmpge_p_p_zi_field_zn_0_min_0_25000000() {
 fn test_cmpge_p_p_zi_field_zn_1_poweroftwo_0_25000020() {
     // Encoding: 0x25000020
     // Test CMPGE_P.P.ZI__ field Zn = 1 (PowerOfTwo)
-    // Fields: Pd=0, Pg=0, size=0, imm5=0, Zn=1
+    // Fields: Zn=1, Pg=0, size=0, imm5=0, Pd=0
     let encoding: u32 = 0x25000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3298,12 +4265,17 @@ fn test_cmpge_p_p_zi_field_zn_1_poweroftwo_0_25000020() {
 fn test_cmpge_p_p_zi_field_zn_30_poweroftwominusone_0_250003c0() {
     // Encoding: 0x250003C0
     // Test CMPGE_P.P.ZI__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, imm5=0, size=0, Zn=30, Pd=0
+    // Fields: Zn=30, Pg=0, Pd=0, imm5=0, size=0
     let encoding: u32 = 0x250003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3314,12 +4286,17 @@ fn test_cmpge_p_p_zi_field_zn_30_poweroftwominusone_0_250003c0() {
 fn test_cmpge_p_p_zi_field_zn_31_max_0_250003e0() {
     // Encoding: 0x250003E0
     // Test CMPGE_P.P.ZI__ field Zn = 31 (Max)
-    // Fields: Pg=0, imm5=0, size=0, Zn=31, Pd=0
+    // Fields: Zn=31, size=0, imm5=0, Pg=0, Pd=0
     let encoding: u32 = 0x250003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3330,12 +4307,17 @@ fn test_cmpge_p_p_zi_field_zn_31_max_0_250003e0() {
 fn test_cmpge_p_p_zi_field_pd_0_min_0_25000000() {
     // Encoding: 0x25000000
     // Test CMPGE_P.P.ZI__ field Pd = 0 (Min)
-    // Fields: imm5=0, Pd=0, size=0, Pg=0, Zn=0
+    // Fields: Zn=0, Pd=0, imm5=0, Pg=0, size=0
     let encoding: u32 = 0x25000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3346,12 +4328,17 @@ fn test_cmpge_p_p_zi_field_pd_0_min_0_25000000() {
 fn test_cmpge_p_p_zi_field_pd_1_poweroftwo_0_25000001() {
     // Encoding: 0x25000001
     // Test CMPGE_P.P.ZI__ field Pd = 1 (PowerOfTwo)
-    // Fields: Zn=0, imm5=0, Pd=1, Pg=0, size=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=1, imm5=0
     let encoding: u32 = 0x25000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3362,12 +4349,17 @@ fn test_cmpge_p_p_zi_field_pd_1_poweroftwo_0_25000001() {
 fn test_cmpge_p_p_zi_combo_0_0_25000000() {
     // Encoding: 0x25000000
     // Test CMPGE_P.P.ZI__ field combination: size=0, imm5=0, Pg=0, Zn=0, Pd=0
-    // Fields: imm5=0, Pd=0, Pg=0, size=0, Zn=0
+    // Fields: imm5=0, Pg=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x25000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3383,7 +4375,12 @@ fn test_cmpge_p_p_zi_special_size_0_size_variant_0_0_25000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3394,12 +4391,17 @@ fn test_cmpge_p_p_zi_special_size_0_size_variant_0_0_25000000() {
 fn test_cmpge_p_p_zi_special_size_1_size_variant_1_0_25400000() {
     // Encoding: 0x25400000
     // Test CMPGE_P.P.ZI__ special value size = 1 (Size variant 1)
-    // Fields: imm5=0, Pd=0, Zn=0, Pg=0, size=1
+    // Fields: Pd=0, Pg=0, size=1, imm5=0, Zn=0
     let encoding: u32 = 0x25400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3410,12 +4412,17 @@ fn test_cmpge_p_p_zi_special_size_1_size_variant_1_0_25400000() {
 fn test_cmpge_p_p_zi_special_size_2_size_variant_2_0_25800000() {
     // Encoding: 0x25800000
     // Test CMPGE_P.P.ZI__ special value size = 2 (Size variant 2)
-    // Fields: Pg=0, size=2, imm5=0, Zn=0, Pd=0
+    // Fields: size=2, Zn=0, Pg=0, Pd=0, imm5=0
     let encoding: u32 = 0x25800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3426,12 +4433,17 @@ fn test_cmpge_p_p_zi_special_size_2_size_variant_2_0_25800000() {
 fn test_cmpge_p_p_zi_special_size_3_size_variant_3_0_25c00000() {
     // Encoding: 0x25C00000
     // Test CMPGE_P.P.ZI__ special value size = 3 (Size variant 3)
-    // Fields: Pg=0, size=3, Zn=0, imm5=0, Pd=0
+    // Fields: Pd=0, Pg=0, Zn=0, imm5=0, size=3
     let encoding: u32 = 0x25C00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3442,12 +4454,16 @@ fn test_cmpge_p_p_zi_special_size_3_size_variant_3_0_25c00000() {
 fn test_cmpge_p_p_zi_invalid_0_0_25000000() {
     // Encoding: 0x25000000
     // Test CMPGE_P.P.ZI__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: imm5=0, Pd=0, size=0, Zn=0, Pg=0
+    // Fields: Pg=0, size=0, Pd=0, Zn=0, imm5=0
     let encoding: u32 = 0x25000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZI__
@@ -3458,12 +4474,16 @@ fn test_cmpge_p_p_zi_invalid_0_0_25000000() {
 fn test_cmpge_p_p_zi_invalid_1_0_25000000() {
     // Encoding: 0x25000000
     // Test CMPGE_P.P.ZI__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zn=0, Pd=0, imm5=0, Pg=0, size=0
+    // Fields: Zn=0, Pg=0, size=0, imm5=0, Pd=0
     let encoding: u32 = 0x25000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3474,12 +4494,17 @@ fn test_cmpge_p_p_zi_invalid_1_0_25000000() {
 fn test_cmphi_p_p_zi_field_size_0_min_10_24200010() {
     // Encoding: 0x24200010
     // Test CMPHI_P.P.ZI__ field size = 0 (Min)
-    // Fields: Zn=0, imm7=0, Pg=0, Pd=0, size=0
+    // Fields: imm7=0, size=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x24200010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3490,12 +4515,17 @@ fn test_cmphi_p_p_zi_field_size_0_min_10_24200010() {
 fn test_cmphi_p_p_zi_field_size_1_poweroftwo_10_24600010() {
     // Encoding: 0x24600010
     // Test CMPHI_P.P.ZI__ field size = 1 (PowerOfTwo)
-    // Fields: size=1, imm7=0, Pd=0, Zn=0, Pg=0
+    // Fields: size=1, Pg=0, Zn=0, Pd=0, imm7=0
     let encoding: u32 = 0x24600010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3506,12 +4536,17 @@ fn test_cmphi_p_p_zi_field_size_1_poweroftwo_10_24600010() {
 fn test_cmphi_p_p_zi_field_size_2_poweroftwo_10_24a00010() {
     // Encoding: 0x24A00010
     // Test CMPHI_P.P.ZI__ field size = 2 (PowerOfTwo)
-    // Fields: imm7=0, size=2, Pg=0, Zn=0, Pd=0
+    // Fields: Pg=0, imm7=0, size=2, Zn=0, Pd=0
     let encoding: u32 = 0x24A00010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3522,12 +4557,17 @@ fn test_cmphi_p_p_zi_field_size_2_poweroftwo_10_24a00010() {
 fn test_cmphi_p_p_zi_field_size_3_max_10_24e00010() {
     // Encoding: 0x24E00010
     // Test CMPHI_P.P.ZI__ field size = 3 (Max)
-    // Fields: size=3, Pd=0, Zn=0, imm7=0, Pg=0
+    // Fields: Zn=0, imm7=0, size=3, Pg=0, Pd=0
     let encoding: u32 = 0x24E00010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3538,12 +4578,17 @@ fn test_cmphi_p_p_zi_field_size_3_max_10_24e00010() {
 fn test_cmphi_p_p_zi_field_imm7_0_zero_10_24200010() {
     // Encoding: 0x24200010
     // Test CMPHI_P.P.ZI__ field imm7 = 0 (Zero)
-    // Fields: imm7=0, Pg=0, Pd=0, Zn=0, size=0
+    // Fields: imm7=0, Zn=0, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x24200010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3554,12 +4599,17 @@ fn test_cmphi_p_p_zi_field_imm7_0_zero_10_24200010() {
 fn test_cmphi_p_p_zi_field_imm7_1_poweroftwo_10_24204010() {
     // Encoding: 0x24204010
     // Test CMPHI_P.P.ZI__ field imm7 = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zn=0, imm7=1, Pg=0, size=0
+    // Fields: Zn=0, Pd=0, size=0, Pg=0, imm7=1
     let encoding: u32 = 0x24204010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3570,12 +4620,17 @@ fn test_cmphi_p_p_zi_field_imm7_1_poweroftwo_10_24204010() {
 fn test_cmphi_p_p_zi_field_imm7_3_poweroftwominusone_10_2420c010() {
     // Encoding: 0x2420C010
     // Test CMPHI_P.P.ZI__ field imm7 = 3 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, size=0, Pg=0, imm7=3, Pd=0
+    // Fields: Zn=0, Pd=0, size=0, Pg=0, imm7=3
     let encoding: u32 = 0x2420C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3586,12 +4641,17 @@ fn test_cmphi_p_p_zi_field_imm7_3_poweroftwominusone_10_2420c010() {
 fn test_cmphi_p_p_zi_field_imm7_4_poweroftwo_10_24210010() {
     // Encoding: 0x24210010
     // Test CMPHI_P.P.ZI__ field imm7 = 4 (PowerOfTwo)
-    // Fields: Pd=0, Pg=0, imm7=4, Zn=0, size=0
+    // Fields: Pg=0, Pd=0, Zn=0, size=0, imm7=4
     let encoding: u32 = 0x24210010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3602,12 +4662,17 @@ fn test_cmphi_p_p_zi_field_imm7_4_poweroftwo_10_24210010() {
 fn test_cmphi_p_p_zi_field_imm7_7_poweroftwominusone_10_2421c010() {
     // Encoding: 0x2421C010
     // Test CMPHI_P.P.ZI__ field imm7 = 7 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, Zn=0, imm7=7, Pd=0, size=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0, imm7=7
     let encoding: u32 = 0x2421C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3618,12 +4683,17 @@ fn test_cmphi_p_p_zi_field_imm7_7_poweroftwominusone_10_2421c010() {
 fn test_cmphi_p_p_zi_field_imm7_8_poweroftwo_10_24220010() {
     // Encoding: 0x24220010
     // Test CMPHI_P.P.ZI__ field imm7 = 8 (PowerOfTwo)
-    // Fields: size=0, Zn=0, Pg=0, Pd=0, imm7=8
+    // Fields: Pg=0, Zn=0, Pd=0, size=0, imm7=8
     let encoding: u32 = 0x24220010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3634,12 +4704,17 @@ fn test_cmphi_p_p_zi_field_imm7_8_poweroftwo_10_24220010() {
 fn test_cmphi_p_p_zi_field_imm7_15_poweroftwominusone_10_2423c010() {
     // Encoding: 0x2423C010
     // Test CMPHI_P.P.ZI__ field imm7 = 15 (PowerOfTwoMinusOne)
-    // Fields: imm7=15, Pg=0, Zn=0, Pd=0, size=0
+    // Fields: imm7=15, size=0, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x2423C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3650,12 +4725,17 @@ fn test_cmphi_p_p_zi_field_imm7_15_poweroftwominusone_10_2423c010() {
 fn test_cmphi_p_p_zi_field_imm7_16_poweroftwo_10_24240010() {
     // Encoding: 0x24240010
     // Test CMPHI_P.P.ZI__ field imm7 = 16 (PowerOfTwo)
-    // Fields: Pd=0, size=0, imm7=16, Pg=0, Zn=0
+    // Fields: Pd=0, imm7=16, Zn=0, size=0, Pg=0
     let encoding: u32 = 0x24240010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3666,12 +4746,17 @@ fn test_cmphi_p_p_zi_field_imm7_16_poweroftwo_10_24240010() {
 fn test_cmphi_p_p_zi_field_imm7_31_poweroftwominusone_10_2427c010() {
     // Encoding: 0x2427C010
     // Test CMPHI_P.P.ZI__ field imm7 = 31 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, Pd=0, Pg=0, size=0, imm7=31
+    // Fields: imm7=31, size=0, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x2427C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3682,12 +4767,17 @@ fn test_cmphi_p_p_zi_field_imm7_31_poweroftwominusone_10_2427c010() {
 fn test_cmphi_p_p_zi_field_imm7_32_poweroftwo_10_24280010() {
     // Encoding: 0x24280010
     // Test CMPHI_P.P.ZI__ field imm7 = 32 (PowerOfTwo)
-    // Fields: Zn=0, size=0, Pg=0, Pd=0, imm7=32
+    // Fields: Pd=0, size=0, Pg=0, imm7=32, Zn=0
     let encoding: u32 = 0x24280010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3698,12 +4788,17 @@ fn test_cmphi_p_p_zi_field_imm7_32_poweroftwo_10_24280010() {
 fn test_cmphi_p_p_zi_field_imm7_63_poweroftwominusone_10_242fc010() {
     // Encoding: 0x242FC010
     // Test CMPHI_P.P.ZI__ field imm7 = 63 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, Pd=0, Pg=0, size=0, imm7=63
+    // Fields: imm7=63, Pg=0, Zn=0, size=0, Pd=0
     let encoding: u32 = 0x242FC010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3714,12 +4809,17 @@ fn test_cmphi_p_p_zi_field_imm7_63_poweroftwominusone_10_242fc010() {
 fn test_cmphi_p_p_zi_field_imm7_64_poweroftwo_10_24300010() {
     // Encoding: 0x24300010
     // Test CMPHI_P.P.ZI__ field imm7 = 64 (PowerOfTwo)
-    // Fields: imm7=64, Pg=0, size=0, Zn=0, Pd=0
+    // Fields: Zn=0, size=0, Pd=0, Pg=0, imm7=64
     let encoding: u32 = 0x24300010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3730,12 +4830,17 @@ fn test_cmphi_p_p_zi_field_imm7_64_poweroftwo_10_24300010() {
 fn test_cmphi_p_p_zi_field_imm7_127_max_10_243fc010() {
     // Encoding: 0x243FC010
     // Test CMPHI_P.P.ZI__ field imm7 = 127 (Max)
-    // Fields: size=0, imm7=127, Zn=0, Pd=0, Pg=0
+    // Fields: Zn=0, size=0, Pd=0, imm7=127, Pg=0
     let encoding: u32 = 0x243FC010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3746,12 +4851,17 @@ fn test_cmphi_p_p_zi_field_imm7_127_max_10_243fc010() {
 fn test_cmphi_p_p_zi_field_pg_0_min_10_24200010() {
     // Encoding: 0x24200010
     // Test CMPHI_P.P.ZI__ field Pg = 0 (Min)
-    // Fields: Pg=0, Zn=0, size=0, Pd=0, imm7=0
+    // Fields: size=0, Pg=0, Pd=0, Zn=0, imm7=0
     let encoding: u32 = 0x24200010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3762,12 +4872,17 @@ fn test_cmphi_p_p_zi_field_pg_0_min_10_24200010() {
 fn test_cmphi_p_p_zi_field_pg_1_poweroftwo_10_24200410() {
     // Encoding: 0x24200410
     // Test CMPHI_P.P.ZI__ field Pg = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pd=0, imm7=0, Pg=1, size=0
+    // Fields: Pg=1, Zn=0, size=0, Pd=0, imm7=0
     let encoding: u32 = 0x24200410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3778,12 +4893,17 @@ fn test_cmphi_p_p_zi_field_pg_1_poweroftwo_10_24200410() {
 fn test_cmphi_p_p_zi_field_zn_0_min_10_24200010() {
     // Encoding: 0x24200010
     // Test CMPHI_P.P.ZI__ field Zn = 0 (Min)
-    // Fields: Pd=0, Pg=0, size=0, Zn=0, imm7=0
+    // Fields: size=0, imm7=0, Zn=0, Pg=0, Pd=0
     let encoding: u32 = 0x24200010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3794,12 +4914,17 @@ fn test_cmphi_p_p_zi_field_zn_0_min_10_24200010() {
 fn test_cmphi_p_p_zi_field_zn_1_poweroftwo_10_24200030() {
     // Encoding: 0x24200030
     // Test CMPHI_P.P.ZI__ field Zn = 1 (PowerOfTwo)
-    // Fields: Pg=0, size=0, imm7=0, Pd=0, Zn=1
+    // Fields: Pd=0, imm7=0, size=0, Pg=0, Zn=1
     let encoding: u32 = 0x24200030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3810,12 +4935,17 @@ fn test_cmphi_p_p_zi_field_zn_1_poweroftwo_10_24200030() {
 fn test_cmphi_p_p_zi_field_zn_30_poweroftwominusone_10_242003d0() {
     // Encoding: 0x242003D0
     // Test CMPHI_P.P.ZI__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Zn=30, Pd=0, Pg=0, imm7=0, size=0
+    // Fields: Pg=0, size=0, imm7=0, Pd=0, Zn=30
     let encoding: u32 = 0x242003D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3826,12 +4956,17 @@ fn test_cmphi_p_p_zi_field_zn_30_poweroftwominusone_10_242003d0() {
 fn test_cmphi_p_p_zi_field_zn_31_max_10_242003f0() {
     // Encoding: 0x242003F0
     // Test CMPHI_P.P.ZI__ field Zn = 31 (Max)
-    // Fields: imm7=0, Pd=0, Pg=0, Zn=31, size=0
+    // Fields: Pd=0, Zn=31, size=0, Pg=0, imm7=0
     let encoding: u32 = 0x242003F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3842,12 +4977,17 @@ fn test_cmphi_p_p_zi_field_zn_31_max_10_242003f0() {
 fn test_cmphi_p_p_zi_field_pd_0_min_10_24200010() {
     // Encoding: 0x24200010
     // Test CMPHI_P.P.ZI__ field Pd = 0 (Min)
-    // Fields: imm7=0, size=0, Pg=0, Zn=0, Pd=0
+    // Fields: Pd=0, size=0, imm7=0, Pg=0, Zn=0
     let encoding: u32 = 0x24200010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3858,12 +4998,17 @@ fn test_cmphi_p_p_zi_field_pd_0_min_10_24200010() {
 fn test_cmphi_p_p_zi_field_pd_1_poweroftwo_10_24200011() {
     // Encoding: 0x24200011
     // Test CMPHI_P.P.ZI__ field Pd = 1 (PowerOfTwo)
-    // Fields: imm7=0, Zn=0, Pd=1, Pg=0, size=0
+    // Fields: imm7=0, size=0, Pg=0, Zn=0, Pd=1
     let encoding: u32 = 0x24200011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3874,12 +5019,17 @@ fn test_cmphi_p_p_zi_field_pd_1_poweroftwo_10_24200011() {
 fn test_cmphi_p_p_zi_combo_0_10_24200010() {
     // Encoding: 0x24200010
     // Test CMPHI_P.P.ZI__ field combination: size=0, imm7=0, Pg=0, Zn=0, Pd=0
-    // Fields: size=0, Pg=0, Zn=0, Pd=0, imm7=0
+    // Fields: Zn=0, Pg=0, imm7=0, Pd=0, size=0
     let encoding: u32 = 0x24200010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3890,12 +5040,17 @@ fn test_cmphi_p_p_zi_combo_0_10_24200010() {
 fn test_cmphi_p_p_zi_special_size_0_size_variant_0_16_24200010() {
     // Encoding: 0x24200010
     // Test CMPHI_P.P.ZI__ special value size = 0 (Size variant 0)
-    // Fields: size=0, imm7=0, Zn=0, Pg=0, Pd=0
+    // Fields: size=0, Zn=0, Pg=0, Pd=0, imm7=0
     let encoding: u32 = 0x24200010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3906,12 +5061,17 @@ fn test_cmphi_p_p_zi_special_size_0_size_variant_0_16_24200010() {
 fn test_cmphi_p_p_zi_special_size_1_size_variant_1_16_24600010() {
     // Encoding: 0x24600010
     // Test CMPHI_P.P.ZI__ special value size = 1 (Size variant 1)
-    // Fields: Pg=0, Pd=0, imm7=0, Zn=0, size=1
+    // Fields: size=1, Pg=0, Zn=0, Pd=0, imm7=0
     let encoding: u32 = 0x24600010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3922,12 +5082,17 @@ fn test_cmphi_p_p_zi_special_size_1_size_variant_1_16_24600010() {
 fn test_cmphi_p_p_zi_special_size_2_size_variant_2_16_24a00010() {
     // Encoding: 0x24A00010
     // Test CMPHI_P.P.ZI__ special value size = 2 (Size variant 2)
-    // Fields: size=2, imm7=0, Zn=0, Pd=0, Pg=0
+    // Fields: size=2, Pg=0, Zn=0, imm7=0, Pd=0
     let encoding: u32 = 0x24A00010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3938,12 +5103,17 @@ fn test_cmphi_p_p_zi_special_size_2_size_variant_2_16_24a00010() {
 fn test_cmphi_p_p_zi_special_size_3_size_variant_3_16_24e00010() {
     // Encoding: 0x24E00010
     // Test CMPHI_P.P.ZI__ special value size = 3 (Size variant 3)
-    // Fields: Pd=0, Zn=0, Pg=0, size=3, imm7=0
+    // Fields: Pd=0, size=3, imm7=0, Pg=0, Zn=0
     let encoding: u32 = 0x24E00010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3954,12 +5124,16 @@ fn test_cmphi_p_p_zi_special_size_3_size_variant_3_16_24e00010() {
 fn test_cmphi_p_p_zi_invalid_0_10_24200010() {
     // Encoding: 0x24200010
     // Test CMPHI_P.P.ZI__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: size=0, Pd=0, Pg=0, Zn=0, imm7=0
+    // Fields: Pg=0, size=0, imm7=0, Zn=0, Pd=0
     let encoding: u32 = 0x24200010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZI__
@@ -3970,12 +5144,16 @@ fn test_cmphi_p_p_zi_invalid_0_10_24200010() {
 fn test_cmphi_p_p_zi_invalid_1_10_24200010() {
     // Encoding: 0x24200010
     // Test CMPHI_P.P.ZI__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, Pd=0, size=0, imm7=0, Zn=0
+    // Fields: Pd=0, size=0, Pg=0, imm7=0, Zn=0
     let encoding: u32 = 0x24200010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -3986,12 +5164,17 @@ fn test_cmphi_p_p_zi_invalid_1_10_24200010() {
 fn test_cmphs_p_p_zi_field_size_0_min_0_24200000() {
     // Encoding: 0x24200000
     // Test CMPHS_P.P.ZI__ field size = 0 (Min)
-    // Fields: imm7=0, Pd=0, size=0, Pg=0, Zn=0
+    // Fields: size=0, Zn=0, Pd=0, imm7=0, Pg=0
     let encoding: u32 = 0x24200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4002,12 +5185,17 @@ fn test_cmphs_p_p_zi_field_size_0_min_0_24200000() {
 fn test_cmphs_p_p_zi_field_size_1_poweroftwo_0_24600000() {
     // Encoding: 0x24600000
     // Test CMPHS_P.P.ZI__ field size = 1 (PowerOfTwo)
-    // Fields: Pd=0, Pg=0, Zn=0, imm7=0, size=1
+    // Fields: imm7=0, size=1, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x24600000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4018,12 +5206,17 @@ fn test_cmphs_p_p_zi_field_size_1_poweroftwo_0_24600000() {
 fn test_cmphs_p_p_zi_field_size_2_poweroftwo_0_24a00000() {
     // Encoding: 0x24A00000
     // Test CMPHS_P.P.ZI__ field size = 2 (PowerOfTwo)
-    // Fields: imm7=0, size=2, Zn=0, Pg=0, Pd=0
+    // Fields: Zn=0, size=2, Pd=0, Pg=0, imm7=0
     let encoding: u32 = 0x24A00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4034,12 +5227,17 @@ fn test_cmphs_p_p_zi_field_size_2_poweroftwo_0_24a00000() {
 fn test_cmphs_p_p_zi_field_size_3_max_0_24e00000() {
     // Encoding: 0x24E00000
     // Test CMPHS_P.P.ZI__ field size = 3 (Max)
-    // Fields: size=3, Pg=0, Zn=0, Pd=0, imm7=0
+    // Fields: imm7=0, Pd=0, Pg=0, size=3, Zn=0
     let encoding: u32 = 0x24E00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4050,12 +5248,17 @@ fn test_cmphs_p_p_zi_field_size_3_max_0_24e00000() {
 fn test_cmphs_p_p_zi_field_imm7_0_zero_0_24200000() {
     // Encoding: 0x24200000
     // Test CMPHS_P.P.ZI__ field imm7 = 0 (Zero)
-    // Fields: size=0, imm7=0, Pd=0, Zn=0, Pg=0
+    // Fields: size=0, Pd=0, Pg=0, imm7=0, Zn=0
     let encoding: u32 = 0x24200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4066,12 +5269,17 @@ fn test_cmphs_p_p_zi_field_imm7_0_zero_0_24200000() {
 fn test_cmphs_p_p_zi_field_imm7_1_poweroftwo_0_24204000() {
     // Encoding: 0x24204000
     // Test CMPHS_P.P.ZI__ field imm7 = 1 (PowerOfTwo)
-    // Fields: imm7=1, Zn=0, Pd=0, size=0, Pg=0
+    // Fields: size=0, imm7=1, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x24204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4082,12 +5290,17 @@ fn test_cmphs_p_p_zi_field_imm7_1_poweroftwo_0_24204000() {
 fn test_cmphs_p_p_zi_field_imm7_3_poweroftwominusone_0_2420c000() {
     // Encoding: 0x2420C000
     // Test CMPHS_P.P.ZI__ field imm7 = 3 (PowerOfTwoMinusOne)
-    // Fields: imm7=3, Pd=0, Zn=0, size=0, Pg=0
+    // Fields: Zn=0, size=0, imm7=3, Pd=0, Pg=0
     let encoding: u32 = 0x2420C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4098,12 +5311,17 @@ fn test_cmphs_p_p_zi_field_imm7_3_poweroftwominusone_0_2420c000() {
 fn test_cmphs_p_p_zi_field_imm7_4_poweroftwo_0_24210000() {
     // Encoding: 0x24210000
     // Test CMPHS_P.P.ZI__ field imm7 = 4 (PowerOfTwo)
-    // Fields: imm7=4, Pd=0, size=0, Pg=0, Zn=0
+    // Fields: size=0, imm7=4, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x24210000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4114,12 +5332,17 @@ fn test_cmphs_p_p_zi_field_imm7_4_poweroftwo_0_24210000() {
 fn test_cmphs_p_p_zi_field_imm7_7_poweroftwominusone_0_2421c000() {
     // Encoding: 0x2421C000
     // Test CMPHS_P.P.ZI__ field imm7 = 7 (PowerOfTwoMinusOne)
-    // Fields: imm7=7, size=0, Zn=0, Pd=0, Pg=0
+    // Fields: Pg=0, Zn=0, Pd=0, size=0, imm7=7
     let encoding: u32 = 0x2421C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4130,12 +5353,17 @@ fn test_cmphs_p_p_zi_field_imm7_7_poweroftwominusone_0_2421c000() {
 fn test_cmphs_p_p_zi_field_imm7_8_poweroftwo_0_24220000() {
     // Encoding: 0x24220000
     // Test CMPHS_P.P.ZI__ field imm7 = 8 (PowerOfTwo)
-    // Fields: Pd=0, Zn=0, imm7=8, size=0, Pg=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0, imm7=8
     let encoding: u32 = 0x24220000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4146,12 +5374,17 @@ fn test_cmphs_p_p_zi_field_imm7_8_poweroftwo_0_24220000() {
 fn test_cmphs_p_p_zi_field_imm7_15_poweroftwominusone_0_2423c000() {
     // Encoding: 0x2423C000
     // Test CMPHS_P.P.ZI__ field imm7 = 15 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, Pg=0, imm7=15, Zn=0, size=0
+    // Fields: size=0, Pg=0, Pd=0, Zn=0, imm7=15
     let encoding: u32 = 0x2423C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4162,12 +5395,17 @@ fn test_cmphs_p_p_zi_field_imm7_15_poweroftwominusone_0_2423c000() {
 fn test_cmphs_p_p_zi_field_imm7_16_poweroftwo_0_24240000() {
     // Encoding: 0x24240000
     // Test CMPHS_P.P.ZI__ field imm7 = 16 (PowerOfTwo)
-    // Fields: size=0, imm7=16, Zn=0, Pg=0, Pd=0
+    // Fields: Pg=0, size=0, imm7=16, Zn=0, Pd=0
     let encoding: u32 = 0x24240000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4178,12 +5416,17 @@ fn test_cmphs_p_p_zi_field_imm7_16_poweroftwo_0_24240000() {
 fn test_cmphs_p_p_zi_field_imm7_31_poweroftwominusone_0_2427c000() {
     // Encoding: 0x2427C000
     // Test CMPHS_P.P.ZI__ field imm7 = 31 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, Zn=0, size=0, imm7=31, Pd=0
+    // Fields: imm7=31, Pd=0, Pg=0, Zn=0, size=0
     let encoding: u32 = 0x2427C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4194,12 +5437,17 @@ fn test_cmphs_p_p_zi_field_imm7_31_poweroftwominusone_0_2427c000() {
 fn test_cmphs_p_p_zi_field_imm7_32_poweroftwo_0_24280000() {
     // Encoding: 0x24280000
     // Test CMPHS_P.P.ZI__ field imm7 = 32 (PowerOfTwo)
-    // Fields: Pd=0, Zn=0, Pg=0, size=0, imm7=32
+    // Fields: Pg=0, Zn=0, imm7=32, size=0, Pd=0
     let encoding: u32 = 0x24280000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4210,12 +5458,17 @@ fn test_cmphs_p_p_zi_field_imm7_32_poweroftwo_0_24280000() {
 fn test_cmphs_p_p_zi_field_imm7_63_poweroftwominusone_0_242fc000() {
     // Encoding: 0x242FC000
     // Test CMPHS_P.P.ZI__ field imm7 = 63 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, imm7=63, Zn=0, Pg=0, size=0
+    // Fields: size=0, imm7=63, Pd=0, Zn=0, Pg=0
     let encoding: u32 = 0x242FC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4226,12 +5479,17 @@ fn test_cmphs_p_p_zi_field_imm7_63_poweroftwominusone_0_242fc000() {
 fn test_cmphs_p_p_zi_field_imm7_64_poweroftwo_0_24300000() {
     // Encoding: 0x24300000
     // Test CMPHS_P.P.ZI__ field imm7 = 64 (PowerOfTwo)
-    // Fields: imm7=64, Pg=0, Zn=0, size=0, Pd=0
+    // Fields: Pg=0, size=0, Zn=0, Pd=0, imm7=64
     let encoding: u32 = 0x24300000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4242,12 +5500,17 @@ fn test_cmphs_p_p_zi_field_imm7_64_poweroftwo_0_24300000() {
 fn test_cmphs_p_p_zi_field_imm7_127_max_0_243fc000() {
     // Encoding: 0x243FC000
     // Test CMPHS_P.P.ZI__ field imm7 = 127 (Max)
-    // Fields: Zn=0, Pg=0, Pd=0, imm7=127, size=0
+    // Fields: Pd=0, size=0, Pg=0, imm7=127, Zn=0
     let encoding: u32 = 0x243FC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4258,12 +5521,17 @@ fn test_cmphs_p_p_zi_field_imm7_127_max_0_243fc000() {
 fn test_cmphs_p_p_zi_field_pg_0_min_0_24200000() {
     // Encoding: 0x24200000
     // Test CMPHS_P.P.ZI__ field Pg = 0 (Min)
-    // Fields: Pg=0, Zn=0, imm7=0, Pd=0, size=0
+    // Fields: imm7=0, Zn=0, Pd=0, Pg=0, size=0
     let encoding: u32 = 0x24200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4274,12 +5542,17 @@ fn test_cmphs_p_p_zi_field_pg_0_min_0_24200000() {
 fn test_cmphs_p_p_zi_field_pg_1_poweroftwo_0_24200400() {
     // Encoding: 0x24200400
     // Test CMPHS_P.P.ZI__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pd=0, imm7=0, size=0, Pg=1, Zn=0
+    // Fields: imm7=0, Zn=0, size=0, Pd=0, Pg=1
     let encoding: u32 = 0x24200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4290,12 +5563,17 @@ fn test_cmphs_p_p_zi_field_pg_1_poweroftwo_0_24200400() {
 fn test_cmphs_p_p_zi_field_zn_0_min_0_24200000() {
     // Encoding: 0x24200000
     // Test CMPHS_P.P.ZI__ field Zn = 0 (Min)
-    // Fields: Pg=0, Zn=0, imm7=0, Pd=0, size=0
+    // Fields: Pd=0, Pg=0, imm7=0, Zn=0, size=0
     let encoding: u32 = 0x24200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4306,12 +5584,17 @@ fn test_cmphs_p_p_zi_field_zn_0_min_0_24200000() {
 fn test_cmphs_p_p_zi_field_zn_1_poweroftwo_0_24200020() {
     // Encoding: 0x24200020
     // Test CMPHS_P.P.ZI__ field Zn = 1 (PowerOfTwo)
-    // Fields: size=0, imm7=0, Pg=0, Zn=1, Pd=0
+    // Fields: imm7=0, size=0, Zn=1, Pd=0, Pg=0
     let encoding: u32 = 0x24200020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4322,12 +5605,17 @@ fn test_cmphs_p_p_zi_field_zn_1_poweroftwo_0_24200020() {
 fn test_cmphs_p_p_zi_field_zn_30_poweroftwominusone_0_242003c0() {
     // Encoding: 0x242003C0
     // Test CMPHS_P.P.ZI__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: imm7=0, Zn=30, Pd=0, size=0, Pg=0
+    // Fields: Pd=0, imm7=0, Zn=30, Pg=0, size=0
     let encoding: u32 = 0x242003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4338,12 +5626,17 @@ fn test_cmphs_p_p_zi_field_zn_30_poweroftwominusone_0_242003c0() {
 fn test_cmphs_p_p_zi_field_zn_31_max_0_242003e0() {
     // Encoding: 0x242003E0
     // Test CMPHS_P.P.ZI__ field Zn = 31 (Max)
-    // Fields: Pd=0, Pg=0, size=0, Zn=31, imm7=0
+    // Fields: imm7=0, Zn=31, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x242003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4354,12 +5647,17 @@ fn test_cmphs_p_p_zi_field_zn_31_max_0_242003e0() {
 fn test_cmphs_p_p_zi_field_pd_0_min_0_24200000() {
     // Encoding: 0x24200000
     // Test CMPHS_P.P.ZI__ field Pd = 0 (Min)
-    // Fields: Zn=0, size=0, Pg=0, Pd=0, imm7=0
+    // Fields: size=0, Pg=0, Pd=0, Zn=0, imm7=0
     let encoding: u32 = 0x24200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4370,12 +5668,17 @@ fn test_cmphs_p_p_zi_field_pd_0_min_0_24200000() {
 fn test_cmphs_p_p_zi_field_pd_1_poweroftwo_0_24200001() {
     // Encoding: 0x24200001
     // Test CMPHS_P.P.ZI__ field Pd = 1 (PowerOfTwo)
-    // Fields: imm7=0, Zn=0, size=0, Pd=1, Pg=0
+    // Fields: Zn=0, Pg=0, imm7=0, Pd=1, size=0
     let encoding: u32 = 0x24200001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4386,12 +5689,17 @@ fn test_cmphs_p_p_zi_field_pd_1_poweroftwo_0_24200001() {
 fn test_cmphs_p_p_zi_combo_0_0_24200000() {
     // Encoding: 0x24200000
     // Test CMPHS_P.P.ZI__ field combination: size=0, imm7=0, Pg=0, Zn=0, Pd=0
-    // Fields: size=0, Pg=0, Pd=0, Zn=0, imm7=0
+    // Fields: imm7=0, size=0, Zn=0, Pg=0, Pd=0
     let encoding: u32 = 0x24200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4402,12 +5710,17 @@ fn test_cmphs_p_p_zi_combo_0_0_24200000() {
 fn test_cmphs_p_p_zi_special_size_0_size_variant_0_0_24200000() {
     // Encoding: 0x24200000
     // Test CMPHS_P.P.ZI__ special value size = 0 (Size variant 0)
-    // Fields: size=0, Zn=0, Pd=0, imm7=0, Pg=0
+    // Fields: Pd=0, Zn=0, imm7=0, size=0, Pg=0
     let encoding: u32 = 0x24200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4418,12 +5731,17 @@ fn test_cmphs_p_p_zi_special_size_0_size_variant_0_0_24200000() {
 fn test_cmphs_p_p_zi_special_size_1_size_variant_1_0_24600000() {
     // Encoding: 0x24600000
     // Test CMPHS_P.P.ZI__ special value size = 1 (Size variant 1)
-    // Fields: Pd=0, imm7=0, size=1, Pg=0, Zn=0
+    // Fields: Zn=0, imm7=0, size=1, Pg=0, Pd=0
     let encoding: u32 = 0x24600000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4434,12 +5752,17 @@ fn test_cmphs_p_p_zi_special_size_1_size_variant_1_0_24600000() {
 fn test_cmphs_p_p_zi_special_size_2_size_variant_2_0_24a00000() {
     // Encoding: 0x24A00000
     // Test CMPHS_P.P.ZI__ special value size = 2 (Size variant 2)
-    // Fields: Zn=0, imm7=0, Pd=0, size=2, Pg=0
+    // Fields: size=2, Zn=0, imm7=0, Pg=0, Pd=0
     let encoding: u32 = 0x24A00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4450,12 +5773,17 @@ fn test_cmphs_p_p_zi_special_size_2_size_variant_2_0_24a00000() {
 fn test_cmphs_p_p_zi_special_size_3_size_variant_3_0_24e00000() {
     // Encoding: 0x24E00000
     // Test CMPHS_P.P.ZI__ special value size = 3 (Size variant 3)
-    // Fields: size=3, Zn=0, Pd=0, imm7=0, Pg=0
+    // Fields: Zn=0, Pg=0, size=3, imm7=0, Pd=0
     let encoding: u32 = 0x24E00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4466,12 +5794,16 @@ fn test_cmphs_p_p_zi_special_size_3_size_variant_3_0_24e00000() {
 fn test_cmphs_p_p_zi_invalid_0_0_24200000() {
     // Encoding: 0x24200000
     // Test CMPHS_P.P.ZI__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Zn=0, Pg=0, Pd=0, imm7=0, size=0
+    // Fields: Pg=0, Pd=0, imm7=0, Zn=0, size=0
     let encoding: u32 = 0x24200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZI__
@@ -4482,12 +5814,16 @@ fn test_cmphs_p_p_zi_invalid_0_0_24200000() {
 fn test_cmphs_p_p_zi_invalid_1_0_24200000() {
     // Encoding: 0x24200000
     // Test CMPHS_P.P.ZI__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, size=0, Pd=0, Zn=0, imm7=0
+    // Fields: imm7=0, Zn=0, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x24200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4503,7 +5839,12 @@ fn test_cmplt_p_p_zi_field_size_0_min_2000_25002000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4514,12 +5855,17 @@ fn test_cmplt_p_p_zi_field_size_0_min_2000_25002000() {
 fn test_cmplt_p_p_zi_field_size_1_poweroftwo_2000_25402000() {
     // Encoding: 0x25402000
     // Test CMPLT_P.P.ZI__ field size = 1 (PowerOfTwo)
-    // Fields: Pg=0, size=1, imm5=0, Zn=0, Pd=0
+    // Fields: Pg=0, Pd=0, size=1, imm5=0, Zn=0
     let encoding: u32 = 0x25402000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4530,12 +5876,17 @@ fn test_cmplt_p_p_zi_field_size_1_poweroftwo_2000_25402000() {
 fn test_cmplt_p_p_zi_field_size_2_poweroftwo_2000_25802000() {
     // Encoding: 0x25802000
     // Test CMPLT_P.P.ZI__ field size = 2 (PowerOfTwo)
-    // Fields: size=2, imm5=0, Pd=0, Zn=0, Pg=0
+    // Fields: Zn=0, size=2, Pg=0, Pd=0, imm5=0
     let encoding: u32 = 0x25802000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4546,12 +5897,17 @@ fn test_cmplt_p_p_zi_field_size_2_poweroftwo_2000_25802000() {
 fn test_cmplt_p_p_zi_field_size_3_max_2000_25c02000() {
     // Encoding: 0x25C02000
     // Test CMPLT_P.P.ZI__ field size = 3 (Max)
-    // Fields: Pd=0, size=3, Zn=0, imm5=0, Pg=0
+    // Fields: size=3, Zn=0, imm5=0, Pg=0, Pd=0
     let encoding: u32 = 0x25C02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4562,12 +5918,17 @@ fn test_cmplt_p_p_zi_field_size_3_max_2000_25c02000() {
 fn test_cmplt_p_p_zi_field_imm5_0_zero_2000_25002000() {
     // Encoding: 0x25002000
     // Test CMPLT_P.P.ZI__ field imm5 = 0 (Zero)
-    // Fields: size=0, imm5=0, Pg=0, Zn=0, Pd=0
+    // Fields: Pg=0, imm5=0, Zn=0, size=0, Pd=0
     let encoding: u32 = 0x25002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4578,12 +5939,17 @@ fn test_cmplt_p_p_zi_field_imm5_0_zero_2000_25002000() {
 fn test_cmplt_p_p_zi_field_imm5_1_poweroftwo_2000_25012000() {
     // Encoding: 0x25012000
     // Test CMPLT_P.P.ZI__ field imm5 = 1 (PowerOfTwo)
-    // Fields: Pg=0, size=0, imm5=1, Zn=0, Pd=0
+    // Fields: Zn=0, imm5=1, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x25012000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4594,12 +5960,17 @@ fn test_cmplt_p_p_zi_field_imm5_1_poweroftwo_2000_25012000() {
 fn test_cmplt_p_p_zi_field_imm5_3_poweroftwominusone_2000_25032000() {
     // Encoding: 0x25032000
     // Test CMPLT_P.P.ZI__ field imm5 = 3 (PowerOfTwoMinusOne)
-    // Fields: size=0, imm5=3, Pd=0, Zn=0, Pg=0
+    // Fields: Pg=0, imm5=3, size=0, Pd=0, Zn=0
     let encoding: u32 = 0x25032000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4610,12 +5981,17 @@ fn test_cmplt_p_p_zi_field_imm5_3_poweroftwominusone_2000_25032000() {
 fn test_cmplt_p_p_zi_field_imm5_4_poweroftwo_2000_25042000() {
     // Encoding: 0x25042000
     // Test CMPLT_P.P.ZI__ field imm5 = 4 (PowerOfTwo)
-    // Fields: size=0, Pd=0, imm5=4, Zn=0, Pg=0
+    // Fields: Zn=0, size=0, imm5=4, Pd=0, Pg=0
     let encoding: u32 = 0x25042000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4626,12 +6002,17 @@ fn test_cmplt_p_p_zi_field_imm5_4_poweroftwo_2000_25042000() {
 fn test_cmplt_p_p_zi_field_imm5_7_poweroftwominusone_2000_25072000() {
     // Encoding: 0x25072000
     // Test CMPLT_P.P.ZI__ field imm5 = 7 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, size=0, Zn=0, Pg=0, imm5=7
+    // Fields: Zn=0, Pd=0, size=0, imm5=7, Pg=0
     let encoding: u32 = 0x25072000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4642,12 +6023,17 @@ fn test_cmplt_p_p_zi_field_imm5_7_poweroftwominusone_2000_25072000() {
 fn test_cmplt_p_p_zi_field_imm5_8_poweroftwo_2000_25082000() {
     // Encoding: 0x25082000
     // Test CMPLT_P.P.ZI__ field imm5 = 8 (PowerOfTwo)
-    // Fields: size=0, Pg=0, Zn=0, Pd=0, imm5=8
+    // Fields: Zn=0, Pd=0, imm5=8, size=0, Pg=0
     let encoding: u32 = 0x25082000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4658,12 +6044,17 @@ fn test_cmplt_p_p_zi_field_imm5_8_poweroftwo_2000_25082000() {
 fn test_cmplt_p_p_zi_field_imm5_15_poweroftwominusone_2000_250f2000() {
     // Encoding: 0x250F2000
     // Test CMPLT_P.P.ZI__ field imm5 = 15 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, Pd=0, size=0, Pg=0, imm5=15
+    // Fields: Zn=0, size=0, Pg=0, Pd=0, imm5=15
     let encoding: u32 = 0x250F2000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4674,12 +6065,17 @@ fn test_cmplt_p_p_zi_field_imm5_15_poweroftwominusone_2000_250f2000() {
 fn test_cmplt_p_p_zi_field_imm5_16_poweroftwo_2000_25102000() {
     // Encoding: 0x25102000
     // Test CMPLT_P.P.ZI__ field imm5 = 16 (PowerOfTwo)
-    // Fields: Zn=0, size=0, Pg=0, imm5=16, Pd=0
+    // Fields: Zn=0, Pd=0, size=0, imm5=16, Pg=0
     let encoding: u32 = 0x25102000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4690,12 +6086,17 @@ fn test_cmplt_p_p_zi_field_imm5_16_poweroftwo_2000_25102000() {
 fn test_cmplt_p_p_zi_field_imm5_31_max_2000_251f2000() {
     // Encoding: 0x251F2000
     // Test CMPLT_P.P.ZI__ field imm5 = 31 (Max)
-    // Fields: Zn=0, Pd=0, imm5=31, Pg=0, size=0
+    // Fields: size=0, Pd=0, Zn=0, Pg=0, imm5=31
     let encoding: u32 = 0x251F2000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4706,12 +6107,17 @@ fn test_cmplt_p_p_zi_field_imm5_31_max_2000_251f2000() {
 fn test_cmplt_p_p_zi_field_pg_0_min_2000_25002000() {
     // Encoding: 0x25002000
     // Test CMPLT_P.P.ZI__ field Pg = 0 (Min)
-    // Fields: Pd=0, Zn=0, Pg=0, imm5=0, size=0
+    // Fields: size=0, Pd=0, imm5=0, Zn=0, Pg=0
     let encoding: u32 = 0x25002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4722,12 +6128,17 @@ fn test_cmplt_p_p_zi_field_pg_0_min_2000_25002000() {
 fn test_cmplt_p_p_zi_field_pg_1_poweroftwo_2000_25002400() {
     // Encoding: 0x25002400
     // Test CMPLT_P.P.ZI__ field Pg = 1 (PowerOfTwo)
-    // Fields: size=0, imm5=0, Zn=0, Pd=0, Pg=1
+    // Fields: imm5=0, Pg=1, size=0, Pd=0, Zn=0
     let encoding: u32 = 0x25002400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4738,12 +6149,17 @@ fn test_cmplt_p_p_zi_field_pg_1_poweroftwo_2000_25002400() {
 fn test_cmplt_p_p_zi_field_zn_0_min_2000_25002000() {
     // Encoding: 0x25002000
     // Test CMPLT_P.P.ZI__ field Zn = 0 (Min)
-    // Fields: imm5=0, Pg=0, size=0, Pd=0, Zn=0
+    // Fields: Pg=0, Pd=0, size=0, imm5=0, Zn=0
     let encoding: u32 = 0x25002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4754,12 +6170,17 @@ fn test_cmplt_p_p_zi_field_zn_0_min_2000_25002000() {
 fn test_cmplt_p_p_zi_field_zn_1_poweroftwo_2000_25002020() {
     // Encoding: 0x25002020
     // Test CMPLT_P.P.ZI__ field Zn = 1 (PowerOfTwo)
-    // Fields: Zn=1, size=0, imm5=0, Pg=0, Pd=0
+    // Fields: size=0, Pg=0, Zn=1, imm5=0, Pd=0
     let encoding: u32 = 0x25002020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4770,12 +6191,17 @@ fn test_cmplt_p_p_zi_field_zn_1_poweroftwo_2000_25002020() {
 fn test_cmplt_p_p_zi_field_zn_30_poweroftwominusone_2000_250023c0() {
     // Encoding: 0x250023C0
     // Test CMPLT_P.P.ZI__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, Zn=30, imm5=0, Pd=0, size=0
+    // Fields: Pd=0, size=0, imm5=0, Pg=0, Zn=30
     let encoding: u32 = 0x250023C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4786,12 +6212,17 @@ fn test_cmplt_p_p_zi_field_zn_30_poweroftwominusone_2000_250023c0() {
 fn test_cmplt_p_p_zi_field_zn_31_max_2000_250023e0() {
     // Encoding: 0x250023E0
     // Test CMPLT_P.P.ZI__ field Zn = 31 (Max)
-    // Fields: imm5=0, Pg=0, Zn=31, Pd=0, size=0
+    // Fields: Zn=31, Pd=0, imm5=0, size=0, Pg=0
     let encoding: u32 = 0x250023E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4802,12 +6233,17 @@ fn test_cmplt_p_p_zi_field_zn_31_max_2000_250023e0() {
 fn test_cmplt_p_p_zi_field_pd_0_min_2000_25002000() {
     // Encoding: 0x25002000
     // Test CMPLT_P.P.ZI__ field Pd = 0 (Min)
-    // Fields: Pd=0, size=0, Pg=0, imm5=0, Zn=0
+    // Fields: Pg=0, Pd=0, size=0, imm5=0, Zn=0
     let encoding: u32 = 0x25002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4818,12 +6254,17 @@ fn test_cmplt_p_p_zi_field_pd_0_min_2000_25002000() {
 fn test_cmplt_p_p_zi_field_pd_1_poweroftwo_2000_25002001() {
     // Encoding: 0x25002001
     // Test CMPLT_P.P.ZI__ field Pd = 1 (PowerOfTwo)
-    // Fields: size=0, Zn=0, Pg=0, imm5=0, Pd=1
+    // Fields: imm5=0, size=0, Pg=0, Pd=1, Zn=0
     let encoding: u32 = 0x25002001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4834,12 +6275,17 @@ fn test_cmplt_p_p_zi_field_pd_1_poweroftwo_2000_25002001() {
 fn test_cmplt_p_p_zi_combo_0_2000_25002000() {
     // Encoding: 0x25002000
     // Test CMPLT_P.P.ZI__ field combination: size=0, imm5=0, Pg=0, Zn=0, Pd=0
-    // Fields: Zn=0, imm5=0, Pd=0, Pg=0, size=0
+    // Fields: imm5=0, size=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x25002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4850,12 +6296,17 @@ fn test_cmplt_p_p_zi_combo_0_2000_25002000() {
 fn test_cmplt_p_p_zi_special_size_0_size_variant_0_8192_25002000() {
     // Encoding: 0x25002000
     // Test CMPLT_P.P.ZI__ special value size = 0 (Size variant 0)
-    // Fields: Pd=0, Zn=0, size=0, imm5=0, Pg=0
+    // Fields: Pg=0, imm5=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x25002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4866,12 +6317,17 @@ fn test_cmplt_p_p_zi_special_size_0_size_variant_0_8192_25002000() {
 fn test_cmplt_p_p_zi_special_size_1_size_variant_1_8192_25402000() {
     // Encoding: 0x25402000
     // Test CMPLT_P.P.ZI__ special value size = 1 (Size variant 1)
-    // Fields: Pd=0, Pg=0, size=1, imm5=0, Zn=0
+    // Fields: Pg=0, Zn=0, size=1, Pd=0, imm5=0
     let encoding: u32 = 0x25402000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4882,12 +6338,17 @@ fn test_cmplt_p_p_zi_special_size_1_size_variant_1_8192_25402000() {
 fn test_cmplt_p_p_zi_special_size_2_size_variant_2_8192_25802000() {
     // Encoding: 0x25802000
     // Test CMPLT_P.P.ZI__ special value size = 2 (Size variant 2)
-    // Fields: imm5=0, Pd=0, size=2, Pg=0, Zn=0
+    // Fields: Pd=0, imm5=0, size=2, Zn=0, Pg=0
     let encoding: u32 = 0x25802000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4898,12 +6359,17 @@ fn test_cmplt_p_p_zi_special_size_2_size_variant_2_8192_25802000() {
 fn test_cmplt_p_p_zi_special_size_3_size_variant_3_8192_25c02000() {
     // Encoding: 0x25C02000
     // Test CMPLT_P.P.ZI__ special value size = 3 (Size variant 3)
-    // Fields: imm5=0, Pd=0, size=3, Pg=0, Zn=0
+    // Fields: imm5=0, Pg=0, Zn=0, size=3, Pd=0
     let encoding: u32 = 0x25C02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4914,12 +6380,16 @@ fn test_cmplt_p_p_zi_special_size_3_size_variant_3_8192_25c02000() {
 fn test_cmplt_p_p_zi_invalid_0_2000_25002000() {
     // Encoding: 0x25002000
     // Test CMPLT_P.P.ZI__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pg=0, size=0, imm5=0, Zn=0, Pd=0
+    // Fields: size=0, Zn=0, Pg=0, imm5=0, Pd=0
     let encoding: u32 = 0x25002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZI__
@@ -4930,12 +6400,16 @@ fn test_cmplt_p_p_zi_invalid_0_2000_25002000() {
 fn test_cmplt_p_p_zi_invalid_1_2000_25002000() {
     // Encoding: 0x25002000
     // Test CMPLT_P.P.ZI__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zn=0, Pg=0, size=0, imm5=0, Pd=0
+    // Fields: size=0, Pg=0, Zn=0, imm5=0, Pd=0
     let encoding: u32 = 0x25002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -4946,12 +6420,17 @@ fn test_cmplt_p_p_zi_invalid_1_2000_25002000() {
 fn test_cmple_p_p_zi_field_size_0_min_2010_25002010() {
     // Encoding: 0x25002010
     // Test CMPLE_P.P.ZI__ field size = 0 (Min)
-    // Fields: Zn=0, imm5=0, Pg=0, Pd=0, size=0
+    // Fields: size=0, Pd=0, imm5=0, Pg=0, Zn=0
     let encoding: u32 = 0x25002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -4962,12 +6441,17 @@ fn test_cmple_p_p_zi_field_size_0_min_2010_25002010() {
 fn test_cmple_p_p_zi_field_size_1_poweroftwo_2010_25402010() {
     // Encoding: 0x25402010
     // Test CMPLE_P.P.ZI__ field size = 1 (PowerOfTwo)
-    // Fields: size=1, Pd=0, Zn=0, Pg=0, imm5=0
+    // Fields: Pg=0, Pd=0, size=1, Zn=0, imm5=0
     let encoding: u32 = 0x25402010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -4978,12 +6462,17 @@ fn test_cmple_p_p_zi_field_size_1_poweroftwo_2010_25402010() {
 fn test_cmple_p_p_zi_field_size_2_poweroftwo_2010_25802010() {
     // Encoding: 0x25802010
     // Test CMPLE_P.P.ZI__ field size = 2 (PowerOfTwo)
-    // Fields: Pg=0, Zn=0, size=2, imm5=0, Pd=0
+    // Fields: imm5=0, Zn=0, Pg=0, Pd=0, size=2
     let encoding: u32 = 0x25802010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -4994,12 +6483,17 @@ fn test_cmple_p_p_zi_field_size_2_poweroftwo_2010_25802010() {
 fn test_cmple_p_p_zi_field_size_3_max_2010_25c02010() {
     // Encoding: 0x25C02010
     // Test CMPLE_P.P.ZI__ field size = 3 (Max)
-    // Fields: Pd=0, Zn=0, Pg=0, size=3, imm5=0
+    // Fields: Pg=0, Zn=0, imm5=0, size=3, Pd=0
     let encoding: u32 = 0x25C02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5010,12 +6504,17 @@ fn test_cmple_p_p_zi_field_size_3_max_2010_25c02010() {
 fn test_cmple_p_p_zi_field_imm5_0_zero_2010_25002010() {
     // Encoding: 0x25002010
     // Test CMPLE_P.P.ZI__ field imm5 = 0 (Zero)
-    // Fields: imm5=0, Pd=0, size=0, Zn=0, Pg=0
+    // Fields: size=0, Pd=0, imm5=0, Zn=0, Pg=0
     let encoding: u32 = 0x25002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5026,12 +6525,17 @@ fn test_cmple_p_p_zi_field_imm5_0_zero_2010_25002010() {
 fn test_cmple_p_p_zi_field_imm5_1_poweroftwo_2010_25012010() {
     // Encoding: 0x25012010
     // Test CMPLE_P.P.ZI__ field imm5 = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zn=0, imm5=1, Pg=0, size=0
+    // Fields: Pg=0, Zn=0, imm5=1, size=0, Pd=0
     let encoding: u32 = 0x25012010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5042,12 +6546,17 @@ fn test_cmple_p_p_zi_field_imm5_1_poweroftwo_2010_25012010() {
 fn test_cmple_p_p_zi_field_imm5_3_poweroftwominusone_2010_25032010() {
     // Encoding: 0x25032010
     // Test CMPLE_P.P.ZI__ field imm5 = 3 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, Zn=0, Pg=0, imm5=3, size=0
+    // Fields: imm5=3, Zn=0, Pd=0, Pg=0, size=0
     let encoding: u32 = 0x25032010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5058,12 +6567,17 @@ fn test_cmple_p_p_zi_field_imm5_3_poweroftwominusone_2010_25032010() {
 fn test_cmple_p_p_zi_field_imm5_4_poweroftwo_2010_25042010() {
     // Encoding: 0x25042010
     // Test CMPLE_P.P.ZI__ field imm5 = 4 (PowerOfTwo)
-    // Fields: imm5=4, Pd=0, size=0, Pg=0, Zn=0
+    // Fields: imm5=4, Zn=0, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x25042010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5074,12 +6588,17 @@ fn test_cmple_p_p_zi_field_imm5_4_poweroftwo_2010_25042010() {
 fn test_cmple_p_p_zi_field_imm5_7_poweroftwominusone_2010_25072010() {
     // Encoding: 0x25072010
     // Test CMPLE_P.P.ZI__ field imm5 = 7 (PowerOfTwoMinusOne)
-    // Fields: size=0, Pg=0, imm5=7, Zn=0, Pd=0
+    // Fields: Pg=0, size=0, Zn=0, imm5=7, Pd=0
     let encoding: u32 = 0x25072010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5090,12 +6609,17 @@ fn test_cmple_p_p_zi_field_imm5_7_poweroftwominusone_2010_25072010() {
 fn test_cmple_p_p_zi_field_imm5_8_poweroftwo_2010_25082010() {
     // Encoding: 0x25082010
     // Test CMPLE_P.P.ZI__ field imm5 = 8 (PowerOfTwo)
-    // Fields: Pd=0, size=0, Pg=0, imm5=8, Zn=0
+    // Fields: size=0, Zn=0, Pd=0, Pg=0, imm5=8
     let encoding: u32 = 0x25082010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5106,12 +6630,17 @@ fn test_cmple_p_p_zi_field_imm5_8_poweroftwo_2010_25082010() {
 fn test_cmple_p_p_zi_field_imm5_15_poweroftwominusone_2010_250f2010() {
     // Encoding: 0x250F2010
     // Test CMPLE_P.P.ZI__ field imm5 = 15 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, Pg=0, size=0, imm5=15, Zn=0
+    // Fields: size=0, Pd=0, Pg=0, Zn=0, imm5=15
     let encoding: u32 = 0x250F2010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5122,12 +6651,17 @@ fn test_cmple_p_p_zi_field_imm5_15_poweroftwominusone_2010_250f2010() {
 fn test_cmple_p_p_zi_field_imm5_16_poweroftwo_2010_25102010() {
     // Encoding: 0x25102010
     // Test CMPLE_P.P.ZI__ field imm5 = 16 (PowerOfTwo)
-    // Fields: Pd=0, Pg=0, imm5=16, Zn=0, size=0
+    // Fields: Zn=0, size=0, Pg=0, Pd=0, imm5=16
     let encoding: u32 = 0x25102010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5138,12 +6672,17 @@ fn test_cmple_p_p_zi_field_imm5_16_poweroftwo_2010_25102010() {
 fn test_cmple_p_p_zi_field_imm5_31_max_2010_251f2010() {
     // Encoding: 0x251F2010
     // Test CMPLE_P.P.ZI__ field imm5 = 31 (Max)
-    // Fields: imm5=31, Pg=0, size=0, Zn=0, Pd=0
+    // Fields: Pg=0, Pd=0, size=0, imm5=31, Zn=0
     let encoding: u32 = 0x251F2010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5154,12 +6693,17 @@ fn test_cmple_p_p_zi_field_imm5_31_max_2010_251f2010() {
 fn test_cmple_p_p_zi_field_pg_0_min_2010_25002010() {
     // Encoding: 0x25002010
     // Test CMPLE_P.P.ZI__ field Pg = 0 (Min)
-    // Fields: Pg=0, imm5=0, size=0, Zn=0, Pd=0
+    // Fields: imm5=0, Pg=0, Pd=0, size=0, Zn=0
     let encoding: u32 = 0x25002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5170,12 +6714,17 @@ fn test_cmple_p_p_zi_field_pg_0_min_2010_25002010() {
 fn test_cmple_p_p_zi_field_pg_1_poweroftwo_2010_25002410() {
     // Encoding: 0x25002410
     // Test CMPLE_P.P.ZI__ field Pg = 1 (PowerOfTwo)
-    // Fields: imm5=0, Pd=0, size=0, Pg=1, Zn=0
+    // Fields: size=0, Zn=0, Pd=0, Pg=1, imm5=0
     let encoding: u32 = 0x25002410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5186,12 +6735,17 @@ fn test_cmple_p_p_zi_field_pg_1_poweroftwo_2010_25002410() {
 fn test_cmple_p_p_zi_field_zn_0_min_2010_25002010() {
     // Encoding: 0x25002010
     // Test CMPLE_P.P.ZI__ field Zn = 0 (Min)
-    // Fields: Zn=0, Pd=0, Pg=0, imm5=0, size=0
+    // Fields: imm5=0, Pd=0, size=0, Pg=0, Zn=0
     let encoding: u32 = 0x25002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5202,12 +6756,17 @@ fn test_cmple_p_p_zi_field_zn_0_min_2010_25002010() {
 fn test_cmple_p_p_zi_field_zn_1_poweroftwo_2010_25002030() {
     // Encoding: 0x25002030
     // Test CMPLE_P.P.ZI__ field Zn = 1 (PowerOfTwo)
-    // Fields: size=0, imm5=0, Pg=0, Zn=1, Pd=0
+    // Fields: Zn=1, Pd=0, size=0, Pg=0, imm5=0
     let encoding: u32 = 0x25002030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5218,12 +6777,17 @@ fn test_cmple_p_p_zi_field_zn_1_poweroftwo_2010_25002030() {
 fn test_cmple_p_p_zi_field_zn_30_poweroftwominusone_2010_250023d0() {
     // Encoding: 0x250023D0
     // Test CMPLE_P.P.ZI__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, size=0, Zn=30, Pd=0, imm5=0
+    // Fields: imm5=0, Zn=30, Pd=0, Pg=0, size=0
     let encoding: u32 = 0x250023D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5234,12 +6798,17 @@ fn test_cmple_p_p_zi_field_zn_30_poweroftwominusone_2010_250023d0() {
 fn test_cmple_p_p_zi_field_zn_31_max_2010_250023f0() {
     // Encoding: 0x250023F0
     // Test CMPLE_P.P.ZI__ field Zn = 31 (Max)
-    // Fields: Pg=0, size=0, Zn=31, Pd=0, imm5=0
+    // Fields: Zn=31, size=0, Pd=0, imm5=0, Pg=0
     let encoding: u32 = 0x250023F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5250,12 +6819,17 @@ fn test_cmple_p_p_zi_field_zn_31_max_2010_250023f0() {
 fn test_cmple_p_p_zi_field_pd_0_min_2010_25002010() {
     // Encoding: 0x25002010
     // Test CMPLE_P.P.ZI__ field Pd = 0 (Min)
-    // Fields: size=0, Pg=0, imm5=0, Pd=0, Zn=0
+    // Fields: size=0, Pg=0, Pd=0, imm5=0, Zn=0
     let encoding: u32 = 0x25002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5266,12 +6840,17 @@ fn test_cmple_p_p_zi_field_pd_0_min_2010_25002010() {
 fn test_cmple_p_p_zi_field_pd_1_poweroftwo_2010_25002011() {
     // Encoding: 0x25002011
     // Test CMPLE_P.P.ZI__ field Pd = 1 (PowerOfTwo)
-    // Fields: size=0, Pd=1, imm5=0, Pg=0, Zn=0
+    // Fields: size=0, Zn=0, Pg=0, imm5=0, Pd=1
     let encoding: u32 = 0x25002011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5282,12 +6861,17 @@ fn test_cmple_p_p_zi_field_pd_1_poweroftwo_2010_25002011() {
 fn test_cmple_p_p_zi_combo_0_2010_25002010() {
     // Encoding: 0x25002010
     // Test CMPLE_P.P.ZI__ field combination: size=0, imm5=0, Pg=0, Zn=0, Pd=0
-    // Fields: Pd=0, imm5=0, Zn=0, Pg=0, size=0
+    // Fields: Pg=0, imm5=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x25002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5298,12 +6882,17 @@ fn test_cmple_p_p_zi_combo_0_2010_25002010() {
 fn test_cmple_p_p_zi_special_size_0_size_variant_0_8208_25002010() {
     // Encoding: 0x25002010
     // Test CMPLE_P.P.ZI__ special value size = 0 (Size variant 0)
-    // Fields: Zn=0, Pd=0, imm5=0, size=0, Pg=0
+    // Fields: Pd=0, Pg=0, size=0, imm5=0, Zn=0
     let encoding: u32 = 0x25002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5314,12 +6903,17 @@ fn test_cmple_p_p_zi_special_size_0_size_variant_0_8208_25002010() {
 fn test_cmple_p_p_zi_special_size_1_size_variant_1_8208_25402010() {
     // Encoding: 0x25402010
     // Test CMPLE_P.P.ZI__ special value size = 1 (Size variant 1)
-    // Fields: Zn=0, imm5=0, Pd=0, size=1, Pg=0
+    // Fields: size=1, imm5=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x25402010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5330,12 +6924,17 @@ fn test_cmple_p_p_zi_special_size_1_size_variant_1_8208_25402010() {
 fn test_cmple_p_p_zi_special_size_2_size_variant_2_8208_25802010() {
     // Encoding: 0x25802010
     // Test CMPLE_P.P.ZI__ special value size = 2 (Size variant 2)
-    // Fields: Pd=0, Zn=0, size=2, Pg=0, imm5=0
+    // Fields: Pd=0, imm5=0, Pg=0, size=2, Zn=0
     let encoding: u32 = 0x25802010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5346,12 +6945,17 @@ fn test_cmple_p_p_zi_special_size_2_size_variant_2_8208_25802010() {
 fn test_cmple_p_p_zi_special_size_3_size_variant_3_8208_25c02010() {
     // Encoding: 0x25C02010
     // Test CMPLE_P.P.ZI__ special value size = 3 (Size variant 3)
-    // Fields: Zn=0, imm5=0, Pg=0, Pd=0, size=3
+    // Fields: imm5=0, Zn=0, Pg=0, Pd=0, size=3
     let encoding: u32 = 0x25C02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5362,12 +6966,16 @@ fn test_cmple_p_p_zi_special_size_3_size_variant_3_8208_25c02010() {
 fn test_cmple_p_p_zi_invalid_0_2010_25002010() {
     // Encoding: 0x25002010
     // Test CMPLE_P.P.ZI__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: size=0, Pd=0, imm5=0, Pg=0, Zn=0
+    // Fields: Pg=0, Pd=0, imm5=0, Zn=0, size=0
     let encoding: u32 = 0x25002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZI__
@@ -5378,12 +6986,16 @@ fn test_cmple_p_p_zi_invalid_0_2010_25002010() {
 fn test_cmple_p_p_zi_invalid_1_2010_25002010() {
     // Encoding: 0x25002010
     // Test CMPLE_P.P.ZI__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, imm5=0, Pd=0, size=0, Zn=0
+    // Fields: Pd=0, imm5=0, Pg=0, size=0, Zn=0
     let encoding: u32 = 0x25002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5394,12 +7006,17 @@ fn test_cmple_p_p_zi_invalid_1_2010_25002010() {
 fn test_cmplo_p_p_zi_field_size_0_min_2000_24202000() {
     // Encoding: 0x24202000
     // Test CMPLO_P.P.ZI__ field size = 0 (Min)
-    // Fields: size=0, Zn=0, Pd=0, imm7=0, Pg=0
+    // Fields: size=0, imm7=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x24202000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5410,12 +7027,17 @@ fn test_cmplo_p_p_zi_field_size_0_min_2000_24202000() {
 fn test_cmplo_p_p_zi_field_size_1_poweroftwo_2000_24602000() {
     // Encoding: 0x24602000
     // Test CMPLO_P.P.ZI__ field size = 1 (PowerOfTwo)
-    // Fields: imm7=0, size=1, Pg=0, Pd=0, Zn=0
+    // Fields: Zn=0, imm7=0, Pg=0, Pd=0, size=1
     let encoding: u32 = 0x24602000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5426,12 +7048,17 @@ fn test_cmplo_p_p_zi_field_size_1_poweroftwo_2000_24602000() {
 fn test_cmplo_p_p_zi_field_size_2_poweroftwo_2000_24a02000() {
     // Encoding: 0x24A02000
     // Test CMPLO_P.P.ZI__ field size = 2 (PowerOfTwo)
-    // Fields: Pg=0, size=2, Zn=0, Pd=0, imm7=0
+    // Fields: Pg=0, imm7=0, Pd=0, size=2, Zn=0
     let encoding: u32 = 0x24A02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5442,12 +7069,17 @@ fn test_cmplo_p_p_zi_field_size_2_poweroftwo_2000_24a02000() {
 fn test_cmplo_p_p_zi_field_size_3_max_2000_24e02000() {
     // Encoding: 0x24E02000
     // Test CMPLO_P.P.ZI__ field size = 3 (Max)
-    // Fields: Pd=0, imm7=0, size=3, Pg=0, Zn=0
+    // Fields: size=3, Zn=0, Pd=0, imm7=0, Pg=0
     let encoding: u32 = 0x24E02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5458,12 +7090,17 @@ fn test_cmplo_p_p_zi_field_size_3_max_2000_24e02000() {
 fn test_cmplo_p_p_zi_field_imm7_0_zero_2000_24202000() {
     // Encoding: 0x24202000
     // Test CMPLO_P.P.ZI__ field imm7 = 0 (Zero)
-    // Fields: imm7=0, size=0, Pd=0, Pg=0, Zn=0
+    // Fields: Pd=0, imm7=0, Pg=0, Zn=0, size=0
     let encoding: u32 = 0x24202000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5474,12 +7111,17 @@ fn test_cmplo_p_p_zi_field_imm7_0_zero_2000_24202000() {
 fn test_cmplo_p_p_zi_field_imm7_1_poweroftwo_2000_24206000() {
     // Encoding: 0x24206000
     // Test CMPLO_P.P.ZI__ field imm7 = 1 (PowerOfTwo)
-    // Fields: Zn=0, imm7=1, Pg=0, Pd=0, size=0
+    // Fields: Pd=0, size=0, Pg=0, Zn=0, imm7=1
     let encoding: u32 = 0x24206000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5490,12 +7132,17 @@ fn test_cmplo_p_p_zi_field_imm7_1_poweroftwo_2000_24206000() {
 fn test_cmplo_p_p_zi_field_imm7_3_poweroftwominusone_2000_2420e000() {
     // Encoding: 0x2420E000
     // Test CMPLO_P.P.ZI__ field imm7 = 3 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, size=0, Zn=0, imm7=3, Pd=0
+    // Fields: Zn=0, imm7=3, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x2420E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5506,12 +7153,17 @@ fn test_cmplo_p_p_zi_field_imm7_3_poweroftwominusone_2000_2420e000() {
 fn test_cmplo_p_p_zi_field_imm7_4_poweroftwo_2000_24212000() {
     // Encoding: 0x24212000
     // Test CMPLO_P.P.ZI__ field imm7 = 4 (PowerOfTwo)
-    // Fields: imm7=4, Zn=0, size=0, Pg=0, Pd=0
+    // Fields: imm7=4, Pg=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x24212000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5522,12 +7174,17 @@ fn test_cmplo_p_p_zi_field_imm7_4_poweroftwo_2000_24212000() {
 fn test_cmplo_p_p_zi_field_imm7_7_poweroftwominusone_2000_2421e000() {
     // Encoding: 0x2421E000
     // Test CMPLO_P.P.ZI__ field imm7 = 7 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, Pg=0, imm7=7, size=0, Pd=0
+    // Fields: size=0, Zn=0, imm7=7, Pg=0, Pd=0
     let encoding: u32 = 0x2421E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5538,12 +7195,17 @@ fn test_cmplo_p_p_zi_field_imm7_7_poweroftwominusone_2000_2421e000() {
 fn test_cmplo_p_p_zi_field_imm7_8_poweroftwo_2000_24222000() {
     // Encoding: 0x24222000
     // Test CMPLO_P.P.ZI__ field imm7 = 8 (PowerOfTwo)
-    // Fields: Pd=0, imm7=8, size=0, Pg=0, Zn=0
+    // Fields: size=0, Zn=0, Pg=0, Pd=0, imm7=8
     let encoding: u32 = 0x24222000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5554,12 +7216,17 @@ fn test_cmplo_p_p_zi_field_imm7_8_poweroftwo_2000_24222000() {
 fn test_cmplo_p_p_zi_field_imm7_15_poweroftwominusone_2000_2423e000() {
     // Encoding: 0x2423E000
     // Test CMPLO_P.P.ZI__ field imm7 = 15 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, imm7=15, size=0, Pg=0, Pd=0
+    // Fields: Pd=0, Pg=0, imm7=15, size=0, Zn=0
     let encoding: u32 = 0x2423E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5570,12 +7237,17 @@ fn test_cmplo_p_p_zi_field_imm7_15_poweroftwominusone_2000_2423e000() {
 fn test_cmplo_p_p_zi_field_imm7_16_poweroftwo_2000_24242000() {
     // Encoding: 0x24242000
     // Test CMPLO_P.P.ZI__ field imm7 = 16 (PowerOfTwo)
-    // Fields: Pd=0, Pg=0, Zn=0, size=0, imm7=16
+    // Fields: size=0, imm7=16, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x24242000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5586,12 +7258,17 @@ fn test_cmplo_p_p_zi_field_imm7_16_poweroftwo_2000_24242000() {
 fn test_cmplo_p_p_zi_field_imm7_31_poweroftwominusone_2000_2427e000() {
     // Encoding: 0x2427E000
     // Test CMPLO_P.P.ZI__ field imm7 = 31 (PowerOfTwoMinusOne)
-    // Fields: size=0, Pd=0, imm7=31, Pg=0, Zn=0
+    // Fields: imm7=31, Pd=0, Pg=0, Zn=0, size=0
     let encoding: u32 = 0x2427E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5602,12 +7279,17 @@ fn test_cmplo_p_p_zi_field_imm7_31_poweroftwominusone_2000_2427e000() {
 fn test_cmplo_p_p_zi_field_imm7_32_poweroftwo_2000_24282000() {
     // Encoding: 0x24282000
     // Test CMPLO_P.P.ZI__ field imm7 = 32 (PowerOfTwo)
-    // Fields: Pd=0, Zn=0, size=0, imm7=32, Pg=0
+    // Fields: Zn=0, Pg=0, size=0, imm7=32, Pd=0
     let encoding: u32 = 0x24282000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5618,12 +7300,17 @@ fn test_cmplo_p_p_zi_field_imm7_32_poweroftwo_2000_24282000() {
 fn test_cmplo_p_p_zi_field_imm7_63_poweroftwominusone_2000_242fe000() {
     // Encoding: 0x242FE000
     // Test CMPLO_P.P.ZI__ field imm7 = 63 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, size=0, Pd=0, Pg=0, imm7=63
+    // Fields: imm7=63, size=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x242FE000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5634,12 +7321,17 @@ fn test_cmplo_p_p_zi_field_imm7_63_poweroftwominusone_2000_242fe000() {
 fn test_cmplo_p_p_zi_field_imm7_64_poweroftwo_2000_24302000() {
     // Encoding: 0x24302000
     // Test CMPLO_P.P.ZI__ field imm7 = 64 (PowerOfTwo)
-    // Fields: size=0, Pg=0, imm7=64, Zn=0, Pd=0
+    // Fields: Pg=0, imm7=64, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x24302000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5650,12 +7342,17 @@ fn test_cmplo_p_p_zi_field_imm7_64_poweroftwo_2000_24302000() {
 fn test_cmplo_p_p_zi_field_imm7_127_max_2000_243fe000() {
     // Encoding: 0x243FE000
     // Test CMPLO_P.P.ZI__ field imm7 = 127 (Max)
-    // Fields: Pg=0, Pd=0, imm7=127, Zn=0, size=0
+    // Fields: Pd=0, size=0, imm7=127, Pg=0, Zn=0
     let encoding: u32 = 0x243FE000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5666,12 +7363,17 @@ fn test_cmplo_p_p_zi_field_imm7_127_max_2000_243fe000() {
 fn test_cmplo_p_p_zi_field_pg_0_min_2000_24202000() {
     // Encoding: 0x24202000
     // Test CMPLO_P.P.ZI__ field Pg = 0 (Min)
-    // Fields: Zn=0, imm7=0, Pg=0, size=0, Pd=0
+    // Fields: Pg=0, imm7=0, Zn=0, size=0, Pd=0
     let encoding: u32 = 0x24202000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5682,12 +7384,17 @@ fn test_cmplo_p_p_zi_field_pg_0_min_2000_24202000() {
 fn test_cmplo_p_p_zi_field_pg_1_poweroftwo_2000_24202400() {
     // Encoding: 0x24202400
     // Test CMPLO_P.P.ZI__ field Pg = 1 (PowerOfTwo)
-    // Fields: size=0, Pd=0, Zn=0, Pg=1, imm7=0
+    // Fields: Pg=1, imm7=0, size=0, Pd=0, Zn=0
     let encoding: u32 = 0x24202400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5698,12 +7405,17 @@ fn test_cmplo_p_p_zi_field_pg_1_poweroftwo_2000_24202400() {
 fn test_cmplo_p_p_zi_field_zn_0_min_2000_24202000() {
     // Encoding: 0x24202000
     // Test CMPLO_P.P.ZI__ field Zn = 0 (Min)
-    // Fields: imm7=0, Pd=0, size=0, Zn=0, Pg=0
+    // Fields: imm7=0, Pd=0, Pg=0, size=0, Zn=0
     let encoding: u32 = 0x24202000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5714,12 +7426,17 @@ fn test_cmplo_p_p_zi_field_zn_0_min_2000_24202000() {
 fn test_cmplo_p_p_zi_field_zn_1_poweroftwo_2000_24202020() {
     // Encoding: 0x24202020
     // Test CMPLO_P.P.ZI__ field Zn = 1 (PowerOfTwo)
-    // Fields: Pg=0, size=0, Pd=0, imm7=0, Zn=1
+    // Fields: imm7=0, Pg=0, size=0, Zn=1, Pd=0
     let encoding: u32 = 0x24202020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5730,12 +7447,17 @@ fn test_cmplo_p_p_zi_field_zn_1_poweroftwo_2000_24202020() {
 fn test_cmplo_p_p_zi_field_zn_30_poweroftwominusone_2000_242023c0() {
     // Encoding: 0x242023C0
     // Test CMPLO_P.P.ZI__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Zn=30, size=0, Pg=0, imm7=0, Pd=0
+    // Fields: Zn=30, size=0, imm7=0, Pd=0, Pg=0
     let encoding: u32 = 0x242023C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5746,12 +7468,17 @@ fn test_cmplo_p_p_zi_field_zn_30_poweroftwominusone_2000_242023c0() {
 fn test_cmplo_p_p_zi_field_zn_31_max_2000_242023e0() {
     // Encoding: 0x242023E0
     // Test CMPLO_P.P.ZI__ field Zn = 31 (Max)
-    // Fields: size=0, Pg=0, imm7=0, Zn=31, Pd=0
+    // Fields: Pd=0, Pg=0, size=0, Zn=31, imm7=0
     let encoding: u32 = 0x242023E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5762,12 +7489,17 @@ fn test_cmplo_p_p_zi_field_zn_31_max_2000_242023e0() {
 fn test_cmplo_p_p_zi_field_pd_0_min_2000_24202000() {
     // Encoding: 0x24202000
     // Test CMPLO_P.P.ZI__ field Pd = 0 (Min)
-    // Fields: imm7=0, Pg=0, Zn=0, size=0, Pd=0
+    // Fields: size=0, Pd=0, Zn=0, imm7=0, Pg=0
     let encoding: u32 = 0x24202000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5778,12 +7510,17 @@ fn test_cmplo_p_p_zi_field_pd_0_min_2000_24202000() {
 fn test_cmplo_p_p_zi_field_pd_1_poweroftwo_2000_24202001() {
     // Encoding: 0x24202001
     // Test CMPLO_P.P.ZI__ field Pd = 1 (PowerOfTwo)
-    // Fields: Pg=0, imm7=0, Zn=0, Pd=1, size=0
+    // Fields: Zn=0, Pg=0, imm7=0, Pd=1, size=0
     let encoding: u32 = 0x24202001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5794,12 +7531,17 @@ fn test_cmplo_p_p_zi_field_pd_1_poweroftwo_2000_24202001() {
 fn test_cmplo_p_p_zi_combo_0_2000_24202000() {
     // Encoding: 0x24202000
     // Test CMPLO_P.P.ZI__ field combination: size=0, imm7=0, Pg=0, Zn=0, Pd=0
-    // Fields: Pd=0, Zn=0, size=0, imm7=0, Pg=0
+    // Fields: Zn=0, size=0, Pg=0, Pd=0, imm7=0
     let encoding: u32 = 0x24202000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5810,12 +7552,17 @@ fn test_cmplo_p_p_zi_combo_0_2000_24202000() {
 fn test_cmplo_p_p_zi_special_size_0_size_variant_0_8192_24202000() {
     // Encoding: 0x24202000
     // Test CMPLO_P.P.ZI__ special value size = 0 (Size variant 0)
-    // Fields: size=0, Pg=0, Zn=0, imm7=0, Pd=0
+    // Fields: Pg=0, Zn=0, imm7=0, size=0, Pd=0
     let encoding: u32 = 0x24202000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5826,12 +7573,17 @@ fn test_cmplo_p_p_zi_special_size_0_size_variant_0_8192_24202000() {
 fn test_cmplo_p_p_zi_special_size_1_size_variant_1_8192_24602000() {
     // Encoding: 0x24602000
     // Test CMPLO_P.P.ZI__ special value size = 1 (Size variant 1)
-    // Fields: size=1, imm7=0, Pg=0, Zn=0, Pd=0
+    // Fields: size=1, imm7=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x24602000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5842,12 +7594,17 @@ fn test_cmplo_p_p_zi_special_size_1_size_variant_1_8192_24602000() {
 fn test_cmplo_p_p_zi_special_size_2_size_variant_2_8192_24a02000() {
     // Encoding: 0x24A02000
     // Test CMPLO_P.P.ZI__ special value size = 2 (Size variant 2)
-    // Fields: size=2, Zn=0, Pg=0, imm7=0, Pd=0
+    // Fields: imm7=0, Zn=0, Pg=0, Pd=0, size=2
     let encoding: u32 = 0x24A02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5858,12 +7615,17 @@ fn test_cmplo_p_p_zi_special_size_2_size_variant_2_8192_24a02000() {
 fn test_cmplo_p_p_zi_special_size_3_size_variant_3_8192_24e02000() {
     // Encoding: 0x24E02000
     // Test CMPLO_P.P.ZI__ special value size = 3 (Size variant 3)
-    // Fields: imm7=0, size=3, Pg=0, Pd=0, Zn=0
+    // Fields: size=3, imm7=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x24E02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5874,12 +7636,16 @@ fn test_cmplo_p_p_zi_special_size_3_size_variant_3_8192_24e02000() {
 fn test_cmplo_p_p_zi_invalid_0_2000_24202000() {
     // Encoding: 0x24202000
     // Test CMPLO_P.P.ZI__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pg=0, size=0, Zn=0, Pd=0, imm7=0
+    // Fields: Pd=0, size=0, imm7=0, Zn=0, Pg=0
     let encoding: u32 = 0x24202000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZI__
@@ -5890,12 +7656,16 @@ fn test_cmplo_p_p_zi_invalid_0_2000_24202000() {
 fn test_cmplo_p_p_zi_invalid_1_2000_24202000() {
     // Encoding: 0x24202000
     // Test CMPLO_P.P.ZI__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, Zn=0, size=0, imm7=0, Pd=0
+    // Fields: size=0, Pd=0, Zn=0, Pg=0, imm7=0
     let encoding: u32 = 0x24202000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -5906,12 +7676,17 @@ fn test_cmplo_p_p_zi_invalid_1_2000_24202000() {
 fn test_cmpls_p_p_zi_field_size_0_min_2010_24202010() {
     // Encoding: 0x24202010
     // Test CMPLS_P.P.ZI__ field size = 0 (Min)
-    // Fields: Zn=0, size=0, imm7=0, Pg=0, Pd=0
+    // Fields: imm7=0, Pd=0, Zn=0, Pg=0, size=0
     let encoding: u32 = 0x24202010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -5922,12 +7697,17 @@ fn test_cmpls_p_p_zi_field_size_0_min_2010_24202010() {
 fn test_cmpls_p_p_zi_field_size_1_poweroftwo_2010_24602010() {
     // Encoding: 0x24602010
     // Test CMPLS_P.P.ZI__ field size = 1 (PowerOfTwo)
-    // Fields: Pg=0, size=1, Pd=0, imm7=0, Zn=0
+    // Fields: imm7=0, size=1, Pd=0, Zn=0, Pg=0
     let encoding: u32 = 0x24602010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -5938,12 +7718,17 @@ fn test_cmpls_p_p_zi_field_size_1_poweroftwo_2010_24602010() {
 fn test_cmpls_p_p_zi_field_size_2_poweroftwo_2010_24a02010() {
     // Encoding: 0x24A02010
     // Test CMPLS_P.P.ZI__ field size = 2 (PowerOfTwo)
-    // Fields: Pg=0, Pd=0, size=2, Zn=0, imm7=0
+    // Fields: Pg=0, size=2, Pd=0, imm7=0, Zn=0
     let encoding: u32 = 0x24A02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -5954,12 +7739,17 @@ fn test_cmpls_p_p_zi_field_size_2_poweroftwo_2010_24a02010() {
 fn test_cmpls_p_p_zi_field_size_3_max_2010_24e02010() {
     // Encoding: 0x24E02010
     // Test CMPLS_P.P.ZI__ field size = 3 (Max)
-    // Fields: Pd=0, Pg=0, Zn=0, imm7=0, size=3
+    // Fields: imm7=0, Pd=0, size=3, Pg=0, Zn=0
     let encoding: u32 = 0x24E02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -5970,12 +7760,17 @@ fn test_cmpls_p_p_zi_field_size_3_max_2010_24e02010() {
 fn test_cmpls_p_p_zi_field_imm7_0_zero_2010_24202010() {
     // Encoding: 0x24202010
     // Test CMPLS_P.P.ZI__ field imm7 = 0 (Zero)
-    // Fields: imm7=0, Zn=0, Pd=0, Pg=0, size=0
+    // Fields: Pd=0, Pg=0, size=0, Zn=0, imm7=0
     let encoding: u32 = 0x24202010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -5986,12 +7781,17 @@ fn test_cmpls_p_p_zi_field_imm7_0_zero_2010_24202010() {
 fn test_cmpls_p_p_zi_field_imm7_1_poweroftwo_2010_24206010() {
     // Encoding: 0x24206010
     // Test CMPLS_P.P.ZI__ field imm7 = 1 (PowerOfTwo)
-    // Fields: Pg=0, size=0, imm7=1, Zn=0, Pd=0
+    // Fields: Zn=0, size=0, imm7=1, Pg=0, Pd=0
     let encoding: u32 = 0x24206010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6002,12 +7802,17 @@ fn test_cmpls_p_p_zi_field_imm7_1_poweroftwo_2010_24206010() {
 fn test_cmpls_p_p_zi_field_imm7_3_poweroftwominusone_2010_2420e010() {
     // Encoding: 0x2420E010
     // Test CMPLS_P.P.ZI__ field imm7 = 3 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, Zn=0, Pg=0, size=0, imm7=3
+    // Fields: Pd=0, size=0, Zn=0, Pg=0, imm7=3
     let encoding: u32 = 0x2420E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6018,12 +7823,17 @@ fn test_cmpls_p_p_zi_field_imm7_3_poweroftwominusone_2010_2420e010() {
 fn test_cmpls_p_p_zi_field_imm7_4_poweroftwo_2010_24212010() {
     // Encoding: 0x24212010
     // Test CMPLS_P.P.ZI__ field imm7 = 4 (PowerOfTwo)
-    // Fields: Pd=0, imm7=4, size=0, Pg=0, Zn=0
+    // Fields: Zn=0, size=0, imm7=4, Pg=0, Pd=0
     let encoding: u32 = 0x24212010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6034,12 +7844,17 @@ fn test_cmpls_p_p_zi_field_imm7_4_poweroftwo_2010_24212010() {
 fn test_cmpls_p_p_zi_field_imm7_7_poweroftwominusone_2010_2421e010() {
     // Encoding: 0x2421E010
     // Test CMPLS_P.P.ZI__ field imm7 = 7 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, Zn=0, size=0, Pg=0, imm7=7
+    // Fields: size=0, imm7=7, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x2421E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6050,12 +7865,17 @@ fn test_cmpls_p_p_zi_field_imm7_7_poweroftwominusone_2010_2421e010() {
 fn test_cmpls_p_p_zi_field_imm7_8_poweroftwo_2010_24222010() {
     // Encoding: 0x24222010
     // Test CMPLS_P.P.ZI__ field imm7 = 8 (PowerOfTwo)
-    // Fields: size=0, imm7=8, Pg=0, Zn=0, Pd=0
+    // Fields: Pg=0, Zn=0, size=0, imm7=8, Pd=0
     let encoding: u32 = 0x24222010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6066,12 +7886,17 @@ fn test_cmpls_p_p_zi_field_imm7_8_poweroftwo_2010_24222010() {
 fn test_cmpls_p_p_zi_field_imm7_15_poweroftwominusone_2010_2423e010() {
     // Encoding: 0x2423E010
     // Test CMPLS_P.P.ZI__ field imm7 = 15 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, size=0, Pd=0, Zn=0, imm7=15
+    // Fields: Pd=0, Zn=0, size=0, imm7=15, Pg=0
     let encoding: u32 = 0x2423E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6082,12 +7907,17 @@ fn test_cmpls_p_p_zi_field_imm7_15_poweroftwominusone_2010_2423e010() {
 fn test_cmpls_p_p_zi_field_imm7_16_poweroftwo_2010_24242010() {
     // Encoding: 0x24242010
     // Test CMPLS_P.P.ZI__ field imm7 = 16 (PowerOfTwo)
-    // Fields: Pg=0, Zn=0, Pd=0, size=0, imm7=16
+    // Fields: imm7=16, Pg=0, Zn=0, Pd=0, size=0
     let encoding: u32 = 0x24242010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6098,12 +7928,17 @@ fn test_cmpls_p_p_zi_field_imm7_16_poweroftwo_2010_24242010() {
 fn test_cmpls_p_p_zi_field_imm7_31_poweroftwominusone_2010_2427e010() {
     // Encoding: 0x2427E010
     // Test CMPLS_P.P.ZI__ field imm7 = 31 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, Pg=0, size=0, imm7=31, Zn=0
+    // Fields: Pg=0, Zn=0, Pd=0, size=0, imm7=31
     let encoding: u32 = 0x2427E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6114,12 +7949,17 @@ fn test_cmpls_p_p_zi_field_imm7_31_poweroftwominusone_2010_2427e010() {
 fn test_cmpls_p_p_zi_field_imm7_32_poweroftwo_2010_24282010() {
     // Encoding: 0x24282010
     // Test CMPLS_P.P.ZI__ field imm7 = 32 (PowerOfTwo)
-    // Fields: Pg=0, Pd=0, imm7=32, Zn=0, size=0
+    // Fields: size=0, Pd=0, imm7=32, Zn=0, Pg=0
     let encoding: u32 = 0x24282010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6130,12 +7970,17 @@ fn test_cmpls_p_p_zi_field_imm7_32_poweroftwo_2010_24282010() {
 fn test_cmpls_p_p_zi_field_imm7_63_poweroftwominusone_2010_242fe010() {
     // Encoding: 0x242FE010
     // Test CMPLS_P.P.ZI__ field imm7 = 63 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, size=0, imm7=63, Zn=0, Pg=0
+    // Fields: Pg=0, imm7=63, Pd=0, Zn=0, size=0
     let encoding: u32 = 0x242FE010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6146,12 +7991,17 @@ fn test_cmpls_p_p_zi_field_imm7_63_poweroftwominusone_2010_242fe010() {
 fn test_cmpls_p_p_zi_field_imm7_64_poweroftwo_2010_24302010() {
     // Encoding: 0x24302010
     // Test CMPLS_P.P.ZI__ field imm7 = 64 (PowerOfTwo)
-    // Fields: size=0, Pg=0, Zn=0, Pd=0, imm7=64
+    // Fields: imm7=64, size=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x24302010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6162,12 +8012,17 @@ fn test_cmpls_p_p_zi_field_imm7_64_poweroftwo_2010_24302010() {
 fn test_cmpls_p_p_zi_field_imm7_127_max_2010_243fe010() {
     // Encoding: 0x243FE010
     // Test CMPLS_P.P.ZI__ field imm7 = 127 (Max)
-    // Fields: Zn=0, Pd=0, Pg=0, size=0, imm7=127
+    // Fields: Pd=0, Pg=0, imm7=127, size=0, Zn=0
     let encoding: u32 = 0x243FE010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6178,12 +8033,17 @@ fn test_cmpls_p_p_zi_field_imm7_127_max_2010_243fe010() {
 fn test_cmpls_p_p_zi_field_pg_0_min_2010_24202010() {
     // Encoding: 0x24202010
     // Test CMPLS_P.P.ZI__ field Pg = 0 (Min)
-    // Fields: Pd=0, Pg=0, size=0, Zn=0, imm7=0
+    // Fields: Zn=0, Pg=0, size=0, Pd=0, imm7=0
     let encoding: u32 = 0x24202010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6194,12 +8054,17 @@ fn test_cmpls_p_p_zi_field_pg_0_min_2010_24202010() {
 fn test_cmpls_p_p_zi_field_pg_1_poweroftwo_2010_24202410() {
     // Encoding: 0x24202410
     // Test CMPLS_P.P.ZI__ field Pg = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pg=1, size=0, Pd=0, imm7=0
+    // Fields: size=0, Pd=0, Pg=1, imm7=0, Zn=0
     let encoding: u32 = 0x24202410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6210,12 +8075,17 @@ fn test_cmpls_p_p_zi_field_pg_1_poweroftwo_2010_24202410() {
 fn test_cmpls_p_p_zi_field_zn_0_min_2010_24202010() {
     // Encoding: 0x24202010
     // Test CMPLS_P.P.ZI__ field Zn = 0 (Min)
-    // Fields: Zn=0, Pg=0, size=0, imm7=0, Pd=0
+    // Fields: Pg=0, size=0, imm7=0, Zn=0, Pd=0
     let encoding: u32 = 0x24202010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6226,12 +8096,17 @@ fn test_cmpls_p_p_zi_field_zn_0_min_2010_24202010() {
 fn test_cmpls_p_p_zi_field_zn_1_poweroftwo_2010_24202030() {
     // Encoding: 0x24202030
     // Test CMPLS_P.P.ZI__ field Zn = 1 (PowerOfTwo)
-    // Fields: Pg=0, imm7=0, Zn=1, size=0, Pd=0
+    // Fields: imm7=0, Zn=1, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x24202030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6242,12 +8117,17 @@ fn test_cmpls_p_p_zi_field_zn_1_poweroftwo_2010_24202030() {
 fn test_cmpls_p_p_zi_field_zn_30_poweroftwominusone_2010_242023d0() {
     // Encoding: 0x242023D0
     // Test CMPLS_P.P.ZI__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, imm7=0, size=0, Zn=30, Pd=0
+    // Fields: size=0, imm7=0, Zn=30, Pg=0, Pd=0
     let encoding: u32 = 0x242023D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6258,12 +8138,17 @@ fn test_cmpls_p_p_zi_field_zn_30_poweroftwominusone_2010_242023d0() {
 fn test_cmpls_p_p_zi_field_zn_31_max_2010_242023f0() {
     // Encoding: 0x242023F0
     // Test CMPLS_P.P.ZI__ field Zn = 31 (Max)
-    // Fields: Zn=31, Pd=0, imm7=0, size=0, Pg=0
+    // Fields: imm7=0, size=0, Pg=0, Pd=0, Zn=31
     let encoding: u32 = 0x242023F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6274,12 +8159,17 @@ fn test_cmpls_p_p_zi_field_zn_31_max_2010_242023f0() {
 fn test_cmpls_p_p_zi_field_pd_0_min_2010_24202010() {
     // Encoding: 0x24202010
     // Test CMPLS_P.P.ZI__ field Pd = 0 (Min)
-    // Fields: Pg=0, Pd=0, imm7=0, size=0, Zn=0
+    // Fields: imm7=0, Zn=0, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x24202010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6290,12 +8180,17 @@ fn test_cmpls_p_p_zi_field_pd_0_min_2010_24202010() {
 fn test_cmpls_p_p_zi_field_pd_1_poweroftwo_2010_24202011() {
     // Encoding: 0x24202011
     // Test CMPLS_P.P.ZI__ field Pd = 1 (PowerOfTwo)
-    // Fields: Pd=1, Pg=0, Zn=0, imm7=0, size=0
+    // Fields: imm7=0, Pd=1, Zn=0, size=0, Pg=0
     let encoding: u32 = 0x24202011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6306,12 +8201,17 @@ fn test_cmpls_p_p_zi_field_pd_1_poweroftwo_2010_24202011() {
 fn test_cmpls_p_p_zi_combo_0_2010_24202010() {
     // Encoding: 0x24202010
     // Test CMPLS_P.P.ZI__ field combination: size=0, imm7=0, Pg=0, Zn=0, Pd=0
-    // Fields: Zn=0, Pd=0, size=0, imm7=0, Pg=0
+    // Fields: imm7=0, size=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x24202010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6322,12 +8222,17 @@ fn test_cmpls_p_p_zi_combo_0_2010_24202010() {
 fn test_cmpls_p_p_zi_special_size_0_size_variant_0_8208_24202010() {
     // Encoding: 0x24202010
     // Test CMPLS_P.P.ZI__ special value size = 0 (Size variant 0)
-    // Fields: Pd=0, size=0, Zn=0, imm7=0, Pg=0
+    // Fields: Pg=0, size=0, imm7=0, Zn=0, Pd=0
     let encoding: u32 = 0x24202010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6338,12 +8243,17 @@ fn test_cmpls_p_p_zi_special_size_0_size_variant_0_8208_24202010() {
 fn test_cmpls_p_p_zi_special_size_1_size_variant_1_8208_24602010() {
     // Encoding: 0x24602010
     // Test CMPLS_P.P.ZI__ special value size = 1 (Size variant 1)
-    // Fields: Pd=0, Pg=0, imm7=0, size=1, Zn=0
+    // Fields: size=1, Pd=0, Zn=0, imm7=0, Pg=0
     let encoding: u32 = 0x24602010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6354,12 +8264,17 @@ fn test_cmpls_p_p_zi_special_size_1_size_variant_1_8208_24602010() {
 fn test_cmpls_p_p_zi_special_size_2_size_variant_2_8208_24a02010() {
     // Encoding: 0x24A02010
     // Test CMPLS_P.P.ZI__ special value size = 2 (Size variant 2)
-    // Fields: Zn=0, Pd=0, Pg=0, size=2, imm7=0
+    // Fields: imm7=0, Pg=0, Zn=0, size=2, Pd=0
     let encoding: u32 = 0x24A02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6370,12 +8285,17 @@ fn test_cmpls_p_p_zi_special_size_2_size_variant_2_8208_24a02010() {
 fn test_cmpls_p_p_zi_special_size_3_size_variant_3_8208_24e02010() {
     // Encoding: 0x24E02010
     // Test CMPLS_P.P.ZI__ special value size = 3 (Size variant 3)
-    // Fields: Pg=0, Zn=0, size=3, imm7=0, Pd=0
+    // Fields: Zn=0, Pd=0, imm7=0, size=3, Pg=0
     let encoding: u32 = 0x24E02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6386,12 +8306,16 @@ fn test_cmpls_p_p_zi_special_size_3_size_variant_3_8208_24e02010() {
 fn test_cmpls_p_p_zi_invalid_0_2010_24202010() {
     // Encoding: 0x24202010
     // Test CMPLS_P.P.ZI__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: size=0, Pg=0, Pd=0, Zn=0, imm7=0
+    // Fields: size=0, Zn=0, Pd=0, imm7=0, Pg=0
     let encoding: u32 = 0x24202010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZI__
@@ -6402,12 +8326,16 @@ fn test_cmpls_p_p_zi_invalid_0_2010_24202010() {
 fn test_cmpls_p_p_zi_invalid_1_2010_24202010() {
     // Encoding: 0x24202010
     // Test CMPLS_P.P.ZI__ invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, Zn=0, Pd=0, imm7=0, Pg=0
+    // Fields: Zn=0, imm7=0, Pg=0, size=0, Pd=0
     let encoding: u32 = 0x24202010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6418,12 +8346,17 @@ fn test_cmpls_p_p_zi_invalid_1_2010_24202010() {
 fn test_cmpne_p_p_zi_field_size_0_min_8010_25008010() {
     // Encoding: 0x25008010
     // Test CMPNE_P.P.ZI__ field size = 0 (Min)
-    // Fields: Pd=0, Pg=0, size=0, Zn=0, imm5=0
+    // Fields: Pg=0, Pd=0, imm5=0, Zn=0, size=0
     let encoding: u32 = 0x25008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6434,12 +8367,17 @@ fn test_cmpne_p_p_zi_field_size_0_min_8010_25008010() {
 fn test_cmpne_p_p_zi_field_size_1_poweroftwo_8010_25408010() {
     // Encoding: 0x25408010
     // Test CMPNE_P.P.ZI__ field size = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pg=0, imm5=0, Pd=0, size=1
+    // Fields: Zn=0, size=1, imm5=0, Pg=0, Pd=0
     let encoding: u32 = 0x25408010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6450,12 +8388,17 @@ fn test_cmpne_p_p_zi_field_size_1_poweroftwo_8010_25408010() {
 fn test_cmpne_p_p_zi_field_size_2_poweroftwo_8010_25808010() {
     // Encoding: 0x25808010
     // Test CMPNE_P.P.ZI__ field size = 2 (PowerOfTwo)
-    // Fields: Zn=0, Pd=0, size=2, imm5=0, Pg=0
+    // Fields: Zn=0, imm5=0, Pg=0, Pd=0, size=2
     let encoding: u32 = 0x25808010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6466,12 +8409,17 @@ fn test_cmpne_p_p_zi_field_size_2_poweroftwo_8010_25808010() {
 fn test_cmpne_p_p_zi_field_size_3_max_8010_25c08010() {
     // Encoding: 0x25C08010
     // Test CMPNE_P.P.ZI__ field size = 3 (Max)
-    // Fields: imm5=0, size=3, Pd=0, Pg=0, Zn=0
+    // Fields: Pd=0, imm5=0, size=3, Pg=0, Zn=0
     let encoding: u32 = 0x25C08010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6482,12 +8430,17 @@ fn test_cmpne_p_p_zi_field_size_3_max_8010_25c08010() {
 fn test_cmpne_p_p_zi_field_imm5_0_zero_8010_25008010() {
     // Encoding: 0x25008010
     // Test CMPNE_P.P.ZI__ field imm5 = 0 (Zero)
-    // Fields: imm5=0, size=0, Zn=0, Pd=0, Pg=0
+    // Fields: size=0, Pd=0, imm5=0, Pg=0, Zn=0
     let encoding: u32 = 0x25008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6498,12 +8451,17 @@ fn test_cmpne_p_p_zi_field_imm5_0_zero_8010_25008010() {
 fn test_cmpne_p_p_zi_field_imm5_1_poweroftwo_8010_25018010() {
     // Encoding: 0x25018010
     // Test CMPNE_P.P.ZI__ field imm5 = 1 (PowerOfTwo)
-    // Fields: size=0, imm5=1, Pg=0, Zn=0, Pd=0
+    // Fields: size=0, Zn=0, imm5=1, Pg=0, Pd=0
     let encoding: u32 = 0x25018010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6514,12 +8472,17 @@ fn test_cmpne_p_p_zi_field_imm5_1_poweroftwo_8010_25018010() {
 fn test_cmpne_p_p_zi_field_imm5_3_poweroftwominusone_8010_25038010() {
     // Encoding: 0x25038010
     // Test CMPNE_P.P.ZI__ field imm5 = 3 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, Pd=0, size=0, imm5=3, Pg=0
+    // Fields: Pd=0, size=0, imm5=3, Zn=0, Pg=0
     let encoding: u32 = 0x25038010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6530,12 +8493,17 @@ fn test_cmpne_p_p_zi_field_imm5_3_poweroftwominusone_8010_25038010() {
 fn test_cmpne_p_p_zi_field_imm5_4_poweroftwo_8010_25048010() {
     // Encoding: 0x25048010
     // Test CMPNE_P.P.ZI__ field imm5 = 4 (PowerOfTwo)
-    // Fields: Pg=0, Pd=0, Zn=0, size=0, imm5=4
+    // Fields: size=0, Pg=0, imm5=4, Pd=0, Zn=0
     let encoding: u32 = 0x25048010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6546,12 +8514,17 @@ fn test_cmpne_p_p_zi_field_imm5_4_poweroftwo_8010_25048010() {
 fn test_cmpne_p_p_zi_field_imm5_7_poweroftwominusone_8010_25078010() {
     // Encoding: 0x25078010
     // Test CMPNE_P.P.ZI__ field imm5 = 7 (PowerOfTwoMinusOne)
-    // Fields: imm5=7, Pg=0, size=0, Pd=0, Zn=0
+    // Fields: Pd=0, Pg=0, size=0, Zn=0, imm5=7
     let encoding: u32 = 0x25078010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6562,12 +8535,17 @@ fn test_cmpne_p_p_zi_field_imm5_7_poweroftwominusone_8010_25078010() {
 fn test_cmpne_p_p_zi_field_imm5_8_poweroftwo_8010_25088010() {
     // Encoding: 0x25088010
     // Test CMPNE_P.P.ZI__ field imm5 = 8 (PowerOfTwo)
-    // Fields: imm5=8, size=0, Zn=0, Pd=0, Pg=0
+    // Fields: Pd=0, size=0, imm5=8, Pg=0, Zn=0
     let encoding: u32 = 0x25088010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6578,12 +8556,17 @@ fn test_cmpne_p_p_zi_field_imm5_8_poweroftwo_8010_25088010() {
 fn test_cmpne_p_p_zi_field_imm5_15_poweroftwominusone_8010_250f8010() {
     // Encoding: 0x250F8010
     // Test CMPNE_P.P.ZI__ field imm5 = 15 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, Pd=0, Zn=0, size=0, imm5=15
+    // Fields: size=0, Pg=0, Zn=0, Pd=0, imm5=15
     let encoding: u32 = 0x250F8010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6594,12 +8577,17 @@ fn test_cmpne_p_p_zi_field_imm5_15_poweroftwominusone_8010_250f8010() {
 fn test_cmpne_p_p_zi_field_imm5_16_poweroftwo_8010_25108010() {
     // Encoding: 0x25108010
     // Test CMPNE_P.P.ZI__ field imm5 = 16 (PowerOfTwo)
-    // Fields: Pg=0, imm5=16, Zn=0, Pd=0, size=0
+    // Fields: Zn=0, Pg=0, size=0, imm5=16, Pd=0
     let encoding: u32 = 0x25108010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6610,12 +8598,17 @@ fn test_cmpne_p_p_zi_field_imm5_16_poweroftwo_8010_25108010() {
 fn test_cmpne_p_p_zi_field_imm5_31_max_8010_251f8010() {
     // Encoding: 0x251F8010
     // Test CMPNE_P.P.ZI__ field imm5 = 31 (Max)
-    // Fields: Zn=0, Pg=0, Pd=0, size=0, imm5=31
+    // Fields: Pg=0, size=0, imm5=31, Zn=0, Pd=0
     let encoding: u32 = 0x251F8010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6626,12 +8619,17 @@ fn test_cmpne_p_p_zi_field_imm5_31_max_8010_251f8010() {
 fn test_cmpne_p_p_zi_field_pg_0_min_8010_25008010() {
     // Encoding: 0x25008010
     // Test CMPNE_P.P.ZI__ field Pg = 0 (Min)
-    // Fields: Zn=0, Pg=0, Pd=0, size=0, imm5=0
+    // Fields: size=0, imm5=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x25008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6642,12 +8640,17 @@ fn test_cmpne_p_p_zi_field_pg_0_min_8010_25008010() {
 fn test_cmpne_p_p_zi_field_pg_1_poweroftwo_8010_25008410() {
     // Encoding: 0x25008410
     // Test CMPNE_P.P.ZI__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pg=1, Pd=0, Zn=0, size=0, imm5=0
+    // Fields: Pg=1, Pd=0, size=0, Zn=0, imm5=0
     let encoding: u32 = 0x25008410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6658,12 +8661,17 @@ fn test_cmpne_p_p_zi_field_pg_1_poweroftwo_8010_25008410() {
 fn test_cmpne_p_p_zi_field_zn_0_min_8010_25008010() {
     // Encoding: 0x25008010
     // Test CMPNE_P.P.ZI__ field Zn = 0 (Min)
-    // Fields: size=0, imm5=0, Zn=0, Pd=0, Pg=0
+    // Fields: Zn=0, Pd=0, size=0, Pg=0, imm5=0
     let encoding: u32 = 0x25008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6674,12 +8682,17 @@ fn test_cmpne_p_p_zi_field_zn_0_min_8010_25008010() {
 fn test_cmpne_p_p_zi_field_zn_1_poweroftwo_8010_25008030() {
     // Encoding: 0x25008030
     // Test CMPNE_P.P.ZI__ field Zn = 1 (PowerOfTwo)
-    // Fields: Pg=0, Zn=1, Pd=0, size=0, imm5=0
+    // Fields: size=0, Pg=0, imm5=0, Pd=0, Zn=1
     let encoding: u32 = 0x25008030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6690,12 +8703,17 @@ fn test_cmpne_p_p_zi_field_zn_1_poweroftwo_8010_25008030() {
 fn test_cmpne_p_p_zi_field_zn_30_poweroftwominusone_8010_250083d0() {
     // Encoding: 0x250083D0
     // Test CMPNE_P.P.ZI__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Zn=30, Pg=0, Pd=0, imm5=0, size=0
+    // Fields: Zn=30, size=0, Pd=0, imm5=0, Pg=0
     let encoding: u32 = 0x250083D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6706,12 +8724,17 @@ fn test_cmpne_p_p_zi_field_zn_30_poweroftwominusone_8010_250083d0() {
 fn test_cmpne_p_p_zi_field_zn_31_max_8010_250083f0() {
     // Encoding: 0x250083F0
     // Test CMPNE_P.P.ZI__ field Zn = 31 (Max)
-    // Fields: size=0, Zn=31, Pd=0, imm5=0, Pg=0
+    // Fields: size=0, Pg=0, Zn=31, imm5=0, Pd=0
     let encoding: u32 = 0x250083F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6722,12 +8745,17 @@ fn test_cmpne_p_p_zi_field_zn_31_max_8010_250083f0() {
 fn test_cmpne_p_p_zi_field_pd_0_min_8010_25008010() {
     // Encoding: 0x25008010
     // Test CMPNE_P.P.ZI__ field Pd = 0 (Min)
-    // Fields: Zn=0, size=0, imm5=0, Pg=0, Pd=0
+    // Fields: Pg=0, Pd=0, imm5=0, Zn=0, size=0
     let encoding: u32 = 0x25008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6738,12 +8766,17 @@ fn test_cmpne_p_p_zi_field_pd_0_min_8010_25008010() {
 fn test_cmpne_p_p_zi_field_pd_1_poweroftwo_8010_25008011() {
     // Encoding: 0x25008011
     // Test CMPNE_P.P.ZI__ field Pd = 1 (PowerOfTwo)
-    // Fields: imm5=0, Pg=0, size=0, Zn=0, Pd=1
+    // Fields: Pg=0, Pd=1, imm5=0, Zn=0, size=0
     let encoding: u32 = 0x25008011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6754,12 +8787,17 @@ fn test_cmpne_p_p_zi_field_pd_1_poweroftwo_8010_25008011() {
 fn test_cmpne_p_p_zi_combo_0_8010_25008010() {
     // Encoding: 0x25008010
     // Test CMPNE_P.P.ZI__ field combination: size=0, imm5=0, Pg=0, Zn=0, Pd=0
-    // Fields: size=0, imm5=0, Zn=0, Pd=0, Pg=0
+    // Fields: Pd=0, imm5=0, Pg=0, Zn=0, size=0
     let encoding: u32 = 0x25008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6770,12 +8808,17 @@ fn test_cmpne_p_p_zi_combo_0_8010_25008010() {
 fn test_cmpne_p_p_zi_special_size_0_size_variant_0_32784_25008010() {
     // Encoding: 0x25008010
     // Test CMPNE_P.P.ZI__ special value size = 0 (Size variant 0)
-    // Fields: Pd=0, Zn=0, size=0, Pg=0, imm5=0
+    // Fields: imm5=0, size=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x25008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6786,12 +8829,17 @@ fn test_cmpne_p_p_zi_special_size_0_size_variant_0_32784_25008010() {
 fn test_cmpne_p_p_zi_special_size_1_size_variant_1_32784_25408010() {
     // Encoding: 0x25408010
     // Test CMPNE_P.P.ZI__ special value size = 1 (Size variant 1)
-    // Fields: Pg=0, Zn=0, imm5=0, Pd=0, size=1
+    // Fields: Pd=0, Pg=0, imm5=0, size=1, Zn=0
     let encoding: u32 = 0x25408010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6802,12 +8850,17 @@ fn test_cmpne_p_p_zi_special_size_1_size_variant_1_32784_25408010() {
 fn test_cmpne_p_p_zi_special_size_2_size_variant_2_32784_25808010() {
     // Encoding: 0x25808010
     // Test CMPNE_P.P.ZI__ special value size = 2 (Size variant 2)
-    // Fields: Zn=0, Pg=0, size=2, Pd=0, imm5=0
+    // Fields: size=2, Zn=0, Pd=0, imm5=0, Pg=0
     let encoding: u32 = 0x25808010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6818,12 +8871,17 @@ fn test_cmpne_p_p_zi_special_size_2_size_variant_2_32784_25808010() {
 fn test_cmpne_p_p_zi_special_size_3_size_variant_3_32784_25c08010() {
     // Encoding: 0x25C08010
     // Test CMPNE_P.P.ZI__ special value size = 3 (Size variant 3)
-    // Fields: size=3, Zn=0, Pg=0, imm5=0, Pd=0
+    // Fields: imm5=0, Zn=0, Pg=0, size=3, Pd=0
     let encoding: u32 = 0x25C08010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6834,12 +8892,16 @@ fn test_cmpne_p_p_zi_special_size_3_size_variant_3_32784_25c08010() {
 fn test_cmpne_p_p_zi_invalid_0_8010_25008010() {
     // Encoding: 0x25008010
     // Test CMPNE_P.P.ZI__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pd=0, Pg=0, Zn=0, size=0, imm5=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0, imm5=0
     let encoding: u32 = 0x25008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZI__
@@ -6850,12 +8912,16 @@ fn test_cmpne_p_p_zi_invalid_0_8010_25008010() {
 fn test_cmpne_p_p_zi_invalid_1_8010_25008010() {
     // Encoding: 0x25008010
     // Test CMPNE_P.P.ZI__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zn=0, Pd=0, imm5=0, Pg=0, size=0
+    // Fields: Zn=0, size=0, Pd=0, imm5=0, Pg=0
     let encoding: u32 = 0x25008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZI__
@@ -6882,8 +8948,8 @@ fn test_cmpeq_p_p_zi_flags_zeroresult_0_25008000() {
     // Test CMPEQ_P.P.ZI__ flag computation: ZeroResult
     // Encoding: 0x25008000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x0);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x0);
     let encoding: u32 = 0x25008000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -6903,8 +8969,8 @@ fn test_cmpeq_p_p_zi_flags_zeroresult_1_25008000() {
     // Test CMPEQ_P.P.ZI__ flag computation: ZeroResult
     // Encoding: 0x25008000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x1);
     let encoding: u32 = 0x25008000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -6945,8 +9011,8 @@ fn test_cmpeq_p_p_zi_flags_unsignedoverflow_3_25008000() {
     // Test CMPEQ_P.P.ZI__ flag computation: UnsignedOverflow
     // Encoding: 0x25008000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x25008000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -6987,8 +9053,8 @@ fn test_cmpeq_p_p_zi_flags_signedoverflow_5_25008000() {
     // Test CMPEQ_P.P.ZI__ flag computation: SignedOverflow
     // Encoding: 0x25008000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     let encoding: u32 = 0x25008000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7065,8 +9131,8 @@ fn test_cmpgt_p_p_zi_flags_zeroresult_0_25000010() {
     // Test CMPGT_P.P.ZI__ flag computation: ZeroResult
     // Encoding: 0x25000010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x0);
     set_x(&mut cpu, 1, 0x0);
+    set_x(&mut cpu, 2, 0x0);
     let encoding: u32 = 0x25000010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7107,8 +9173,8 @@ fn test_cmpgt_p_p_zi_flags_negativeresult_2_25000010() {
     // Test CMPGT_P.P.ZI__ flag computation: NegativeResult
     // Encoding: 0x25000010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x25000010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7128,8 +9194,8 @@ fn test_cmpgt_p_p_zi_flags_unsignedoverflow_3_25000010() {
     // Test CMPGT_P.P.ZI__ flag computation: UnsignedOverflow
     // Encoding: 0x25000010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x25000010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7149,8 +9215,8 @@ fn test_cmpgt_p_p_zi_flags_unsignedoverflow_4_25000010() {
     // Test CMPGT_P.P.ZI__ flag computation: UnsignedOverflow
     // Encoding: 0x25000010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x2);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x2);
     let encoding: u32 = 0x25000010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7170,8 +9236,8 @@ fn test_cmpgt_p_p_zi_flags_signedoverflow_5_25000010() {
     // Test CMPGT_P.P.ZI__ flag computation: SignedOverflow
     // Encoding: 0x25000010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     let encoding: u32 = 0x25000010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7191,8 +9257,8 @@ fn test_cmpgt_p_p_zi_flags_signedoverflow_6_25000010() {
     // Test CMPGT_P.P.ZI__ flag computation: SignedOverflow
     // Encoding: 0x25000010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x8000000000000000);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x25000010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7212,8 +9278,8 @@ fn test_cmpgt_p_p_zi_flags_positiveresult_7_25000010() {
     // Test CMPGT_P.P.ZI__ flag computation: PositiveResult
     // Encoding: 0x25000010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x32);
     set_x(&mut cpu, 1, 0x64);
+    set_x(&mut cpu, 2, 0x32);
     let encoding: u32 = 0x25000010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7269,8 +9335,8 @@ fn test_cmpge_p_p_zi_flags_zeroresult_1_25000000() {
     // Test CMPGE_P.P.ZI__ flag computation: ZeroResult
     // Encoding: 0x25000000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x1);
     let encoding: u32 = 0x25000000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7290,8 +9356,8 @@ fn test_cmpge_p_p_zi_flags_negativeresult_2_25000000() {
     // Test CMPGE_P.P.ZI__ flag computation: NegativeResult
     // Encoding: 0x25000000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x0);
     set_x(&mut cpu, 1, 0x8000000000000000);
+    set_x(&mut cpu, 2, 0x0);
     let encoding: u32 = 0x25000000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7311,8 +9377,8 @@ fn test_cmpge_p_p_zi_flags_unsignedoverflow_3_25000000() {
     // Test CMPGE_P.P.ZI__ flag computation: UnsignedOverflow
     // Encoding: 0x25000000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x25000000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7353,8 +9419,8 @@ fn test_cmpge_p_p_zi_flags_signedoverflow_5_25000000() {
     // Test CMPGE_P.P.ZI__ flag computation: SignedOverflow
     // Encoding: 0x25000000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     let encoding: u32 = 0x25000000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7431,8 +9497,8 @@ fn test_cmphi_p_p_zi_flags_zeroresult_0_24200010() {
     // Test CMPHI_P.P.ZI__ flag computation: ZeroResult
     // Encoding: 0x24200010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x0);
     set_x(&mut cpu, 1, 0x0);
+    set_x(&mut cpu, 2, 0x0);
     let encoding: u32 = 0x24200010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7614,8 +9680,8 @@ fn test_cmphs_p_p_zi_flags_zeroresult_0_24200000() {
     // Test CMPHS_P.P.ZI__ flag computation: ZeroResult
     // Encoding: 0x24200000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x0);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x0);
     let encoding: u32 = 0x24200000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7761,8 +9827,8 @@ fn test_cmphs_p_p_zi_flags_positiveresult_7_24200000() {
     // Test CMPHS_P.P.ZI__ flag computation: PositiveResult
     // Encoding: 0x24200000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x64);
     set_x(&mut cpu, 2, 0x32);
+    set_x(&mut cpu, 1, 0x64);
     let encoding: u32 = 0x24200000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7818,8 +9884,8 @@ fn test_cmplt_p_p_zi_flags_zeroresult_1_25002000() {
     // Test CMPLT_P.P.ZI__ flag computation: ZeroResult
     // Encoding: 0x25002000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x1);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x25002000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7839,8 +9905,8 @@ fn test_cmplt_p_p_zi_flags_negativeresult_2_25002000() {
     // Test CMPLT_P.P.ZI__ flag computation: NegativeResult
     // Encoding: 0x25002000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x25002000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7881,8 +9947,8 @@ fn test_cmplt_p_p_zi_flags_unsignedoverflow_4_25002000() {
     // Test CMPLT_P.P.ZI__ flag computation: UnsignedOverflow
     // Encoding: 0x25002000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x2);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x25002000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7902,8 +9968,8 @@ fn test_cmplt_p_p_zi_flags_signedoverflow_5_25002000() {
     // Test CMPLT_P.P.ZI__ flag computation: SignedOverflow
     // Encoding: 0x25002000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     let encoding: u32 = 0x25002000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -7923,8 +9989,8 @@ fn test_cmplt_p_p_zi_flags_signedoverflow_6_25002000() {
     // Test CMPLT_P.P.ZI__ flag computation: SignedOverflow
     // Encoding: 0x25002000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x25002000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8022,8 +10088,8 @@ fn test_cmple_p_p_zi_flags_negativeresult_2_25002010() {
     // Test CMPLE_P.P.ZI__ flag computation: NegativeResult
     // Encoding: 0x25002010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x25002010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8064,8 +10130,8 @@ fn test_cmple_p_p_zi_flags_unsignedoverflow_4_25002010() {
     // Test CMPLE_P.P.ZI__ flag computation: UnsignedOverflow
     // Encoding: 0x25002010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x2);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x2);
     let encoding: u32 = 0x25002010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8085,8 +10151,8 @@ fn test_cmple_p_p_zi_flags_signedoverflow_5_25002010() {
     // Test CMPLE_P.P.ZI__ flag computation: SignedOverflow
     // Encoding: 0x25002010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x25002010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8163,8 +10229,8 @@ fn test_cmplo_p_p_zi_flags_zeroresult_0_24202000() {
     // Test CMPLO_P.P.ZI__ flag computation: ZeroResult
     // Encoding: 0x24202000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x0);
     set_x(&mut cpu, 1, 0x0);
+    set_x(&mut cpu, 2, 0x0);
     let encoding: u32 = 0x24202000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8205,8 +10271,8 @@ fn test_cmplo_p_p_zi_flags_negativeresult_2_24202000() {
     // Test CMPLO_P.P.ZI__ flag computation: NegativeResult
     // Encoding: 0x24202000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x24202000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8247,8 +10313,8 @@ fn test_cmplo_p_p_zi_flags_unsignedoverflow_4_24202000() {
     // Test CMPLO_P.P.ZI__ flag computation: UnsignedOverflow
     // Encoding: 0x24202000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x2);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24202000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8289,8 +10355,8 @@ fn test_cmplo_p_p_zi_flags_signedoverflow_6_24202000() {
     // Test CMPLO_P.P.ZI__ flag computation: SignedOverflow
     // Encoding: 0x24202000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x8000000000000000);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24202000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8367,8 +10433,8 @@ fn test_cmpls_p_p_zi_flags_zeroresult_1_24202010() {
     // Test CMPLS_P.P.ZI__ flag computation: ZeroResult
     // Encoding: 0x24202010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x1);
     let encoding: u32 = 0x24202010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8388,8 +10454,8 @@ fn test_cmpls_p_p_zi_flags_negativeresult_2_24202010() {
     // Test CMPLS_P.P.ZI__ flag computation: NegativeResult
     // Encoding: 0x24202010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x24202010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8409,8 +10475,8 @@ fn test_cmpls_p_p_zi_flags_unsignedoverflow_3_24202010() {
     // Test CMPLS_P.P.ZI__ flag computation: UnsignedOverflow
     // Encoding: 0x24202010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x24202010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8430,8 +10496,8 @@ fn test_cmpls_p_p_zi_flags_unsignedoverflow_4_24202010() {
     // Test CMPLS_P.P.ZI__ flag computation: UnsignedOverflow
     // Encoding: 0x24202010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x2);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24202010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8451,8 +10517,8 @@ fn test_cmpls_p_p_zi_flags_signedoverflow_5_24202010() {
     // Test CMPLS_P.P.ZI__ flag computation: SignedOverflow
     // Encoding: 0x24202010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24202010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8493,8 +10559,8 @@ fn test_cmpls_p_p_zi_flags_positiveresult_7_24202010() {
     // Test CMPLS_P.P.ZI__ flag computation: PositiveResult
     // Encoding: 0x24202010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x64);
     set_x(&mut cpu, 2, 0x32);
+    set_x(&mut cpu, 1, 0x64);
     let encoding: u32 = 0x24202010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8550,8 +10616,8 @@ fn test_cmpne_p_p_zi_flags_zeroresult_1_25008010() {
     // Test CMPNE_P.P.ZI__ flag computation: ZeroResult
     // Encoding: 0x25008010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x1);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x25008010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8571,8 +10637,8 @@ fn test_cmpne_p_p_zi_flags_negativeresult_2_25008010() {
     // Test CMPNE_P.P.ZI__ flag computation: NegativeResult
     // Encoding: 0x25008010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x0);
     set_x(&mut cpu, 1, 0x8000000000000000);
+    set_x(&mut cpu, 2, 0x0);
     let encoding: u32 = 0x25008010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8592,8 +10658,8 @@ fn test_cmpne_p_p_zi_flags_unsignedoverflow_3_25008010() {
     // Test CMPNE_P.P.ZI__ flag computation: UnsignedOverflow
     // Encoding: 0x25008010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x25008010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8634,8 +10700,8 @@ fn test_cmpne_p_p_zi_flags_signedoverflow_5_25008010() {
     // Test CMPNE_P.P.ZI__ flag computation: SignedOverflow
     // Encoding: 0x25008010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     let encoding: u32 = 0x25008010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8655,8 +10721,8 @@ fn test_cmpne_p_p_zi_flags_signedoverflow_6_25008010() {
     // Test CMPNE_P.P.ZI__ flag computation: SignedOverflow
     // Encoding: 0x25008010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x25008010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8676,8 +10742,8 @@ fn test_cmpne_p_p_zi_flags_positiveresult_7_25008010() {
     // Test CMPNE_P.P.ZI__ flag computation: PositiveResult
     // Encoding: 0x25008010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x32);
     set_x(&mut cpu, 1, 0x64);
+    set_x(&mut cpu, 2, 0x32);
     let encoding: u32 = 0x25008010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8700,12 +10766,17 @@ fn test_cmpne_p_p_zi_flags_positiveresult_7_25008010() {
 fn test_cmpeq_p_p_zz_field_size_0_min_a000_2400a000() {
     // Encoding: 0x2400A000
     // Test CMPEQ_P.P.ZZ__ field size = 0 (Min)
-    // Fields: Zn=0, Pd=0, Zm=0, size=0, Pg=0
+    // Fields: Zm=0, Pg=0, Pd=0, size=0, Zn=0
     let encoding: u32 = 0x2400A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8716,12 +10787,17 @@ fn test_cmpeq_p_p_zz_field_size_0_min_a000_2400a000() {
 fn test_cmpeq_p_p_zz_field_size_1_poweroftwo_a000_2440a000() {
     // Encoding: 0x2440A000
     // Test CMPEQ_P.P.ZZ__ field size = 1 (PowerOfTwo)
-    // Fields: Zm=0, Pd=0, Pg=0, size=1, Zn=0
+    // Fields: size=1, Zm=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x2440A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8732,12 +10808,17 @@ fn test_cmpeq_p_p_zz_field_size_1_poweroftwo_a000_2440a000() {
 fn test_cmpeq_p_p_zz_field_size_2_poweroftwo_a000_2480a000() {
     // Encoding: 0x2480A000
     // Test CMPEQ_P.P.ZZ__ field size = 2 (PowerOfTwo)
-    // Fields: Pd=0, Zm=0, Zn=0, size=2, Pg=0
+    // Fields: Pg=0, Pd=0, Zn=0, Zm=0, size=2
     let encoding: u32 = 0x2480A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8748,12 +10829,17 @@ fn test_cmpeq_p_p_zz_field_size_2_poweroftwo_a000_2480a000() {
 fn test_cmpeq_p_p_zz_field_size_3_max_a000_24c0a000() {
     // Encoding: 0x24C0A000
     // Test CMPEQ_P.P.ZZ__ field size = 3 (Max)
-    // Fields: Zn=0, Zm=0, size=3, Pd=0, Pg=0
+    // Fields: Zm=0, Pd=0, Zn=0, Pg=0, size=3
     let encoding: u32 = 0x24C0A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8764,12 +10850,17 @@ fn test_cmpeq_p_p_zz_field_size_3_max_a000_24c0a000() {
 fn test_cmpeq_p_p_zz_field_zm_0_min_a000_2400a000() {
     // Encoding: 0x2400A000
     // Test CMPEQ_P.P.ZZ__ field Zm = 0 (Min)
-    // Fields: size=0, Pd=0, Zm=0, Pg=0, Zn=0
+    // Fields: Pg=0, size=0, Zm=0, Zn=0, Pd=0
     let encoding: u32 = 0x2400A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8780,12 +10871,17 @@ fn test_cmpeq_p_p_zz_field_zm_0_min_a000_2400a000() {
 fn test_cmpeq_p_p_zz_field_zm_1_poweroftwo_a000_2401a000() {
     // Encoding: 0x2401A000
     // Test CMPEQ_P.P.ZZ__ field Zm = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zn=0, Zm=1, size=0, Pg=0
+    // Fields: Zn=0, Zm=1, Pg=0, size=0, Pd=0
     let encoding: u32 = 0x2401A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8796,12 +10892,17 @@ fn test_cmpeq_p_p_zz_field_zm_1_poweroftwo_a000_2401a000() {
 fn test_cmpeq_p_p_zz_field_zm_30_poweroftwominusone_a000_241ea000() {
     // Encoding: 0x241EA000
     // Test CMPEQ_P.P.ZZ__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Zn=0, Pd=0, Zm=30, Pg=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0, Zm=30
     let encoding: u32 = 0x241EA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8812,12 +10913,17 @@ fn test_cmpeq_p_p_zz_field_zm_30_poweroftwominusone_a000_241ea000() {
 fn test_cmpeq_p_p_zz_field_zm_31_max_a000_241fa000() {
     // Encoding: 0x241FA000
     // Test CMPEQ_P.P.ZZ__ field Zm = 31 (Max)
-    // Fields: Pg=0, Pd=0, size=0, Zm=31, Zn=0
+    // Fields: Pd=0, size=0, Pg=0, Zm=31, Zn=0
     let encoding: u32 = 0x241FA000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8828,12 +10934,17 @@ fn test_cmpeq_p_p_zz_field_zm_31_max_a000_241fa000() {
 fn test_cmpeq_p_p_zz_field_pg_0_min_a000_2400a000() {
     // Encoding: 0x2400A000
     // Test CMPEQ_P.P.ZZ__ field Pg = 0 (Min)
-    // Fields: size=0, Pd=0, Zm=0, Pg=0, Zn=0
+    // Fields: Zm=0, Zn=0, Pg=0, Pd=0, size=0
     let encoding: u32 = 0x2400A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8844,12 +10955,17 @@ fn test_cmpeq_p_p_zz_field_pg_0_min_a000_2400a000() {
 fn test_cmpeq_p_p_zz_field_pg_1_poweroftwo_a000_2400a400() {
     // Encoding: 0x2400A400
     // Test CMPEQ_P.P.ZZ__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zn=0, size=0, Zm=0, Pg=1
+    // Fields: Zm=0, Zn=0, size=0, Pd=0, Pg=1
     let encoding: u32 = 0x2400A400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8860,12 +10976,17 @@ fn test_cmpeq_p_p_zz_field_pg_1_poweroftwo_a000_2400a400() {
 fn test_cmpeq_p_p_zz_field_zn_0_min_a000_2400a000() {
     // Encoding: 0x2400A000
     // Test CMPEQ_P.P.ZZ__ field Zn = 0 (Min)
-    // Fields: Zm=0, Pg=0, size=0, Zn=0, Pd=0
+    // Fields: size=0, Zn=0, Pg=0, Zm=0, Pd=0
     let encoding: u32 = 0x2400A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8876,12 +10997,17 @@ fn test_cmpeq_p_p_zz_field_zn_0_min_a000_2400a000() {
 fn test_cmpeq_p_p_zz_field_zn_1_poweroftwo_a000_2400a020() {
     // Encoding: 0x2400A020
     // Test CMPEQ_P.P.ZZ__ field Zn = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zm=0, size=0, Pg=0, Zn=1
+    // Fields: size=0, Zm=0, Pg=0, Zn=1, Pd=0
     let encoding: u32 = 0x2400A020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8892,12 +11018,17 @@ fn test_cmpeq_p_p_zz_field_zn_1_poweroftwo_a000_2400a020() {
 fn test_cmpeq_p_p_zz_field_zn_30_poweroftwominusone_a000_2400a3c0() {
     // Encoding: 0x2400A3C0
     // Test CMPEQ_P.P.ZZ__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Zm=0, Pg=0, Pd=0, Zn=30
+    // Fields: Zm=0, size=0, Pg=0, Zn=30, Pd=0
     let encoding: u32 = 0x2400A3C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8908,12 +11039,17 @@ fn test_cmpeq_p_p_zz_field_zn_30_poweroftwominusone_a000_2400a3c0() {
 fn test_cmpeq_p_p_zz_field_zn_31_max_a000_2400a3e0() {
     // Encoding: 0x2400A3E0
     // Test CMPEQ_P.P.ZZ__ field Zn = 31 (Max)
-    // Fields: Pd=0, Pg=0, size=0, Zm=0, Zn=31
+    // Fields: Pg=0, Zm=0, Zn=31, Pd=0, size=0
     let encoding: u32 = 0x2400A3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8924,12 +11060,17 @@ fn test_cmpeq_p_p_zz_field_zn_31_max_a000_2400a3e0() {
 fn test_cmpeq_p_p_zz_field_pd_0_min_a000_2400a000() {
     // Encoding: 0x2400A000
     // Test CMPEQ_P.P.ZZ__ field Pd = 0 (Min)
-    // Fields: Pd=0, Zm=0, Zn=0, size=0, Pg=0
+    // Fields: Zn=0, Pg=0, Zm=0, size=0, Pd=0
     let encoding: u32 = 0x2400A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8940,12 +11081,17 @@ fn test_cmpeq_p_p_zz_field_pd_0_min_a000_2400a000() {
 fn test_cmpeq_p_p_zz_field_pd_1_poweroftwo_a000_2400a001() {
     // Encoding: 0x2400A001
     // Test CMPEQ_P.P.ZZ__ field Pd = 1 (PowerOfTwo)
-    // Fields: size=0, Pg=0, Zn=0, Zm=0, Pd=1
+    // Fields: Pd=1, Pg=0, Zm=0, size=0, Zn=0
     let encoding: u32 = 0x2400A001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8956,12 +11102,17 @@ fn test_cmpeq_p_p_zz_field_pd_1_poweroftwo_a000_2400a001() {
 fn test_cmpeq_p_p_zz_combo_0_a000_2400a000() {
     // Encoding: 0x2400A000
     // Test CMPEQ_P.P.ZZ__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: size=0, Pg=0, Zm=0, Zn=0, Pd=0
+    // Fields: Zn=0, size=0, Pg=0, Zm=0, Pd=0
     let encoding: u32 = 0x2400A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8972,12 +11123,17 @@ fn test_cmpeq_p_p_zz_combo_0_a000_2400a000() {
 fn test_cmpeq_p_p_zz_special_size_0_size_variant_0_40960_2400a000() {
     // Encoding: 0x2400A000
     // Test CMPEQ_P.P.ZZ__ special value size = 0 (Size variant 0)
-    // Fields: Zm=0, Pg=0, size=0, Pd=0, Zn=0
+    // Fields: size=0, Zm=0, Zn=0, Pg=0, Pd=0
     let encoding: u32 = 0x2400A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -8988,12 +11144,17 @@ fn test_cmpeq_p_p_zz_special_size_0_size_variant_0_40960_2400a000() {
 fn test_cmpeq_p_p_zz_special_size_1_size_variant_1_40960_2440a000() {
     // Encoding: 0x2440A000
     // Test CMPEQ_P.P.ZZ__ special value size = 1 (Size variant 1)
-    // Fields: Pd=0, Zm=0, size=1, Pg=0, Zn=0
+    // Fields: Pg=0, Zm=0, Zn=0, Pd=0, size=1
     let encoding: u32 = 0x2440A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -9004,12 +11165,17 @@ fn test_cmpeq_p_p_zz_special_size_1_size_variant_1_40960_2440a000() {
 fn test_cmpeq_p_p_zz_special_size_2_size_variant_2_40960_2480a000() {
     // Encoding: 0x2480A000
     // Test CMPEQ_P.P.ZZ__ special value size = 2 (Size variant 2)
-    // Fields: Pd=0, Zn=0, Pg=0, size=2, Zm=0
+    // Fields: size=2, Pd=0, Zm=0, Zn=0, Pg=0
     let encoding: u32 = 0x2480A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -9020,12 +11186,17 @@ fn test_cmpeq_p_p_zz_special_size_2_size_variant_2_40960_2480a000() {
 fn test_cmpeq_p_p_zz_special_size_3_size_variant_3_40960_24c0a000() {
     // Encoding: 0x24C0A000
     // Test CMPEQ_P.P.ZZ__ special value size = 3 (Size variant 3)
-    // Fields: size=3, Zm=0, Pd=0, Zn=0, Pg=0
+    // Fields: size=3, Zn=0, Zm=0, Pd=0, Pg=0
     let encoding: u32 = 0x24C0A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -9036,12 +11207,16 @@ fn test_cmpeq_p_p_zz_special_size_3_size_variant_3_40960_24c0a000() {
 fn test_cmpeq_p_p_zz_invalid_0_a000_2400a000() {
     // Encoding: 0x2400A000
     // Test CMPEQ_P.P.ZZ__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pg=0, size=0, Zm=0, Pd=0, Zn=0
+    // Fields: Pd=0, Pg=0, Zm=0, size=0, Zn=0
     let encoding: u32 = 0x2400A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -9052,12 +11227,16 @@ fn test_cmpeq_p_p_zz_invalid_0_a000_2400a000() {
 fn test_cmpeq_p_p_zz_invalid_1_a000_2400a000() {
     // Encoding: 0x2400A000
     // Test CMPEQ_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, Zm=0, Pd=0, Zn=0, size=0
+    // Fields: size=0, Pd=0, Zn=0, Pg=0, Zm=0
     let encoding: u32 = 0x2400A000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9068,12 +11247,17 @@ fn test_cmpeq_p_p_zz_invalid_1_a000_2400a000() {
 fn test_cmpgt_p_p_zz_field_size_0_min_8010_24008010() {
     // Encoding: 0x24008010
     // Test CMPGT_P.P.ZZ__ field size = 0 (Min)
-    // Fields: Zm=0, size=0, Zn=0, Pg=0, Pd=0
+    // Fields: size=0, Zm=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x24008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9084,12 +11268,17 @@ fn test_cmpgt_p_p_zz_field_size_0_min_8010_24008010() {
 fn test_cmpgt_p_p_zz_field_size_1_poweroftwo_8010_24408010() {
     // Encoding: 0x24408010
     // Test CMPGT_P.P.ZZ__ field size = 1 (PowerOfTwo)
-    // Fields: Pg=0, size=1, Zm=0, Zn=0, Pd=0
+    // Fields: Zm=0, Pd=0, Zn=0, size=1, Pg=0
     let encoding: u32 = 0x24408010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9100,12 +11289,17 @@ fn test_cmpgt_p_p_zz_field_size_1_poweroftwo_8010_24408010() {
 fn test_cmpgt_p_p_zz_field_size_2_poweroftwo_8010_24808010() {
     // Encoding: 0x24808010
     // Test CMPGT_P.P.ZZ__ field size = 2 (PowerOfTwo)
-    // Fields: size=2, Pg=0, Pd=0, Zn=0, Zm=0
+    // Fields: Pd=0, Pg=0, Zm=0, size=2, Zn=0
     let encoding: u32 = 0x24808010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9116,12 +11310,17 @@ fn test_cmpgt_p_p_zz_field_size_2_poweroftwo_8010_24808010() {
 fn test_cmpgt_p_p_zz_field_size_3_max_8010_24c08010() {
     // Encoding: 0x24C08010
     // Test CMPGT_P.P.ZZ__ field size = 3 (Max)
-    // Fields: Pg=0, size=3, Zn=0, Zm=0, Pd=0
+    // Fields: Zm=0, size=3, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x24C08010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9132,12 +11331,17 @@ fn test_cmpgt_p_p_zz_field_size_3_max_8010_24c08010() {
 fn test_cmpgt_p_p_zz_field_zm_0_min_8010_24008010() {
     // Encoding: 0x24008010
     // Test CMPGT_P.P.ZZ__ field Zm = 0 (Min)
-    // Fields: Zn=0, size=0, Zm=0, Pd=0, Pg=0
+    // Fields: size=0, Zn=0, Zm=0, Pg=0, Pd=0
     let encoding: u32 = 0x24008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9148,12 +11352,17 @@ fn test_cmpgt_p_p_zz_field_zm_0_min_8010_24008010() {
 fn test_cmpgt_p_p_zz_field_zm_1_poweroftwo_8010_24018010() {
     // Encoding: 0x24018010
     // Test CMPGT_P.P.ZZ__ field Zm = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zn=0, size=0, Zm=1, Pg=0
+    // Fields: Pg=0, Zm=1, Zn=0, Pd=0, size=0
     let encoding: u32 = 0x24018010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9164,12 +11373,17 @@ fn test_cmpgt_p_p_zz_field_zm_1_poweroftwo_8010_24018010() {
 fn test_cmpgt_p_p_zz_field_zm_30_poweroftwominusone_8010_241e8010() {
     // Encoding: 0x241E8010
     // Test CMPGT_P.P.ZZ__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Zm=30, Pd=0, Pg=0, size=0, Zn=0
+    // Fields: Zn=0, Pd=0, Zm=30, Pg=0, size=0
     let encoding: u32 = 0x241E8010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9180,12 +11394,17 @@ fn test_cmpgt_p_p_zz_field_zm_30_poweroftwominusone_8010_241e8010() {
 fn test_cmpgt_p_p_zz_field_zm_31_max_8010_241f8010() {
     // Encoding: 0x241F8010
     // Test CMPGT_P.P.ZZ__ field Zm = 31 (Max)
-    // Fields: Pd=0, Pg=0, Zm=31, size=0, Zn=0
+    // Fields: Zn=0, Zm=31, Pg=0, size=0, Pd=0
     let encoding: u32 = 0x241F8010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9196,12 +11415,17 @@ fn test_cmpgt_p_p_zz_field_zm_31_max_8010_241f8010() {
 fn test_cmpgt_p_p_zz_field_pg_0_min_8010_24008010() {
     // Encoding: 0x24008010
     // Test CMPGT_P.P.ZZ__ field Pg = 0 (Min)
-    // Fields: Pd=0, Pg=0, Zn=0, size=0, Zm=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x24008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9212,12 +11436,17 @@ fn test_cmpgt_p_p_zz_field_pg_0_min_8010_24008010() {
 fn test_cmpgt_p_p_zz_field_pg_1_poweroftwo_8010_24008410() {
     // Encoding: 0x24008410
     // Test CMPGT_P.P.ZZ__ field Pg = 1 (PowerOfTwo)
-    // Fields: Zm=0, Zn=0, size=0, Pd=0, Pg=1
+    // Fields: Zn=0, Zm=0, Pg=1, size=0, Pd=0
     let encoding: u32 = 0x24008410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9228,12 +11457,17 @@ fn test_cmpgt_p_p_zz_field_pg_1_poweroftwo_8010_24008410() {
 fn test_cmpgt_p_p_zz_field_zn_0_min_8010_24008010() {
     // Encoding: 0x24008010
     // Test CMPGT_P.P.ZZ__ field Zn = 0 (Min)
-    // Fields: Pg=0, Pd=0, Zm=0, size=0, Zn=0
+    // Fields: Pd=0, size=0, Zm=0, Pg=0, Zn=0
     let encoding: u32 = 0x24008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9244,12 +11478,17 @@ fn test_cmpgt_p_p_zz_field_zn_0_min_8010_24008010() {
 fn test_cmpgt_p_p_zz_field_zn_1_poweroftwo_8010_24008030() {
     // Encoding: 0x24008030
     // Test CMPGT_P.P.ZZ__ field Zn = 1 (PowerOfTwo)
-    // Fields: Pd=0, Pg=0, Zm=0, size=0, Zn=1
+    // Fields: Zn=1, size=0, Zm=0, Pd=0, Pg=0
     let encoding: u32 = 0x24008030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9260,12 +11499,17 @@ fn test_cmpgt_p_p_zz_field_zn_1_poweroftwo_8010_24008030() {
 fn test_cmpgt_p_p_zz_field_zn_30_poweroftwominusone_8010_240083d0() {
     // Encoding: 0x240083D0
     // Test CMPGT_P.P.ZZ__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, Pd=0, Zm=0, size=0, Zn=30
+    // Fields: Zn=30, Zm=0, Pd=0, Pg=0, size=0
     let encoding: u32 = 0x240083D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9276,12 +11520,17 @@ fn test_cmpgt_p_p_zz_field_zn_30_poweroftwominusone_8010_240083d0() {
 fn test_cmpgt_p_p_zz_field_zn_31_max_8010_240083f0() {
     // Encoding: 0x240083F0
     // Test CMPGT_P.P.ZZ__ field Zn = 31 (Max)
-    // Fields: Zn=31, size=0, Zm=0, Pg=0, Pd=0
+    // Fields: Pg=0, Zm=0, size=0, Pd=0, Zn=31
     let encoding: u32 = 0x240083F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9292,12 +11541,17 @@ fn test_cmpgt_p_p_zz_field_zn_31_max_8010_240083f0() {
 fn test_cmpgt_p_p_zz_field_pd_0_min_8010_24008010() {
     // Encoding: 0x24008010
     // Test CMPGT_P.P.ZZ__ field Pd = 0 (Min)
-    // Fields: Pd=0, size=0, Zm=0, Pg=0, Zn=0
+    // Fields: Pd=0, Zm=0, size=0, Zn=0, Pg=0
     let encoding: u32 = 0x24008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9308,12 +11562,17 @@ fn test_cmpgt_p_p_zz_field_pd_0_min_8010_24008010() {
 fn test_cmpgt_p_p_zz_field_pd_1_poweroftwo_8010_24008011() {
     // Encoding: 0x24008011
     // Test CMPGT_P.P.ZZ__ field Pd = 1 (PowerOfTwo)
-    // Fields: Zm=0, size=0, Pg=0, Zn=0, Pd=1
+    // Fields: Zn=0, Pg=0, Zm=0, size=0, Pd=1
     let encoding: u32 = 0x24008011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9324,12 +11583,17 @@ fn test_cmpgt_p_p_zz_field_pd_1_poweroftwo_8010_24008011() {
 fn test_cmpgt_p_p_zz_combo_0_8010_24008010() {
     // Encoding: 0x24008010
     // Test CMPGT_P.P.ZZ__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Pg=0, size=0, Zm=0, Zn=0, Pd=0
+    // Fields: Pd=0, Zm=0, size=0, Pg=0, Zn=0
     let encoding: u32 = 0x24008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9340,12 +11604,17 @@ fn test_cmpgt_p_p_zz_combo_0_8010_24008010() {
 fn test_cmpgt_p_p_zz_special_size_0_size_variant_0_32784_24008010() {
     // Encoding: 0x24008010
     // Test CMPGT_P.P.ZZ__ special value size = 0 (Size variant 0)
-    // Fields: Zn=0, Pd=0, Pg=0, Zm=0, size=0
+    // Fields: Zn=0, size=0, Zm=0, Pg=0, Pd=0
     let encoding: u32 = 0x24008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9356,12 +11625,17 @@ fn test_cmpgt_p_p_zz_special_size_0_size_variant_0_32784_24008010() {
 fn test_cmpgt_p_p_zz_special_size_1_size_variant_1_32784_24408010() {
     // Encoding: 0x24408010
     // Test CMPGT_P.P.ZZ__ special value size = 1 (Size variant 1)
-    // Fields: size=1, Pd=0, Zm=0, Zn=0, Pg=0
+    // Fields: size=1, Pg=0, Pd=0, Zn=0, Zm=0
     let encoding: u32 = 0x24408010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9372,12 +11646,17 @@ fn test_cmpgt_p_p_zz_special_size_1_size_variant_1_32784_24408010() {
 fn test_cmpgt_p_p_zz_special_size_2_size_variant_2_32784_24808010() {
     // Encoding: 0x24808010
     // Test CMPGT_P.P.ZZ__ special value size = 2 (Size variant 2)
-    // Fields: Pg=0, Pd=0, Zm=0, Zn=0, size=2
+    // Fields: Zm=0, Pg=0, Pd=0, size=2, Zn=0
     let encoding: u32 = 0x24808010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9388,12 +11667,17 @@ fn test_cmpgt_p_p_zz_special_size_2_size_variant_2_32784_24808010() {
 fn test_cmpgt_p_p_zz_special_size_3_size_variant_3_32784_24c08010() {
     // Encoding: 0x24C08010
     // Test CMPGT_P.P.ZZ__ special value size = 3 (Size variant 3)
-    // Fields: Zm=0, Pg=0, Pd=0, size=3, Zn=0
+    // Fields: size=3, Zn=0, Pg=0, Pd=0, Zm=0
     let encoding: u32 = 0x24C08010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9404,12 +11688,16 @@ fn test_cmpgt_p_p_zz_special_size_3_size_variant_3_32784_24c08010() {
 fn test_cmpgt_p_p_zz_invalid_0_8010_24008010() {
     // Encoding: 0x24008010
     // Test CMPGT_P.P.ZZ__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pd=0, size=0, Zn=0, Zm=0, Pg=0
+    // Fields: Zm=0, size=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x24008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZZ__
@@ -9420,12 +11708,16 @@ fn test_cmpgt_p_p_zz_invalid_0_8010_24008010() {
 fn test_cmpgt_p_p_zz_invalid_1_8010_24008010() {
     // Encoding: 0x24008010
     // Test CMPGT_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, Pg=0, Pd=0, Zm=0, Zn=0
+    // Fields: Zn=0, Zm=0, size=0, Pd=0, Pg=0
     let encoding: u32 = 0x24008010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9436,12 +11728,17 @@ fn test_cmpgt_p_p_zz_invalid_1_8010_24008010() {
 fn test_cmpge_p_p_zz_field_size_0_min_8000_24008000() {
     // Encoding: 0x24008000
     // Test CMPGE_P.P.ZZ__ field size = 0 (Min)
-    // Fields: Zm=0, Zn=0, Pd=0, size=0, Pg=0
+    // Fields: size=0, Zm=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x24008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9452,12 +11749,17 @@ fn test_cmpge_p_p_zz_field_size_0_min_8000_24008000() {
 fn test_cmpge_p_p_zz_field_size_1_poweroftwo_8000_24408000() {
     // Encoding: 0x24408000
     // Test CMPGE_P.P.ZZ__ field size = 1 (PowerOfTwo)
-    // Fields: Zm=0, size=1, Pd=0, Pg=0, Zn=0
+    // Fields: Zm=0, Zn=0, Pd=0, size=1, Pg=0
     let encoding: u32 = 0x24408000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9468,12 +11770,17 @@ fn test_cmpge_p_p_zz_field_size_1_poweroftwo_8000_24408000() {
 fn test_cmpge_p_p_zz_field_size_2_poweroftwo_8000_24808000() {
     // Encoding: 0x24808000
     // Test CMPGE_P.P.ZZ__ field size = 2 (PowerOfTwo)
-    // Fields: size=2, Zm=0, Zn=0, Pd=0, Pg=0
+    // Fields: size=2, Zn=0, Zm=0, Pg=0, Pd=0
     let encoding: u32 = 0x24808000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9484,12 +11791,17 @@ fn test_cmpge_p_p_zz_field_size_2_poweroftwo_8000_24808000() {
 fn test_cmpge_p_p_zz_field_size_3_max_8000_24c08000() {
     // Encoding: 0x24C08000
     // Test CMPGE_P.P.ZZ__ field size = 3 (Max)
-    // Fields: Pg=0, size=3, Zn=0, Pd=0, Zm=0
+    // Fields: Pd=0, size=3, Zm=0, Pg=0, Zn=0
     let encoding: u32 = 0x24C08000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9500,12 +11812,17 @@ fn test_cmpge_p_p_zz_field_size_3_max_8000_24c08000() {
 fn test_cmpge_p_p_zz_field_zm_0_min_8000_24008000() {
     // Encoding: 0x24008000
     // Test CMPGE_P.P.ZZ__ field Zm = 0 (Min)
-    // Fields: Zm=0, Pg=0, Zn=0, size=0, Pd=0
+    // Fields: Zm=0, Zn=0, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x24008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9516,12 +11833,17 @@ fn test_cmpge_p_p_zz_field_zm_0_min_8000_24008000() {
 fn test_cmpge_p_p_zz_field_zm_1_poweroftwo_8000_24018000() {
     // Encoding: 0x24018000
     // Test CMPGE_P.P.ZZ__ field Zm = 1 (PowerOfTwo)
-    // Fields: Pd=0, Pg=0, size=0, Zn=0, Zm=1
+    // Fields: Zn=0, Zm=1, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x24018000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9532,12 +11854,17 @@ fn test_cmpge_p_p_zz_field_zm_1_poweroftwo_8000_24018000() {
 fn test_cmpge_p_p_zz_field_zm_30_poweroftwominusone_8000_241e8000() {
     // Encoding: 0x241E8000
     // Test CMPGE_P.P.ZZ__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Zm=30, Pg=0, Zn=0, Pd=0, size=0
+    // Fields: Pd=0, size=0, Zn=0, Zm=30, Pg=0
     let encoding: u32 = 0x241E8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9548,12 +11875,17 @@ fn test_cmpge_p_p_zz_field_zm_30_poweroftwominusone_8000_241e8000() {
 fn test_cmpge_p_p_zz_field_zm_31_max_8000_241f8000() {
     // Encoding: 0x241F8000
     // Test CMPGE_P.P.ZZ__ field Zm = 31 (Max)
-    // Fields: Zn=0, Zm=31, Pg=0, Pd=0, size=0
+    // Fields: Pg=0, Pd=0, Zm=31, size=0, Zn=0
     let encoding: u32 = 0x241F8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9564,12 +11896,17 @@ fn test_cmpge_p_p_zz_field_zm_31_max_8000_241f8000() {
 fn test_cmpge_p_p_zz_field_pg_0_min_8000_24008000() {
     // Encoding: 0x24008000
     // Test CMPGE_P.P.ZZ__ field Pg = 0 (Min)
-    // Fields: Zn=0, Pg=0, size=0, Pd=0, Zm=0
+    // Fields: Zn=0, Pd=0, Zm=0, size=0, Pg=0
     let encoding: u32 = 0x24008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9580,12 +11917,17 @@ fn test_cmpge_p_p_zz_field_pg_0_min_8000_24008000() {
 fn test_cmpge_p_p_zz_field_pg_1_poweroftwo_8000_24008400() {
     // Encoding: 0x24008400
     // Test CMPGE_P.P.ZZ__ field Pg = 1 (PowerOfTwo)
-    // Fields: size=0, Zm=0, Pg=1, Zn=0, Pd=0
+    // Fields: Pd=0, Pg=1, size=0, Zm=0, Zn=0
     let encoding: u32 = 0x24008400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9596,12 +11938,17 @@ fn test_cmpge_p_p_zz_field_pg_1_poweroftwo_8000_24008400() {
 fn test_cmpge_p_p_zz_field_zn_0_min_8000_24008000() {
     // Encoding: 0x24008000
     // Test CMPGE_P.P.ZZ__ field Zn = 0 (Min)
-    // Fields: Zm=0, Pd=0, Zn=0, size=0, Pg=0
+    // Fields: Pg=0, Zn=0, Zm=0, Pd=0, size=0
     let encoding: u32 = 0x24008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9612,12 +11959,17 @@ fn test_cmpge_p_p_zz_field_zn_0_min_8000_24008000() {
 fn test_cmpge_p_p_zz_field_zn_1_poweroftwo_8000_24008020() {
     // Encoding: 0x24008020
     // Test CMPGE_P.P.ZZ__ field Zn = 1 (PowerOfTwo)
-    // Fields: size=0, Pd=0, Zn=1, Pg=0, Zm=0
+    // Fields: Zm=0, Pd=0, Pg=0, size=0, Zn=1
     let encoding: u32 = 0x24008020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9628,12 +11980,17 @@ fn test_cmpge_p_p_zz_field_zn_1_poweroftwo_8000_24008020() {
 fn test_cmpge_p_p_zz_field_zn_30_poweroftwominusone_8000_240083c0() {
     // Encoding: 0x240083C0
     // Test CMPGE_P.P.ZZ__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Pg=0, Zm=0, Zn=30, Pd=0
+    // Fields: Zm=0, size=0, Pg=0, Pd=0, Zn=30
     let encoding: u32 = 0x240083C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9644,12 +12001,17 @@ fn test_cmpge_p_p_zz_field_zn_30_poweroftwominusone_8000_240083c0() {
 fn test_cmpge_p_p_zz_field_zn_31_max_8000_240083e0() {
     // Encoding: 0x240083E0
     // Test CMPGE_P.P.ZZ__ field Zn = 31 (Max)
-    // Fields: size=0, Zm=0, Pg=0, Zn=31, Pd=0
+    // Fields: size=0, Zm=0, Pd=0, Zn=31, Pg=0
     let encoding: u32 = 0x240083E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9660,12 +12022,17 @@ fn test_cmpge_p_p_zz_field_zn_31_max_8000_240083e0() {
 fn test_cmpge_p_p_zz_field_pd_0_min_8000_24008000() {
     // Encoding: 0x24008000
     // Test CMPGE_P.P.ZZ__ field Pd = 0 (Min)
-    // Fields: Pg=0, size=0, Zm=0, Pd=0, Zn=0
+    // Fields: size=0, Pg=0, Zm=0, Pd=0, Zn=0
     let encoding: u32 = 0x24008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9676,12 +12043,17 @@ fn test_cmpge_p_p_zz_field_pd_0_min_8000_24008000() {
 fn test_cmpge_p_p_zz_field_pd_1_poweroftwo_8000_24008001() {
     // Encoding: 0x24008001
     // Test CMPGE_P.P.ZZ__ field Pd = 1 (PowerOfTwo)
-    // Fields: Pd=1, Zm=0, Pg=0, size=0, Zn=0
+    // Fields: Pg=0, size=0, Zm=0, Zn=0, Pd=1
     let encoding: u32 = 0x24008001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9692,12 +12064,17 @@ fn test_cmpge_p_p_zz_field_pd_1_poweroftwo_8000_24008001() {
 fn test_cmpge_p_p_zz_combo_0_8000_24008000() {
     // Encoding: 0x24008000
     // Test CMPGE_P.P.ZZ__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Zn=0, Pd=0, Zm=0, size=0, Pg=0
+    // Fields: Pg=0, Zm=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x24008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9708,12 +12085,17 @@ fn test_cmpge_p_p_zz_combo_0_8000_24008000() {
 fn test_cmpge_p_p_zz_special_size_0_size_variant_0_32768_24008000() {
     // Encoding: 0x24008000
     // Test CMPGE_P.P.ZZ__ special value size = 0 (Size variant 0)
-    // Fields: Zn=0, Pd=0, size=0, Zm=0, Pg=0
+    // Fields: Zm=0, Zn=0, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x24008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9724,12 +12106,17 @@ fn test_cmpge_p_p_zz_special_size_0_size_variant_0_32768_24008000() {
 fn test_cmpge_p_p_zz_special_size_1_size_variant_1_32768_24408000() {
     // Encoding: 0x24408000
     // Test CMPGE_P.P.ZZ__ special value size = 1 (Size variant 1)
-    // Fields: Pd=0, size=1, Pg=0, Zm=0, Zn=0
+    // Fields: size=1, Zm=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x24408000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9740,12 +12127,17 @@ fn test_cmpge_p_p_zz_special_size_1_size_variant_1_32768_24408000() {
 fn test_cmpge_p_p_zz_special_size_2_size_variant_2_32768_24808000() {
     // Encoding: 0x24808000
     // Test CMPGE_P.P.ZZ__ special value size = 2 (Size variant 2)
-    // Fields: Pg=0, Pd=0, Zn=0, size=2, Zm=0
+    // Fields: size=2, Zm=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x24808000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9756,12 +12148,17 @@ fn test_cmpge_p_p_zz_special_size_2_size_variant_2_32768_24808000() {
 fn test_cmpge_p_p_zz_special_size_3_size_variant_3_32768_24c08000() {
     // Encoding: 0x24C08000
     // Test CMPGE_P.P.ZZ__ special value size = 3 (Size variant 3)
-    // Fields: Zn=0, size=3, Pg=0, Zm=0, Pd=0
+    // Fields: Pd=0, Zm=0, Zn=0, size=3, Pg=0
     let encoding: u32 = 0x24C08000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9772,12 +12169,16 @@ fn test_cmpge_p_p_zz_special_size_3_size_variant_3_32768_24c08000() {
 fn test_cmpge_p_p_zz_invalid_0_8000_24008000() {
     // Encoding: 0x24008000
     // Test CMPGE_P.P.ZZ__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: size=0, Pg=0, Zm=0, Pd=0, Zn=0
+    // Fields: Zm=0, Zn=0, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x24008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZZ__
@@ -9788,12 +12189,16 @@ fn test_cmpge_p_p_zz_invalid_0_8000_24008000() {
 fn test_cmpge_p_p_zz_invalid_1_8000_24008000() {
     // Encoding: 0x24008000
     // Test CMPGE_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pd=0, size=0, Zm=0, Pg=0, Zn=0
+    // Fields: Zm=0, Zn=0, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x24008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -9804,12 +12209,17 @@ fn test_cmpge_p_p_zz_invalid_1_8000_24008000() {
 fn test_cmphi_p_p_zz_field_size_0_min_10_24000010() {
     // Encoding: 0x24000010
     // Test CMPHI_P.P.ZZ__ field size = 0 (Min)
-    // Fields: Pg=0, size=0, Zm=0, Zn=0, Pd=0
+    // Fields: Zn=0, Pd=0, size=0, Zm=0, Pg=0
     let encoding: u32 = 0x24000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -9820,12 +12230,17 @@ fn test_cmphi_p_p_zz_field_size_0_min_10_24000010() {
 fn test_cmphi_p_p_zz_field_size_1_poweroftwo_10_24400010() {
     // Encoding: 0x24400010
     // Test CMPHI_P.P.ZZ__ field size = 1 (PowerOfTwo)
-    // Fields: Zm=0, size=1, Pg=0, Zn=0, Pd=0
+    // Fields: size=1, Zn=0, Pd=0, Pg=0, Zm=0
     let encoding: u32 = 0x24400010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -9836,12 +12251,17 @@ fn test_cmphi_p_p_zz_field_size_1_poweroftwo_10_24400010() {
 fn test_cmphi_p_p_zz_field_size_2_poweroftwo_10_24800010() {
     // Encoding: 0x24800010
     // Test CMPHI_P.P.ZZ__ field size = 2 (PowerOfTwo)
-    // Fields: size=2, Zn=0, Pd=0, Pg=0, Zm=0
+    // Fields: Pd=0, Zn=0, size=2, Zm=0, Pg=0
     let encoding: u32 = 0x24800010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -9852,12 +12272,17 @@ fn test_cmphi_p_p_zz_field_size_2_poweroftwo_10_24800010() {
 fn test_cmphi_p_p_zz_field_size_3_max_10_24c00010() {
     // Encoding: 0x24C00010
     // Test CMPHI_P.P.ZZ__ field size = 3 (Max)
-    // Fields: size=3, Pg=0, Pd=0, Zm=0, Zn=0
+    // Fields: Zm=0, Pg=0, Pd=0, Zn=0, size=3
     let encoding: u32 = 0x24C00010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -9868,12 +12293,17 @@ fn test_cmphi_p_p_zz_field_size_3_max_10_24c00010() {
 fn test_cmphi_p_p_zz_field_zm_0_min_10_24000010() {
     // Encoding: 0x24000010
     // Test CMPHI_P.P.ZZ__ field Zm = 0 (Min)
-    // Fields: size=0, Pg=0, Zm=0, Zn=0, Pd=0
+    // Fields: size=0, Zm=0, Zn=0, Pg=0, Pd=0
     let encoding: u32 = 0x24000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -9884,12 +12314,17 @@ fn test_cmphi_p_p_zz_field_zm_0_min_10_24000010() {
 fn test_cmphi_p_p_zz_field_zm_1_poweroftwo_10_24010010() {
     // Encoding: 0x24010010
     // Test CMPHI_P.P.ZZ__ field Zm = 1 (PowerOfTwo)
-    // Fields: Zn=0, Zm=1, size=0, Pd=0, Pg=0
+    // Fields: Zm=1, Pg=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x24010010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -9900,12 +12335,17 @@ fn test_cmphi_p_p_zz_field_zm_1_poweroftwo_10_24010010() {
 fn test_cmphi_p_p_zz_field_zm_30_poweroftwominusone_10_241e0010() {
     // Encoding: 0x241E0010
     // Test CMPHI_P.P.ZZ__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Pg=0, Zn=0, Pd=0, Zm=30
+    // Fields: Zn=0, size=0, Pd=0, Pg=0, Zm=30
     let encoding: u32 = 0x241E0010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -9916,12 +12356,17 @@ fn test_cmphi_p_p_zz_field_zm_30_poweroftwominusone_10_241e0010() {
 fn test_cmphi_p_p_zz_field_zm_31_max_10_241f0010() {
     // Encoding: 0x241F0010
     // Test CMPHI_P.P.ZZ__ field Zm = 31 (Max)
-    // Fields: size=0, Pd=0, Pg=0, Zn=0, Zm=31
+    // Fields: Pg=0, Zm=31, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x241F0010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -9932,12 +12377,17 @@ fn test_cmphi_p_p_zz_field_zm_31_max_10_241f0010() {
 fn test_cmphi_p_p_zz_field_pg_0_min_10_24000010() {
     // Encoding: 0x24000010
     // Test CMPHI_P.P.ZZ__ field Pg = 0 (Min)
-    // Fields: Zm=0, Zn=0, Pg=0, size=0, Pd=0
+    // Fields: Pg=0, Zn=0, Pd=0, size=0, Zm=0
     let encoding: u32 = 0x24000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -9948,12 +12398,17 @@ fn test_cmphi_p_p_zz_field_pg_0_min_10_24000010() {
 fn test_cmphi_p_p_zz_field_pg_1_poweroftwo_10_24000410() {
     // Encoding: 0x24000410
     // Test CMPHI_P.P.ZZ__ field Pg = 1 (PowerOfTwo)
-    // Fields: Zn=0, size=0, Zm=0, Pg=1, Pd=0
+    // Fields: Zn=0, Pg=1, size=0, Zm=0, Pd=0
     let encoding: u32 = 0x24000410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -9964,12 +12419,17 @@ fn test_cmphi_p_p_zz_field_pg_1_poweroftwo_10_24000410() {
 fn test_cmphi_p_p_zz_field_zn_0_min_10_24000010() {
     // Encoding: 0x24000010
     // Test CMPHI_P.P.ZZ__ field Zn = 0 (Min)
-    // Fields: Zn=0, Pg=0, size=0, Zm=0, Pd=0
+    // Fields: size=0, Zn=0, Pg=0, Pd=0, Zm=0
     let encoding: u32 = 0x24000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -9980,12 +12440,17 @@ fn test_cmphi_p_p_zz_field_zn_0_min_10_24000010() {
 fn test_cmphi_p_p_zz_field_zn_1_poweroftwo_10_24000030() {
     // Encoding: 0x24000030
     // Test CMPHI_P.P.ZZ__ field Zn = 1 (PowerOfTwo)
-    // Fields: Pg=0, Zm=0, Pd=0, size=0, Zn=1
+    // Fields: Pg=0, Zn=1, size=0, Pd=0, Zm=0
     let encoding: u32 = 0x24000030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -9996,12 +12461,17 @@ fn test_cmphi_p_p_zz_field_zn_1_poweroftwo_10_24000030() {
 fn test_cmphi_p_p_zz_field_zn_30_poweroftwominusone_10_240003d0() {
     // Encoding: 0x240003D0
     // Test CMPHI_P.P.ZZ__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Zm=0, Zn=30, size=0, Pg=0, Pd=0
+    // Fields: Pd=0, Zm=0, Zn=30, size=0, Pg=0
     let encoding: u32 = 0x240003D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -10012,12 +12482,17 @@ fn test_cmphi_p_p_zz_field_zn_30_poweroftwominusone_10_240003d0() {
 fn test_cmphi_p_p_zz_field_zn_31_max_10_240003f0() {
     // Encoding: 0x240003F0
     // Test CMPHI_P.P.ZZ__ field Zn = 31 (Max)
-    // Fields: Pd=0, size=0, Zn=31, Pg=0, Zm=0
+    // Fields: Zm=0, Zn=31, Pd=0, Pg=0, size=0
     let encoding: u32 = 0x240003F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -10028,12 +12503,17 @@ fn test_cmphi_p_p_zz_field_zn_31_max_10_240003f0() {
 fn test_cmphi_p_p_zz_field_pd_0_min_10_24000010() {
     // Encoding: 0x24000010
     // Test CMPHI_P.P.ZZ__ field Pd = 0 (Min)
-    // Fields: Pg=0, Pd=0, size=0, Zm=0, Zn=0
+    // Fields: Zm=0, size=0, Zn=0, Pg=0, Pd=0
     let encoding: u32 = 0x24000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -10044,12 +12524,17 @@ fn test_cmphi_p_p_zz_field_pd_0_min_10_24000010() {
 fn test_cmphi_p_p_zz_field_pd_1_poweroftwo_10_24000011() {
     // Encoding: 0x24000011
     // Test CMPHI_P.P.ZZ__ field Pd = 1 (PowerOfTwo)
-    // Fields: Pg=0, Zm=0, Pd=1, size=0, Zn=0
+    // Fields: size=0, Pd=1, Pg=0, Zn=0, Zm=0
     let encoding: u32 = 0x24000011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -10060,12 +12545,17 @@ fn test_cmphi_p_p_zz_field_pd_1_poweroftwo_10_24000011() {
 fn test_cmphi_p_p_zz_combo_0_10_24000010() {
     // Encoding: 0x24000010
     // Test CMPHI_P.P.ZZ__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Zm=0, Pg=0, size=0, Pd=0, Zn=0
+    // Fields: Zn=0, Pd=0, Zm=0, size=0, Pg=0
     let encoding: u32 = 0x24000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -10076,12 +12566,17 @@ fn test_cmphi_p_p_zz_combo_0_10_24000010() {
 fn test_cmphi_p_p_zz_special_size_0_size_variant_0_16_24000010() {
     // Encoding: 0x24000010
     // Test CMPHI_P.P.ZZ__ special value size = 0 (Size variant 0)
-    // Fields: Zn=0, Zm=0, Pd=0, Pg=0, size=0
+    // Fields: Zm=0, Pg=0, Zn=0, size=0, Pd=0
     let encoding: u32 = 0x24000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -10092,12 +12587,17 @@ fn test_cmphi_p_p_zz_special_size_0_size_variant_0_16_24000010() {
 fn test_cmphi_p_p_zz_special_size_1_size_variant_1_16_24400010() {
     // Encoding: 0x24400010
     // Test CMPHI_P.P.ZZ__ special value size = 1 (Size variant 1)
-    // Fields: Zn=0, Pd=0, size=1, Zm=0, Pg=0
+    // Fields: Zm=0, Pg=0, size=1, Zn=0, Pd=0
     let encoding: u32 = 0x24400010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -10108,12 +12608,17 @@ fn test_cmphi_p_p_zz_special_size_1_size_variant_1_16_24400010() {
 fn test_cmphi_p_p_zz_special_size_2_size_variant_2_16_24800010() {
     // Encoding: 0x24800010
     // Test CMPHI_P.P.ZZ__ special value size = 2 (Size variant 2)
-    // Fields: Zm=0, size=2, Zn=0, Pd=0, Pg=0
+    // Fields: size=2, Zm=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x24800010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -10124,12 +12629,17 @@ fn test_cmphi_p_p_zz_special_size_2_size_variant_2_16_24800010() {
 fn test_cmphi_p_p_zz_special_size_3_size_variant_3_16_24c00010() {
     // Encoding: 0x24C00010
     // Test CMPHI_P.P.ZZ__ special value size = 3 (Size variant 3)
-    // Fields: size=3, Pg=0, Pd=0, Zn=0, Zm=0
+    // Fields: Pg=0, Zn=0, size=3, Zm=0, Pd=0
     let encoding: u32 = 0x24C00010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -10140,12 +12650,16 @@ fn test_cmphi_p_p_zz_special_size_3_size_variant_3_16_24c00010() {
 fn test_cmphi_p_p_zz_invalid_0_10_24000010() {
     // Encoding: 0x24000010
     // Test CMPHI_P.P.ZZ__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pg=0, Zn=0, size=0, Zm=0, Pd=0
+    // Fields: Zm=0, Pd=0, Zn=0, size=0, Pg=0
     let encoding: u32 = 0x24000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZZ__
@@ -10156,12 +12670,16 @@ fn test_cmphi_p_p_zz_invalid_0_10_24000010() {
 fn test_cmphi_p_p_zz_invalid_1_10_24000010() {
     // Encoding: 0x24000010
     // Test CMPHI_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, Zm=0, Zn=0, Pd=0, Pg=0
+    // Fields: size=0, Pd=0, Zm=0, Zn=0, Pg=0
     let encoding: u32 = 0x24000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10172,12 +12690,17 @@ fn test_cmphi_p_p_zz_invalid_1_10_24000010() {
 fn test_cmphs_p_p_zz_field_size_0_min_0_24000000() {
     // Encoding: 0x24000000
     // Test CMPHS_P.P.ZZ__ field size = 0 (Min)
-    // Fields: size=0, Zm=0, Pg=0, Pd=0, Zn=0
+    // Fields: size=0, Pg=0, Pd=0, Zm=0, Zn=0
     let encoding: u32 = 0x24000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10188,12 +12711,17 @@ fn test_cmphs_p_p_zz_field_size_0_min_0_24000000() {
 fn test_cmphs_p_p_zz_field_size_1_poweroftwo_0_24400000() {
     // Encoding: 0x24400000
     // Test CMPHS_P.P.ZZ__ field size = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zm=0, size=1, Zn=0, Pg=0
+    // Fields: size=1, Pd=0, Zm=0, Pg=0, Zn=0
     let encoding: u32 = 0x24400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10204,12 +12732,17 @@ fn test_cmphs_p_p_zz_field_size_1_poweroftwo_0_24400000() {
 fn test_cmphs_p_p_zz_field_size_2_poweroftwo_0_24800000() {
     // Encoding: 0x24800000
     // Test CMPHS_P.P.ZZ__ field size = 2 (PowerOfTwo)
-    // Fields: Zn=0, Zm=0, size=2, Pg=0, Pd=0
+    // Fields: size=2, Zm=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x24800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10220,12 +12753,17 @@ fn test_cmphs_p_p_zz_field_size_2_poweroftwo_0_24800000() {
 fn test_cmphs_p_p_zz_field_size_3_max_0_24c00000() {
     // Encoding: 0x24C00000
     // Test CMPHS_P.P.ZZ__ field size = 3 (Max)
-    // Fields: Zm=0, Pg=0, size=3, Zn=0, Pd=0
+    // Fields: Zm=0, Zn=0, Pg=0, Pd=0, size=3
     let encoding: u32 = 0x24C00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10241,7 +12779,12 @@ fn test_cmphs_p_p_zz_field_zm_0_min_0_24000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10252,12 +12795,17 @@ fn test_cmphs_p_p_zz_field_zm_0_min_0_24000000() {
 fn test_cmphs_p_p_zz_field_zm_1_poweroftwo_0_24010000() {
     // Encoding: 0x24010000
     // Test CMPHS_P.P.ZZ__ field Zm = 1 (PowerOfTwo)
-    // Fields: Pg=0, Zm=1, Zn=0, Pd=0, size=0
+    // Fields: Pg=0, Zn=0, Pd=0, size=0, Zm=1
     let encoding: u32 = 0x24010000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10268,12 +12816,17 @@ fn test_cmphs_p_p_zz_field_zm_1_poweroftwo_0_24010000() {
 fn test_cmphs_p_p_zz_field_zm_30_poweroftwominusone_0_241e0000() {
     // Encoding: 0x241E0000
     // Test CMPHS_P.P.ZZ__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, size=0, Zm=30, Pg=0, Zn=0
+    // Fields: Zm=30, size=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x241E0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10284,12 +12837,17 @@ fn test_cmphs_p_p_zz_field_zm_30_poweroftwominusone_0_241e0000() {
 fn test_cmphs_p_p_zz_field_zm_31_max_0_241f0000() {
     // Encoding: 0x241F0000
     // Test CMPHS_P.P.ZZ__ field Zm = 31 (Max)
-    // Fields: Zn=0, Pd=0, Pg=0, size=0, Zm=31
+    // Fields: Pg=0, Pd=0, Zm=31, Zn=0, size=0
     let encoding: u32 = 0x241F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10300,12 +12858,17 @@ fn test_cmphs_p_p_zz_field_zm_31_max_0_241f0000() {
 fn test_cmphs_p_p_zz_field_pg_0_min_0_24000000() {
     // Encoding: 0x24000000
     // Test CMPHS_P.P.ZZ__ field Pg = 0 (Min)
-    // Fields: Zm=0, size=0, Zn=0, Pd=0, Pg=0
+    // Fields: Pg=0, size=0, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x24000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10316,12 +12879,17 @@ fn test_cmphs_p_p_zz_field_pg_0_min_0_24000000() {
 fn test_cmphs_p_p_zz_field_pg_1_poweroftwo_0_24000400() {
     // Encoding: 0x24000400
     // Test CMPHS_P.P.ZZ__ field Pg = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pg=1, size=0, Pd=0, Zm=0
+    // Fields: Zn=0, Pd=0, Pg=1, size=0, Zm=0
     let encoding: u32 = 0x24000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10332,12 +12900,17 @@ fn test_cmphs_p_p_zz_field_pg_1_poweroftwo_0_24000400() {
 fn test_cmphs_p_p_zz_field_zn_0_min_0_24000000() {
     // Encoding: 0x24000000
     // Test CMPHS_P.P.ZZ__ field Zn = 0 (Min)
-    // Fields: size=0, Zm=0, Zn=0, Pd=0, Pg=0
+    // Fields: Zm=0, Pd=0, size=0, Pg=0, Zn=0
     let encoding: u32 = 0x24000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10348,12 +12921,17 @@ fn test_cmphs_p_p_zz_field_zn_0_min_0_24000000() {
 fn test_cmphs_p_p_zz_field_zn_1_poweroftwo_0_24000020() {
     // Encoding: 0x24000020
     // Test CMPHS_P.P.ZZ__ field Zn = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zn=1, Pg=0, Zm=0, size=0
+    // Fields: Pg=0, Pd=0, Zm=0, size=0, Zn=1
     let encoding: u32 = 0x24000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10364,12 +12942,17 @@ fn test_cmphs_p_p_zz_field_zn_1_poweroftwo_0_24000020() {
 fn test_cmphs_p_p_zz_field_zn_30_poweroftwominusone_0_240003c0() {
     // Encoding: 0x240003C0
     // Test CMPHS_P.P.ZZ__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Zm=0, Pg=0, Pd=0, Zn=30
+    // Fields: Zn=30, Pd=0, size=0, Zm=0, Pg=0
     let encoding: u32 = 0x240003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10380,12 +12963,17 @@ fn test_cmphs_p_p_zz_field_zn_30_poweroftwominusone_0_240003c0() {
 fn test_cmphs_p_p_zz_field_zn_31_max_0_240003e0() {
     // Encoding: 0x240003E0
     // Test CMPHS_P.P.ZZ__ field Zn = 31 (Max)
-    // Fields: Zn=31, size=0, Pg=0, Zm=0, Pd=0
+    // Fields: Zn=31, Pg=0, Pd=0, Zm=0, size=0
     let encoding: u32 = 0x240003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10396,12 +12984,17 @@ fn test_cmphs_p_p_zz_field_zn_31_max_0_240003e0() {
 fn test_cmphs_p_p_zz_field_pd_0_min_0_24000000() {
     // Encoding: 0x24000000
     // Test CMPHS_P.P.ZZ__ field Pd = 0 (Min)
-    // Fields: size=0, Zm=0, Pd=0, Zn=0, Pg=0
+    // Fields: Pd=0, Zm=0, Pg=0, Zn=0, size=0
     let encoding: u32 = 0x24000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10412,12 +13005,17 @@ fn test_cmphs_p_p_zz_field_pd_0_min_0_24000000() {
 fn test_cmphs_p_p_zz_field_pd_1_poweroftwo_0_24000001() {
     // Encoding: 0x24000001
     // Test CMPHS_P.P.ZZ__ field Pd = 1 (PowerOfTwo)
-    // Fields: Zm=0, size=0, Pg=0, Pd=1, Zn=0
+    // Fields: Zn=0, Pd=1, Zm=0, Pg=0, size=0
     let encoding: u32 = 0x24000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10428,12 +13026,17 @@ fn test_cmphs_p_p_zz_field_pd_1_poweroftwo_0_24000001() {
 fn test_cmphs_p_p_zz_combo_0_0_24000000() {
     // Encoding: 0x24000000
     // Test CMPHS_P.P.ZZ__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Pg=0, Zm=0, Zn=0, Pd=0, size=0
+    // Fields: Pd=0, Zn=0, Zm=0, size=0, Pg=0
     let encoding: u32 = 0x24000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10444,12 +13047,17 @@ fn test_cmphs_p_p_zz_combo_0_0_24000000() {
 fn test_cmphs_p_p_zz_special_size_0_size_variant_0_0_24000000() {
     // Encoding: 0x24000000
     // Test CMPHS_P.P.ZZ__ special value size = 0 (Size variant 0)
-    // Fields: Zn=0, Pg=0, Pd=0, Zm=0, size=0
+    // Fields: Zn=0, Pg=0, size=0, Zm=0, Pd=0
     let encoding: u32 = 0x24000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10460,12 +13068,17 @@ fn test_cmphs_p_p_zz_special_size_0_size_variant_0_0_24000000() {
 fn test_cmphs_p_p_zz_special_size_1_size_variant_1_0_24400000() {
     // Encoding: 0x24400000
     // Test CMPHS_P.P.ZZ__ special value size = 1 (Size variant 1)
-    // Fields: Zm=0, Pg=0, size=1, Pd=0, Zn=0
+    // Fields: Pg=0, size=1, Zm=0, Zn=0, Pd=0
     let encoding: u32 = 0x24400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10476,12 +13089,17 @@ fn test_cmphs_p_p_zz_special_size_1_size_variant_1_0_24400000() {
 fn test_cmphs_p_p_zz_special_size_2_size_variant_2_0_24800000() {
     // Encoding: 0x24800000
     // Test CMPHS_P.P.ZZ__ special value size = 2 (Size variant 2)
-    // Fields: Pg=0, Zn=0, size=2, Pd=0, Zm=0
+    // Fields: Pg=0, size=2, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x24800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10492,12 +13110,17 @@ fn test_cmphs_p_p_zz_special_size_2_size_variant_2_0_24800000() {
 fn test_cmphs_p_p_zz_special_size_3_size_variant_3_0_24c00000() {
     // Encoding: 0x24C00000
     // Test CMPHS_P.P.ZZ__ special value size = 3 (Size variant 3)
-    // Fields: Zm=0, Pg=0, Zn=0, Pd=0, size=3
+    // Fields: size=3, Zn=0, Zm=0, Pd=0, Pg=0
     let encoding: u32 = 0x24C00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10508,12 +13131,16 @@ fn test_cmphs_p_p_zz_special_size_3_size_variant_3_0_24c00000() {
 fn test_cmphs_p_p_zz_invalid_0_0_24000000() {
     // Encoding: 0x24000000
     // Test CMPHS_P.P.ZZ__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Zm=0, size=0, Pd=0, Pg=0, Zn=0
+    // Fields: Pd=0, Zm=0, Zn=0, Pg=0, size=0
     let encoding: u32 = 0x24000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZZ__
@@ -10524,12 +13151,16 @@ fn test_cmphs_p_p_zz_invalid_0_0_24000000() {
 fn test_cmphs_p_p_zz_invalid_1_0_24000000() {
     // Encoding: 0x24000000
     // Test CMPHS_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, size=0, Pd=0, Zm=0, Zn=0
+    // Fields: size=0, Zm=0, Pd=0, Zn=0, Pg=0
     let encoding: u32 = 0x24000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10540,12 +13171,17 @@ fn test_cmphs_p_p_zz_invalid_1_0_24000000() {
 fn test_cmpne_p_p_zz_field_size_0_min_a010_2400a010() {
     // Encoding: 0x2400A010
     // Test CMPNE_P.P.ZZ__ field size = 0 (Min)
-    // Fields: size=0, Zm=0, Pg=0, Zn=0, Pd=0
+    // Fields: Pg=0, size=0, Zm=0, Zn=0, Pd=0
     let encoding: u32 = 0x2400A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10556,12 +13192,17 @@ fn test_cmpne_p_p_zz_field_size_0_min_a010_2400a010() {
 fn test_cmpne_p_p_zz_field_size_1_poweroftwo_a010_2440a010() {
     // Encoding: 0x2440A010
     // Test CMPNE_P.P.ZZ__ field size = 1 (PowerOfTwo)
-    // Fields: Pd=0, size=1, Zn=0, Pg=0, Zm=0
+    // Fields: size=1, Pg=0, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x2440A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10572,12 +13213,17 @@ fn test_cmpne_p_p_zz_field_size_1_poweroftwo_a010_2440a010() {
 fn test_cmpne_p_p_zz_field_size_2_poweroftwo_a010_2480a010() {
     // Encoding: 0x2480A010
     // Test CMPNE_P.P.ZZ__ field size = 2 (PowerOfTwo)
-    // Fields: Pg=0, Zm=0, Zn=0, Pd=0, size=2
+    // Fields: Zm=0, size=2, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x2480A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10588,12 +13234,17 @@ fn test_cmpne_p_p_zz_field_size_2_poweroftwo_a010_2480a010() {
 fn test_cmpne_p_p_zz_field_size_3_max_a010_24c0a010() {
     // Encoding: 0x24C0A010
     // Test CMPNE_P.P.ZZ__ field size = 3 (Max)
-    // Fields: Zm=0, Pd=0, Zn=0, size=3, Pg=0
+    // Fields: Pg=0, Zn=0, Zm=0, size=3, Pd=0
     let encoding: u32 = 0x24C0A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10604,12 +13255,17 @@ fn test_cmpne_p_p_zz_field_size_3_max_a010_24c0a010() {
 fn test_cmpne_p_p_zz_field_zm_0_min_a010_2400a010() {
     // Encoding: 0x2400A010
     // Test CMPNE_P.P.ZZ__ field Zm = 0 (Min)
-    // Fields: Zn=0, Pd=0, size=0, Pg=0, Zm=0
+    // Fields: Pg=0, size=0, Zm=0, Pd=0, Zn=0
     let encoding: u32 = 0x2400A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10620,12 +13276,17 @@ fn test_cmpne_p_p_zz_field_zm_0_min_a010_2400a010() {
 fn test_cmpne_p_p_zz_field_zm_1_poweroftwo_a010_2401a010() {
     // Encoding: 0x2401A010
     // Test CMPNE_P.P.ZZ__ field Zm = 1 (PowerOfTwo)
-    // Fields: Pg=0, size=0, Zm=1, Zn=0, Pd=0
+    // Fields: Pg=0, Zm=1, Zn=0, size=0, Pd=0
     let encoding: u32 = 0x2401A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10636,12 +13297,17 @@ fn test_cmpne_p_p_zz_field_zm_1_poweroftwo_a010_2401a010() {
 fn test_cmpne_p_p_zz_field_zm_30_poweroftwominusone_a010_241ea010() {
     // Encoding: 0x241EA010
     // Test CMPNE_P.P.ZZ__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, Pd=0, Zm=30, size=0, Zn=0
+    // Fields: Zn=0, size=0, Pd=0, Zm=30, Pg=0
     let encoding: u32 = 0x241EA010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10652,12 +13318,17 @@ fn test_cmpne_p_p_zz_field_zm_30_poweroftwominusone_a010_241ea010() {
 fn test_cmpne_p_p_zz_field_zm_31_max_a010_241fa010() {
     // Encoding: 0x241FA010
     // Test CMPNE_P.P.ZZ__ field Zm = 31 (Max)
-    // Fields: Pg=0, Zn=0, Zm=31, size=0, Pd=0
+    // Fields: size=0, Zm=31, Pd=0, Zn=0, Pg=0
     let encoding: u32 = 0x241FA010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10668,12 +13339,17 @@ fn test_cmpne_p_p_zz_field_zm_31_max_a010_241fa010() {
 fn test_cmpne_p_p_zz_field_pg_0_min_a010_2400a010() {
     // Encoding: 0x2400A010
     // Test CMPNE_P.P.ZZ__ field Pg = 0 (Min)
-    // Fields: Zm=0, Pg=0, Zn=0, Pd=0, size=0
+    // Fields: Zn=0, Pd=0, size=0, Zm=0, Pg=0
     let encoding: u32 = 0x2400A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10684,12 +13360,17 @@ fn test_cmpne_p_p_zz_field_pg_0_min_a010_2400a010() {
 fn test_cmpne_p_p_zz_field_pg_1_poweroftwo_a010_2400a410() {
     // Encoding: 0x2400A410
     // Test CMPNE_P.P.ZZ__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pd=0, Pg=1, Zn=0, size=0, Zm=0
+    // Fields: Pg=1, Pd=0, size=0, Zn=0, Zm=0
     let encoding: u32 = 0x2400A410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10700,12 +13381,17 @@ fn test_cmpne_p_p_zz_field_pg_1_poweroftwo_a010_2400a410() {
 fn test_cmpne_p_p_zz_field_zn_0_min_a010_2400a010() {
     // Encoding: 0x2400A010
     // Test CMPNE_P.P.ZZ__ field Zn = 0 (Min)
-    // Fields: Zn=0, Pg=0, Pd=0, size=0, Zm=0
+    // Fields: Zm=0, size=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x2400A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10716,12 +13402,17 @@ fn test_cmpne_p_p_zz_field_zn_0_min_a010_2400a010() {
 fn test_cmpne_p_p_zz_field_zn_1_poweroftwo_a010_2400a030() {
     // Encoding: 0x2400A030
     // Test CMPNE_P.P.ZZ__ field Zn = 1 (PowerOfTwo)
-    // Fields: Zm=0, Zn=1, Pd=0, Pg=0, size=0
+    // Fields: Pd=0, size=0, Zn=1, Pg=0, Zm=0
     let encoding: u32 = 0x2400A030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10732,12 +13423,17 @@ fn test_cmpne_p_p_zz_field_zn_1_poweroftwo_a010_2400a030() {
 fn test_cmpne_p_p_zz_field_zn_30_poweroftwominusone_a010_2400a3d0() {
     // Encoding: 0x2400A3D0
     // Test CMPNE_P.P.ZZ__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Zn=30, Pd=0, Pg=0, size=0, Zm=0
+    // Fields: Zm=0, Pd=0, size=0, Zn=30, Pg=0
     let encoding: u32 = 0x2400A3D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10748,12 +13444,17 @@ fn test_cmpne_p_p_zz_field_zn_30_poweroftwominusone_a010_2400a3d0() {
 fn test_cmpne_p_p_zz_field_zn_31_max_a010_2400a3f0() {
     // Encoding: 0x2400A3F0
     // Test CMPNE_P.P.ZZ__ field Zn = 31 (Max)
-    // Fields: size=0, Zm=0, Zn=31, Pd=0, Pg=0
+    // Fields: Zm=0, size=0, Zn=31, Pd=0, Pg=0
     let encoding: u32 = 0x2400A3F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10764,12 +13465,17 @@ fn test_cmpne_p_p_zz_field_zn_31_max_a010_2400a3f0() {
 fn test_cmpne_p_p_zz_field_pd_0_min_a010_2400a010() {
     // Encoding: 0x2400A010
     // Test CMPNE_P.P.ZZ__ field Pd = 0 (Min)
-    // Fields: Pd=0, Pg=0, size=0, Zm=0, Zn=0
+    // Fields: Pd=0, size=0, Zm=0, Pg=0, Zn=0
     let encoding: u32 = 0x2400A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10780,12 +13486,17 @@ fn test_cmpne_p_p_zz_field_pd_0_min_a010_2400a010() {
 fn test_cmpne_p_p_zz_field_pd_1_poweroftwo_a010_2400a011() {
     // Encoding: 0x2400A011
     // Test CMPNE_P.P.ZZ__ field Pd = 1 (PowerOfTwo)
-    // Fields: size=0, Zm=0, Pg=0, Zn=0, Pd=1
+    // Fields: Zm=0, Zn=0, size=0, Pd=1, Pg=0
     let encoding: u32 = 0x2400A011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10796,12 +13507,17 @@ fn test_cmpne_p_p_zz_field_pd_1_poweroftwo_a010_2400a011() {
 fn test_cmpne_p_p_zz_combo_0_a010_2400a010() {
     // Encoding: 0x2400A010
     // Test CMPNE_P.P.ZZ__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: size=0, Pg=0, Zm=0, Zn=0, Pd=0
+    // Fields: Pg=0, Zn=0, Pd=0, size=0, Zm=0
     let encoding: u32 = 0x2400A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10812,12 +13528,17 @@ fn test_cmpne_p_p_zz_combo_0_a010_2400a010() {
 fn test_cmpne_p_p_zz_special_size_0_size_variant_0_40976_2400a010() {
     // Encoding: 0x2400A010
     // Test CMPNE_P.P.ZZ__ special value size = 0 (Size variant 0)
-    // Fields: Zn=0, Pg=0, Zm=0, Pd=0, size=0
+    // Fields: Pg=0, size=0, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x2400A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10828,12 +13549,17 @@ fn test_cmpne_p_p_zz_special_size_0_size_variant_0_40976_2400a010() {
 fn test_cmpne_p_p_zz_special_size_1_size_variant_1_40976_2440a010() {
     // Encoding: 0x2440A010
     // Test CMPNE_P.P.ZZ__ special value size = 1 (Size variant 1)
-    // Fields: Pg=0, size=1, Zm=0, Zn=0, Pd=0
+    // Fields: Zm=0, Pg=0, Pd=0, Zn=0, size=1
     let encoding: u32 = 0x2440A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10844,12 +13570,17 @@ fn test_cmpne_p_p_zz_special_size_1_size_variant_1_40976_2440a010() {
 fn test_cmpne_p_p_zz_special_size_2_size_variant_2_40976_2480a010() {
     // Encoding: 0x2480A010
     // Test CMPNE_P.P.ZZ__ special value size = 2 (Size variant 2)
-    // Fields: Zm=0, Pg=0, size=2, Zn=0, Pd=0
+    // Fields: Zm=0, Zn=0, size=2, Pg=0, Pd=0
     let encoding: u32 = 0x2480A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10860,12 +13591,17 @@ fn test_cmpne_p_p_zz_special_size_2_size_variant_2_40976_2480a010() {
 fn test_cmpne_p_p_zz_special_size_3_size_variant_3_40976_24c0a010() {
     // Encoding: 0x24C0A010
     // Test CMPNE_P.P.ZZ__ special value size = 3 (Size variant 3)
-    // Fields: Zn=0, Pd=0, size=3, Pg=0, Zm=0
+    // Fields: Pd=0, size=3, Zm=0, Zn=0, Pg=0
     let encoding: u32 = 0x24C0A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10876,12 +13612,16 @@ fn test_cmpne_p_p_zz_special_size_3_size_variant_3_40976_24c0a010() {
 fn test_cmpne_p_p_zz_invalid_0_a010_2400a010() {
     // Encoding: 0x2400A010
     // Test CMPNE_P.P.ZZ__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Zn=0, size=0, Pd=0, Pg=0, Zm=0
+    // Fields: Pg=0, size=0, Pd=0, Zm=0, Zn=0
     let encoding: u32 = 0x2400A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZZ__
@@ -10892,12 +13632,16 @@ fn test_cmpne_p_p_zz_invalid_0_a010_2400a010() {
 fn test_cmpne_p_p_zz_invalid_1_a010_2400a010() {
     // Encoding: 0x2400A010
     // Test CMPNE_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zn=0, Pg=0, Pd=0, size=0, Zm=0
+    // Fields: Zm=0, Pg=0, Pd=0, size=0, Zn=0
     let encoding: u32 = 0x2400A010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZZ__
@@ -11128,8 +13872,8 @@ fn test_cmpgt_p_p_zz_flags_zeroresult_1_24008010() {
     // Test CMPGT_P.P.ZZ__ flag computation: ZeroResult
     // Encoding: 0x24008010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x1);
     let encoding: u32 = 0x24008010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11170,8 +13914,8 @@ fn test_cmpgt_p_p_zz_flags_unsignedoverflow_3_24008010() {
     // Test CMPGT_P.P.ZZ__ flag computation: UnsignedOverflow
     // Encoding: 0x24008010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x24008010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11191,8 +13935,8 @@ fn test_cmpgt_p_p_zz_flags_unsignedoverflow_4_24008010() {
     // Test CMPGT_P.P.ZZ__ flag computation: UnsignedOverflow
     // Encoding: 0x24008010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x2);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24008010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11233,8 +13977,8 @@ fn test_cmpgt_p_p_zz_flags_signedoverflow_6_24008010() {
     // Test CMPGT_P.P.ZZ__ flag computation: SignedOverflow
     // Encoding: 0x24008010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x24008010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11290,8 +14034,8 @@ fn test_cmpge_p_p_zz_flags_zeroresult_0_24008000() {
     // Test CMPGE_P.P.ZZ__ flag computation: ZeroResult
     // Encoding: 0x24008000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x0);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x0);
     let encoding: u32 = 0x24008000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11311,8 +14055,8 @@ fn test_cmpge_p_p_zz_flags_zeroresult_1_24008000() {
     // Test CMPGE_P.P.ZZ__ flag computation: ZeroResult
     // Encoding: 0x24008000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x1);
     let encoding: u32 = 0x24008000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11374,8 +14118,8 @@ fn test_cmpge_p_p_zz_flags_unsignedoverflow_4_24008000() {
     // Test CMPGE_P.P.ZZ__ flag computation: UnsignedOverflow
     // Encoding: 0x24008000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x2);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24008000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11395,8 +14139,8 @@ fn test_cmpge_p_p_zz_flags_signedoverflow_5_24008000() {
     // Test CMPGE_P.P.ZZ__ flag computation: SignedOverflow
     // Encoding: 0x24008000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24008000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11437,8 +14181,8 @@ fn test_cmpge_p_p_zz_flags_positiveresult_7_24008000() {
     // Test CMPGE_P.P.ZZ__ flag computation: PositiveResult
     // Encoding: 0x24008000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x64);
     set_x(&mut cpu, 2, 0x32);
+    set_x(&mut cpu, 1, 0x64);
     let encoding: u32 = 0x24008000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11473,8 +14217,8 @@ fn test_cmphi_p_p_zz_flags_zeroresult_0_24000010() {
     // Test CMPHI_P.P.ZZ__ flag computation: ZeroResult
     // Encoding: 0x24000010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x0);
     set_x(&mut cpu, 1, 0x0);
+    set_x(&mut cpu, 2, 0x0);
     let encoding: u32 = 0x24000010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11515,8 +14259,8 @@ fn test_cmphi_p_p_zz_flags_negativeresult_2_24000010() {
     // Test CMPHI_P.P.ZZ__ flag computation: NegativeResult
     // Encoding: 0x24000010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x0);
     set_x(&mut cpu, 1, 0x8000000000000000);
+    set_x(&mut cpu, 2, 0x0);
     let encoding: u32 = 0x24000010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11557,8 +14301,8 @@ fn test_cmphi_p_p_zz_flags_unsignedoverflow_4_24000010() {
     // Test CMPHI_P.P.ZZ__ flag computation: UnsignedOverflow
     // Encoding: 0x24000010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x2);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x2);
     let encoding: u32 = 0x24000010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11656,8 +14400,8 @@ fn test_cmphs_p_p_zz_flags_zeroresult_0_24000000() {
     // Test CMPHS_P.P.ZZ__ flag computation: ZeroResult
     // Encoding: 0x24000000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x0);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x0);
     let encoding: u32 = 0x24000000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11677,8 +14421,8 @@ fn test_cmphs_p_p_zz_flags_zeroresult_1_24000000() {
     // Test CMPHS_P.P.ZZ__ flag computation: ZeroResult
     // Encoding: 0x24000000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x1);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24000000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11740,8 +14484,8 @@ fn test_cmphs_p_p_zz_flags_unsignedoverflow_4_24000000() {
     // Test CMPHS_P.P.ZZ__ flag computation: UnsignedOverflow
     // Encoding: 0x24000000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x2);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24000000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11839,8 +14583,8 @@ fn test_cmpne_p_p_zz_flags_zeroresult_0_2400a010() {
     // Test CMPNE_P.P.ZZ__ flag computation: ZeroResult
     // Encoding: 0x2400A010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x0);
     set_x(&mut cpu, 1, 0x0);
+    set_x(&mut cpu, 2, 0x0);
     let encoding: u32 = 0x2400A010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11860,8 +14604,8 @@ fn test_cmpne_p_p_zz_flags_zeroresult_1_2400a010() {
     // Test CMPNE_P.P.ZZ__ flag computation: ZeroResult
     // Encoding: 0x2400A010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x1);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x2400A010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11902,8 +14646,8 @@ fn test_cmpne_p_p_zz_flags_unsignedoverflow_3_2400a010() {
     // Test CMPNE_P.P.ZZ__ flag computation: UnsignedOverflow
     // Encoding: 0x2400A010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x2400A010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11923,8 +14667,8 @@ fn test_cmpne_p_p_zz_flags_unsignedoverflow_4_2400a010() {
     // Test CMPNE_P.P.ZZ__ flag computation: UnsignedOverflow
     // Encoding: 0x2400A010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x2);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x2);
     let encoding: u32 = 0x2400A010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11944,8 +14688,8 @@ fn test_cmpne_p_p_zz_flags_signedoverflow_5_2400a010() {
     // Test CMPNE_P.P.ZZ__ flag computation: SignedOverflow
     // Encoding: 0x2400A010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x2400A010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11986,8 +14730,8 @@ fn test_cmpne_p_p_zz_flags_positiveresult_7_2400a010() {
     // Test CMPNE_P.P.ZZ__ flag computation: PositiveResult
     // Encoding: 0x2400A010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x32);
     set_x(&mut cpu, 1, 0x64);
+    set_x(&mut cpu, 2, 0x32);
     let encoding: u32 = 0x2400A010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -12010,12 +14754,17 @@ fn test_cmpne_p_p_zz_flags_positiveresult_7_2400a010() {
 fn test_fcmla_z_zzzi_h_field_i2_0_min_1000_64a01000() {
     // Encoding: 0x64A01000
     // Test FCMLA_Z.ZZZi_H field i2 = 0 (Min)
-    // Fields: Zn=0, rot=0, Zda=0, i2=0, Zm=0
+    // Fields: i2=0, Zn=0, Zm=0, Zda=0, rot=0
     let encoding: u32 = 0x64A01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12026,12 +14775,17 @@ fn test_fcmla_z_zzzi_h_field_i2_0_min_1000_64a01000() {
 fn test_fcmla_z_zzzi_h_field_i2_1_poweroftwo_1000_64a81000() {
     // Encoding: 0x64A81000
     // Test FCMLA_Z.ZZZi_H field i2 = 1 (PowerOfTwo)
-    // Fields: i2=1, Zn=0, Zda=0, rot=0, Zm=0
+    // Fields: Zn=0, rot=0, i2=1, Zm=0, Zda=0
     let encoding: u32 = 0x64A81000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12042,12 +14796,17 @@ fn test_fcmla_z_zzzi_h_field_i2_1_poweroftwo_1000_64a81000() {
 fn test_fcmla_z_zzzi_h_field_i2_3_max_1000_64b81000() {
     // Encoding: 0x64B81000
     // Test FCMLA_Z.ZZZi_H field i2 = 3 (Max)
-    // Fields: Zm=0, rot=0, i2=3, Zn=0, Zda=0
+    // Fields: Zda=0, i2=3, Zm=0, rot=0, Zn=0
     let encoding: u32 = 0x64B81000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12058,12 +14817,17 @@ fn test_fcmla_z_zzzi_h_field_i2_3_max_1000_64b81000() {
 fn test_fcmla_z_zzzi_h_field_zm_0_min_1000_64a01000() {
     // Encoding: 0x64A01000
     // Test FCMLA_Z.ZZZi_H field Zm = 0 (Min)
-    // Fields: Zda=0, rot=0, Zn=0, Zm=0, i2=0
+    // Fields: Zda=0, i2=0, Zm=0, Zn=0, rot=0
     let encoding: u32 = 0x64A01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12074,12 +14838,17 @@ fn test_fcmla_z_zzzi_h_field_zm_0_min_1000_64a01000() {
 fn test_fcmla_z_zzzi_h_field_zm_1_poweroftwo_1000_64a11000() {
     // Encoding: 0x64A11000
     // Test FCMLA_Z.ZZZi_H field Zm = 1 (PowerOfTwo)
-    // Fields: Zda=0, Zn=0, Zm=1, i2=0, rot=0
+    // Fields: i2=0, Zm=1, Zn=0, rot=0, Zda=0
     let encoding: u32 = 0x64A11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12090,12 +14859,17 @@ fn test_fcmla_z_zzzi_h_field_zm_1_poweroftwo_1000_64a11000() {
 fn test_fcmla_z_zzzi_h_field_rot_0_min_1000_64a01000() {
     // Encoding: 0x64A01000
     // Test FCMLA_Z.ZZZi_H field rot = 0 (Min)
-    // Fields: rot=0, Zda=0, i2=0, Zn=0, Zm=0
+    // Fields: Zn=0, i2=0, Zda=0, rot=0, Zm=0
     let encoding: u32 = 0x64A01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12106,12 +14880,17 @@ fn test_fcmla_z_zzzi_h_field_rot_0_min_1000_64a01000() {
 fn test_fcmla_z_zzzi_h_field_rot_1_poweroftwo_1000_64a01400() {
     // Encoding: 0x64A01400
     // Test FCMLA_Z.ZZZi_H field rot = 1 (PowerOfTwo)
-    // Fields: Zda=0, Zm=0, rot=1, i2=0, Zn=0
+    // Fields: Zm=0, rot=1, i2=0, Zn=0, Zda=0
     let encoding: u32 = 0x64A01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12122,12 +14901,17 @@ fn test_fcmla_z_zzzi_h_field_rot_1_poweroftwo_1000_64a01400() {
 fn test_fcmla_z_zzzi_h_field_rot_3_max_1000_64a01c00() {
     // Encoding: 0x64A01C00
     // Test FCMLA_Z.ZZZi_H field rot = 3 (Max)
-    // Fields: i2=0, Zn=0, Zda=0, Zm=0, rot=3
+    // Fields: Zda=0, Zn=0, i2=0, Zm=0, rot=3
     let encoding: u32 = 0x64A01C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12138,12 +14922,17 @@ fn test_fcmla_z_zzzi_h_field_rot_3_max_1000_64a01c00() {
 fn test_fcmla_z_zzzi_h_field_zn_0_min_1000_64a01000() {
     // Encoding: 0x64A01000
     // Test FCMLA_Z.ZZZi_H field Zn = 0 (Min)
-    // Fields: rot=0, Zn=0, Zda=0, i2=0, Zm=0
+    // Fields: Zn=0, rot=0, Zda=0, Zm=0, i2=0
     let encoding: u32 = 0x64A01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12154,12 +14943,17 @@ fn test_fcmla_z_zzzi_h_field_zn_0_min_1000_64a01000() {
 fn test_fcmla_z_zzzi_h_field_zn_1_poweroftwo_1000_64a01020() {
     // Encoding: 0x64A01020
     // Test FCMLA_Z.ZZZi_H field Zn = 1 (PowerOfTwo)
-    // Fields: Zm=0, i2=0, Zn=1, Zda=0, rot=0
+    // Fields: Zn=1, Zda=0, i2=0, rot=0, Zm=0
     let encoding: u32 = 0x64A01020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12170,12 +14964,17 @@ fn test_fcmla_z_zzzi_h_field_zn_1_poweroftwo_1000_64a01020() {
 fn test_fcmla_z_zzzi_h_field_zn_30_poweroftwominusone_1000_64a013c0() {
     // Encoding: 0x64A013C0
     // Test FCMLA_Z.ZZZi_H field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: rot=0, i2=0, Zn=30, Zda=0, Zm=0
+    // Fields: Zm=0, i2=0, Zn=30, rot=0, Zda=0
     let encoding: u32 = 0x64A013C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12186,12 +14985,17 @@ fn test_fcmla_z_zzzi_h_field_zn_30_poweroftwominusone_1000_64a013c0() {
 fn test_fcmla_z_zzzi_h_field_zn_31_max_1000_64a013e0() {
     // Encoding: 0x64A013E0
     // Test FCMLA_Z.ZZZi_H field Zn = 31 (Max)
-    // Fields: Zn=31, Zda=0, rot=0, i2=0, Zm=0
+    // Fields: i2=0, rot=0, Zda=0, Zn=31, Zm=0
     let encoding: u32 = 0x64A013E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12202,12 +15006,17 @@ fn test_fcmla_z_zzzi_h_field_zn_31_max_1000_64a013e0() {
 fn test_fcmla_z_zzzi_h_field_zda_0_min_1000_64a01000() {
     // Encoding: 0x64A01000
     // Test FCMLA_Z.ZZZi_H field Zda = 0 (Min)
-    // Fields: Zda=0, rot=0, i2=0, Zm=0, Zn=0
+    // Fields: rot=0, Zda=0, Zm=0, Zn=0, i2=0
     let encoding: u32 = 0x64A01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12218,12 +15027,17 @@ fn test_fcmla_z_zzzi_h_field_zda_0_min_1000_64a01000() {
 fn test_fcmla_z_zzzi_h_field_zda_1_poweroftwo_1000_64a01001() {
     // Encoding: 0x64A01001
     // Test FCMLA_Z.ZZZi_H field Zda = 1 (PowerOfTwo)
-    // Fields: rot=0, Zm=0, i2=0, Zn=0, Zda=1
+    // Fields: Zn=0, rot=0, i2=0, Zm=0, Zda=1
     let encoding: u32 = 0x64A01001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12234,12 +15048,17 @@ fn test_fcmla_z_zzzi_h_field_zda_1_poweroftwo_1000_64a01001() {
 fn test_fcmla_z_zzzi_h_field_zda_15_poweroftwominusone_1000_64a0100f() {
     // Encoding: 0x64A0100F
     // Test FCMLA_Z.ZZZi_H field Zda = 15 (PowerOfTwoMinusOne)
-    // Fields: Zm=0, i2=0, rot=0, Zn=0, Zda=15
+    // Fields: rot=0, Zm=0, Zda=15, i2=0, Zn=0
     let encoding: u32 = 0x64A0100F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12250,12 +15069,17 @@ fn test_fcmla_z_zzzi_h_field_zda_15_poweroftwominusone_1000_64a0100f() {
 fn test_fcmla_z_zzzi_h_field_zda_31_max_1000_64a0101f() {
     // Encoding: 0x64A0101F
     // Test FCMLA_Z.ZZZi_H field Zda = 31 (Max)
-    // Fields: rot=0, Zm=0, Zda=31, Zn=0, i2=0
+    // Fields: i2=0, Zm=0, rot=0, Zn=0, Zda=31
     let encoding: u32 = 0x64A0101F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12266,12 +15090,17 @@ fn test_fcmla_z_zzzi_h_field_zda_31_max_1000_64a0101f() {
 fn test_fcmla_z_zzzi_h_combo_0_1000_64a01000() {
     // Encoding: 0x64A01000
     // Test FCMLA_Z.ZZZi_H field combination: i2=0, Zm=0, rot=0, Zn=0, Zda=0
-    // Fields: i2=0, rot=0, Zm=0, Zn=0, Zda=0
+    // Fields: Zda=0, i2=0, Zn=0, Zm=0, rot=0
     let encoding: u32 = 0x64A01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12282,12 +15111,16 @@ fn test_fcmla_z_zzzi_h_combo_0_1000_64a01000() {
 fn test_fcmla_z_zzzi_h_invalid_0_1000_64a01000() {
     // Encoding: 0x64A01000
     // Test FCMLA_Z.ZZZi_H invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Zda=0, i2=0, rot=0, Zm=0, Zn=0
+    // Fields: Zm=0, rot=0, i2=0, Zn=0, Zda=0
     let encoding: u32 = 0x64A01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12298,12 +15131,16 @@ fn test_fcmla_z_zzzi_h_invalid_0_1000_64a01000() {
 fn test_fcmla_z_zzzi_h_invalid_1_1000_64a01000() {
     // Encoding: 0x64A01000
     // Test FCMLA_Z.ZZZi_H invalid encoding: Unconditional UNDEFINED
-    // Fields: Zda=0, rot=0, Zn=0, Zm=0, i2=0
+    // Fields: rot=0, i2=0, Zm=0, Zn=0, Zda=0
     let encoding: u32 = 0x64A01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12314,12 +15151,17 @@ fn test_fcmla_z_zzzi_h_invalid_1_1000_64a01000() {
 fn test_fcmla_z_zzzi_s_field_i1_0_min_1000_64e01000() {
     // Encoding: 0x64E01000
     // Test FCMLA_Z.ZZZi_S field i1 = 0 (Min)
-    // Fields: Zm=0, rot=0, i1=0, Zda=0, Zn=0
+    // Fields: Zn=0, Zm=0, Zda=0, i1=0, rot=0
     let encoding: u32 = 0x64E01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12330,12 +15172,17 @@ fn test_fcmla_z_zzzi_s_field_i1_0_min_1000_64e01000() {
 fn test_fcmla_z_zzzi_s_field_i1_1_max_1000_64f01000() {
     // Encoding: 0x64F01000
     // Test FCMLA_Z.ZZZi_S field i1 = 1 (Max)
-    // Fields: Zn=0, i1=1, Zm=0, rot=0, Zda=0
+    // Fields: Zn=0, rot=0, Zda=0, Zm=0, i1=1
     let encoding: u32 = 0x64F01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12346,12 +15193,17 @@ fn test_fcmla_z_zzzi_s_field_i1_1_max_1000_64f01000() {
 fn test_fcmla_z_zzzi_s_field_zm_0_min_1000_64e01000() {
     // Encoding: 0x64E01000
     // Test FCMLA_Z.ZZZi_S field Zm = 0 (Min)
-    // Fields: Zn=0, rot=0, i1=0, Zm=0, Zda=0
+    // Fields: Zm=0, i1=0, Zn=0, Zda=0, rot=0
     let encoding: u32 = 0x64E01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12362,12 +15214,17 @@ fn test_fcmla_z_zzzi_s_field_zm_0_min_1000_64e01000() {
 fn test_fcmla_z_zzzi_s_field_zm_1_poweroftwo_1000_64e11000() {
     // Encoding: 0x64E11000
     // Test FCMLA_Z.ZZZi_S field Zm = 1 (PowerOfTwo)
-    // Fields: Zm=1, rot=0, i1=0, Zn=0, Zda=0
+    // Fields: i1=0, rot=0, Zda=0, Zm=1, Zn=0
     let encoding: u32 = 0x64E11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12378,12 +15235,17 @@ fn test_fcmla_z_zzzi_s_field_zm_1_poweroftwo_1000_64e11000() {
 fn test_fcmla_z_zzzi_s_field_rot_0_min_1000_64e01000() {
     // Encoding: 0x64E01000
     // Test FCMLA_Z.ZZZi_S field rot = 0 (Min)
-    // Fields: Zm=0, Zn=0, rot=0, Zda=0, i1=0
+    // Fields: Zda=0, Zm=0, i1=0, rot=0, Zn=0
     let encoding: u32 = 0x64E01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12394,12 +15256,17 @@ fn test_fcmla_z_zzzi_s_field_rot_0_min_1000_64e01000() {
 fn test_fcmla_z_zzzi_s_field_rot_1_poweroftwo_1000_64e01400() {
     // Encoding: 0x64E01400
     // Test FCMLA_Z.ZZZi_S field rot = 1 (PowerOfTwo)
-    // Fields: i1=0, Zm=0, Zn=0, rot=1, Zda=0
+    // Fields: Zn=0, Zda=0, rot=1, Zm=0, i1=0
     let encoding: u32 = 0x64E01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12410,12 +15277,17 @@ fn test_fcmla_z_zzzi_s_field_rot_1_poweroftwo_1000_64e01400() {
 fn test_fcmla_z_zzzi_s_field_rot_3_max_1000_64e01c00() {
     // Encoding: 0x64E01C00
     // Test FCMLA_Z.ZZZi_S field rot = 3 (Max)
-    // Fields: i1=0, Zda=0, Zm=0, Zn=0, rot=3
+    // Fields: Zm=0, Zn=0, Zda=0, i1=0, rot=3
     let encoding: u32 = 0x64E01C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12426,12 +15298,17 @@ fn test_fcmla_z_zzzi_s_field_rot_3_max_1000_64e01c00() {
 fn test_fcmla_z_zzzi_s_field_zn_0_min_1000_64e01000() {
     // Encoding: 0x64E01000
     // Test FCMLA_Z.ZZZi_S field Zn = 0 (Min)
-    // Fields: Zn=0, rot=0, i1=0, Zm=0, Zda=0
+    // Fields: i1=0, Zn=0, Zda=0, rot=0, Zm=0
     let encoding: u32 = 0x64E01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12442,12 +15319,17 @@ fn test_fcmla_z_zzzi_s_field_zn_0_min_1000_64e01000() {
 fn test_fcmla_z_zzzi_s_field_zn_1_poweroftwo_1000_64e01020() {
     // Encoding: 0x64E01020
     // Test FCMLA_Z.ZZZi_S field Zn = 1 (PowerOfTwo)
-    // Fields: Zn=1, Zda=0, i1=0, rot=0, Zm=0
+    // Fields: Zn=1, Zda=0, i1=0, Zm=0, rot=0
     let encoding: u32 = 0x64E01020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12458,12 +15340,17 @@ fn test_fcmla_z_zzzi_s_field_zn_1_poweroftwo_1000_64e01020() {
 fn test_fcmla_z_zzzi_s_field_zn_30_poweroftwominusone_1000_64e013c0() {
     // Encoding: 0x64E013C0
     // Test FCMLA_Z.ZZZi_S field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Zn=30, rot=0, Zda=0, i1=0, Zm=0
+    // Fields: i1=0, Zm=0, Zda=0, rot=0, Zn=30
     let encoding: u32 = 0x64E013C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12474,12 +15361,17 @@ fn test_fcmla_z_zzzi_s_field_zn_30_poweroftwominusone_1000_64e013c0() {
 fn test_fcmla_z_zzzi_s_field_zn_31_max_1000_64e013e0() {
     // Encoding: 0x64E013E0
     // Test FCMLA_Z.ZZZi_S field Zn = 31 (Max)
-    // Fields: Zda=0, rot=0, i1=0, Zn=31, Zm=0
+    // Fields: Zda=0, i1=0, Zm=0, rot=0, Zn=31
     let encoding: u32 = 0x64E013E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12490,12 +15382,17 @@ fn test_fcmla_z_zzzi_s_field_zn_31_max_1000_64e013e0() {
 fn test_fcmla_z_zzzi_s_field_zda_0_min_1000_64e01000() {
     // Encoding: 0x64E01000
     // Test FCMLA_Z.ZZZi_S field Zda = 0 (Min)
-    // Fields: rot=0, Zm=0, Zn=0, i1=0, Zda=0
+    // Fields: rot=0, Zn=0, i1=0, Zm=0, Zda=0
     let encoding: u32 = 0x64E01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12506,12 +15403,17 @@ fn test_fcmla_z_zzzi_s_field_zda_0_min_1000_64e01000() {
 fn test_fcmla_z_zzzi_s_field_zda_1_poweroftwo_1000_64e01001() {
     // Encoding: 0x64E01001
     // Test FCMLA_Z.ZZZi_S field Zda = 1 (PowerOfTwo)
-    // Fields: i1=0, Zm=0, rot=0, Zn=0, Zda=1
+    // Fields: Zm=0, Zda=1, rot=0, i1=0, Zn=0
     let encoding: u32 = 0x64E01001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12522,12 +15424,17 @@ fn test_fcmla_z_zzzi_s_field_zda_1_poweroftwo_1000_64e01001() {
 fn test_fcmla_z_zzzi_s_field_zda_15_poweroftwominusone_1000_64e0100f() {
     // Encoding: 0x64E0100F
     // Test FCMLA_Z.ZZZi_S field Zda = 15 (PowerOfTwoMinusOne)
-    // Fields: Zm=0, Zda=15, Zn=0, i1=0, rot=0
+    // Fields: i1=0, Zm=0, Zda=15, rot=0, Zn=0
     let encoding: u32 = 0x64E0100F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12538,12 +15445,17 @@ fn test_fcmla_z_zzzi_s_field_zda_15_poweroftwominusone_1000_64e0100f() {
 fn test_fcmla_z_zzzi_s_field_zda_31_max_1000_64e0101f() {
     // Encoding: 0x64E0101F
     // Test FCMLA_Z.ZZZi_S field Zda = 31 (Max)
-    // Fields: i1=0, Zm=0, Zda=31, Zn=0, rot=0
+    // Fields: Zda=31, Zn=0, i1=0, Zm=0, rot=0
     let encoding: u32 = 0x64E0101F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12554,12 +15466,17 @@ fn test_fcmla_z_zzzi_s_field_zda_31_max_1000_64e0101f() {
 fn test_fcmla_z_zzzi_s_combo_0_1000_64e01000() {
     // Encoding: 0x64E01000
     // Test FCMLA_Z.ZZZi_S field combination: i1=0, Zm=0, rot=0, Zn=0, Zda=0
-    // Fields: i1=0, Zda=0, rot=0, Zm=0, Zn=0
+    // Fields: rot=0, Zn=0, Zm=0, Zda=0, i1=0
     let encoding: u32 = 0x64E01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12570,12 +15487,16 @@ fn test_fcmla_z_zzzi_s_combo_0_1000_64e01000() {
 fn test_fcmla_z_zzzi_s_invalid_0_1000_64e01000() {
     // Encoding: 0x64E01000
     // Test FCMLA_Z.ZZZi_S invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: rot=0, Zn=0, Zda=0, i1=0, Zm=0
+    // Fields: i1=0, Zn=0, Zda=0, rot=0, Zm=0
     let encoding: u32 = 0x64E01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_S
@@ -12586,12 +15507,16 @@ fn test_fcmla_z_zzzi_s_invalid_0_1000_64e01000() {
 fn test_fcmla_z_zzzi_s_invalid_1_1000_64e01000() {
     // Encoding: 0x64E01000
     // Test FCMLA_Z.ZZZi_S invalid encoding: Unconditional UNDEFINED
-    // Fields: Zda=0, rot=0, i1=0, Zm=0, Zn=0
+    // Fields: rot=0, Zn=0, Zm=0, Zda=0, i1=0
     let encoding: u32 = 0x64E01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.ZZZi_H
@@ -12636,12 +15561,17 @@ fn test_fcmla_z_zzzi_s_reg_write_0_64e01000() {
 fn test_fcmla_z_p_zzz_field_size_0_min_0_64000000() {
     // Encoding: 0x64000000
     // Test FCMLA_Z.P.ZZZ__ field size = 0 (Min)
-    // Fields: Zm=0, rot=0, Zn=0, size=0, Pg=0, Zda=0
+    // Fields: Zda=0, rot=0, size=0, Zn=0, Pg=0, Zm=0
     let encoding: u32 = 0x64000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12652,12 +15582,17 @@ fn test_fcmla_z_p_zzz_field_size_0_min_0_64000000() {
 fn test_fcmla_z_p_zzz_field_size_1_poweroftwo_0_64400000() {
     // Encoding: 0x64400000
     // Test FCMLA_Z.P.ZZZ__ field size = 1 (PowerOfTwo)
-    // Fields: Zm=0, Pg=0, Zn=0, size=1, Zda=0, rot=0
+    // Fields: Zm=0, Pg=0, Zn=0, Zda=0, size=1, rot=0
     let encoding: u32 = 0x64400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12668,12 +15603,17 @@ fn test_fcmla_z_p_zzz_field_size_1_poweroftwo_0_64400000() {
 fn test_fcmla_z_p_zzz_field_size_2_poweroftwo_0_64800000() {
     // Encoding: 0x64800000
     // Test FCMLA_Z.P.ZZZ__ field size = 2 (PowerOfTwo)
-    // Fields: size=2, Zda=0, rot=0, Zn=0, Zm=0, Pg=0
+    // Fields: rot=0, Zm=0, Pg=0, Zn=0, Zda=0, size=2
     let encoding: u32 = 0x64800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12684,12 +15624,17 @@ fn test_fcmla_z_p_zzz_field_size_2_poweroftwo_0_64800000() {
 fn test_fcmla_z_p_zzz_field_size_3_max_0_64c00000() {
     // Encoding: 0x64C00000
     // Test FCMLA_Z.P.ZZZ__ field size = 3 (Max)
-    // Fields: size=3, rot=0, Pg=0, Zm=0, Zda=0, Zn=0
+    // Fields: Zn=0, Zm=0, size=3, Zda=0, rot=0, Pg=0
     let encoding: u32 = 0x64C00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12700,12 +15645,17 @@ fn test_fcmla_z_p_zzz_field_size_3_max_0_64c00000() {
 fn test_fcmla_z_p_zzz_field_zm_0_min_0_64000000() {
     // Encoding: 0x64000000
     // Test FCMLA_Z.P.ZZZ__ field Zm = 0 (Min)
-    // Fields: Pg=0, Zda=0, Zn=0, rot=0, size=0, Zm=0
+    // Fields: Zm=0, Zn=0, size=0, Pg=0, Zda=0, rot=0
     let encoding: u32 = 0x64000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12716,12 +15666,17 @@ fn test_fcmla_z_p_zzz_field_zm_0_min_0_64000000() {
 fn test_fcmla_z_p_zzz_field_zm_1_poweroftwo_0_64010000() {
     // Encoding: 0x64010000
     // Test FCMLA_Z.P.ZZZ__ field Zm = 1 (PowerOfTwo)
-    // Fields: size=0, Zda=0, Pg=0, Zn=0, rot=0, Zm=1
+    // Fields: Zda=0, Pg=0, Zn=0, size=0, Zm=1, rot=0
     let encoding: u32 = 0x64010000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12732,12 +15687,17 @@ fn test_fcmla_z_p_zzz_field_zm_1_poweroftwo_0_64010000() {
 fn test_fcmla_z_p_zzz_field_zm_30_poweroftwominusone_0_641e0000() {
     // Encoding: 0x641E0000
     // Test FCMLA_Z.P.ZZZ__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Zm=30, Zda=0, Pg=0, Zn=0, size=0, rot=0
+    // Fields: rot=0, Pg=0, size=0, Zn=0, Zm=30, Zda=0
     let encoding: u32 = 0x641E0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12748,12 +15708,17 @@ fn test_fcmla_z_p_zzz_field_zm_30_poweroftwominusone_0_641e0000() {
 fn test_fcmla_z_p_zzz_field_zm_31_max_0_641f0000() {
     // Encoding: 0x641F0000
     // Test FCMLA_Z.P.ZZZ__ field Zm = 31 (Max)
-    // Fields: rot=0, Zm=31, Pg=0, Zda=0, size=0, Zn=0
+    // Fields: Zda=0, rot=0, Zm=31, Pg=0, size=0, Zn=0
     let encoding: u32 = 0x641F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12764,12 +15729,17 @@ fn test_fcmla_z_p_zzz_field_zm_31_max_0_641f0000() {
 fn test_fcmla_z_p_zzz_field_rot_0_min_0_64000000() {
     // Encoding: 0x64000000
     // Test FCMLA_Z.P.ZZZ__ field rot = 0 (Min)
-    // Fields: size=0, rot=0, Zm=0, Pg=0, Zda=0, Zn=0
+    // Fields: Zn=0, rot=0, Zm=0, Pg=0, size=0, Zda=0
     let encoding: u32 = 0x64000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12780,12 +15750,17 @@ fn test_fcmla_z_p_zzz_field_rot_0_min_0_64000000() {
 fn test_fcmla_z_p_zzz_field_rot_1_poweroftwo_0_64002000() {
     // Encoding: 0x64002000
     // Test FCMLA_Z.P.ZZZ__ field rot = 1 (PowerOfTwo)
-    // Fields: Zm=0, Pg=0, size=0, rot=1, Zn=0, Zda=0
+    // Fields: Pg=0, Zn=0, Zm=0, rot=1, Zda=0, size=0
     let encoding: u32 = 0x64002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12796,12 +15771,17 @@ fn test_fcmla_z_p_zzz_field_rot_1_poweroftwo_0_64002000() {
 fn test_fcmla_z_p_zzz_field_rot_3_max_0_64006000() {
     // Encoding: 0x64006000
     // Test FCMLA_Z.P.ZZZ__ field rot = 3 (Max)
-    // Fields: size=0, Zm=0, Zn=0, rot=3, Pg=0, Zda=0
+    // Fields: rot=3, Zm=0, Pg=0, Zda=0, size=0, Zn=0
     let encoding: u32 = 0x64006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12812,12 +15792,17 @@ fn test_fcmla_z_p_zzz_field_rot_3_max_0_64006000() {
 fn test_fcmla_z_p_zzz_field_pg_0_min_0_64000000() {
     // Encoding: 0x64000000
     // Test FCMLA_Z.P.ZZZ__ field Pg = 0 (Min)
-    // Fields: size=0, rot=0, Zn=0, Zm=0, Pg=0, Zda=0
+    // Fields: Zda=0, Zm=0, size=0, Pg=0, Zn=0, rot=0
     let encoding: u32 = 0x64000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12828,12 +15813,17 @@ fn test_fcmla_z_p_zzz_field_pg_0_min_0_64000000() {
 fn test_fcmla_z_p_zzz_field_pg_1_poweroftwo_0_64000400() {
     // Encoding: 0x64000400
     // Test FCMLA_Z.P.ZZZ__ field Pg = 1 (PowerOfTwo)
-    // Fields: rot=0, Zda=0, Zm=0, Pg=1, size=0, Zn=0
+    // Fields: Pg=1, rot=0, Zm=0, Zn=0, Zda=0, size=0
     let encoding: u32 = 0x64000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12844,12 +15834,17 @@ fn test_fcmla_z_p_zzz_field_pg_1_poweroftwo_0_64000400() {
 fn test_fcmla_z_p_zzz_field_zn_0_min_0_64000000() {
     // Encoding: 0x64000000
     // Test FCMLA_Z.P.ZZZ__ field Zn = 0 (Min)
-    // Fields: Zm=0, size=0, Zn=0, Pg=0, rot=0, Zda=0
+    // Fields: rot=0, Pg=0, Zda=0, size=0, Zm=0, Zn=0
     let encoding: u32 = 0x64000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12860,12 +15855,17 @@ fn test_fcmla_z_p_zzz_field_zn_0_min_0_64000000() {
 fn test_fcmla_z_p_zzz_field_zn_1_poweroftwo_0_64000020() {
     // Encoding: 0x64000020
     // Test FCMLA_Z.P.ZZZ__ field Zn = 1 (PowerOfTwo)
-    // Fields: Zn=1, rot=0, Zm=0, Zda=0, Pg=0, size=0
+    // Fields: rot=0, Pg=0, Zn=1, Zda=0, size=0, Zm=0
     let encoding: u32 = 0x64000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12876,12 +15876,17 @@ fn test_fcmla_z_p_zzz_field_zn_1_poweroftwo_0_64000020() {
 fn test_fcmla_z_p_zzz_field_zn_30_poweroftwominusone_0_640003c0() {
     // Encoding: 0x640003C0
     // Test FCMLA_Z.P.ZZZ__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Zn=30, Zda=0, rot=0, size=0, Zm=0, Pg=0
+    // Fields: size=0, Pg=0, Zn=30, Zm=0, rot=0, Zda=0
     let encoding: u32 = 0x640003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12892,12 +15897,17 @@ fn test_fcmla_z_p_zzz_field_zn_30_poweroftwominusone_0_640003c0() {
 fn test_fcmla_z_p_zzz_field_zn_31_max_0_640003e0() {
     // Encoding: 0x640003E0
     // Test FCMLA_Z.P.ZZZ__ field Zn = 31 (Max)
-    // Fields: rot=0, Zn=31, Pg=0, Zda=0, size=0, Zm=0
+    // Fields: Zda=0, rot=0, Pg=0, size=0, Zm=0, Zn=31
     let encoding: u32 = 0x640003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12908,12 +15918,17 @@ fn test_fcmla_z_p_zzz_field_zn_31_max_0_640003e0() {
 fn test_fcmla_z_p_zzz_field_zda_0_min_0_64000000() {
     // Encoding: 0x64000000
     // Test FCMLA_Z.P.ZZZ__ field Zda = 0 (Min)
-    // Fields: Zn=0, rot=0, size=0, Zda=0, Pg=0, Zm=0
+    // Fields: Zm=0, Pg=0, Zn=0, Zda=0, size=0, rot=0
     let encoding: u32 = 0x64000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12924,12 +15939,17 @@ fn test_fcmla_z_p_zzz_field_zda_0_min_0_64000000() {
 fn test_fcmla_z_p_zzz_field_zda_1_poweroftwo_0_64000001() {
     // Encoding: 0x64000001
     // Test FCMLA_Z.P.ZZZ__ field Zda = 1 (PowerOfTwo)
-    // Fields: Pg=0, size=0, Zda=1, Zn=0, rot=0, Zm=0
+    // Fields: rot=0, Zn=0, Zda=1, Pg=0, size=0, Zm=0
     let encoding: u32 = 0x64000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12940,12 +15960,17 @@ fn test_fcmla_z_p_zzz_field_zda_1_poweroftwo_0_64000001() {
 fn test_fcmla_z_p_zzz_field_zda_15_poweroftwominusone_0_6400000f() {
     // Encoding: 0x6400000F
     // Test FCMLA_Z.P.ZZZ__ field Zda = 15 (PowerOfTwoMinusOne)
-    // Fields: size=0, Zm=0, rot=0, Zn=0, Pg=0, Zda=15
+    // Fields: size=0, Zm=0, rot=0, Zda=15, Pg=0, Zn=0
     let encoding: u32 = 0x6400000F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12956,12 +15981,17 @@ fn test_fcmla_z_p_zzz_field_zda_15_poweroftwominusone_0_6400000f() {
 fn test_fcmla_z_p_zzz_field_zda_31_max_0_6400001f() {
     // Encoding: 0x6400001F
     // Test FCMLA_Z.P.ZZZ__ field Zda = 31 (Max)
-    // Fields: Zn=0, Zm=0, size=0, Zda=31, rot=0, Pg=0
+    // Fields: Zn=0, size=0, rot=0, Zda=31, Zm=0, Pg=0
     let encoding: u32 = 0x6400001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12972,12 +16002,17 @@ fn test_fcmla_z_p_zzz_field_zda_31_max_0_6400001f() {
 fn test_fcmla_z_p_zzz_combo_0_0_64000000() {
     // Encoding: 0x64000000
     // Test FCMLA_Z.P.ZZZ__ field combination: size=0, Zm=0, rot=0, Pg=0, Zn=0, Zda=0
-    // Fields: rot=0, size=0, Zm=0, Pg=0, Zda=0, Zn=0
+    // Fields: rot=0, Pg=0, Zm=0, size=0, Zn=0, Zda=0
     let encoding: u32 = 0x64000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -12988,12 +16023,17 @@ fn test_fcmla_z_p_zzz_combo_0_0_64000000() {
 fn test_fcmla_z_p_zzz_special_size_0_size_variant_0_0_64000000() {
     // Encoding: 0x64000000
     // Test FCMLA_Z.P.ZZZ__ special value size = 0 (Size variant 0)
-    // Fields: Zm=0, Zn=0, size=0, Zda=0, rot=0, Pg=0
+    // Fields: Zm=0, size=0, rot=0, Zda=0, Zn=0, Pg=0
     let encoding: u32 = 0x64000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -13004,12 +16044,17 @@ fn test_fcmla_z_p_zzz_special_size_0_size_variant_0_0_64000000() {
 fn test_fcmla_z_p_zzz_special_size_1_size_variant_1_0_64400000() {
     // Encoding: 0x64400000
     // Test FCMLA_Z.P.ZZZ__ special value size = 1 (Size variant 1)
-    // Fields: Pg=0, Zm=0, Zda=0, size=1, Zn=0, rot=0
+    // Fields: Zn=0, Zda=0, rot=0, Pg=0, size=1, Zm=0
     let encoding: u32 = 0x64400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -13020,12 +16065,17 @@ fn test_fcmla_z_p_zzz_special_size_1_size_variant_1_0_64400000() {
 fn test_fcmla_z_p_zzz_special_size_2_size_variant_2_0_64800000() {
     // Encoding: 0x64800000
     // Test FCMLA_Z.P.ZZZ__ special value size = 2 (Size variant 2)
-    // Fields: size=2, rot=0, Zn=0, Zda=0, Zm=0, Pg=0
+    // Fields: Zn=0, Zda=0, Pg=0, Zm=0, size=2, rot=0
     let encoding: u32 = 0x64800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -13036,12 +16086,17 @@ fn test_fcmla_z_p_zzz_special_size_2_size_variant_2_0_64800000() {
 fn test_fcmla_z_p_zzz_special_size_3_size_variant_3_0_64c00000() {
     // Encoding: 0x64C00000
     // Test FCMLA_Z.P.ZZZ__ special value size = 3 (Size variant 3)
-    // Fields: Zda=0, rot=0, Zn=0, Pg=0, Zm=0, size=3
+    // Fields: Zm=0, Pg=0, Zn=0, Zda=0, size=3, rot=0
     let encoding: u32 = 0x64C00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -13052,12 +16107,16 @@ fn test_fcmla_z_p_zzz_special_size_3_size_variant_3_0_64c00000() {
 fn test_fcmla_z_p_zzz_invalid_0_0_64000000() {
     // Encoding: 0x64000000
     // Test FCMLA_Z.P.ZZZ__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pg=0, size=0, rot=0, Zda=0, Zm=0, Zn=0
+    // Fields: Pg=0, Zm=0, size=0, rot=0, Zn=0, Zda=0
     let encoding: u32 = 0x64000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -13068,12 +16127,16 @@ fn test_fcmla_z_p_zzz_invalid_0_0_64000000() {
 fn test_fcmla_z_p_zzz_invalid_1_0_64000000() {
     // Encoding: 0x64000000
     // Test FCMLA_Z.P.ZZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, rot=0, Zda=0, Pg=0, Zm=0, Zn=0
+    // Fields: size=0, Zm=0, Pg=0, Zn=0, Zda=0, rot=0
     let encoding: u32 = 0x64000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -13084,12 +16147,16 @@ fn test_fcmla_z_p_zzz_invalid_1_0_64000000() {
 fn test_fcmla_z_p_zzz_invalid_2_0_64000000() {
     // Encoding: 0x64000000
     // Test FCMLA_Z.P.ZZZ__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([false, false]) }
-    // Fields: size=0, Pg=0, Zm=0, Zn=0, rot=0, Zda=0
+    // Fields: Zm=0, Zn=0, rot=0, Zda=0, size=0, Pg=0
     let encoding: u32 = 0x64000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -13100,12 +16167,16 @@ fn test_fcmla_z_p_zzz_invalid_2_0_64000000() {
 fn test_fcmla_z_p_zzz_invalid_3_0_64000000() {
     // Encoding: 0x64000000
     // Test FCMLA_Z.P.ZZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, Zn=0, Zda=0, size=0, rot=0, Zm=0
+    // Fields: Zm=0, rot=0, size=0, Pg=0, Zda=0, Zn=0
     let encoding: u32 = 0x64000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMLA_Z.P.ZZZ__
@@ -13135,12 +16206,17 @@ fn test_fcmla_z_p_zzz_reg_write_0_64000000() {
 fn test_fcmeq_p_p_zz_field_size_0_min_6000_65006000() {
     // Encoding: 0x65006000
     // Test FCMEQ_P.P.ZZ__ field size = 0 (Min)
-    // Fields: Zm=0, Pg=0, Zn=0, size=0, Pd=0
+    // Fields: Pg=0, Zn=0, size=0, Pd=0, Zm=0
     let encoding: u32 = 0x65006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13151,12 +16227,17 @@ fn test_fcmeq_p_p_zz_field_size_0_min_6000_65006000() {
 fn test_fcmeq_p_p_zz_field_size_1_poweroftwo_6000_65406000() {
     // Encoding: 0x65406000
     // Test FCMEQ_P.P.ZZ__ field size = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pg=0, Pd=0, size=1, Zm=0
+    // Fields: size=1, Zm=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x65406000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13167,12 +16248,17 @@ fn test_fcmeq_p_p_zz_field_size_1_poweroftwo_6000_65406000() {
 fn test_fcmeq_p_p_zz_field_size_2_poweroftwo_6000_65806000() {
     // Encoding: 0x65806000
     // Test FCMEQ_P.P.ZZ__ field size = 2 (PowerOfTwo)
-    // Fields: size=2, Zm=0, Pg=0, Zn=0, Pd=0
+    // Fields: size=2, Zm=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x65806000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13183,12 +16269,17 @@ fn test_fcmeq_p_p_zz_field_size_2_poweroftwo_6000_65806000() {
 fn test_fcmeq_p_p_zz_field_size_3_max_6000_65c06000() {
     // Encoding: 0x65C06000
     // Test FCMEQ_P.P.ZZ__ field size = 3 (Max)
-    // Fields: Zn=0, Pg=0, Zm=0, size=3, Pd=0
+    // Fields: Pd=0, Zm=0, Pg=0, Zn=0, size=3
     let encoding: u32 = 0x65C06000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13199,12 +16290,17 @@ fn test_fcmeq_p_p_zz_field_size_3_max_6000_65c06000() {
 fn test_fcmeq_p_p_zz_field_zm_0_min_6000_65006000() {
     // Encoding: 0x65006000
     // Test FCMEQ_P.P.ZZ__ field Zm = 0 (Min)
-    // Fields: size=0, Zm=0, Pd=0, Zn=0, Pg=0
+    // Fields: Zn=0, size=0, Zm=0, Pg=0, Pd=0
     let encoding: u32 = 0x65006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13215,12 +16311,17 @@ fn test_fcmeq_p_p_zz_field_zm_0_min_6000_65006000() {
 fn test_fcmeq_p_p_zz_field_zm_1_poweroftwo_6000_65016000() {
     // Encoding: 0x65016000
     // Test FCMEQ_P.P.ZZ__ field Zm = 1 (PowerOfTwo)
-    // Fields: Zn=0, size=0, Zm=1, Pg=0, Pd=0
+    // Fields: Pg=0, Pd=0, Zm=1, Zn=0, size=0
     let encoding: u32 = 0x65016000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13231,12 +16332,17 @@ fn test_fcmeq_p_p_zz_field_zm_1_poweroftwo_6000_65016000() {
 fn test_fcmeq_p_p_zz_field_zm_30_poweroftwominusone_6000_651e6000() {
     // Encoding: 0x651E6000
     // Test FCMEQ_P.P.ZZ__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, Zm=30, Pd=0, Pg=0, size=0
+    // Fields: Pg=0, Zm=30, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x651E6000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13247,12 +16353,17 @@ fn test_fcmeq_p_p_zz_field_zm_30_poweroftwominusone_6000_651e6000() {
 fn test_fcmeq_p_p_zz_field_zm_31_max_6000_651f6000() {
     // Encoding: 0x651F6000
     // Test FCMEQ_P.P.ZZ__ field Zm = 31 (Max)
-    // Fields: size=0, Zm=31, Pg=0, Pd=0, Zn=0
+    // Fields: Pg=0, Zm=31, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x651F6000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13263,12 +16374,17 @@ fn test_fcmeq_p_p_zz_field_zm_31_max_6000_651f6000() {
 fn test_fcmeq_p_p_zz_field_pg_0_min_6000_65006000() {
     // Encoding: 0x65006000
     // Test FCMEQ_P.P.ZZ__ field Pg = 0 (Min)
-    // Fields: Pd=0, Zm=0, size=0, Zn=0, Pg=0
+    // Fields: Pd=0, Pg=0, size=0, Zm=0, Zn=0
     let encoding: u32 = 0x65006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13279,12 +16395,17 @@ fn test_fcmeq_p_p_zz_field_pg_0_min_6000_65006000() {
 fn test_fcmeq_p_p_zz_field_pg_1_poweroftwo_6000_65006400() {
     // Encoding: 0x65006400
     // Test FCMEQ_P.P.ZZ__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zm=0, Zn=0, Pg=1, size=0
+    // Fields: Pg=1, Zm=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x65006400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13295,12 +16416,17 @@ fn test_fcmeq_p_p_zz_field_pg_1_poweroftwo_6000_65006400() {
 fn test_fcmeq_p_p_zz_field_zn_0_min_6000_65006000() {
     // Encoding: 0x65006000
     // Test FCMEQ_P.P.ZZ__ field Zn = 0 (Min)
-    // Fields: size=0, Pg=0, Zm=0, Zn=0, Pd=0
+    // Fields: Pg=0, Zm=0, Pd=0, Zn=0, size=0
     let encoding: u32 = 0x65006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13311,12 +16437,17 @@ fn test_fcmeq_p_p_zz_field_zn_0_min_6000_65006000() {
 fn test_fcmeq_p_p_zz_field_zn_1_poweroftwo_6000_65006020() {
     // Encoding: 0x65006020
     // Test FCMEQ_P.P.ZZ__ field Zn = 1 (PowerOfTwo)
-    // Fields: Zn=1, Pd=0, Pg=0, size=0, Zm=0
+    // Fields: Zm=0, Pd=0, size=0, Zn=1, Pg=0
     let encoding: u32 = 0x65006020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13327,12 +16458,17 @@ fn test_fcmeq_p_p_zz_field_zn_1_poweroftwo_6000_65006020() {
 fn test_fcmeq_p_p_zz_field_zn_30_poweroftwominusone_6000_650063c0() {
     // Encoding: 0x650063C0
     // Test FCMEQ_P.P.ZZ__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Pd=0, Pg=0, Zm=0, Zn=30
+    // Fields: size=0, Zn=30, Pd=0, Pg=0, Zm=0
     let encoding: u32 = 0x650063C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13343,12 +16479,17 @@ fn test_fcmeq_p_p_zz_field_zn_30_poweroftwominusone_6000_650063c0() {
 fn test_fcmeq_p_p_zz_field_zn_31_max_6000_650063e0() {
     // Encoding: 0x650063E0
     // Test FCMEQ_P.P.ZZ__ field Zn = 31 (Max)
-    // Fields: Pd=0, Pg=0, Zm=0, Zn=31, size=0
+    // Fields: Pg=0, Zn=31, Zm=0, size=0, Pd=0
     let encoding: u32 = 0x650063E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13359,12 +16500,17 @@ fn test_fcmeq_p_p_zz_field_zn_31_max_6000_650063e0() {
 fn test_fcmeq_p_p_zz_field_pd_0_min_6000_65006000() {
     // Encoding: 0x65006000
     // Test FCMEQ_P.P.ZZ__ field Pd = 0 (Min)
-    // Fields: Zn=0, Zm=0, Pg=0, size=0, Pd=0
+    // Fields: Pg=0, Zn=0, Zm=0, Pd=0, size=0
     let encoding: u32 = 0x65006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13375,12 +16521,17 @@ fn test_fcmeq_p_p_zz_field_pd_0_min_6000_65006000() {
 fn test_fcmeq_p_p_zz_field_pd_1_poweroftwo_6000_65006001() {
     // Encoding: 0x65006001
     // Test FCMEQ_P.P.ZZ__ field Pd = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pd=1, size=0, Zm=0, Pg=0
+    // Fields: size=0, Zm=0, Zn=0, Pd=1, Pg=0
     let encoding: u32 = 0x65006001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13391,12 +16542,17 @@ fn test_fcmeq_p_p_zz_field_pd_1_poweroftwo_6000_65006001() {
 fn test_fcmeq_p_p_zz_combo_0_6000_65006000() {
     // Encoding: 0x65006000
     // Test FCMEQ_P.P.ZZ__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Zn=0, Zm=0, size=0, Pg=0, Pd=0
+    // Fields: size=0, Pd=0, Zn=0, Pg=0, Zm=0
     let encoding: u32 = 0x65006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13407,12 +16563,17 @@ fn test_fcmeq_p_p_zz_combo_0_6000_65006000() {
 fn test_fcmeq_p_p_zz_special_size_0_size_variant_0_24576_65006000() {
     // Encoding: 0x65006000
     // Test FCMEQ_P.P.ZZ__ special value size = 0 (Size variant 0)
-    // Fields: Zm=0, Zn=0, size=0, Pg=0, Pd=0
+    // Fields: size=0, Pd=0, Pg=0, Zn=0, Zm=0
     let encoding: u32 = 0x65006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13423,12 +16584,17 @@ fn test_fcmeq_p_p_zz_special_size_0_size_variant_0_24576_65006000() {
 fn test_fcmeq_p_p_zz_special_size_1_size_variant_1_24576_65406000() {
     // Encoding: 0x65406000
     // Test FCMEQ_P.P.ZZ__ special value size = 1 (Size variant 1)
-    // Fields: Zm=0, size=1, Pd=0, Zn=0, Pg=0
+    // Fields: Zm=0, Zn=0, size=1, Pg=0, Pd=0
     let encoding: u32 = 0x65406000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13439,12 +16605,17 @@ fn test_fcmeq_p_p_zz_special_size_1_size_variant_1_24576_65406000() {
 fn test_fcmeq_p_p_zz_special_size_2_size_variant_2_24576_65806000() {
     // Encoding: 0x65806000
     // Test FCMEQ_P.P.ZZ__ special value size = 2 (Size variant 2)
-    // Fields: Pg=0, size=2, Pd=0, Zn=0, Zm=0
+    // Fields: size=2, Pg=0, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x65806000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13455,12 +16626,17 @@ fn test_fcmeq_p_p_zz_special_size_2_size_variant_2_24576_65806000() {
 fn test_fcmeq_p_p_zz_special_size_3_size_variant_3_24576_65c06000() {
     // Encoding: 0x65C06000
     // Test FCMEQ_P.P.ZZ__ special value size = 3 (Size variant 3)
-    // Fields: Pg=0, size=3, Zn=0, Zm=0, Pd=0
+    // Fields: Zn=0, size=3, Pg=0, Pd=0, Zm=0
     let encoding: u32 = 0x65C06000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13471,12 +16647,16 @@ fn test_fcmeq_p_p_zz_special_size_3_size_variant_3_24576_65c06000() {
 fn test_fcmeq_p_p_zz_invalid_0_6000_65006000() {
     // Encoding: 0x65006000
     // Test FCMEQ_P.P.ZZ__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pd=0, size=0, Zm=0, Zn=0, Pg=0
+    // Fields: Pg=0, size=0, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x65006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13487,12 +16667,16 @@ fn test_fcmeq_p_p_zz_invalid_0_6000_65006000() {
 fn test_fcmeq_p_p_zz_invalid_1_6000_65006000() {
     // Encoding: 0x65006000
     // Test FCMEQ_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, size=0, Zn=0, Pd=0, Zm=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x65006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13503,12 +16687,16 @@ fn test_fcmeq_p_p_zz_invalid_1_6000_65006000() {
 fn test_fcmeq_p_p_zz_invalid_2_6000_65006000() {
     // Encoding: 0x65006000
     // Test FCMEQ_P.P.ZZ__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([false, false]) }
-    // Fields: Pd=0, size=0, Zm=0, Pg=0, Zn=0
+    // Fields: Zn=0, Pd=0, Pg=0, size=0, Zm=0
     let encoding: u32 = 0x65006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -13519,12 +16707,16 @@ fn test_fcmeq_p_p_zz_invalid_2_6000_65006000() {
 fn test_fcmeq_p_p_zz_invalid_3_6000_65006000() {
     // Encoding: 0x65006000
     // Test FCMEQ_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, Pd=0, size=0, Zm=0, Zn=0
+    // Fields: Pg=0, Zm=0, Zn=0, Pd=0, size=0
     let encoding: u32 = 0x65006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13535,12 +16727,17 @@ fn test_fcmeq_p_p_zz_invalid_3_6000_65006000() {
 fn test_fcmgt_p_p_zz_field_size_0_min_4010_65004010() {
     // Encoding: 0x65004010
     // Test FCMGT_P.P.ZZ__ field size = 0 (Min)
-    // Fields: Pd=0, Zn=0, size=0, Zm=0, Pg=0
+    // Fields: size=0, Zm=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x65004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13551,12 +16748,17 @@ fn test_fcmgt_p_p_zz_field_size_0_min_4010_65004010() {
 fn test_fcmgt_p_p_zz_field_size_1_poweroftwo_4010_65404010() {
     // Encoding: 0x65404010
     // Test FCMGT_P.P.ZZ__ field size = 1 (PowerOfTwo)
-    // Fields: Zn=0, Zm=0, Pg=0, size=1, Pd=0
+    // Fields: size=1, Zn=0, Pg=0, Pd=0, Zm=0
     let encoding: u32 = 0x65404010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13567,12 +16769,17 @@ fn test_fcmgt_p_p_zz_field_size_1_poweroftwo_4010_65404010() {
 fn test_fcmgt_p_p_zz_field_size_2_poweroftwo_4010_65804010() {
     // Encoding: 0x65804010
     // Test FCMGT_P.P.ZZ__ field size = 2 (PowerOfTwo)
-    // Fields: Pd=0, size=2, Zm=0, Zn=0, Pg=0
+    // Fields: size=2, Zm=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x65804010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13583,12 +16790,17 @@ fn test_fcmgt_p_p_zz_field_size_2_poweroftwo_4010_65804010() {
 fn test_fcmgt_p_p_zz_field_size_3_max_4010_65c04010() {
     // Encoding: 0x65C04010
     // Test FCMGT_P.P.ZZ__ field size = 3 (Max)
-    // Fields: Pg=0, Zm=0, size=3, Zn=0, Pd=0
+    // Fields: Zn=0, Pg=0, Zm=0, size=3, Pd=0
     let encoding: u32 = 0x65C04010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13599,12 +16811,17 @@ fn test_fcmgt_p_p_zz_field_size_3_max_4010_65c04010() {
 fn test_fcmgt_p_p_zz_field_zm_0_min_4010_65004010() {
     // Encoding: 0x65004010
     // Test FCMGT_P.P.ZZ__ field Zm = 0 (Min)
-    // Fields: Pg=0, Pd=0, Zn=0, size=0, Zm=0
+    // Fields: Pg=0, Zn=0, size=0, Pd=0, Zm=0
     let encoding: u32 = 0x65004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13615,12 +16832,17 @@ fn test_fcmgt_p_p_zz_field_zm_0_min_4010_65004010() {
 fn test_fcmgt_p_p_zz_field_zm_1_poweroftwo_4010_65014010() {
     // Encoding: 0x65014010
     // Test FCMGT_P.P.ZZ__ field Zm = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pg=0, Zm=1, size=0, Pd=0
+    // Fields: Pg=0, Pd=0, size=0, Zm=1, Zn=0
     let encoding: u32 = 0x65014010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13631,12 +16853,17 @@ fn test_fcmgt_p_p_zz_field_zm_1_poweroftwo_4010_65014010() {
 fn test_fcmgt_p_p_zz_field_zm_30_poweroftwominusone_4010_651e4010() {
     // Encoding: 0x651E4010
     // Test FCMGT_P.P.ZZ__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Zm=30, Zn=0, Pg=0, size=0, Pd=0
+    // Fields: Zn=0, Pd=0, size=0, Pg=0, Zm=30
     let encoding: u32 = 0x651E4010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13647,12 +16874,17 @@ fn test_fcmgt_p_p_zz_field_zm_30_poweroftwominusone_4010_651e4010() {
 fn test_fcmgt_p_p_zz_field_zm_31_max_4010_651f4010() {
     // Encoding: 0x651F4010
     // Test FCMGT_P.P.ZZ__ field Zm = 31 (Max)
-    // Fields: size=0, Zm=31, Pg=0, Zn=0, Pd=0
+    // Fields: size=0, Zn=0, Pg=0, Pd=0, Zm=31
     let encoding: u32 = 0x651F4010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13663,12 +16895,17 @@ fn test_fcmgt_p_p_zz_field_zm_31_max_4010_651f4010() {
 fn test_fcmgt_p_p_zz_field_pg_0_min_4010_65004010() {
     // Encoding: 0x65004010
     // Test FCMGT_P.P.ZZ__ field Pg = 0 (Min)
-    // Fields: Pg=0, Zn=0, Pd=0, Zm=0, size=0
+    // Fields: Pg=0, Pd=0, Zm=0, size=0, Zn=0
     let encoding: u32 = 0x65004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13679,12 +16916,17 @@ fn test_fcmgt_p_p_zz_field_pg_0_min_4010_65004010() {
 fn test_fcmgt_p_p_zz_field_pg_1_poweroftwo_4010_65004410() {
     // Encoding: 0x65004410
     // Test FCMGT_P.P.ZZ__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pg=1, size=0, Zm=0, Zn=0, Pd=0
+    // Fields: Zn=0, size=0, Pg=1, Zm=0, Pd=0
     let encoding: u32 = 0x65004410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13695,12 +16937,17 @@ fn test_fcmgt_p_p_zz_field_pg_1_poweroftwo_4010_65004410() {
 fn test_fcmgt_p_p_zz_field_zn_0_min_4010_65004010() {
     // Encoding: 0x65004010
     // Test FCMGT_P.P.ZZ__ field Zn = 0 (Min)
-    // Fields: Zn=0, Pd=0, size=0, Zm=0, Pg=0
+    // Fields: Zm=0, size=0, Pd=0, Zn=0, Pg=0
     let encoding: u32 = 0x65004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13711,12 +16958,17 @@ fn test_fcmgt_p_p_zz_field_zn_0_min_4010_65004010() {
 fn test_fcmgt_p_p_zz_field_zn_1_poweroftwo_4010_65004030() {
     // Encoding: 0x65004030
     // Test FCMGT_P.P.ZZ__ field Zn = 1 (PowerOfTwo)
-    // Fields: size=0, Zm=0, Pd=0, Zn=1, Pg=0
+    // Fields: size=0, Pd=0, Zm=0, Pg=0, Zn=1
     let encoding: u32 = 0x65004030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13727,12 +16979,17 @@ fn test_fcmgt_p_p_zz_field_zn_1_poweroftwo_4010_65004030() {
 fn test_fcmgt_p_p_zz_field_zn_30_poweroftwominusone_4010_650043d0() {
     // Encoding: 0x650043D0
     // Test FCMGT_P.P.ZZ__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Zm=0, size=0, Zn=30, Pg=0, Pd=0
+    // Fields: Pg=0, Zm=0, size=0, Zn=30, Pd=0
     let encoding: u32 = 0x650043D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13743,12 +17000,17 @@ fn test_fcmgt_p_p_zz_field_zn_30_poweroftwominusone_4010_650043d0() {
 fn test_fcmgt_p_p_zz_field_zn_31_max_4010_650043f0() {
     // Encoding: 0x650043F0
     // Test FCMGT_P.P.ZZ__ field Zn = 31 (Max)
-    // Fields: size=0, Pd=0, Zn=31, Pg=0, Zm=0
+    // Fields: Zm=0, Zn=31, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x650043F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13759,12 +17021,17 @@ fn test_fcmgt_p_p_zz_field_zn_31_max_4010_650043f0() {
 fn test_fcmgt_p_p_zz_field_pd_0_min_4010_65004010() {
     // Encoding: 0x65004010
     // Test FCMGT_P.P.ZZ__ field Pd = 0 (Min)
-    // Fields: size=0, Zn=0, Pg=0, Pd=0, Zm=0
+    // Fields: size=0, Zn=0, Pg=0, Zm=0, Pd=0
     let encoding: u32 = 0x65004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13775,12 +17042,17 @@ fn test_fcmgt_p_p_zz_field_pd_0_min_4010_65004010() {
 fn test_fcmgt_p_p_zz_field_pd_1_poweroftwo_4010_65004011() {
     // Encoding: 0x65004011
     // Test FCMGT_P.P.ZZ__ field Pd = 1 (PowerOfTwo)
-    // Fields: Pd=1, Zm=0, Zn=0, Pg=0, size=0
+    // Fields: Pg=0, Zm=0, size=0, Pd=1, Zn=0
     let encoding: u32 = 0x65004011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13791,12 +17063,17 @@ fn test_fcmgt_p_p_zz_field_pd_1_poweroftwo_4010_65004011() {
 fn test_fcmgt_p_p_zz_combo_0_4010_65004010() {
     // Encoding: 0x65004010
     // Test FCMGT_P.P.ZZ__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Zm=0, size=0, Zn=0, Pg=0, Pd=0
+    // Fields: Zn=0, size=0, Pd=0, Pg=0, Zm=0
     let encoding: u32 = 0x65004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13807,12 +17084,17 @@ fn test_fcmgt_p_p_zz_combo_0_4010_65004010() {
 fn test_fcmgt_p_p_zz_special_size_0_size_variant_0_16400_65004010() {
     // Encoding: 0x65004010
     // Test FCMGT_P.P.ZZ__ special value size = 0 (Size variant 0)
-    // Fields: Zm=0, Pg=0, Zn=0, Pd=0, size=0
+    // Fields: Pd=0, Zn=0, size=0, Pg=0, Zm=0
     let encoding: u32 = 0x65004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13823,12 +17105,17 @@ fn test_fcmgt_p_p_zz_special_size_0_size_variant_0_16400_65004010() {
 fn test_fcmgt_p_p_zz_special_size_1_size_variant_1_16400_65404010() {
     // Encoding: 0x65404010
     // Test FCMGT_P.P.ZZ__ special value size = 1 (Size variant 1)
-    // Fields: size=1, Pg=0, Pd=0, Zm=0, Zn=0
+    // Fields: size=1, Zm=0, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x65404010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13839,12 +17126,17 @@ fn test_fcmgt_p_p_zz_special_size_1_size_variant_1_16400_65404010() {
 fn test_fcmgt_p_p_zz_special_size_2_size_variant_2_16400_65804010() {
     // Encoding: 0x65804010
     // Test FCMGT_P.P.ZZ__ special value size = 2 (Size variant 2)
-    // Fields: size=2, Pg=0, Zn=0, Pd=0, Zm=0
+    // Fields: Pg=0, Pd=0, size=2, Zm=0, Zn=0
     let encoding: u32 = 0x65804010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13855,12 +17147,17 @@ fn test_fcmgt_p_p_zz_special_size_2_size_variant_2_16400_65804010() {
 fn test_fcmgt_p_p_zz_special_size_3_size_variant_3_16400_65c04010() {
     // Encoding: 0x65C04010
     // Test FCMGT_P.P.ZZ__ special value size = 3 (Size variant 3)
-    // Fields: Pd=0, Pg=0, Zm=0, size=3, Zn=0
+    // Fields: Zn=0, Zm=0, Pd=0, size=3, Pg=0
     let encoding: u32 = 0x65C04010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13871,12 +17168,16 @@ fn test_fcmgt_p_p_zz_special_size_3_size_variant_3_16400_65c04010() {
 fn test_fcmgt_p_p_zz_invalid_0_4010_65004010() {
     // Encoding: 0x65004010
     // Test FCMGT_P.P.ZZ__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pg=0, size=0, Zm=0, Pd=0, Zn=0
+    // Fields: Zm=0, Pd=0, size=0, Zn=0, Pg=0
     let encoding: u32 = 0x65004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13887,12 +17188,16 @@ fn test_fcmgt_p_p_zz_invalid_0_4010_65004010() {
 fn test_fcmgt_p_p_zz_invalid_1_4010_65004010() {
     // Encoding: 0x65004010
     // Test FCMGT_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zn=0, Pd=0, size=0, Zm=0, Pg=0
+    // Fields: Pg=0, size=0, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x65004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13903,12 +17208,16 @@ fn test_fcmgt_p_p_zz_invalid_1_4010_65004010() {
 fn test_fcmgt_p_p_zz_invalid_2_4010_65004010() {
     // Encoding: 0x65004010
     // Test FCMGT_P.P.ZZ__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([false, false]) }
-    // Fields: size=0, Pg=0, Pd=0, Zm=0, Zn=0
+    // Fields: Zm=0, Zn=0, Pg=0, size=0, Pd=0
     let encoding: u32 = 0x65004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGT_P.P.ZZ__
@@ -13919,12 +17228,16 @@ fn test_fcmgt_p_p_zz_invalid_2_4010_65004010() {
 fn test_fcmgt_p_p_zz_invalid_3_4010_65004010() {
     // Encoding: 0x65004010
     // Test FCMGT_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zm=0, size=0, Zn=0, Pg=0, Pd=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x65004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -13935,12 +17248,17 @@ fn test_fcmgt_p_p_zz_invalid_3_4010_65004010() {
 fn test_fcmge_p_p_zz_field_size_0_min_4000_65004000() {
     // Encoding: 0x65004000
     // Test FCMGE_P.P.ZZ__ field size = 0 (Min)
-    // Fields: Zn=0, size=0, Pg=0, Pd=0, Zm=0
+    // Fields: size=0, Zm=0, Pd=0, Zn=0, Pg=0
     let encoding: u32 = 0x65004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -13951,12 +17269,17 @@ fn test_fcmge_p_p_zz_field_size_0_min_4000_65004000() {
 fn test_fcmge_p_p_zz_field_size_1_poweroftwo_4000_65404000() {
     // Encoding: 0x65404000
     // Test FCMGE_P.P.ZZ__ field size = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pd=0, Pg=0, size=1, Zm=0
+    // Fields: Zm=0, Pg=0, Zn=0, size=1, Pd=0
     let encoding: u32 = 0x65404000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -13967,12 +17290,17 @@ fn test_fcmge_p_p_zz_field_size_1_poweroftwo_4000_65404000() {
 fn test_fcmge_p_p_zz_field_size_2_poweroftwo_4000_65804000() {
     // Encoding: 0x65804000
     // Test FCMGE_P.P.ZZ__ field size = 2 (PowerOfTwo)
-    // Fields: Zn=0, Zm=0, Pd=0, size=2, Pg=0
+    // Fields: size=2, Pg=0, Zm=0, Zn=0, Pd=0
     let encoding: u32 = 0x65804000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -13983,12 +17311,17 @@ fn test_fcmge_p_p_zz_field_size_2_poweroftwo_4000_65804000() {
 fn test_fcmge_p_p_zz_field_size_3_max_4000_65c04000() {
     // Encoding: 0x65C04000
     // Test FCMGE_P.P.ZZ__ field size = 3 (Max)
-    // Fields: Pg=0, Zn=0, size=3, Zm=0, Pd=0
+    // Fields: Pd=0, Pg=0, Zm=0, Zn=0, size=3
     let encoding: u32 = 0x65C04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -13999,12 +17332,17 @@ fn test_fcmge_p_p_zz_field_size_3_max_4000_65c04000() {
 fn test_fcmge_p_p_zz_field_zm_0_min_4000_65004000() {
     // Encoding: 0x65004000
     // Test FCMGE_P.P.ZZ__ field Zm = 0 (Min)
-    // Fields: Zm=0, Pg=0, Pd=0, size=0, Zn=0
+    // Fields: Zm=0, size=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x65004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14015,12 +17353,17 @@ fn test_fcmge_p_p_zz_field_zm_0_min_4000_65004000() {
 fn test_fcmge_p_p_zz_field_zm_1_poweroftwo_4000_65014000() {
     // Encoding: 0x65014000
     // Test FCMGE_P.P.ZZ__ field Zm = 1 (PowerOfTwo)
-    // Fields: Pg=0, Pd=0, size=0, Zm=1, Zn=0
+    // Fields: size=0, Zm=1, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x65014000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14031,12 +17374,17 @@ fn test_fcmge_p_p_zz_field_zm_1_poweroftwo_4000_65014000() {
 fn test_fcmge_p_p_zz_field_zm_30_poweroftwominusone_4000_651e4000() {
     // Encoding: 0x651E4000
     // Test FCMGE_P.P.ZZ__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, size=0, Zm=30, Pg=0, Pd=0
+    // Fields: size=0, Pg=0, Pd=0, Zn=0, Zm=30
     let encoding: u32 = 0x651E4000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14047,12 +17395,17 @@ fn test_fcmge_p_p_zz_field_zm_30_poweroftwominusone_4000_651e4000() {
 fn test_fcmge_p_p_zz_field_zm_31_max_4000_651f4000() {
     // Encoding: 0x651F4000
     // Test FCMGE_P.P.ZZ__ field Zm = 31 (Max)
-    // Fields: size=0, Zm=31, Zn=0, Pg=0, Pd=0
+    // Fields: size=0, Zn=0, Pg=0, Pd=0, Zm=31
     let encoding: u32 = 0x651F4000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14063,12 +17416,17 @@ fn test_fcmge_p_p_zz_field_zm_31_max_4000_651f4000() {
 fn test_fcmge_p_p_zz_field_pg_0_min_4000_65004000() {
     // Encoding: 0x65004000
     // Test FCMGE_P.P.ZZ__ field Pg = 0 (Min)
-    // Fields: Zm=0, Zn=0, size=0, Pg=0, Pd=0
+    // Fields: Pd=0, size=0, Zm=0, Pg=0, Zn=0
     let encoding: u32 = 0x65004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14079,12 +17437,17 @@ fn test_fcmge_p_p_zz_field_pg_0_min_4000_65004000() {
 fn test_fcmge_p_p_zz_field_pg_1_poweroftwo_4000_65004400() {
     // Encoding: 0x65004400
     // Test FCMGE_P.P.ZZ__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pg=1, Pd=0, Zm=0, size=0, Zn=0
+    // Fields: Pg=1, Zm=0, Zn=0, size=0, Pd=0
     let encoding: u32 = 0x65004400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14095,12 +17458,17 @@ fn test_fcmge_p_p_zz_field_pg_1_poweroftwo_4000_65004400() {
 fn test_fcmge_p_p_zz_field_zn_0_min_4000_65004000() {
     // Encoding: 0x65004000
     // Test FCMGE_P.P.ZZ__ field Zn = 0 (Min)
-    // Fields: Zm=0, Zn=0, Pd=0, Pg=0, size=0
+    // Fields: Pd=0, Pg=0, size=0, Zm=0, Zn=0
     let encoding: u32 = 0x65004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14111,12 +17479,17 @@ fn test_fcmge_p_p_zz_field_zn_0_min_4000_65004000() {
 fn test_fcmge_p_p_zz_field_zn_1_poweroftwo_4000_65004020() {
     // Encoding: 0x65004020
     // Test FCMGE_P.P.ZZ__ field Zn = 1 (PowerOfTwo)
-    // Fields: Pd=0, size=0, Zm=0, Pg=0, Zn=1
+    // Fields: size=0, Pg=0, Pd=0, Zm=0, Zn=1
     let encoding: u32 = 0x65004020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14127,12 +17500,17 @@ fn test_fcmge_p_p_zz_field_zn_1_poweroftwo_4000_65004020() {
 fn test_fcmge_p_p_zz_field_zn_30_poweroftwominusone_4000_650043c0() {
     // Encoding: 0x650043C0
     // Test FCMGE_P.P.ZZ__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Zn=30, Pd=0, size=0, Zm=0, Pg=0
+    // Fields: Pd=0, size=0, Zm=0, Pg=0, Zn=30
     let encoding: u32 = 0x650043C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14143,12 +17521,17 @@ fn test_fcmge_p_p_zz_field_zn_30_poweroftwominusone_4000_650043c0() {
 fn test_fcmge_p_p_zz_field_zn_31_max_4000_650043e0() {
     // Encoding: 0x650043E0
     // Test FCMGE_P.P.ZZ__ field Zn = 31 (Max)
-    // Fields: Pg=0, Zn=31, Pd=0, Zm=0, size=0
+    // Fields: size=0, Zm=0, Pg=0, Pd=0, Zn=31
     let encoding: u32 = 0x650043E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14159,12 +17542,17 @@ fn test_fcmge_p_p_zz_field_zn_31_max_4000_650043e0() {
 fn test_fcmge_p_p_zz_field_pd_0_min_4000_65004000() {
     // Encoding: 0x65004000
     // Test FCMGE_P.P.ZZ__ field Pd = 0 (Min)
-    // Fields: Pd=0, Pg=0, Zm=0, size=0, Zn=0
+    // Fields: Zn=0, Pd=0, size=0, Zm=0, Pg=0
     let encoding: u32 = 0x65004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14175,12 +17563,17 @@ fn test_fcmge_p_p_zz_field_pd_0_min_4000_65004000() {
 fn test_fcmge_p_p_zz_field_pd_1_poweroftwo_4000_65004001() {
     // Encoding: 0x65004001
     // Test FCMGE_P.P.ZZ__ field Pd = 1 (PowerOfTwo)
-    // Fields: Zm=0, Zn=0, Pg=0, size=0, Pd=1
+    // Fields: Pg=0, Zm=0, Zn=0, Pd=1, size=0
     let encoding: u32 = 0x65004001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14191,12 +17584,17 @@ fn test_fcmge_p_p_zz_field_pd_1_poweroftwo_4000_65004001() {
 fn test_fcmge_p_p_zz_combo_0_4000_65004000() {
     // Encoding: 0x65004000
     // Test FCMGE_P.P.ZZ__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Pg=0, Pd=0, Zm=0, size=0, Zn=0
+    // Fields: Zm=0, Zn=0, Pd=0, Pg=0, size=0
     let encoding: u32 = 0x65004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14207,12 +17605,17 @@ fn test_fcmge_p_p_zz_combo_0_4000_65004000() {
 fn test_fcmge_p_p_zz_special_size_0_size_variant_0_16384_65004000() {
     // Encoding: 0x65004000
     // Test FCMGE_P.P.ZZ__ special value size = 0 (Size variant 0)
-    // Fields: Pd=0, Zm=0, size=0, Pg=0, Zn=0
+    // Fields: Zm=0, Pg=0, Zn=0, size=0, Pd=0
     let encoding: u32 = 0x65004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14223,12 +17626,17 @@ fn test_fcmge_p_p_zz_special_size_0_size_variant_0_16384_65004000() {
 fn test_fcmge_p_p_zz_special_size_1_size_variant_1_16384_65404000() {
     // Encoding: 0x65404000
     // Test FCMGE_P.P.ZZ__ special value size = 1 (Size variant 1)
-    // Fields: Zn=0, Pd=0, Pg=0, Zm=0, size=1
+    // Fields: Zn=0, Pd=0, Zm=0, Pg=0, size=1
     let encoding: u32 = 0x65404000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14239,12 +17647,17 @@ fn test_fcmge_p_p_zz_special_size_1_size_variant_1_16384_65404000() {
 fn test_fcmge_p_p_zz_special_size_2_size_variant_2_16384_65804000() {
     // Encoding: 0x65804000
     // Test FCMGE_P.P.ZZ__ special value size = 2 (Size variant 2)
-    // Fields: size=2, Pg=0, Zm=0, Zn=0, Pd=0
+    // Fields: Zn=0, Zm=0, Pg=0, size=2, Pd=0
     let encoding: u32 = 0x65804000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14255,12 +17668,17 @@ fn test_fcmge_p_p_zz_special_size_2_size_variant_2_16384_65804000() {
 fn test_fcmge_p_p_zz_special_size_3_size_variant_3_16384_65c04000() {
     // Encoding: 0x65C04000
     // Test FCMGE_P.P.ZZ__ special value size = 3 (Size variant 3)
-    // Fields: size=3, Zn=0, Pd=0, Zm=0, Pg=0
+    // Fields: Zm=0, Pg=0, Zn=0, size=3, Pd=0
     let encoding: u32 = 0x65C04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14271,12 +17689,16 @@ fn test_fcmge_p_p_zz_special_size_3_size_variant_3_16384_65c04000() {
 fn test_fcmge_p_p_zz_invalid_0_4000_65004000() {
     // Encoding: 0x65004000
     // Test FCMGE_P.P.ZZ__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pg=0, Zn=0, size=0, Zm=0, Pd=0
+    // Fields: Pd=0, Zn=0, Zm=0, size=0, Pg=0
     let encoding: u32 = 0x65004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14287,12 +17709,16 @@ fn test_fcmge_p_p_zz_invalid_0_4000_65004000() {
 fn test_fcmge_p_p_zz_invalid_1_4000_65004000() {
     // Encoding: 0x65004000
     // Test FCMGE_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zm=0, size=0, Pg=0, Pd=0, Zn=0
+    // Fields: size=0, Zm=0, Zn=0, Pg=0, Pd=0
     let encoding: u32 = 0x65004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14303,12 +17729,16 @@ fn test_fcmge_p_p_zz_invalid_1_4000_65004000() {
 fn test_fcmge_p_p_zz_invalid_2_4000_65004000() {
     // Encoding: 0x65004000
     // Test FCMGE_P.P.ZZ__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([false, false]) }
-    // Fields: Zn=0, Pd=0, Pg=0, Zm=0, size=0
+    // Fields: Pg=0, Zm=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x65004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMGE_P.P.ZZ__
@@ -14319,12 +17749,16 @@ fn test_fcmge_p_p_zz_invalid_2_4000_65004000() {
 fn test_fcmge_p_p_zz_invalid_3_4000_65004000() {
     // Encoding: 0x65004000
     // Test FCMGE_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, size=0, Zm=0, Zn=0, Pd=0
+    // Fields: Pd=0, size=0, Zm=0, Pg=0, Zn=0
     let encoding: u32 = 0x65004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14335,12 +17769,17 @@ fn test_fcmge_p_p_zz_invalid_3_4000_65004000() {
 fn test_fcmne_p_p_zz_field_size_0_min_6010_65006010() {
     // Encoding: 0x65006010
     // Test FCMNE_P.P.ZZ__ field size = 0 (Min)
-    // Fields: Zm=0, Zn=0, size=0, Pd=0, Pg=0
+    // Fields: size=0, Pg=0, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x65006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14351,12 +17790,17 @@ fn test_fcmne_p_p_zz_field_size_0_min_6010_65006010() {
 fn test_fcmne_p_p_zz_field_size_1_poweroftwo_6010_65406010() {
     // Encoding: 0x65406010
     // Test FCMNE_P.P.ZZ__ field size = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zn=0, Pg=0, size=1, Zm=0
+    // Fields: Pd=0, Pg=0, Zm=0, Zn=0, size=1
     let encoding: u32 = 0x65406010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14367,12 +17811,17 @@ fn test_fcmne_p_p_zz_field_size_1_poweroftwo_6010_65406010() {
 fn test_fcmne_p_p_zz_field_size_2_poweroftwo_6010_65806010() {
     // Encoding: 0x65806010
     // Test FCMNE_P.P.ZZ__ field size = 2 (PowerOfTwo)
-    // Fields: Pg=0, Pd=0, size=2, Zm=0, Zn=0
+    // Fields: Pd=0, size=2, Pg=0, Zn=0, Zm=0
     let encoding: u32 = 0x65806010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14383,12 +17832,17 @@ fn test_fcmne_p_p_zz_field_size_2_poweroftwo_6010_65806010() {
 fn test_fcmne_p_p_zz_field_size_3_max_6010_65c06010() {
     // Encoding: 0x65C06010
     // Test FCMNE_P.P.ZZ__ field size = 3 (Max)
-    // Fields: Zn=0, Pd=0, Zm=0, size=3, Pg=0
+    // Fields: size=3, Zn=0, Pd=0, Zm=0, Pg=0
     let encoding: u32 = 0x65C06010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14399,12 +17853,17 @@ fn test_fcmne_p_p_zz_field_size_3_max_6010_65c06010() {
 fn test_fcmne_p_p_zz_field_zm_0_min_6010_65006010() {
     // Encoding: 0x65006010
     // Test FCMNE_P.P.ZZ__ field Zm = 0 (Min)
-    // Fields: size=0, Pg=0, Zm=0, Zn=0, Pd=0
+    // Fields: Pd=0, Zn=0, size=0, Zm=0, Pg=0
     let encoding: u32 = 0x65006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14415,12 +17874,17 @@ fn test_fcmne_p_p_zz_field_zm_0_min_6010_65006010() {
 fn test_fcmne_p_p_zz_field_zm_1_poweroftwo_6010_65016010() {
     // Encoding: 0x65016010
     // Test FCMNE_P.P.ZZ__ field Zm = 1 (PowerOfTwo)
-    // Fields: Zm=1, size=0, Zn=0, Pd=0, Pg=0
+    // Fields: Zn=0, Zm=1, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x65016010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14431,12 +17895,17 @@ fn test_fcmne_p_p_zz_field_zm_1_poweroftwo_6010_65016010() {
 fn test_fcmne_p_p_zz_field_zm_30_poweroftwominusone_6010_651e6010() {
     // Encoding: 0x651E6010
     // Test FCMNE_P.P.ZZ__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, Zn=0, Pd=0, size=0, Zm=30
+    // Fields: Zn=0, Pd=0, Pg=0, size=0, Zm=30
     let encoding: u32 = 0x651E6010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14447,12 +17916,17 @@ fn test_fcmne_p_p_zz_field_zm_30_poweroftwominusone_6010_651e6010() {
 fn test_fcmne_p_p_zz_field_zm_31_max_6010_651f6010() {
     // Encoding: 0x651F6010
     // Test FCMNE_P.P.ZZ__ field Zm = 31 (Max)
-    // Fields: Pg=0, Zm=31, Zn=0, Pd=0, size=0
+    // Fields: Zn=0, Pg=0, Pd=0, size=0, Zm=31
     let encoding: u32 = 0x651F6010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14463,12 +17937,17 @@ fn test_fcmne_p_p_zz_field_zm_31_max_6010_651f6010() {
 fn test_fcmne_p_p_zz_field_pg_0_min_6010_65006010() {
     // Encoding: 0x65006010
     // Test FCMNE_P.P.ZZ__ field Pg = 0 (Min)
-    // Fields: Pg=0, size=0, Zm=0, Zn=0, Pd=0
+    // Fields: Pd=0, Zm=0, Zn=0, Pg=0, size=0
     let encoding: u32 = 0x65006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14479,12 +17958,17 @@ fn test_fcmne_p_p_zz_field_pg_0_min_6010_65006010() {
 fn test_fcmne_p_p_zz_field_pg_1_poweroftwo_6010_65006410() {
     // Encoding: 0x65006410
     // Test FCMNE_P.P.ZZ__ field Pg = 1 (PowerOfTwo)
-    // Fields: Zn=0, Zm=0, size=0, Pg=1, Pd=0
+    // Fields: size=0, Pg=1, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x65006410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14495,12 +17979,17 @@ fn test_fcmne_p_p_zz_field_pg_1_poweroftwo_6010_65006410() {
 fn test_fcmne_p_p_zz_field_zn_0_min_6010_65006010() {
     // Encoding: 0x65006010
     // Test FCMNE_P.P.ZZ__ field Zn = 0 (Min)
-    // Fields: Zm=0, Pg=0, Zn=0, Pd=0, size=0
+    // Fields: Zm=0, Pg=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x65006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14511,12 +18000,17 @@ fn test_fcmne_p_p_zz_field_zn_0_min_6010_65006010() {
 fn test_fcmne_p_p_zz_field_zn_1_poweroftwo_6010_65006030() {
     // Encoding: 0x65006030
     // Test FCMNE_P.P.ZZ__ field Zn = 1 (PowerOfTwo)
-    // Fields: Zn=1, Pg=0, size=0, Zm=0, Pd=0
+    // Fields: size=0, Zm=0, Pd=0, Zn=1, Pg=0
     let encoding: u32 = 0x65006030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14527,12 +18021,17 @@ fn test_fcmne_p_p_zz_field_zn_1_poweroftwo_6010_65006030() {
 fn test_fcmne_p_p_zz_field_zn_30_poweroftwominusone_6010_650063d0() {
     // Encoding: 0x650063D0
     // Test FCMNE_P.P.ZZ__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Zn=30, Pd=0, size=0, Zm=0, Pg=0
+    // Fields: size=0, Pg=0, Zm=0, Zn=30, Pd=0
     let encoding: u32 = 0x650063D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14543,12 +18042,17 @@ fn test_fcmne_p_p_zz_field_zn_30_poweroftwominusone_6010_650063d0() {
 fn test_fcmne_p_p_zz_field_zn_31_max_6010_650063f0() {
     // Encoding: 0x650063F0
     // Test FCMNE_P.P.ZZ__ field Zn = 31 (Max)
-    // Fields: Zn=31, Zm=0, Pg=0, size=0, Pd=0
+    // Fields: Zm=0, Zn=31, size=0, Pd=0, Pg=0
     let encoding: u32 = 0x650063F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14559,12 +18063,17 @@ fn test_fcmne_p_p_zz_field_zn_31_max_6010_650063f0() {
 fn test_fcmne_p_p_zz_field_pd_0_min_6010_65006010() {
     // Encoding: 0x65006010
     // Test FCMNE_P.P.ZZ__ field Pd = 0 (Min)
-    // Fields: Zm=0, Zn=0, Pd=0, Pg=0, size=0
+    // Fields: Pd=0, size=0, Zn=0, Zm=0, Pg=0
     let encoding: u32 = 0x65006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14575,12 +18084,17 @@ fn test_fcmne_p_p_zz_field_pd_0_min_6010_65006010() {
 fn test_fcmne_p_p_zz_field_pd_1_poweroftwo_6010_65006011() {
     // Encoding: 0x65006011
     // Test FCMNE_P.P.ZZ__ field Pd = 1 (PowerOfTwo)
-    // Fields: size=0, Pd=1, Zm=0, Zn=0, Pg=0
+    // Fields: Zm=0, size=0, Pd=1, Pg=0, Zn=0
     let encoding: u32 = 0x65006011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14591,12 +18105,17 @@ fn test_fcmne_p_p_zz_field_pd_1_poweroftwo_6010_65006011() {
 fn test_fcmne_p_p_zz_combo_0_6010_65006010() {
     // Encoding: 0x65006010
     // Test FCMNE_P.P.ZZ__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: size=0, Pd=0, Zm=0, Zn=0, Pg=0
+    // Fields: Pd=0, Pg=0, Zn=0, Zm=0, size=0
     let encoding: u32 = 0x65006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14607,12 +18126,17 @@ fn test_fcmne_p_p_zz_combo_0_6010_65006010() {
 fn test_fcmne_p_p_zz_special_size_0_size_variant_0_24592_65006010() {
     // Encoding: 0x65006010
     // Test FCMNE_P.P.ZZ__ special value size = 0 (Size variant 0)
-    // Fields: Zm=0, size=0, Pd=0, Pg=0, Zn=0
+    // Fields: size=0, Zm=0, Zn=0, Pg=0, Pd=0
     let encoding: u32 = 0x65006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14623,12 +18147,17 @@ fn test_fcmne_p_p_zz_special_size_0_size_variant_0_24592_65006010() {
 fn test_fcmne_p_p_zz_special_size_1_size_variant_1_24592_65406010() {
     // Encoding: 0x65406010
     // Test FCMNE_P.P.ZZ__ special value size = 1 (Size variant 1)
-    // Fields: Pg=0, Pd=0, size=1, Zn=0, Zm=0
+    // Fields: Zm=0, Pg=0, Pd=0, Zn=0, size=1
     let encoding: u32 = 0x65406010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14639,12 +18168,17 @@ fn test_fcmne_p_p_zz_special_size_1_size_variant_1_24592_65406010() {
 fn test_fcmne_p_p_zz_special_size_2_size_variant_2_24592_65806010() {
     // Encoding: 0x65806010
     // Test FCMNE_P.P.ZZ__ special value size = 2 (Size variant 2)
-    // Fields: Zm=0, Pd=0, size=2, Zn=0, Pg=0
+    // Fields: Zn=0, Pd=0, Zm=0, Pg=0, size=2
     let encoding: u32 = 0x65806010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14655,12 +18189,17 @@ fn test_fcmne_p_p_zz_special_size_2_size_variant_2_24592_65806010() {
 fn test_fcmne_p_p_zz_special_size_3_size_variant_3_24592_65c06010() {
     // Encoding: 0x65C06010
     // Test FCMNE_P.P.ZZ__ special value size = 3 (Size variant 3)
-    // Fields: size=3, Zm=0, Pg=0, Pd=0, Zn=0
+    // Fields: Zm=0, Pd=0, Pg=0, Zn=0, size=3
     let encoding: u32 = 0x65C06010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14671,12 +18210,16 @@ fn test_fcmne_p_p_zz_special_size_3_size_variant_3_24592_65c06010() {
 fn test_fcmne_p_p_zz_invalid_0_6010_65006010() {
     // Encoding: 0x65006010
     // Test FCMNE_P.P.ZZ__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pg=0, Zn=0, size=0, Pd=0, Zm=0
+    // Fields: Pg=0, size=0, Pd=0, Zn=0, Zm=0
     let encoding: u32 = 0x65006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14687,12 +18230,16 @@ fn test_fcmne_p_p_zz_invalid_0_6010_65006010() {
 fn test_fcmne_p_p_zz_invalid_1_6010_65006010() {
     // Encoding: 0x65006010
     // Test FCMNE_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, Zn=0, Pd=0, Pg=0, Zm=0
+    // Fields: Zn=0, Zm=0, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x65006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14703,12 +18250,16 @@ fn test_fcmne_p_p_zz_invalid_1_6010_65006010() {
 fn test_fcmne_p_p_zz_invalid_2_6010_65006010() {
     // Encoding: 0x65006010
     // Test FCMNE_P.P.ZZ__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([false, false]) }
-    // Fields: Zn=0, Pg=0, Pd=0, size=0, Zm=0
+    // Fields: Pd=0, size=0, Zm=0, Zn=0, Pg=0
     let encoding: u32 = 0x65006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMNE_P.P.ZZ__
@@ -14719,12 +18270,16 @@ fn test_fcmne_p_p_zz_invalid_2_6010_65006010() {
 fn test_fcmne_p_p_zz_invalid_3_6010_65006010() {
     // Encoding: 0x65006010
     // Test FCMNE_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, size=0, Zn=0, Pd=0, Zm=0
+    // Fields: Pg=0, Zn=0, Zm=0, size=0, Pd=0
     let encoding: u32 = 0x65006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14735,12 +18290,17 @@ fn test_fcmne_p_p_zz_invalid_3_6010_65006010() {
 fn test_fcmuo_p_p_zz_field_size_0_min_c000_6500c000() {
     // Encoding: 0x6500C000
     // Test FCMUO_P.P.ZZ__ field size = 0 (Min)
-    // Fields: Zn=0, Pg=0, Pd=0, size=0, Zm=0
+    // Fields: Zm=0, Pd=0, Zn=0, size=0, Pg=0
     let encoding: u32 = 0x6500C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14751,12 +18311,17 @@ fn test_fcmuo_p_p_zz_field_size_0_min_c000_6500c000() {
 fn test_fcmuo_p_p_zz_field_size_1_poweroftwo_c000_6540c000() {
     // Encoding: 0x6540C000
     // Test FCMUO_P.P.ZZ__ field size = 1 (PowerOfTwo)
-    // Fields: size=1, Zn=0, Zm=0, Pd=0, Pg=0
+    // Fields: Pg=0, Zn=0, size=1, Zm=0, Pd=0
     let encoding: u32 = 0x6540C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14767,12 +18332,17 @@ fn test_fcmuo_p_p_zz_field_size_1_poweroftwo_c000_6540c000() {
 fn test_fcmuo_p_p_zz_field_size_2_poweroftwo_c000_6580c000() {
     // Encoding: 0x6580C000
     // Test FCMUO_P.P.ZZ__ field size = 2 (PowerOfTwo)
-    // Fields: Zm=0, Pg=0, Zn=0, Pd=0, size=2
+    // Fields: Zm=0, Zn=0, size=2, Pd=0, Pg=0
     let encoding: u32 = 0x6580C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14783,12 +18353,17 @@ fn test_fcmuo_p_p_zz_field_size_2_poweroftwo_c000_6580c000() {
 fn test_fcmuo_p_p_zz_field_size_3_max_c000_65c0c000() {
     // Encoding: 0x65C0C000
     // Test FCMUO_P.P.ZZ__ field size = 3 (Max)
-    // Fields: Zn=0, Pd=0, size=3, Zm=0, Pg=0
+    // Fields: Zn=0, Zm=0, Pd=0, size=3, Pg=0
     let encoding: u32 = 0x65C0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14799,12 +18374,17 @@ fn test_fcmuo_p_p_zz_field_size_3_max_c000_65c0c000() {
 fn test_fcmuo_p_p_zz_field_zm_0_min_c000_6500c000() {
     // Encoding: 0x6500C000
     // Test FCMUO_P.P.ZZ__ field Zm = 0 (Min)
-    // Fields: Zn=0, Pd=0, size=0, Zm=0, Pg=0
+    // Fields: Zm=0, Pd=0, size=0, Pg=0, Zn=0
     let encoding: u32 = 0x6500C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14815,12 +18395,17 @@ fn test_fcmuo_p_p_zz_field_zm_0_min_c000_6500c000() {
 fn test_fcmuo_p_p_zz_field_zm_1_poweroftwo_c000_6501c000() {
     // Encoding: 0x6501C000
     // Test FCMUO_P.P.ZZ__ field Zm = 1 (PowerOfTwo)
-    // Fields: Pd=0, Pg=0, size=0, Zm=1, Zn=0
+    // Fields: Zm=1, Zn=0, Pg=0, size=0, Pd=0
     let encoding: u32 = 0x6501C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14831,12 +18416,17 @@ fn test_fcmuo_p_p_zz_field_zm_1_poweroftwo_c000_6501c000() {
 fn test_fcmuo_p_p_zz_field_zm_30_poweroftwominusone_c000_651ec000() {
     // Encoding: 0x651EC000
     // Test FCMUO_P.P.ZZ__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, Pd=0, size=0, Pg=0, Zm=30
+    // Fields: Zn=0, Zm=30, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x651EC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14847,12 +18437,17 @@ fn test_fcmuo_p_p_zz_field_zm_30_poweroftwominusone_c000_651ec000() {
 fn test_fcmuo_p_p_zz_field_zm_31_max_c000_651fc000() {
     // Encoding: 0x651FC000
     // Test FCMUO_P.P.ZZ__ field Zm = 31 (Max)
-    // Fields: Zn=0, Pg=0, size=0, Pd=0, Zm=31
+    // Fields: Zm=31, Zn=0, size=0, Pd=0, Pg=0
     let encoding: u32 = 0x651FC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14863,12 +18458,17 @@ fn test_fcmuo_p_p_zz_field_zm_31_max_c000_651fc000() {
 fn test_fcmuo_p_p_zz_field_pg_0_min_c000_6500c000() {
     // Encoding: 0x6500C000
     // Test FCMUO_P.P.ZZ__ field Pg = 0 (Min)
-    // Fields: size=0, Pd=0, Pg=0, Zn=0, Zm=0
+    // Fields: Pd=0, size=0, Zm=0, Pg=0, Zn=0
     let encoding: u32 = 0x6500C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14879,12 +18479,17 @@ fn test_fcmuo_p_p_zz_field_pg_0_min_c000_6500c000() {
 fn test_fcmuo_p_p_zz_field_pg_1_poweroftwo_c000_6500c400() {
     // Encoding: 0x6500C400
     // Test FCMUO_P.P.ZZ__ field Pg = 1 (PowerOfTwo)
-    // Fields: size=0, Zm=0, Pg=1, Zn=0, Pd=0
+    // Fields: Zn=0, size=0, Pg=1, Zm=0, Pd=0
     let encoding: u32 = 0x6500C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14895,12 +18500,17 @@ fn test_fcmuo_p_p_zz_field_pg_1_poweroftwo_c000_6500c400() {
 fn test_fcmuo_p_p_zz_field_zn_0_min_c000_6500c000() {
     // Encoding: 0x6500C000
     // Test FCMUO_P.P.ZZ__ field Zn = 0 (Min)
-    // Fields: Pg=0, size=0, Zm=0, Zn=0, Pd=0
+    // Fields: size=0, Zm=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x6500C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14911,12 +18521,17 @@ fn test_fcmuo_p_p_zz_field_zn_0_min_c000_6500c000() {
 fn test_fcmuo_p_p_zz_field_zn_1_poweroftwo_c000_6500c020() {
     // Encoding: 0x6500C020
     // Test FCMUO_P.P.ZZ__ field Zn = 1 (PowerOfTwo)
-    // Fields: Zn=1, Zm=0, Pd=0, Pg=0, size=0
+    // Fields: size=0, Pd=0, Zm=0, Zn=1, Pg=0
     let encoding: u32 = 0x6500C020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14927,12 +18542,17 @@ fn test_fcmuo_p_p_zz_field_zn_1_poweroftwo_c000_6500c020() {
 fn test_fcmuo_p_p_zz_field_zn_30_poweroftwominusone_c000_6500c3c0() {
     // Encoding: 0x6500C3C0
     // Test FCMUO_P.P.ZZ__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Pd=0, Pg=0, Zn=30, Zm=0
+    // Fields: Zm=0, Pg=0, Pd=0, size=0, Zn=30
     let encoding: u32 = 0x6500C3C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14943,12 +18563,17 @@ fn test_fcmuo_p_p_zz_field_zn_30_poweroftwominusone_c000_6500c3c0() {
 fn test_fcmuo_p_p_zz_field_zn_31_max_c000_6500c3e0() {
     // Encoding: 0x6500C3E0
     // Test FCMUO_P.P.ZZ__ field Zn = 31 (Max)
-    // Fields: Pd=0, size=0, Pg=0, Zm=0, Zn=31
+    // Fields: Zm=0, size=0, Pd=0, Pg=0, Zn=31
     let encoding: u32 = 0x6500C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14959,12 +18584,17 @@ fn test_fcmuo_p_p_zz_field_zn_31_max_c000_6500c3e0() {
 fn test_fcmuo_p_p_zz_field_pd_0_min_c000_6500c000() {
     // Encoding: 0x6500C000
     // Test FCMUO_P.P.ZZ__ field Pd = 0 (Min)
-    // Fields: Zn=0, size=0, Zm=0, Pg=0, Pd=0
+    // Fields: size=0, Zm=0, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x6500C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14975,12 +18605,17 @@ fn test_fcmuo_p_p_zz_field_pd_0_min_c000_6500c000() {
 fn test_fcmuo_p_p_zz_field_pd_1_poweroftwo_c000_6500c001() {
     // Encoding: 0x6500C001
     // Test FCMUO_P.P.ZZ__ field Pd = 1 (PowerOfTwo)
-    // Fields: Zn=0, size=0, Zm=0, Pg=0, Pd=1
+    // Fields: Zm=0, Zn=0, Pd=1, Pg=0, size=0
     let encoding: u32 = 0x6500C001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -14991,12 +18626,17 @@ fn test_fcmuo_p_p_zz_field_pd_1_poweroftwo_c000_6500c001() {
 fn test_fcmuo_p_p_zz_combo_0_c000_6500c000() {
     // Encoding: 0x6500C000
     // Test FCMUO_P.P.ZZ__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Pg=0, Zn=0, size=0, Zm=0, Pd=0
+    // Fields: Zn=0, Pd=0, size=0, Pg=0, Zm=0
     let encoding: u32 = 0x6500C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -15007,12 +18647,17 @@ fn test_fcmuo_p_p_zz_combo_0_c000_6500c000() {
 fn test_fcmuo_p_p_zz_special_size_0_size_variant_0_49152_6500c000() {
     // Encoding: 0x6500C000
     // Test FCMUO_P.P.ZZ__ special value size = 0 (Size variant 0)
-    // Fields: size=0, Pd=0, Zm=0, Pg=0, Zn=0
+    // Fields: Pg=0, Pd=0, Zm=0, Zn=0, size=0
     let encoding: u32 = 0x6500C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -15023,12 +18668,17 @@ fn test_fcmuo_p_p_zz_special_size_0_size_variant_0_49152_6500c000() {
 fn test_fcmuo_p_p_zz_special_size_1_size_variant_1_49152_6540c000() {
     // Encoding: 0x6540C000
     // Test FCMUO_P.P.ZZ__ special value size = 1 (Size variant 1)
-    // Fields: Pd=0, Zn=0, Zm=0, size=1, Pg=0
+    // Fields: size=1, Zm=0, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x6540C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -15039,12 +18689,17 @@ fn test_fcmuo_p_p_zz_special_size_1_size_variant_1_49152_6540c000() {
 fn test_fcmuo_p_p_zz_special_size_2_size_variant_2_49152_6580c000() {
     // Encoding: 0x6580C000
     // Test FCMUO_P.P.ZZ__ special value size = 2 (Size variant 2)
-    // Fields: Pd=0, Zm=0, Pg=0, size=2, Zn=0
+    // Fields: Pg=0, size=2, Pd=0, Zn=0, Zm=0
     let encoding: u32 = 0x6580C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -15055,12 +18710,17 @@ fn test_fcmuo_p_p_zz_special_size_2_size_variant_2_49152_6580c000() {
 fn test_fcmuo_p_p_zz_special_size_3_size_variant_3_49152_65c0c000() {
     // Encoding: 0x65C0C000
     // Test FCMUO_P.P.ZZ__ special value size = 3 (Size variant 3)
-    // Fields: Zm=0, Zn=0, Pg=0, Pd=0, size=3
+    // Fields: Zm=0, Pd=0, Pg=0, size=3, Zn=0
     let encoding: u32 = 0x65C0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -15071,12 +18731,16 @@ fn test_fcmuo_p_p_zz_special_size_3_size_variant_3_49152_65c0c000() {
 fn test_fcmuo_p_p_zz_invalid_0_c000_6500c000() {
     // Encoding: 0x6500C000
     // Test FCMUO_P.P.ZZ__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Zn=0, Pd=0, size=0, Pg=0, Zm=0
+    // Fields: size=0, Pg=0, Zm=0, Pd=0, Zn=0
     let encoding: u32 = 0x6500C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -15087,12 +18751,16 @@ fn test_fcmuo_p_p_zz_invalid_0_c000_6500c000() {
 fn test_fcmuo_p_p_zz_invalid_1_c000_6500c000() {
     // Encoding: 0x6500C000
     // Test FCMUO_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, Zn=0, Pd=0, Pg=0, Zm=0
+    // Fields: size=0, Pd=0, Zn=0, Zm=0, Pg=0
     let encoding: u32 = 0x6500C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -15103,12 +18771,16 @@ fn test_fcmuo_p_p_zz_invalid_1_c000_6500c000() {
 fn test_fcmuo_p_p_zz_invalid_2_c000_6500c000() {
     // Encoding: 0x6500C000
     // Test FCMUO_P.P.ZZ__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([false, false]) }
-    // Fields: Zm=0, Pg=0, size=0, Zn=0, Pd=0
+    // Fields: Zn=0, Pd=0, Pg=0, size=0, Zm=0
     let encoding: u32 = 0x6500C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMUO_P.P.ZZ__
@@ -15119,12 +18791,16 @@ fn test_fcmuo_p_p_zz_invalid_2_c000_6500c000() {
 fn test_fcmuo_p_p_zz_invalid_3_c000_6500c000() {
     // Encoding: 0x6500C000
     // Test FCMUO_P.P.ZZ__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pd=0, size=0, Pg=0, Zm=0, Zn=0
+    // Fields: size=0, Zm=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x6500C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: FCMEQ_P.P.ZZ__
@@ -15214,12 +18890,17 @@ fn test_fcmuo_p_p_zz_reg_write_0_6500c000() {
 fn test_cmpeq_p_p_zw_field_size_0_min_2000_24002000() {
     // Encoding: 0x24002000
     // Test CMPEQ_P.P.ZW__ field size = 0 (Min)
-    // Fields: size=0, Zn=0, Pg=0, Pd=0, Zm=0
+    // Fields: Pd=0, Zn=0, size=0, Pg=0, Zm=0
     let encoding: u32 = 0x24002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15230,12 +18911,17 @@ fn test_cmpeq_p_p_zw_field_size_0_min_2000_24002000() {
 fn test_cmpeq_p_p_zw_field_size_1_poweroftwo_2000_24402000() {
     // Encoding: 0x24402000
     // Test CMPEQ_P.P.ZW__ field size = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pg=0, Zm=0, Pd=0, size=1
+    // Fields: size=1, Zn=0, Pd=0, Zm=0, Pg=0
     let encoding: u32 = 0x24402000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15246,12 +18932,17 @@ fn test_cmpeq_p_p_zw_field_size_1_poweroftwo_2000_24402000() {
 fn test_cmpeq_p_p_zw_field_size_2_poweroftwo_2000_24802000() {
     // Encoding: 0x24802000
     // Test CMPEQ_P.P.ZW__ field size = 2 (PowerOfTwo)
-    // Fields: size=2, Zm=0, Pg=0, Zn=0, Pd=0
+    // Fields: Pg=0, Zn=0, size=2, Pd=0, Zm=0
     let encoding: u32 = 0x24802000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15262,12 +18953,17 @@ fn test_cmpeq_p_p_zw_field_size_2_poweroftwo_2000_24802000() {
 fn test_cmpeq_p_p_zw_field_size_3_max_2000_24c02000() {
     // Encoding: 0x24C02000
     // Test CMPEQ_P.P.ZW__ field size = 3 (Max)
-    // Fields: Zm=0, Zn=0, Pd=0, Pg=0, size=3
+    // Fields: Zn=0, Zm=0, size=3, Pd=0, Pg=0
     let encoding: u32 = 0x24C02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15278,12 +18974,17 @@ fn test_cmpeq_p_p_zw_field_size_3_max_2000_24c02000() {
 fn test_cmpeq_p_p_zw_field_zm_0_min_2000_24002000() {
     // Encoding: 0x24002000
     // Test CMPEQ_P.P.ZW__ field Zm = 0 (Min)
-    // Fields: Zn=0, size=0, Zm=0, Pd=0, Pg=0
+    // Fields: size=0, Zn=0, Pg=0, Zm=0, Pd=0
     let encoding: u32 = 0x24002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15294,12 +18995,17 @@ fn test_cmpeq_p_p_zw_field_zm_0_min_2000_24002000() {
 fn test_cmpeq_p_p_zw_field_zm_1_poweroftwo_2000_24012000() {
     // Encoding: 0x24012000
     // Test CMPEQ_P.P.ZW__ field Zm = 1 (PowerOfTwo)
-    // Fields: size=0, Zm=1, Zn=0, Pd=0, Pg=0
+    // Fields: Zm=1, Zn=0, Pg=0, Pd=0, size=0
     let encoding: u32 = 0x24012000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15310,12 +19016,17 @@ fn test_cmpeq_p_p_zw_field_zm_1_poweroftwo_2000_24012000() {
 fn test_cmpeq_p_p_zw_field_zm_30_poweroftwominusone_2000_241e2000() {
     // Encoding: 0x241E2000
     // Test CMPEQ_P.P.ZW__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, Pg=0, Pd=0, Zm=30, size=0
+    // Fields: size=0, Zn=0, Pg=0, Pd=0, Zm=30
     let encoding: u32 = 0x241E2000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15326,12 +19037,17 @@ fn test_cmpeq_p_p_zw_field_zm_30_poweroftwominusone_2000_241e2000() {
 fn test_cmpeq_p_p_zw_field_zm_31_max_2000_241f2000() {
     // Encoding: 0x241F2000
     // Test CMPEQ_P.P.ZW__ field Zm = 31 (Max)
-    // Fields: Zm=31, size=0, Zn=0, Pd=0, Pg=0
+    // Fields: Pg=0, size=0, Zn=0, Zm=31, Pd=0
     let encoding: u32 = 0x241F2000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15342,12 +19058,17 @@ fn test_cmpeq_p_p_zw_field_zm_31_max_2000_241f2000() {
 fn test_cmpeq_p_p_zw_field_pg_0_min_2000_24002000() {
     // Encoding: 0x24002000
     // Test CMPEQ_P.P.ZW__ field Pg = 0 (Min)
-    // Fields: Zm=0, Pg=0, size=0, Zn=0, Pd=0
+    // Fields: Pd=0, size=0, Zm=0, Pg=0, Zn=0
     let encoding: u32 = 0x24002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15358,12 +19079,17 @@ fn test_cmpeq_p_p_zw_field_pg_0_min_2000_24002000() {
 fn test_cmpeq_p_p_zw_field_pg_1_poweroftwo_2000_24002400() {
     // Encoding: 0x24002400
     // Test CMPEQ_P.P.ZW__ field Pg = 1 (PowerOfTwo)
-    // Fields: size=0, Zm=0, Pd=0, Pg=1, Zn=0
+    // Fields: Pd=0, Zm=0, Pg=1, size=0, Zn=0
     let encoding: u32 = 0x24002400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15374,12 +19100,17 @@ fn test_cmpeq_p_p_zw_field_pg_1_poweroftwo_2000_24002400() {
 fn test_cmpeq_p_p_zw_field_zn_0_min_2000_24002000() {
     // Encoding: 0x24002000
     // Test CMPEQ_P.P.ZW__ field Zn = 0 (Min)
-    // Fields: Pg=0, size=0, Zn=0, Pd=0, Zm=0
+    // Fields: Pd=0, size=0, Pg=0, Zm=0, Zn=0
     let encoding: u32 = 0x24002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15390,12 +19121,17 @@ fn test_cmpeq_p_p_zw_field_zn_0_min_2000_24002000() {
 fn test_cmpeq_p_p_zw_field_zn_1_poweroftwo_2000_24002020() {
     // Encoding: 0x24002020
     // Test CMPEQ_P.P.ZW__ field Zn = 1 (PowerOfTwo)
-    // Fields: Zn=1, Pd=0, Pg=0, size=0, Zm=0
+    // Fields: Pd=0, Zn=1, size=0, Zm=0, Pg=0
     let encoding: u32 = 0x24002020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15406,12 +19142,17 @@ fn test_cmpeq_p_p_zw_field_zn_1_poweroftwo_2000_24002020() {
 fn test_cmpeq_p_p_zw_field_zn_30_poweroftwominusone_2000_240023c0() {
     // Encoding: 0x240023C0
     // Test CMPEQ_P.P.ZW__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Zn=30, Pd=0, Zm=0, Pg=0
+    // Fields: size=0, Zm=0, Pd=0, Pg=0, Zn=30
     let encoding: u32 = 0x240023C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15422,12 +19163,17 @@ fn test_cmpeq_p_p_zw_field_zn_30_poweroftwominusone_2000_240023c0() {
 fn test_cmpeq_p_p_zw_field_zn_31_max_2000_240023e0() {
     // Encoding: 0x240023E0
     // Test CMPEQ_P.P.ZW__ field Zn = 31 (Max)
-    // Fields: Zm=0, Pg=0, Pd=0, size=0, Zn=31
+    // Fields: Pg=0, Pd=0, size=0, Zm=0, Zn=31
     let encoding: u32 = 0x240023E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15438,12 +19184,17 @@ fn test_cmpeq_p_p_zw_field_zn_31_max_2000_240023e0() {
 fn test_cmpeq_p_p_zw_field_pd_0_min_2000_24002000() {
     // Encoding: 0x24002000
     // Test CMPEQ_P.P.ZW__ field Pd = 0 (Min)
-    // Fields: Zm=0, size=0, Pd=0, Zn=0, Pg=0
+    // Fields: Pd=0, Pg=0, Zm=0, Zn=0, size=0
     let encoding: u32 = 0x24002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15454,12 +19205,17 @@ fn test_cmpeq_p_p_zw_field_pd_0_min_2000_24002000() {
 fn test_cmpeq_p_p_zw_field_pd_1_poweroftwo_2000_24002001() {
     // Encoding: 0x24002001
     // Test CMPEQ_P.P.ZW__ field Pd = 1 (PowerOfTwo)
-    // Fields: Pg=0, Zn=0, size=0, Pd=1, Zm=0
+    // Fields: Zm=0, Zn=0, Pd=1, Pg=0, size=0
     let encoding: u32 = 0x24002001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15470,12 +19226,17 @@ fn test_cmpeq_p_p_zw_field_pd_1_poweroftwo_2000_24002001() {
 fn test_cmpeq_p_p_zw_combo_0_2000_24002000() {
     // Encoding: 0x24002000
     // Test CMPEQ_P.P.ZW__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Zn=0, size=0, Pd=0, Zm=0, Pg=0
+    // Fields: Zn=0, Pd=0, Zm=0, Pg=0, size=0
     let encoding: u32 = 0x24002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15486,12 +19247,17 @@ fn test_cmpeq_p_p_zw_combo_0_2000_24002000() {
 fn test_cmpeq_p_p_zw_special_size_0_size_variant_0_8192_24002000() {
     // Encoding: 0x24002000
     // Test CMPEQ_P.P.ZW__ special value size = 0 (Size variant 0)
-    // Fields: Zn=0, size=0, Zm=0, Pg=0, Pd=0
+    // Fields: Zn=0, Pd=0, Pg=0, Zm=0, size=0
     let encoding: u32 = 0x24002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15502,12 +19268,17 @@ fn test_cmpeq_p_p_zw_special_size_0_size_variant_0_8192_24002000() {
 fn test_cmpeq_p_p_zw_special_size_1_size_variant_1_8192_24402000() {
     // Encoding: 0x24402000
     // Test CMPEQ_P.P.ZW__ special value size = 1 (Size variant 1)
-    // Fields: Zn=0, Pg=0, Zm=0, size=1, Pd=0
+    // Fields: Pd=0, Zm=0, size=1, Pg=0, Zn=0
     let encoding: u32 = 0x24402000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15518,12 +19289,17 @@ fn test_cmpeq_p_p_zw_special_size_1_size_variant_1_8192_24402000() {
 fn test_cmpeq_p_p_zw_special_size_2_size_variant_2_8192_24802000() {
     // Encoding: 0x24802000
     // Test CMPEQ_P.P.ZW__ special value size = 2 (Size variant 2)
-    // Fields: Pg=0, size=2, Pd=0, Zn=0, Zm=0
+    // Fields: Pd=0, Zm=0, Pg=0, Zn=0, size=2
     let encoding: u32 = 0x24802000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15534,12 +19310,17 @@ fn test_cmpeq_p_p_zw_special_size_2_size_variant_2_8192_24802000() {
 fn test_cmpeq_p_p_zw_special_size_3_size_variant_3_8192_24c02000() {
     // Encoding: 0x24C02000
     // Test CMPEQ_P.P.ZW__ special value size = 3 (Size variant 3)
-    // Fields: Pg=0, Zn=0, size=3, Pd=0, Zm=0
+    // Fields: Pd=0, Zm=0, Pg=0, Zn=0, size=3
     let encoding: u32 = 0x24C02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15555,7 +19336,11 @@ fn test_cmpeq_p_p_zw_invalid_0_2000_24002000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15566,12 +19351,16 @@ fn test_cmpeq_p_p_zw_invalid_0_2000_24002000() {
 fn test_cmpeq_p_p_zw_invalid_1_2000_24002000() {
     // Encoding: 0x24002000
     // Test CMPEQ_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zm=0, Pd=0, Pg=0, size=0, Zn=0
+    // Fields: Pd=0, Pg=0, Zn=0, size=0, Zm=0
     let encoding: u32 = 0x24002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15582,12 +19371,16 @@ fn test_cmpeq_p_p_zw_invalid_1_2000_24002000() {
 fn test_cmpeq_p_p_zw_invalid_2_2000_24002000() {
     // Encoding: 0x24002000
     // Test CMPEQ_P.P.ZW__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: Zn=0, Zm=0, Pg=0, Pd=0, size=0
+    // Fields: Pg=0, Zn=0, size=0, Zm=0, Pd=0
     let encoding: u32 = 0x24002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -15598,12 +19391,16 @@ fn test_cmpeq_p_p_zw_invalid_2_2000_24002000() {
 fn test_cmpeq_p_p_zw_invalid_3_2000_24002000() {
     // Encoding: 0x24002000
     // Test CMPEQ_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zm=0, Zn=0, Pd=0, size=0, Pg=0
+    // Fields: Pg=0, Zn=0, Zm=0, size=0, Pd=0
     let encoding: u32 = 0x24002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15614,12 +19411,17 @@ fn test_cmpeq_p_p_zw_invalid_3_2000_24002000() {
 fn test_cmpgt_p_p_zw_field_size_0_min_4010_24004010() {
     // Encoding: 0x24004010
     // Test CMPGT_P.P.ZW__ field size = 0 (Min)
-    // Fields: Pd=0, size=0, Pg=0, Zn=0, Zm=0
+    // Fields: Pg=0, Pd=0, Zn=0, size=0, Zm=0
     let encoding: u32 = 0x24004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15630,12 +19432,17 @@ fn test_cmpgt_p_p_zw_field_size_0_min_4010_24004010() {
 fn test_cmpgt_p_p_zw_field_size_1_poweroftwo_4010_24404010() {
     // Encoding: 0x24404010
     // Test CMPGT_P.P.ZW__ field size = 1 (PowerOfTwo)
-    // Fields: Pg=0, Zn=0, size=1, Zm=0, Pd=0
+    // Fields: Zm=0, Pd=0, Zn=0, size=1, Pg=0
     let encoding: u32 = 0x24404010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15646,12 +19453,17 @@ fn test_cmpgt_p_p_zw_field_size_1_poweroftwo_4010_24404010() {
 fn test_cmpgt_p_p_zw_field_size_2_poweroftwo_4010_24804010() {
     // Encoding: 0x24804010
     // Test CMPGT_P.P.ZW__ field size = 2 (PowerOfTwo)
-    // Fields: Zn=0, Pg=0, size=2, Pd=0, Zm=0
+    // Fields: Pd=0, size=2, Zm=0, Zn=0, Pg=0
     let encoding: u32 = 0x24804010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15662,12 +19474,17 @@ fn test_cmpgt_p_p_zw_field_size_2_poweroftwo_4010_24804010() {
 fn test_cmpgt_p_p_zw_field_size_3_max_4010_24c04010() {
     // Encoding: 0x24C04010
     // Test CMPGT_P.P.ZW__ field size = 3 (Max)
-    // Fields: Zm=0, Zn=0, Pg=0, Pd=0, size=3
+    // Fields: Zm=0, Pd=0, Zn=0, size=3, Pg=0
     let encoding: u32 = 0x24C04010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15678,12 +19495,17 @@ fn test_cmpgt_p_p_zw_field_size_3_max_4010_24c04010() {
 fn test_cmpgt_p_p_zw_field_zm_0_min_4010_24004010() {
     // Encoding: 0x24004010
     // Test CMPGT_P.P.ZW__ field Zm = 0 (Min)
-    // Fields: size=0, Zn=0, Pd=0, Pg=0, Zm=0
+    // Fields: Pd=0, Pg=0, Zm=0, size=0, Zn=0
     let encoding: u32 = 0x24004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15694,12 +19516,17 @@ fn test_cmpgt_p_p_zw_field_zm_0_min_4010_24004010() {
 fn test_cmpgt_p_p_zw_field_zm_1_poweroftwo_4010_24014010() {
     // Encoding: 0x24014010
     // Test CMPGT_P.P.ZW__ field Zm = 1 (PowerOfTwo)
-    // Fields: Zn=0, Zm=1, size=0, Pg=0, Pd=0
+    // Fields: Pd=0, Zm=1, Zn=0, Pg=0, size=0
     let encoding: u32 = 0x24014010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15710,12 +19537,17 @@ fn test_cmpgt_p_p_zw_field_zm_1_poweroftwo_4010_24014010() {
 fn test_cmpgt_p_p_zw_field_zm_30_poweroftwominusone_4010_241e4010() {
     // Encoding: 0x241E4010
     // Test CMPGT_P.P.ZW__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, Pd=0, size=0, Zm=30, Zn=0
+    // Fields: Pg=0, Zm=30, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x241E4010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15726,12 +19558,17 @@ fn test_cmpgt_p_p_zw_field_zm_30_poweroftwominusone_4010_241e4010() {
 fn test_cmpgt_p_p_zw_field_zm_31_max_4010_241f4010() {
     // Encoding: 0x241F4010
     // Test CMPGT_P.P.ZW__ field Zm = 31 (Max)
-    // Fields: Pg=0, Pd=0, size=0, Zm=31, Zn=0
+    // Fields: Pg=0, size=0, Zm=31, Zn=0, Pd=0
     let encoding: u32 = 0x241F4010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15742,12 +19579,17 @@ fn test_cmpgt_p_p_zw_field_zm_31_max_4010_241f4010() {
 fn test_cmpgt_p_p_zw_field_pg_0_min_4010_24004010() {
     // Encoding: 0x24004010
     // Test CMPGT_P.P.ZW__ field Pg = 0 (Min)
-    // Fields: size=0, Zm=0, Pd=0, Pg=0, Zn=0
+    // Fields: Pg=0, Zm=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x24004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15758,12 +19600,17 @@ fn test_cmpgt_p_p_zw_field_pg_0_min_4010_24004010() {
 fn test_cmpgt_p_p_zw_field_pg_1_poweroftwo_4010_24004410() {
     // Encoding: 0x24004410
     // Test CMPGT_P.P.ZW__ field Pg = 1 (PowerOfTwo)
-    // Fields: Zm=0, Pd=0, Pg=1, size=0, Zn=0
+    // Fields: size=0, Pg=1, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x24004410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15774,12 +19621,17 @@ fn test_cmpgt_p_p_zw_field_pg_1_poweroftwo_4010_24004410() {
 fn test_cmpgt_p_p_zw_field_zn_0_min_4010_24004010() {
     // Encoding: 0x24004010
     // Test CMPGT_P.P.ZW__ field Zn = 0 (Min)
-    // Fields: Pg=0, size=0, Zn=0, Zm=0, Pd=0
+    // Fields: Zm=0, Pd=0, size=0, Pg=0, Zn=0
     let encoding: u32 = 0x24004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15790,12 +19642,17 @@ fn test_cmpgt_p_p_zw_field_zn_0_min_4010_24004010() {
 fn test_cmpgt_p_p_zw_field_zn_1_poweroftwo_4010_24004030() {
     // Encoding: 0x24004030
     // Test CMPGT_P.P.ZW__ field Zn = 1 (PowerOfTwo)
-    // Fields: Zn=1, Pg=0, Zm=0, size=0, Pd=0
+    // Fields: Pg=0, Zm=0, size=0, Pd=0, Zn=1
     let encoding: u32 = 0x24004030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15806,12 +19663,17 @@ fn test_cmpgt_p_p_zw_field_zn_1_poweroftwo_4010_24004030() {
 fn test_cmpgt_p_p_zw_field_zn_30_poweroftwominusone_4010_240043d0() {
     // Encoding: 0x240043D0
     // Test CMPGT_P.P.ZW__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Zn=30, Pg=0, Zm=0, Pd=0
+    // Fields: Zn=30, Pg=0, Pd=0, Zm=0, size=0
     let encoding: u32 = 0x240043D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15822,12 +19684,17 @@ fn test_cmpgt_p_p_zw_field_zn_30_poweroftwominusone_4010_240043d0() {
 fn test_cmpgt_p_p_zw_field_zn_31_max_4010_240043f0() {
     // Encoding: 0x240043F0
     // Test CMPGT_P.P.ZW__ field Zn = 31 (Max)
-    // Fields: Pg=0, Zm=0, Pd=0, size=0, Zn=31
+    // Fields: Pg=0, size=0, Zn=31, Pd=0, Zm=0
     let encoding: u32 = 0x240043F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15843,7 +19710,12 @@ fn test_cmpgt_p_p_zw_field_pd_0_min_4010_24004010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15854,12 +19726,17 @@ fn test_cmpgt_p_p_zw_field_pd_0_min_4010_24004010() {
 fn test_cmpgt_p_p_zw_field_pd_1_poweroftwo_4010_24004011() {
     // Encoding: 0x24004011
     // Test CMPGT_P.P.ZW__ field Pd = 1 (PowerOfTwo)
-    // Fields: Pd=1, size=0, Zm=0, Pg=0, Zn=0
+    // Fields: Pg=0, Zn=0, size=0, Pd=1, Zm=0
     let encoding: u32 = 0x24004011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15870,12 +19747,17 @@ fn test_cmpgt_p_p_zw_field_pd_1_poweroftwo_4010_24004011() {
 fn test_cmpgt_p_p_zw_combo_0_4010_24004010() {
     // Encoding: 0x24004010
     // Test CMPGT_P.P.ZW__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: size=0, Zn=0, Pg=0, Zm=0, Pd=0
+    // Fields: Pg=0, Pd=0, Zn=0, size=0, Zm=0
     let encoding: u32 = 0x24004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15886,12 +19768,17 @@ fn test_cmpgt_p_p_zw_combo_0_4010_24004010() {
 fn test_cmpgt_p_p_zw_special_size_0_size_variant_0_16400_24004010() {
     // Encoding: 0x24004010
     // Test CMPGT_P.P.ZW__ special value size = 0 (Size variant 0)
-    // Fields: Pd=0, Pg=0, Zn=0, size=0, Zm=0
+    // Fields: Zn=0, Zm=0, Pg=0, size=0, Pd=0
     let encoding: u32 = 0x24004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15902,12 +19789,17 @@ fn test_cmpgt_p_p_zw_special_size_0_size_variant_0_16400_24004010() {
 fn test_cmpgt_p_p_zw_special_size_1_size_variant_1_16400_24404010() {
     // Encoding: 0x24404010
     // Test CMPGT_P.P.ZW__ special value size = 1 (Size variant 1)
-    // Fields: Zm=0, size=1, Pd=0, Zn=0, Pg=0
+    // Fields: Pd=0, Zm=0, size=1, Pg=0, Zn=0
     let encoding: u32 = 0x24404010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15918,12 +19810,17 @@ fn test_cmpgt_p_p_zw_special_size_1_size_variant_1_16400_24404010() {
 fn test_cmpgt_p_p_zw_special_size_2_size_variant_2_16400_24804010() {
     // Encoding: 0x24804010
     // Test CMPGT_P.P.ZW__ special value size = 2 (Size variant 2)
-    // Fields: Zn=0, Pd=0, size=2, Pg=0, Zm=0
+    // Fields: Pg=0, Zm=0, size=2, Zn=0, Pd=0
     let encoding: u32 = 0x24804010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15934,12 +19831,17 @@ fn test_cmpgt_p_p_zw_special_size_2_size_variant_2_16400_24804010() {
 fn test_cmpgt_p_p_zw_special_size_3_size_variant_3_16400_24c04010() {
     // Encoding: 0x24C04010
     // Test CMPGT_P.P.ZW__ special value size = 3 (Size variant 3)
-    // Fields: Pd=0, Zn=0, Zm=0, Pg=0, size=3
+    // Fields: Zm=0, size=3, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x24C04010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15950,12 +19852,16 @@ fn test_cmpgt_p_p_zw_special_size_3_size_variant_3_16400_24c04010() {
 fn test_cmpgt_p_p_zw_invalid_0_4010_24004010() {
     // Encoding: 0x24004010
     // Test CMPGT_P.P.ZW__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: size=0, Pg=0, Zn=0, Pd=0, Zm=0
+    // Fields: Pd=0, Zm=0, size=0, Pg=0, Zn=0
     let encoding: u32 = 0x24004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15966,12 +19872,16 @@ fn test_cmpgt_p_p_zw_invalid_0_4010_24004010() {
 fn test_cmpgt_p_p_zw_invalid_1_4010_24004010() {
     // Encoding: 0x24004010
     // Test CMPGT_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zm=0, Pd=0, size=0, Pg=0, Zn=0
+    // Fields: Zm=0, Zn=0, Pd=0, Pg=0, size=0
     let encoding: u32 = 0x24004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15982,12 +19892,16 @@ fn test_cmpgt_p_p_zw_invalid_1_4010_24004010() {
 fn test_cmpgt_p_p_zw_invalid_2_4010_24004010() {
     // Encoding: 0x24004010
     // Test CMPGT_P.P.ZW__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: Zm=0, Pg=0, Zn=0, Pd=0, size=0
+    // Fields: Pg=0, Zm=0, Pd=0, Zn=0, size=0
     let encoding: u32 = 0x24004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGT_P.P.ZW__
@@ -15998,12 +19912,16 @@ fn test_cmpgt_p_p_zw_invalid_2_4010_24004010() {
 fn test_cmpgt_p_p_zw_invalid_3_4010_24004010() {
     // Encoding: 0x24004010
     // Test CMPGT_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, Zm=0, Pd=0, Zn=0, Pg=0
+    // Fields: size=0, Zn=0, Zm=0, Pd=0, Pg=0
     let encoding: u32 = 0x24004010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16014,12 +19932,17 @@ fn test_cmpgt_p_p_zw_invalid_3_4010_24004010() {
 fn test_cmpge_p_p_zw_field_size_0_min_4000_24004000() {
     // Encoding: 0x24004000
     // Test CMPGE_P.P.ZW__ field size = 0 (Min)
-    // Fields: Zn=0, Pd=0, size=0, Pg=0, Zm=0
+    // Fields: Pd=0, Zn=0, Zm=0, Pg=0, size=0
     let encoding: u32 = 0x24004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16030,12 +19953,17 @@ fn test_cmpge_p_p_zw_field_size_0_min_4000_24004000() {
 fn test_cmpge_p_p_zw_field_size_1_poweroftwo_4000_24404000() {
     // Encoding: 0x24404000
     // Test CMPGE_P.P.ZW__ field size = 1 (PowerOfTwo)
-    // Fields: size=1, Pd=0, Zn=0, Zm=0, Pg=0
+    // Fields: Pg=0, Zm=0, Zn=0, size=1, Pd=0
     let encoding: u32 = 0x24404000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16046,12 +19974,17 @@ fn test_cmpge_p_p_zw_field_size_1_poweroftwo_4000_24404000() {
 fn test_cmpge_p_p_zw_field_size_2_poweroftwo_4000_24804000() {
     // Encoding: 0x24804000
     // Test CMPGE_P.P.ZW__ field size = 2 (PowerOfTwo)
-    // Fields: Pd=0, Zm=0, Pg=0, size=2, Zn=0
+    // Fields: Zm=0, Zn=0, size=2, Pd=0, Pg=0
     let encoding: u32 = 0x24804000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16062,12 +19995,17 @@ fn test_cmpge_p_p_zw_field_size_2_poweroftwo_4000_24804000() {
 fn test_cmpge_p_p_zw_field_size_3_max_4000_24c04000() {
     // Encoding: 0x24C04000
     // Test CMPGE_P.P.ZW__ field size = 3 (Max)
-    // Fields: Zm=0, Pd=0, size=3, Zn=0, Pg=0
+    // Fields: Zm=0, Zn=0, Pg=0, size=3, Pd=0
     let encoding: u32 = 0x24C04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16078,12 +20016,17 @@ fn test_cmpge_p_p_zw_field_size_3_max_4000_24c04000() {
 fn test_cmpge_p_p_zw_field_zm_0_min_4000_24004000() {
     // Encoding: 0x24004000
     // Test CMPGE_P.P.ZW__ field Zm = 0 (Min)
-    // Fields: Zm=0, Pd=0, Pg=0, Zn=0, size=0
+    // Fields: Pg=0, Pd=0, size=0, Zn=0, Zm=0
     let encoding: u32 = 0x24004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16094,12 +20037,17 @@ fn test_cmpge_p_p_zw_field_zm_0_min_4000_24004000() {
 fn test_cmpge_p_p_zw_field_zm_1_poweroftwo_4000_24014000() {
     // Encoding: 0x24014000
     // Test CMPGE_P.P.ZW__ field Zm = 1 (PowerOfTwo)
-    // Fields: Pg=0, Zm=1, Zn=0, size=0, Pd=0
+    // Fields: Zm=1, Zn=0, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x24014000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16115,7 +20063,12 @@ fn test_cmpge_p_p_zw_field_zm_30_poweroftwominusone_4000_241e4000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16126,12 +20079,17 @@ fn test_cmpge_p_p_zw_field_zm_30_poweroftwominusone_4000_241e4000() {
 fn test_cmpge_p_p_zw_field_zm_31_max_4000_241f4000() {
     // Encoding: 0x241F4000
     // Test CMPGE_P.P.ZW__ field Zm = 31 (Max)
-    // Fields: size=0, Zm=31, Pg=0, Zn=0, Pd=0
+    // Fields: Zm=31, Pd=0, Pg=0, Zn=0, size=0
     let encoding: u32 = 0x241F4000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16142,12 +20100,17 @@ fn test_cmpge_p_p_zw_field_zm_31_max_4000_241f4000() {
 fn test_cmpge_p_p_zw_field_pg_0_min_4000_24004000() {
     // Encoding: 0x24004000
     // Test CMPGE_P.P.ZW__ field Pg = 0 (Min)
-    // Fields: size=0, Zm=0, Pg=0, Zn=0, Pd=0
+    // Fields: size=0, Zm=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x24004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16158,12 +20121,17 @@ fn test_cmpge_p_p_zw_field_pg_0_min_4000_24004000() {
 fn test_cmpge_p_p_zw_field_pg_1_poweroftwo_4000_24004400() {
     // Encoding: 0x24004400
     // Test CMPGE_P.P.ZW__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pd=0, size=0, Pg=1, Zm=0, Zn=0
+    // Fields: Pg=1, size=0, Zm=0, Zn=0, Pd=0
     let encoding: u32 = 0x24004400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16174,12 +20142,17 @@ fn test_cmpge_p_p_zw_field_pg_1_poweroftwo_4000_24004400() {
 fn test_cmpge_p_p_zw_field_zn_0_min_4000_24004000() {
     // Encoding: 0x24004000
     // Test CMPGE_P.P.ZW__ field Zn = 0 (Min)
-    // Fields: Pg=0, size=0, Zn=0, Pd=0, Zm=0
+    // Fields: Zm=0, Zn=0, size=0, Pd=0, Pg=0
     let encoding: u32 = 0x24004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16190,12 +20163,17 @@ fn test_cmpge_p_p_zw_field_zn_0_min_4000_24004000() {
 fn test_cmpge_p_p_zw_field_zn_1_poweroftwo_4000_24004020() {
     // Encoding: 0x24004020
     // Test CMPGE_P.P.ZW__ field Zn = 1 (PowerOfTwo)
-    // Fields: Zn=1, size=0, Pd=0, Pg=0, Zm=0
+    // Fields: Pg=0, Zm=0, Zn=1, size=0, Pd=0
     let encoding: u32 = 0x24004020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16206,12 +20184,17 @@ fn test_cmpge_p_p_zw_field_zn_1_poweroftwo_4000_24004020() {
 fn test_cmpge_p_p_zw_field_zn_30_poweroftwominusone_4000_240043c0() {
     // Encoding: 0x240043C0
     // Test CMPGE_P.P.ZW__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Zm=0, Zn=30, Pg=0, Pd=0, size=0
+    // Fields: Zm=0, size=0, Pg=0, Zn=30, Pd=0
     let encoding: u32 = 0x240043C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16222,12 +20205,17 @@ fn test_cmpge_p_p_zw_field_zn_30_poweroftwominusone_4000_240043c0() {
 fn test_cmpge_p_p_zw_field_zn_31_max_4000_240043e0() {
     // Encoding: 0x240043E0
     // Test CMPGE_P.P.ZW__ field Zn = 31 (Max)
-    // Fields: Pg=0, Zm=0, size=0, Zn=31, Pd=0
+    // Fields: size=0, Zn=31, Pg=0, Pd=0, Zm=0
     let encoding: u32 = 0x240043E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16238,12 +20226,17 @@ fn test_cmpge_p_p_zw_field_zn_31_max_4000_240043e0() {
 fn test_cmpge_p_p_zw_field_pd_0_min_4000_24004000() {
     // Encoding: 0x24004000
     // Test CMPGE_P.P.ZW__ field Pd = 0 (Min)
-    // Fields: Pd=0, size=0, Zm=0, Zn=0, Pg=0
+    // Fields: Pd=0, size=0, Zm=0, Pg=0, Zn=0
     let encoding: u32 = 0x24004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16254,12 +20247,17 @@ fn test_cmpge_p_p_zw_field_pd_0_min_4000_24004000() {
 fn test_cmpge_p_p_zw_field_pd_1_poweroftwo_4000_24004001() {
     // Encoding: 0x24004001
     // Test CMPGE_P.P.ZW__ field Pd = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pd=1, Pg=0, size=0, Zm=0
+    // Fields: Pg=0, Zm=0, size=0, Zn=0, Pd=1
     let encoding: u32 = 0x24004001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16270,12 +20268,17 @@ fn test_cmpge_p_p_zw_field_pd_1_poweroftwo_4000_24004001() {
 fn test_cmpge_p_p_zw_combo_0_4000_24004000() {
     // Encoding: 0x24004000
     // Test CMPGE_P.P.ZW__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Zm=0, Zn=0, Pd=0, size=0, Pg=0
+    // Fields: size=0, Zm=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x24004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16286,12 +20289,17 @@ fn test_cmpge_p_p_zw_combo_0_4000_24004000() {
 fn test_cmpge_p_p_zw_special_size_0_size_variant_0_16384_24004000() {
     // Encoding: 0x24004000
     // Test CMPGE_P.P.ZW__ special value size = 0 (Size variant 0)
-    // Fields: Zn=0, Pd=0, size=0, Pg=0, Zm=0
+    // Fields: size=0, Pd=0, Zm=0, Zn=0, Pg=0
     let encoding: u32 = 0x24004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16302,12 +20310,17 @@ fn test_cmpge_p_p_zw_special_size_0_size_variant_0_16384_24004000() {
 fn test_cmpge_p_p_zw_special_size_1_size_variant_1_16384_24404000() {
     // Encoding: 0x24404000
     // Test CMPGE_P.P.ZW__ special value size = 1 (Size variant 1)
-    // Fields: Pg=0, size=1, Zn=0, Pd=0, Zm=0
+    // Fields: Zn=0, Pg=0, size=1, Zm=0, Pd=0
     let encoding: u32 = 0x24404000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16318,12 +20331,17 @@ fn test_cmpge_p_p_zw_special_size_1_size_variant_1_16384_24404000() {
 fn test_cmpge_p_p_zw_special_size_2_size_variant_2_16384_24804000() {
     // Encoding: 0x24804000
     // Test CMPGE_P.P.ZW__ special value size = 2 (Size variant 2)
-    // Fields: size=2, Zn=0, Pd=0, Pg=0, Zm=0
+    // Fields: Pd=0, size=2, Zn=0, Zm=0, Pg=0
     let encoding: u32 = 0x24804000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16334,12 +20352,17 @@ fn test_cmpge_p_p_zw_special_size_2_size_variant_2_16384_24804000() {
 fn test_cmpge_p_p_zw_special_size_3_size_variant_3_16384_24c04000() {
     // Encoding: 0x24C04000
     // Test CMPGE_P.P.ZW__ special value size = 3 (Size variant 3)
-    // Fields: Zn=0, size=3, Zm=0, Pg=0, Pd=0
+    // Fields: Pg=0, Zn=0, Pd=0, size=3, Zm=0
     let encoding: u32 = 0x24C04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16350,12 +20373,16 @@ fn test_cmpge_p_p_zw_special_size_3_size_variant_3_16384_24c04000() {
 fn test_cmpge_p_p_zw_invalid_0_4000_24004000() {
     // Encoding: 0x24004000
     // Test CMPGE_P.P.ZW__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Zn=0, size=0, Pg=0, Zm=0, Pd=0
+    // Fields: Zm=0, Pg=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x24004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16366,12 +20393,16 @@ fn test_cmpge_p_p_zw_invalid_0_4000_24004000() {
 fn test_cmpge_p_p_zw_invalid_1_4000_24004000() {
     // Encoding: 0x24004000
     // Test CMPGE_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zn=0, size=0, Pd=0, Zm=0, Pg=0
+    // Fields: size=0, Pg=0, Zn=0, Zm=0, Pd=0
     let encoding: u32 = 0x24004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16382,12 +20413,16 @@ fn test_cmpge_p_p_zw_invalid_1_4000_24004000() {
 fn test_cmpge_p_p_zw_invalid_2_4000_24004000() {
     // Encoding: 0x24004000
     // Test CMPGE_P.P.ZW__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: Zn=0, Zm=0, size=0, Pg=0, Pd=0
+    // Fields: Pd=0, Zm=0, size=0, Pg=0, Zn=0
     let encoding: u32 = 0x24004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPGE_P.P.ZW__
@@ -16398,12 +20433,16 @@ fn test_cmpge_p_p_zw_invalid_2_4000_24004000() {
 fn test_cmpge_p_p_zw_invalid_3_4000_24004000() {
     // Encoding: 0x24004000
     // Test CMPGE_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pd=0, size=0, Zn=0, Zm=0, Pg=0
+    // Fields: size=0, Pd=0, Zn=0, Zm=0, Pg=0
     let encoding: u32 = 0x24004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16414,12 +20453,17 @@ fn test_cmpge_p_p_zw_invalid_3_4000_24004000() {
 fn test_cmphi_p_p_zw_field_size_0_min_c010_2400c010() {
     // Encoding: 0x2400C010
     // Test CMPHI_P.P.ZW__ field size = 0 (Min)
-    // Fields: Zm=0, Zn=0, Pd=0, size=0, Pg=0
+    // Fields: Zn=0, Pg=0, Zm=0, Pd=0, size=0
     let encoding: u32 = 0x2400C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16430,12 +20474,17 @@ fn test_cmphi_p_p_zw_field_size_0_min_c010_2400c010() {
 fn test_cmphi_p_p_zw_field_size_1_poweroftwo_c010_2440c010() {
     // Encoding: 0x2440C010
     // Test CMPHI_P.P.ZW__ field size = 1 (PowerOfTwo)
-    // Fields: Zm=0, size=1, Zn=0, Pg=0, Pd=0
+    // Fields: Zn=0, size=1, Zm=0, Pg=0, Pd=0
     let encoding: u32 = 0x2440C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16446,12 +20495,17 @@ fn test_cmphi_p_p_zw_field_size_1_poweroftwo_c010_2440c010() {
 fn test_cmphi_p_p_zw_field_size_2_poweroftwo_c010_2480c010() {
     // Encoding: 0x2480C010
     // Test CMPHI_P.P.ZW__ field size = 2 (PowerOfTwo)
-    // Fields: Zn=0, Pd=0, size=2, Zm=0, Pg=0
+    // Fields: Pg=0, Zn=0, size=2, Zm=0, Pd=0
     let encoding: u32 = 0x2480C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16462,12 +20516,17 @@ fn test_cmphi_p_p_zw_field_size_2_poweroftwo_c010_2480c010() {
 fn test_cmphi_p_p_zw_field_size_3_max_c010_24c0c010() {
     // Encoding: 0x24C0C010
     // Test CMPHI_P.P.ZW__ field size = 3 (Max)
-    // Fields: Zm=0, size=3, Zn=0, Pd=0, Pg=0
+    // Fields: size=3, Pd=0, Zm=0, Zn=0, Pg=0
     let encoding: u32 = 0x24C0C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16478,12 +20537,17 @@ fn test_cmphi_p_p_zw_field_size_3_max_c010_24c0c010() {
 fn test_cmphi_p_p_zw_field_zm_0_min_c010_2400c010() {
     // Encoding: 0x2400C010
     // Test CMPHI_P.P.ZW__ field Zm = 0 (Min)
-    // Fields: Zm=0, Zn=0, Pd=0, size=0, Pg=0
+    // Fields: Pd=0, Zm=0, Pg=0, size=0, Zn=0
     let encoding: u32 = 0x2400C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16494,12 +20558,17 @@ fn test_cmphi_p_p_zw_field_zm_0_min_c010_2400c010() {
 fn test_cmphi_p_p_zw_field_zm_1_poweroftwo_c010_2401c010() {
     // Encoding: 0x2401C010
     // Test CMPHI_P.P.ZW__ field Zm = 1 (PowerOfTwo)
-    // Fields: Zm=1, Zn=0, Pd=0, Pg=0, size=0
+    // Fields: Pg=0, size=0, Zm=1, Zn=0, Pd=0
     let encoding: u32 = 0x2401C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16510,12 +20579,17 @@ fn test_cmphi_p_p_zw_field_zm_1_poweroftwo_c010_2401c010() {
 fn test_cmphi_p_p_zw_field_zm_30_poweroftwominusone_c010_241ec010() {
     // Encoding: 0x241EC010
     // Test CMPHI_P.P.ZW__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Zn=0, Pd=0, Zm=30, Pg=0, size=0
+    // Fields: Zn=0, Pd=0, Pg=0, Zm=30, size=0
     let encoding: u32 = 0x241EC010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16526,12 +20600,17 @@ fn test_cmphi_p_p_zw_field_zm_30_poweroftwominusone_c010_241ec010() {
 fn test_cmphi_p_p_zw_field_zm_31_max_c010_241fc010() {
     // Encoding: 0x241FC010
     // Test CMPHI_P.P.ZW__ field Zm = 31 (Max)
-    // Fields: Zm=31, Pg=0, Pd=0, size=0, Zn=0
+    // Fields: size=0, Pg=0, Pd=0, Zn=0, Zm=31
     let encoding: u32 = 0x241FC010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16542,12 +20621,17 @@ fn test_cmphi_p_p_zw_field_zm_31_max_c010_241fc010() {
 fn test_cmphi_p_p_zw_field_pg_0_min_c010_2400c010() {
     // Encoding: 0x2400C010
     // Test CMPHI_P.P.ZW__ field Pg = 0 (Min)
-    // Fields: Zn=0, Pd=0, Zm=0, size=0, Pg=0
+    // Fields: Zm=0, Zn=0, Pg=0, size=0, Pd=0
     let encoding: u32 = 0x2400C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16558,12 +20642,17 @@ fn test_cmphi_p_p_zw_field_pg_0_min_c010_2400c010() {
 fn test_cmphi_p_p_zw_field_pg_1_poweroftwo_c010_2400c410() {
     // Encoding: 0x2400C410
     // Test CMPHI_P.P.ZW__ field Pg = 1 (PowerOfTwo)
-    // Fields: Zn=0, Zm=0, Pd=0, size=0, Pg=1
+    // Fields: Pd=0, Pg=1, Zm=0, size=0, Zn=0
     let encoding: u32 = 0x2400C410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16574,12 +20663,17 @@ fn test_cmphi_p_p_zw_field_pg_1_poweroftwo_c010_2400c410() {
 fn test_cmphi_p_p_zw_field_zn_0_min_c010_2400c010() {
     // Encoding: 0x2400C010
     // Test CMPHI_P.P.ZW__ field Zn = 0 (Min)
-    // Fields: Zm=0, Zn=0, Pd=0, size=0, Pg=0
+    // Fields: size=0, Zm=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x2400C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16590,12 +20684,17 @@ fn test_cmphi_p_p_zw_field_zn_0_min_c010_2400c010() {
 fn test_cmphi_p_p_zw_field_zn_1_poweroftwo_c010_2400c030() {
     // Encoding: 0x2400C030
     // Test CMPHI_P.P.ZW__ field Zn = 1 (PowerOfTwo)
-    // Fields: size=0, Pg=0, Zn=1, Zm=0, Pd=0
+    // Fields: size=0, Zn=1, Pd=0, Pg=0, Zm=0
     let encoding: u32 = 0x2400C030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16606,12 +20705,17 @@ fn test_cmphi_p_p_zw_field_zn_1_poweroftwo_c010_2400c030() {
 fn test_cmphi_p_p_zw_field_zn_30_poweroftwominusone_c010_2400c3d0() {
     // Encoding: 0x2400C3D0
     // Test CMPHI_P.P.ZW__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Zm=0, Zn=30, Pg=0, Pd=0
+    // Fields: Pg=0, Zn=30, Pd=0, size=0, Zm=0
     let encoding: u32 = 0x2400C3D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16622,12 +20726,17 @@ fn test_cmphi_p_p_zw_field_zn_30_poweroftwominusone_c010_2400c3d0() {
 fn test_cmphi_p_p_zw_field_zn_31_max_c010_2400c3f0() {
     // Encoding: 0x2400C3F0
     // Test CMPHI_P.P.ZW__ field Zn = 31 (Max)
-    // Fields: Pg=0, Pd=0, size=0, Zm=0, Zn=31
+    // Fields: size=0, Zm=0, Zn=31, Pg=0, Pd=0
     let encoding: u32 = 0x2400C3F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16638,12 +20747,17 @@ fn test_cmphi_p_p_zw_field_zn_31_max_c010_2400c3f0() {
 fn test_cmphi_p_p_zw_field_pd_0_min_c010_2400c010() {
     // Encoding: 0x2400C010
     // Test CMPHI_P.P.ZW__ field Pd = 0 (Min)
-    // Fields: Zm=0, Zn=0, size=0, Pg=0, Pd=0
+    // Fields: size=0, Zm=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x2400C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16654,12 +20768,17 @@ fn test_cmphi_p_p_zw_field_pd_0_min_c010_2400c010() {
 fn test_cmphi_p_p_zw_field_pd_1_poweroftwo_c010_2400c011() {
     // Encoding: 0x2400C011
     // Test CMPHI_P.P.ZW__ field Pd = 1 (PowerOfTwo)
-    // Fields: Zm=0, Zn=0, Pg=0, Pd=1, size=0
+    // Fields: size=0, Zm=0, Pg=0, Pd=1, Zn=0
     let encoding: u32 = 0x2400C011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16670,12 +20789,17 @@ fn test_cmphi_p_p_zw_field_pd_1_poweroftwo_c010_2400c011() {
 fn test_cmphi_p_p_zw_combo_0_c010_2400c010() {
     // Encoding: 0x2400C010
     // Test CMPHI_P.P.ZW__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Zn=0, size=0, Zm=0, Pd=0, Pg=0
+    // Fields: size=0, Zn=0, Pd=0, Zm=0, Pg=0
     let encoding: u32 = 0x2400C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16686,12 +20810,17 @@ fn test_cmphi_p_p_zw_combo_0_c010_2400c010() {
 fn test_cmphi_p_p_zw_special_size_0_size_variant_0_49168_2400c010() {
     // Encoding: 0x2400C010
     // Test CMPHI_P.P.ZW__ special value size = 0 (Size variant 0)
-    // Fields: Pg=0, size=0, Zm=0, Zn=0, Pd=0
+    // Fields: Zm=0, Pg=0, Pd=0, Zn=0, size=0
     let encoding: u32 = 0x2400C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16702,12 +20831,17 @@ fn test_cmphi_p_p_zw_special_size_0_size_variant_0_49168_2400c010() {
 fn test_cmphi_p_p_zw_special_size_1_size_variant_1_49168_2440c010() {
     // Encoding: 0x2440C010
     // Test CMPHI_P.P.ZW__ special value size = 1 (Size variant 1)
-    // Fields: Zm=0, Pg=0, size=1, Zn=0, Pd=0
+    // Fields: Pd=0, size=1, Pg=0, Zm=0, Zn=0
     let encoding: u32 = 0x2440C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16718,12 +20852,17 @@ fn test_cmphi_p_p_zw_special_size_1_size_variant_1_49168_2440c010() {
 fn test_cmphi_p_p_zw_special_size_2_size_variant_2_49168_2480c010() {
     // Encoding: 0x2480C010
     // Test CMPHI_P.P.ZW__ special value size = 2 (Size variant 2)
-    // Fields: Zn=0, size=2, Pg=0, Pd=0, Zm=0
+    // Fields: Zn=0, Pd=0, Pg=0, size=2, Zm=0
     let encoding: u32 = 0x2480C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16734,12 +20873,17 @@ fn test_cmphi_p_p_zw_special_size_2_size_variant_2_49168_2480c010() {
 fn test_cmphi_p_p_zw_special_size_3_size_variant_3_49168_24c0c010() {
     // Encoding: 0x24C0C010
     // Test CMPHI_P.P.ZW__ special value size = 3 (Size variant 3)
-    // Fields: size=3, Pg=0, Zn=0, Pd=0, Zm=0
+    // Fields: Zn=0, Pd=0, Zm=0, size=3, Pg=0
     let encoding: u32 = 0x24C0C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16750,12 +20894,16 @@ fn test_cmphi_p_p_zw_special_size_3_size_variant_3_49168_24c0c010() {
 fn test_cmphi_p_p_zw_invalid_0_c010_2400c010() {
     // Encoding: 0x2400C010
     // Test CMPHI_P.P.ZW__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pd=0, Pg=0, Zn=0, Zm=0, size=0
+    // Fields: size=0, Zm=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x2400C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16766,12 +20914,16 @@ fn test_cmphi_p_p_zw_invalid_0_c010_2400c010() {
 fn test_cmphi_p_p_zw_invalid_1_c010_2400c010() {
     // Encoding: 0x2400C010
     // Test CMPHI_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, Pd=0, Zn=0, Zm=0, Pg=0
+    // Fields: Zn=0, Pg=0, Pd=0, Zm=0, size=0
     let encoding: u32 = 0x2400C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16782,12 +20934,16 @@ fn test_cmphi_p_p_zw_invalid_1_c010_2400c010() {
 fn test_cmphi_p_p_zw_invalid_2_c010_2400c010() {
     // Encoding: 0x2400C010
     // Test CMPHI_P.P.ZW__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: Zm=0, size=0, Pg=0, Zn=0, Pd=0
+    // Fields: Zn=0, Pg=0, Pd=0, Zm=0, size=0
     let encoding: u32 = 0x2400C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHI_P.P.ZW__
@@ -16798,12 +20954,16 @@ fn test_cmphi_p_p_zw_invalid_2_c010_2400c010() {
 fn test_cmphi_p_p_zw_invalid_3_c010_2400c010() {
     // Encoding: 0x2400C010
     // Test CMPHI_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, Zm=0, size=0, Zn=0, Pd=0
+    // Fields: Zm=0, Pd=0, Zn=0, size=0, Pg=0
     let encoding: u32 = 0x2400C010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -16814,12 +20974,17 @@ fn test_cmphi_p_p_zw_invalid_3_c010_2400c010() {
 fn test_cmphs_p_p_zw_field_size_0_min_c000_2400c000() {
     // Encoding: 0x2400C000
     // Test CMPHS_P.P.ZW__ field size = 0 (Min)
-    // Fields: Pd=0, Zm=0, size=0, Zn=0, Pg=0
+    // Fields: Pd=0, size=0, Zm=0, Pg=0, Zn=0
     let encoding: u32 = 0x2400C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -16830,12 +20995,17 @@ fn test_cmphs_p_p_zw_field_size_0_min_c000_2400c000() {
 fn test_cmphs_p_p_zw_field_size_1_poweroftwo_c000_2440c000() {
     // Encoding: 0x2440C000
     // Test CMPHS_P.P.ZW__ field size = 1 (PowerOfTwo)
-    // Fields: Zm=0, Zn=0, Pd=0, size=1, Pg=0
+    // Fields: Pd=0, Zm=0, size=1, Zn=0, Pg=0
     let encoding: u32 = 0x2440C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -16846,12 +21016,17 @@ fn test_cmphs_p_p_zw_field_size_1_poweroftwo_c000_2440c000() {
 fn test_cmphs_p_p_zw_field_size_2_poweroftwo_c000_2480c000() {
     // Encoding: 0x2480C000
     // Test CMPHS_P.P.ZW__ field size = 2 (PowerOfTwo)
-    // Fields: Zn=0, size=2, Pd=0, Zm=0, Pg=0
+    // Fields: Pg=0, Pd=0, size=2, Zn=0, Zm=0
     let encoding: u32 = 0x2480C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -16862,12 +21037,17 @@ fn test_cmphs_p_p_zw_field_size_2_poweroftwo_c000_2480c000() {
 fn test_cmphs_p_p_zw_field_size_3_max_c000_24c0c000() {
     // Encoding: 0x24C0C000
     // Test CMPHS_P.P.ZW__ field size = 3 (Max)
-    // Fields: Pd=0, Zm=0, Zn=0, size=3, Pg=0
+    // Fields: size=3, Zm=0, Zn=0, Pg=0, Pd=0
     let encoding: u32 = 0x24C0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -16878,12 +21058,17 @@ fn test_cmphs_p_p_zw_field_size_3_max_c000_24c0c000() {
 fn test_cmphs_p_p_zw_field_zm_0_min_c000_2400c000() {
     // Encoding: 0x2400C000
     // Test CMPHS_P.P.ZW__ field Zm = 0 (Min)
-    // Fields: size=0, Pd=0, Zn=0, Zm=0, Pg=0
+    // Fields: Pg=0, Zn=0, Pd=0, size=0, Zm=0
     let encoding: u32 = 0x2400C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -16894,12 +21079,17 @@ fn test_cmphs_p_p_zw_field_zm_0_min_c000_2400c000() {
 fn test_cmphs_p_p_zw_field_zm_1_poweroftwo_c000_2401c000() {
     // Encoding: 0x2401C000
     // Test CMPHS_P.P.ZW__ field Zm = 1 (PowerOfTwo)
-    // Fields: size=0, Pg=0, Pd=0, Zm=1, Zn=0
+    // Fields: Pg=0, Pd=0, Zn=0, size=0, Zm=1
     let encoding: u32 = 0x2401C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -16910,12 +21100,17 @@ fn test_cmphs_p_p_zw_field_zm_1_poweroftwo_c000_2401c000() {
 fn test_cmphs_p_p_zw_field_zm_30_poweroftwominusone_c000_241ec000() {
     // Encoding: 0x241EC000
     // Test CMPHS_P.P.ZW__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, Pg=0, size=0, Zm=30, Zn=0
+    // Fields: Pg=0, Zm=30, size=0, Pd=0, Zn=0
     let encoding: u32 = 0x241EC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -16926,12 +21121,17 @@ fn test_cmphs_p_p_zw_field_zm_30_poweroftwominusone_c000_241ec000() {
 fn test_cmphs_p_p_zw_field_zm_31_max_c000_241fc000() {
     // Encoding: 0x241FC000
     // Test CMPHS_P.P.ZW__ field Zm = 31 (Max)
-    // Fields: Pg=0, Zn=0, size=0, Pd=0, Zm=31
+    // Fields: Pd=0, Zm=31, Pg=0, Zn=0, size=0
     let encoding: u32 = 0x241FC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -16942,12 +21142,17 @@ fn test_cmphs_p_p_zw_field_zm_31_max_c000_241fc000() {
 fn test_cmphs_p_p_zw_field_pg_0_min_c000_2400c000() {
     // Encoding: 0x2400C000
     // Test CMPHS_P.P.ZW__ field Pg = 0 (Min)
-    // Fields: Zn=0, Pg=0, Pd=0, Zm=0, size=0
+    // Fields: Zn=0, size=0, Pd=0, Zm=0, Pg=0
     let encoding: u32 = 0x2400C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -16958,12 +21163,17 @@ fn test_cmphs_p_p_zw_field_pg_0_min_c000_2400c000() {
 fn test_cmphs_p_p_zw_field_pg_1_poweroftwo_c000_2400c400() {
     // Encoding: 0x2400C400
     // Test CMPHS_P.P.ZW__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pg=1, Zn=0, size=0, Pd=0, Zm=0
+    // Fields: Zn=0, Pg=1, size=0, Pd=0, Zm=0
     let encoding: u32 = 0x2400C400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -16974,12 +21184,17 @@ fn test_cmphs_p_p_zw_field_pg_1_poweroftwo_c000_2400c400() {
 fn test_cmphs_p_p_zw_field_zn_0_min_c000_2400c000() {
     // Encoding: 0x2400C000
     // Test CMPHS_P.P.ZW__ field Zn = 0 (Min)
-    // Fields: Zm=0, Zn=0, Pd=0, size=0, Pg=0
+    // Fields: Pd=0, Zn=0, size=0, Zm=0, Pg=0
     let encoding: u32 = 0x2400C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -16990,12 +21205,17 @@ fn test_cmphs_p_p_zw_field_zn_0_min_c000_2400c000() {
 fn test_cmphs_p_p_zw_field_zn_1_poweroftwo_c000_2400c020() {
     // Encoding: 0x2400C020
     // Test CMPHS_P.P.ZW__ field Zn = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zm=0, Pg=0, Zn=1, size=0
+    // Fields: Pg=0, size=0, Pd=0, Zn=1, Zm=0
     let encoding: u32 = 0x2400C020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -17006,12 +21226,17 @@ fn test_cmphs_p_p_zw_field_zn_1_poweroftwo_c000_2400c020() {
 fn test_cmphs_p_p_zw_field_zn_30_poweroftwominusone_c000_2400c3c0() {
     // Encoding: 0x2400C3C0
     // Test CMPHS_P.P.ZW__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, size=0, Pg=0, Zm=0, Zn=30
+    // Fields: Zm=0, Zn=30, Pg=0, Pd=0, size=0
     let encoding: u32 = 0x2400C3C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -17022,12 +21247,17 @@ fn test_cmphs_p_p_zw_field_zn_30_poweroftwominusone_c000_2400c3c0() {
 fn test_cmphs_p_p_zw_field_zn_31_max_c000_2400c3e0() {
     // Encoding: 0x2400C3E0
     // Test CMPHS_P.P.ZW__ field Zn = 31 (Max)
-    // Fields: Zm=0, Zn=31, Pd=0, size=0, Pg=0
+    // Fields: Pd=0, Zn=31, size=0, Zm=0, Pg=0
     let encoding: u32 = 0x2400C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -17038,12 +21268,17 @@ fn test_cmphs_p_p_zw_field_zn_31_max_c000_2400c3e0() {
 fn test_cmphs_p_p_zw_field_pd_0_min_c000_2400c000() {
     // Encoding: 0x2400C000
     // Test CMPHS_P.P.ZW__ field Pd = 0 (Min)
-    // Fields: Zm=0, Pd=0, size=0, Pg=0, Zn=0
+    // Fields: Pg=0, size=0, Zm=0, Zn=0, Pd=0
     let encoding: u32 = 0x2400C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -17054,12 +21289,17 @@ fn test_cmphs_p_p_zw_field_pd_0_min_c000_2400c000() {
 fn test_cmphs_p_p_zw_field_pd_1_poweroftwo_c000_2400c001() {
     // Encoding: 0x2400C001
     // Test CMPHS_P.P.ZW__ field Pd = 1 (PowerOfTwo)
-    // Fields: size=0, Pg=0, Zm=0, Zn=0, Pd=1
+    // Fields: Pd=1, Zn=0, size=0, Zm=0, Pg=0
     let encoding: u32 = 0x2400C001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -17070,12 +21310,17 @@ fn test_cmphs_p_p_zw_field_pd_1_poweroftwo_c000_2400c001() {
 fn test_cmphs_p_p_zw_combo_0_c000_2400c000() {
     // Encoding: 0x2400C000
     // Test CMPHS_P.P.ZW__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Zn=0, Zm=0, Pg=0, Pd=0, size=0
+    // Fields: Zn=0, Pd=0, size=0, Pg=0, Zm=0
     let encoding: u32 = 0x2400C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -17086,12 +21331,17 @@ fn test_cmphs_p_p_zw_combo_0_c000_2400c000() {
 fn test_cmphs_p_p_zw_special_size_0_size_variant_0_49152_2400c000() {
     // Encoding: 0x2400C000
     // Test CMPHS_P.P.ZW__ special value size = 0 (Size variant 0)
-    // Fields: Zn=0, size=0, Zm=0, Pg=0, Pd=0
+    // Fields: size=0, Pg=0, Zm=0, Zn=0, Pd=0
     let encoding: u32 = 0x2400C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -17102,12 +21352,17 @@ fn test_cmphs_p_p_zw_special_size_0_size_variant_0_49152_2400c000() {
 fn test_cmphs_p_p_zw_special_size_1_size_variant_1_49152_2440c000() {
     // Encoding: 0x2440C000
     // Test CMPHS_P.P.ZW__ special value size = 1 (Size variant 1)
-    // Fields: Zn=0, Zm=0, size=1, Pd=0, Pg=0
+    // Fields: Pd=0, size=1, Zm=0, Pg=0, Zn=0
     let encoding: u32 = 0x2440C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -17118,12 +21373,17 @@ fn test_cmphs_p_p_zw_special_size_1_size_variant_1_49152_2440c000() {
 fn test_cmphs_p_p_zw_special_size_2_size_variant_2_49152_2480c000() {
     // Encoding: 0x2480C000
     // Test CMPHS_P.P.ZW__ special value size = 2 (Size variant 2)
-    // Fields: Zn=0, Pg=0, Zm=0, size=2, Pd=0
+    // Fields: size=2, Pd=0, Zn=0, Pg=0, Zm=0
     let encoding: u32 = 0x2480C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -17134,12 +21394,17 @@ fn test_cmphs_p_p_zw_special_size_2_size_variant_2_49152_2480c000() {
 fn test_cmphs_p_p_zw_special_size_3_size_variant_3_49152_24c0c000() {
     // Encoding: 0x24C0C000
     // Test CMPHS_P.P.ZW__ special value size = 3 (Size variant 3)
-    // Fields: Pg=0, Zn=0, Zm=0, size=3, Pd=0
+    // Fields: size=3, Zm=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x24C0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -17150,12 +21415,16 @@ fn test_cmphs_p_p_zw_special_size_3_size_variant_3_49152_24c0c000() {
 fn test_cmphs_p_p_zw_invalid_0_c000_2400c000() {
     // Encoding: 0x2400C000
     // Test CMPHS_P.P.ZW__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Zn=0, size=0, Zm=0, Pd=0, Pg=0
+    // Fields: Pg=0, Zm=0, Pd=0, Zn=0, size=0
     let encoding: u32 = 0x2400C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -17166,12 +21435,16 @@ fn test_cmphs_p_p_zw_invalid_0_c000_2400c000() {
 fn test_cmphs_p_p_zw_invalid_1_c000_2400c000() {
     // Encoding: 0x2400C000
     // Test CMPHS_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, Zn=0, Zm=0, Pg=0, Pd=0
+    // Fields: Pg=0, Zm=0, Zn=0, Pd=0, size=0
     let encoding: u32 = 0x2400C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -17182,12 +21455,16 @@ fn test_cmphs_p_p_zw_invalid_1_c000_2400c000() {
 fn test_cmphs_p_p_zw_invalid_2_c000_2400c000() {
     // Encoding: 0x2400C000
     // Test CMPHS_P.P.ZW__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: Zm=0, size=0, Pd=0, Zn=0, Pg=0
+    // Fields: Pg=0, Pd=0, Zm=0, Zn=0, size=0
     let encoding: u32 = 0x2400C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPHS_P.P.ZW__
@@ -17198,12 +21475,16 @@ fn test_cmphs_p_p_zw_invalid_2_c000_2400c000() {
 fn test_cmphs_p_p_zw_invalid_3_c000_2400c000() {
     // Encoding: 0x2400C000
     // Test CMPHS_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zm=0, size=0, Zn=0, Pd=0, Pg=0
+    // Fields: Zn=0, Pd=0, size=0, Pg=0, Zm=0
     let encoding: u32 = 0x2400C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17214,12 +21495,17 @@ fn test_cmphs_p_p_zw_invalid_3_c000_2400c000() {
 fn test_cmplt_p_p_zw_field_size_0_min_6000_24006000() {
     // Encoding: 0x24006000
     // Test CMPLT_P.P.ZW__ field size = 0 (Min)
-    // Fields: Zm=0, Pg=0, size=0, Zn=0, Pd=0
+    // Fields: Pd=0, Zm=0, Zn=0, Pg=0, size=0
     let encoding: u32 = 0x24006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17230,12 +21516,17 @@ fn test_cmplt_p_p_zw_field_size_0_min_6000_24006000() {
 fn test_cmplt_p_p_zw_field_size_1_poweroftwo_6000_24406000() {
     // Encoding: 0x24406000
     // Test CMPLT_P.P.ZW__ field size = 1 (PowerOfTwo)
-    // Fields: Zn=0, Zm=0, Pg=0, Pd=0, size=1
+    // Fields: Pg=0, size=1, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x24406000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17246,12 +21537,17 @@ fn test_cmplt_p_p_zw_field_size_1_poweroftwo_6000_24406000() {
 fn test_cmplt_p_p_zw_field_size_2_poweroftwo_6000_24806000() {
     // Encoding: 0x24806000
     // Test CMPLT_P.P.ZW__ field size = 2 (PowerOfTwo)
-    // Fields: Zm=0, Pg=0, Zn=0, size=2, Pd=0
+    // Fields: Zm=0, Pd=0, Pg=0, Zn=0, size=2
     let encoding: u32 = 0x24806000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17262,12 +21558,17 @@ fn test_cmplt_p_p_zw_field_size_2_poweroftwo_6000_24806000() {
 fn test_cmplt_p_p_zw_field_size_3_max_6000_24c06000() {
     // Encoding: 0x24C06000
     // Test CMPLT_P.P.ZW__ field size = 3 (Max)
-    // Fields: Zn=0, Pg=0, size=3, Zm=0, Pd=0
+    // Fields: Zm=0, Zn=0, Pg=0, size=3, Pd=0
     let encoding: u32 = 0x24C06000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17278,12 +21579,17 @@ fn test_cmplt_p_p_zw_field_size_3_max_6000_24c06000() {
 fn test_cmplt_p_p_zw_field_zm_0_min_6000_24006000() {
     // Encoding: 0x24006000
     // Test CMPLT_P.P.ZW__ field Zm = 0 (Min)
-    // Fields: size=0, Pd=0, Zm=0, Zn=0, Pg=0
+    // Fields: Pd=0, Pg=0, Zn=0, size=0, Zm=0
     let encoding: u32 = 0x24006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17294,12 +21600,17 @@ fn test_cmplt_p_p_zw_field_zm_0_min_6000_24006000() {
 fn test_cmplt_p_p_zw_field_zm_1_poweroftwo_6000_24016000() {
     // Encoding: 0x24016000
     // Test CMPLT_P.P.ZW__ field Zm = 1 (PowerOfTwo)
-    // Fields: Zm=1, Zn=0, size=0, Pg=0, Pd=0
+    // Fields: Zm=1, size=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x24016000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17310,12 +21621,17 @@ fn test_cmplt_p_p_zw_field_zm_1_poweroftwo_6000_24016000() {
 fn test_cmplt_p_p_zw_field_zm_30_poweroftwominusone_6000_241e6000() {
     // Encoding: 0x241E6000
     // Test CMPLT_P.P.ZW__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Zn=0, Pd=0, Zm=30, Pg=0
+    // Fields: size=0, Zm=30, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x241E6000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17326,12 +21642,17 @@ fn test_cmplt_p_p_zw_field_zm_30_poweroftwominusone_6000_241e6000() {
 fn test_cmplt_p_p_zw_field_zm_31_max_6000_241f6000() {
     // Encoding: 0x241F6000
     // Test CMPLT_P.P.ZW__ field Zm = 31 (Max)
-    // Fields: Pg=0, Zn=0, size=0, Zm=31, Pd=0
+    // Fields: size=0, Zn=0, Zm=31, Pd=0, Pg=0
     let encoding: u32 = 0x241F6000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17342,12 +21663,17 @@ fn test_cmplt_p_p_zw_field_zm_31_max_6000_241f6000() {
 fn test_cmplt_p_p_zw_field_pg_0_min_6000_24006000() {
     // Encoding: 0x24006000
     // Test CMPLT_P.P.ZW__ field Pg = 0 (Min)
-    // Fields: Zn=0, Pg=0, Zm=0, size=0, Pd=0
+    // Fields: size=0, Zn=0, Zm=0, Pd=0, Pg=0
     let encoding: u32 = 0x24006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17358,12 +21684,17 @@ fn test_cmplt_p_p_zw_field_pg_0_min_6000_24006000() {
 fn test_cmplt_p_p_zw_field_pg_1_poweroftwo_6000_24006400() {
     // Encoding: 0x24006400
     // Test CMPLT_P.P.ZW__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pg=1, Zn=0, Pd=0, size=0, Zm=0
+    // Fields: Zm=0, Pg=1, Zn=0, Pd=0, size=0
     let encoding: u32 = 0x24006400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17374,12 +21705,17 @@ fn test_cmplt_p_p_zw_field_pg_1_poweroftwo_6000_24006400() {
 fn test_cmplt_p_p_zw_field_zn_0_min_6000_24006000() {
     // Encoding: 0x24006000
     // Test CMPLT_P.P.ZW__ field Zn = 0 (Min)
-    // Fields: Pg=0, size=0, Pd=0, Zn=0, Zm=0
+    // Fields: Zm=0, Pg=0, size=0, Pd=0, Zn=0
     let encoding: u32 = 0x24006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17390,12 +21726,17 @@ fn test_cmplt_p_p_zw_field_zn_0_min_6000_24006000() {
 fn test_cmplt_p_p_zw_field_zn_1_poweroftwo_6000_24006020() {
     // Encoding: 0x24006020
     // Test CMPLT_P.P.ZW__ field Zn = 1 (PowerOfTwo)
-    // Fields: Zm=0, Zn=1, size=0, Pg=0, Pd=0
+    // Fields: Zn=1, size=0, Pd=0, Zm=0, Pg=0
     let encoding: u32 = 0x24006020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17406,12 +21747,17 @@ fn test_cmplt_p_p_zw_field_zn_1_poweroftwo_6000_24006020() {
 fn test_cmplt_p_p_zw_field_zn_30_poweroftwominusone_6000_240063c0() {
     // Encoding: 0x240063C0
     // Test CMPLT_P.P.ZW__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Zm=0, Zn=30, Pd=0, size=0, Pg=0
+    // Fields: Pd=0, Pg=0, Zn=30, Zm=0, size=0
     let encoding: u32 = 0x240063C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17422,12 +21768,17 @@ fn test_cmplt_p_p_zw_field_zn_30_poweroftwominusone_6000_240063c0() {
 fn test_cmplt_p_p_zw_field_zn_31_max_6000_240063e0() {
     // Encoding: 0x240063E0
     // Test CMPLT_P.P.ZW__ field Zn = 31 (Max)
-    // Fields: size=0, Pg=0, Zn=31, Pd=0, Zm=0
+    // Fields: Pg=0, Zn=31, Pd=0, Zm=0, size=0
     let encoding: u32 = 0x240063E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17438,12 +21789,17 @@ fn test_cmplt_p_p_zw_field_zn_31_max_6000_240063e0() {
 fn test_cmplt_p_p_zw_field_pd_0_min_6000_24006000() {
     // Encoding: 0x24006000
     // Test CMPLT_P.P.ZW__ field Pd = 0 (Min)
-    // Fields: Pg=0, Zn=0, size=0, Zm=0, Pd=0
+    // Fields: size=0, Pg=0, Zn=0, Zm=0, Pd=0
     let encoding: u32 = 0x24006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17454,12 +21810,17 @@ fn test_cmplt_p_p_zw_field_pd_0_min_6000_24006000() {
 fn test_cmplt_p_p_zw_field_pd_1_poweroftwo_6000_24006001() {
     // Encoding: 0x24006001
     // Test CMPLT_P.P.ZW__ field Pd = 1 (PowerOfTwo)
-    // Fields: size=0, Pg=0, Zn=0, Pd=1, Zm=0
+    // Fields: Pd=1, size=0, Zn=0, Pg=0, Zm=0
     let encoding: u32 = 0x24006001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17470,12 +21831,17 @@ fn test_cmplt_p_p_zw_field_pd_1_poweroftwo_6000_24006001() {
 fn test_cmplt_p_p_zw_combo_0_6000_24006000() {
     // Encoding: 0x24006000
     // Test CMPLT_P.P.ZW__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Zm=0, Pd=0, Pg=0, size=0, Zn=0
+    // Fields: Zm=0, size=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x24006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17486,12 +21852,17 @@ fn test_cmplt_p_p_zw_combo_0_6000_24006000() {
 fn test_cmplt_p_p_zw_special_size_0_size_variant_0_24576_24006000() {
     // Encoding: 0x24006000
     // Test CMPLT_P.P.ZW__ special value size = 0 (Size variant 0)
-    // Fields: Pd=0, size=0, Pg=0, Zm=0, Zn=0
+    // Fields: Pd=0, Zm=0, Pg=0, Zn=0, size=0
     let encoding: u32 = 0x24006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17502,12 +21873,17 @@ fn test_cmplt_p_p_zw_special_size_0_size_variant_0_24576_24006000() {
 fn test_cmplt_p_p_zw_special_size_1_size_variant_1_24576_24406000() {
     // Encoding: 0x24406000
     // Test CMPLT_P.P.ZW__ special value size = 1 (Size variant 1)
-    // Fields: size=1, Zm=0, Pd=0, Pg=0, Zn=0
+    // Fields: Pd=0, size=1, Pg=0, Zn=0, Zm=0
     let encoding: u32 = 0x24406000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17518,12 +21894,17 @@ fn test_cmplt_p_p_zw_special_size_1_size_variant_1_24576_24406000() {
 fn test_cmplt_p_p_zw_special_size_2_size_variant_2_24576_24806000() {
     // Encoding: 0x24806000
     // Test CMPLT_P.P.ZW__ special value size = 2 (Size variant 2)
-    // Fields: size=2, Pg=0, Pd=0, Zn=0, Zm=0
+    // Fields: Pd=0, Zm=0, size=2, Pg=0, Zn=0
     let encoding: u32 = 0x24806000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17534,12 +21915,17 @@ fn test_cmplt_p_p_zw_special_size_2_size_variant_2_24576_24806000() {
 fn test_cmplt_p_p_zw_special_size_3_size_variant_3_24576_24c06000() {
     // Encoding: 0x24C06000
     // Test CMPLT_P.P.ZW__ special value size = 3 (Size variant 3)
-    // Fields: Pd=0, Zn=0, size=3, Pg=0, Zm=0
+    // Fields: Zm=0, Pg=0, size=3, Zn=0, Pd=0
     let encoding: u32 = 0x24C06000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17550,12 +21936,16 @@ fn test_cmplt_p_p_zw_special_size_3_size_variant_3_24576_24c06000() {
 fn test_cmplt_p_p_zw_invalid_0_6000_24006000() {
     // Encoding: 0x24006000
     // Test CMPLT_P.P.ZW__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pg=0, Zn=0, size=0, Zm=0, Pd=0
+    // Fields: Zn=0, Pd=0, Pg=0, Zm=0, size=0
     let encoding: u32 = 0x24006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17566,12 +21956,16 @@ fn test_cmplt_p_p_zw_invalid_0_6000_24006000() {
 fn test_cmplt_p_p_zw_invalid_1_6000_24006000() {
     // Encoding: 0x24006000
     // Test CMPLT_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, Zm=0, Zn=0, Pd=0, Pg=0
+    // Fields: Zn=0, Zm=0, Pd=0, size=0, Pg=0
     let encoding: u32 = 0x24006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17582,12 +21976,16 @@ fn test_cmplt_p_p_zw_invalid_1_6000_24006000() {
 fn test_cmplt_p_p_zw_invalid_2_6000_24006000() {
     // Encoding: 0x24006000
     // Test CMPLT_P.P.ZW__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: Zn=0, Pd=0, size=0, Zm=0, Pg=0
+    // Fields: size=0, Zn=0, Zm=0, Pd=0, Pg=0
     let encoding: u32 = 0x24006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLT_P.P.ZW__
@@ -17598,12 +21996,16 @@ fn test_cmplt_p_p_zw_invalid_2_6000_24006000() {
 fn test_cmplt_p_p_zw_invalid_3_6000_24006000() {
     // Encoding: 0x24006000
     // Test CMPLT_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pd=0, Pg=0, Zn=0, size=0, Zm=0
+    // Fields: Pd=0, Zn=0, size=0, Zm=0, Pg=0
     let encoding: u32 = 0x24006000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17614,12 +22016,17 @@ fn test_cmplt_p_p_zw_invalid_3_6000_24006000() {
 fn test_cmple_p_p_zw_field_size_0_min_6010_24006010() {
     // Encoding: 0x24006010
     // Test CMPLE_P.P.ZW__ field size = 0 (Min)
-    // Fields: Zn=0, Pg=0, Pd=0, size=0, Zm=0
+    // Fields: Pg=0, size=0, Zn=0, Zm=0, Pd=0
     let encoding: u32 = 0x24006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17630,12 +22037,17 @@ fn test_cmple_p_p_zw_field_size_0_min_6010_24006010() {
 fn test_cmple_p_p_zw_field_size_1_poweroftwo_6010_24406010() {
     // Encoding: 0x24406010
     // Test CMPLE_P.P.ZW__ field size = 1 (PowerOfTwo)
-    // Fields: Zn=0, size=1, Pd=0, Zm=0, Pg=0
+    // Fields: Zn=0, Pg=0, Zm=0, Pd=0, size=1
     let encoding: u32 = 0x24406010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17646,12 +22058,17 @@ fn test_cmple_p_p_zw_field_size_1_poweroftwo_6010_24406010() {
 fn test_cmple_p_p_zw_field_size_2_poweroftwo_6010_24806010() {
     // Encoding: 0x24806010
     // Test CMPLE_P.P.ZW__ field size = 2 (PowerOfTwo)
-    // Fields: size=2, Pd=0, Zm=0, Zn=0, Pg=0
+    // Fields: Pd=0, size=2, Zm=0, Zn=0, Pg=0
     let encoding: u32 = 0x24806010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17662,12 +22079,17 @@ fn test_cmple_p_p_zw_field_size_2_poweroftwo_6010_24806010() {
 fn test_cmple_p_p_zw_field_size_3_max_6010_24c06010() {
     // Encoding: 0x24C06010
     // Test CMPLE_P.P.ZW__ field size = 3 (Max)
-    // Fields: Pg=0, Zm=0, size=3, Zn=0, Pd=0
+    // Fields: Pd=0, size=3, Pg=0, Zn=0, Zm=0
     let encoding: u32 = 0x24C06010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17678,12 +22100,17 @@ fn test_cmple_p_p_zw_field_size_3_max_6010_24c06010() {
 fn test_cmple_p_p_zw_field_zm_0_min_6010_24006010() {
     // Encoding: 0x24006010
     // Test CMPLE_P.P.ZW__ field Zm = 0 (Min)
-    // Fields: Zm=0, Zn=0, Pd=0, size=0, Pg=0
+    // Fields: Zn=0, Pd=0, Pg=0, size=0, Zm=0
     let encoding: u32 = 0x24006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17694,12 +22121,17 @@ fn test_cmple_p_p_zw_field_zm_0_min_6010_24006010() {
 fn test_cmple_p_p_zw_field_zm_1_poweroftwo_6010_24016010() {
     // Encoding: 0x24016010
     // Test CMPLE_P.P.ZW__ field Zm = 1 (PowerOfTwo)
-    // Fields: size=0, Zn=0, Pg=0, Pd=0, Zm=1
+    // Fields: size=0, Pg=0, Zm=1, Zn=0, Pd=0
     let encoding: u32 = 0x24016010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17710,12 +22142,17 @@ fn test_cmple_p_p_zw_field_zm_1_poweroftwo_6010_24016010() {
 fn test_cmple_p_p_zw_field_zm_30_poweroftwominusone_6010_241e6010() {
     // Encoding: 0x241E6010
     // Test CMPLE_P.P.ZW__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, Pg=0, Zm=30, size=0, Zn=0
+    // Fields: Pg=0, size=0, Zn=0, Pd=0, Zm=30
     let encoding: u32 = 0x241E6010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17726,12 +22163,17 @@ fn test_cmple_p_p_zw_field_zm_30_poweroftwominusone_6010_241e6010() {
 fn test_cmple_p_p_zw_field_zm_31_max_6010_241f6010() {
     // Encoding: 0x241F6010
     // Test CMPLE_P.P.ZW__ field Zm = 31 (Max)
-    // Fields: Pd=0, Zm=31, size=0, Pg=0, Zn=0
+    // Fields: Pg=0, Pd=0, size=0, Zm=31, Zn=0
     let encoding: u32 = 0x241F6010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17742,12 +22184,17 @@ fn test_cmple_p_p_zw_field_zm_31_max_6010_241f6010() {
 fn test_cmple_p_p_zw_field_pg_0_min_6010_24006010() {
     // Encoding: 0x24006010
     // Test CMPLE_P.P.ZW__ field Pg = 0 (Min)
-    // Fields: Zn=0, Pg=0, Pd=0, size=0, Zm=0
+    // Fields: Zm=0, Pd=0, Zn=0, size=0, Pg=0
     let encoding: u32 = 0x24006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17758,12 +22205,17 @@ fn test_cmple_p_p_zw_field_pg_0_min_6010_24006010() {
 fn test_cmple_p_p_zw_field_pg_1_poweroftwo_6010_24006410() {
     // Encoding: 0x24006410
     // Test CMPLE_P.P.ZW__ field Pg = 1 (PowerOfTwo)
-    // Fields: Zm=0, Pg=1, Zn=0, size=0, Pd=0
+    // Fields: Pd=0, Zm=0, size=0, Zn=0, Pg=1
     let encoding: u32 = 0x24006410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17774,12 +22226,17 @@ fn test_cmple_p_p_zw_field_pg_1_poweroftwo_6010_24006410() {
 fn test_cmple_p_p_zw_field_zn_0_min_6010_24006010() {
     // Encoding: 0x24006010
     // Test CMPLE_P.P.ZW__ field Zn = 0 (Min)
-    // Fields: size=0, Pg=0, Zn=0, Zm=0, Pd=0
+    // Fields: size=0, Pg=0, Pd=0, Zm=0, Zn=0
     let encoding: u32 = 0x24006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17790,12 +22247,17 @@ fn test_cmple_p_p_zw_field_zn_0_min_6010_24006010() {
 fn test_cmple_p_p_zw_field_zn_1_poweroftwo_6010_24006030() {
     // Encoding: 0x24006030
     // Test CMPLE_P.P.ZW__ field Zn = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zm=0, Pg=0, size=0, Zn=1
+    // Fields: Pg=0, Pd=0, Zn=1, size=0, Zm=0
     let encoding: u32 = 0x24006030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17806,12 +22268,17 @@ fn test_cmple_p_p_zw_field_zn_1_poweroftwo_6010_24006030() {
 fn test_cmple_p_p_zw_field_zn_30_poweroftwominusone_6010_240063d0() {
     // Encoding: 0x240063D0
     // Test CMPLE_P.P.ZW__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, Zn=30, size=0, Pd=0, Zm=0
+    // Fields: Pg=0, Zm=0, Pd=0, size=0, Zn=30
     let encoding: u32 = 0x240063D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17822,12 +22289,17 @@ fn test_cmple_p_p_zw_field_zn_30_poweroftwominusone_6010_240063d0() {
 fn test_cmple_p_p_zw_field_zn_31_max_6010_240063f0() {
     // Encoding: 0x240063F0
     // Test CMPLE_P.P.ZW__ field Zn = 31 (Max)
-    // Fields: Zn=31, Pd=0, size=0, Pg=0, Zm=0
+    // Fields: Zn=31, Pg=0, Zm=0, Pd=0, size=0
     let encoding: u32 = 0x240063F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17838,12 +22310,17 @@ fn test_cmple_p_p_zw_field_zn_31_max_6010_240063f0() {
 fn test_cmple_p_p_zw_field_pd_0_min_6010_24006010() {
     // Encoding: 0x24006010
     // Test CMPLE_P.P.ZW__ field Pd = 0 (Min)
-    // Fields: Pd=0, size=0, Pg=0, Zm=0, Zn=0
+    // Fields: size=0, Pd=0, Pg=0, Zm=0, Zn=0
     let encoding: u32 = 0x24006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17854,12 +22331,17 @@ fn test_cmple_p_p_zw_field_pd_0_min_6010_24006010() {
 fn test_cmple_p_p_zw_field_pd_1_poweroftwo_6010_24006011() {
     // Encoding: 0x24006011
     // Test CMPLE_P.P.ZW__ field Pd = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pd=1, Zm=0, Pg=0, size=0
+    // Fields: size=0, Zn=0, Pd=1, Zm=0, Pg=0
     let encoding: u32 = 0x24006011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17870,12 +22352,17 @@ fn test_cmple_p_p_zw_field_pd_1_poweroftwo_6010_24006011() {
 fn test_cmple_p_p_zw_combo_0_6010_24006010() {
     // Encoding: 0x24006010
     // Test CMPLE_P.P.ZW__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Zm=0, Pg=0, Zn=0, size=0, Pd=0
+    // Fields: Zm=0, size=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x24006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17886,12 +22373,17 @@ fn test_cmple_p_p_zw_combo_0_6010_24006010() {
 fn test_cmple_p_p_zw_special_size_0_size_variant_0_24592_24006010() {
     // Encoding: 0x24006010
     // Test CMPLE_P.P.ZW__ special value size = 0 (Size variant 0)
-    // Fields: Zn=0, Pd=0, size=0, Zm=0, Pg=0
+    // Fields: Zm=0, Pg=0, Zn=0, size=0, Pd=0
     let encoding: u32 = 0x24006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17902,12 +22394,17 @@ fn test_cmple_p_p_zw_special_size_0_size_variant_0_24592_24006010() {
 fn test_cmple_p_p_zw_special_size_1_size_variant_1_24592_24406010() {
     // Encoding: 0x24406010
     // Test CMPLE_P.P.ZW__ special value size = 1 (Size variant 1)
-    // Fields: Zn=0, Pd=0, Zm=0, Pg=0, size=1
+    // Fields: size=1, Pd=0, Zn=0, Zm=0, Pg=0
     let encoding: u32 = 0x24406010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17918,12 +22415,17 @@ fn test_cmple_p_p_zw_special_size_1_size_variant_1_24592_24406010() {
 fn test_cmple_p_p_zw_special_size_2_size_variant_2_24592_24806010() {
     // Encoding: 0x24806010
     // Test CMPLE_P.P.ZW__ special value size = 2 (Size variant 2)
-    // Fields: Pg=0, Zn=0, size=2, Pd=0, Zm=0
+    // Fields: size=2, Zm=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x24806010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17934,12 +22436,17 @@ fn test_cmple_p_p_zw_special_size_2_size_variant_2_24592_24806010() {
 fn test_cmple_p_p_zw_special_size_3_size_variant_3_24592_24c06010() {
     // Encoding: 0x24C06010
     // Test CMPLE_P.P.ZW__ special value size = 3 (Size variant 3)
-    // Fields: Zm=0, Pd=0, size=3, Pg=0, Zn=0
+    // Fields: Zm=0, Pd=0, Pg=0, size=3, Zn=0
     let encoding: u32 = 0x24C06010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17950,12 +22457,16 @@ fn test_cmple_p_p_zw_special_size_3_size_variant_3_24592_24c06010() {
 fn test_cmple_p_p_zw_invalid_0_6010_24006010() {
     // Encoding: 0x24006010
     // Test CMPLE_P.P.ZW__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pg=0, Pd=0, Zm=0, size=0, Zn=0
+    // Fields: size=0, Zm=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x24006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17966,12 +22477,16 @@ fn test_cmple_p_p_zw_invalid_0_6010_24006010() {
 fn test_cmple_p_p_zw_invalid_1_6010_24006010() {
     // Encoding: 0x24006010
     // Test CMPLE_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pd=0, Zm=0, Pg=0, size=0, Zn=0
+    // Fields: Zm=0, Pd=0, size=0, Zn=0, Pg=0
     let encoding: u32 = 0x24006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17982,12 +22497,16 @@ fn test_cmple_p_p_zw_invalid_1_6010_24006010() {
 fn test_cmple_p_p_zw_invalid_2_6010_24006010() {
     // Encoding: 0x24006010
     // Test CMPLE_P.P.ZW__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: Zm=0, Pg=0, size=0, Pd=0, Zn=0
+    // Fields: Zm=0, Zn=0, Pg=0, size=0, Pd=0
     let encoding: u32 = 0x24006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLE_P.P.ZW__
@@ -17998,12 +22517,16 @@ fn test_cmple_p_p_zw_invalid_2_6010_24006010() {
 fn test_cmple_p_p_zw_invalid_3_6010_24006010() {
     // Encoding: 0x24006010
     // Test CMPLE_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, Zn=0, Zm=0, Pd=0, size=0
+    // Fields: size=0, Zn=0, Pd=0, Zm=0, Pg=0
     let encoding: u32 = 0x24006010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18014,12 +22537,17 @@ fn test_cmple_p_p_zw_invalid_3_6010_24006010() {
 fn test_cmplo_p_p_zw_field_size_0_min_e000_2400e000() {
     // Encoding: 0x2400E000
     // Test CMPLO_P.P.ZW__ field size = 0 (Min)
-    // Fields: Pd=0, size=0, Zm=0, Pg=0, Zn=0
+    // Fields: size=0, Zn=0, Pd=0, Zm=0, Pg=0
     let encoding: u32 = 0x2400E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18030,12 +22558,17 @@ fn test_cmplo_p_p_zw_field_size_0_min_e000_2400e000() {
 fn test_cmplo_p_p_zw_field_size_1_poweroftwo_e000_2440e000() {
     // Encoding: 0x2440E000
     // Test CMPLO_P.P.ZW__ field size = 1 (PowerOfTwo)
-    // Fields: Pd=0, size=1, Zm=0, Pg=0, Zn=0
+    // Fields: Pg=0, Pd=0, Zm=0, size=1, Zn=0
     let encoding: u32 = 0x2440E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18046,12 +22579,17 @@ fn test_cmplo_p_p_zw_field_size_1_poweroftwo_e000_2440e000() {
 fn test_cmplo_p_p_zw_field_size_2_poweroftwo_e000_2480e000() {
     // Encoding: 0x2480E000
     // Test CMPLO_P.P.ZW__ field size = 2 (PowerOfTwo)
-    // Fields: Pd=0, Zn=0, size=2, Pg=0, Zm=0
+    // Fields: size=2, Zm=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x2480E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18062,12 +22600,17 @@ fn test_cmplo_p_p_zw_field_size_2_poweroftwo_e000_2480e000() {
 fn test_cmplo_p_p_zw_field_size_3_max_e000_24c0e000() {
     // Encoding: 0x24C0E000
     // Test CMPLO_P.P.ZW__ field size = 3 (Max)
-    // Fields: size=3, Pd=0, Zn=0, Pg=0, Zm=0
+    // Fields: Pg=0, Pd=0, Zm=0, size=3, Zn=0
     let encoding: u32 = 0x24C0E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18078,12 +22621,17 @@ fn test_cmplo_p_p_zw_field_size_3_max_e000_24c0e000() {
 fn test_cmplo_p_p_zw_field_zm_0_min_e000_2400e000() {
     // Encoding: 0x2400E000
     // Test CMPLO_P.P.ZW__ field Zm = 0 (Min)
-    // Fields: Zm=0, Zn=0, Pd=0, size=0, Pg=0
+    // Fields: size=0, Pg=0, Zn=0, Zm=0, Pd=0
     let encoding: u32 = 0x2400E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18094,12 +22642,17 @@ fn test_cmplo_p_p_zw_field_zm_0_min_e000_2400e000() {
 fn test_cmplo_p_p_zw_field_zm_1_poweroftwo_e000_2401e000() {
     // Encoding: 0x2401E000
     // Test CMPLO_P.P.ZW__ field Zm = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zm=1, Pg=0, size=0, Zn=0
+    // Fields: Pd=0, size=0, Pg=0, Zm=1, Zn=0
     let encoding: u32 = 0x2401E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18110,12 +22663,17 @@ fn test_cmplo_p_p_zw_field_zm_1_poweroftwo_e000_2401e000() {
 fn test_cmplo_p_p_zw_field_zm_30_poweroftwominusone_e000_241ee000() {
     // Encoding: 0x241EE000
     // Test CMPLO_P.P.ZW__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Zm=30, Pg=0, Zn=0, Pd=0
+    // Fields: Zm=30, size=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x241EE000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18126,12 +22684,17 @@ fn test_cmplo_p_p_zw_field_zm_30_poweroftwominusone_e000_241ee000() {
 fn test_cmplo_p_p_zw_field_zm_31_max_e000_241fe000() {
     // Encoding: 0x241FE000
     // Test CMPLO_P.P.ZW__ field Zm = 31 (Max)
-    // Fields: Zn=0, Zm=31, Pg=0, Pd=0, size=0
+    // Fields: Zn=0, size=0, Pd=0, Zm=31, Pg=0
     let encoding: u32 = 0x241FE000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18142,12 +22705,17 @@ fn test_cmplo_p_p_zw_field_zm_31_max_e000_241fe000() {
 fn test_cmplo_p_p_zw_field_pg_0_min_e000_2400e000() {
     // Encoding: 0x2400E000
     // Test CMPLO_P.P.ZW__ field Pg = 0 (Min)
-    // Fields: Pg=0, size=0, Zn=0, Pd=0, Zm=0
+    // Fields: size=0, Zn=0, Zm=0, Pg=0, Pd=0
     let encoding: u32 = 0x2400E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18158,12 +22726,17 @@ fn test_cmplo_p_p_zw_field_pg_0_min_e000_2400e000() {
 fn test_cmplo_p_p_zw_field_pg_1_poweroftwo_e000_2400e400() {
     // Encoding: 0x2400E400
     // Test CMPLO_P.P.ZW__ field Pg = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zm=0, Zn=0, size=0, Pg=1
+    // Fields: Zm=0, Pd=0, Zn=0, Pg=1, size=0
     let encoding: u32 = 0x2400E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18174,12 +22747,17 @@ fn test_cmplo_p_p_zw_field_pg_1_poweroftwo_e000_2400e400() {
 fn test_cmplo_p_p_zw_field_zn_0_min_e000_2400e000() {
     // Encoding: 0x2400E000
     // Test CMPLO_P.P.ZW__ field Zn = 0 (Min)
-    // Fields: Pg=0, size=0, Pd=0, Zn=0, Zm=0
+    // Fields: Pg=0, Pd=0, size=0, Zm=0, Zn=0
     let encoding: u32 = 0x2400E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18190,12 +22768,17 @@ fn test_cmplo_p_p_zw_field_zn_0_min_e000_2400e000() {
 fn test_cmplo_p_p_zw_field_zn_1_poweroftwo_e000_2400e020() {
     // Encoding: 0x2400E020
     // Test CMPLO_P.P.ZW__ field Zn = 1 (PowerOfTwo)
-    // Fields: Pg=0, Zn=1, Pd=0, size=0, Zm=0
+    // Fields: Pd=0, Zn=1, Pg=0, Zm=0, size=0
     let encoding: u32 = 0x2400E020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18206,12 +22789,17 @@ fn test_cmplo_p_p_zw_field_zn_1_poweroftwo_e000_2400e020() {
 fn test_cmplo_p_p_zw_field_zn_30_poweroftwominusone_e000_2400e3c0() {
     // Encoding: 0x2400E3C0
     // Test CMPLO_P.P.ZW__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, Zm=0, size=0, Pg=0, Zn=30
+    // Fields: Zn=30, Pd=0, Pg=0, size=0, Zm=0
     let encoding: u32 = 0x2400E3C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18222,12 +22810,17 @@ fn test_cmplo_p_p_zw_field_zn_30_poweroftwominusone_e000_2400e3c0() {
 fn test_cmplo_p_p_zw_field_zn_31_max_e000_2400e3e0() {
     // Encoding: 0x2400E3E0
     // Test CMPLO_P.P.ZW__ field Zn = 31 (Max)
-    // Fields: Zm=0, Pg=0, Pd=0, size=0, Zn=31
+    // Fields: Pg=0, Pd=0, size=0, Zm=0, Zn=31
     let encoding: u32 = 0x2400E3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18238,12 +22831,17 @@ fn test_cmplo_p_p_zw_field_zn_31_max_e000_2400e3e0() {
 fn test_cmplo_p_p_zw_field_pd_0_min_e000_2400e000() {
     // Encoding: 0x2400E000
     // Test CMPLO_P.P.ZW__ field Pd = 0 (Min)
-    // Fields: Zm=0, Zn=0, Pg=0, size=0, Pd=0
+    // Fields: Pg=0, size=0, Pd=0, Zn=0, Zm=0
     let encoding: u32 = 0x2400E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18254,12 +22852,17 @@ fn test_cmplo_p_p_zw_field_pd_0_min_e000_2400e000() {
 fn test_cmplo_p_p_zw_field_pd_1_poweroftwo_e000_2400e001() {
     // Encoding: 0x2400E001
     // Test CMPLO_P.P.ZW__ field Pd = 1 (PowerOfTwo)
-    // Fields: size=0, Zn=0, Zm=0, Pg=0, Pd=1
+    // Fields: Pg=0, size=0, Zm=0, Zn=0, Pd=1
     let encoding: u32 = 0x2400E001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18270,12 +22873,17 @@ fn test_cmplo_p_p_zw_field_pd_1_poweroftwo_e000_2400e001() {
 fn test_cmplo_p_p_zw_combo_0_e000_2400e000() {
     // Encoding: 0x2400E000
     // Test CMPLO_P.P.ZW__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Pd=0, Pg=0, size=0, Zm=0, Zn=0
+    // Fields: Zm=0, size=0, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x2400E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18286,12 +22894,17 @@ fn test_cmplo_p_p_zw_combo_0_e000_2400e000() {
 fn test_cmplo_p_p_zw_special_size_0_size_variant_0_57344_2400e000() {
     // Encoding: 0x2400E000
     // Test CMPLO_P.P.ZW__ special value size = 0 (Size variant 0)
-    // Fields: Zn=0, Pd=0, Zm=0, Pg=0, size=0
+    // Fields: Pd=0, Pg=0, Zm=0, size=0, Zn=0
     let encoding: u32 = 0x2400E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18302,12 +22915,17 @@ fn test_cmplo_p_p_zw_special_size_0_size_variant_0_57344_2400e000() {
 fn test_cmplo_p_p_zw_special_size_1_size_variant_1_57344_2440e000() {
     // Encoding: 0x2440E000
     // Test CMPLO_P.P.ZW__ special value size = 1 (Size variant 1)
-    // Fields: Zm=0, size=1, Zn=0, Pg=0, Pd=0
+    // Fields: Zm=0, Pg=0, Zn=0, Pd=0, size=1
     let encoding: u32 = 0x2440E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18318,12 +22936,17 @@ fn test_cmplo_p_p_zw_special_size_1_size_variant_1_57344_2440e000() {
 fn test_cmplo_p_p_zw_special_size_2_size_variant_2_57344_2480e000() {
     // Encoding: 0x2480E000
     // Test CMPLO_P.P.ZW__ special value size = 2 (Size variant 2)
-    // Fields: Pg=0, Pd=0, Zn=0, size=2, Zm=0
+    // Fields: size=2, Pd=0, Zn=0, Zm=0, Pg=0
     let encoding: u32 = 0x2480E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18334,12 +22957,17 @@ fn test_cmplo_p_p_zw_special_size_2_size_variant_2_57344_2480e000() {
 fn test_cmplo_p_p_zw_special_size_3_size_variant_3_57344_24c0e000() {
     // Encoding: 0x24C0E000
     // Test CMPLO_P.P.ZW__ special value size = 3 (Size variant 3)
-    // Fields: Zn=0, Pd=0, Zm=0, Pg=0, size=3
+    // Fields: size=3, Zm=0, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x24C0E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18350,12 +22978,16 @@ fn test_cmplo_p_p_zw_special_size_3_size_variant_3_57344_24c0e000() {
 fn test_cmplo_p_p_zw_invalid_0_e000_2400e000() {
     // Encoding: 0x2400E000
     // Test CMPLO_P.P.ZW__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: size=0, Pg=0, Zm=0, Pd=0, Zn=0
+    // Fields: Zn=0, Zm=0, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x2400E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18366,12 +22998,16 @@ fn test_cmplo_p_p_zw_invalid_0_e000_2400e000() {
 fn test_cmplo_p_p_zw_invalid_1_e000_2400e000() {
     // Encoding: 0x2400E000
     // Test CMPLO_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, Pg=0, Zm=0, Pd=0, Zn=0
+    // Fields: size=0, Pg=0, Zn=0, Zm=0, Pd=0
     let encoding: u32 = 0x2400E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18382,12 +23018,16 @@ fn test_cmplo_p_p_zw_invalid_1_e000_2400e000() {
 fn test_cmplo_p_p_zw_invalid_2_e000_2400e000() {
     // Encoding: 0x2400E000
     // Test CMPLO_P.P.ZW__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: Pd=0, Pg=0, size=0, Zm=0, Zn=0
+    // Fields: Pd=0, size=0, Zn=0, Zm=0, Pg=0
     let encoding: u32 = 0x2400E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLO_P.P.ZW__
@@ -18398,12 +23038,16 @@ fn test_cmplo_p_p_zw_invalid_2_e000_2400e000() {
 fn test_cmplo_p_p_zw_invalid_3_e000_2400e000() {
     // Encoding: 0x2400E000
     // Test CMPLO_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pd=0, Zm=0, size=0, Zn=0, Pg=0
+    // Fields: Pd=0, Zm=0, Pg=0, Zn=0, size=0
     let encoding: u32 = 0x2400E000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18414,12 +23058,17 @@ fn test_cmplo_p_p_zw_invalid_3_e000_2400e000() {
 fn test_cmpls_p_p_zw_field_size_0_min_e010_2400e010() {
     // Encoding: 0x2400E010
     // Test CMPLS_P.P.ZW__ field size = 0 (Min)
-    // Fields: Pg=0, Zm=0, Pd=0, Zn=0, size=0
+    // Fields: Zm=0, Zn=0, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x2400E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18430,12 +23079,17 @@ fn test_cmpls_p_p_zw_field_size_0_min_e010_2400e010() {
 fn test_cmpls_p_p_zw_field_size_1_poweroftwo_e010_2440e010() {
     // Encoding: 0x2440E010
     // Test CMPLS_P.P.ZW__ field size = 1 (PowerOfTwo)
-    // Fields: size=1, Zm=0, Pg=0, Zn=0, Pd=0
+    // Fields: Pg=0, size=1, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x2440E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18446,12 +23100,17 @@ fn test_cmpls_p_p_zw_field_size_1_poweroftwo_e010_2440e010() {
 fn test_cmpls_p_p_zw_field_size_2_poweroftwo_e010_2480e010() {
     // Encoding: 0x2480E010
     // Test CMPLS_P.P.ZW__ field size = 2 (PowerOfTwo)
-    // Fields: Zn=0, Zm=0, Pg=0, size=2, Pd=0
+    // Fields: Pg=0, size=2, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x2480E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18462,12 +23121,17 @@ fn test_cmpls_p_p_zw_field_size_2_poweroftwo_e010_2480e010() {
 fn test_cmpls_p_p_zw_field_size_3_max_e010_24c0e010() {
     // Encoding: 0x24C0E010
     // Test CMPLS_P.P.ZW__ field size = 3 (Max)
-    // Fields: Pg=0, size=3, Zm=0, Zn=0, Pd=0
+    // Fields: Zm=0, Pd=0, Zn=0, size=3, Pg=0
     let encoding: u32 = 0x24C0E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18478,12 +23142,17 @@ fn test_cmpls_p_p_zw_field_size_3_max_e010_24c0e010() {
 fn test_cmpls_p_p_zw_field_zm_0_min_e010_2400e010() {
     // Encoding: 0x2400E010
     // Test CMPLS_P.P.ZW__ field Zm = 0 (Min)
-    // Fields: size=0, Zm=0, Pg=0, Zn=0, Pd=0
+    // Fields: Pg=0, Pd=0, Zn=0, size=0, Zm=0
     let encoding: u32 = 0x2400E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18494,12 +23163,17 @@ fn test_cmpls_p_p_zw_field_zm_0_min_e010_2400e010() {
 fn test_cmpls_p_p_zw_field_zm_1_poweroftwo_e010_2401e010() {
     // Encoding: 0x2401E010
     // Test CMPLS_P.P.ZW__ field Zm = 1 (PowerOfTwo)
-    // Fields: Zn=0, Pg=0, Zm=1, Pd=0, size=0
+    // Fields: Zm=1, Pg=0, Zn=0, size=0, Pd=0
     let encoding: u32 = 0x2401E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18510,12 +23184,17 @@ fn test_cmpls_p_p_zw_field_zm_1_poweroftwo_e010_2401e010() {
 fn test_cmpls_p_p_zw_field_zm_30_poweroftwominusone_e010_241ee010() {
     // Encoding: 0x241EE010
     // Test CMPLS_P.P.ZW__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, size=0, Pd=0, Zm=30, Zn=0
+    // Fields: Pg=0, Pd=0, size=0, Zm=30, Zn=0
     let encoding: u32 = 0x241EE010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18526,12 +23205,17 @@ fn test_cmpls_p_p_zw_field_zm_30_poweroftwominusone_e010_241ee010() {
 fn test_cmpls_p_p_zw_field_zm_31_max_e010_241fe010() {
     // Encoding: 0x241FE010
     // Test CMPLS_P.P.ZW__ field Zm = 31 (Max)
-    // Fields: size=0, Zm=31, Pg=0, Zn=0, Pd=0
+    // Fields: size=0, Zm=31, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x241FE010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18542,12 +23226,17 @@ fn test_cmpls_p_p_zw_field_zm_31_max_e010_241fe010() {
 fn test_cmpls_p_p_zw_field_pg_0_min_e010_2400e010() {
     // Encoding: 0x2400E010
     // Test CMPLS_P.P.ZW__ field Pg = 0 (Min)
-    // Fields: Zm=0, Pg=0, size=0, Pd=0, Zn=0
+    // Fields: Pd=0, Pg=0, Zm=0, Zn=0, size=0
     let encoding: u32 = 0x2400E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18558,12 +23247,17 @@ fn test_cmpls_p_p_zw_field_pg_0_min_e010_2400e010() {
 fn test_cmpls_p_p_zw_field_pg_1_poweroftwo_e010_2400e410() {
     // Encoding: 0x2400E410
     // Test CMPLS_P.P.ZW__ field Pg = 1 (PowerOfTwo)
-    // Fields: Zn=0, size=0, Pg=1, Pd=0, Zm=0
+    // Fields: Pd=0, size=0, Zm=0, Pg=1, Zn=0
     let encoding: u32 = 0x2400E410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18574,12 +23268,17 @@ fn test_cmpls_p_p_zw_field_pg_1_poweroftwo_e010_2400e410() {
 fn test_cmpls_p_p_zw_field_zn_0_min_e010_2400e010() {
     // Encoding: 0x2400E010
     // Test CMPLS_P.P.ZW__ field Zn = 0 (Min)
-    // Fields: size=0, Zm=0, Pg=0, Zn=0, Pd=0
+    // Fields: Pg=0, Zm=0, Zn=0, Pd=0, size=0
     let encoding: u32 = 0x2400E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18590,12 +23289,17 @@ fn test_cmpls_p_p_zw_field_zn_0_min_e010_2400e010() {
 fn test_cmpls_p_p_zw_field_zn_1_poweroftwo_e010_2400e030() {
     // Encoding: 0x2400E030
     // Test CMPLS_P.P.ZW__ field Zn = 1 (PowerOfTwo)
-    // Fields: Zn=1, Pg=0, size=0, Zm=0, Pd=0
+    // Fields: Pg=0, size=0, Zm=0, Zn=1, Pd=0
     let encoding: u32 = 0x2400E030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18606,12 +23310,17 @@ fn test_cmpls_p_p_zw_field_zn_1_poweroftwo_e010_2400e030() {
 fn test_cmpls_p_p_zw_field_zn_30_poweroftwominusone_e010_2400e3d0() {
     // Encoding: 0x2400E3D0
     // Test CMPLS_P.P.ZW__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Pd=0, size=0, Pg=0, Zm=0, Zn=30
+    // Fields: size=0, Pd=0, Pg=0, Zn=30, Zm=0
     let encoding: u32 = 0x2400E3D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18622,12 +23331,17 @@ fn test_cmpls_p_p_zw_field_zn_30_poweroftwominusone_e010_2400e3d0() {
 fn test_cmpls_p_p_zw_field_zn_31_max_e010_2400e3f0() {
     // Encoding: 0x2400E3F0
     // Test CMPLS_P.P.ZW__ field Zn = 31 (Max)
-    // Fields: size=0, Zm=0, Zn=31, Pd=0, Pg=0
+    // Fields: Pg=0, size=0, Zm=0, Pd=0, Zn=31
     let encoding: u32 = 0x2400E3F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18638,12 +23352,17 @@ fn test_cmpls_p_p_zw_field_zn_31_max_e010_2400e3f0() {
 fn test_cmpls_p_p_zw_field_pd_0_min_e010_2400e010() {
     // Encoding: 0x2400E010
     // Test CMPLS_P.P.ZW__ field Pd = 0 (Min)
-    // Fields: Zn=0, Zm=0, Pg=0, size=0, Pd=0
+    // Fields: size=0, Pg=0, Zm=0, Zn=0, Pd=0
     let encoding: u32 = 0x2400E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18654,12 +23373,17 @@ fn test_cmpls_p_p_zw_field_pd_0_min_e010_2400e010() {
 fn test_cmpls_p_p_zw_field_pd_1_poweroftwo_e010_2400e011() {
     // Encoding: 0x2400E011
     // Test CMPLS_P.P.ZW__ field Pd = 1 (PowerOfTwo)
-    // Fields: Zm=0, Zn=0, Pd=1, Pg=0, size=0
+    // Fields: size=0, Pd=1, Zn=0, Zm=0, Pg=0
     let encoding: u32 = 0x2400E011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18670,12 +23394,17 @@ fn test_cmpls_p_p_zw_field_pd_1_poweroftwo_e010_2400e011() {
 fn test_cmpls_p_p_zw_combo_0_e010_2400e010() {
     // Encoding: 0x2400E010
     // Test CMPLS_P.P.ZW__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: size=0, Pd=0, Pg=0, Zm=0, Zn=0
+    // Fields: size=0, Zm=0, Pd=0, Zn=0, Pg=0
     let encoding: u32 = 0x2400E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18686,12 +23415,17 @@ fn test_cmpls_p_p_zw_combo_0_e010_2400e010() {
 fn test_cmpls_p_p_zw_special_size_0_size_variant_0_57360_2400e010() {
     // Encoding: 0x2400E010
     // Test CMPLS_P.P.ZW__ special value size = 0 (Size variant 0)
-    // Fields: Zm=0, Zn=0, Pd=0, size=0, Pg=0
+    // Fields: Pd=0, Zn=0, size=0, Zm=0, Pg=0
     let encoding: u32 = 0x2400E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18702,12 +23436,17 @@ fn test_cmpls_p_p_zw_special_size_0_size_variant_0_57360_2400e010() {
 fn test_cmpls_p_p_zw_special_size_1_size_variant_1_57360_2440e010() {
     // Encoding: 0x2440E010
     // Test CMPLS_P.P.ZW__ special value size = 1 (Size variant 1)
-    // Fields: Zn=0, Pg=0, Zm=0, size=1, Pd=0
+    // Fields: Zm=0, size=1, Zn=0, Pg=0, Pd=0
     let encoding: u32 = 0x2440E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18718,12 +23457,17 @@ fn test_cmpls_p_p_zw_special_size_1_size_variant_1_57360_2440e010() {
 fn test_cmpls_p_p_zw_special_size_2_size_variant_2_57360_2480e010() {
     // Encoding: 0x2480E010
     // Test CMPLS_P.P.ZW__ special value size = 2 (Size variant 2)
-    // Fields: Zn=0, Pg=0, Zm=0, size=2, Pd=0
+    // Fields: Pg=0, Zm=0, size=2, Zn=0, Pd=0
     let encoding: u32 = 0x2480E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18734,12 +23478,17 @@ fn test_cmpls_p_p_zw_special_size_2_size_variant_2_57360_2480e010() {
 fn test_cmpls_p_p_zw_special_size_3_size_variant_3_57360_24c0e010() {
     // Encoding: 0x24C0E010
     // Test CMPLS_P.P.ZW__ special value size = 3 (Size variant 3)
-    // Fields: Pg=0, size=3, Zm=0, Zn=0, Pd=0
+    // Fields: Pg=0, Zm=0, size=3, Pd=0, Zn=0
     let encoding: u32 = 0x24C0E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18750,12 +23499,16 @@ fn test_cmpls_p_p_zw_special_size_3_size_variant_3_57360_24c0e010() {
 fn test_cmpls_p_p_zw_invalid_0_e010_2400e010() {
     // Encoding: 0x2400E010
     // Test CMPLS_P.P.ZW__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Pd=0, Pg=0, size=0, Zn=0, Zm=0
+    // Fields: size=0, Zm=0, Zn=0, Pd=0, Pg=0
     let encoding: u32 = 0x2400E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18766,12 +23519,16 @@ fn test_cmpls_p_p_zw_invalid_0_e010_2400e010() {
 fn test_cmpls_p_p_zw_invalid_1_e010_2400e010() {
     // Encoding: 0x2400E010
     // Test CMPLS_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pd=0, Zm=0, size=0, Zn=0, Pg=0
+    // Fields: Pg=0, Zn=0, size=0, Pd=0, Zm=0
     let encoding: u32 = 0x2400E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18782,12 +23539,16 @@ fn test_cmpls_p_p_zw_invalid_1_e010_2400e010() {
 fn test_cmpls_p_p_zw_invalid_2_e010_2400e010() {
     // Encoding: 0x2400E010
     // Test CMPLS_P.P.ZW__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: Zn=0, Pd=0, Pg=0, size=0, Zm=0
+    // Fields: Pg=0, Zm=0, size=0, Zn=0, Pd=0
     let encoding: u32 = 0x2400E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPLS_P.P.ZW__
@@ -18798,12 +23559,16 @@ fn test_cmpls_p_p_zw_invalid_2_e010_2400e010() {
 fn test_cmpls_p_p_zw_invalid_3_e010_2400e010() {
     // Encoding: 0x2400E010
     // Test CMPLS_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Pg=0, Zm=0, size=0, Zn=0, Pd=0
+    // Fields: size=0, Pg=0, Zm=0, Zn=0, Pd=0
     let encoding: u32 = 0x2400E010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -18814,12 +23579,17 @@ fn test_cmpls_p_p_zw_invalid_3_e010_2400e010() {
 fn test_cmpne_p_p_zw_field_size_0_min_2010_24002010() {
     // Encoding: 0x24002010
     // Test CMPNE_P.P.ZW__ field size = 0 (Min)
-    // Fields: Pg=0, Zn=0, size=0, Pd=0, Zm=0
+    // Fields: Pg=0, size=0, Zn=0, Pd=0, Zm=0
     let encoding: u32 = 0x24002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -18830,12 +23600,17 @@ fn test_cmpne_p_p_zw_field_size_0_min_2010_24002010() {
 fn test_cmpne_p_p_zw_field_size_1_poweroftwo_2010_24402010() {
     // Encoding: 0x24402010
     // Test CMPNE_P.P.ZW__ field size = 1 (PowerOfTwo)
-    // Fields: Pd=0, Zm=0, Pg=0, Zn=0, size=1
+    // Fields: Zm=0, size=1, Pg=0, Zn=0, Pd=0
     let encoding: u32 = 0x24402010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -18846,12 +23621,17 @@ fn test_cmpne_p_p_zw_field_size_1_poweroftwo_2010_24402010() {
 fn test_cmpne_p_p_zw_field_size_2_poweroftwo_2010_24802010() {
     // Encoding: 0x24802010
     // Test CMPNE_P.P.ZW__ field size = 2 (PowerOfTwo)
-    // Fields: Pg=0, Zm=0, size=2, Zn=0, Pd=0
+    // Fields: size=2, Zn=0, Zm=0, Pd=0, Pg=0
     let encoding: u32 = 0x24802010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -18862,12 +23642,17 @@ fn test_cmpne_p_p_zw_field_size_2_poweroftwo_2010_24802010() {
 fn test_cmpne_p_p_zw_field_size_3_max_2010_24c02010() {
     // Encoding: 0x24C02010
     // Test CMPNE_P.P.ZW__ field size = 3 (Max)
-    // Fields: Zm=0, Pg=0, Pd=0, Zn=0, size=3
+    // Fields: Pd=0, Zm=0, size=3, Pg=0, Zn=0
     let encoding: u32 = 0x24C02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -18878,12 +23663,17 @@ fn test_cmpne_p_p_zw_field_size_3_max_2010_24c02010() {
 fn test_cmpne_p_p_zw_field_zm_0_min_2010_24002010() {
     // Encoding: 0x24002010
     // Test CMPNE_P.P.ZW__ field Zm = 0 (Min)
-    // Fields: Pg=0, size=0, Zn=0, Pd=0, Zm=0
+    // Fields: Zm=0, Pd=0, size=0, Pg=0, Zn=0
     let encoding: u32 = 0x24002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -18894,12 +23684,17 @@ fn test_cmpne_p_p_zw_field_zm_0_min_2010_24002010() {
 fn test_cmpne_p_p_zw_field_zm_1_poweroftwo_2010_24012010() {
     // Encoding: 0x24012010
     // Test CMPNE_P.P.ZW__ field Zm = 1 (PowerOfTwo)
-    // Fields: Pg=0, size=0, Zm=1, Zn=0, Pd=0
+    // Fields: Zm=1, size=0, Pg=0, Pd=0, Zn=0
     let encoding: u32 = 0x24012010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -18910,12 +23705,17 @@ fn test_cmpne_p_p_zw_field_zm_1_poweroftwo_2010_24012010() {
 fn test_cmpne_p_p_zw_field_zm_30_poweroftwominusone_2010_241e2010() {
     // Encoding: 0x241E2010
     // Test CMPNE_P.P.ZW__ field Zm = 30 (PowerOfTwoMinusOne)
-    // Fields: Zm=30, size=0, Pg=0, Zn=0, Pd=0
+    // Fields: Zn=0, Pg=0, Pd=0, size=0, Zm=30
     let encoding: u32 = 0x241E2010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -18926,12 +23726,17 @@ fn test_cmpne_p_p_zw_field_zm_30_poweroftwominusone_2010_241e2010() {
 fn test_cmpne_p_p_zw_field_zm_31_max_2010_241f2010() {
     // Encoding: 0x241F2010
     // Test CMPNE_P.P.ZW__ field Zm = 31 (Max)
-    // Fields: Zn=0, size=0, Pg=0, Pd=0, Zm=31
+    // Fields: size=0, Zn=0, Pg=0, Pd=0, Zm=31
     let encoding: u32 = 0x241F2010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -18942,12 +23747,17 @@ fn test_cmpne_p_p_zw_field_zm_31_max_2010_241f2010() {
 fn test_cmpne_p_p_zw_field_pg_0_min_2010_24002010() {
     // Encoding: 0x24002010
     // Test CMPNE_P.P.ZW__ field Pg = 0 (Min)
-    // Fields: Zm=0, Pg=0, Zn=0, Pd=0, size=0
+    // Fields: Pd=0, Zm=0, Pg=0, size=0, Zn=0
     let encoding: u32 = 0x24002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -18958,12 +23768,17 @@ fn test_cmpne_p_p_zw_field_pg_0_min_2010_24002010() {
 fn test_cmpne_p_p_zw_field_pg_1_poweroftwo_2010_24002410() {
     // Encoding: 0x24002410
     // Test CMPNE_P.P.ZW__ field Pg = 1 (PowerOfTwo)
-    // Fields: size=0, Zm=0, Pd=0, Pg=1, Zn=0
+    // Fields: Pd=0, size=0, Pg=1, Zn=0, Zm=0
     let encoding: u32 = 0x24002410;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -18974,12 +23789,17 @@ fn test_cmpne_p_p_zw_field_pg_1_poweroftwo_2010_24002410() {
 fn test_cmpne_p_p_zw_field_zn_0_min_2010_24002010() {
     // Encoding: 0x24002010
     // Test CMPNE_P.P.ZW__ field Zn = 0 (Min)
-    // Fields: size=0, Pd=0, Pg=0, Zm=0, Zn=0
+    // Fields: Pg=0, Zn=0, Pd=0, size=0, Zm=0
     let encoding: u32 = 0x24002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -18990,12 +23810,17 @@ fn test_cmpne_p_p_zw_field_zn_0_min_2010_24002010() {
 fn test_cmpne_p_p_zw_field_zn_1_poweroftwo_2010_24002030() {
     // Encoding: 0x24002030
     // Test CMPNE_P.P.ZW__ field Zn = 1 (PowerOfTwo)
-    // Fields: Zm=0, Zn=1, Pd=0, size=0, Pg=0
+    // Fields: Zm=0, Pd=0, Zn=1, Pg=0, size=0
     let encoding: u32 = 0x24002030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -19006,12 +23831,17 @@ fn test_cmpne_p_p_zw_field_zn_1_poweroftwo_2010_24002030() {
 fn test_cmpne_p_p_zw_field_zn_30_poweroftwominusone_2010_240023d0() {
     // Encoding: 0x240023D0
     // Test CMPNE_P.P.ZW__ field Zn = 30 (PowerOfTwoMinusOne)
-    // Fields: Pg=0, Zn=30, Zm=0, Pd=0, size=0
+    // Fields: Pd=0, Zn=30, Pg=0, Zm=0, size=0
     let encoding: u32 = 0x240023D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -19022,12 +23852,17 @@ fn test_cmpne_p_p_zw_field_zn_30_poweroftwominusone_2010_240023d0() {
 fn test_cmpne_p_p_zw_field_zn_31_max_2010_240023f0() {
     // Encoding: 0x240023F0
     // Test CMPNE_P.P.ZW__ field Zn = 31 (Max)
-    // Fields: size=0, Pg=0, Zn=31, Zm=0, Pd=0
+    // Fields: Zm=0, size=0, Pg=0, Zn=31, Pd=0
     let encoding: u32 = 0x240023F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -19038,12 +23873,17 @@ fn test_cmpne_p_p_zw_field_zn_31_max_2010_240023f0() {
 fn test_cmpne_p_p_zw_field_pd_0_min_2010_24002010() {
     // Encoding: 0x24002010
     // Test CMPNE_P.P.ZW__ field Pd = 0 (Min)
-    // Fields: Zm=0, size=0, Pd=0, Pg=0, Zn=0
+    // Fields: Zm=0, Pg=0, Zn=0, size=0, Pd=0
     let encoding: u32 = 0x24002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -19054,12 +23894,17 @@ fn test_cmpne_p_p_zw_field_pd_0_min_2010_24002010() {
 fn test_cmpne_p_p_zw_field_pd_1_poweroftwo_2010_24002011() {
     // Encoding: 0x24002011
     // Test CMPNE_P.P.ZW__ field Pd = 1 (PowerOfTwo)
-    // Fields: size=0, Zn=0, Pd=1, Zm=0, Pg=0
+    // Fields: Pg=0, Pd=1, size=0, Zn=0, Zm=0
     let encoding: u32 = 0x24002011;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -19070,12 +23915,17 @@ fn test_cmpne_p_p_zw_field_pd_1_poweroftwo_2010_24002011() {
 fn test_cmpne_p_p_zw_combo_0_2010_24002010() {
     // Encoding: 0x24002010
     // Test CMPNE_P.P.ZW__ field combination: size=0, Zm=0, Pg=0, Zn=0, Pd=0
-    // Fields: Pd=0, Pg=0, Zn=0, size=0, Zm=0
+    // Fields: size=0, Pg=0, Pd=0, Zm=0, Zn=0
     let encoding: u32 = 0x24002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -19086,12 +23936,17 @@ fn test_cmpne_p_p_zw_combo_0_2010_24002010() {
 fn test_cmpne_p_p_zw_special_size_0_size_variant_0_8208_24002010() {
     // Encoding: 0x24002010
     // Test CMPNE_P.P.ZW__ special value size = 0 (Size variant 0)
-    // Fields: Zm=0, Pg=0, Zn=0, Pd=0, size=0
+    // Fields: Zn=0, Pd=0, size=0, Pg=0, Zm=0
     let encoding: u32 = 0x24002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -19102,12 +23957,17 @@ fn test_cmpne_p_p_zw_special_size_0_size_variant_0_8208_24002010() {
 fn test_cmpne_p_p_zw_special_size_1_size_variant_1_8208_24402010() {
     // Encoding: 0x24402010
     // Test CMPNE_P.P.ZW__ special value size = 1 (Size variant 1)
-    // Fields: size=1, Zm=0, Zn=0, Pg=0, Pd=0
+    // Fields: Pd=0, size=1, Pg=0, Zm=0, Zn=0
     let encoding: u32 = 0x24402010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -19118,12 +23978,17 @@ fn test_cmpne_p_p_zw_special_size_1_size_variant_1_8208_24402010() {
 fn test_cmpne_p_p_zw_special_size_2_size_variant_2_8208_24802010() {
     // Encoding: 0x24802010
     // Test CMPNE_P.P.ZW__ special value size = 2 (Size variant 2)
-    // Fields: Zm=0, Pg=0, Zn=0, Pd=0, size=2
+    // Fields: Zm=0, Pd=0, Zn=0, size=2, Pg=0
     let encoding: u32 = 0x24802010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -19134,12 +23999,17 @@ fn test_cmpne_p_p_zw_special_size_2_size_variant_2_8208_24802010() {
 fn test_cmpne_p_p_zw_special_size_3_size_variant_3_8208_24c02010() {
     // Encoding: 0x24C02010
     // Test CMPNE_P.P.ZW__ special value size = 3 (Size variant 3)
-    // Fields: Pd=0, Zm=0, Pg=0, size=3, Zn=0
+    // Fields: Zm=0, Zn=0, Pd=0, size=3, Pg=0
     let encoding: u32 = 0x24C02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -19150,12 +24020,16 @@ fn test_cmpne_p_p_zw_special_size_3_size_variant_3_8208_24c02010() {
 fn test_cmpne_p_p_zw_invalid_0_2010_24002010() {
     // Encoding: 0x24002010
     // Test CMPNE_P.P.ZW__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Zm=0, Pg=0, Pd=0, Zn=0, size=0
+    // Fields: Zm=0, Pd=0, Zn=0, size=0, Pg=0
     let encoding: u32 = 0x24002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -19166,12 +24040,16 @@ fn test_cmpne_p_p_zw_invalid_0_2010_24002010() {
 fn test_cmpne_p_p_zw_invalid_1_2010_24002010() {
     // Encoding: 0x24002010
     // Test CMPNE_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zn=0, Pd=0, Pg=0, Zm=0, size=0
+    // Fields: Zn=0, Zm=0, size=0, Pg=0, Pd=0
     let encoding: u32 = 0x24002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -19182,12 +24060,16 @@ fn test_cmpne_p_p_zw_invalid_1_2010_24002010() {
 fn test_cmpne_p_p_zw_invalid_2_2010_24002010() {
     // Encoding: 0x24002010
     // Test CMPNE_P.P.ZW__ invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: size=0, Pd=0, Zn=0, Pg=0, Zm=0
+    // Fields: size=0, Zm=0, Pd=0, Pg=0, Zn=0
     let encoding: u32 = 0x24002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPNE_P.P.ZW__
@@ -19198,12 +24080,16 @@ fn test_cmpne_p_p_zw_invalid_2_2010_24002010() {
 fn test_cmpne_p_p_zw_invalid_3_2010_24002010() {
     // Encoding: 0x24002010
     // Test CMPNE_P.P.ZW__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Zn=0, Pd=0, size=0, Zm=0, Pg=0
+    // Fields: size=0, Zn=0, Pg=0, Zm=0, Pd=0
     let encoding: u32 = 0x24002010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CMPEQ_P.P.ZW__
@@ -19251,8 +24137,8 @@ fn test_cmpeq_p_p_zw_flags_zeroresult_1_24002000() {
     // Test CMPEQ_P.P.ZW__ flag computation: ZeroResult
     // Encoding: 0x24002000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x1);
     let encoding: u32 = 0x24002000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19293,8 +24179,8 @@ fn test_cmpeq_p_p_zw_flags_unsignedoverflow_3_24002000() {
     // Test CMPEQ_P.P.ZW__ flag computation: UnsignedOverflow
     // Encoding: 0x24002000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x24002000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19314,8 +24200,8 @@ fn test_cmpeq_p_p_zw_flags_unsignedoverflow_4_24002000() {
     // Test CMPEQ_P.P.ZW__ flag computation: UnsignedOverflow
     // Encoding: 0x24002000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x2);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24002000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19335,8 +24221,8 @@ fn test_cmpeq_p_p_zw_flags_signedoverflow_5_24002000() {
     // Test CMPEQ_P.P.ZW__ flag computation: SignedOverflow
     // Encoding: 0x24002000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24002000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19476,8 +24362,8 @@ fn test_cmpgt_p_p_zw_flags_unsignedoverflow_3_24004010() {
     // Test CMPGT_P.P.ZW__ flag computation: UnsignedOverflow
     // Encoding: 0x24004010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24004010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19539,8 +24425,8 @@ fn test_cmpgt_p_p_zw_flags_signedoverflow_6_24004010() {
     // Test CMPGT_P.P.ZW__ flag computation: SignedOverflow
     // Encoding: 0x24004010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x24004010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19560,8 +24446,8 @@ fn test_cmpgt_p_p_zw_flags_positiveresult_7_24004010() {
     // Test CMPGT_P.P.ZW__ flag computation: PositiveResult
     // Encoding: 0x24004010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x32);
     set_x(&mut cpu, 1, 0x64);
+    set_x(&mut cpu, 2, 0x32);
     let encoding: u32 = 0x24004010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19638,8 +24524,8 @@ fn test_cmpge_p_p_zw_flags_negativeresult_2_24004000() {
     // Test CMPGE_P.P.ZW__ flag computation: NegativeResult
     // Encoding: 0x24004000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x24004000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19659,8 +24545,8 @@ fn test_cmpge_p_p_zw_flags_unsignedoverflow_3_24004000() {
     // Test CMPGE_P.P.ZW__ flag computation: UnsignedOverflow
     // Encoding: 0x24004000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24004000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19680,8 +24566,8 @@ fn test_cmpge_p_p_zw_flags_unsignedoverflow_4_24004000() {
     // Test CMPGE_P.P.ZW__ flag computation: UnsignedOverflow
     // Encoding: 0x24004000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x2);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x2);
     let encoding: u32 = 0x24004000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19701,8 +24587,8 @@ fn test_cmpge_p_p_zw_flags_signedoverflow_5_24004000() {
     // Test CMPGE_P.P.ZW__ flag computation: SignedOverflow
     // Encoding: 0x24004000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24004000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19722,8 +24608,8 @@ fn test_cmpge_p_p_zw_flags_signedoverflow_6_24004000() {
     // Test CMPGE_P.P.ZW__ flag computation: SignedOverflow
     // Encoding: 0x24004000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x24004000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19743,8 +24629,8 @@ fn test_cmpge_p_p_zw_flags_positiveresult_7_24004000() {
     // Test CMPGE_P.P.ZW__ flag computation: PositiveResult
     // Encoding: 0x24004000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x64);
     set_x(&mut cpu, 2, 0x32);
+    set_x(&mut cpu, 1, 0x64);
     let encoding: u32 = 0x24004000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19800,8 +24686,8 @@ fn test_cmphi_p_p_zw_flags_zeroresult_1_2400c010() {
     // Test CMPHI_P.P.ZW__ flag computation: ZeroResult
     // Encoding: 0x2400C010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x1);
     let encoding: u32 = 0x2400C010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19884,8 +24770,8 @@ fn test_cmphi_p_p_zw_flags_signedoverflow_5_2400c010() {
     // Test CMPHI_P.P.ZW__ flag computation: SignedOverflow
     // Encoding: 0x2400C010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x2400C010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19905,8 +24791,8 @@ fn test_cmphi_p_p_zw_flags_signedoverflow_6_2400c010() {
     // Test CMPHI_P.P.ZW__ flag computation: SignedOverflow
     // Encoding: 0x2400C010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x2400C010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19926,8 +24812,8 @@ fn test_cmphi_p_p_zw_flags_positiveresult_7_2400c010() {
     // Test CMPHI_P.P.ZW__ flag computation: PositiveResult
     // Encoding: 0x2400C010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x32);
     set_x(&mut cpu, 1, 0x64);
+    set_x(&mut cpu, 2, 0x32);
     let encoding: u32 = 0x2400C010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -19962,8 +24848,8 @@ fn test_cmphs_p_p_zw_flags_zeroresult_0_2400c000() {
     // Test CMPHS_P.P.ZW__ flag computation: ZeroResult
     // Encoding: 0x2400C000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x0);
     set_x(&mut cpu, 1, 0x0);
+    set_x(&mut cpu, 2, 0x0);
     let encoding: u32 = 0x2400C000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20046,8 +24932,8 @@ fn test_cmphs_p_p_zw_flags_unsignedoverflow_4_2400c000() {
     // Test CMPHS_P.P.ZW__ flag computation: UnsignedOverflow
     // Encoding: 0x2400C000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x2);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x2);
     let encoding: u32 = 0x2400C000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20067,8 +24953,8 @@ fn test_cmphs_p_p_zw_flags_signedoverflow_5_2400c000() {
     // Test CMPHS_P.P.ZW__ flag computation: SignedOverflow
     // Encoding: 0x2400C000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x2400C000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20208,8 +25094,8 @@ fn test_cmplt_p_p_zw_flags_unsignedoverflow_3_24006000() {
     // Test CMPLT_P.P.ZW__ flag computation: UnsignedOverflow
     // Encoding: 0x24006000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24006000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20229,8 +25115,8 @@ fn test_cmplt_p_p_zw_flags_unsignedoverflow_4_24006000() {
     // Test CMPLT_P.P.ZW__ flag computation: UnsignedOverflow
     // Encoding: 0x24006000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x2);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x2);
     let encoding: u32 = 0x24006000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20271,8 +25157,8 @@ fn test_cmplt_p_p_zw_flags_signedoverflow_6_24006000() {
     // Test CMPLT_P.P.ZW__ flag computation: SignedOverflow
     // Encoding: 0x24006000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x24006000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20391,8 +25277,8 @@ fn test_cmple_p_p_zw_flags_unsignedoverflow_3_24006010() {
     // Test CMPLE_P.P.ZW__ flag computation: UnsignedOverflow
     // Encoding: 0x24006010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x24006010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20433,8 +25319,8 @@ fn test_cmple_p_p_zw_flags_signedoverflow_5_24006010() {
     // Test CMPLE_P.P.ZW__ flag computation: SignedOverflow
     // Encoding: 0x24006010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x24006010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20511,8 +25397,8 @@ fn test_cmplo_p_p_zw_flags_zeroresult_0_2400e000() {
     // Test CMPLO_P.P.ZW__ flag computation: ZeroResult
     // Encoding: 0x2400E000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x0);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x0);
     let encoding: u32 = 0x2400E000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20553,8 +25439,8 @@ fn test_cmplo_p_p_zw_flags_negativeresult_2_2400e000() {
     // Test CMPLO_P.P.ZW__ flag computation: NegativeResult
     // Encoding: 0x2400E000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x2400E000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20574,8 +25460,8 @@ fn test_cmplo_p_p_zw_flags_unsignedoverflow_3_2400e000() {
     // Test CMPLO_P.P.ZW__ flag computation: UnsignedOverflow
     // Encoding: 0x2400E000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x2400E000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20595,8 +25481,8 @@ fn test_cmplo_p_p_zw_flags_unsignedoverflow_4_2400e000() {
     // Test CMPLO_P.P.ZW__ flag computation: UnsignedOverflow
     // Encoding: 0x2400E000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x2);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x2400E000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20616,8 +25502,8 @@ fn test_cmplo_p_p_zw_flags_signedoverflow_5_2400e000() {
     // Test CMPLO_P.P.ZW__ flag computation: SignedOverflow
     // Encoding: 0x2400E000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x2400E000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20715,8 +25601,8 @@ fn test_cmpls_p_p_zw_flags_zeroresult_1_2400e010() {
     // Test CMPLS_P.P.ZW__ flag computation: ZeroResult
     // Encoding: 0x2400E010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x1);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x2400E010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20736,8 +25622,8 @@ fn test_cmpls_p_p_zw_flags_negativeresult_2_2400e010() {
     // Test CMPLS_P.P.ZW__ flag computation: NegativeResult
     // Encoding: 0x2400E010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x2400E010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20757,8 +25643,8 @@ fn test_cmpls_p_p_zw_flags_unsignedoverflow_3_2400e010() {
     // Test CMPLS_P.P.ZW__ flag computation: UnsignedOverflow
     // Encoding: 0x2400E010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x2400E010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20799,8 +25685,8 @@ fn test_cmpls_p_p_zw_flags_signedoverflow_5_2400e010() {
     // Test CMPLS_P.P.ZW__ flag computation: SignedOverflow
     // Encoding: 0x2400E010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     let encoding: u32 = 0x2400E010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20820,8 +25706,8 @@ fn test_cmpls_p_p_zw_flags_signedoverflow_6_2400e010() {
     // Test CMPLS_P.P.ZW__ flag computation: SignedOverflow
     // Encoding: 0x2400E010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x8000000000000000);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x2400E010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20877,8 +25763,8 @@ fn test_cmpne_p_p_zw_flags_zeroresult_0_24002010() {
     // Test CMPNE_P.P.ZW__ flag computation: ZeroResult
     // Encoding: 0x24002010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x0);
     set_x(&mut cpu, 1, 0x0);
+    set_x(&mut cpu, 2, 0x0);
     let encoding: u32 = 0x24002010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20898,8 +25784,8 @@ fn test_cmpne_p_p_zw_flags_zeroresult_1_24002010() {
     // Test CMPNE_P.P.ZW__ flag computation: ZeroResult
     // Encoding: 0x24002010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x1);
     let encoding: u32 = 0x24002010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20919,8 +25805,8 @@ fn test_cmpne_p_p_zw_flags_negativeresult_2_24002010() {
     // Test CMPNE_P.P.ZW__ flag computation: NegativeResult
     // Encoding: 0x24002010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x24002010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -20940,8 +25826,8 @@ fn test_cmpne_p_p_zw_flags_unsignedoverflow_3_24002010() {
     // Test CMPNE_P.P.ZW__ flag computation: UnsignedOverflow
     // Encoding: 0x24002010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24002010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -21003,8 +25889,8 @@ fn test_cmpne_p_p_zw_flags_signedoverflow_6_24002010() {
     // Test CMPNE_P.P.ZW__ flag computation: SignedOverflow
     // Encoding: 0x24002010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x8000000000000000);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x24002010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -21024,8 +25910,8 @@ fn test_cmpne_p_p_zw_flags_positiveresult_7_24002010() {
     // Test CMPNE_P.P.ZW__ flag computation: PositiveResult
     // Encoding: 0x24002010
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x64);
     set_x(&mut cpu, 2, 0x32);
+    set_x(&mut cpu, 1, 0x64);
     let encoding: u32 = 0x24002010;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -21048,12 +25934,17 @@ fn test_cmpne_p_p_zw_flags_positiveresult_7_24002010() {
 fn test_ctermeq_rr_field_sz_0_min_2000_25a02000() {
     // Encoding: 0x25A02000
     // Test CTERMEQ_RR__ field sz = 0 (Min)
-    // Fields: Rm=0, sz=0, Rn=0
+    // Fields: sz=0, Rm=0, Rn=0
     let encoding: u32 = 0x25A02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21064,12 +25955,17 @@ fn test_ctermeq_rr_field_sz_0_min_2000_25a02000() {
 fn test_ctermeq_rr_field_sz_1_max_2000_25e02000() {
     // Encoding: 0x25E02000
     // Test CTERMEQ_RR__ field sz = 1 (Max)
-    // Fields: Rm=0, sz=1, Rn=0
+    // Fields: Rm=0, Rn=0, sz=1
     let encoding: u32 = 0x25E02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21080,12 +25976,17 @@ fn test_ctermeq_rr_field_sz_1_max_2000_25e02000() {
 fn test_ctermeq_rr_field_rm_0_min_2000_25a02000() {
     // Encoding: 0x25A02000
     // Test CTERMEQ_RR__ field Rm = 0 (Min)
-    // Fields: sz=0, Rm=0, Rn=0
+    // Fields: Rn=0, sz=0, Rm=0
     let encoding: u32 = 0x25A02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21101,7 +26002,12 @@ fn test_ctermeq_rr_field_rm_1_poweroftwo_2000_25a12000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21112,12 +26018,17 @@ fn test_ctermeq_rr_field_rm_1_poweroftwo_2000_25a12000() {
 fn test_ctermeq_rr_field_rm_30_poweroftwominusone_2000_25be2000() {
     // Encoding: 0x25BE2000
     // Test CTERMEQ_RR__ field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=30, Rn=0, sz=0
+    // Fields: Rn=0, sz=0, Rm=30
     let encoding: u32 = 0x25BE2000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21128,12 +26039,17 @@ fn test_ctermeq_rr_field_rm_30_poweroftwominusone_2000_25be2000() {
 fn test_ctermeq_rr_field_rm_31_max_2000_25bf2000() {
     // Encoding: 0x25BF2000
     // Test CTERMEQ_RR__ field Rm = 31 (Max)
-    // Fields: sz=0, Rn=0, Rm=31
+    // Fields: Rn=0, sz=0, Rm=31
     let encoding: u32 = 0x25BF2000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21144,12 +26060,17 @@ fn test_ctermeq_rr_field_rm_31_max_2000_25bf2000() {
 fn test_ctermeq_rr_field_rn_0_min_2000_25a02000() {
     // Encoding: 0x25A02000
     // Test CTERMEQ_RR__ field Rn = 0 (Min)
-    // Fields: Rm=0, Rn=0, sz=0
+    // Fields: Rn=0, sz=0, Rm=0
     let encoding: u32 = 0x25A02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21160,12 +26081,17 @@ fn test_ctermeq_rr_field_rn_0_min_2000_25a02000() {
 fn test_ctermeq_rr_field_rn_1_poweroftwo_2000_25a02020() {
     // Encoding: 0x25A02020
     // Test CTERMEQ_RR__ field Rn = 1 (PowerOfTwo)
-    // Fields: sz=0, Rm=0, Rn=1
+    // Fields: Rn=1, sz=0, Rm=0
     let encoding: u32 = 0x25A02020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21176,12 +26102,17 @@ fn test_ctermeq_rr_field_rn_1_poweroftwo_2000_25a02020() {
 fn test_ctermeq_rr_field_rn_30_poweroftwominusone_2000_25a023c0() {
     // Encoding: 0x25A023C0
     // Test CTERMEQ_RR__ field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=0, Rn=30, sz=0
+    // Fields: sz=0, Rm=0, Rn=30
     let encoding: u32 = 0x25A023C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21197,7 +26128,12 @@ fn test_ctermeq_rr_field_rn_31_max_2000_25a023e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21208,12 +26144,17 @@ fn test_ctermeq_rr_field_rn_31_max_2000_25a023e0() {
 fn test_ctermeq_rr_combo_0_2000_25a02000() {
     // Encoding: 0x25A02000
     // Test CTERMEQ_RR__ field combination: sz=0, Rm=0, Rn=0
-    // Fields: Rm=0, sz=0, Rn=0
+    // Fields: sz=0, Rn=0, Rm=0
     let encoding: u32 = 0x25A02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21224,12 +26165,17 @@ fn test_ctermeq_rr_combo_0_2000_25a02000() {
 fn test_ctermeq_rr_special_sz_0_size_variant_0_8192_25a02000() {
     // Encoding: 0x25A02000
     // Test CTERMEQ_RR__ special value sz = 0 (Size variant 0)
-    // Fields: Rm=0, Rn=0, sz=0
+    // Fields: sz=0, Rn=0, Rm=0
     let encoding: u32 = 0x25A02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21240,12 +26186,17 @@ fn test_ctermeq_rr_special_sz_0_size_variant_0_8192_25a02000() {
 fn test_ctermeq_rr_special_sz_1_size_variant_1_8192_25e02000() {
     // Encoding: 0x25E02000
     // Test CTERMEQ_RR__ special value sz = 1 (Size variant 1)
-    // Fields: sz=1, Rm=0, Rn=0
+    // Fields: sz=1, Rn=0, Rm=0
     let encoding: u32 = 0x25E02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21256,12 +26207,17 @@ fn test_ctermeq_rr_special_sz_1_size_variant_1_8192_25e02000() {
 fn test_ctermeq_rr_special_rn_31_stack_pointer_sp_may_require_alignment_8192_25a023e0() {
     // Encoding: 0x25A023E0
     // Test CTERMEQ_RR__ special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: sz=0, Rn=31, Rm=0
+    // Fields: sz=0, Rm=0, Rn=31
     let encoding: u32 = 0x25A023E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21272,12 +26228,16 @@ fn test_ctermeq_rr_special_rn_31_stack_pointer_sp_may_require_alignment_8192_25a
 fn test_ctermeq_rr_invalid_0_2000_25a02000() {
     // Encoding: 0x25A02000
     // Test CTERMEQ_RR__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: sz=0, Rn=0, Rm=0
+    // Fields: Rm=0, sz=0, Rn=0
     let encoding: u32 = 0x25A02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21288,12 +26248,16 @@ fn test_ctermeq_rr_invalid_0_2000_25a02000() {
 fn test_ctermeq_rr_invalid_1_2000_25a02000() {
     // Encoding: 0x25A02000
     // Test CTERMEQ_RR__ invalid encoding: Unconditional UNDEFINED
-    // Fields: Rm=0, Rn=0, sz=0
+    // Fields: Rn=0, Rm=0, sz=0
     let encoding: u32 = 0x25A02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21304,12 +26268,17 @@ fn test_ctermeq_rr_invalid_1_2000_25a02000() {
 fn test_ctermne_rr_field_sz_0_min_2010_25a02010() {
     // Encoding: 0x25A02010
     // Test CTERMNE_RR__ field sz = 0 (Min)
-    // Fields: Rn=0, sz=0, Rm=0
+    // Fields: Rm=0, sz=0, Rn=0
     let encoding: u32 = 0x25A02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21320,12 +26289,17 @@ fn test_ctermne_rr_field_sz_0_min_2010_25a02010() {
 fn test_ctermne_rr_field_sz_1_max_2010_25e02010() {
     // Encoding: 0x25E02010
     // Test CTERMNE_RR__ field sz = 1 (Max)
-    // Fields: sz=1, Rn=0, Rm=0
+    // Fields: sz=1, Rm=0, Rn=0
     let encoding: u32 = 0x25E02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21341,7 +26315,12 @@ fn test_ctermne_rr_field_rm_0_min_2010_25a02010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21352,12 +26331,17 @@ fn test_ctermne_rr_field_rm_0_min_2010_25a02010() {
 fn test_ctermne_rr_field_rm_1_poweroftwo_2010_25a12010() {
     // Encoding: 0x25A12010
     // Test CTERMNE_RR__ field Rm = 1 (PowerOfTwo)
-    // Fields: Rn=0, sz=0, Rm=1
+    // Fields: Rm=1, Rn=0, sz=0
     let encoding: u32 = 0x25A12010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21368,12 +26352,17 @@ fn test_ctermne_rr_field_rm_1_poweroftwo_2010_25a12010() {
 fn test_ctermne_rr_field_rm_30_poweroftwominusone_2010_25be2010() {
     // Encoding: 0x25BE2010
     // Test CTERMNE_RR__ field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: sz=0, Rm=30, Rn=0
+    // Fields: Rm=30, sz=0, Rn=0
     let encoding: u32 = 0x25BE2010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21384,12 +26373,17 @@ fn test_ctermne_rr_field_rm_30_poweroftwominusone_2010_25be2010() {
 fn test_ctermne_rr_field_rm_31_max_2010_25bf2010() {
     // Encoding: 0x25BF2010
     // Test CTERMNE_RR__ field Rm = 31 (Max)
-    // Fields: Rn=0, sz=0, Rm=31
+    // Fields: sz=0, Rm=31, Rn=0
     let encoding: u32 = 0x25BF2010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21405,7 +26399,12 @@ fn test_ctermne_rr_field_rn_0_min_2010_25a02010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21416,12 +26415,17 @@ fn test_ctermne_rr_field_rn_0_min_2010_25a02010() {
 fn test_ctermne_rr_field_rn_1_poweroftwo_2010_25a02030() {
     // Encoding: 0x25A02030
     // Test CTERMNE_RR__ field Rn = 1 (PowerOfTwo)
-    // Fields: Rn=1, sz=0, Rm=0
+    // Fields: sz=0, Rm=0, Rn=1
     let encoding: u32 = 0x25A02030;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21432,12 +26436,17 @@ fn test_ctermne_rr_field_rn_1_poweroftwo_2010_25a02030() {
 fn test_ctermne_rr_field_rn_30_poweroftwominusone_2010_25a023d0() {
     // Encoding: 0x25A023D0
     // Test CTERMNE_RR__ field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: sz=0, Rn=30, Rm=0
+    // Fields: Rm=0, Rn=30, sz=0
     let encoding: u32 = 0x25A023D0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21448,12 +26457,17 @@ fn test_ctermne_rr_field_rn_30_poweroftwominusone_2010_25a023d0() {
 fn test_ctermne_rr_field_rn_31_max_2010_25a023f0() {
     // Encoding: 0x25A023F0
     // Test CTERMNE_RR__ field Rn = 31 (Max)
-    // Fields: Rm=0, Rn=31, sz=0
+    // Fields: Rn=31, Rm=0, sz=0
     let encoding: u32 = 0x25A023F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21464,12 +26478,17 @@ fn test_ctermne_rr_field_rn_31_max_2010_25a023f0() {
 fn test_ctermne_rr_combo_0_2010_25a02010() {
     // Encoding: 0x25A02010
     // Test CTERMNE_RR__ field combination: sz=0, Rm=0, Rn=0
-    // Fields: sz=0, Rm=0, Rn=0
+    // Fields: Rn=0, Rm=0, sz=0
     let encoding: u32 = 0x25A02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21480,12 +26499,17 @@ fn test_ctermne_rr_combo_0_2010_25a02010() {
 fn test_ctermne_rr_special_sz_0_size_variant_0_8208_25a02010() {
     // Encoding: 0x25A02010
     // Test CTERMNE_RR__ special value sz = 0 (Size variant 0)
-    // Fields: Rn=0, sz=0, Rm=0
+    // Fields: sz=0, Rm=0, Rn=0
     let encoding: u32 = 0x25A02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21496,12 +26520,17 @@ fn test_ctermne_rr_special_sz_0_size_variant_0_8208_25a02010() {
 fn test_ctermne_rr_special_sz_1_size_variant_1_8208_25e02010() {
     // Encoding: 0x25E02010
     // Test CTERMNE_RR__ special value sz = 1 (Size variant 1)
-    // Fields: sz=1, Rm=0, Rn=0
+    // Fields: Rm=0, Rn=0, sz=1
     let encoding: u32 = 0x25E02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21512,12 +26541,17 @@ fn test_ctermne_rr_special_sz_1_size_variant_1_8208_25e02010() {
 fn test_ctermne_rr_special_rn_31_stack_pointer_sp_may_require_alignment_8208_25a023f0() {
     // Encoding: 0x25A023F0
     // Test CTERMNE_RR__ special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rm=0, Rn=31, sz=0
+    // Fields: Rn=31, Rm=0, sz=0
     let encoding: u32 = 0x25A023F0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21528,12 +26562,16 @@ fn test_ctermne_rr_special_rn_31_stack_pointer_sp_may_require_alignment_8208_25a
 fn test_ctermne_rr_invalid_0_2010_25a02010() {
     // Encoding: 0x25A02010
     // Test CTERMNE_RR__ invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSVE" }, args: [] } }
-    // Fields: Rm=0, Rn=0, sz=0
+    // Fields: Rn=0, sz=0, Rm=0
     let encoding: u32 = 0x25A02010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CTERMNE_RR__
@@ -21549,7 +26587,11 @@ fn test_ctermne_rr_invalid_1_2010_25a02010() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: CTERMEQ_RR__
@@ -21639,8 +26681,8 @@ fn test_ctermeq_rr_flags_unsignedoverflow_3_25a22020() {
     // Test CTERMEQ_RR__ flag computation: UnsignedOverflow
     // Encoding: 0x25A22020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x25A22020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -21681,8 +26723,8 @@ fn test_ctermeq_rr_flags_signedoverflow_5_25a22020() {
     // Test CTERMEQ_RR__ flag computation: SignedOverflow
     // Encoding: 0x25A22020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0x25A22020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -21723,8 +26765,8 @@ fn test_ctermeq_rr_flags_positiveresult_7_25a22020() {
     // Test CTERMEQ_RR__ flag computation: PositiveResult
     // Encoding: 0x25A22020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x64);
     set_x(&mut cpu, 2, 0x32);
+    set_x(&mut cpu, 1, 0x64);
     let encoding: u32 = 0x25A22020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -21759,8 +26801,8 @@ fn test_ctermne_rr_flags_zeroresult_0_25a22030() {
     // Test CTERMNE_RR__ flag computation: ZeroResult
     // Encoding: 0x25A22030
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x0);
     set_x(&mut cpu, 1, 0x0);
+    set_x(&mut cpu, 2, 0x0);
     let encoding: u32 = 0x25A22030;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -21780,8 +26822,8 @@ fn test_ctermne_rr_flags_zeroresult_1_25a22030() {
     // Test CTERMNE_RR__ flag computation: ZeroResult
     // Encoding: 0x25A22030
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x1);
     let encoding: u32 = 0x25A22030;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -21801,8 +26843,8 @@ fn test_ctermne_rr_flags_negativeresult_2_25a22030() {
     // Test CTERMNE_RR__ flag computation: NegativeResult
     // Encoding: 0x25A22030
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x0);
     set_x(&mut cpu, 1, 0x8000000000000000);
+    set_x(&mut cpu, 2, 0x0);
     let encoding: u32 = 0x25A22030;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -21822,8 +26864,8 @@ fn test_ctermne_rr_flags_unsignedoverflow_3_25a22030() {
     // Test CTERMNE_RR__ flag computation: UnsignedOverflow
     // Encoding: 0x25A22030
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x25A22030;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -21864,8 +26906,8 @@ fn test_ctermne_rr_flags_signedoverflow_5_25a22030() {
     // Test CTERMNE_RR__ flag computation: SignedOverflow
     // Encoding: 0x25A22030
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
     let encoding: u32 = 0x25A22030;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -21885,8 +26927,8 @@ fn test_ctermne_rr_flags_signedoverflow_6_25a22030() {
     // Test CTERMNE_RR__ flag computation: SignedOverflow
     // Encoding: 0x25A22030
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x8000000000000000);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x25A22030;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -21906,8 +26948,8 @@ fn test_ctermne_rr_flags_positiveresult_7_25a22030() {
     // Test CTERMNE_RR__ flag computation: PositiveResult
     // Encoding: 0x25A22030
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x64);
     set_x(&mut cpu, 2, 0x32);
+    set_x(&mut cpu, 1, 0x64);
     let encoding: u32 = 0x25A22030;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -21917,4 +26959,3 @@ fn test_ctermne_rr_flags_positiveresult_7_25a22030() {
     assert_eq!(cpu.get_pstate().n, false, "N should be false");
     assert_eq!(cpu.get_pstate().v, false, "V should be false");
 }
-

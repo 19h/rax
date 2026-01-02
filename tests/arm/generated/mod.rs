@@ -4,5 +4,10 @@
 //! DO NOT EDIT MANUALLY.
 
 pub mod test_helpers;
+pub mod test_helpers_32;
 
+pub mod a32;
 pub mod a64;
+pub mod sysreg;
+pub mod t16;
+pub mod t32;

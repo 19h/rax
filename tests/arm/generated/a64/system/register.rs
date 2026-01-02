@@ -20,12 +20,17 @@ use crate::generated::test_helpers::*;
 fn test_aarch64_system_register_system_field_l_0_min_0_d5100000() {
     // Encoding: 0xD5100000
     // Test aarch64_system_register_system field L = 0 (Min)
-    // Fields: o0=0, L=0, CRm=0, op1=0, op2=0, CRn=0, Rt=0
+    // Fields: L=0, o0=0, CRn=0, CRm=0, op2=0, op1=0, Rt=0
     let encoding: u32 = 0xD5100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -36,12 +41,17 @@ fn test_aarch64_system_register_system_field_l_0_min_0_d5100000() {
 fn test_aarch64_system_register_system_field_l_1_max_0_d5300000() {
     // Encoding: 0xD5300000
     // Test aarch64_system_register_system field L = 1 (Max)
-    // Fields: o0=0, op1=0, CRn=0, CRm=0, op2=0, Rt=0, L=1
+    // Fields: L=1, op2=0, op1=0, o0=0, CRn=0, Rt=0, CRm=0
     let encoding: u32 = 0xD5300000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -52,12 +62,17 @@ fn test_aarch64_system_register_system_field_l_1_max_0_d5300000() {
 fn test_aarch64_system_register_system_field_o0_0_min_0_d5100000() {
     // Encoding: 0xD5100000
     // Test aarch64_system_register_system field o0 = 0 (Min)
-    // Fields: op2=0, o0=0, op1=0, CRn=0, CRm=0, L=0, Rt=0
+    // Fields: CRn=0, CRm=0, op1=0, o0=0, op2=0, L=0, Rt=0
     let encoding: u32 = 0xD5100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -68,12 +83,17 @@ fn test_aarch64_system_register_system_field_o0_0_min_0_d5100000() {
 fn test_aarch64_system_register_system_field_o0_1_max_0_d5180000() {
     // Encoding: 0xD5180000
     // Test aarch64_system_register_system field o0 = 1 (Max)
-    // Fields: op1=0, o0=1, L=0, CRn=0, CRm=0, op2=0, Rt=0
+    // Fields: Rt=0, L=0, CRm=0, op2=0, o0=1, op1=0, CRn=0
     let encoding: u32 = 0xD5180000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -84,12 +104,17 @@ fn test_aarch64_system_register_system_field_o0_1_max_0_d5180000() {
 fn test_aarch64_system_register_system_field_op1_0_min_0_d5100000() {
     // Encoding: 0xD5100000
     // Test aarch64_system_register_system field op1 = 0 (Min)
-    // Fields: Rt=0, op2=0, op1=0, L=0, o0=0, CRn=0, CRm=0
+    // Fields: L=0, Rt=0, op2=0, CRn=0, op1=0, o0=0, CRm=0
     let encoding: u32 = 0xD5100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -100,12 +125,17 @@ fn test_aarch64_system_register_system_field_op1_0_min_0_d5100000() {
 fn test_aarch64_system_register_system_field_op1_1_poweroftwo_0_d5110000() {
     // Encoding: 0xD5110000
     // Test aarch64_system_register_system field op1 = 1 (PowerOfTwo)
-    // Fields: L=0, CRm=0, o0=0, op1=1, CRn=0, op2=0, Rt=0
+    // Fields: o0=0, op1=1, L=0, CRn=0, CRm=0, op2=0, Rt=0
     let encoding: u32 = 0xD5110000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -116,12 +146,17 @@ fn test_aarch64_system_register_system_field_op1_1_poweroftwo_0_d5110000() {
 fn test_aarch64_system_register_system_field_op1_7_max_0_d5170000() {
     // Encoding: 0xD5170000
     // Test aarch64_system_register_system field op1 = 7 (Max)
-    // Fields: Rt=0, op1=7, CRn=0, L=0, CRm=0, op2=0, o0=0
+    // Fields: CRm=0, o0=0, op1=7, L=0, Rt=0, op2=0, CRn=0
     let encoding: u32 = 0xD5170000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -132,12 +167,17 @@ fn test_aarch64_system_register_system_field_op1_7_max_0_d5170000() {
 fn test_aarch64_system_register_system_field_crn_0_min_0_d5100000() {
     // Encoding: 0xD5100000
     // Test aarch64_system_register_system field CRn = 0 (Min)
-    // Fields: L=0, CRn=0, Rt=0, op1=0, CRm=0, op2=0, o0=0
+    // Fields: o0=0, op1=0, CRm=0, op2=0, CRn=0, L=0, Rt=0
     let encoding: u32 = 0xD5100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -148,12 +188,17 @@ fn test_aarch64_system_register_system_field_crn_0_min_0_d5100000() {
 fn test_aarch64_system_register_system_field_crn_1_poweroftwo_0_d5101000() {
     // Encoding: 0xD5101000
     // Test aarch64_system_register_system field CRn = 1 (PowerOfTwo)
-    // Fields: L=0, CRn=1, CRm=0, o0=0, Rt=0, op2=0, op1=0
+    // Fields: Rt=0, CRm=0, CRn=1, L=0, op2=0, o0=0, op1=0
     let encoding: u32 = 0xD5101000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -164,12 +209,17 @@ fn test_aarch64_system_register_system_field_crn_1_poweroftwo_0_d5101000() {
 fn test_aarch64_system_register_system_field_crn_7_poweroftwominusone_0_d5107000() {
     // Encoding: 0xD5107000
     // Test aarch64_system_register_system field CRn = 7 (PowerOfTwoMinusOne)
-    // Fields: op1=0, L=0, CRm=0, CRn=7, Rt=0, o0=0, op2=0
+    // Fields: op1=0, CRn=7, o0=0, op2=0, Rt=0, L=0, CRm=0
     let encoding: u32 = 0xD5107000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -180,12 +230,17 @@ fn test_aarch64_system_register_system_field_crn_7_poweroftwominusone_0_d5107000
 fn test_aarch64_system_register_system_field_crn_15_max_0_d510f000() {
     // Encoding: 0xD510F000
     // Test aarch64_system_register_system field CRn = 15 (Max)
-    // Fields: CRn=15, op2=0, Rt=0, CRm=0, L=0, op1=0, o0=0
+    // Fields: op2=0, Rt=0, L=0, op1=0, o0=0, CRn=15, CRm=0
     let encoding: u32 = 0xD510F000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -196,12 +251,17 @@ fn test_aarch64_system_register_system_field_crn_15_max_0_d510f000() {
 fn test_aarch64_system_register_system_field_crm_0_min_0_d5100000() {
     // Encoding: 0xD5100000
     // Test aarch64_system_register_system field CRm = 0 (Min)
-    // Fields: o0=0, op1=0, CRn=0, L=0, op2=0, Rt=0, CRm=0
+    // Fields: CRn=0, CRm=0, Rt=0, op2=0, L=0, o0=0, op1=0
     let encoding: u32 = 0xD5100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -212,12 +272,17 @@ fn test_aarch64_system_register_system_field_crm_0_min_0_d5100000() {
 fn test_aarch64_system_register_system_field_crm_1_poweroftwo_0_d5100100() {
     // Encoding: 0xD5100100
     // Test aarch64_system_register_system field CRm = 1 (PowerOfTwo)
-    // Fields: Rt=0, L=0, o0=0, CRn=0, op1=0, CRm=1, op2=0
+    // Fields: L=0, o0=0, op2=0, CRn=0, Rt=0, op1=0, CRm=1
     let encoding: u32 = 0xD5100100;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -228,12 +293,17 @@ fn test_aarch64_system_register_system_field_crm_1_poweroftwo_0_d5100100() {
 fn test_aarch64_system_register_system_field_crm_7_poweroftwominusone_0_d5100700() {
     // Encoding: 0xD5100700
     // Test aarch64_system_register_system field CRm = 7 (PowerOfTwoMinusOne)
-    // Fields: L=0, op1=0, Rt=0, CRn=0, o0=0, op2=0, CRm=7
+    // Fields: Rt=0, o0=0, op1=0, CRn=0, L=0, CRm=7, op2=0
     let encoding: u32 = 0xD5100700;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -244,12 +314,17 @@ fn test_aarch64_system_register_system_field_crm_7_poweroftwominusone_0_d5100700
 fn test_aarch64_system_register_system_field_crm_15_max_0_d5100f00() {
     // Encoding: 0xD5100F00
     // Test aarch64_system_register_system field CRm = 15 (Max)
-    // Fields: CRm=15, L=0, Rt=0, o0=0, op1=0, CRn=0, op2=0
+    // Fields: CRn=0, CRm=15, o0=0, op2=0, op1=0, Rt=0, L=0
     let encoding: u32 = 0xD5100F00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -260,12 +335,17 @@ fn test_aarch64_system_register_system_field_crm_15_max_0_d5100f00() {
 fn test_aarch64_system_register_system_field_op2_0_min_0_d5100000() {
     // Encoding: 0xD5100000
     // Test aarch64_system_register_system field op2 = 0 (Min)
-    // Fields: L=0, o0=0, CRn=0, CRm=0, op2=0, op1=0, Rt=0
+    // Fields: L=0, o0=0, op1=0, CRm=0, Rt=0, CRn=0, op2=0
     let encoding: u32 = 0xD5100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -276,12 +356,17 @@ fn test_aarch64_system_register_system_field_op2_0_min_0_d5100000() {
 fn test_aarch64_system_register_system_field_op2_1_poweroftwo_0_d5100020() {
     // Encoding: 0xD5100020
     // Test aarch64_system_register_system field op2 = 1 (PowerOfTwo)
-    // Fields: L=0, CRm=0, op1=0, op2=1, Rt=0, o0=0, CRn=0
+    // Fields: L=0, o0=0, op1=0, CRm=0, op2=1, CRn=0, Rt=0
     let encoding: u32 = 0xD5100020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -292,12 +377,17 @@ fn test_aarch64_system_register_system_field_op2_1_poweroftwo_0_d5100020() {
 fn test_aarch64_system_register_system_field_op2_7_max_0_d51000e0() {
     // Encoding: 0xD51000E0
     // Test aarch64_system_register_system field op2 = 7 (Max)
-    // Fields: Rt=0, op1=0, op2=7, L=0, o0=0, CRm=0, CRn=0
+    // Fields: CRn=0, op1=0, Rt=0, o0=0, CRm=0, op2=7, L=0
     let encoding: u32 = 0xD51000E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -308,12 +398,17 @@ fn test_aarch64_system_register_system_field_op2_7_max_0_d51000e0() {
 fn test_aarch64_system_register_system_field_rt_0_min_0_d5100000() {
     // Encoding: 0xD5100000
     // Test aarch64_system_register_system field Rt = 0 (Min)
-    // Fields: CRm=0, o0=0, CRn=0, op2=0, Rt=0, L=0, op1=0
+    // Fields: CRm=0, op2=0, Rt=0, L=0, CRn=0, o0=0, op1=0
     let encoding: u32 = 0xD5100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -324,12 +419,17 @@ fn test_aarch64_system_register_system_field_rt_0_min_0_d5100000() {
 fn test_aarch64_system_register_system_field_rt_1_poweroftwo_0_d5100001() {
     // Encoding: 0xD5100001
     // Test aarch64_system_register_system field Rt = 1 (PowerOfTwo)
-    // Fields: o0=0, op2=0, L=0, op1=0, CRn=0, Rt=1, CRm=0
+    // Fields: CRm=0, o0=0, op2=0, L=0, op1=0, CRn=0, Rt=1
     let encoding: u32 = 0xD5100001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -340,12 +440,17 @@ fn test_aarch64_system_register_system_field_rt_1_poweroftwo_0_d5100001() {
 fn test_aarch64_system_register_system_field_rt_30_poweroftwominusone_0_d510001e() {
     // Encoding: 0xD510001E
     // Test aarch64_system_register_system field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: L=0, CRm=0, CRn=0, op2=0, Rt=30, o0=0, op1=0
+    // Fields: L=0, o0=0, op1=0, CRm=0, CRn=0, op2=0, Rt=30
     let encoding: u32 = 0xD510001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -356,12 +461,17 @@ fn test_aarch64_system_register_system_field_rt_30_poweroftwominusone_0_d510001e
 fn test_aarch64_system_register_system_field_rt_31_max_0_d510001f() {
     // Encoding: 0xD510001F
     // Test aarch64_system_register_system field Rt = 31 (Max)
-    // Fields: op1=0, o0=0, CRn=0, CRm=0, op2=0, L=0, Rt=31
+    // Fields: CRm=0, op2=0, Rt=31, op1=0, CRn=0, L=0, o0=0
     let encoding: u32 = 0xD510001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -372,12 +482,17 @@ fn test_aarch64_system_register_system_field_rt_31_max_0_d510001f() {
 fn test_aarch64_system_register_system_combo_0_0_d5100000() {
     // Encoding: 0xD5100000
     // Test aarch64_system_register_system field combination: L=0, o0=0, op1=0, CRn=0, CRm=0, op2=0, Rt=0
-    // Fields: L=0, CRn=0, op2=0, o0=0, op1=0, CRm=0, Rt=0
+    // Fields: Rt=0, op1=0, CRm=0, op2=0, L=0, o0=0, CRn=0
     let encoding: u32 = 0xD5100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -385,15 +500,21 @@ fn test_aarch64_system_register_system_combo_0_0_d5100000() {
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_system_register_system_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_d510001f() {
+fn test_aarch64_system_register_system_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_d510001f(
+) {
     // Encoding: 0xD510001F
     // Test aarch64_system_register_system special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: o0=0, CRn=0, L=0, CRm=0, op1=0, op2=0, Rt=31
+    // Fields: CRm=0, op2=0, L=0, o0=0, CRn=0, Rt=31, op1=0
     let encoding: u32 = 0xD510001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_system
@@ -439,12 +560,17 @@ fn test_aarch64_system_register_system_zr_rt_d510001f() {
 fn test_aarch64_system_register_cpsr_field_op1_0_min_401f_d500401f() {
     // Encoding: 0xD500401F
     // Test aarch64_system_register_cpsr field op1 = 0 (Min)
-    // Fields: CRm=0, op1=0, op2=0
+    // Fields: op1=0, op2=0, CRm=0
     let encoding: u32 = 0xD500401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -455,12 +581,17 @@ fn test_aarch64_system_register_cpsr_field_op1_0_min_401f_d500401f() {
 fn test_aarch64_system_register_cpsr_field_op1_1_poweroftwo_401f_d501401f() {
     // Encoding: 0xD501401F
     // Test aarch64_system_register_cpsr field op1 = 1 (PowerOfTwo)
-    // Fields: op1=1, CRm=0, op2=0
+    // Fields: op2=0, CRm=0, op1=1
     let encoding: u32 = 0xD501401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -471,12 +602,17 @@ fn test_aarch64_system_register_cpsr_field_op1_1_poweroftwo_401f_d501401f() {
 fn test_aarch64_system_register_cpsr_field_op1_7_max_401f_d507401f() {
     // Encoding: 0xD507401F
     // Test aarch64_system_register_cpsr field op1 = 7 (Max)
-    // Fields: CRm=0, op2=0, op1=7
+    // Fields: op1=7, CRm=0, op2=0
     let encoding: u32 = 0xD507401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -492,7 +628,12 @@ fn test_aarch64_system_register_cpsr_field_crm_0_min_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -503,12 +644,17 @@ fn test_aarch64_system_register_cpsr_field_crm_0_min_401f_d500401f() {
 fn test_aarch64_system_register_cpsr_field_crm_1_poweroftwo_401f_d500411f() {
     // Encoding: 0xD500411F
     // Test aarch64_system_register_cpsr field CRm = 1 (PowerOfTwo)
-    // Fields: op1=0, CRm=1, op2=0
+    // Fields: CRm=1, op1=0, op2=0
     let encoding: u32 = 0xD500411F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -519,12 +665,17 @@ fn test_aarch64_system_register_cpsr_field_crm_1_poweroftwo_401f_d500411f() {
 fn test_aarch64_system_register_cpsr_field_crm_7_poweroftwominusone_401f_d500471f() {
     // Encoding: 0xD500471F
     // Test aarch64_system_register_cpsr field CRm = 7 (PowerOfTwoMinusOne)
-    // Fields: op2=0, op1=0, CRm=7
+    // Fields: op2=0, CRm=7, op1=0
     let encoding: u32 = 0xD500471F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -535,12 +686,17 @@ fn test_aarch64_system_register_cpsr_field_crm_7_poweroftwominusone_401f_d500471
 fn test_aarch64_system_register_cpsr_field_crm_15_max_401f_d5004f1f() {
     // Encoding: 0xD5004F1F
     // Test aarch64_system_register_cpsr field CRm = 15 (Max)
-    // Fields: op1=0, op2=0, CRm=15
+    // Fields: op2=0, CRm=15, op1=0
     let encoding: u32 = 0xD5004F1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -551,12 +707,17 @@ fn test_aarch64_system_register_cpsr_field_crm_15_max_401f_d5004f1f() {
 fn test_aarch64_system_register_cpsr_field_op2_0_min_401f_d500401f() {
     // Encoding: 0xD500401F
     // Test aarch64_system_register_cpsr field op2 = 0 (Min)
-    // Fields: op2=0, CRm=0, op1=0
+    // Fields: op2=0, op1=0, CRm=0
     let encoding: u32 = 0xD500401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -567,12 +728,17 @@ fn test_aarch64_system_register_cpsr_field_op2_0_min_401f_d500401f() {
 fn test_aarch64_system_register_cpsr_field_op2_1_poweroftwo_401f_d500403f() {
     // Encoding: 0xD500403F
     // Test aarch64_system_register_cpsr field op2 = 1 (PowerOfTwo)
-    // Fields: CRm=0, op2=1, op1=0
+    // Fields: CRm=0, op1=0, op2=1
     let encoding: u32 = 0xD500403F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -588,7 +754,12 @@ fn test_aarch64_system_register_cpsr_field_op2_7_max_401f_d50040ff() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -599,12 +770,17 @@ fn test_aarch64_system_register_cpsr_field_op2_7_max_401f_d50040ff() {
 fn test_aarch64_system_register_cpsr_combo_0_401f_d500401f() {
     // Encoding: 0xD500401F
     // Test aarch64_system_register_cpsr field combination: op1=0, CRm=0, op2=0
-    // Fields: op2=0, op1=0, CRm=0
+    // Fields: CRm=0, op2=0, op1=0
     let encoding: u32 = 0xD500401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -615,12 +791,16 @@ fn test_aarch64_system_register_cpsr_combo_0_401f_d500401f() {
 fn test_aarch64_system_register_cpsr_invalid_0_401f_d500401f() {
     // Encoding: 0xD500401F
     // Test aarch64_system_register_cpsr invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveUAOExt" }, args: [] } }
-    // Fields: op1=0, op2=0, CRm=0
+    // Fields: CRm=0, op1=0, op2=0
     let encoding: u32 = 0xD500401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -631,12 +811,16 @@ fn test_aarch64_system_register_cpsr_invalid_0_401f_d500401f() {
 fn test_aarch64_system_register_cpsr_invalid_1_401f_d500401f() {
     // Encoding: 0xD500401F
     // Test aarch64_system_register_cpsr invalid encoding: Unconditional UNDEFINED
-    // Fields: op2=0, CRm=0, op1=0
+    // Fields: CRm=0, op1=0, op2=0
     let encoding: u32 = 0xD500401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -647,12 +831,16 @@ fn test_aarch64_system_register_cpsr_invalid_1_401f_d500401f() {
 fn test_aarch64_system_register_cpsr_invalid_2_401f_d500401f() {
     // Encoding: 0xD500401F
     // Test aarch64_system_register_cpsr invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HavePANExt" }, args: [] } }
-    // Fields: op1=0, op2=0, CRm=0
+    // Fields: CRm=0, op2=0, op1=0
     let encoding: u32 = 0xD500401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -663,12 +851,16 @@ fn test_aarch64_system_register_cpsr_invalid_2_401f_d500401f() {
 fn test_aarch64_system_register_cpsr_invalid_3_401f_d500401f() {
     // Encoding: 0xD500401F
     // Test aarch64_system_register_cpsr invalid encoding: Unconditional UNDEFINED
-    // Fields: op1=0, CRm=0, op2=0
+    // Fields: CRm=0, op1=0, op2=0
     let encoding: u32 = 0xD500401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -679,12 +871,16 @@ fn test_aarch64_system_register_cpsr_invalid_3_401f_d500401f() {
 fn test_aarch64_system_register_cpsr_invalid_4_401f_d500401f() {
     // Encoding: 0xD500401F
     // Test aarch64_system_register_cpsr invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveDITExt" }, args: [] } }
-    // Fields: op1=0, CRm=0, op2=0
+    // Fields: CRm=0, op2=0, op1=0
     let encoding: u32 = 0xD500401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -695,12 +891,16 @@ fn test_aarch64_system_register_cpsr_invalid_4_401f_d500401f() {
 fn test_aarch64_system_register_cpsr_invalid_5_401f_d500401f() {
     // Encoding: 0xD500401F
     // Test aarch64_system_register_cpsr invalid encoding: Unconditional UNDEFINED
-    // Fields: op2=0, op1=0, CRm=0
+    // Fields: op1=0, CRm=0, op2=0
     let encoding: u32 = 0xD500401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -711,12 +911,16 @@ fn test_aarch64_system_register_cpsr_invalid_5_401f_d500401f() {
 fn test_aarch64_system_register_cpsr_invalid_6_401f_d500401f() {
     // Encoding: 0xD500401F
     // Test aarch64_system_register_cpsr invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveSSBSExt" }, args: [] } }
-    // Fields: op2=0, op1=0, CRm=0
+    // Fields: op2=0, CRm=0, op1=0
     let encoding: u32 = 0xD500401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -727,12 +931,16 @@ fn test_aarch64_system_register_cpsr_invalid_6_401f_d500401f() {
 fn test_aarch64_system_register_cpsr_invalid_7_401f_d500401f() {
     // Encoding: 0xD500401F
     // Test aarch64_system_register_cpsr invalid encoding: Unconditional UNDEFINED
-    // Fields: op2=0, CRm=0, op1=0
+    // Fields: CRm=0, op2=0, op1=0
     let encoding: u32 = 0xD500401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_register_cpsr
@@ -743,11 +951,14 @@ fn test_aarch64_system_register_cpsr_invalid_7_401f_d500401f() {
 fn test_aarch64_system_register_cpsr_invalid_8_401f_d500401f() {
     // Encoding: 0xD500401F
     // Test aarch64_system_register_cpsr invalid encoding: Unconditional UNDEFINED
-    // Fields: op2=0, op1=0, CRm=0
+    // Fields: op2=0, CRm=0, op1=0
     let encoding: u32 = 0xD500401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
-
