@@ -14,11 +14,13 @@ pub mod generator;
 pub mod oracle;
 pub mod output;
 pub mod qemu;
+pub mod sysreg;
 pub mod types;
 
 pub use analysis::InstructionAnalyzer;
 pub use generator::{EncodingTestGenerator, ExecutionTestGenerator};
 pub use output::TestOutputFormatter;
+pub use sysreg::{build_sysreg_encodings, generate_all_sysreg_tests, SysRegEncoding};
 pub use types::*;
 
 use crate::syntax::{Definition, Instruction};

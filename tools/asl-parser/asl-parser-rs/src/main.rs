@@ -164,6 +164,18 @@ enum Command {
         #[arg(long, default_value = "false")]
         structured: bool,
     },
+
+    /// Generate system register tests from arm_regs.asl
+    #[command(alias = "sysreg-tests")]
+    SysRegGen {
+        /// Input ASL register file (arm_regs.asl)
+        #[arg(required = true)]
+        input: PathBuf,
+
+        /// Output directory for generated tests
+        #[arg(short, long, default_value = "generated_tests")]
+        output: PathBuf,
+    },
 }
 
 #[derive(Clone, Copy, ValueEnum, Default)]
@@ -288,6 +300,9 @@ fn main() -> Result<()> {
                 iset,
                 structured,
             )?;
+        }
+        Command::SysRegGen { input, output } => {
+            generate_sysreg_tests(&input, &output)?;
         }
     }
 
@@ -736,7 +751,7 @@ fn generate_tests(
         max_encoding_tests: max_tests,
         include_negative_tests: include_negative,
         generate_execution_tests: include_execution,
-        instruction_sets: target_isets,
+        instruction_sets: target_isets.clone(),
         ..Default::default()
     };
 
@@ -792,7 +807,7 @@ fn generate_tests(
         let files = generate_structured_output(&all_suites);
 
         // Also generate helper files
-        let helper_files = generate_helper_files();
+        let helper_files = generate_helper_files(&target_isets);
 
         write_structured_output(output, &files)
             .into_diagnostic()
@@ -859,11 +874,78 @@ fn generate_tests(
     Ok(())
 }
 
+/// Generate system register tests from arm_regs.asl
+fn generate_sysreg_tests(input: &PathBuf, output: &PathBuf) -> Result<()> {
+    use asl_parser::testgen::sysreg;
+
+    println!("Parsing register definitions from {}...", input.display());
+
+    let source = fs::read_to_string(input)
+        .into_diagnostic()
+        .wrap_err_with(|| format!("failed to read file: {}", input.display()))?;
+
+    let regs = parse_registers(&source).map_err(|e| {
+        miette::miette!(
+            labels = vec![miette::LabeledSpan::at(
+                e.span.start..e.span.end,
+                e.kind.to_string()
+            )],
+            "parse error in {}",
+            input.display()
+        )
+        .with_source_code(source.clone())
+    })?;
+
+    println!("Parsed {} register definitions", regs.len());
+
+    // Create output directory
+    fs::create_dir_all(output)
+        .into_diagnostic()
+        .wrap_err("failed to create output directory")?;
+
+    // Generate the test code
+    let test_code = sysreg::generate_all_sysreg_tests(&regs);
+
+    // Write to output file
+    let output_file = output.join("sysreg_tests.rs");
+    fs::write(&output_file, &test_code)
+        .into_diagnostic()
+        .wrap_err_with(|| format!("failed to write {}", output_file.display()))?;
+
+    println!("Generated system register tests: {}", output_file.display());
+
+    // Generate mod.rs for the sysreg tests
+    let mod_content = r#"//! System register tests.
+mod sysreg_tests;
+"#;
+    let mod_file = output.join("mod.rs");
+    fs::write(&mod_file, mod_content)
+        .into_diagnostic()
+        .wrap_err_with(|| format!("failed to write {}", mod_file.display()))?;
+
+    Ok(())
+}
+
 /// Generate helper files for the test infrastructure
-fn generate_helper_files() -> Vec<(&'static str, String)> {
+fn generate_helper_files(
+    target_isets: &[asl_parser::syntax::InstructionSet],
+) -> Vec<(&'static str, String)> {
+    use asl_parser::syntax::InstructionSet;
     let mut files = Vec::new();
 
-    // A64 test helpers
+    let has_a64 = target_isets.contains(&InstructionSet::A64);
+    let has_a32 = target_isets.iter().any(|i| {
+        matches!(
+            i,
+            InstructionSet::A32 | InstructionSet::T32 | InstructionSet::T16
+        )
+    });
+
+    // A64 test helpers (only if generating A64 tests)
+    if !has_a64 {
+        return files;
+    }
+
     let a64_helpers = r#"//! A64 test helpers.
 //!
 //! Common test infrastructure for AArch64 instruction tests.
@@ -933,7 +1015,11 @@ pub fn get_qreg(cpu: &AArch64Cpu, reg: u8) -> u128 {
 "#;
     files.push(("test_helpers.rs", a64_helpers.to_string()));
 
-    // A32/T32/T16 test helpers
+    // A32/T32/T16 test helpers (only if generating 32-bit tests)
+    if !has_a32 {
+        return files;
+    }
+
     let a32_helpers = r#"//! A32/T32/T16 test helpers.
 //!
 //! Common test infrastructure for AArch32 instruction tests.
@@ -942,68 +1028,195 @@ pub fn get_qreg(cpu: &AArch64Cpu, reg: u8) -> u128 {
 #![allow(unused_imports)]
 #![allow(dead_code)]
 
-use rax::arm::{Armv7Config, Armv7Cpu, FlatMemory};
+use rax::arm::{Armv7Cpu, Executor, ExecResult, ExceptionType};
+use rax::arm::decoder::{Aarch32Decoder, ThumbDecoder};
+use rax::arm::execution::{ArmMemory, FlatMemory};
+pub use rax::arm::CpuExit;
 
-// Re-export types so tests can use them directly
-pub use rax::arm::{ArmCpu, CpuExit};
+/// Processor state for flag assertions
+#[derive(Debug, Clone, Copy, Default)]
+pub struct PState {
+    pub n: bool,
+    pub z: bool,
+    pub c: bool,
+    pub v: bool,
+}
+
+/// Test context combining CPU and memory
+pub struct TestCpu {
+    pub cpu: Armv7Cpu,
+    pub mem: FlatMemory,
+}
+
+impl TestCpu {
+    /// Execute one instruction
+    pub fn step(&mut self) -> Result<CpuExit, String> {
+        step(self)
+    }
+    
+    /// Write bytes to memory (for compatibility with generated tests)
+    pub fn write_memory(&mut self, addr: u64, bytes: &[u8]) -> Result<(), String> {
+        for (i, &b) in bytes.iter().enumerate() {
+            self.mem.write_byte((addr as u32) + i as u32, b)
+                .map_err(|e| format!("write error: {:?}", e))?;
+        }
+        Ok(())
+    }
+    
+    /// Read bytes from memory (for compatibility with generated tests)
+    pub fn read_memory(&self, addr: u64, size: usize) -> Vec<u8> {
+        let mut result = Vec::with_capacity(size);
+        for i in 0..size {
+            result.push(self.mem.read_byte((addr as u32) + i as u32).unwrap_or(0));
+        }
+        result
+    }
+    
+    /// Get processor state flags (for compatibility with generated tests)
+    pub fn get_pstate(&self) -> PState {
+        PState {
+            n: self.cpu.cpsr.n,
+            z: self.cpu.cpsr.z,
+            c: self.cpu.cpsr.c,
+            v: self.cpu.cpsr.v,
+        }
+    }
+}
 
 /// Create a test CPU with default configuration (A32 mode)
-pub fn create_test_cpu() -> Armv7Cpu {
-    let memory = FlatMemory::new(0, 0x1000_0000);
-    Armv7Cpu::new(Armv7Config::default(), Box::new(memory))
+pub fn create_test_cpu() -> TestCpu {
+    let cpu = Armv7Cpu::new();
+    let mem = FlatMemory::new(0x1000_0000, 0);  // size, base
+    TestCpu { cpu, mem }
 }
 
 /// Create a test CPU in Thumb mode
-pub fn create_thumb_cpu() -> Armv7Cpu {
-    let memory = FlatMemory::new(0, 0x1000_0000);
-    let mut cpu = Armv7Cpu::new(Armv7Config::default(), Box::new(memory));
-    cpu.set_thumb(true);
-    cpu
+pub fn create_thumb_cpu() -> TestCpu {
+    let mut cpu = Armv7Cpu::new();
+    cpu.cpsr.t = true;
+    let mem = FlatMemory::new(0x1000_0000, 0);  // size, base
+    TestCpu { cpu, mem }
 }
 
 /// Write a 32-bit instruction to memory
-pub fn write_insn(cpu: &mut Armv7Cpu, addr: u64, insn: u32) {
-    cpu.write_memory(addr, &insn.to_le_bytes()).unwrap();
+pub fn write_insn(ctx: &mut TestCpu, addr: u32, insn: u32) {
+    ctx.mem.write_word(addr, insn).unwrap();
 }
 
 /// Write a 16-bit Thumb instruction to memory
-pub fn write_insn16(cpu: &mut Armv7Cpu, addr: u64, insn: u16) {
-    cpu.write_memory(addr, &insn.to_le_bytes()).unwrap();
+pub fn write_insn16(ctx: &mut TestCpu, addr: u32, insn: u16) {
+    ctx.mem.write_halfword(addr, insn).unwrap();
+}
+
+/// Write bytes to memory
+pub fn write_memory(ctx: &mut TestCpu, addr: u32, bytes: &[u8]) {
+    for (i, &b) in bytes.iter().enumerate() {
+        ctx.mem.write_byte(addr + i as u32, b).unwrap();
+    }
+}
+
+/// Read bytes from memory
+pub fn read_memory(ctx: &TestCpu, addr: u32, size: usize) -> Vec<u8> {
+    let mut result = Vec::with_capacity(size);
+    for i in 0..size {
+        result.push(ctx.mem.read_byte(addr + i as u32).unwrap());
+    }
+    result
 }
 
 /// Set a general purpose register (R0-R14)
-pub fn set_w(cpu: &mut Armv7Cpu, reg: u8, value: u32) {
-    cpu.set_gpr(reg, value);
+pub fn set_w(ctx: &mut TestCpu, reg: u8, value: u32) {
+    ctx.cpu.set_reg(reg as usize, value);
 }
 
 /// Get a general purpose register (R0-R14)
-pub fn get_w(cpu: &Armv7Cpu, reg: u8) -> u32 {
-    cpu.get_gpr(reg)
+pub fn get_w(ctx: &TestCpu, reg: u8) -> u32 {
+    ctx.cpu.reg(reg as usize)
 }
 
 /// Set the stack pointer (R13/SP)
-pub fn set_sp(cpu: &mut Armv7Cpu, value: u32) {
-    cpu.set_gpr(13, value);
+pub fn set_sp(ctx: &mut TestCpu, value: u32) {
+    ctx.cpu.set_reg(13, value);
 }
 
 /// Get the stack pointer (R13/SP)
-pub fn get_sp(cpu: &Armv7Cpu) -> u32 {
-    cpu.get_gpr(13)
+pub fn get_sp(ctx: &TestCpu) -> u32 {
+    ctx.cpu.reg(13)
 }
 
 /// Set the link register (R14/LR)
-pub fn set_lr(cpu: &mut Armv7Cpu, value: u32) {
-    cpu.set_gpr(14, value);
+pub fn set_lr(ctx: &mut TestCpu, value: u32) {
+    ctx.cpu.set_reg(14, value);
 }
 
 /// Get the link register (R14/LR)
-pub fn get_lr(cpu: &Armv7Cpu) -> u32 {
-    cpu.get_gpr(14)
+pub fn get_lr(ctx: &TestCpu) -> u32 {
+    ctx.cpu.reg(14)
+}
+
+/// Set the PC register
+pub fn set_pc(ctx: &mut TestCpu, value: u32) {
+    ctx.cpu.set_reg(15, value);
+}
+
+/// Get the PC register
+pub fn get_pc(ctx: &TestCpu) -> u32 {
+    ctx.cpu.get_pc()
 }
 
 /// Execute one instruction and return the exit status
-pub fn step(cpu: &mut Armv7Cpu) -> CpuExit {
-    cpu.step().unwrap()
+pub fn step(ctx: &mut TestCpu) -> Result<CpuExit, String> {
+    let pc = ctx.cpu.get_pc();
+    let is_thumb = ctx.cpu.cpsr.t;
+    
+    // Fetch and decode instruction
+    let decoded = if is_thumb {
+        let hw = ctx.mem.read_halfword(pc).map_err(|e| format!("fetch error: {:?}", e))?;
+        // Check for 32-bit Thumb instruction
+        if (hw >> 11) >= 0x1D {
+            let hw2 = ctx.mem.read_halfword(pc + 2).map_err(|e| format!("fetch error: {:?}", e))?;
+            let insn32 = ((hw as u32) << 16) | (hw2 as u32);
+            ThumbDecoder::decode_32bit(insn32).map_err(|e| format!("decode error: {:?}", e))?
+        } else {
+            ThumbDecoder::decode_16bit(hw).map_err(|e| format!("decode error: {:?}", e))?
+        }
+    } else {
+        let insn = ctx.mem.read_word(pc).map_err(|e| format!("fetch error: {:?}", e))?;
+        Aarch32Decoder::decode(insn).map_err(|e| format!("decode error: {:?}", e))?
+    };
+    
+    // Calculate instruction size for PC advance
+    let insn_size = if is_thumb {
+        let hw = ctx.mem.read_halfword(pc).unwrap();
+        if (hw >> 11) >= 0x1D { 4 } else { 2 }
+    } else {
+        4
+    };
+    
+    // Execute
+    let mut exec = Executor::new(&mut ctx.cpu, &mut ctx.mem);
+    match exec.execute(&decoded) {
+        ExecResult::Continue => {
+            // Advance PC
+            ctx.cpu.set_reg(15, pc + insn_size);
+            Ok(CpuExit::Continue)
+        }
+        ExecResult::Branch(addr) => {
+            ctx.cpu.set_reg(15, addr);
+            Ok(CpuExit::Continue)
+        }
+        ExecResult::Halt => Ok(CpuExit::Halt),
+        ExecResult::Undefined => Ok(CpuExit::Undefined(0)),
+        ExecResult::Exception(exc) => {
+            match exc {
+                ExceptionType::SupervisorCall(imm) => Ok(CpuExit::Svc(imm)),
+                ExceptionType::UndefinedInstruction => Ok(CpuExit::Undefined(0)),
+                ExceptionType::Breakpoint(imm) => Ok(CpuExit::Breakpoint(imm as u32)),
+                _ => Err(format!("exception: {:?}", exc)),
+            }
+        }
+        ExecResult::MemoryFault(e) => Err(format!("memory fault: {:?}", e)),
+    }
 }
 "#;
     files.push(("test_helpers_32.rs", a32_helpers.to_string()));
