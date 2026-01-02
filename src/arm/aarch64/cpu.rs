@@ -1614,6 +1614,14 @@ impl AArch64Cpu {
             return Ok(CpuExit::Continue);
         }
 
+        // Vector FP16 add (binary uniform add)
+        if (insn >> 24) & 0x1F == 0b01110
+            && (insn >> 21) & 0x7 == 0b010
+            && (insn >> 10) & 0x3F == 0b000101
+        {
+            return self.exec_simd_fp16_add(insn);
+        }
+
         // Advanced SIMD three-same
         // Encoding: 0_Q_U_01110_size_1_Rm_opcode_1_Rn_Rd
         if (insn >> 24) & 0x1F == 0b01110 && (insn >> 21) & 1 == 1 && (insn >> 10) & 1 == 1 {
@@ -1636,6 +1644,190 @@ impl AArch64Cpu {
         )))
     }
 
+    /// Execute SIMD FP add (binary uniform add).
+    fn exec_simd_fp_add_uniform(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let q = (insn >> 30) & 1;
+        let pair = ((insn >> 29) & 1) != 0;
+        let size = (insn >> 22) & 0x3;
+        let rm = ((insn >> 16) & 0x1F) as usize;
+        let rn = ((insn >> 5) & 0x1F) as usize;
+        let rd = (insn & 0x1F) as usize;
+
+        let esize = if size & 1 == 0 { 4 } else { 8 };
+        let datasize = if q == 1 { 16 } else { 8 };
+        let elements = datasize / esize;
+
+        let src1 = self.v[rn].to_le_bytes();
+        let src2 = self.v[rm].to_le_bytes();
+        let mut dst = [0u8; 16];
+        let mut concat = [0u8; 32];
+
+        if pair {
+            concat[..datasize].copy_from_slice(&src1[..datasize]);
+            concat[datasize..datasize * 2].copy_from_slice(&src2[..datasize]);
+        }
+
+        for e in 0..elements {
+            let out_off = e * esize;
+            if esize == 4 {
+                let (a, b) = if pair {
+                    let idx1 = 2 * e;
+                    let idx2 = idx1 + 1;
+                    let a_off = idx1 * esize;
+                    let b_off = idx2 * esize;
+                    (
+                        f32::from_le_bytes([
+                            concat[a_off],
+                            concat[a_off + 1],
+                            concat[a_off + 2],
+                            concat[a_off + 3],
+                        ]),
+                        f32::from_le_bytes([
+                            concat[b_off],
+                            concat[b_off + 1],
+                            concat[b_off + 2],
+                            concat[b_off + 3],
+                        ]),
+                    )
+                } else {
+                    let a_off = e * esize;
+                    let b_off = e * esize;
+                    (
+                        f32::from_le_bytes([
+                            src1[a_off],
+                            src1[a_off + 1],
+                            src1[a_off + 2],
+                            src1[a_off + 3],
+                        ]),
+                        f32::from_le_bytes([
+                            src2[b_off],
+                            src2[b_off + 1],
+                            src2[b_off + 2],
+                            src2[b_off + 3],
+                        ]),
+                    )
+                };
+
+                let result = a + b;
+                let bytes = result.to_le_bytes();
+                dst[out_off..out_off + 4].copy_from_slice(&bytes);
+            } else {
+                let (a, b) = if pair {
+                    let idx1 = 2 * e;
+                    let idx2 = idx1 + 1;
+                    let a_off = idx1 * esize;
+                    let b_off = idx2 * esize;
+                    (
+                        f64::from_le_bytes([
+                            concat[a_off],
+                            concat[a_off + 1],
+                            concat[a_off + 2],
+                            concat[a_off + 3],
+                            concat[a_off + 4],
+                            concat[a_off + 5],
+                            concat[a_off + 6],
+                            concat[a_off + 7],
+                        ]),
+                        f64::from_le_bytes([
+                            concat[b_off],
+                            concat[b_off + 1],
+                            concat[b_off + 2],
+                            concat[b_off + 3],
+                            concat[b_off + 4],
+                            concat[b_off + 5],
+                            concat[b_off + 6],
+                            concat[b_off + 7],
+                        ]),
+                    )
+                } else {
+                    let a_off = e * esize;
+                    let b_off = e * esize;
+                    (
+                        f64::from_le_bytes([
+                            src1[a_off],
+                            src1[a_off + 1],
+                            src1[a_off + 2],
+                            src1[a_off + 3],
+                            src1[a_off + 4],
+                            src1[a_off + 5],
+                            src1[a_off + 6],
+                            src1[a_off + 7],
+                        ]),
+                        f64::from_le_bytes([
+                            src2[b_off],
+                            src2[b_off + 1],
+                            src2[b_off + 2],
+                            src2[b_off + 3],
+                            src2[b_off + 4],
+                            src2[b_off + 5],
+                            src2[b_off + 6],
+                            src2[b_off + 7],
+                        ]),
+                    )
+                };
+
+                let result = a + b;
+                let bytes = result.to_le_bytes();
+                dst[out_off..out_off + 8].copy_from_slice(&bytes);
+            }
+        }
+
+        self.v[rd] = u128::from_le_bytes(dst);
+        Ok(CpuExit::Continue)
+    }
+
+    /// Execute SIMD FP16 add (binary uniform add).
+    fn exec_simd_fp16_add(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let q = (insn >> 30) & 1;
+        let pair = ((insn >> 29) & 1) != 0;
+        let rm = ((insn >> 16) & 0x1F) as usize;
+        let rn = ((insn >> 5) & 0x1F) as usize;
+        let rd = (insn & 0x1F) as usize;
+
+        let datasize = if q == 1 { 16 } else { 8 };
+        let esize = 2usize;
+        let elements = datasize / esize;
+
+        let src1 = self.v[rn].to_le_bytes();
+        let src2 = self.v[rm].to_le_bytes();
+        let mut dst = [0u8; 16];
+        let mut concat = [0u8; 32];
+
+        if pair {
+            concat[..datasize].copy_from_slice(&src1[..datasize]);
+            concat[datasize..datasize * 2].copy_from_slice(&src2[..datasize]);
+        }
+
+        for e in 0..elements {
+            let out_off = e * esize;
+            let (a_bits, b_bits) = if pair {
+                let idx1 = 2 * e;
+                let idx2 = idx1 + 1;
+                let a_off = idx1 * esize;
+                let b_off = idx2 * esize;
+                (
+                    u16::from_le_bytes([concat[a_off], concat[a_off + 1]]),
+                    u16::from_le_bytes([concat[b_off], concat[b_off + 1]]),
+                )
+            } else {
+                let a_off = e * esize;
+                let b_off = e * esize;
+                (
+                    u16::from_le_bytes([src1[a_off], src1[a_off + 1]]),
+                    u16::from_le_bytes([src2[b_off], src2[b_off + 1]]),
+                )
+            };
+
+            let result = Self::fp16_to_f32(a_bits) + Self::fp16_to_f32(b_bits);
+            let out_bits = Self::f32_to_fp16(result);
+            let bytes = out_bits.to_le_bytes();
+            dst[out_off..out_off + 2].copy_from_slice(&bytes);
+        }
+
+        self.v[rd] = u128::from_le_bytes(dst);
+        Ok(CpuExit::Continue)
+    }
+
     /// Execute SIMD three-same register instructions.
     fn exec_simd_three_same(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let q = (insn >> 30) & 1;
@@ -1646,7 +1838,20 @@ impl AArch64Cpu {
         let rn = ((insn >> 5) & 0x1F) as usize;
         let rd = (insn & 0x1F) as usize;
 
-        let esize = 1usize << size;
+        if opcode == 0b11010 && ((insn >> 23) & 1) == 0 {
+            return self.exec_simd_fp_add_uniform(insn);
+        }
+
+        let is_fp = opcode >= 0b11000;
+        let esize = if is_fp {
+            if size & 1 == 0 {
+                4
+            } else {
+                8
+            }
+        } else {
+            1usize << size
+        };
         let datasize = if q == 1 { 16 } else { 8 };
         let elements = datasize / esize;
 
@@ -1995,6 +2200,68 @@ impl AArch64Cpu {
 
     fn fp_nmul_f64(&self, a: f64, b: f64) -> f64 {
         -(a * b)
+    }
+
+    fn fp16_to_f32(h: u16) -> f32 {
+        let sign = ((h >> 15) & 1) as u32;
+        let exp = ((h >> 10) & 0x1F) as u32;
+        let mant = (h & 0x3FF) as u32;
+
+        let f32_bits = if exp == 0 {
+            if mant == 0 {
+                sign << 31
+            } else {
+                let mut m = mant;
+                let mut e = 0i32;
+                while (m & 0x400) == 0 {
+                    m <<= 1;
+                    e += 1;
+                }
+                m &= 0x3FF;
+                let new_exp = (127 - 15 - e) as u32;
+                (sign << 31) | (new_exp << 23) | (m << 13)
+            }
+        } else if exp == 0x1F {
+            (sign << 31) | (0xFF << 23) | (mant << 13)
+        } else {
+            let new_exp = exp + 127 - 15;
+            (sign << 31) | (new_exp << 23) | (mant << 13)
+        };
+
+        f32::from_bits(f32_bits)
+    }
+
+    fn f32_to_fp16(f: f32) -> u16 {
+        let bits = f.to_bits();
+        let sign = ((bits >> 31) & 1) as u16;
+        let exp = ((bits >> 23) & 0xFF) as i32;
+        let mant = (bits & 0x7FFFFF) as u32;
+
+        if exp == 0xFF {
+            if mant == 0 {
+                (sign << 15) | (0x1F << 10)
+            } else {
+                (sign << 15) | (0x1F << 10) | ((mant >> 13) as u16 & 0x3FF).max(1)
+            }
+        } else if exp == 0 {
+            sign << 15
+        } else {
+            let new_exp = exp - 127 + 15;
+            if new_exp >= 0x1F {
+                (sign << 15) | (0x1F << 10)
+            } else if new_exp <= 0 {
+                if new_exp < -10 {
+                    sign << 15
+                } else {
+                    let shift = 1 - new_exp;
+                    let m = (0x800000 | mant) >> (13 + shift);
+                    (sign << 15) | (m as u16 & 0x3FF)
+                }
+            } else {
+                let new_mant = (mant >> 13) as u16;
+                (sign << 15) | ((new_exp as u16) << 10) | (new_mant & 0x3FF)
+            }
+        }
     }
 
     // =========================================================================

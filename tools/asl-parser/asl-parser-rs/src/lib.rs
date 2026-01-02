@@ -38,6 +38,7 @@ pub mod lexer;
 pub mod parser;
 pub mod span;
 pub mod syntax;
+pub mod testgen;
 pub mod xml;
 
 pub use error::{ParseError, Result};

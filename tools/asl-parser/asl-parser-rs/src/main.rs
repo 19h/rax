@@ -2,6 +2,7 @@
 //!
 //! A command-line tool for parsing ARM Architecture Specification Language files.
 
+use asl_parser::testgen::{OutputFormat as TestOutputFormat, TestGenConfig, TestGenerator};
 use asl_parser::{parse_definitions, parse_instructions, parse_registers};
 use clap::{Parser, Subcommand, ValueEnum};
 use miette::{IntoDiagnostic, Result, WrapErr};
@@ -123,6 +124,72 @@ enum Command {
         #[arg(short, long, default_value = "summary")]
         format: OutputFormat,
     },
+
+    /// Generate test cases from parsed instruction definitions
+    #[command(alias = "tests")]
+    TestGen {
+        /// Input ASL instruction file
+        #[arg(required = true)]
+        input: PathBuf,
+
+        /// Output directory for generated tests
+        #[arg(short, long, default_value = "generated_tests")]
+        output: PathBuf,
+
+        /// Maximum number of tests per instruction
+        #[arg(long, default_value = "200")]
+        max_tests: usize,
+
+        /// Include negative tests (UNDEFINED encodings)
+        #[arg(long, default_value = "true")]
+        include_negative: bool,
+
+        /// Include execution tests (register/flag effects)
+        #[arg(long, default_value = "true")]
+        include_execution: bool,
+
+        /// Filter to specific instruction name (regex pattern)
+        #[arg(long)]
+        filter: Option<String>,
+
+        /// Output format (rust, json, text)
+        #[arg(short, long, default_value = "rust")]
+        format: TestGenOutputFormat,
+
+        /// Target instruction set (a64, a32, t32, t16, all)
+        #[arg(long, default_value = "a64")]
+        iset: InstructionSetArg,
+
+        /// Generate structured hierarchical output (tests/arm/a64/integer/...)
+        #[arg(long, default_value = "false")]
+        structured: bool,
+    },
+}
+
+#[derive(Clone, Copy, ValueEnum, Default)]
+enum TestGenOutputFormat {
+    /// Generate Rust test code
+    #[default]
+    Rust,
+    /// Generate JSON output
+    Json,
+    /// Generate human-readable text
+    Text,
+}
+
+#[derive(Clone, Copy, ValueEnum, Default)]
+enum InstructionSetArg {
+    /// A64 instruction set only
+    #[default]
+    A64,
+    /// A32 instruction set only
+    A32,
+    /// Thumb-32 instruction set only
+    T32,
+    /// Thumb-16 instruction set only
+    T16,
+    /// All instruction sets
+    All,
 }
 
 #[derive(Clone, Copy, ValueEnum, Default)]
@@ -198,6 +265,29 @@ fn main() -> Result<()> {
             format,
         } => {
             run_pipeline(&workdir, &version, demangle, format)?;
+        }
+        Command::TestGen {
+            input,
+            output,
+            max_tests,
+            include_negative,
+            include_execution,
+            filter,
+            format,
+            iset,
+            structured,
+        } => {
+            generate_tests(
+                &input,
+                &output,
+                max_tests,
+                include_negative,
+                include_execution,
+                filter,
+                format,
+                iset,
+                structured,
+            )?;
         }
     }
 
@@ -560,6 +650,359 @@ fn run_pipeline(
 
     println!("\n=== Pipeline complete! ===");
     Ok(())
+}
+
+fn generate_tests(
+    input: &PathBuf,
+    output: &PathBuf,
+    max_tests: usize,
+    include_negative: bool,
+    include_execution: bool,
+    filter: Option<String>,
+    format: TestGenOutputFormat,
+    iset: InstructionSetArg,
+    structured: bool,
+) -> Result<()> {
+    use asl_parser::syntax::InstructionSet;
+    use regex::Regex;
+
+    println!("=== Test Generation ===");
+    println!("Input: {}", input.display());
+    println!("Output: {}", output.display());
+
+    // Read and parse the instruction file
+    let source = fs::read_to_string(input)
+        .into_diagnostic()
+        .wrap_err_with(|| format!("failed to read file: {}", input.display()))?;
+
+    println!("Parsing instructions...");
+    let instrs = parse_instructions(&source).map_err(|e| {
+        miette::miette!(
+            labels = vec![miette::LabeledSpan::at(
+                e.span.start..e.span.end,
+                e.kind.to_string()
+            )],
+            "parse error in {}",
+            input.display()
+        )
+        .with_source_code(source.clone())
+    })?;
+
+    println!("Parsed {} instructions", instrs.len());
+
+    // Apply filter if provided
+    let filter_regex = filter.as_ref().map(|f| {
+        Regex::new(f).unwrap_or_else(|_| {
+            eprintln!("Warning: Invalid filter regex '{}', ignoring", f);
+            Regex::new(".*").unwrap()
+        })
+    });
+
+    let filtered_instrs: Vec<_> = instrs
+        .iter()
+        .filter(|i| {
+            filter_regex
+                .as_ref()
+                .map(|r| r.is_match(i.name.as_str()))
+                .unwrap_or(true)
+        })
+        .collect();
+
+    if filtered_instrs.is_empty() {
+        println!("No instructions match the filter");
+        return Ok(());
+    }
+
+    println!(
+        "Processing {} instructions (after filter)",
+        filtered_instrs.len()
+    );
+
+    // Configure test generator
+    let target_isets = match iset {
+        InstructionSetArg::A64 => vec![InstructionSet::A64],
+        InstructionSetArg::A32 => vec![InstructionSet::A32],
+        InstructionSetArg::T32 => vec![InstructionSet::T32],
+        InstructionSetArg::T16 => vec![InstructionSet::T16],
+        InstructionSetArg::All => vec![
+            InstructionSet::A64,
+            InstructionSet::A32,
+            InstructionSet::T32,
+            InstructionSet::T16,
+        ],
+    };
+
+    let config = TestGenConfig {
+        max_encoding_tests: max_tests,
+        include_negative_tests: include_negative,
+        generate_execution_tests: include_execution,
+        instruction_sets: target_isets,
+        ..Default::default()
+    };
+
+    let mut generator = TestGenerator::with_config(config);
+
+    // Generate tests for each instruction
+    let mut all_suites = Vec::new();
+    for instr in &filtered_instrs {
+        let suite = generator.generate_instruction_tests(instr);
+        if !suite.encoding_tests.is_empty() || !suite.execution_tests.is_empty() {
+            println!(
+                "  {} - {} encoding tests, {} execution tests",
+                instr.name,
+                suite.encoding_tests.len(),
+                suite.execution_tests.len()
+            );
+            all_suites.push(suite);
+        }
+    }
+
+    if all_suites.is_empty() {
+        println!("No tests generated");
+        return Ok(());
+    }
+
+    // Deduplicate test suites based on encoding analysis to avoid duplicate test names
+    let mut seen_encodings = std::collections::HashSet::new();
+    let unique_suites: Vec<_> = all_suites
+        .into_iter()
+        .filter(|suite| {
+            // Create a key from instruction name + first encoding value
+            let key = if let Some(first_test) = suite.encoding_tests.first() {
+                format!("{}_{:08x}", suite.instruction_name, first_test.encoding)
+            } else {
+                suite.instruction_name.clone()
+            };
+            seen_encodings.insert(key)
+        })
+        .collect();
+
+    let all_suites = unique_suites;
+
+    // Create output directory
+    fs::create_dir_all(output)
+        .into_diagnostic()
+        .wrap_err("Failed to create output directory")?;
+
+    // Handle structured vs single-file output
+    if structured {
+        use asl_parser::testgen::output::{generate_structured_output, write_structured_output};
+
+        println!("\nGenerating structured output...");
+        let files = generate_structured_output(&all_suites);
+
+        // Also generate helper files
+        let helper_files = generate_helper_files();
+
+        write_structured_output(output, &files)
+            .into_diagnostic()
+            .wrap_err("Failed to write structured output")?;
+
+        // Write helper files
+        for (path, content) in helper_files {
+            let full_path = output.join(path);
+            if let Some(parent) = full_path.parent() {
+                fs::create_dir_all(parent)
+                    .into_diagnostic()
+                    .wrap_err("Failed to create helper directory")?;
+            }
+            fs::write(&full_path, content)
+                .into_diagnostic()
+                .wrap_err_with(|| {
+                    format!("Failed to write helper file: {}", full_path.display())
+                })?;
+        }
+
+        println!(
+            "\nGenerated {} test suites ({} total tests) in {} files",
+            all_suites.len(),
+            all_suites
+                .iter()
+                .map(|s| s.encoding_tests.len() + s.execution_tests.len())
+                .sum::<usize>(),
+            files.len()
+        );
+        println!("Output directory: {}", output.display());
+    } else {
+        // Single-file output (original behavior)
+        let output_format = match format {
+            TestGenOutputFormat::Rust => TestOutputFormat::Rust,
+            TestGenOutputFormat::Json => TestOutputFormat::Json,
+            TestGenOutputFormat::Text => TestOutputFormat::Text,
+        };
+
+        let output_content =
+            asl_parser::testgen::TestOutputFormatter::format(&all_suites, output_format);
+
+        let ext = match format {
+            TestGenOutputFormat::Rust => "rs",
+            TestGenOutputFormat::Json => "json",
+            TestGenOutputFormat::Text => "txt",
+        };
+
+        let output_file = output.join(format!("generated_tests.{}", ext));
+        fs::write(&output_file, &output_content)
+            .into_diagnostic()
+            .wrap_err("Failed to write output file")?;
+
+        println!(
+            "\nGenerated {} test suites ({} total tests)",
+            all_suites.len(),
+            all_suites
+                .iter()
+                .map(|s| s.encoding_tests.len() + s.execution_tests.len())
+                .sum::<usize>()
+        );
+        println!("Output: {}", output_file.display());
+    }
+
+    Ok(())
+}
+
+/// Generate helper files for the test infrastructure
+fn generate_helper_files() -> Vec<(&'static str, String)> {
+    let mut files = Vec::new();
+
+    // A64 test helpers
+    let a64_helpers = r#"//! A64 test helpers.
+//!
+//! Common test infrastructure for AArch64 instruction tests.
+//! DO NOT EDIT MANUALLY.
+
+#![allow(unused_imports)]
+#![allow(dead_code)]
+
+use rax::arm::{AArch64Config, AArch64Cpu, ArmCpu, CpuExit, FlatMemory};
+
+/// Create a test CPU with default configuration
+pub fn create_test_cpu() -> AArch64Cpu {
+    let memory = FlatMemory::new(0, 0x1000_0000);
+    AArch64Cpu::new(AArch64Config::default(), Box::new(memory))
+}
+
+/// Write an instruction to memory
+pub fn write_insn(cpu: &mut AArch64Cpu, addr: u64, insn: u32) {
+    cpu.write_memory(addr, &insn.to_le_bytes()).unwrap();
+}
+
+/// Execute instructions until reaching target address
+pub fn run_to(cpu: &mut AArch64Cpu, target_pc: u64) -> CpuExit {
+    loop {
+        let exit = cpu.step().unwrap();
+        if cpu.get_pc() >= target_pc || !matches!(exit, CpuExit::Continue) {
+            return exit;
+        }
+    }
+}
+
+/// Set a general purpose register (X0-X30)
+pub fn set_x(cpu: &mut AArch64Cpu, reg: u8, value: u64) {
+    cpu.set_gpr(reg, value);
+}
+
+/// Get a general purpose register (X0-X30)
+pub fn get_x(cpu: &AArch64Cpu, reg: u8) -> u64 {
+    cpu.get_gpr(reg)
+}
+
+/// Set the 32-bit view of a register (W0-W30)
+pub fn set_w(cpu: &mut AArch64Cpu, reg: u8, value: u32) {
+    cpu.set_gpr(reg, value as u64);
+}
+
+/// Get the 32-bit view of a register (W0-W30)
+pub fn get_w(cpu: &AArch64Cpu, reg: u8) -> u32 {
+    cpu.get_gpr(reg) as u32
+}
+
+/// Set SIMD register (V0-V31)
+pub fn set_qreg(cpu: &mut AArch64Cpu, reg: u8, value: u128) {
+    let low = value as u64;
+    let high = (value >> 64) as u64;
+    cpu.set_simd_reg(reg, low, high).unwrap();
+}
+
+/// Get SIMD register (V0-V31)
+pub fn get_qreg(cpu: &AArch64Cpu, reg: u8) -> u128 {
+    let (low, high) = cpu.get_simd_reg(reg).unwrap();
+    (high as u128) << 64 | (low as u128)
+}
+"#;
+    files.push(("test_helpers.rs", a64_helpers.to_string()));
+
+    // A32/T32/T16 test helpers
+    let a32_helpers = r#"//! A32/T32/T16 test helpers.
+//!
+//! Common test infrastructure for AArch32 instruction tests.
+//! DO NOT EDIT MANUALLY.
+
+#![allow(unused_imports)]
+#![allow(dead_code)]
+
+use rax::arm::{Armv7Config, Armv7Cpu, ArmCpu, CpuExit, FlatMemory};
+
+/// Create a test CPU with default configuration (A32 mode)
+pub fn create_test_cpu() -> Armv7Cpu {
+    let memory = FlatMemory::new(0, 0x1000_0000);
+    Armv7Cpu::new(Armv7Config::default(), Box::new(memory))
+}
+
+/// Create a test CPU in Thumb mode
+pub fn create_thumb_cpu() -> Armv7Cpu {
+    let memory = FlatMemory::new(0, 0x1000_0000);
+    let mut cpu = Armv7Cpu::new(Armv7Config::default(), Box::new(memory));
+    cpu.set_thumb(true);
+    cpu
+}
+
+/// Write a 32-bit instruction to memory
+pub fn write_insn(cpu: &mut Armv7Cpu, addr: u64, insn: u32) {
+    cpu.write_memory(addr, &insn.to_le_bytes()).unwrap();
+}
+
+/// Write a 16-bit Thumb instruction to memory
+pub fn write_insn16(cpu: &mut Armv7Cpu, addr: u64, insn: u16) {
+    cpu.write_memory(addr, &insn.to_le_bytes()).unwrap();
+}
+
+/// Set a general purpose register (R0-R14)
+pub fn set_w(cpu: &mut Armv7Cpu, reg: u8, value: u32) {
+    cpu.set_gpr(reg, value);
+}
+
+/// Get a general purpose register (R0-R14)
+pub fn get_w(cpu: &Armv7Cpu, reg: u8) -> u32 {
+    cpu.get_gpr(reg)
+}
+
+/// Set the stack pointer (R13/SP)
+pub fn set_sp(cpu: &mut Armv7Cpu, value: u32) {
+    cpu.set_gpr(13, value);
+}
+
+/// Get the stack pointer (R13/SP)
+pub fn get_sp(cpu: &Armv7Cpu) -> u32 {
+    cpu.get_gpr(13)
+}
+
+/// Set the link register (R14/LR)
+pub fn set_lr(cpu: &mut Armv7Cpu, value: u32) {
+    cpu.set_gpr(14, value);
+}
+
+/// Get the link register (R14/LR)
+pub fn get_lr(cpu: &Armv7Cpu) -> u32 {
+    cpu.get_gpr(14)
+}
+
+/// Execute one instruction and return the exit status
+pub fn step(cpu: &mut Armv7Cpu) -> CpuExit {
+    cpu.step().unwrap()
+}
+"#;
+    files.push(("test_helpers_32.rs", a32_helpers.to_string()));
+
+    files
 }
 
 fn print_def_summary(def: &asl_parser::Definition) {
