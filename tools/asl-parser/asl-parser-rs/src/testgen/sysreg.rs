@@ -553,3 +553,282 @@ pub fn generate_all_sysreg_tests(regs: &[RegisterDefinition]) -> String {
     println!("Generated {} system register tests", test_count);
     output
 }
+
+// =============================================================================
+// AArch32 CP15 Coprocessor Register Support
+// =============================================================================
+
+/// CP15 coprocessor register encoding for AArch32.
+#[derive(Debug, Clone, Copy)]
+pub struct Cp15Encoding {
+    /// CRn - primary register number (0-15)
+    pub crn: u8,
+    /// Op1 - opcode 1 (0-7)
+    pub op1: u8,
+    /// CRm - secondary register number (0-15)
+    pub crm: u8,
+    /// Op2 - opcode 2 (0-7)
+    pub op2: u8,
+}
+
+impl Cp15Encoding {
+    pub const fn new(crn: u8, op1: u8, crm: u8, op2: u8) -> Self {
+        Self { crn, op1, crm, op2 }
+    }
+
+    /// Generate MRC instruction encoding: MRC p15, op1, Rt, CRn, CRm, op2
+    /// Format: cond 1110 op1[2:0] 1 CRn Rt 1111 op2[2:0] 1 CRm
+    /// We use cond=AL (0xE)
+    pub fn mrc_encoding(&self, rt: u8) -> u32 {
+        0xEE100F10  // Base: MRC p15, unconditional
+            | ((self.op1 as u32 & 0x7) << 21)
+            | ((self.crn as u32 & 0xF) << 16)
+            | ((rt as u32 & 0xF) << 12)
+            | ((self.op2 as u32 & 0x7) << 5)
+            | (self.crm as u32 & 0xF)
+    }
+
+    /// Generate MCR instruction encoding: MCR p15, op1, Rt, CRn, CRm, op2
+    /// Format: cond 1110 op1[2:0] 0 CRn Rt 1111 op2[2:0] 1 CRm
+    pub fn mcr_encoding(&self, rt: u8) -> u32 {
+        0xEE000F10  // Base: MCR p15, unconditional
+            | ((self.op1 as u32 & 0x7) << 21)
+            | ((self.crn as u32 & 0xF) << 16)
+            | ((rt as u32 & 0xF) << 12)
+            | ((self.op2 as u32 & 0x7) << 5)
+            | (self.crm as u32 & 0xF)
+    }
+}
+
+/// Build the mapping from A32 register names to CP15 encodings.
+pub fn build_cp15_encodings() -> HashMap<String, Cp15Encoding> {
+    let mut map = HashMap::new();
+
+    // Main ID Register
+    map.insert("MIDR".into(), Cp15Encoding::new(0, 0, 0, 0));
+    // Cache Type Register
+    map.insert("CTR".into(), Cp15Encoding::new(0, 0, 0, 1));
+    // Multiprocessor Affinity Register
+    map.insert("MPIDR".into(), Cp15Encoding::new(0, 0, 0, 5));
+
+    // System Control Register
+    map.insert("SCTLR".into(), Cp15Encoding::new(1, 0, 0, 0));
+    // Auxiliary Control Register
+    map.insert("ACTLR".into(), Cp15Encoding::new(1, 0, 0, 1));
+    // Coprocessor Access Control Register
+    map.insert("CPACR".into(), Cp15Encoding::new(1, 0, 0, 2));
+
+    // Translation Table Base Register 0
+    map.insert("TTBR0".into(), Cp15Encoding::new(2, 0, 0, 0));
+    // Translation Table Base Register 1
+    map.insert("TTBR1".into(), Cp15Encoding::new(2, 0, 0, 1));
+    // Translation Table Base Control Register
+    map.insert("TTBCR".into(), Cp15Encoding::new(2, 0, 0, 2));
+
+    // Domain Access Control Register
+    map.insert("DACR".into(), Cp15Encoding::new(3, 0, 0, 0));
+
+    // Data Fault Status Register
+    map.insert("DFSR".into(), Cp15Encoding::new(5, 0, 0, 0));
+    // Instruction Fault Status Register
+    map.insert("IFSR".into(), Cp15Encoding::new(5, 0, 0, 1));
+
+    // Data Fault Address Register
+    map.insert("DFAR".into(), Cp15Encoding::new(6, 0, 0, 0));
+    // Instruction Fault Address Register
+    map.insert("IFAR".into(), Cp15Encoding::new(6, 0, 0, 2));
+
+    // Cache operations (write-only typically)
+    map.insert("ICIALLU".into(), Cp15Encoding::new(7, 0, 5, 0));
+    map.insert("DCIMVAC".into(), Cp15Encoding::new(7, 0, 6, 1));
+    map.insert("DCISW".into(), Cp15Encoding::new(7, 0, 6, 2));
+    map.insert("DCCMVAC".into(), Cp15Encoding::new(7, 0, 10, 1));
+    map.insert("DCCSW".into(), Cp15Encoding::new(7, 0, 10, 2));
+    map.insert("DCCIMVAC".into(), Cp15Encoding::new(7, 0, 14, 1));
+
+    // TLB operations (write-only)
+    map.insert("TLBIALL".into(), Cp15Encoding::new(8, 0, 7, 0));
+    map.insert("TLBIMVA".into(), Cp15Encoding::new(8, 0, 7, 1));
+    map.insert("TLBIASID".into(), Cp15Encoding::new(8, 0, 7, 2));
+
+    // Performance Monitors
+    map.insert("PMCR".into(), Cp15Encoding::new(9, 0, 12, 0));
+    map.insert("PMCNTENSET".into(), Cp15Encoding::new(9, 0, 12, 1));
+    map.insert("PMCNTENCLR".into(), Cp15Encoding::new(9, 0, 12, 2));
+    map.insert("PMSELR".into(), Cp15Encoding::new(9, 0, 12, 5));
+    map.insert("PMCCNTR".into(), Cp15Encoding::new(9, 0, 13, 0));
+
+    // Vector Base Address Register
+    map.insert("VBAR".into(), Cp15Encoding::new(12, 0, 0, 0));
+    // Monitor Vector Base Address Register
+    map.insert("MVBAR".into(), Cp15Encoding::new(12, 0, 0, 1));
+
+    // Context ID Register
+    map.insert("CONTEXTIDR".into(), Cp15Encoding::new(13, 0, 0, 1));
+    // Thread ID registers
+    map.insert("TPIDRURW".into(), Cp15Encoding::new(13, 0, 0, 2));
+    map.insert("TPIDRURO".into(), Cp15Encoding::new(13, 0, 0, 3));
+    map.insert("TPIDRPRW".into(), Cp15Encoding::new(13, 0, 0, 4));
+
+    // Counter-timer registers
+    map.insert("CNTFRQ".into(), Cp15Encoding::new(14, 0, 0, 0));
+
+    map
+}
+
+/// CP15 registers that are read-only
+pub fn readonly_cp15_registers() -> Vec<&'static str> {
+    vec!["MIDR", "CTR", "MPIDR", "CNTFRQ"]
+}
+
+/// CP15 registers that are write-only (cache/TLB operations)
+pub fn writeonly_cp15_registers() -> Vec<&'static str> {
+    vec![
+        "ICIALLU", "DCIMVAC", "DCISW", "DCCMVAC", "DCCSW", "DCCIMVAC", "TLBIALL", "TLBIMVA",
+        "TLBIASID",
+    ]
+}
+
+/// Generate A32 CP15 register tests.
+pub fn generate_cp15_tests(
+    reg: &Register,
+    encoding: &Cp15Encoding,
+    is_readonly: bool,
+    is_writeonly: bool,
+) -> Vec<SysRegTest> {
+    let mut tests = Vec::new();
+    let name = &reg.name;
+    let name_lower = name.to_lowercase();
+
+    // Test 1: MRC read test (unless write-only)
+    if !is_writeonly {
+        tests.push(generate_mrc_test(name, &name_lower, encoding));
+    }
+
+    // Test 2: MCR write test (unless read-only)
+    if !is_readonly && !is_writeonly {
+        tests.push(generate_mcr_mrc_test(name, &name_lower, encoding));
+    }
+
+    tests
+}
+
+fn generate_mrc_test(name: &str, name_lower: &str, enc: &Cp15Encoding) -> SysRegTest {
+    let mrc_insn = enc.mrc_encoding(0); // MRC p15, op1, R0, CRn, CRm, op2
+
+    let code = format!(
+        r#"
+#[test]
+fn test_mrc_{name_lower}() {{
+    let mut cpu = create_test_cpu();
+    
+    // MRC p15, {op1}, R0, c{crn}, c{crm}, {op2}  ({name})
+    let mrc_insn: u32 = 0x{mrc_insn:08X};
+    write_insn(&mut cpu, 0, mrc_insn);
+    
+    // Execute
+    let result = cpu.step();
+    assert!(result.is_ok(), "MRC {name} should succeed: {{:?}}", result);
+    
+    // R0 should contain the register value
+    let value = get_w(&cpu, 0);
+    println!("{name} = 0x{{:08X}}", value);
+}}
+"#,
+        name = name,
+        name_lower = name_lower,
+        mrc_insn = mrc_insn,
+        op1 = enc.op1,
+        crn = enc.crn,
+        crm = enc.crm,
+        op2 = enc.op2,
+    );
+
+    SysRegTest {
+        name: format!("test_mrc_{}", name_lower),
+        description: format!("Read {} using MRC", name),
+        code,
+    }
+}
+
+fn generate_mcr_mrc_test(name: &str, name_lower: &str, enc: &Cp15Encoding) -> SysRegTest {
+    let mcr_insn = enc.mcr_encoding(1); // MCR p15, op1, R1, CRn, CRm, op2
+    let mrc_insn = enc.mrc_encoding(0); // MRC p15, op1, R0, CRn, CRm, op2
+
+    let code = format!(
+        r#"
+#[test]
+fn test_mcr_mrc_{name_lower}() {{
+    let mut cpu = create_test_cpu();
+    
+    // Set R1 to test value
+    set_w(&mut cpu, 1, 0x12345678);
+    
+    // MCR p15, {op1}, R1, c{crn}, c{crm}, {op2}  ({name})
+    let mcr_insn: u32 = 0x{mcr_insn:08X};
+    write_insn(&mut cpu, 0, mcr_insn);
+    cpu.step().expect("MCR should succeed");
+    
+    // MRC p15, {op1}, R0, c{crn}, c{crm}, {op2}  ({name})
+    let mrc_insn: u32 = 0x{mrc_insn:08X};
+    write_insn(&mut cpu, 4, mrc_insn);
+    cpu.step().expect("MRC should succeed");
+    
+    // Verify round-trip
+    let readback = get_w(&cpu, 0);
+    println!("{name}: wrote 0x12345678, read 0x{{:08X}}", readback);
+}}
+"#,
+        name = name,
+        name_lower = name_lower,
+        mcr_insn = mcr_insn,
+        mrc_insn = mrc_insn,
+        op1 = enc.op1,
+        crn = enc.crn,
+        crm = enc.crm,
+        op2 = enc.op2,
+    );
+
+    SysRegTest {
+        name: format!("test_mcr_mrc_{}", name_lower),
+        description: format!("Write then read {} using MCR/MRC", name),
+        code,
+    }
+}
+
+/// Generate all A32 CP15 register tests.
+pub fn generate_all_cp15_tests(regs: &[RegisterDefinition]) -> String {
+    let encodings = build_cp15_encodings();
+    let readonly = readonly_cp15_registers();
+    let writeonly = writeonly_cp15_registers();
+
+    let mut output = String::new();
+    output.push_str("//! Auto-generated A32 CP15 coprocessor register tests.\n");
+    output.push_str("//! DO NOT EDIT MANUALLY.\n\n");
+    output.push_str("use super::super::test_helpers_32::*;\n\n");
+
+    let mut test_count = 0;
+
+    for reg_def in regs {
+        let reg = match reg_def {
+            RegisterDefinition::Single(r) => r,
+            RegisterDefinition::Array(_) => continue,
+        };
+
+        // Check if we have encoding for this register
+        if let Some(encoding) = encodings.get(reg.name.as_str()) {
+            let is_readonly = readonly.contains(&reg.name.as_str());
+            let is_writeonly = writeonly.contains(&reg.name.as_str());
+            let tests = generate_cp15_tests(reg, encoding, is_readonly, is_writeonly);
+
+            for test in tests {
+                output.push_str(&test.code);
+                output.push('\n');
+                test_count += 1;
+            }
+        }
+    }
+
+    println!("Generated {} CP15 register tests", test_count);
+    output
+}

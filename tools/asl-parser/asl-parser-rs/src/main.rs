@@ -903,20 +903,35 @@ fn generate_sysreg_tests(input: &PathBuf, output: &PathBuf) -> Result<()> {
         .into_diagnostic()
         .wrap_err("failed to create output directory")?;
 
-    // Generate the test code
-    let test_code = sysreg::generate_all_sysreg_tests(&regs);
-
-    // Write to output file
-    let output_file = output.join("sysreg_tests.rs");
-    fs::write(&output_file, &test_code)
+    // Generate A64 MRS/MSR tests
+    let a64_test_code = sysreg::generate_all_sysreg_tests(&regs);
+    let a64_output_file = output.join("sysreg_a64_tests.rs");
+    fs::write(&a64_output_file, &a64_test_code)
         .into_diagnostic()
-        .wrap_err_with(|| format!("failed to write {}", output_file.display()))?;
+        .wrap_err_with(|| format!("failed to write {}", a64_output_file.display()))?;
+    println!(
+        "Generated A64 system register tests: {}",
+        a64_output_file.display()
+    );
 
-    println!("Generated system register tests: {}", output_file.display());
+    // Generate A32 CP15 tests
+    let a32_test_code = sysreg::generate_all_cp15_tests(&regs);
+    let a32_output_file = output.join("sysreg_a32_tests.rs");
+    fs::write(&a32_output_file, &a32_test_code)
+        .into_diagnostic()
+        .wrap_err_with(|| format!("failed to write {}", a32_output_file.display()))?;
+    println!(
+        "Generated A32 CP15 register tests: {}",
+        a32_output_file.display()
+    );
 
     // Generate mod.rs for the sysreg tests
     let mod_content = r#"//! System register tests.
-mod sysreg_tests;
+//!
+//! Contains tests for both A64 (MRS/MSR) and A32 (MCR/MRC) system registers.
+
+mod sysreg_a64_tests;
+mod sysreg_a32_tests;
 "#;
     let mod_file = output.join("mod.rs");
     fs::write(&mod_file, mod_content)
