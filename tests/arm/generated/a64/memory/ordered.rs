@@ -20,12 +20,17 @@ use crate::generated::test_helpers::*;
 fn test_aarch64_memory_ordered_field_size_0_min_0_08800000() {
     // Encoding: 0x08800000
     // Test aarch64_memory_ordered field size = 0 (Min)
-    // Fields: Rn=0, Rt=0, o0=0, Rt2=0, size=0, L=0, Rs=0
+    // Fields: Rn=0, size=0, Rt=0, L=0, o0=0, Rt2=0, Rs=0
     let encoding: u32 = 0x08800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -36,12 +41,17 @@ fn test_aarch64_memory_ordered_field_size_0_min_0_08800000() {
 fn test_aarch64_memory_ordered_field_size_1_poweroftwo_0_48800000() {
     // Encoding: 0x48800000
     // Test aarch64_memory_ordered field size = 1 (PowerOfTwo)
-    // Fields: size=1, Rs=0, o0=0, Rn=0, Rt=0, Rt2=0, L=0
+    // Fields: L=0, size=1, o0=0, Rt=0, Rs=0, Rt2=0, Rn=0
     let encoding: u32 = 0x48800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -52,12 +62,17 @@ fn test_aarch64_memory_ordered_field_size_1_poweroftwo_0_48800000() {
 fn test_aarch64_memory_ordered_field_size_2_poweroftwo_0_88800000() {
     // Encoding: 0x88800000
     // Test aarch64_memory_ordered field size = 2 (PowerOfTwo)
-    // Fields: Rt=0, Rn=0, o0=0, size=2, L=0, Rs=0, Rt2=0
+    // Fields: Rt=0, Rn=0, o0=0, L=0, Rs=0, Rt2=0, size=2
     let encoding: u32 = 0x88800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -68,12 +83,17 @@ fn test_aarch64_memory_ordered_field_size_2_poweroftwo_0_88800000() {
 fn test_aarch64_memory_ordered_field_size_3_max_0_c8800000() {
     // Encoding: 0xC8800000
     // Test aarch64_memory_ordered field size = 3 (Max)
-    // Fields: Rt2=0, o0=0, Rn=0, Rt=0, Rs=0, L=0, size=3
+    // Fields: size=3, Rt=0, L=0, o0=0, Rn=0, Rt2=0, Rs=0
     let encoding: u32 = 0xC8800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -84,12 +104,17 @@ fn test_aarch64_memory_ordered_field_size_3_max_0_c8800000() {
 fn test_aarch64_memory_ordered_field_l_0_min_0_08800000() {
     // Encoding: 0x08800000
     // Test aarch64_memory_ordered field L = 0 (Min)
-    // Fields: o0=0, Rs=0, L=0, Rn=0, Rt=0, Rt2=0, size=0
+    // Fields: Rt2=0, Rt=0, Rn=0, o0=0, Rs=0, size=0, L=0
     let encoding: u32 = 0x08800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -100,12 +125,17 @@ fn test_aarch64_memory_ordered_field_l_0_min_0_08800000() {
 fn test_aarch64_memory_ordered_field_l_1_max_0_08c00000() {
     // Encoding: 0x08C00000
     // Test aarch64_memory_ordered field L = 1 (Max)
-    // Fields: o0=0, size=0, L=1, Rs=0, Rn=0, Rt=0, Rt2=0
+    // Fields: Rt=0, L=1, Rs=0, o0=0, size=0, Rt2=0, Rn=0
     let encoding: u32 = 0x08C00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -116,12 +146,17 @@ fn test_aarch64_memory_ordered_field_l_1_max_0_08c00000() {
 fn test_aarch64_memory_ordered_field_rs_0_min_0_08800000() {
     // Encoding: 0x08800000
     // Test aarch64_memory_ordered field Rs = 0 (Min)
-    // Fields: Rt2=0, size=0, o0=0, Rs=0, L=0, Rn=0, Rt=0
+    // Fields: Rt=0, L=0, size=0, o0=0, Rt2=0, Rn=0, Rs=0
     let encoding: u32 = 0x08800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -132,12 +167,17 @@ fn test_aarch64_memory_ordered_field_rs_0_min_0_08800000() {
 fn test_aarch64_memory_ordered_field_rs_1_poweroftwo_0_08810000() {
     // Encoding: 0x08810000
     // Test aarch64_memory_ordered field Rs = 1 (PowerOfTwo)
-    // Fields: L=0, o0=0, Rt2=0, size=0, Rs=1, Rn=0, Rt=0
+    // Fields: Rt=0, size=0, Rt2=0, L=0, Rn=0, o0=0, Rs=1
     let encoding: u32 = 0x08810000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -148,12 +188,17 @@ fn test_aarch64_memory_ordered_field_rs_1_poweroftwo_0_08810000() {
 fn test_aarch64_memory_ordered_field_rs_30_poweroftwominusone_0_089e0000() {
     // Encoding: 0x089E0000
     // Test aarch64_memory_ordered field Rs = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rt2=0, Rs=30, L=0, o0=0, Rn=0, Rt=0
+    // Fields: L=0, Rt=0, o0=0, Rt2=0, Rn=0, size=0, Rs=30
     let encoding: u32 = 0x089E0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -164,12 +209,17 @@ fn test_aarch64_memory_ordered_field_rs_30_poweroftwominusone_0_089e0000() {
 fn test_aarch64_memory_ordered_field_rs_31_max_0_089f0000() {
     // Encoding: 0x089F0000
     // Test aarch64_memory_ordered field Rs = 31 (Max)
-    // Fields: L=0, Rt2=0, Rs=31, size=0, o0=0, Rn=0, Rt=0
+    // Fields: Rn=0, Rt=0, Rs=31, o0=0, Rt2=0, size=0, L=0
     let encoding: u32 = 0x089F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -180,12 +230,17 @@ fn test_aarch64_memory_ordered_field_rs_31_max_0_089f0000() {
 fn test_aarch64_memory_ordered_field_o0_0_min_0_08800000() {
     // Encoding: 0x08800000
     // Test aarch64_memory_ordered field o0 = 0 (Min)
-    // Fields: Rt=0, size=0, Rs=0, L=0, Rt2=0, Rn=0, o0=0
+    // Fields: Rt=0, Rt2=0, Rs=0, size=0, L=0, o0=0, Rn=0
     let encoding: u32 = 0x08800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -196,12 +251,17 @@ fn test_aarch64_memory_ordered_field_o0_0_min_0_08800000() {
 fn test_aarch64_memory_ordered_field_o0_1_max_0_08808000() {
     // Encoding: 0x08808000
     // Test aarch64_memory_ordered field o0 = 1 (Max)
-    // Fields: Rt2=0, size=0, Rs=0, o0=1, L=0, Rn=0, Rt=0
+    // Fields: o0=1, Rt2=0, Rn=0, Rt=0, size=0, L=0, Rs=0
     let encoding: u32 = 0x08808000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -212,12 +272,17 @@ fn test_aarch64_memory_ordered_field_o0_1_max_0_08808000() {
 fn test_aarch64_memory_ordered_field_rt2_0_min_0_08800000() {
     // Encoding: 0x08800000
     // Test aarch64_memory_ordered field Rt2 = 0 (Min)
-    // Fields: Rt2=0, o0=0, Rt=0, L=0, Rn=0, size=0, Rs=0
+    // Fields: size=0, L=0, Rs=0, Rn=0, o0=0, Rt2=0, Rt=0
     let encoding: u32 = 0x08800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -228,12 +293,17 @@ fn test_aarch64_memory_ordered_field_rt2_0_min_0_08800000() {
 fn test_aarch64_memory_ordered_field_rt2_1_poweroftwo_0_08800400() {
     // Encoding: 0x08800400
     // Test aarch64_memory_ordered field Rt2 = 1 (PowerOfTwo)
-    // Fields: Rt2=1, Rn=0, Rt=0, L=0, size=0, Rs=0, o0=0
+    // Fields: Rt=0, Rs=0, o0=0, Rn=0, size=0, L=0, Rt2=1
     let encoding: u32 = 0x08800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -244,12 +314,17 @@ fn test_aarch64_memory_ordered_field_rt2_1_poweroftwo_0_08800400() {
 fn test_aarch64_memory_ordered_field_rt2_30_poweroftwominusone_0_08807800() {
     // Encoding: 0x08807800
     // Test aarch64_memory_ordered field Rt2 = 30 (PowerOfTwoMinusOne)
-    // Fields: o0=0, Rs=0, size=0, L=0, Rn=0, Rt=0, Rt2=30
+    // Fields: Rt=0, size=0, o0=0, L=0, Rs=0, Rt2=30, Rn=0
     let encoding: u32 = 0x08807800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -260,12 +335,17 @@ fn test_aarch64_memory_ordered_field_rt2_30_poweroftwominusone_0_08807800() {
 fn test_aarch64_memory_ordered_field_rt2_31_max_0_08807c00() {
     // Encoding: 0x08807C00
     // Test aarch64_memory_ordered field Rt2 = 31 (Max)
-    // Fields: Rn=0, L=0, Rs=0, size=0, o0=0, Rt2=31, Rt=0
+    // Fields: size=0, Rs=0, Rt2=31, Rn=0, L=0, o0=0, Rt=0
     let encoding: u32 = 0x08807C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -276,12 +356,17 @@ fn test_aarch64_memory_ordered_field_rt2_31_max_0_08807c00() {
 fn test_aarch64_memory_ordered_field_rn_0_min_0_08800000() {
     // Encoding: 0x08800000
     // Test aarch64_memory_ordered field Rn = 0 (Min)
-    // Fields: Rs=0, L=0, o0=0, size=0, Rt2=0, Rn=0, Rt=0
+    // Fields: L=0, Rs=0, Rt2=0, Rt=0, Rn=0, size=0, o0=0
     let encoding: u32 = 0x08800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -292,12 +377,17 @@ fn test_aarch64_memory_ordered_field_rn_0_min_0_08800000() {
 fn test_aarch64_memory_ordered_field_rn_1_poweroftwo_0_08800020() {
     // Encoding: 0x08800020
     // Test aarch64_memory_ordered field Rn = 1 (PowerOfTwo)
-    // Fields: L=0, Rt=0, Rn=1, size=0, Rt2=0, o0=0, Rs=0
+    // Fields: Rn=1, Rt2=0, o0=0, size=0, Rs=0, Rt=0, L=0
     let encoding: u32 = 0x08800020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -308,12 +398,17 @@ fn test_aarch64_memory_ordered_field_rn_1_poweroftwo_0_08800020() {
 fn test_aarch64_memory_ordered_field_rn_30_poweroftwominusone_0_088003c0() {
     // Encoding: 0x088003C0
     // Test aarch64_memory_ordered field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rs=0, Rt2=0, Rn=30, L=0, o0=0, Rt=0
+    // Fields: o0=0, Rn=30, L=0, Rs=0, size=0, Rt=0, Rt2=0
     let encoding: u32 = 0x088003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -324,12 +419,17 @@ fn test_aarch64_memory_ordered_field_rn_30_poweroftwominusone_0_088003c0() {
 fn test_aarch64_memory_ordered_field_rn_31_max_0_088003e0() {
     // Encoding: 0x088003E0
     // Test aarch64_memory_ordered field Rn = 31 (Max)
-    // Fields: o0=0, Rn=31, L=0, size=0, Rs=0, Rt2=0, Rt=0
+    // Fields: Rt2=0, Rn=31, Rt=0, L=0, size=0, Rs=0, o0=0
     let encoding: u32 = 0x088003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -340,12 +440,17 @@ fn test_aarch64_memory_ordered_field_rn_31_max_0_088003e0() {
 fn test_aarch64_memory_ordered_field_rt_0_min_0_08800000() {
     // Encoding: 0x08800000
     // Test aarch64_memory_ordered field Rt = 0 (Min)
-    // Fields: Rt2=0, Rt=0, Rs=0, o0=0, L=0, Rn=0, size=0
+    // Fields: Rt=0, Rt2=0, L=0, Rn=0, o0=0, Rs=0, size=0
     let encoding: u32 = 0x08800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -356,12 +461,17 @@ fn test_aarch64_memory_ordered_field_rt_0_min_0_08800000() {
 fn test_aarch64_memory_ordered_field_rt_1_poweroftwo_0_08800001() {
     // Encoding: 0x08800001
     // Test aarch64_memory_ordered field Rt = 1 (PowerOfTwo)
-    // Fields: o0=0, Rn=0, Rt=1, L=0, Rt2=0, size=0, Rs=0
+    // Fields: size=0, L=0, Rn=0, Rt2=0, Rs=0, o0=0, Rt=1
     let encoding: u32 = 0x08800001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -372,12 +482,17 @@ fn test_aarch64_memory_ordered_field_rt_1_poweroftwo_0_08800001() {
 fn test_aarch64_memory_ordered_field_rt_30_poweroftwominusone_0_0880001e() {
     // Encoding: 0x0880001E
     // Test aarch64_memory_ordered field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rn=0, L=0, o0=0, Rs=0, Rt=30, Rt2=0
+    // Fields: Rn=0, Rs=0, Rt=30, L=0, o0=0, Rt2=0, size=0
     let encoding: u32 = 0x0880001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -388,12 +503,17 @@ fn test_aarch64_memory_ordered_field_rt_30_poweroftwominusone_0_0880001e() {
 fn test_aarch64_memory_ordered_field_rt_31_max_0_0880001f() {
     // Encoding: 0x0880001F
     // Test aarch64_memory_ordered field Rt = 31 (Max)
-    // Fields: L=0, Rt2=0, size=0, Rn=0, Rt=31, Rs=0, o0=0
+    // Fields: Rs=0, Rt2=0, size=0, L=0, Rt=31, o0=0, Rn=0
     let encoding: u32 = 0x0880001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -404,12 +524,17 @@ fn test_aarch64_memory_ordered_field_rt_31_max_0_0880001f() {
 fn test_aarch64_memory_ordered_combo_0_0_08800000() {
     // Encoding: 0x08800000
     // Test aarch64_memory_ordered field combination: size=0, L=0, Rs=0, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: size=0, o0=0, Rt2=0, L=0, Rn=0, Rs=0, Rt=0
+    // Fields: o0=0, Rt2=0, Rn=0, Rt=0, L=0, size=0, Rs=0
     let encoding: u32 = 0x08800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -420,12 +545,17 @@ fn test_aarch64_memory_ordered_combo_0_0_08800000() {
 fn test_aarch64_memory_ordered_special_size_0_size_variant_0_0_08800000() {
     // Encoding: 0x08800000
     // Test aarch64_memory_ordered special value size = 0 (Size variant 0)
-    // Fields: size=0, L=0, Rn=0, Rt=0, Rs=0, o0=0, Rt2=0
+    // Fields: Rn=0, Rs=0, L=0, size=0, Rt=0, o0=0, Rt2=0
     let encoding: u32 = 0x08800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -436,12 +566,17 @@ fn test_aarch64_memory_ordered_special_size_0_size_variant_0_0_08800000() {
 fn test_aarch64_memory_ordered_special_size_1_size_variant_1_0_48800000() {
     // Encoding: 0x48800000
     // Test aarch64_memory_ordered special value size = 1 (Size variant 1)
-    // Fields: Rn=0, L=0, Rt=0, size=1, Rs=0, o0=0, Rt2=0
+    // Fields: size=1, Rt=0, Rt2=0, Rs=0, L=0, o0=0, Rn=0
     let encoding: u32 = 0x48800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -452,12 +587,17 @@ fn test_aarch64_memory_ordered_special_size_1_size_variant_1_0_48800000() {
 fn test_aarch64_memory_ordered_special_size_2_size_variant_2_0_88800000() {
     // Encoding: 0x88800000
     // Test aarch64_memory_ordered special value size = 2 (Size variant 2)
-    // Fields: o0=0, Rn=0, Rs=0, size=2, L=0, Rt2=0, Rt=0
+    // Fields: Rn=0, Rs=0, o0=0, L=0, Rt2=0, Rt=0, size=2
     let encoding: u32 = 0x88800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -468,12 +608,17 @@ fn test_aarch64_memory_ordered_special_size_2_size_variant_2_0_88800000() {
 fn test_aarch64_memory_ordered_special_size_3_size_variant_3_0_c8800000() {
     // Encoding: 0xC8800000
     // Test aarch64_memory_ordered special value size = 3 (Size variant 3)
-    // Fields: L=0, Rs=0, Rt2=0, o0=0, Rt=0, Rn=0, size=3
+    // Fields: size=3, L=0, Rs=0, o0=0, Rt2=0, Rt=0, Rn=0
     let encoding: u32 = 0xC8800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -484,12 +629,17 @@ fn test_aarch64_memory_ordered_special_size_3_size_variant_3_0_c8800000() {
 fn test_aarch64_memory_ordered_special_rn_31_stack_pointer_sp_may_require_alignment_0_088003e0() {
     // Encoding: 0x088003E0
     // Test aarch64_memory_ordered special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rt2=0, size=0, L=0, Rs=0, Rn=31, o0=0, Rt=0
+    // Fields: size=0, Rt2=0, Rn=31, L=0, Rt=0, Rs=0, o0=0
     let encoding: u32 = 0x088003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -497,15 +647,21 @@ fn test_aarch64_memory_ordered_special_rn_31_stack_pointer_sp_may_require_alignm
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_ordered_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_0880001f() {
+fn test_aarch64_memory_ordered_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_0880001f(
+) {
     // Encoding: 0x0880001F
     // Test aarch64_memory_ordered special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rt2=0, Rn=0, Rt=31, size=0, L=0, Rs=0, o0=0
+    // Fields: Rt2=0, Rs=0, size=0, o0=0, Rt=31, Rn=0, L=0
     let encoding: u32 = 0x0880001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered
@@ -563,8 +719,8 @@ fn test_aarch64_memory_ordered_store_0_08800020() {
     // Test aarch64_memory_ordered memory store: 8 bytes
     // Encoding: 0x08800020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x100000000000);
     set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
+    set_x(&mut cpu, 1, 0x100000000000);
     let encoding: u32 = 0x08800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -583,12 +739,17 @@ fn test_aarch64_memory_ordered_store_0_08800020() {
 fn test_aarch64_memory_ordered_rcpc_field_size_0_min_c000_38a0c000() {
     // Encoding: 0x38A0C000
     // Test aarch64_memory_ordered_rcpc field size = 0 (Min)
-    // Fields: Rs=0, Rn=0, size=0, Rt=0
+    // Fields: size=0, Rt=0, Rs=0, Rn=0
     let encoding: u32 = 0x38A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -599,12 +760,17 @@ fn test_aarch64_memory_ordered_rcpc_field_size_0_min_c000_38a0c000() {
 fn test_aarch64_memory_ordered_rcpc_field_size_1_poweroftwo_c000_78a0c000() {
     // Encoding: 0x78A0C000
     // Test aarch64_memory_ordered_rcpc field size = 1 (PowerOfTwo)
-    // Fields: Rn=0, size=1, Rs=0, Rt=0
+    // Fields: size=1, Rs=0, Rt=0, Rn=0
     let encoding: u32 = 0x78A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -615,12 +781,17 @@ fn test_aarch64_memory_ordered_rcpc_field_size_1_poweroftwo_c000_78a0c000() {
 fn test_aarch64_memory_ordered_rcpc_field_size_2_poweroftwo_c000_b8a0c000() {
     // Encoding: 0xB8A0C000
     // Test aarch64_memory_ordered_rcpc field size = 2 (PowerOfTwo)
-    // Fields: Rn=0, size=2, Rs=0, Rt=0
+    // Fields: size=2, Rn=0, Rt=0, Rs=0
     let encoding: u32 = 0xB8A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -631,12 +802,17 @@ fn test_aarch64_memory_ordered_rcpc_field_size_2_poweroftwo_c000_b8a0c000() {
 fn test_aarch64_memory_ordered_rcpc_field_size_3_max_c000_f8a0c000() {
     // Encoding: 0xF8A0C000
     // Test aarch64_memory_ordered_rcpc field size = 3 (Max)
-    // Fields: size=3, Rt=0, Rn=0, Rs=0
+    // Fields: Rn=0, Rs=0, Rt=0, size=3
     let encoding: u32 = 0xF8A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -647,12 +823,17 @@ fn test_aarch64_memory_ordered_rcpc_field_size_3_max_c000_f8a0c000() {
 fn test_aarch64_memory_ordered_rcpc_field_rs_0_min_c000_38a0c000() {
     // Encoding: 0x38A0C000
     // Test aarch64_memory_ordered_rcpc field Rs = 0 (Min)
-    // Fields: Rs=0, size=0, Rn=0, Rt=0
+    // Fields: size=0, Rs=0, Rt=0, Rn=0
     let encoding: u32 = 0x38A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -663,12 +844,17 @@ fn test_aarch64_memory_ordered_rcpc_field_rs_0_min_c000_38a0c000() {
 fn test_aarch64_memory_ordered_rcpc_field_rs_1_poweroftwo_c000_38a1c000() {
     // Encoding: 0x38A1C000
     // Test aarch64_memory_ordered_rcpc field Rs = 1 (PowerOfTwo)
-    // Fields: Rt=0, Rs=1, size=0, Rn=0
+    // Fields: size=0, Rt=0, Rn=0, Rs=1
     let encoding: u32 = 0x38A1C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -679,12 +865,17 @@ fn test_aarch64_memory_ordered_rcpc_field_rs_1_poweroftwo_c000_38a1c000() {
 fn test_aarch64_memory_ordered_rcpc_field_rs_30_poweroftwominusone_c000_38bec000() {
     // Encoding: 0x38BEC000
     // Test aarch64_memory_ordered_rcpc field Rs = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rs=30, Rt=0, Rn=0
+    // Fields: Rn=0, size=0, Rs=30, Rt=0
     let encoding: u32 = 0x38BEC000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -700,7 +891,12 @@ fn test_aarch64_memory_ordered_rcpc_field_rs_31_max_c000_38bfc000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -711,12 +907,17 @@ fn test_aarch64_memory_ordered_rcpc_field_rs_31_max_c000_38bfc000() {
 fn test_aarch64_memory_ordered_rcpc_field_rn_0_min_c000_38a0c000() {
     // Encoding: 0x38A0C000
     // Test aarch64_memory_ordered_rcpc field Rn = 0 (Min)
-    // Fields: Rt=0, Rs=0, Rn=0, size=0
+    // Fields: Rn=0, size=0, Rt=0, Rs=0
     let encoding: u32 = 0x38A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -727,12 +928,17 @@ fn test_aarch64_memory_ordered_rcpc_field_rn_0_min_c000_38a0c000() {
 fn test_aarch64_memory_ordered_rcpc_field_rn_1_poweroftwo_c000_38a0c020() {
     // Encoding: 0x38A0C020
     // Test aarch64_memory_ordered_rcpc field Rn = 1 (PowerOfTwo)
-    // Fields: size=0, Rs=0, Rn=1, Rt=0
+    // Fields: Rs=0, Rn=1, Rt=0, size=0
     let encoding: u32 = 0x38A0C020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -748,7 +954,12 @@ fn test_aarch64_memory_ordered_rcpc_field_rn_30_poweroftwominusone_c000_38a0c3c0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -759,12 +970,17 @@ fn test_aarch64_memory_ordered_rcpc_field_rn_30_poweroftwominusone_c000_38a0c3c0
 fn test_aarch64_memory_ordered_rcpc_field_rn_31_max_c000_38a0c3e0() {
     // Encoding: 0x38A0C3E0
     // Test aarch64_memory_ordered_rcpc field Rn = 31 (Max)
-    // Fields: Rs=0, Rn=31, size=0, Rt=0
+    // Fields: Rn=31, size=0, Rt=0, Rs=0
     let encoding: u32 = 0x38A0C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -775,12 +991,17 @@ fn test_aarch64_memory_ordered_rcpc_field_rn_31_max_c000_38a0c3e0() {
 fn test_aarch64_memory_ordered_rcpc_field_rt_0_min_c000_38a0c000() {
     // Encoding: 0x38A0C000
     // Test aarch64_memory_ordered_rcpc field Rt = 0 (Min)
-    // Fields: Rt=0, Rn=0, Rs=0, size=0
+    // Fields: Rs=0, Rt=0, size=0, Rn=0
     let encoding: u32 = 0x38A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -791,12 +1012,17 @@ fn test_aarch64_memory_ordered_rcpc_field_rt_0_min_c000_38a0c000() {
 fn test_aarch64_memory_ordered_rcpc_field_rt_1_poweroftwo_c000_38a0c001() {
     // Encoding: 0x38A0C001
     // Test aarch64_memory_ordered_rcpc field Rt = 1 (PowerOfTwo)
-    // Fields: Rt=1, Rn=0, size=0, Rs=0
+    // Fields: Rs=0, size=0, Rt=1, Rn=0
     let encoding: u32 = 0x38A0C001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -807,12 +1033,17 @@ fn test_aarch64_memory_ordered_rcpc_field_rt_1_poweroftwo_c000_38a0c001() {
 fn test_aarch64_memory_ordered_rcpc_field_rt_30_poweroftwominusone_c000_38a0c01e() {
     // Encoding: 0x38A0C01E
     // Test aarch64_memory_ordered_rcpc field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rn=0, Rs=0, Rt=30
+    // Fields: Rs=0, Rn=0, Rt=30, size=0
     let encoding: u32 = 0x38A0C01E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -823,12 +1054,17 @@ fn test_aarch64_memory_ordered_rcpc_field_rt_30_poweroftwominusone_c000_38a0c01e
 fn test_aarch64_memory_ordered_rcpc_field_rt_31_max_c000_38a0c01f() {
     // Encoding: 0x38A0C01F
     // Test aarch64_memory_ordered_rcpc field Rt = 31 (Max)
-    // Fields: Rs=0, Rn=0, Rt=31, size=0
+    // Fields: Rs=0, size=0, Rn=0, Rt=31
     let encoding: u32 = 0x38A0C01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -839,12 +1075,17 @@ fn test_aarch64_memory_ordered_rcpc_field_rt_31_max_c000_38a0c01f() {
 fn test_aarch64_memory_ordered_rcpc_combo_0_c000_38a0c000() {
     // Encoding: 0x38A0C000
     // Test aarch64_memory_ordered_rcpc field combination: size=0, Rs=0, Rn=0, Rt=0
-    // Fields: Rn=0, size=0, Rs=0, Rt=0
+    // Fields: size=0, Rt=0, Rn=0, Rs=0
     let encoding: u32 = 0x38A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -855,12 +1096,17 @@ fn test_aarch64_memory_ordered_rcpc_combo_0_c000_38a0c000() {
 fn test_aarch64_memory_ordered_rcpc_special_size_0_size_variant_0_49152_38a0c000() {
     // Encoding: 0x38A0C000
     // Test aarch64_memory_ordered_rcpc special value size = 0 (Size variant 0)
-    // Fields: Rs=0, Rt=0, Rn=0, size=0
+    // Fields: Rs=0, size=0, Rn=0, Rt=0
     let encoding: u32 = 0x38A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -876,7 +1122,12 @@ fn test_aarch64_memory_ordered_rcpc_special_size_1_size_variant_1_49152_78a0c000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -887,12 +1138,17 @@ fn test_aarch64_memory_ordered_rcpc_special_size_1_size_variant_1_49152_78a0c000
 fn test_aarch64_memory_ordered_rcpc_special_size_2_size_variant_2_49152_b8a0c000() {
     // Encoding: 0xB8A0C000
     // Test aarch64_memory_ordered_rcpc special value size = 2 (Size variant 2)
-    // Fields: size=2, Rn=0, Rs=0, Rt=0
+    // Fields: Rs=0, Rn=0, Rt=0, size=2
     let encoding: u32 = 0xB8A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -903,12 +1159,17 @@ fn test_aarch64_memory_ordered_rcpc_special_size_2_size_variant_2_49152_b8a0c000
 fn test_aarch64_memory_ordered_rcpc_special_size_3_size_variant_3_49152_f8a0c000() {
     // Encoding: 0xF8A0C000
     // Test aarch64_memory_ordered_rcpc special value size = 3 (Size variant 3)
-    // Fields: size=3, Rs=0, Rt=0, Rn=0
+    // Fields: Rn=0, Rs=0, size=3, Rt=0
     let encoding: u32 = 0xF8A0C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -916,15 +1177,21 @@ fn test_aarch64_memory_ordered_rcpc_special_size_3_size_variant_3_49152_f8a0c000
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_ordered_rcpc_special_rn_31_stack_pointer_sp_may_require_alignment_49152_38a0c3e0() {
+fn test_aarch64_memory_ordered_rcpc_special_rn_31_stack_pointer_sp_may_require_alignment_49152_38a0c3e0(
+) {
     // Encoding: 0x38A0C3E0
     // Test aarch64_memory_ordered_rcpc special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: size=0, Rn=31, Rt=0, Rs=0
+    // Fields: Rn=31, Rt=0, size=0, Rs=0
     let encoding: u32 = 0x38A0C3E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -932,15 +1199,21 @@ fn test_aarch64_memory_ordered_rcpc_special_rn_31_stack_pointer_sp_may_require_a
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_ordered_rcpc_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_49152_38a0c01f() {
+fn test_aarch64_memory_ordered_rcpc_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_49152_38a0c01f(
+) {
     // Encoding: 0x38A0C01F
     // Test aarch64_memory_ordered_rcpc special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rt=31, Rs=0, size=0, Rn=0
+    // Fields: size=0, Rs=0, Rt=31, Rn=0
     let encoding: u32 = 0x38A0C01F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_memory_ordered_rcpc
@@ -988,4 +1261,3 @@ fn test_aarch64_memory_ordered_rcpc_zr_rt_38a0c01f() {
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
     assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
 }
-

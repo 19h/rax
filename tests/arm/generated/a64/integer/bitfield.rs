@@ -20,12 +20,17 @@ use crate::generated::test_helpers::*;
 fn test_aarch64_integer_ins_ext_extract_immediate_field_sf_0_min_0_13800000() {
     // Encoding: 0x13800000
     // Test aarch64_integer_ins_ext_extract_immediate field sf = 0 (Min)
-    // Fields: imms=0, Rn=0, Rd=0, Rm=0, N=0, sf=0
+    // Fields: Rm=0, Rn=0, Rd=0, N=0, imms=0, sf=0
     let encoding: u32 = 0x13800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -36,12 +41,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_sf_0_min_0_13800000() {
 fn test_aarch64_integer_ins_ext_extract_immediate_field_sf_1_max_0_93800000() {
     // Encoding: 0x93800000
     // Test aarch64_integer_ins_ext_extract_immediate field sf = 1 (Max)
-    // Fields: imms=0, Rd=0, N=0, sf=1, Rn=0, Rm=0
+    // Fields: sf=1, Rd=0, imms=0, N=0, Rn=0, Rm=0
     let encoding: u32 = 0x93800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -52,12 +62,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_sf_1_max_0_93800000() {
 fn test_aarch64_integer_ins_ext_extract_immediate_field_n_0_min_0_13800000() {
     // Encoding: 0x13800000
     // Test aarch64_integer_ins_ext_extract_immediate field N = 0 (Min)
-    // Fields: Rm=0, Rd=0, imms=0, sf=0, N=0, Rn=0
+    // Fields: N=0, Rd=0, sf=0, Rm=0, imms=0, Rn=0
     let encoding: u32 = 0x13800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -68,12 +83,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_n_0_min_0_13800000() {
 fn test_aarch64_integer_ins_ext_extract_immediate_field_n_1_max_0_13c00000() {
     // Encoding: 0x13C00000
     // Test aarch64_integer_ins_ext_extract_immediate field N = 1 (Max)
-    // Fields: imms=0, N=1, Rm=0, Rn=0, sf=0, Rd=0
+    // Fields: sf=0, Rd=0, N=1, Rn=0, imms=0, Rm=0
     let encoding: u32 = 0x13C00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -84,12 +104,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_n_1_max_0_13c00000() {
 fn test_aarch64_integer_ins_ext_extract_immediate_field_rm_0_min_0_13800000() {
     // Encoding: 0x13800000
     // Test aarch64_integer_ins_ext_extract_immediate field Rm = 0 (Min)
-    // Fields: sf=0, Rm=0, Rn=0, imms=0, N=0, Rd=0
+    // Fields: sf=0, Rn=0, Rm=0, Rd=0, imms=0, N=0
     let encoding: u32 = 0x13800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -100,12 +125,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_rm_0_min_0_13800000() {
 fn test_aarch64_integer_ins_ext_extract_immediate_field_rm_1_poweroftwo_0_13810000() {
     // Encoding: 0x13810000
     // Test aarch64_integer_ins_ext_extract_immediate field Rm = 1 (PowerOfTwo)
-    // Fields: Rm=1, Rd=0, imms=0, sf=0, N=0, Rn=0
+    // Fields: Rn=0, sf=0, Rm=1, N=0, imms=0, Rd=0
     let encoding: u32 = 0x13810000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -116,12 +146,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_rm_1_poweroftwo_0_138100
 fn test_aarch64_integer_ins_ext_extract_immediate_field_rm_30_poweroftwominusone_0_139e0000() {
     // Encoding: 0x139E0000
     // Test aarch64_integer_ins_ext_extract_immediate field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: N=0, sf=0, imms=0, Rn=0, Rd=0, Rm=30
+    // Fields: imms=0, Rd=0, Rm=30, Rn=0, sf=0, N=0
     let encoding: u32 = 0x139E0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -132,12 +167,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_rm_30_poweroftwominusone
 fn test_aarch64_integer_ins_ext_extract_immediate_field_rm_31_max_0_139f0000() {
     // Encoding: 0x139F0000
     // Test aarch64_integer_ins_ext_extract_immediate field Rm = 31 (Max)
-    // Fields: Rm=31, sf=0, N=0, Rn=0, Rd=0, imms=0
+    // Fields: Rn=0, imms=0, sf=0, Rd=0, Rm=31, N=0
     let encoding: u32 = 0x139F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -148,12 +188,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_rm_31_max_0_139f0000() {
 fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_0_zero_0_13800000() {
     // Encoding: 0x13800000
     // Test aarch64_integer_ins_ext_extract_immediate field imms = 0 (Zero)
-    // Fields: sf=0, Rn=0, imms=0, N=0, Rd=0, Rm=0
+    // Fields: N=0, Rd=0, Rm=0, sf=0, imms=0, Rn=0
     let encoding: u32 = 0x13800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -164,12 +209,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_0_zero_0_13800000()
 fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_1_poweroftwo_0_13800400() {
     // Encoding: 0x13800400
     // Test aarch64_integer_ins_ext_extract_immediate field imms = 1 (PowerOfTwo)
-    // Fields: N=0, imms=1, Rm=0, sf=0, Rn=0, Rd=0
+    // Fields: Rd=0, Rm=0, imms=1, N=0, Rn=0, sf=0
     let encoding: u32 = 0x13800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -180,12 +230,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_1_poweroftwo_0_1380
 fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_3_poweroftwominusone_0_13800c00() {
     // Encoding: 0x13800C00
     // Test aarch64_integer_ins_ext_extract_immediate field imms = 3 (PowerOfTwoMinusOne)
-    // Fields: N=0, sf=0, Rd=0, Rn=0, Rm=0, imms=3
+    // Fields: imms=3, N=0, sf=0, Rn=0, Rm=0, Rd=0
     let encoding: u32 = 0x13800C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -196,12 +251,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_3_poweroftwominuson
 fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_4_poweroftwo_0_13801000() {
     // Encoding: 0x13801000
     // Test aarch64_integer_ins_ext_extract_immediate field imms = 4 (PowerOfTwo)
-    // Fields: imms=4, Rd=0, Rn=0, N=0, sf=0, Rm=0
+    // Fields: imms=4, Rn=0, sf=0, Rd=0, Rm=0, N=0
     let encoding: u32 = 0x13801000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -212,12 +272,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_4_poweroftwo_0_1380
 fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_7_poweroftwominusone_0_13801c00() {
     // Encoding: 0x13801C00
     // Test aarch64_integer_ins_ext_extract_immediate field imms = 7 (PowerOfTwoMinusOne)
-    // Fields: N=0, Rn=0, imms=7, Rd=0, Rm=0, sf=0
+    // Fields: sf=0, Rn=0, N=0, Rd=0, imms=7, Rm=0
     let encoding: u32 = 0x13801C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -228,12 +293,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_7_poweroftwominuson
 fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_8_poweroftwo_0_13802000() {
     // Encoding: 0x13802000
     // Test aarch64_integer_ins_ext_extract_immediate field imms = 8 (PowerOfTwo)
-    // Fields: N=0, Rm=0, Rd=0, sf=0, imms=8, Rn=0
+    // Fields: imms=8, Rn=0, Rd=0, N=0, Rm=0, sf=0
     let encoding: u32 = 0x13802000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -244,12 +314,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_8_poweroftwo_0_1380
 fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_15_poweroftwominusone_0_13803c00() {
     // Encoding: 0x13803C00
     // Test aarch64_integer_ins_ext_extract_immediate field imms = 15 (PowerOfTwoMinusOne)
-    // Fields: N=0, sf=0, Rm=0, imms=15, Rn=0, Rd=0
+    // Fields: N=0, Rd=0, Rm=0, Rn=0, sf=0, imms=15
     let encoding: u32 = 0x13803C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -260,12 +335,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_15_poweroftwominuso
 fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_16_poweroftwo_0_13804000() {
     // Encoding: 0x13804000
     // Test aarch64_integer_ins_ext_extract_immediate field imms = 16 (PowerOfTwo)
-    // Fields: sf=0, imms=16, Rn=0, Rd=0, N=0, Rm=0
+    // Fields: Rd=0, sf=0, Rn=0, Rm=0, imms=16, N=0
     let encoding: u32 = 0x13804000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -276,12 +356,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_16_poweroftwo_0_138
 fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_31_poweroftwominusone_0_13807c00() {
     // Encoding: 0x13807C00
     // Test aarch64_integer_ins_ext_extract_immediate field imms = 31 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rd=0, imms=31, N=0, sf=0, Rm=0
+    // Fields: Rm=0, Rn=0, imms=31, N=0, sf=0, Rd=0
     let encoding: u32 = 0x13807C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -292,12 +377,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_31_poweroftwominuso
 fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_32_poweroftwo_0_13808000() {
     // Encoding: 0x13808000
     // Test aarch64_integer_ins_ext_extract_immediate field imms = 32 (PowerOfTwo)
-    // Fields: N=0, imms=32, Rn=0, sf=0, Rm=0, Rd=0
+    // Fields: sf=0, N=0, Rn=0, Rm=0, Rd=0, imms=32
     let encoding: u32 = 0x13808000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -308,12 +398,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_32_poweroftwo_0_138
 fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_63_max_0_1380fc00() {
     // Encoding: 0x1380FC00
     // Test aarch64_integer_ins_ext_extract_immediate field imms = 63 (Max)
-    // Fields: Rm=0, Rd=0, N=0, sf=0, imms=63, Rn=0
+    // Fields: Rn=0, Rm=0, Rd=0, N=0, sf=0, imms=63
     let encoding: u32 = 0x1380FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -324,12 +419,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_imms_63_max_0_1380fc00()
 fn test_aarch64_integer_ins_ext_extract_immediate_field_rn_0_min_0_13800000() {
     // Encoding: 0x13800000
     // Test aarch64_integer_ins_ext_extract_immediate field Rn = 0 (Min)
-    // Fields: Rm=0, N=0, imms=0, Rd=0, Rn=0, sf=0
+    // Fields: Rm=0, Rn=0, N=0, sf=0, imms=0, Rd=0
     let encoding: u32 = 0x13800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -340,12 +440,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_rn_0_min_0_13800000() {
 fn test_aarch64_integer_ins_ext_extract_immediate_field_rn_1_poweroftwo_0_13800020() {
     // Encoding: 0x13800020
     // Test aarch64_integer_ins_ext_extract_immediate field Rn = 1 (PowerOfTwo)
-    // Fields: imms=0, N=0, Rn=1, sf=0, Rd=0, Rm=0
+    // Fields: imms=0, Rn=1, Rd=0, N=0, sf=0, Rm=0
     let encoding: u32 = 0x13800020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -356,12 +461,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_rn_1_poweroftwo_0_138000
 fn test_aarch64_integer_ins_ext_extract_immediate_field_rn_30_poweroftwominusone_0_138003c0() {
     // Encoding: 0x138003C0
     // Test aarch64_integer_ins_ext_extract_immediate field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: imms=0, Rn=30, N=0, Rd=0, Rm=0, sf=0
+    // Fields: sf=0, Rn=30, Rm=0, Rd=0, N=0, imms=0
     let encoding: u32 = 0x138003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -372,12 +482,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_rn_30_poweroftwominusone
 fn test_aarch64_integer_ins_ext_extract_immediate_field_rn_31_max_0_138003e0() {
     // Encoding: 0x138003E0
     // Test aarch64_integer_ins_ext_extract_immediate field Rn = 31 (Max)
-    // Fields: Rd=0, imms=0, Rm=0, N=0, Rn=31, sf=0
+    // Fields: sf=0, imms=0, Rn=31, Rd=0, N=0, Rm=0
     let encoding: u32 = 0x138003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -388,12 +503,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_rn_31_max_0_138003e0() {
 fn test_aarch64_integer_ins_ext_extract_immediate_field_rd_0_min_0_13800000() {
     // Encoding: 0x13800000
     // Test aarch64_integer_ins_ext_extract_immediate field Rd = 0 (Min)
-    // Fields: Rm=0, Rd=0, N=0, Rn=0, sf=0, imms=0
+    // Fields: sf=0, N=0, Rm=0, Rn=0, imms=0, Rd=0
     let encoding: u32 = 0x13800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -404,12 +524,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_rd_0_min_0_13800000() {
 fn test_aarch64_integer_ins_ext_extract_immediate_field_rd_1_poweroftwo_0_13800001() {
     // Encoding: 0x13800001
     // Test aarch64_integer_ins_ext_extract_immediate field Rd = 1 (PowerOfTwo)
-    // Fields: Rd=1, Rm=0, sf=0, imms=0, N=0, Rn=0
+    // Fields: imms=0, sf=0, N=0, Rd=1, Rn=0, Rm=0
     let encoding: u32 = 0x13800001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -420,12 +545,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_rd_1_poweroftwo_0_138000
 fn test_aarch64_integer_ins_ext_extract_immediate_field_rd_30_poweroftwominusone_0_1380001e() {
     // Encoding: 0x1380001E
     // Test aarch64_integer_ins_ext_extract_immediate field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: N=0, sf=0, Rm=0, Rd=30, imms=0, Rn=0
+    // Fields: sf=0, N=0, Rm=0, Rn=0, Rd=30, imms=0
     let encoding: u32 = 0x1380001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -436,12 +566,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_rd_30_poweroftwominusone
 fn test_aarch64_integer_ins_ext_extract_immediate_field_rd_31_max_0_1380001f() {
     // Encoding: 0x1380001F
     // Test aarch64_integer_ins_ext_extract_immediate field Rd = 31 (Max)
-    // Fields: imms=0, sf=0, Rn=0, N=0, Rm=0, Rd=31
+    // Fields: Rd=31, Rm=0, sf=0, Rn=0, N=0, imms=0
     let encoding: u32 = 0x1380001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -452,12 +587,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_field_rd_31_max_0_1380001f() {
 fn test_aarch64_integer_ins_ext_extract_immediate_combo_0_0_13800000() {
     // Encoding: 0x13800000
     // Test aarch64_integer_ins_ext_extract_immediate field combination: sf=0, N=0, Rm=0, imms=0, Rn=0, Rd=0
-    // Fields: N=0, imms=0, sf=0, Rd=0, Rm=0, Rn=0
+    // Fields: Rn=0, Rd=0, imms=0, N=0, sf=0, Rm=0
     let encoding: u32 = 0x13800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -468,12 +608,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_combo_0_0_13800000() {
 fn test_aarch64_integer_ins_ext_extract_immediate_special_sf_0_size_variant_0_0_13800000() {
     // Encoding: 0x13800000
     // Test aarch64_integer_ins_ext_extract_immediate special value sf = 0 (Size variant 0)
-    // Fields: Rd=0, sf=0, N=0, Rm=0, imms=0, Rn=0
+    // Fields: N=0, Rm=0, imms=0, Rd=0, sf=0, Rn=0
     let encoding: u32 = 0x13800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -484,12 +629,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_special_sf_0_size_variant_0_0_
 fn test_aarch64_integer_ins_ext_extract_immediate_special_sf_1_size_variant_1_0_93800000() {
     // Encoding: 0x93800000
     // Test aarch64_integer_ins_ext_extract_immediate special value sf = 1 (Size variant 1)
-    // Fields: N=0, sf=1, Rn=0, imms=0, Rm=0, Rd=0
+    // Fields: Rn=0, N=0, Rd=0, Rm=0, sf=1, imms=0
     let encoding: u32 = 0x93800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -497,15 +647,21 @@ fn test_aarch64_integer_ins_ext_extract_immediate_special_sf_1_size_variant_1_0_
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_ins_ext_extract_immediate_special_rn_31_stack_pointer_sp_may_require_alignment_0_138003e0() {
+fn test_aarch64_integer_ins_ext_extract_immediate_special_rn_31_stack_pointer_sp_may_require_alignment_0_138003e0(
+) {
     // Encoding: 0x138003E0
     // Test aarch64_integer_ins_ext_extract_immediate special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: N=0, Rm=0, sf=0, Rd=0, imms=0, Rn=31
+    // Fields: N=0, sf=0, Rm=0, imms=0, Rd=0, Rn=31
     let encoding: u32 = 0x138003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -513,15 +669,21 @@ fn test_aarch64_integer_ins_ext_extract_immediate_special_rn_31_stack_pointer_sp
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_ins_ext_extract_immediate_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1380001f() {
+fn test_aarch64_integer_ins_ext_extract_immediate_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1380001f(
+) {
     // Encoding: 0x1380001F
     // Test aarch64_integer_ins_ext_extract_immediate special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rm=0, N=0, sf=0, Rn=0, imms=0, Rd=31
+    // Fields: imms=0, N=0, Rn=0, sf=0, Rm=0, Rd=31
     let encoding: u32 = 0x1380001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -532,12 +694,16 @@ fn test_aarch64_integer_ins_ext_extract_immediate_special_rd_31_zero_register_xz
 fn test_aarch64_integer_ins_ext_extract_immediate_invalid_0_0_13800000() {
     // Encoding: 0x13800000
     // Test aarch64_integer_ins_ext_extract_immediate invalid encoding: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "N" }), rhs: Var(QualifiedIdentifier { qualifier: Any, name: "sf" }) }
-    // Fields: Rm=0, imms=0, sf=0, N=0, Rn=0, Rd=0
+    // Fields: Rn=0, N=0, sf=0, Rm=0, imms=0, Rd=0
     let encoding: u32 = 0x13800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -548,12 +714,16 @@ fn test_aarch64_integer_ins_ext_extract_immediate_invalid_0_0_13800000() {
 fn test_aarch64_integer_ins_ext_extract_immediate_invalid_1_0_13800000() {
     // Encoding: 0x13800000
     // Test aarch64_integer_ins_ext_extract_immediate invalid encoding: Unconditional UNDEFINED
-    // Fields: imms=0, Rd=0, N=0, sf=0, Rn=0, Rm=0
+    // Fields: Rn=0, imms=0, Rd=0, sf=0, N=0, Rm=0
     let encoding: u32 = 0x13800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -564,12 +734,16 @@ fn test_aarch64_integer_ins_ext_extract_immediate_invalid_1_0_13800000() {
 fn test_aarch64_integer_ins_ext_extract_immediate_invalid_2_0_13800000() {
     // Encoding: 0x13800000
     // Test aarch64_integer_ins_ext_extract_immediate invalid encoding: Binary { op: Eq, lhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "sf" }), rhs: Binary { op: And, lhs: LitBits([false]), rhs: Index { base: Var(QualifiedIdentifier { qualifier: Any, name: "imms" }), indices: [Single(LitInt(5))] } } }, rhs: LitBits([true]) }
-    // Fields: N=0, Rm=0, sf=0, Rn=0, Rd=0, imms=0
+    // Fields: N=0, Rn=0, Rm=0, Rd=0, imms=0, sf=0
     let encoding: u32 = 0x13800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -580,12 +754,16 @@ fn test_aarch64_integer_ins_ext_extract_immediate_invalid_2_0_13800000() {
 fn test_aarch64_integer_ins_ext_extract_immediate_invalid_3_0_13800000() {
     // Encoding: 0x13800000
     // Test aarch64_integer_ins_ext_extract_immediate invalid encoding: Unconditional UNDEFINED
-    // Fields: imms=0, N=0, Rm=0, Rn=0, Rd=0, sf=0
+    // Fields: imms=0, Rm=0, Rn=0, Rd=0, N=0, sf=0
     let encoding: u32 = 0x13800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -597,8 +775,8 @@ fn test_aarch64_integer_ins_ext_extract_immediate_extr_oracle_32_0_13820020() {
     // Test EXTR 32-bit: extract at 0 (oracle)
     // Encoding: 0x13820020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xCAFEBABE);
     set_x(&mut cpu, 1, 0xDEADBEEF);
+    set_x(&mut cpu, 2, 0xCAFEBABE);
     let encoding: u32 = 0x13820020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -615,13 +793,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_extr_oracle_64_0_93c20020() {
     // Test EXTR 64-bit: extract at 0 (oracle)
     // Encoding: 0x93C20020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xDEADBEEF);
     set_x(&mut cpu, 2, 0xCAFEBABE);
+    set_x(&mut cpu, 1, 0xDEADBEEF);
     let encoding: u32 = 0x93C20020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xCAFEBABE, "X0 should be 0x00000000CAFEBABE");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xCAFEBABE,
+        "X0 should be 0x00000000CAFEBABE"
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -633,8 +815,8 @@ fn test_aarch64_integer_ins_ext_extract_immediate_extr_oracle_32_1_13824020() {
     // Test EXTR 32-bit: extract at 16 (oracle)
     // Encoding: 0x13824020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xCAFEBABE);
     set_x(&mut cpu, 1, 0xDEADBEEF);
+    set_x(&mut cpu, 2, 0xCAFEBABE);
     let encoding: u32 = 0x13824020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -657,7 +839,11 @@ fn test_aarch64_integer_ins_ext_extract_immediate_extr_oracle_64_1_93c24020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xBEEF00000000CAFE, "X0 should be 0xBEEF00000000CAFE");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xBEEF00000000CAFE,
+        "X0 should be 0xBEEF00000000CAFE"
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -669,8 +855,8 @@ fn test_aarch64_integer_ins_ext_extract_immediate_extr_oracle_32_2_13822020() {
     // Test EXTR 32-bit: extract at 8 (oracle)
     // Encoding: 0x13822020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xDEADBEEF);
     set_x(&mut cpu, 2, 0xCAFEBABE);
+    set_x(&mut cpu, 1, 0xDEADBEEF);
     let encoding: u32 = 0x13822020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -693,7 +879,11 @@ fn test_aarch64_integer_ins_ext_extract_immediate_extr_oracle_64_2_93c22020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xEF00000000CAFEBA, "X0 should be 0xEF00000000CAFEBA");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xEF00000000CAFEBA,
+        "X0 should be 0xEF00000000CAFEBA"
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -705,13 +895,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_extr_oracle_64_3_93c28020() {
     // Test EXTR 64-bit: extract at 32 (64-bit) (oracle)
     // Encoding: 0x93C28020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x123456789ABCDEF0);
     set_x(&mut cpu, 2, 0xFEDCBA9876543210);
+    set_x(&mut cpu, 1, 0x123456789ABCDEF0);
     let encoding: u32 = 0x93C28020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0x9ABCDEF0FEDCBA98, "X0 should be 0x9ABCDEF0FEDCBA98");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0x9ABCDEF0FEDCBA98,
+        "X0 should be 0x9ABCDEF0FEDCBA98"
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -723,8 +917,8 @@ fn test_aarch64_integer_ins_ext_extract_immediate_extr_oracle_32_4_13821020() {
     // Test EXTR 32-bit: alternating bits (oracle)
     // Encoding: 0x13821020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xAAAAAAAA);
     set_x(&mut cpu, 2, 0x55555555);
+    set_x(&mut cpu, 1, 0xAAAAAAAA);
     let encoding: u32 = 0x13821020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -747,7 +941,11 @@ fn test_aarch64_integer_ins_ext_extract_immediate_extr_oracle_64_4_93c21020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xA000000005555555, "X0 should be 0xA000000005555555");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xA000000005555555,
+        "X0 should be 0xA000000005555555"
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_extract_immediate
@@ -808,12 +1006,17 @@ fn test_aarch64_integer_ins_ext_extract_immediate_zr_rd_1380001f() {
 fn test_aarch64_integer_bitfield_field_sf_0_min_0_13000000() {
     // Encoding: 0x13000000
     // Test aarch64_integer_bitfield field sf = 0 (Min)
-    // Fields: immr=0, imms=0, N=0, Rn=0, Rd=0, opc=0, sf=0
+    // Fields: immr=0, imms=0, N=0, opc=0, Rn=0, sf=0, Rd=0
     let encoding: u32 = 0x13000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -824,12 +1027,17 @@ fn test_aarch64_integer_bitfield_field_sf_0_min_0_13000000() {
 fn test_aarch64_integer_bitfield_field_sf_1_max_0_93000000() {
     // Encoding: 0x93000000
     // Test aarch64_integer_bitfield field sf = 1 (Max)
-    // Fields: Rd=0, imms=0, Rn=0, N=0, opc=0, sf=1, immr=0
+    // Fields: Rn=0, immr=0, N=0, Rd=0, imms=0, sf=1, opc=0
     let encoding: u32 = 0x93000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -840,12 +1048,17 @@ fn test_aarch64_integer_bitfield_field_sf_1_max_0_93000000() {
 fn test_aarch64_integer_bitfield_field_opc_0_min_0_13000000() {
     // Encoding: 0x13000000
     // Test aarch64_integer_bitfield field opc = 0 (Min)
-    // Fields: immr=0, N=0, imms=0, Rn=0, Rd=0, sf=0, opc=0
+    // Fields: imms=0, N=0, Rn=0, Rd=0, opc=0, immr=0, sf=0
     let encoding: u32 = 0x13000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -856,12 +1069,17 @@ fn test_aarch64_integer_bitfield_field_opc_0_min_0_13000000() {
 fn test_aarch64_integer_bitfield_field_opc_1_poweroftwo_0_33000000() {
     // Encoding: 0x33000000
     // Test aarch64_integer_bitfield field opc = 1 (PowerOfTwo)
-    // Fields: N=0, immr=0, opc=1, imms=0, Rn=0, Rd=0, sf=0
+    // Fields: N=0, immr=0, Rd=0, imms=0, sf=0, Rn=0, opc=1
     let encoding: u32 = 0x33000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -872,12 +1090,17 @@ fn test_aarch64_integer_bitfield_field_opc_1_poweroftwo_0_33000000() {
 fn test_aarch64_integer_bitfield_field_opc_2_poweroftwo_0_53000000() {
     // Encoding: 0x53000000
     // Test aarch64_integer_bitfield field opc = 2 (PowerOfTwo)
-    // Fields: Rn=0, Rd=0, imms=0, sf=0, opc=2, N=0, immr=0
+    // Fields: sf=0, Rd=0, immr=0, N=0, imms=0, opc=2, Rn=0
     let encoding: u32 = 0x53000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -888,12 +1111,17 @@ fn test_aarch64_integer_bitfield_field_opc_2_poweroftwo_0_53000000() {
 fn test_aarch64_integer_bitfield_field_opc_3_max_0_73000000() {
     // Encoding: 0x73000000
     // Test aarch64_integer_bitfield field opc = 3 (Max)
-    // Fields: N=0, imms=0, Rn=0, opc=3, immr=0, Rd=0, sf=0
+    // Fields: immr=0, opc=3, sf=0, N=0, imms=0, Rn=0, Rd=0
     let encoding: u32 = 0x73000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -904,12 +1132,17 @@ fn test_aarch64_integer_bitfield_field_opc_3_max_0_73000000() {
 fn test_aarch64_integer_bitfield_field_n_0_min_0_13000000() {
     // Encoding: 0x13000000
     // Test aarch64_integer_bitfield field N = 0 (Min)
-    // Fields: sf=0, opc=0, immr=0, imms=0, Rn=0, Rd=0, N=0
+    // Fields: Rn=0, Rd=0, immr=0, opc=0, sf=0, N=0, imms=0
     let encoding: u32 = 0x13000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -920,12 +1153,17 @@ fn test_aarch64_integer_bitfield_field_n_0_min_0_13000000() {
 fn test_aarch64_integer_bitfield_field_n_1_max_0_13400000() {
     // Encoding: 0x13400000
     // Test aarch64_integer_bitfield field N = 1 (Max)
-    // Fields: immr=0, opc=0, Rn=0, Rd=0, imms=0, N=1, sf=0
+    // Fields: sf=0, imms=0, Rd=0, Rn=0, N=1, immr=0, opc=0
     let encoding: u32 = 0x13400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -936,12 +1174,17 @@ fn test_aarch64_integer_bitfield_field_n_1_max_0_13400000() {
 fn test_aarch64_integer_bitfield_field_immr_0_zero_0_13000000() {
     // Encoding: 0x13000000
     // Test aarch64_integer_bitfield field immr = 0 (Zero)
-    // Fields: N=0, Rn=0, Rd=0, sf=0, opc=0, imms=0, immr=0
+    // Fields: imms=0, Rn=0, Rd=0, N=0, sf=0, opc=0, immr=0
     let encoding: u32 = 0x13000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -952,12 +1195,17 @@ fn test_aarch64_integer_bitfield_field_immr_0_zero_0_13000000() {
 fn test_aarch64_integer_bitfield_field_immr_1_poweroftwo_0_13010000() {
     // Encoding: 0x13010000
     // Test aarch64_integer_bitfield field immr = 1 (PowerOfTwo)
-    // Fields: immr=1, imms=0, Rd=0, Rn=0, N=0, sf=0, opc=0
+    // Fields: sf=0, opc=0, immr=1, N=0, imms=0, Rd=0, Rn=0
     let encoding: u32 = 0x13010000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -968,12 +1216,17 @@ fn test_aarch64_integer_bitfield_field_immr_1_poweroftwo_0_13010000() {
 fn test_aarch64_integer_bitfield_field_immr_3_poweroftwominusone_0_13030000() {
     // Encoding: 0x13030000
     // Test aarch64_integer_bitfield field immr = 3 (PowerOfTwoMinusOne)
-    // Fields: Rd=0, N=0, imms=0, opc=0, sf=0, immr=3, Rn=0
+    // Fields: sf=0, opc=0, Rn=0, Rd=0, N=0, immr=3, imms=0
     let encoding: u32 = 0x13030000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -984,12 +1237,17 @@ fn test_aarch64_integer_bitfield_field_immr_3_poweroftwominusone_0_13030000() {
 fn test_aarch64_integer_bitfield_field_immr_4_poweroftwo_0_13040000() {
     // Encoding: 0x13040000
     // Test aarch64_integer_bitfield field immr = 4 (PowerOfTwo)
-    // Fields: Rd=0, N=0, sf=0, Rn=0, opc=0, immr=4, imms=0
+    // Fields: immr=4, Rn=0, imms=0, N=0, opc=0, sf=0, Rd=0
     let encoding: u32 = 0x13040000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1000,12 +1258,17 @@ fn test_aarch64_integer_bitfield_field_immr_4_poweroftwo_0_13040000() {
 fn test_aarch64_integer_bitfield_field_immr_7_poweroftwominusone_0_13070000() {
     // Encoding: 0x13070000
     // Test aarch64_integer_bitfield field immr = 7 (PowerOfTwoMinusOne)
-    // Fields: opc=0, N=0, sf=0, imms=0, Rn=0, Rd=0, immr=7
+    // Fields: Rn=0, Rd=0, N=0, opc=0, sf=0, immr=7, imms=0
     let encoding: u32 = 0x13070000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1016,12 +1279,17 @@ fn test_aarch64_integer_bitfield_field_immr_7_poweroftwominusone_0_13070000() {
 fn test_aarch64_integer_bitfield_field_immr_8_poweroftwo_0_13080000() {
     // Encoding: 0x13080000
     // Test aarch64_integer_bitfield field immr = 8 (PowerOfTwo)
-    // Fields: Rd=0, N=0, sf=0, opc=0, imms=0, immr=8, Rn=0
+    // Fields: immr=8, Rd=0, Rn=0, sf=0, imms=0, N=0, opc=0
     let encoding: u32 = 0x13080000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1032,12 +1300,17 @@ fn test_aarch64_integer_bitfield_field_immr_8_poweroftwo_0_13080000() {
 fn test_aarch64_integer_bitfield_field_immr_15_poweroftwominusone_0_130f0000() {
     // Encoding: 0x130F0000
     // Test aarch64_integer_bitfield field immr = 15 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rd=0, N=0, sf=0, opc=0, immr=15, imms=0
+    // Fields: immr=15, imms=0, sf=0, N=0, opc=0, Rn=0, Rd=0
     let encoding: u32 = 0x130F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1048,12 +1321,17 @@ fn test_aarch64_integer_bitfield_field_immr_15_poweroftwominusone_0_130f0000() {
 fn test_aarch64_integer_bitfield_field_immr_16_poweroftwo_0_13100000() {
     // Encoding: 0x13100000
     // Test aarch64_integer_bitfield field immr = 16 (PowerOfTwo)
-    // Fields: opc=0, immr=16, N=0, imms=0, Rn=0, Rd=0, sf=0
+    // Fields: imms=0, Rn=0, sf=0, Rd=0, opc=0, immr=16, N=0
     let encoding: u32 = 0x13100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1064,12 +1342,17 @@ fn test_aarch64_integer_bitfield_field_immr_16_poweroftwo_0_13100000() {
 fn test_aarch64_integer_bitfield_field_immr_31_poweroftwominusone_0_131f0000() {
     // Encoding: 0x131F0000
     // Test aarch64_integer_bitfield field immr = 31 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rd=0, N=0, opc=0, sf=0, immr=31, imms=0
+    // Fields: imms=0, sf=0, opc=0, immr=31, Rn=0, Rd=0, N=0
     let encoding: u32 = 0x131F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1080,12 +1363,17 @@ fn test_aarch64_integer_bitfield_field_immr_31_poweroftwominusone_0_131f0000() {
 fn test_aarch64_integer_bitfield_field_immr_32_poweroftwo_0_13200000() {
     // Encoding: 0x13200000
     // Test aarch64_integer_bitfield field immr = 32 (PowerOfTwo)
-    // Fields: sf=0, opc=0, N=0, Rd=0, immr=32, imms=0, Rn=0
+    // Fields: imms=0, Rn=0, N=0, Rd=0, opc=0, immr=32, sf=0
     let encoding: u32 = 0x13200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1096,12 +1384,17 @@ fn test_aarch64_integer_bitfield_field_immr_32_poweroftwo_0_13200000() {
 fn test_aarch64_integer_bitfield_field_immr_63_max_0_133f0000() {
     // Encoding: 0x133F0000
     // Test aarch64_integer_bitfield field immr = 63 (Max)
-    // Fields: opc=0, imms=0, Rn=0, Rd=0, sf=0, immr=63, N=0
+    // Fields: N=0, imms=0, immr=63, Rd=0, sf=0, Rn=0, opc=0
     let encoding: u32 = 0x133F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1112,12 +1405,17 @@ fn test_aarch64_integer_bitfield_field_immr_63_max_0_133f0000() {
 fn test_aarch64_integer_bitfield_field_imms_0_zero_0_13000000() {
     // Encoding: 0x13000000
     // Test aarch64_integer_bitfield field imms = 0 (Zero)
-    // Fields: imms=0, Rn=0, N=0, opc=0, Rd=0, sf=0, immr=0
+    // Fields: Rn=0, Rd=0, N=0, imms=0, opc=0, sf=0, immr=0
     let encoding: u32 = 0x13000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1128,12 +1426,17 @@ fn test_aarch64_integer_bitfield_field_imms_0_zero_0_13000000() {
 fn test_aarch64_integer_bitfield_field_imms_1_poweroftwo_0_13000400() {
     // Encoding: 0x13000400
     // Test aarch64_integer_bitfield field imms = 1 (PowerOfTwo)
-    // Fields: Rn=0, Rd=0, immr=0, opc=0, N=0, sf=0, imms=1
+    // Fields: sf=0, N=0, imms=1, immr=0, opc=0, Rn=0, Rd=0
     let encoding: u32 = 0x13000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1144,12 +1447,17 @@ fn test_aarch64_integer_bitfield_field_imms_1_poweroftwo_0_13000400() {
 fn test_aarch64_integer_bitfield_field_imms_3_poweroftwominusone_0_13000c00() {
     // Encoding: 0x13000C00
     // Test aarch64_integer_bitfield field imms = 3 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rd=0, immr=0, opc=0, sf=0, N=0, imms=3
+    // Fields: opc=0, N=0, immr=0, Rn=0, sf=0, imms=3, Rd=0
     let encoding: u32 = 0x13000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1160,12 +1468,17 @@ fn test_aarch64_integer_bitfield_field_imms_3_poweroftwominusone_0_13000c00() {
 fn test_aarch64_integer_bitfield_field_imms_4_poweroftwo_0_13001000() {
     // Encoding: 0x13001000
     // Test aarch64_integer_bitfield field imms = 4 (PowerOfTwo)
-    // Fields: imms=4, Rn=0, Rd=0, sf=0, opc=0, N=0, immr=0
+    // Fields: opc=0, immr=0, imms=4, Rd=0, N=0, Rn=0, sf=0
     let encoding: u32 = 0x13001000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1176,12 +1489,17 @@ fn test_aarch64_integer_bitfield_field_imms_4_poweroftwo_0_13001000() {
 fn test_aarch64_integer_bitfield_field_imms_7_poweroftwominusone_0_13001c00() {
     // Encoding: 0x13001C00
     // Test aarch64_integer_bitfield field imms = 7 (PowerOfTwoMinusOne)
-    // Fields: sf=0, immr=0, opc=0, imms=7, Rn=0, Rd=0, N=0
+    // Fields: opc=0, sf=0, imms=7, Rn=0, Rd=0, immr=0, N=0
     let encoding: u32 = 0x13001C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1192,12 +1510,17 @@ fn test_aarch64_integer_bitfield_field_imms_7_poweroftwominusone_0_13001c00() {
 fn test_aarch64_integer_bitfield_field_imms_8_poweroftwo_0_13002000() {
     // Encoding: 0x13002000
     // Test aarch64_integer_bitfield field imms = 8 (PowerOfTwo)
-    // Fields: sf=0, N=0, Rn=0, imms=8, opc=0, immr=0, Rd=0
+    // Fields: opc=0, immr=0, Rn=0, Rd=0, imms=8, sf=0, N=0
     let encoding: u32 = 0x13002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1208,12 +1531,17 @@ fn test_aarch64_integer_bitfield_field_imms_8_poweroftwo_0_13002000() {
 fn test_aarch64_integer_bitfield_field_imms_15_poweroftwominusone_0_13003c00() {
     // Encoding: 0x13003C00
     // Test aarch64_integer_bitfield field imms = 15 (PowerOfTwoMinusOne)
-    // Fields: opc=0, N=0, immr=0, imms=15, Rd=0, Rn=0, sf=0
+    // Fields: Rd=0, sf=0, Rn=0, immr=0, opc=0, N=0, imms=15
     let encoding: u32 = 0x13003C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1224,12 +1552,17 @@ fn test_aarch64_integer_bitfield_field_imms_15_poweroftwominusone_0_13003c00() {
 fn test_aarch64_integer_bitfield_field_imms_16_poweroftwo_0_13004000() {
     // Encoding: 0x13004000
     // Test aarch64_integer_bitfield field imms = 16 (PowerOfTwo)
-    // Fields: N=0, Rd=0, immr=0, sf=0, opc=0, imms=16, Rn=0
+    // Fields: immr=0, opc=0, imms=16, Rd=0, sf=0, N=0, Rn=0
     let encoding: u32 = 0x13004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1240,12 +1573,17 @@ fn test_aarch64_integer_bitfield_field_imms_16_poweroftwo_0_13004000() {
 fn test_aarch64_integer_bitfield_field_imms_31_poweroftwominusone_0_13007c00() {
     // Encoding: 0x13007C00
     // Test aarch64_integer_bitfield field imms = 31 (PowerOfTwoMinusOne)
-    // Fields: N=0, immr=0, Rd=0, sf=0, opc=0, imms=31, Rn=0
+    // Fields: N=0, Rn=0, sf=0, Rd=0, imms=31, immr=0, opc=0
     let encoding: u32 = 0x13007C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1256,12 +1594,17 @@ fn test_aarch64_integer_bitfield_field_imms_31_poweroftwominusone_0_13007c00() {
 fn test_aarch64_integer_bitfield_field_imms_32_poweroftwo_0_13008000() {
     // Encoding: 0x13008000
     // Test aarch64_integer_bitfield field imms = 32 (PowerOfTwo)
-    // Fields: Rd=0, Rn=0, immr=0, N=0, imms=32, opc=0, sf=0
+    // Fields: Rd=0, immr=0, N=0, opc=0, sf=0, Rn=0, imms=32
     let encoding: u32 = 0x13008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1272,12 +1615,17 @@ fn test_aarch64_integer_bitfield_field_imms_32_poweroftwo_0_13008000() {
 fn test_aarch64_integer_bitfield_field_imms_63_max_0_1300fc00() {
     // Encoding: 0x1300FC00
     // Test aarch64_integer_bitfield field imms = 63 (Max)
-    // Fields: sf=0, imms=63, N=0, opc=0, immr=0, Rn=0, Rd=0
+    // Fields: imms=63, sf=0, opc=0, Rd=0, immr=0, Rn=0, N=0
     let encoding: u32 = 0x1300FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1288,12 +1636,17 @@ fn test_aarch64_integer_bitfield_field_imms_63_max_0_1300fc00() {
 fn test_aarch64_integer_bitfield_field_rn_0_min_0_13000000() {
     // Encoding: 0x13000000
     // Test aarch64_integer_bitfield field Rn = 0 (Min)
-    // Fields: sf=0, immr=0, imms=0, Rn=0, Rd=0, N=0, opc=0
+    // Fields: sf=0, N=0, Rn=0, immr=0, opc=0, imms=0, Rd=0
     let encoding: u32 = 0x13000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1304,12 +1657,17 @@ fn test_aarch64_integer_bitfield_field_rn_0_min_0_13000000() {
 fn test_aarch64_integer_bitfield_field_rn_1_poweroftwo_0_13000020() {
     // Encoding: 0x13000020
     // Test aarch64_integer_bitfield field Rn = 1 (PowerOfTwo)
-    // Fields: immr=0, N=0, opc=0, sf=0, imms=0, Rn=1, Rd=0
+    // Fields: Rd=0, Rn=1, opc=0, sf=0, N=0, imms=0, immr=0
     let encoding: u32 = 0x13000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1320,12 +1678,17 @@ fn test_aarch64_integer_bitfield_field_rn_1_poweroftwo_0_13000020() {
 fn test_aarch64_integer_bitfield_field_rn_30_poweroftwominusone_0_130003c0() {
     // Encoding: 0x130003C0
     // Test aarch64_integer_bitfield field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: sf=0, imms=0, opc=0, immr=0, N=0, Rn=30, Rd=0
+    // Fields: immr=0, Rn=30, Rd=0, sf=0, imms=0, opc=0, N=0
     let encoding: u32 = 0x130003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1336,12 +1699,17 @@ fn test_aarch64_integer_bitfield_field_rn_30_poweroftwominusone_0_130003c0() {
 fn test_aarch64_integer_bitfield_field_rn_31_max_0_130003e0() {
     // Encoding: 0x130003E0
     // Test aarch64_integer_bitfield field Rn = 31 (Max)
-    // Fields: immr=0, opc=0, Rd=0, sf=0, imms=0, Rn=31, N=0
+    // Fields: Rn=31, Rd=0, N=0, imms=0, opc=0, immr=0, sf=0
     let encoding: u32 = 0x130003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1352,12 +1720,17 @@ fn test_aarch64_integer_bitfield_field_rn_31_max_0_130003e0() {
 fn test_aarch64_integer_bitfield_field_rd_0_min_0_13000000() {
     // Encoding: 0x13000000
     // Test aarch64_integer_bitfield field Rd = 0 (Min)
-    // Fields: Rn=0, Rd=0, opc=0, N=0, sf=0, immr=0, imms=0
+    // Fields: imms=0, Rn=0, Rd=0, sf=0, opc=0, N=0, immr=0
     let encoding: u32 = 0x13000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1368,12 +1741,17 @@ fn test_aarch64_integer_bitfield_field_rd_0_min_0_13000000() {
 fn test_aarch64_integer_bitfield_field_rd_1_poweroftwo_0_13000001() {
     // Encoding: 0x13000001
     // Test aarch64_integer_bitfield field Rd = 1 (PowerOfTwo)
-    // Fields: Rd=1, N=0, immr=0, opc=0, imms=0, sf=0, Rn=0
+    // Fields: N=0, sf=0, opc=0, immr=0, imms=0, Rn=0, Rd=1
     let encoding: u32 = 0x13000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1384,12 +1762,17 @@ fn test_aarch64_integer_bitfield_field_rd_1_poweroftwo_0_13000001() {
 fn test_aarch64_integer_bitfield_field_rd_30_poweroftwominusone_0_1300001e() {
     // Encoding: 0x1300001E
     // Test aarch64_integer_bitfield field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: opc=0, sf=0, N=0, immr=0, imms=0, Rn=0, Rd=30
+    // Fields: N=0, immr=0, Rn=0, sf=0, Rd=30, imms=0, opc=0
     let encoding: u32 = 0x1300001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1400,12 +1783,17 @@ fn test_aarch64_integer_bitfield_field_rd_30_poweroftwominusone_0_1300001e() {
 fn test_aarch64_integer_bitfield_field_rd_31_max_0_1300001f() {
     // Encoding: 0x1300001F
     // Test aarch64_integer_bitfield field Rd = 31 (Max)
-    // Fields: sf=0, opc=0, immr=0, imms=0, N=0, Rn=0, Rd=31
+    // Fields: imms=0, Rd=31, sf=0, opc=0, immr=0, Rn=0, N=0
     let encoding: u32 = 0x1300001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1416,12 +1804,17 @@ fn test_aarch64_integer_bitfield_field_rd_31_max_0_1300001f() {
 fn test_aarch64_integer_bitfield_combo_0_0_13000000() {
     // Encoding: 0x13000000
     // Test aarch64_integer_bitfield field combination: sf=0, opc=0, N=0, immr=0, imms=0, Rn=0, Rd=0
-    // Fields: immr=0, sf=0, Rn=0, imms=0, Rd=0, opc=0, N=0
+    // Fields: Rd=0, N=0, immr=0, Rn=0, sf=0, opc=0, imms=0
     let encoding: u32 = 0x13000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1432,12 +1825,17 @@ fn test_aarch64_integer_bitfield_combo_0_0_13000000() {
 fn test_aarch64_integer_bitfield_special_sf_0_size_variant_0_0_13000000() {
     // Encoding: 0x13000000
     // Test aarch64_integer_bitfield special value sf = 0 (Size variant 0)
-    // Fields: sf=0, immr=0, Rd=0, opc=0, imms=0, Rn=0, N=0
+    // Fields: immr=0, imms=0, sf=0, N=0, Rn=0, opc=0, Rd=0
     let encoding: u32 = 0x13000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1448,12 +1846,17 @@ fn test_aarch64_integer_bitfield_special_sf_0_size_variant_0_0_13000000() {
 fn test_aarch64_integer_bitfield_special_sf_1_size_variant_1_0_93000000() {
     // Encoding: 0x93000000
     // Test aarch64_integer_bitfield special value sf = 1 (Size variant 1)
-    // Fields: Rd=0, N=0, opc=0, immr=0, imms=0, Rn=0, sf=1
+    // Fields: imms=0, Rn=0, opc=0, Rd=0, immr=0, N=0, sf=1
     let encoding: u32 = 0x93000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1464,12 +1867,17 @@ fn test_aarch64_integer_bitfield_special_sf_1_size_variant_1_0_93000000() {
 fn test_aarch64_integer_bitfield_special_opc_0_size_variant_0_0_13000000() {
     // Encoding: 0x13000000
     // Test aarch64_integer_bitfield special value opc = 0 (Size variant 0)
-    // Fields: Rd=0, opc=0, immr=0, Rn=0, sf=0, imms=0, N=0
+    // Fields: immr=0, sf=0, Rd=0, opc=0, N=0, Rn=0, imms=0
     let encoding: u32 = 0x13000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1480,12 +1888,17 @@ fn test_aarch64_integer_bitfield_special_opc_0_size_variant_0_0_13000000() {
 fn test_aarch64_integer_bitfield_special_opc_1_size_variant_1_0_33000000() {
     // Encoding: 0x33000000
     // Test aarch64_integer_bitfield special value opc = 1 (Size variant 1)
-    // Fields: opc=1, imms=0, Rd=0, immr=0, sf=0, N=0, Rn=0
+    // Fields: immr=0, Rd=0, opc=1, sf=0, imms=0, N=0, Rn=0
     let encoding: u32 = 0x33000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1496,12 +1909,17 @@ fn test_aarch64_integer_bitfield_special_opc_1_size_variant_1_0_33000000() {
 fn test_aarch64_integer_bitfield_special_opc_2_size_variant_2_0_53000000() {
     // Encoding: 0x53000000
     // Test aarch64_integer_bitfield special value opc = 2 (Size variant 2)
-    // Fields: N=0, Rn=0, immr=0, sf=0, opc=2, imms=0, Rd=0
+    // Fields: Rd=0, N=0, imms=0, opc=2, immr=0, Rn=0, sf=0
     let encoding: u32 = 0x53000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1512,12 +1930,17 @@ fn test_aarch64_integer_bitfield_special_opc_2_size_variant_2_0_53000000() {
 fn test_aarch64_integer_bitfield_special_opc_3_size_variant_3_0_73000000() {
     // Encoding: 0x73000000
     // Test aarch64_integer_bitfield special value opc = 3 (Size variant 3)
-    // Fields: opc=3, immr=0, Rn=0, sf=0, N=0, Rd=0, imms=0
+    // Fields: imms=0, Rd=0, Rn=0, opc=3, N=0, sf=0, immr=0
     let encoding: u32 = 0x73000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1528,12 +1951,17 @@ fn test_aarch64_integer_bitfield_special_opc_3_size_variant_3_0_73000000() {
 fn test_aarch64_integer_bitfield_special_rn_31_stack_pointer_sp_may_require_alignment_0_130003e0() {
     // Encoding: 0x130003E0
     // Test aarch64_integer_bitfield special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: opc=0, Rd=0, imms=0, Rn=31, sf=0, immr=0, N=0
+    // Fields: N=0, imms=0, immr=0, sf=0, opc=0, Rn=31, Rd=0
     let encoding: u32 = 0x130003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1541,15 +1969,21 @@ fn test_aarch64_integer_bitfield_special_rn_31_stack_pointer_sp_may_require_alig
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_bitfield_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1300001f() {
+fn test_aarch64_integer_bitfield_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1300001f(
+) {
     // Encoding: 0x1300001F
     // Test aarch64_integer_bitfield special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: imms=0, opc=0, N=0, Rn=0, sf=0, immr=0, Rd=31
+    // Fields: N=0, opc=0, Rn=0, immr=0, sf=0, Rd=31, imms=0
     let encoding: u32 = 0x1300001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1560,12 +1994,16 @@ fn test_aarch64_integer_bitfield_special_rd_31_zero_register_xzr_wzr_reads_as_0_
 fn test_aarch64_integer_bitfield_invalid_0_0_13000000() {
     // Encoding: 0x13000000
     // Test aarch64_integer_bitfield invalid encoding: Unconditional UNDEFINED
-    // Fields: Rd=0, sf=0, Rn=0, imms=0, opc=0, N=0, immr=0
+    // Fields: opc=0, imms=0, immr=0, N=0, sf=0, Rd=0, Rn=0
     let encoding: u32 = 0x13000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1576,12 +2014,16 @@ fn test_aarch64_integer_bitfield_invalid_0_0_13000000() {
 fn test_aarch64_integer_bitfield_invalid_1_0_13000000() {
     // Encoding: 0x13000000
     // Test aarch64_integer_bitfield invalid encoding: Binary { op: Ne, lhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "sf" }), rhs: Binary { op: And, lhs: LitBits([true]), rhs: Var(QualifiedIdentifier { qualifier: Any, name: "N" }) } }, rhs: LitBits([true]) }
-    // Fields: sf=0, opc=0, immr=0, imms=0, Rn=0, Rd=0, N=0
+    // Fields: opc=0, sf=0, N=0, immr=0, Rn=0, Rd=0, imms=0
     let encoding: u32 = 0x13000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1592,12 +2034,16 @@ fn test_aarch64_integer_bitfield_invalid_1_0_13000000() {
 fn test_aarch64_integer_bitfield_invalid_2_0_13000000() {
     // Encoding: 0x13000000
     // Test aarch64_integer_bitfield invalid encoding: Unconditional UNDEFINED
-    // Fields: imms=0, Rn=0, opc=0, immr=0, Rd=0, N=0, sf=0
+    // Fields: opc=0, Rd=0, N=0, sf=0, immr=0, imms=0, Rn=0
     let encoding: u32 = 0x13000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1608,12 +2054,16 @@ fn test_aarch64_integer_bitfield_invalid_2_0_13000000() {
 fn test_aarch64_integer_bitfield_invalid_3_0_13000000() {
     // Encoding: 0x13000000
     // Test aarch64_integer_bitfield invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "sf" }), rhs: Binary { op: And, lhs: LitBits([false]), rhs: Binary { op: Ne, lhs: Binary { op: Ne, lhs: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "N" }), rhs: Binary { op: Or, lhs: LitBits([false]), rhs: Index { base: Var(QualifiedIdentifier { qualifier: Any, name: "immr" }), indices: [Single(LitInt(5))] } } }, rhs: Binary { op: Or, lhs: LitBits([false]), rhs: Index { base: Var(QualifiedIdentifier { qualifier: Any, name: "imms" }), indices: [Single(LitInt(5))] } } }, rhs: LitBits([false]) } } }
-    // Fields: sf=0, Rd=0, N=0, opc=0, immr=0, imms=0, Rn=0
+    // Fields: imms=0, N=0, Rn=0, Rd=0, immr=0, sf=0, opc=0
     let encoding: u32 = 0x13000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1624,12 +2074,16 @@ fn test_aarch64_integer_bitfield_invalid_3_0_13000000() {
 fn test_aarch64_integer_bitfield_invalid_4_0_13000000() {
     // Encoding: 0x13000000
     // Test aarch64_integer_bitfield invalid encoding: Unconditional UNDEFINED
-    // Fields: sf=0, opc=0, N=0, imms=0, Rd=0, Rn=0, immr=0
+    // Fields: opc=0, imms=0, N=0, immr=0, sf=0, Rn=0, Rd=0
     let encoding: u32 = 0x13000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1663,7 +2117,11 @@ fn test_aarch64_integer_bitfield_sbfm_oracle_64_0_93401c20() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFFF, "X0 should be 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFFFFF,
+        "X0 should be 0xFFFFFFFFFFFFFFFF"
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1697,7 +2155,11 @@ fn test_aarch64_integer_bitfield_sbfm_oracle_64_1_93401c20() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFF80, "X0 should be 0xFFFFFFFFFFFFFF80");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFFF80,
+        "X0 should be 0xFFFFFFFFFFFFFF80"
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1731,7 +2193,11 @@ fn test_aarch64_integer_bitfield_sbfm_oracle_64_2_93403c20() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFFF, "X0 should be 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFFFFF,
+        "X0 should be 0xFFFFFFFFFFFFFFFF"
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1765,7 +2231,11 @@ fn test_aarch64_integer_bitfield_sbfm_oracle_64_3_93403c20() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFF8000, "X0 should be 0xFFFFFFFFFFFF8000");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFF8000,
+        "X0 should be 0xFFFFFFFFFFFF8000"
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1799,7 +2269,11 @@ fn test_aarch64_integer_bitfield_sbfm_oracle_64_4_93407c20() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFFF, "X0 should be 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFFFFF,
+        "X0 should be 0xFFFFFFFFFFFFFFFF"
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1867,7 +2341,11 @@ fn test_aarch64_integer_bitfield_sbfm_oracle_64_6_93441c20() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFFE, "X0 should be 0xFFFFFFFFFFFFFFFE");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFFFFE,
+        "X0 should be 0xFFFFFFFFFFFFFFFE"
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1884,7 +2362,11 @@ fn test_aarch64_integer_bitfield_sbfm_oracle_64_7_937c0c20() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFE0, "X0 should be 0xFFFFFFFFFFFFFFE0");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFFFE0,
+        "X0 should be 0xFFFFFFFFFFFFFFE0"
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1918,7 +2400,11 @@ fn test_aarch64_integer_bitfield_sbfm_oracle_64_8_93507c20() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFCCCC, "X0 should be 0xFFFFFFFFFFFFCCCC");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFCCCC,
+        "X0 should be 0xFFFFFFFFFFFFCCCC"
+    );
 }
 
 /// Provenance: aarch64_integer_bitfield
@@ -1979,12 +2465,17 @@ fn test_aarch64_integer_bitfield_zr_rd_1300001f() {
 fn test_aarch64_integer_ins_ext_insert_movewide_field_sf_0_min_0_12800000() {
     // Encoding: 0x12800000
     // Test aarch64_integer_ins_ext_insert_movewide field sf = 0 (Min)
-    // Fields: sf=0, Rd=0, opc=0, hw=0, imm16=0
+    // Fields: sf=0, imm16=0, Rd=0, opc=0, hw=0
     let encoding: u32 = 0x12800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -1995,12 +2486,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_sf_0_min_0_12800000() {
 fn test_aarch64_integer_ins_ext_insert_movewide_field_sf_1_max_0_92800000() {
     // Encoding: 0x92800000
     // Test aarch64_integer_ins_ext_insert_movewide field sf = 1 (Max)
-    // Fields: sf=1, opc=0, imm16=0, hw=0, Rd=0
+    // Fields: Rd=0, hw=0, imm16=0, sf=1, opc=0
     let encoding: u32 = 0x92800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2011,12 +2507,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_sf_1_max_0_92800000() {
 fn test_aarch64_integer_ins_ext_insert_movewide_field_opc_0_min_0_12800000() {
     // Encoding: 0x12800000
     // Test aarch64_integer_ins_ext_insert_movewide field opc = 0 (Min)
-    // Fields: sf=0, imm16=0, opc=0, Rd=0, hw=0
+    // Fields: imm16=0, hw=0, Rd=0, sf=0, opc=0
     let encoding: u32 = 0x12800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2027,12 +2528,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_opc_0_min_0_12800000() {
 fn test_aarch64_integer_ins_ext_insert_movewide_field_opc_1_poweroftwo_0_32800000() {
     // Encoding: 0x32800000
     // Test aarch64_integer_ins_ext_insert_movewide field opc = 1 (PowerOfTwo)
-    // Fields: hw=0, imm16=0, Rd=0, sf=0, opc=1
+    // Fields: opc=1, hw=0, imm16=0, sf=0, Rd=0
     let encoding: u32 = 0x32800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2043,12 +2549,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_opc_1_poweroftwo_0_3280000
 fn test_aarch64_integer_ins_ext_insert_movewide_field_opc_2_poweroftwo_0_52800000() {
     // Encoding: 0x52800000
     // Test aarch64_integer_ins_ext_insert_movewide field opc = 2 (PowerOfTwo)
-    // Fields: imm16=0, opc=2, Rd=0, sf=0, hw=0
+    // Fields: opc=2, hw=0, sf=0, imm16=0, Rd=0
     let encoding: u32 = 0x52800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2059,12 +2570,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_opc_2_poweroftwo_0_5280000
 fn test_aarch64_integer_ins_ext_insert_movewide_field_opc_3_max_0_72800000() {
     // Encoding: 0x72800000
     // Test aarch64_integer_ins_ext_insert_movewide field opc = 3 (Max)
-    // Fields: sf=0, opc=3, hw=0, imm16=0, Rd=0
+    // Fields: sf=0, hw=0, imm16=0, opc=3, Rd=0
     let encoding: u32 = 0x72800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2075,12 +2591,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_opc_3_max_0_72800000() {
 fn test_aarch64_integer_ins_ext_insert_movewide_field_hw_0_min_0_12800000() {
     // Encoding: 0x12800000
     // Test aarch64_integer_ins_ext_insert_movewide field hw = 0 (Min)
-    // Fields: imm16=0, hw=0, sf=0, Rd=0, opc=0
+    // Fields: Rd=0, imm16=0, sf=0, opc=0, hw=0
     let encoding: u32 = 0x12800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2091,12 +2612,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_hw_0_min_0_12800000() {
 fn test_aarch64_integer_ins_ext_insert_movewide_field_hw_1_poweroftwo_0_12a00000() {
     // Encoding: 0x12A00000
     // Test aarch64_integer_ins_ext_insert_movewide field hw = 1 (PowerOfTwo)
-    // Fields: imm16=0, sf=0, hw=1, opc=0, Rd=0
+    // Fields: opc=0, imm16=0, sf=0, hw=1, Rd=0
     let encoding: u32 = 0x12A00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2107,12 +2633,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_hw_1_poweroftwo_0_12a00000
 fn test_aarch64_integer_ins_ext_insert_movewide_field_hw_3_max_0_12e00000() {
     // Encoding: 0x12E00000
     // Test aarch64_integer_ins_ext_insert_movewide field hw = 3 (Max)
-    // Fields: opc=0, sf=0, Rd=0, hw=3, imm16=0
+    // Fields: imm16=0, Rd=0, hw=3, sf=0, opc=0
     let encoding: u32 = 0x12E00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2123,12 +2654,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_hw_3_max_0_12e00000() {
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_0_zero_0_12800000() {
     // Encoding: 0x12800000
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 0 (Zero)
-    // Fields: opc=0, hw=0, imm16=0, sf=0, Rd=0
+    // Fields: hw=0, sf=0, imm16=0, Rd=0, opc=0
     let encoding: u32 = 0x12800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2139,12 +2675,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_0_zero_0_12800000() 
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_1_poweroftwo_0_12800020() {
     // Encoding: 0x12800020
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 1 (PowerOfTwo)
-    // Fields: Rd=0, imm16=1, opc=0, sf=0, hw=0
+    // Fields: sf=0, Rd=0, hw=0, opc=0, imm16=1
     let encoding: u32 = 0x12800020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2155,12 +2696,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_1_poweroftwo_0_12800
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_3_poweroftwominusone_0_12800060() {
     // Encoding: 0x12800060
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 3 (PowerOfTwoMinusOne)
-    // Fields: sf=0, Rd=0, opc=0, hw=0, imm16=3
+    // Fields: Rd=0, opc=0, sf=0, imm16=3, hw=0
     let encoding: u32 = 0x12800060;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2171,12 +2717,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_3_poweroftwominusone
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_4_poweroftwo_0_12800080() {
     // Encoding: 0x12800080
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 4 (PowerOfTwo)
-    // Fields: sf=0, Rd=0, opc=0, imm16=4, hw=0
+    // Fields: opc=0, hw=0, sf=0, imm16=4, Rd=0
     let encoding: u32 = 0x12800080;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2187,12 +2738,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_4_poweroftwo_0_12800
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_7_poweroftwominusone_0_128000e0() {
     // Encoding: 0x128000E0
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 7 (PowerOfTwoMinusOne)
-    // Fields: sf=0, opc=0, Rd=0, hw=0, imm16=7
+    // Fields: opc=0, Rd=0, hw=0, imm16=7, sf=0
     let encoding: u32 = 0x128000E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2203,12 +2759,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_7_poweroftwominusone
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_8_poweroftwo_0_12800100() {
     // Encoding: 0x12800100
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 8 (PowerOfTwo)
-    // Fields: hw=0, Rd=0, imm16=8, opc=0, sf=0
+    // Fields: imm16=8, sf=0, opc=0, hw=0, Rd=0
     let encoding: u32 = 0x12800100;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2219,12 +2780,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_8_poweroftwo_0_12800
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_15_poweroftwominusone_0_128001e0() {
     // Encoding: 0x128001E0
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 15 (PowerOfTwoMinusOne)
-    // Fields: Rd=0, hw=0, opc=0, imm16=15, sf=0
+    // Fields: sf=0, Rd=0, opc=0, hw=0, imm16=15
     let encoding: u32 = 0x128001E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2235,12 +2801,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_15_poweroftwominuson
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_16_poweroftwo_0_12800200() {
     // Encoding: 0x12800200
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 16 (PowerOfTwo)
-    // Fields: imm16=16, opc=0, hw=0, Rd=0, sf=0
+    // Fields: opc=0, hw=0, sf=0, imm16=16, Rd=0
     let encoding: u32 = 0x12800200;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2251,12 +2822,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_16_poweroftwo_0_1280
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_31_poweroftwominusone_0_128003e0() {
     // Encoding: 0x128003E0
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 31 (PowerOfTwoMinusOne)
-    // Fields: opc=0, sf=0, Rd=0, hw=0, imm16=31
+    // Fields: opc=0, imm16=31, hw=0, Rd=0, sf=0
     let encoding: u32 = 0x128003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2267,12 +2843,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_31_poweroftwominuson
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_32_poweroftwo_0_12800400() {
     // Encoding: 0x12800400
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 32 (PowerOfTwo)
-    // Fields: sf=0, Rd=0, opc=0, hw=0, imm16=32
+    // Fields: sf=0, hw=0, imm16=32, Rd=0, opc=0
     let encoding: u32 = 0x12800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2283,12 +2864,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_32_poweroftwo_0_1280
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_63_poweroftwominusone_0_128007e0() {
     // Encoding: 0x128007E0
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 63 (PowerOfTwoMinusOne)
-    // Fields: sf=0, Rd=0, hw=0, opc=0, imm16=63
+    // Fields: sf=0, Rd=0, imm16=63, hw=0, opc=0
     let encoding: u32 = 0x128007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2299,12 +2885,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_63_poweroftwominuson
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_64_poweroftwo_0_12800800() {
     // Encoding: 0x12800800
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 64 (PowerOfTwo)
-    // Fields: opc=0, Rd=0, hw=0, imm16=64, sf=0
+    // Fields: imm16=64, hw=0, sf=0, opc=0, Rd=0
     let encoding: u32 = 0x12800800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2315,12 +2906,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_64_poweroftwo_0_1280
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_127_poweroftwominusone_0_12800fe0() {
     // Encoding: 0x12800FE0
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 127 (PowerOfTwoMinusOne)
-    // Fields: sf=0, Rd=0, imm16=127, opc=0, hw=0
+    // Fields: imm16=127, hw=0, opc=0, Rd=0, sf=0
     let encoding: u32 = 0x12800FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2331,12 +2927,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_127_poweroftwominuso
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_128_poweroftwo_0_12801000() {
     // Encoding: 0x12801000
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 128 (PowerOfTwo)
-    // Fields: Rd=0, imm16=128, sf=0, opc=0, hw=0
+    // Fields: hw=0, opc=0, imm16=128, sf=0, Rd=0
     let encoding: u32 = 0x12801000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2347,12 +2948,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_128_poweroftwo_0_128
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_255_poweroftwominusone_0_12801fe0() {
     // Encoding: 0x12801FE0
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 255 (PowerOfTwoMinusOne)
-    // Fields: opc=0, imm16=255, sf=0, hw=0, Rd=0
+    // Fields: Rd=0, imm16=255, opc=0, sf=0, hw=0
     let encoding: u32 = 0x12801FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2363,12 +2969,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_255_poweroftwominuso
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_256_poweroftwo_0_12802000() {
     // Encoding: 0x12802000
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 256 (PowerOfTwo)
-    // Fields: imm16=256, sf=0, hw=0, opc=0, Rd=0
+    // Fields: hw=0, Rd=0, sf=0, opc=0, imm16=256
     let encoding: u32 = 0x12802000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2379,12 +2990,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_256_poweroftwo_0_128
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_511_poweroftwominusone_0_12803fe0() {
     // Encoding: 0x12803FE0
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 511 (PowerOfTwoMinusOne)
-    // Fields: hw=0, Rd=0, imm16=511, opc=0, sf=0
+    // Fields: sf=0, imm16=511, Rd=0, opc=0, hw=0
     let encoding: u32 = 0x12803FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2395,12 +3011,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_511_poweroftwominuso
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_512_poweroftwo_0_12804000() {
     // Encoding: 0x12804000
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 512 (PowerOfTwo)
-    // Fields: sf=0, opc=0, Rd=0, hw=0, imm16=512
+    // Fields: sf=0, Rd=0, hw=0, imm16=512, opc=0
     let encoding: u32 = 0x12804000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2411,12 +3032,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_512_poweroftwo_0_128
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_1023_poweroftwominusone_0_12807fe0() {
     // Encoding: 0x12807FE0
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 1023 (PowerOfTwoMinusOne)
-    // Fields: opc=0, sf=0, hw=0, imm16=1023, Rd=0
+    // Fields: sf=0, Rd=0, hw=0, opc=0, imm16=1023
     let encoding: u32 = 0x12807FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2427,12 +3053,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_1023_poweroftwominus
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_1024_poweroftwo_0_12808000() {
     // Encoding: 0x12808000
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 1024 (PowerOfTwo)
-    // Fields: Rd=0, sf=0, hw=0, imm16=1024, opc=0
+    // Fields: sf=0, opc=0, Rd=0, hw=0, imm16=1024
     let encoding: u32 = 0x12808000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2443,12 +3074,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_1024_poweroftwo_0_12
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_2047_poweroftwominusone_0_1280ffe0() {
     // Encoding: 0x1280FFE0
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 2047 (PowerOfTwoMinusOne)
-    // Fields: opc=0, imm16=2047, Rd=0, sf=0, hw=0
+    // Fields: hw=0, opc=0, sf=0, imm16=2047, Rd=0
     let encoding: u32 = 0x1280FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2459,12 +3095,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_2047_poweroftwominus
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_2048_poweroftwo_0_12810000() {
     // Encoding: 0x12810000
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 2048 (PowerOfTwo)
-    // Fields: hw=0, opc=0, imm16=2048, sf=0, Rd=0
+    // Fields: Rd=0, hw=0, sf=0, imm16=2048, opc=0
     let encoding: u32 = 0x12810000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2475,12 +3116,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_2048_poweroftwo_0_12
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_4095_poweroftwominusone_0_1281ffe0() {
     // Encoding: 0x1281FFE0
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 4095 (PowerOfTwoMinusOne)
-    // Fields: imm16=4095, hw=0, opc=0, sf=0, Rd=0
+    // Fields: imm16=4095, sf=0, Rd=0, hw=0, opc=0
     let encoding: u32 = 0x1281FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2491,12 +3137,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_4095_poweroftwominus
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_4096_poweroftwo_0_12820000() {
     // Encoding: 0x12820000
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 4096 (PowerOfTwo)
-    // Fields: opc=0, Rd=0, sf=0, hw=0, imm16=4096
+    // Fields: imm16=4096, hw=0, sf=0, opc=0, Rd=0
     let encoding: u32 = 0x12820000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2507,12 +3158,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_4096_poweroftwo_0_12
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_8191_poweroftwominusone_0_1283ffe0() {
     // Encoding: 0x1283FFE0
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 8191 (PowerOfTwoMinusOne)
-    // Fields: sf=0, opc=0, hw=0, imm16=8191, Rd=0
+    // Fields: Rd=0, sf=0, hw=0, opc=0, imm16=8191
     let encoding: u32 = 0x1283FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2523,12 +3179,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_8191_poweroftwominus
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_8192_poweroftwo_0_12840000() {
     // Encoding: 0x12840000
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 8192 (PowerOfTwo)
-    // Fields: opc=0, Rd=0, sf=0, hw=0, imm16=8192
+    // Fields: hw=0, sf=0, Rd=0, opc=0, imm16=8192
     let encoding: u32 = 0x12840000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2539,12 +3200,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_8192_poweroftwo_0_12
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_16383_poweroftwominusone_0_1287ffe0() {
     // Encoding: 0x1287FFE0
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 16383 (PowerOfTwoMinusOne)
-    // Fields: sf=0, opc=0, hw=0, Rd=0, imm16=16383
+    // Fields: opc=0, Rd=0, imm16=16383, sf=0, hw=0
     let encoding: u32 = 0x1287FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2555,12 +3221,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_16383_poweroftwominu
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_16384_poweroftwo_0_12880000() {
     // Encoding: 0x12880000
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 16384 (PowerOfTwo)
-    // Fields: opc=0, imm16=16384, Rd=0, sf=0, hw=0
+    // Fields: sf=0, opc=0, hw=0, imm16=16384, Rd=0
     let encoding: u32 = 0x12880000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2571,12 +3242,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_16384_poweroftwo_0_1
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_32767_poweroftwominusone_0_128fffe0() {
     // Encoding: 0x128FFFE0
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 32767 (PowerOfTwoMinusOne)
-    // Fields: opc=0, imm16=32767, hw=0, Rd=0, sf=0
+    // Fields: imm16=32767, Rd=0, hw=0, opc=0, sf=0
     let encoding: u32 = 0x128FFFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2587,12 +3263,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_32767_poweroftwominu
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_32768_poweroftwo_0_12900000() {
     // Encoding: 0x12900000
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 32768 (PowerOfTwo)
-    // Fields: Rd=0, sf=0, hw=0, opc=0, imm16=32768
+    // Fields: opc=0, hw=0, sf=0, Rd=0, imm16=32768
     let encoding: u32 = 0x12900000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2603,12 +3284,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_32768_poweroftwo_0_1
 fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_65535_max_0_129fffe0() {
     // Encoding: 0x129FFFE0
     // Test aarch64_integer_ins_ext_insert_movewide field imm16 = 65535 (Max)
-    // Fields: imm16=65535, hw=0, Rd=0, sf=0, opc=0
+    // Fields: opc=0, imm16=65535, hw=0, sf=0, Rd=0
     let encoding: u32 = 0x129FFFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2619,12 +3305,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_imm16_65535_max_0_129fffe0
 fn test_aarch64_integer_ins_ext_insert_movewide_field_rd_0_min_0_12800000() {
     // Encoding: 0x12800000
     // Test aarch64_integer_ins_ext_insert_movewide field Rd = 0 (Min)
-    // Fields: Rd=0, sf=0, hw=0, imm16=0, opc=0
+    // Fields: hw=0, Rd=0, sf=0, opc=0, imm16=0
     let encoding: u32 = 0x12800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2635,12 +3326,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_rd_0_min_0_12800000() {
 fn test_aarch64_integer_ins_ext_insert_movewide_field_rd_1_poweroftwo_0_12800001() {
     // Encoding: 0x12800001
     // Test aarch64_integer_ins_ext_insert_movewide field Rd = 1 (PowerOfTwo)
-    // Fields: sf=0, imm16=0, opc=0, hw=0, Rd=1
+    // Fields: hw=0, imm16=0, opc=0, sf=0, Rd=1
     let encoding: u32 = 0x12800001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2651,12 +3347,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_rd_1_poweroftwo_0_12800001
 fn test_aarch64_integer_ins_ext_insert_movewide_field_rd_30_poweroftwominusone_0_1280001e() {
     // Encoding: 0x1280001E
     // Test aarch64_integer_ins_ext_insert_movewide field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: imm16=0, sf=0, hw=0, Rd=30, opc=0
+    // Fields: imm16=0, hw=0, Rd=30, opc=0, sf=0
     let encoding: u32 = 0x1280001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2667,12 +3368,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_rd_30_poweroftwominusone_0
 fn test_aarch64_integer_ins_ext_insert_movewide_field_rd_31_max_0_1280001f() {
     // Encoding: 0x1280001F
     // Test aarch64_integer_ins_ext_insert_movewide field Rd = 31 (Max)
-    // Fields: opc=0, Rd=31, sf=0, hw=0, imm16=0
+    // Fields: sf=0, hw=0, Rd=31, opc=0, imm16=0
     let encoding: u32 = 0x1280001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2683,12 +3389,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_field_rd_31_max_0_1280001f() {
 fn test_aarch64_integer_ins_ext_insert_movewide_combo_0_0_12800000() {
     // Encoding: 0x12800000
     // Test aarch64_integer_ins_ext_insert_movewide field combination: sf=0, opc=0, hw=0, imm16=0, Rd=0
-    // Fields: opc=0, sf=0, imm16=0, Rd=0, hw=0
+    // Fields: Rd=0, imm16=0, sf=0, hw=0, opc=0
     let encoding: u32 = 0x12800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2699,12 +3410,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_combo_0_0_12800000() {
 fn test_aarch64_integer_ins_ext_insert_movewide_special_sf_0_size_variant_0_0_12800000() {
     // Encoding: 0x12800000
     // Test aarch64_integer_ins_ext_insert_movewide special value sf = 0 (Size variant 0)
-    // Fields: sf=0, imm16=0, hw=0, opc=0, Rd=0
+    // Fields: sf=0, Rd=0, opc=0, hw=0, imm16=0
     let encoding: u32 = 0x12800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2715,12 +3431,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_special_sf_0_size_variant_0_0_12
 fn test_aarch64_integer_ins_ext_insert_movewide_special_sf_1_size_variant_1_0_92800000() {
     // Encoding: 0x92800000
     // Test aarch64_integer_ins_ext_insert_movewide special value sf = 1 (Size variant 1)
-    // Fields: opc=0, hw=0, Rd=0, imm16=0, sf=1
+    // Fields: sf=1, opc=0, hw=0, imm16=0, Rd=0
     let encoding: u32 = 0x92800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2731,12 +3452,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_special_sf_1_size_variant_1_0_92
 fn test_aarch64_integer_ins_ext_insert_movewide_special_opc_0_size_variant_0_0_12800000() {
     // Encoding: 0x12800000
     // Test aarch64_integer_ins_ext_insert_movewide special value opc = 0 (Size variant 0)
-    // Fields: opc=0, Rd=0, sf=0, hw=0, imm16=0
+    // Fields: opc=0, hw=0, imm16=0, Rd=0, sf=0
     let encoding: u32 = 0x12800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2747,12 +3473,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_special_opc_0_size_variant_0_0_1
 fn test_aarch64_integer_ins_ext_insert_movewide_special_opc_1_size_variant_1_0_32800000() {
     // Encoding: 0x32800000
     // Test aarch64_integer_ins_ext_insert_movewide special value opc = 1 (Size variant 1)
-    // Fields: hw=0, sf=0, opc=1, imm16=0, Rd=0
+    // Fields: Rd=0, hw=0, imm16=0, sf=0, opc=1
     let encoding: u32 = 0x32800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2763,12 +3494,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_special_opc_1_size_variant_1_0_3
 fn test_aarch64_integer_ins_ext_insert_movewide_special_opc_2_size_variant_2_0_52800000() {
     // Encoding: 0x52800000
     // Test aarch64_integer_ins_ext_insert_movewide special value opc = 2 (Size variant 2)
-    // Fields: opc=2, hw=0, imm16=0, sf=0, Rd=0
+    // Fields: sf=0, hw=0, imm16=0, opc=2, Rd=0
     let encoding: u32 = 0x52800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2779,12 +3515,17 @@ fn test_aarch64_integer_ins_ext_insert_movewide_special_opc_2_size_variant_2_0_5
 fn test_aarch64_integer_ins_ext_insert_movewide_special_opc_3_size_variant_3_0_72800000() {
     // Encoding: 0x72800000
     // Test aarch64_integer_ins_ext_insert_movewide special value opc = 3 (Size variant 3)
-    // Fields: Rd=0, opc=3, hw=0, sf=0, imm16=0
+    // Fields: imm16=0, Rd=0, hw=0, opc=3, sf=0
     let encoding: u32 = 0x72800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2792,15 +3533,21 @@ fn test_aarch64_integer_ins_ext_insert_movewide_special_opc_3_size_variant_3_0_7
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_integer_ins_ext_insert_movewide_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1280001f() {
+fn test_aarch64_integer_ins_ext_insert_movewide_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1280001f(
+) {
     // Encoding: 0x1280001F
     // Test aarch64_integer_ins_ext_insert_movewide special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: imm16=0, hw=0, opc=0, Rd=31, sf=0
+    // Fields: Rd=31, imm16=0, opc=0, sf=0, hw=0
     let encoding: u32 = 0x1280001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2811,12 +3558,16 @@ fn test_aarch64_integer_ins_ext_insert_movewide_special_rd_31_zero_register_xzr_
 fn test_aarch64_integer_ins_ext_insert_movewide_invalid_0_0_12800000() {
     // Encoding: 0x12800000
     // Test aarch64_integer_ins_ext_insert_movewide invalid encoding: Unconditional UNDEFINED
-    // Fields: imm16=0, hw=0, opc=0, Rd=0, sf=0
+    // Fields: hw=0, imm16=0, opc=0, Rd=0, sf=0
     let encoding: u32 = 0x12800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2827,12 +3578,16 @@ fn test_aarch64_integer_ins_ext_insert_movewide_invalid_0_0_12800000() {
 fn test_aarch64_integer_ins_ext_insert_movewide_invalid_1_0_12800000() {
     // Encoding: 0x12800000
     // Test aarch64_integer_ins_ext_insert_movewide invalid encoding: Binary { op: Eq, lhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "sf" }), rhs: Binary { op: And, lhs: LitBits([false]), rhs: Index { base: Var(QualifiedIdentifier { qualifier: Any, name: "hw" }), indices: [Single(LitInt(1))] } } }, rhs: LitBits([true]) }
-    // Fields: hw=0, opc=0, imm16=0, Rd=0, sf=0
+    // Fields: Rd=0, sf=0, opc=0, hw=0, imm16=0
     let encoding: u32 = 0x12800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2843,12 +3598,16 @@ fn test_aarch64_integer_ins_ext_insert_movewide_invalid_1_0_12800000() {
 fn test_aarch64_integer_ins_ext_insert_movewide_invalid_2_0_12800000() {
     // Encoding: 0x12800000
     // Test aarch64_integer_ins_ext_insert_movewide invalid encoding: Unconditional UNDEFINED
-    // Fields: sf=0, hw=0, opc=0, imm16=0, Rd=0
+    // Fields: imm16=0, sf=0, Rd=0, opc=0, hw=0
     let encoding: u32 = 0x12800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2880,7 +3639,11 @@ fn test_aarch64_integer_ins_ext_insert_movewide_movn_oracle_64_0_92824680() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFEDCB, "X0 should be 0xFFFFFFFFFFFFEDCB");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFEDCB,
+        "X0 should be 0xFFFFFFFFFFFFEDCB"
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2912,7 +3675,11 @@ fn test_aarch64_integer_ins_ext_insert_movewide_movn_oracle_64_1_92b579a0() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFF5432FFFF, "X0 should be 0xFFFFFFFF5432FFFF");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFF5432FFFF,
+        "X0 should be 0xFFFFFFFF5432FFFF"
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2944,7 +3711,11 @@ fn test_aarch64_integer_ins_ext_insert_movewide_movn_oracle_64_2_929fffe0() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFF0000, "X0 should be 0xFFFFFFFFFFFF0000");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFF0000,
+        "X0 should be 0xFFFFFFFFFFFF0000"
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2976,7 +3747,11 @@ fn test_aarch64_integer_ins_ext_insert_movewide_movn_oracle_64_3_92800000() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFFF, "X0 should be 0xFFFFFFFFFFFFFFFF");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFFFFFFFFFFFFF,
+        "X0 should be 0xFFFFFFFFFFFFFFFF"
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -2992,7 +3767,11 @@ fn test_aarch64_integer_ins_ext_insert_movewide_movn_oracle_64_4_92cacf00() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0xFFFFA987FFFFFFFF, "X0 should be 0xFFFFA987FFFFFFFF");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0xFFFFA987FFFFFFFF,
+        "X0 should be 0xFFFFA987FFFFFFFF"
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -3008,7 +3787,11 @@ fn test_aarch64_integer_ins_ext_insert_movewide_movn_oracle_64_5_92fbd5a0() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0x2152FFFFFFFFFFFF, "X0 should be 0x2152FFFFFFFFFFFF");
+    assert_eq!(
+        get_x(&cpu, 0),
+        0x2152FFFFFFFFFFFF,
+        "X0 should be 0x2152FFFFFFFFFFFF"
+    );
 }
 
 /// Provenance: aarch64_integer_ins_ext_insert_movewide
@@ -3041,4 +3824,3 @@ fn test_aarch64_integer_ins_ext_insert_movewide_zr_rd_1280001f() {
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
     assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
 }
-

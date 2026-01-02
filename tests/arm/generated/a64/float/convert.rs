@@ -20,12 +20,17 @@ use crate::generated::test_helpers::*;
 fn test_aarch64_float_convert_int_field_sf_0_min_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int field sf = 0 (Min)
-    // Fields: rmode=0, Rn=0, Rd=0, sf=0, opcode=0, type1=0
+    // Fields: opcode=0, type1=0, sf=0, Rd=0, Rn=0, rmode=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -36,12 +41,17 @@ fn test_aarch64_float_convert_int_field_sf_0_min_0_1e200000() {
 fn test_aarch64_float_convert_int_field_sf_1_max_0_9e200000() {
     // Encoding: 0x9E200000
     // Test aarch64_float_convert_int field sf = 1 (Max)
-    // Fields: rmode=0, Rd=0, Rn=0, sf=1, type1=0, opcode=0
+    // Fields: type1=0, opcode=0, sf=1, Rn=0, Rd=0, rmode=0
     let encoding: u32 = 0x9E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -52,12 +62,17 @@ fn test_aarch64_float_convert_int_field_sf_1_max_0_9e200000() {
 fn test_aarch64_float_convert_int_field_type1_0_min_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int field type1 = 0 (Min)
-    // Fields: sf=0, rmode=0, opcode=0, Rn=0, type1=0, Rd=0
+    // Fields: opcode=0, Rn=0, type1=0, sf=0, Rd=0, rmode=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -68,12 +83,17 @@ fn test_aarch64_float_convert_int_field_type1_0_min_0_1e200000() {
 fn test_aarch64_float_convert_int_field_type1_1_poweroftwo_0_1e600000() {
     // Encoding: 0x1E600000
     // Test aarch64_float_convert_int field type1 = 1 (PowerOfTwo)
-    // Fields: sf=0, opcode=0, rmode=0, Rn=0, Rd=0, type1=1
+    // Fields: Rn=0, rmode=0, Rd=0, type1=1, sf=0, opcode=0
     let encoding: u32 = 0x1E600000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -84,12 +104,17 @@ fn test_aarch64_float_convert_int_field_type1_1_poweroftwo_0_1e600000() {
 fn test_aarch64_float_convert_int_field_type1_3_max_0_1ee00000() {
     // Encoding: 0x1EE00000
     // Test aarch64_float_convert_int field type1 = 3 (Max)
-    // Fields: type1=3, Rd=0, sf=0, rmode=0, Rn=0, opcode=0
+    // Fields: Rd=0, Rn=0, type1=3, opcode=0, sf=0, rmode=0
     let encoding: u32 = 0x1EE00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -100,12 +125,17 @@ fn test_aarch64_float_convert_int_field_type1_3_max_0_1ee00000() {
 fn test_aarch64_float_convert_int_field_rmode_0_min_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int field rmode = 0 (Min)
-    // Fields: type1=0, Rn=0, sf=0, Rd=0, opcode=0, rmode=0
+    // Fields: Rd=0, Rn=0, type1=0, rmode=0, opcode=0, sf=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -116,12 +146,17 @@ fn test_aarch64_float_convert_int_field_rmode_0_min_0_1e200000() {
 fn test_aarch64_float_convert_int_field_rmode_1_poweroftwo_0_1e280000() {
     // Encoding: 0x1E280000
     // Test aarch64_float_convert_int field rmode = 1 (PowerOfTwo)
-    // Fields: Rd=0, Rn=0, sf=0, rmode=1, opcode=0, type1=0
+    // Fields: rmode=1, sf=0, opcode=0, Rn=0, type1=0, Rd=0
     let encoding: u32 = 0x1E280000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -132,12 +167,17 @@ fn test_aarch64_float_convert_int_field_rmode_1_poweroftwo_0_1e280000() {
 fn test_aarch64_float_convert_int_field_rmode_3_max_0_1e380000() {
     // Encoding: 0x1E380000
     // Test aarch64_float_convert_int field rmode = 3 (Max)
-    // Fields: rmode=3, opcode=0, Rn=0, Rd=0, sf=0, type1=0
+    // Fields: Rn=0, sf=0, type1=0, rmode=3, Rd=0, opcode=0
     let encoding: u32 = 0x1E380000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -148,12 +188,17 @@ fn test_aarch64_float_convert_int_field_rmode_3_max_0_1e380000() {
 fn test_aarch64_float_convert_int_field_opcode_0_min_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int field opcode = 0 (Min)
-    // Fields: type1=0, rmode=0, opcode=0, Rn=0, sf=0, Rd=0
+    // Fields: sf=0, rmode=0, Rn=0, opcode=0, type1=0, Rd=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -164,12 +209,17 @@ fn test_aarch64_float_convert_int_field_opcode_0_min_0_1e200000() {
 fn test_aarch64_float_convert_int_field_opcode_1_poweroftwo_0_1e210000() {
     // Encoding: 0x1E210000
     // Test aarch64_float_convert_int field opcode = 1 (PowerOfTwo)
-    // Fields: sf=0, rmode=0, type1=0, opcode=1, Rd=0, Rn=0
+    // Fields: opcode=1, Rd=0, rmode=0, type1=0, sf=0, Rn=0
     let encoding: u32 = 0x1E210000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -180,12 +230,17 @@ fn test_aarch64_float_convert_int_field_opcode_1_poweroftwo_0_1e210000() {
 fn test_aarch64_float_convert_int_field_opcode_7_max_0_1e270000() {
     // Encoding: 0x1E270000
     // Test aarch64_float_convert_int field opcode = 7 (Max)
-    // Fields: type1=0, opcode=7, sf=0, Rd=0, rmode=0, Rn=0
+    // Fields: Rn=0, Rd=0, rmode=0, sf=0, type1=0, opcode=7
     let encoding: u32 = 0x1E270000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -196,12 +251,17 @@ fn test_aarch64_float_convert_int_field_opcode_7_max_0_1e270000() {
 fn test_aarch64_float_convert_int_field_rn_0_min_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int field Rn = 0 (Min)
-    // Fields: type1=0, opcode=0, Rd=0, sf=0, Rn=0, rmode=0
+    // Fields: type1=0, rmode=0, opcode=0, Rn=0, Rd=0, sf=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -212,12 +272,17 @@ fn test_aarch64_float_convert_int_field_rn_0_min_0_1e200000() {
 fn test_aarch64_float_convert_int_field_rn_1_poweroftwo_0_1e200020() {
     // Encoding: 0x1E200020
     // Test aarch64_float_convert_int field Rn = 1 (PowerOfTwo)
-    // Fields: Rd=0, rmode=0, type1=0, sf=0, opcode=0, Rn=1
+    // Fields: sf=0, Rd=0, rmode=0, opcode=0, Rn=1, type1=0
     let encoding: u32 = 0x1E200020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -228,12 +293,17 @@ fn test_aarch64_float_convert_int_field_rn_1_poweroftwo_0_1e200020() {
 fn test_aarch64_float_convert_int_field_rn_30_poweroftwominusone_0_1e2003c0() {
     // Encoding: 0x1E2003C0
     // Test aarch64_float_convert_int field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=30, Rd=0, rmode=0, opcode=0, type1=0, sf=0
+    // Fields: opcode=0, rmode=0, Rd=0, Rn=30, type1=0, sf=0
     let encoding: u32 = 0x1E2003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -244,12 +314,17 @@ fn test_aarch64_float_convert_int_field_rn_30_poweroftwominusone_0_1e2003c0() {
 fn test_aarch64_float_convert_int_field_rn_31_max_0_1e2003e0() {
     // Encoding: 0x1E2003E0
     // Test aarch64_float_convert_int field Rn = 31 (Max)
-    // Fields: sf=0, opcode=0, Rn=31, Rd=0, rmode=0, type1=0
+    // Fields: sf=0, rmode=0, type1=0, opcode=0, Rn=31, Rd=0
     let encoding: u32 = 0x1E2003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -260,12 +335,17 @@ fn test_aarch64_float_convert_int_field_rn_31_max_0_1e2003e0() {
 fn test_aarch64_float_convert_int_field_rd_0_min_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int field Rd = 0 (Min)
-    // Fields: Rn=0, sf=0, rmode=0, type1=0, opcode=0, Rd=0
+    // Fields: opcode=0, Rd=0, sf=0, type1=0, rmode=0, Rn=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -276,12 +356,17 @@ fn test_aarch64_float_convert_int_field_rd_0_min_0_1e200000() {
 fn test_aarch64_float_convert_int_field_rd_1_poweroftwo_0_1e200001() {
     // Encoding: 0x1E200001
     // Test aarch64_float_convert_int field Rd = 1 (PowerOfTwo)
-    // Fields: sf=0, type1=0, opcode=0, Rn=0, Rd=1, rmode=0
+    // Fields: sf=0, type1=0, Rn=0, rmode=0, Rd=1, opcode=0
     let encoding: u32 = 0x1E200001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -292,12 +377,17 @@ fn test_aarch64_float_convert_int_field_rd_1_poweroftwo_0_1e200001() {
 fn test_aarch64_float_convert_int_field_rd_30_poweroftwominusone_0_1e20001e() {
     // Encoding: 0x1E20001E
     // Test aarch64_float_convert_int field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=30, sf=0, Rn=0, type1=0, rmode=0, opcode=0
+    // Fields: Rn=0, rmode=0, sf=0, type1=0, Rd=30, opcode=0
     let encoding: u32 = 0x1E20001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -308,12 +398,17 @@ fn test_aarch64_float_convert_int_field_rd_30_poweroftwominusone_0_1e20001e() {
 fn test_aarch64_float_convert_int_field_rd_31_max_0_1e20001f() {
     // Encoding: 0x1E20001F
     // Test aarch64_float_convert_int field Rd = 31 (Max)
-    // Fields: opcode=0, Rn=0, type1=0, Rd=31, rmode=0, sf=0
+    // Fields: Rd=31, type1=0, Rn=0, sf=0, rmode=0, opcode=0
     let encoding: u32 = 0x1E20001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -324,12 +419,17 @@ fn test_aarch64_float_convert_int_field_rd_31_max_0_1e20001f() {
 fn test_aarch64_float_convert_int_combo_0_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int field combination: sf=0, type1=0, rmode=0, opcode=0, Rn=0, Rd=0
-    // Fields: type1=0, opcode=0, Rd=0, Rn=0, sf=0, rmode=0
+    // Fields: type1=0, Rn=0, rmode=0, Rd=0, sf=0, opcode=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -340,12 +440,17 @@ fn test_aarch64_float_convert_int_combo_0_0_1e200000() {
 fn test_aarch64_float_convert_int_special_sf_0_size_variant_0_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int special value sf = 0 (Size variant 0)
-    // Fields: type1=0, opcode=0, rmode=0, sf=0, Rn=0, Rd=0
+    // Fields: Rn=0, Rd=0, rmode=0, opcode=0, type1=0, sf=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -356,12 +461,17 @@ fn test_aarch64_float_convert_int_special_sf_0_size_variant_0_0_1e200000() {
 fn test_aarch64_float_convert_int_special_sf_1_size_variant_1_0_9e200000() {
     // Encoding: 0x9E200000
     // Test aarch64_float_convert_int special value sf = 1 (Size variant 1)
-    // Fields: rmode=0, opcode=0, sf=1, Rn=0, type1=0, Rd=0
+    // Fields: rmode=0, Rn=0, type1=0, Rd=0, sf=1, opcode=0
     let encoding: u32 = 0x9E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -369,15 +479,21 @@ fn test_aarch64_float_convert_int_special_sf_1_size_variant_1_0_9e200000() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_float_convert_int_special_rn_31_stack_pointer_sp_may_require_alignment_0_1e2003e0() {
+fn test_aarch64_float_convert_int_special_rn_31_stack_pointer_sp_may_require_alignment_0_1e2003e0()
+{
     // Encoding: 0x1E2003E0
     // Test aarch64_float_convert_int special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: type1=0, rmode=0, opcode=0, Rn=31, sf=0, Rd=0
+    // Fields: Rd=0, type1=0, rmode=0, sf=0, opcode=0, Rn=31
     let encoding: u32 = 0x1E2003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -385,15 +501,21 @@ fn test_aarch64_float_convert_int_special_rn_31_stack_pointer_sp_may_require_ali
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_float_convert_int_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1e20001f() {
+fn test_aarch64_float_convert_int_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1e20001f(
+) {
     // Encoding: 0x1E20001F
     // Test aarch64_float_convert_int special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rn=0, Rd=31, sf=0, type1=0, opcode=0, rmode=0
+    // Fields: opcode=0, type1=0, sf=0, Rd=31, rmode=0, Rn=0
     let encoding: u32 = 0x1E20001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -404,12 +526,16 @@ fn test_aarch64_float_convert_int_special_rd_31_zero_register_xzr_wzr_reads_as_0
 fn test_aarch64_float_convert_int_invalid_0_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int invalid encoding: Binary { op: BitConcat, lhs: Slice { base: Var(QualifiedIdentifier { qualifier: Any, name: "opcode" }), slices: [Range { hi: LitInt(2), lo: LitInt(1) }] }, rhs: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "rmode" }), rhs: LitBits([true, true, false, true]) } }
-    // Fields: rmode=0, sf=0, opcode=0, type1=0, Rd=0, Rn=0
+    // Fields: sf=0, opcode=0, type1=0, rmode=0, Rn=0, Rd=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -420,12 +546,16 @@ fn test_aarch64_float_convert_int_invalid_0_0_1e200000() {
 fn test_aarch64_float_convert_int_invalid_1_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int invalid encoding: Unconditional UNDEFINED
-    // Fields: rmode=0, sf=0, Rn=0, opcode=0, Rd=0, type1=0
+    // Fields: rmode=0, Rd=0, type1=0, sf=0, Rn=0, opcode=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -436,12 +566,16 @@ fn test_aarch64_float_convert_int_invalid_1_0_1e200000() {
 fn test_aarch64_float_convert_int_invalid_2_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int invalid encoding: Unconditional UNDEFINED
-    // Fields: sf=0, opcode=0, type1=0, rmode=0, Rd=0, Rn=0
+    // Fields: type1=0, opcode=0, sf=0, Rn=0, Rd=0, rmode=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -452,12 +586,16 @@ fn test_aarch64_float_convert_int_invalid_2_0_1e200000() {
 fn test_aarch64_float_convert_int_invalid_3_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int invalid encoding: Binary { op: Ne, lhs: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "fltsize" }), rhs: Binary { op: And, lhs: LitInt(16), rhs: Var(QualifiedIdentifier { qualifier: Any, name: "fltsize" }) } }, rhs: Var(QualifiedIdentifier { qualifier: Any, name: "intsize" }) }
-    // Fields: sf=0, Rd=0, rmode=0, Rn=0, type1=0, opcode=0
+    // Fields: Rn=0, opcode=0, Rd=0, sf=0, type1=0, rmode=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -468,12 +606,16 @@ fn test_aarch64_float_convert_int_invalid_3_0_1e200000() {
 fn test_aarch64_float_convert_int_invalid_4_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int invalid encoding: Unconditional UNDEFINED
-    // Fields: type1=0, rmode=0, sf=0, Rn=0, Rd=0, opcode=0
+    // Fields: rmode=0, Rn=0, Rd=0, sf=0, type1=0, opcode=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -484,12 +626,16 @@ fn test_aarch64_float_convert_int_invalid_4_0_1e200000() {
 fn test_aarch64_float_convert_int_invalid_5_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int invalid encoding: Binary { op: Ne, lhs: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "intsize" }), rhs: Binary { op: Or, lhs: LitInt(64), rhs: Var(QualifiedIdentifier { qualifier: Any, name: "fltsize" }) } }, rhs: LitInt(128) }
-    // Fields: type1=0, Rn=0, rmode=0, Rd=0, sf=0, opcode=0
+    // Fields: opcode=0, Rn=0, rmode=0, type1=0, sf=0, Rd=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -500,12 +646,16 @@ fn test_aarch64_float_convert_int_invalid_5_0_1e200000() {
 fn test_aarch64_float_convert_int_invalid_6_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int invalid encoding: Unconditional UNDEFINED
-    // Fields: Rd=0, opcode=0, sf=0, type1=0, rmode=0, Rn=0
+    // Fields: rmode=0, Rn=0, type1=0, opcode=0, sf=0, Rd=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -516,12 +666,16 @@ fn test_aarch64_float_convert_int_invalid_6_0_1e200000() {
 fn test_aarch64_float_convert_int_invalid_7_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveFJCVTZSExt" }, args: [] } }
-    // Fields: type1=0, sf=0, opcode=0, Rd=0, Rn=0, rmode=0
+    // Fields: type1=0, Rn=0, Rd=0, opcode=0, sf=0, rmode=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -532,12 +686,16 @@ fn test_aarch64_float_convert_int_invalid_7_0_1e200000() {
 fn test_aarch64_float_convert_int_invalid_8_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, sf=0, Rd=0, type1=0, rmode=0, opcode=0
+    // Fields: sf=0, Rd=0, opcode=0, Rn=0, rmode=0, type1=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -548,12 +706,16 @@ fn test_aarch64_float_convert_int_invalid_8_0_1e200000() {
 fn test_aarch64_float_convert_int_invalid_9_0_1e200000() {
     // Encoding: 0x1E200000
     // Test aarch64_float_convert_int invalid encoding: Unconditional UNDEFINED
-    // Fields: opcode=0, Rn=0, Rd=0, sf=0, rmode=0, type1=0
+    // Fields: sf=0, type1=0, opcode=0, Rn=0, Rd=0, rmode=0
     let encoding: u32 = 0x1E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_int
@@ -659,12 +821,17 @@ fn test_aarch64_float_convert_int_zr_rd_1e20001f() {
 fn test_aarch64_float_convert_fix_field_sf_0_min_0_1e000000() {
     // Encoding: 0x1E000000
     // Test aarch64_float_convert_fix field sf = 0 (Min)
-    // Fields: type1=0, scale=0, Rn=0, Rd=0, sf=0, rmode=0, opcode=0
+    // Fields: scale=0, Rn=0, sf=0, Rd=0, type1=0, opcode=0, rmode=0
     let encoding: u32 = 0x1E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -675,12 +842,17 @@ fn test_aarch64_float_convert_fix_field_sf_0_min_0_1e000000() {
 fn test_aarch64_float_convert_fix_field_sf_1_max_0_9e000000() {
     // Encoding: 0x9E000000
     // Test aarch64_float_convert_fix field sf = 1 (Max)
-    // Fields: rmode=0, type1=0, Rd=0, sf=1, opcode=0, Rn=0, scale=0
+    // Fields: Rn=0, type1=0, rmode=0, scale=0, sf=1, Rd=0, opcode=0
     let encoding: u32 = 0x9E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -691,12 +863,17 @@ fn test_aarch64_float_convert_fix_field_sf_1_max_0_9e000000() {
 fn test_aarch64_float_convert_fix_field_type1_0_min_0_1e000000() {
     // Encoding: 0x1E000000
     // Test aarch64_float_convert_fix field type1 = 0 (Min)
-    // Fields: type1=0, rmode=0, opcode=0, Rn=0, sf=0, scale=0, Rd=0
+    // Fields: Rd=0, type1=0, opcode=0, sf=0, rmode=0, scale=0, Rn=0
     let encoding: u32 = 0x1E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -707,12 +884,17 @@ fn test_aarch64_float_convert_fix_field_type1_0_min_0_1e000000() {
 fn test_aarch64_float_convert_fix_field_type1_1_poweroftwo_0_1e400000() {
     // Encoding: 0x1E400000
     // Test aarch64_float_convert_fix field type1 = 1 (PowerOfTwo)
-    // Fields: sf=0, rmode=0, Rn=0, Rd=0, opcode=0, scale=0, type1=1
+    // Fields: opcode=0, scale=0, Rn=0, sf=0, type1=1, Rd=0, rmode=0
     let encoding: u32 = 0x1E400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -723,12 +905,17 @@ fn test_aarch64_float_convert_fix_field_type1_1_poweroftwo_0_1e400000() {
 fn test_aarch64_float_convert_fix_field_type1_3_max_0_1ec00000() {
     // Encoding: 0x1EC00000
     // Test aarch64_float_convert_fix field type1 = 3 (Max)
-    // Fields: Rn=0, sf=0, rmode=0, opcode=0, scale=0, Rd=0, type1=3
+    // Fields: rmode=0, sf=0, type1=3, opcode=0, Rn=0, scale=0, Rd=0
     let encoding: u32 = 0x1EC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -739,12 +926,17 @@ fn test_aarch64_float_convert_fix_field_type1_3_max_0_1ec00000() {
 fn test_aarch64_float_convert_fix_field_rmode_0_min_0_1e000000() {
     // Encoding: 0x1E000000
     // Test aarch64_float_convert_fix field rmode = 0 (Min)
-    // Fields: rmode=0, scale=0, type1=0, opcode=0, Rn=0, Rd=0, sf=0
+    // Fields: sf=0, scale=0, rmode=0, opcode=0, type1=0, Rn=0, Rd=0
     let encoding: u32 = 0x1E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -755,12 +947,17 @@ fn test_aarch64_float_convert_fix_field_rmode_0_min_0_1e000000() {
 fn test_aarch64_float_convert_fix_field_rmode_1_poweroftwo_0_1e080000() {
     // Encoding: 0x1E080000
     // Test aarch64_float_convert_fix field rmode = 1 (PowerOfTwo)
-    // Fields: opcode=0, type1=0, sf=0, rmode=1, scale=0, Rd=0, Rn=0
+    // Fields: opcode=0, scale=0, Rd=0, type1=0, Rn=0, sf=0, rmode=1
     let encoding: u32 = 0x1E080000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -771,12 +968,17 @@ fn test_aarch64_float_convert_fix_field_rmode_1_poweroftwo_0_1e080000() {
 fn test_aarch64_float_convert_fix_field_rmode_3_max_0_1e180000() {
     // Encoding: 0x1E180000
     // Test aarch64_float_convert_fix field rmode = 3 (Max)
-    // Fields: opcode=0, scale=0, rmode=3, sf=0, Rn=0, type1=0, Rd=0
+    // Fields: Rn=0, sf=0, type1=0, rmode=3, opcode=0, scale=0, Rd=0
     let encoding: u32 = 0x1E180000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -787,12 +989,17 @@ fn test_aarch64_float_convert_fix_field_rmode_3_max_0_1e180000() {
 fn test_aarch64_float_convert_fix_field_opcode_0_min_0_1e000000() {
     // Encoding: 0x1E000000
     // Test aarch64_float_convert_fix field opcode = 0 (Min)
-    // Fields: opcode=0, sf=0, Rd=0, scale=0, Rn=0, type1=0, rmode=0
+    // Fields: type1=0, opcode=0, sf=0, scale=0, Rn=0, rmode=0, Rd=0
     let encoding: u32 = 0x1E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -803,12 +1010,17 @@ fn test_aarch64_float_convert_fix_field_opcode_0_min_0_1e000000() {
 fn test_aarch64_float_convert_fix_field_opcode_1_poweroftwo_0_1e010000() {
     // Encoding: 0x1E010000
     // Test aarch64_float_convert_fix field opcode = 1 (PowerOfTwo)
-    // Fields: type1=0, scale=0, sf=0, opcode=1, Rn=0, rmode=0, Rd=0
+    // Fields: Rd=0, type1=0, rmode=0, sf=0, opcode=1, scale=0, Rn=0
     let encoding: u32 = 0x1E010000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -819,12 +1031,17 @@ fn test_aarch64_float_convert_fix_field_opcode_1_poweroftwo_0_1e010000() {
 fn test_aarch64_float_convert_fix_field_opcode_7_max_0_1e070000() {
     // Encoding: 0x1E070000
     // Test aarch64_float_convert_fix field opcode = 7 (Max)
-    // Fields: sf=0, rmode=0, Rn=0, type1=0, opcode=7, scale=0, Rd=0
+    // Fields: scale=0, Rn=0, type1=0, opcode=7, Rd=0, sf=0, rmode=0
     let encoding: u32 = 0x1E070000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -835,12 +1052,17 @@ fn test_aarch64_float_convert_fix_field_opcode_7_max_0_1e070000() {
 fn test_aarch64_float_convert_fix_field_scale_0_min_0_1e000000() {
     // Encoding: 0x1E000000
     // Test aarch64_float_convert_fix field scale = 0 (Min)
-    // Fields: Rn=0, Rd=0, scale=0, sf=0, type1=0, rmode=0, opcode=0
+    // Fields: sf=0, type1=0, opcode=0, scale=0, Rn=0, rmode=0, Rd=0
     let encoding: u32 = 0x1E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -851,12 +1073,17 @@ fn test_aarch64_float_convert_fix_field_scale_0_min_0_1e000000() {
 fn test_aarch64_float_convert_fix_field_scale_1_poweroftwo_0_1e000400() {
     // Encoding: 0x1E000400
     // Test aarch64_float_convert_fix field scale = 1 (PowerOfTwo)
-    // Fields: sf=0, scale=1, Rn=0, Rd=0, opcode=0, rmode=0, type1=0
+    // Fields: scale=1, Rn=0, type1=0, Rd=0, opcode=0, rmode=0, sf=0
     let encoding: u32 = 0x1E000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -867,12 +1094,17 @@ fn test_aarch64_float_convert_fix_field_scale_1_poweroftwo_0_1e000400() {
 fn test_aarch64_float_convert_fix_field_scale_31_poweroftwominusone_0_1e007c00() {
     // Encoding: 0x1E007C00
     // Test aarch64_float_convert_fix field scale = 31 (PowerOfTwoMinusOne)
-    // Fields: Rd=0, rmode=0, type1=0, sf=0, opcode=0, scale=31, Rn=0
+    // Fields: Rd=0, scale=31, sf=0, opcode=0, type1=0, rmode=0, Rn=0
     let encoding: u32 = 0x1E007C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -883,12 +1115,17 @@ fn test_aarch64_float_convert_fix_field_scale_31_poweroftwominusone_0_1e007c00()
 fn test_aarch64_float_convert_fix_field_scale_63_max_0_1e00fc00() {
     // Encoding: 0x1E00FC00
     // Test aarch64_float_convert_fix field scale = 63 (Max)
-    // Fields: Rn=0, Rd=0, sf=0, rmode=0, type1=0, opcode=0, scale=63
+    // Fields: type1=0, rmode=0, sf=0, scale=63, Rn=0, opcode=0, Rd=0
     let encoding: u32 = 0x1E00FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -899,12 +1136,17 @@ fn test_aarch64_float_convert_fix_field_scale_63_max_0_1e00fc00() {
 fn test_aarch64_float_convert_fix_field_rn_0_min_0_1e000000() {
     // Encoding: 0x1E000000
     // Test aarch64_float_convert_fix field Rn = 0 (Min)
-    // Fields: rmode=0, sf=0, opcode=0, Rn=0, scale=0, Rd=0, type1=0
+    // Fields: Rd=0, rmode=0, scale=0, Rn=0, opcode=0, type1=0, sf=0
     let encoding: u32 = 0x1E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -915,12 +1157,17 @@ fn test_aarch64_float_convert_fix_field_rn_0_min_0_1e000000() {
 fn test_aarch64_float_convert_fix_field_rn_1_poweroftwo_0_1e000020() {
     // Encoding: 0x1E000020
     // Test aarch64_float_convert_fix field Rn = 1 (PowerOfTwo)
-    // Fields: rmode=0, type1=0, Rn=1, opcode=0, sf=0, Rd=0, scale=0
+    // Fields: opcode=0, Rn=1, Rd=0, rmode=0, type1=0, scale=0, sf=0
     let encoding: u32 = 0x1E000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -931,12 +1178,17 @@ fn test_aarch64_float_convert_fix_field_rn_1_poweroftwo_0_1e000020() {
 fn test_aarch64_float_convert_fix_field_rn_30_poweroftwominusone_0_1e0003c0() {
     // Encoding: 0x1E0003C0
     // Test aarch64_float_convert_fix field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: type1=0, scale=0, Rn=30, Rd=0, opcode=0, sf=0, rmode=0
+    // Fields: type1=0, scale=0, rmode=0, opcode=0, Rd=0, sf=0, Rn=30
     let encoding: u32 = 0x1E0003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -947,12 +1199,17 @@ fn test_aarch64_float_convert_fix_field_rn_30_poweroftwominusone_0_1e0003c0() {
 fn test_aarch64_float_convert_fix_field_rn_31_max_0_1e0003e0() {
     // Encoding: 0x1E0003E0
     // Test aarch64_float_convert_fix field Rn = 31 (Max)
-    // Fields: Rn=31, Rd=0, rmode=0, opcode=0, sf=0, type1=0, scale=0
+    // Fields: sf=0, Rn=31, rmode=0, opcode=0, Rd=0, type1=0, scale=0
     let encoding: u32 = 0x1E0003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -963,12 +1220,17 @@ fn test_aarch64_float_convert_fix_field_rn_31_max_0_1e0003e0() {
 fn test_aarch64_float_convert_fix_field_rd_0_min_0_1e000000() {
     // Encoding: 0x1E000000
     // Test aarch64_float_convert_fix field Rd = 0 (Min)
-    // Fields: Rn=0, Rd=0, opcode=0, type1=0, sf=0, rmode=0, scale=0
+    // Fields: sf=0, Rn=0, Rd=0, scale=0, type1=0, opcode=0, rmode=0
     let encoding: u32 = 0x1E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -979,12 +1241,17 @@ fn test_aarch64_float_convert_fix_field_rd_0_min_0_1e000000() {
 fn test_aarch64_float_convert_fix_field_rd_1_poweroftwo_0_1e000001() {
     // Encoding: 0x1E000001
     // Test aarch64_float_convert_fix field Rd = 1 (PowerOfTwo)
-    // Fields: sf=0, opcode=0, type1=0, Rd=1, Rn=0, scale=0, rmode=0
+    // Fields: scale=0, opcode=0, sf=0, type1=0, rmode=0, Rn=0, Rd=1
     let encoding: u32 = 0x1E000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -995,12 +1262,17 @@ fn test_aarch64_float_convert_fix_field_rd_1_poweroftwo_0_1e000001() {
 fn test_aarch64_float_convert_fix_field_rd_30_poweroftwominusone_0_1e00001e() {
     // Encoding: 0x1E00001E
     // Test aarch64_float_convert_fix field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: scale=0, opcode=0, Rn=0, Rd=30, rmode=0, sf=0, type1=0
+    // Fields: Rd=30, sf=0, scale=0, Rn=0, rmode=0, type1=0, opcode=0
     let encoding: u32 = 0x1E00001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1011,12 +1283,17 @@ fn test_aarch64_float_convert_fix_field_rd_30_poweroftwominusone_0_1e00001e() {
 fn test_aarch64_float_convert_fix_field_rd_31_max_0_1e00001f() {
     // Encoding: 0x1E00001F
     // Test aarch64_float_convert_fix field Rd = 31 (Max)
-    // Fields: Rd=31, sf=0, scale=0, opcode=0, Rn=0, type1=0, rmode=0
+    // Fields: opcode=0, Rd=31, scale=0, Rn=0, rmode=0, type1=0, sf=0
     let encoding: u32 = 0x1E00001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1027,12 +1304,17 @@ fn test_aarch64_float_convert_fix_field_rd_31_max_0_1e00001f() {
 fn test_aarch64_float_convert_fix_combo_0_0_1e000000() {
     // Encoding: 0x1E000000
     // Test aarch64_float_convert_fix field combination: sf=0, type1=0, rmode=0, opcode=0, scale=0, Rn=0, Rd=0
-    // Fields: scale=0, Rn=0, Rd=0, type1=0, sf=0, opcode=0, rmode=0
+    // Fields: Rd=0, scale=0, type1=0, rmode=0, sf=0, Rn=0, opcode=0
     let encoding: u32 = 0x1E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1043,12 +1325,17 @@ fn test_aarch64_float_convert_fix_combo_0_0_1e000000() {
 fn test_aarch64_float_convert_fix_special_sf_0_size_variant_0_0_1e000000() {
     // Encoding: 0x1E000000
     // Test aarch64_float_convert_fix special value sf = 0 (Size variant 0)
-    // Fields: opcode=0, scale=0, rmode=0, Rn=0, Rd=0, sf=0, type1=0
+    // Fields: sf=0, opcode=0, scale=0, type1=0, Rn=0, rmode=0, Rd=0
     let encoding: u32 = 0x1E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1059,12 +1346,17 @@ fn test_aarch64_float_convert_fix_special_sf_0_size_variant_0_0_1e000000() {
 fn test_aarch64_float_convert_fix_special_sf_1_size_variant_1_0_9e000000() {
     // Encoding: 0x9E000000
     // Test aarch64_float_convert_fix special value sf = 1 (Size variant 1)
-    // Fields: scale=0, Rd=0, Rn=0, rmode=0, sf=1, type1=0, opcode=0
+    // Fields: scale=0, Rn=0, rmode=0, opcode=0, Rd=0, sf=1, type1=0
     let encoding: u32 = 0x9E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1072,15 +1364,21 @@ fn test_aarch64_float_convert_fix_special_sf_1_size_variant_1_0_9e000000() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_float_convert_fix_special_rn_31_stack_pointer_sp_may_require_alignment_0_1e0003e0() {
+fn test_aarch64_float_convert_fix_special_rn_31_stack_pointer_sp_may_require_alignment_0_1e0003e0()
+{
     // Encoding: 0x1E0003E0
     // Test aarch64_float_convert_fix special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: rmode=0, Rd=0, scale=0, Rn=31, type1=0, opcode=0, sf=0
+    // Fields: scale=0, type1=0, opcode=0, Rd=0, sf=0, Rn=31, rmode=0
     let encoding: u32 = 0x1E0003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1088,15 +1386,21 @@ fn test_aarch64_float_convert_fix_special_rn_31_stack_pointer_sp_may_require_ali
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_float_convert_fix_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1e00001f() {
+fn test_aarch64_float_convert_fix_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1e00001f(
+) {
     // Encoding: 0x1E00001F
     // Test aarch64_float_convert_fix special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rd=31, sf=0, rmode=0, type1=0, Rn=0, opcode=0, scale=0
+    // Fields: Rd=31, rmode=0, sf=0, type1=0, opcode=0, scale=0, Rn=0
     let encoding: u32 = 0x1E00001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1107,12 +1411,16 @@ fn test_aarch64_float_convert_fix_special_rd_31_zero_register_xzr_wzr_reads_as_0
 fn test_aarch64_float_convert_fix_invalid_0_0_1e000000() {
     // Encoding: 0x1E000000
     // Test aarch64_float_convert_fix invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, type1=0, rmode=0, scale=0, sf=0, opcode=0, Rd=0
+    // Fields: Rd=0, scale=0, rmode=0, sf=0, type1=0, opcode=0, Rn=0
     let encoding: u32 = 0x1E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1123,12 +1431,16 @@ fn test_aarch64_float_convert_fix_invalid_0_0_1e000000() {
 fn test_aarch64_float_convert_fix_invalid_1_0_1e000000() {
     // Encoding: 0x1E000000
     // Test aarch64_float_convert_fix invalid encoding: Unconditional UNDEFINED
-    // Fields: sf=0, Rn=0, opcode=0, rmode=0, scale=0, type1=0, Rd=0
+    // Fields: Rn=0, scale=0, opcode=0, Rd=0, type1=0, rmode=0, sf=0
     let encoding: u32 = 0x1E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1139,12 +1451,16 @@ fn test_aarch64_float_convert_fix_invalid_1_0_1e000000() {
 fn test_aarch64_float_convert_fix_invalid_2_0_1e000000() {
     // Encoding: 0x1E000000
     // Test aarch64_float_convert_fix invalid encoding: Binary { op: Eq, lhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "sf" }), rhs: Binary { op: And, lhs: LitBits([false]), rhs: Index { base: Var(QualifiedIdentifier { qualifier: Any, name: "scale" }), indices: [Single(LitInt(5))] } } }, rhs: LitBits([false]) }
-    // Fields: Rn=0, type1=0, sf=0, rmode=0, opcode=0, Rd=0, scale=0
+    // Fields: sf=0, rmode=0, opcode=0, type1=0, Rn=0, Rd=0, scale=0
     let encoding: u32 = 0x1E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1155,12 +1471,16 @@ fn test_aarch64_float_convert_fix_invalid_2_0_1e000000() {
 fn test_aarch64_float_convert_fix_invalid_3_0_1e000000() {
     // Encoding: 0x1E000000
     // Test aarch64_float_convert_fix invalid encoding: Unconditional UNDEFINED
-    // Fields: rmode=0, opcode=0, scale=0, sf=0, type1=0, Rn=0, Rd=0
+    // Fields: opcode=0, scale=0, Rd=0, type1=0, sf=0, rmode=0, Rn=0
     let encoding: u32 = 0x1E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1171,12 +1491,16 @@ fn test_aarch64_float_convert_fix_invalid_3_0_1e000000() {
 fn test_aarch64_float_convert_fix_invalid_4_0_1e000000() {
     // Encoding: 0x1E000000
     // Test aarch64_float_convert_fix invalid encoding: Unconditional UNDEFINED
-    // Fields: rmode=0, sf=0, type1=0, Rn=0, Rd=0, scale=0, opcode=0
+    // Fields: rmode=0, sf=0, Rd=0, scale=0, type1=0, opcode=0, Rn=0
     let encoding: u32 = 0x1E000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fix
@@ -1252,12 +1576,17 @@ fn test_aarch64_float_convert_fix_zr_rd_1e00001f() {
 fn test_aarch64_float_convert_fp_field_type1_0_min_4000_1e224000() {
     // Encoding: 0x1E224000
     // Test aarch64_float_convert_fp field type1 = 0 (Min)
-    // Fields: opc=0, Rd=0, type1=0, Rn=0
+    // Fields: type1=0, opc=0, Rn=0, Rd=0
     let encoding: u32 = 0x1E224000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1268,12 +1597,17 @@ fn test_aarch64_float_convert_fp_field_type1_0_min_4000_1e224000() {
 fn test_aarch64_float_convert_fp_field_type1_1_poweroftwo_4000_1e624000() {
     // Encoding: 0x1E624000
     // Test aarch64_float_convert_fp field type1 = 1 (PowerOfTwo)
-    // Fields: Rn=0, opc=0, type1=1, Rd=0
+    // Fields: opc=0, Rn=0, type1=1, Rd=0
     let encoding: u32 = 0x1E624000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1284,12 +1618,17 @@ fn test_aarch64_float_convert_fp_field_type1_1_poweroftwo_4000_1e624000() {
 fn test_aarch64_float_convert_fp_field_type1_3_max_4000_1ee24000() {
     // Encoding: 0x1EE24000
     // Test aarch64_float_convert_fp field type1 = 3 (Max)
-    // Fields: opc=0, Rn=0, type1=3, Rd=0
+    // Fields: opc=0, Rn=0, Rd=0, type1=3
     let encoding: u32 = 0x1EE24000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1300,12 +1639,17 @@ fn test_aarch64_float_convert_fp_field_type1_3_max_4000_1ee24000() {
 fn test_aarch64_float_convert_fp_field_opc_0_min_4000_1e224000() {
     // Encoding: 0x1E224000
     // Test aarch64_float_convert_fp field opc = 0 (Min)
-    // Fields: Rn=0, Rd=0, type1=0, opc=0
+    // Fields: type1=0, Rn=0, opc=0, Rd=0
     let encoding: u32 = 0x1E224000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1321,7 +1665,12 @@ fn test_aarch64_float_convert_fp_field_opc_1_poweroftwo_4000_1e22c000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1337,7 +1686,12 @@ fn test_aarch64_float_convert_fp_field_opc_2_poweroftwo_4000_1e234000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1348,12 +1702,17 @@ fn test_aarch64_float_convert_fp_field_opc_2_poweroftwo_4000_1e234000() {
 fn test_aarch64_float_convert_fp_field_opc_3_max_4000_1e23c000() {
     // Encoding: 0x1E23C000
     // Test aarch64_float_convert_fp field opc = 3 (Max)
-    // Fields: type1=0, opc=3, Rd=0, Rn=0
+    // Fields: Rd=0, Rn=0, type1=0, opc=3
     let encoding: u32 = 0x1E23C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1364,12 +1723,17 @@ fn test_aarch64_float_convert_fp_field_opc_3_max_4000_1e23c000() {
 fn test_aarch64_float_convert_fp_field_rn_0_min_4000_1e224000() {
     // Encoding: 0x1E224000
     // Test aarch64_float_convert_fp field Rn = 0 (Min)
-    // Fields: opc=0, Rd=0, type1=0, Rn=0
+    // Fields: Rd=0, Rn=0, type1=0, opc=0
     let encoding: u32 = 0x1E224000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1380,12 +1744,17 @@ fn test_aarch64_float_convert_fp_field_rn_0_min_4000_1e224000() {
 fn test_aarch64_float_convert_fp_field_rn_1_poweroftwo_4000_1e224020() {
     // Encoding: 0x1E224020
     // Test aarch64_float_convert_fp field Rn = 1 (PowerOfTwo)
-    // Fields: opc=0, type1=0, Rn=1, Rd=0
+    // Fields: opc=0, Rn=1, Rd=0, type1=0
     let encoding: u32 = 0x1E224020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1396,12 +1765,17 @@ fn test_aarch64_float_convert_fp_field_rn_1_poweroftwo_4000_1e224020() {
 fn test_aarch64_float_convert_fp_field_rn_30_poweroftwominusone_4000_1e2243c0() {
     // Encoding: 0x1E2243C0
     // Test aarch64_float_convert_fp field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=30, type1=0, Rd=0, opc=0
+    // Fields: type1=0, Rd=0, Rn=30, opc=0
     let encoding: u32 = 0x1E2243C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1412,12 +1786,17 @@ fn test_aarch64_float_convert_fp_field_rn_30_poweroftwominusone_4000_1e2243c0() 
 fn test_aarch64_float_convert_fp_field_rn_31_max_4000_1e2243e0() {
     // Encoding: 0x1E2243E0
     // Test aarch64_float_convert_fp field Rn = 31 (Max)
-    // Fields: Rn=31, type1=0, opc=0, Rd=0
+    // Fields: Rd=0, opc=0, type1=0, Rn=31
     let encoding: u32 = 0x1E2243E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1428,12 +1807,17 @@ fn test_aarch64_float_convert_fp_field_rn_31_max_4000_1e2243e0() {
 fn test_aarch64_float_convert_fp_field_rd_0_min_4000_1e224000() {
     // Encoding: 0x1E224000
     // Test aarch64_float_convert_fp field Rd = 0 (Min)
-    // Fields: type1=0, Rn=0, Rd=0, opc=0
+    // Fields: opc=0, Rd=0, type1=0, Rn=0
     let encoding: u32 = 0x1E224000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1444,12 +1828,17 @@ fn test_aarch64_float_convert_fp_field_rd_0_min_4000_1e224000() {
 fn test_aarch64_float_convert_fp_field_rd_1_poweroftwo_4000_1e224001() {
     // Encoding: 0x1E224001
     // Test aarch64_float_convert_fp field Rd = 1 (PowerOfTwo)
-    // Fields: Rn=0, Rd=1, opc=0, type1=0
+    // Fields: type1=0, Rn=0, opc=0, Rd=1
     let encoding: u32 = 0x1E224001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1460,12 +1849,17 @@ fn test_aarch64_float_convert_fp_field_rd_1_poweroftwo_4000_1e224001() {
 fn test_aarch64_float_convert_fp_field_rd_30_poweroftwominusone_4000_1e22401e() {
     // Encoding: 0x1E22401E
     // Test aarch64_float_convert_fp field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=30, Rn=0, type1=0, opc=0
+    // Fields: type1=0, opc=0, Rd=30, Rn=0
     let encoding: u32 = 0x1E22401E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1476,12 +1870,17 @@ fn test_aarch64_float_convert_fp_field_rd_30_poweroftwominusone_4000_1e22401e() 
 fn test_aarch64_float_convert_fp_field_rd_31_max_4000_1e22401f() {
     // Encoding: 0x1E22401F
     // Test aarch64_float_convert_fp field Rd = 31 (Max)
-    // Fields: opc=0, Rd=31, type1=0, Rn=0
+    // Fields: Rd=31, type1=0, Rn=0, opc=0
     let encoding: u32 = 0x1E22401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1492,12 +1891,17 @@ fn test_aarch64_float_convert_fp_field_rd_31_max_4000_1e22401f() {
 fn test_aarch64_float_convert_fp_combo_0_4000_1e224000() {
     // Encoding: 0x1E224000
     // Test aarch64_float_convert_fp field combination: type1=0, opc=0, Rn=0, Rd=0
-    // Fields: type1=0, opc=0, Rn=0, Rd=0
+    // Fields: opc=0, Rd=0, Rn=0, type1=0
     let encoding: u32 = 0x1E224000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1508,12 +1912,17 @@ fn test_aarch64_float_convert_fp_combo_0_4000_1e224000() {
 fn test_aarch64_float_convert_fp_special_opc_0_size_variant_0_16384_1e224000() {
     // Encoding: 0x1E224000
     // Test aarch64_float_convert_fp special value opc = 0 (Size variant 0)
-    // Fields: type1=0, Rd=0, opc=0, Rn=0
+    // Fields: type1=0, opc=0, Rn=0, Rd=0
     let encoding: u32 = 0x1E224000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1524,12 +1933,17 @@ fn test_aarch64_float_convert_fp_special_opc_0_size_variant_0_16384_1e224000() {
 fn test_aarch64_float_convert_fp_special_opc_1_size_variant_1_16384_1e22c000() {
     // Encoding: 0x1E22C000
     // Test aarch64_float_convert_fp special value opc = 1 (Size variant 1)
-    // Fields: Rd=0, Rn=0, opc=1, type1=0
+    // Fields: Rn=0, type1=0, opc=1, Rd=0
     let encoding: u32 = 0x1E22C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1540,12 +1954,17 @@ fn test_aarch64_float_convert_fp_special_opc_1_size_variant_1_16384_1e22c000() {
 fn test_aarch64_float_convert_fp_special_opc_2_size_variant_2_16384_1e234000() {
     // Encoding: 0x1E234000
     // Test aarch64_float_convert_fp special value opc = 2 (Size variant 2)
-    // Fields: opc=2, type1=0, Rn=0, Rd=0
+    // Fields: Rd=0, type1=0, opc=2, Rn=0
     let encoding: u32 = 0x1E234000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1556,12 +1975,17 @@ fn test_aarch64_float_convert_fp_special_opc_2_size_variant_2_16384_1e234000() {
 fn test_aarch64_float_convert_fp_special_opc_3_size_variant_3_16384_1e23c000() {
     // Encoding: 0x1E23C000
     // Test aarch64_float_convert_fp special value opc = 3 (Size variant 3)
-    // Fields: Rd=0, type1=0, Rn=0, opc=3
+    // Fields: opc=3, type1=0, Rd=0, Rn=0
     let encoding: u32 = 0x1E23C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1569,15 +1993,21 @@ fn test_aarch64_float_convert_fp_special_opc_3_size_variant_3_16384_1e23c000() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_float_convert_fp_special_rn_31_stack_pointer_sp_may_require_alignment_16384_1e2243e0() {
+fn test_aarch64_float_convert_fp_special_rn_31_stack_pointer_sp_may_require_alignment_16384_1e2243e0(
+) {
     // Encoding: 0x1E2243E0
     // Test aarch64_float_convert_fp special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rd=0, Rn=31, type1=0, opc=0
+    // Fields: Rd=0, type1=0, opc=0, Rn=31
     let encoding: u32 = 0x1E2243E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1585,15 +2015,21 @@ fn test_aarch64_float_convert_fp_special_rn_31_stack_pointer_sp_may_require_alig
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_float_convert_fp_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_16384_1e22401f() {
+fn test_aarch64_float_convert_fp_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_16384_1e22401f(
+) {
     // Encoding: 0x1E22401F
     // Test aarch64_float_convert_fp special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: type1=0, opc=0, Rn=0, Rd=31
+    // Fields: opc=0, Rd=31, type1=0, Rn=0
     let encoding: u32 = 0x1E22401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1604,12 +2040,16 @@ fn test_aarch64_float_convert_fp_special_rd_31_zero_register_xzr_wzr_reads_as_0_
 fn test_aarch64_float_convert_fp_invalid_0_4000_1e224000() {
     // Encoding: 0x1E224000
     // Test aarch64_float_convert_fp invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "type1" }), rhs: Var(QualifiedIdentifier { qualifier: Any, name: "opc" }) }
-    // Fields: Rd=0, Rn=0, opc=0, type1=0
+    // Fields: Rd=0, Rn=0, type1=0, opc=0
     let encoding: u32 = 0x1E224000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1620,12 +2060,16 @@ fn test_aarch64_float_convert_fp_invalid_0_4000_1e224000() {
 fn test_aarch64_float_convert_fp_invalid_1_4000_1e224000() {
     // Encoding: 0x1E224000
     // Test aarch64_float_convert_fp invalid encoding: Unconditional UNDEFINED
-    // Fields: type1=0, opc=0, Rn=0, Rd=0
+    // Fields: Rn=0, opc=0, Rd=0, type1=0
     let encoding: u32 = 0x1E224000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1636,12 +2080,16 @@ fn test_aarch64_float_convert_fp_invalid_1_4000_1e224000() {
 fn test_aarch64_float_convert_fp_invalid_2_4000_1e224000() {
     // Encoding: 0x1E224000
     // Test aarch64_float_convert_fp invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, opc=0, type1=0, Rd=0
+    // Fields: opc=0, Rd=0, type1=0, Rn=0
     let encoding: u32 = 0x1E224000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1652,12 +2100,16 @@ fn test_aarch64_float_convert_fp_invalid_2_4000_1e224000() {
 fn test_aarch64_float_convert_fp_invalid_3_4000_1e224000() {
     // Encoding: 0x1E224000
     // Test aarch64_float_convert_fp invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, type1=0, opc=0, Rd=0
+    // Fields: Rn=0, Rd=0, type1=0, opc=0
     let encoding: u32 = 0x1E224000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_float_convert_fp
@@ -1705,4 +2157,3 @@ fn test_aarch64_float_convert_fp_zr_rd_1e22401f() {
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
     assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
 }
-

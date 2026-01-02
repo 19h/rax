@@ -25,7 +25,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_0_zero_3_d4000003() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -41,7 +46,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_1_poweroftwo_3_d400002
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -57,7 +67,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_3_poweroftwominusone_3
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -73,7 +88,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_4_poweroftwo_3_d400008
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -89,7 +109,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_7_poweroftwominusone_3
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -105,7 +130,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_8_poweroftwo_3_d400010
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -121,7 +151,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_15_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -137,7 +172,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_16_poweroftwo_3_d40002
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -153,7 +193,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_31_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -169,7 +214,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_32_poweroftwo_3_d40004
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -185,7 +235,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_63_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -201,7 +256,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_64_poweroftwo_3_d40008
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -217,7 +277,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_127_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -233,7 +298,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_128_poweroftwo_3_d4001
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -249,7 +319,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_255_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -265,7 +340,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_256_poweroftwo_3_d4002
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -281,7 +361,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_511_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -297,7 +382,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_512_poweroftwo_3_d4004
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -313,7 +403,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_1023_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -329,7 +424,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_1024_poweroftwo_3_d400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -345,7 +445,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_2047_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -361,7 +466,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_2048_poweroftwo_3_d401
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -377,7 +487,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_4095_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -393,7 +508,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_4096_poweroftwo_3_d402
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -409,7 +529,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_8191_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -425,7 +550,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_8192_poweroftwo_3_d404
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -441,7 +571,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_16383_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -457,7 +592,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_16384_poweroftwo_3_d40
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -473,7 +613,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_32767_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -489,7 +634,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_32768_poweroftwo_3_d41
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -505,7 +655,12 @@ fn test_aarch64_system_exceptions_runtime_smc_field_imm16_65535_max_3_d41fffe3()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_smc
@@ -521,7 +676,12 @@ fn test_aarch64_system_exceptions_runtime_smc_combo_0_3_d4000003() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -541,7 +701,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_0_zero_0_d4400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -557,7 +722,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_1_poweroftwo_0_d4400020
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -573,7 +743,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_3_poweroftwominusone_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -589,7 +764,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_4_poweroftwo_0_d4400080
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -605,7 +785,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_7_poweroftwominusone_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -621,7 +806,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_8_poweroftwo_0_d4400100
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -637,7 +827,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_15_poweroftwominusone_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -653,7 +848,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_16_poweroftwo_0_d440020
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -669,7 +869,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_31_poweroftwominusone_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -685,7 +890,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_32_poweroftwo_0_d440040
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -701,7 +911,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_63_poweroftwominusone_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -717,7 +932,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_64_poweroftwo_0_d440080
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -733,7 +953,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_127_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -749,7 +974,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_128_poweroftwo_0_d44010
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -765,7 +995,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_255_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -781,7 +1016,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_256_poweroftwo_0_d44020
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -797,7 +1037,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_511_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -813,7 +1058,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_512_poweroftwo_0_d44040
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -829,7 +1079,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_1023_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -845,7 +1100,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_1024_poweroftwo_0_d4408
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -861,7 +1121,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_2047_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -877,7 +1142,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_2048_poweroftwo_0_d4410
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -893,7 +1163,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_4095_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -909,7 +1184,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_4096_poweroftwo_0_d4420
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -925,7 +1205,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_8191_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -941,7 +1226,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_8192_poweroftwo_0_d4440
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -957,7 +1247,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_16383_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -973,7 +1268,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_16384_poweroftwo_0_d448
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -989,7 +1289,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_32767_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -1005,7 +1310,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_32768_poweroftwo_0_d450
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -1021,7 +1331,12 @@ fn test_aarch64_system_exceptions_debug_halt_field_imm16_65535_max_0_d45fffe0() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_halt
@@ -1037,7 +1352,12 @@ fn test_aarch64_system_exceptions_debug_halt_combo_0_0_d4400000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -1057,7 +1377,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_0_zero_0_d4200000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1073,7 +1398,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_1_poweroftwo_0_d4
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1089,7 +1419,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_3_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1105,7 +1440,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_4_poweroftwo_0_d4
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1121,7 +1461,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_7_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1137,7 +1482,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_8_poweroftwo_0_d4
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1153,7 +1503,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_15_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1169,7 +1524,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_16_poweroftwo_0_d
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1185,7 +1545,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_31_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1201,7 +1566,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_32_poweroftwo_0_d
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1217,7 +1587,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_63_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1233,7 +1608,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_64_poweroftwo_0_d
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1249,7 +1629,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_127_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1265,7 +1650,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_128_poweroftwo_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1281,7 +1671,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_255_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1297,7 +1692,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_256_poweroftwo_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1313,7 +1713,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_511_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1329,7 +1734,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_512_poweroftwo_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1337,7 +1747,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_512_poweroftwo_0_
 /// Requirement: FieldBoundary { field: "imm16", value: 1023, boundary: PowerOfTwoMinusOne }
 /// 2^10 - 1 = 1023
 #[test]
-fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_1023_poweroftwominusone_0_d4207fe0() {
+fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_1023_poweroftwominusone_0_d4207fe0()
+{
     // Encoding: 0xD4207FE0
     // Test aarch64_system_exceptions_debug_breakpoint field imm16 = 1023 (PowerOfTwoMinusOne)
     // Fields: imm16=1023
@@ -1345,7 +1756,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_1023_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1361,7 +1777,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_1024_poweroftwo_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1369,7 +1790,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_1024_poweroftwo_0
 /// Requirement: FieldBoundary { field: "imm16", value: 2047, boundary: PowerOfTwoMinusOne }
 /// 2^11 - 1 = 2047
 #[test]
-fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_2047_poweroftwominusone_0_d420ffe0() {
+fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_2047_poweroftwominusone_0_d420ffe0()
+{
     // Encoding: 0xD420FFE0
     // Test aarch64_system_exceptions_debug_breakpoint field imm16 = 2047 (PowerOfTwoMinusOne)
     // Fields: imm16=2047
@@ -1377,7 +1799,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_2047_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1393,7 +1820,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_2048_poweroftwo_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1401,7 +1833,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_2048_poweroftwo_0
 /// Requirement: FieldBoundary { field: "imm16", value: 4095, boundary: PowerOfTwoMinusOne }
 /// 2^12 - 1 = 4095
 #[test]
-fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_4095_poweroftwominusone_0_d421ffe0() {
+fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_4095_poweroftwominusone_0_d421ffe0()
+{
     // Encoding: 0xD421FFE0
     // Test aarch64_system_exceptions_debug_breakpoint field imm16 = 4095 (PowerOfTwoMinusOne)
     // Fields: imm16=4095
@@ -1409,7 +1842,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_4095_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1425,7 +1863,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_4096_poweroftwo_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1433,7 +1876,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_4096_poweroftwo_0
 /// Requirement: FieldBoundary { field: "imm16", value: 8191, boundary: PowerOfTwoMinusOne }
 /// 2^13 - 1 = 8191
 #[test]
-fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_8191_poweroftwominusone_0_d423ffe0() {
+fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_8191_poweroftwominusone_0_d423ffe0()
+{
     // Encoding: 0xD423FFE0
     // Test aarch64_system_exceptions_debug_breakpoint field imm16 = 8191 (PowerOfTwoMinusOne)
     // Fields: imm16=8191
@@ -1441,7 +1885,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_8191_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1457,7 +1906,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_8192_poweroftwo_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1465,7 +1919,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_8192_poweroftwo_0
 /// Requirement: FieldBoundary { field: "imm16", value: 16383, boundary: PowerOfTwoMinusOne }
 /// 2^14 - 1 = 16383
 #[test]
-fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_16383_poweroftwominusone_0_d427ffe0() {
+fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_16383_poweroftwominusone_0_d427ffe0()
+{
     // Encoding: 0xD427FFE0
     // Test aarch64_system_exceptions_debug_breakpoint field imm16 = 16383 (PowerOfTwoMinusOne)
     // Fields: imm16=16383
@@ -1473,7 +1928,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_16383_poweroftwom
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1489,7 +1949,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_16384_poweroftwo_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1497,7 +1962,8 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_16384_poweroftwo_
 /// Requirement: FieldBoundary { field: "imm16", value: 32767, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (32767)
 #[test]
-fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_32767_poweroftwominusone_0_d42fffe0() {
+fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_32767_poweroftwominusone_0_d42fffe0()
+{
     // Encoding: 0xD42FFFE0
     // Test aarch64_system_exceptions_debug_breakpoint field imm16 = 32767 (PowerOfTwoMinusOne)
     // Fields: imm16=32767
@@ -1505,7 +1971,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_32767_poweroftwom
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1521,7 +1992,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_32768_poweroftwo_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1537,7 +2013,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_field_imm16_65535_max_0_d43ff
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_breakpoint
@@ -1553,7 +2034,12 @@ fn test_aarch64_system_exceptions_debug_breakpoint_combo_0_0_d4200000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -1573,7 +2059,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_0_zero_2_d4000002() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1589,7 +2080,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_1_poweroftwo_2_d400002
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1605,7 +2101,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_3_poweroftwominusone_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1621,7 +2122,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_4_poweroftwo_2_d400008
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1637,7 +2143,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_7_poweroftwominusone_2
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1653,7 +2164,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_8_poweroftwo_2_d400010
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1669,7 +2185,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_15_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1685,7 +2206,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_16_poweroftwo_2_d40002
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1701,7 +2227,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_31_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1717,7 +2248,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_32_poweroftwo_2_d40004
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1733,7 +2269,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_63_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1749,7 +2290,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_64_poweroftwo_2_d40008
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1765,7 +2311,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_127_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1781,7 +2332,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_128_poweroftwo_2_d4001
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1797,7 +2353,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_255_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1813,7 +2374,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_256_poweroftwo_2_d4002
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1829,7 +2395,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_511_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1845,7 +2416,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_512_poweroftwo_2_d4004
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1861,7 +2437,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_1023_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1877,7 +2458,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_1024_poweroftwo_2_d400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1893,7 +2479,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_2047_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1909,7 +2500,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_2048_poweroftwo_2_d401
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1925,7 +2521,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_4095_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1941,7 +2542,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_4096_poweroftwo_2_d402
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1957,7 +2563,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_8191_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1973,7 +2584,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_8192_poweroftwo_2_d404
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -1989,7 +2605,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_16383_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -2005,7 +2626,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_16384_poweroftwo_2_d40
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -2021,7 +2647,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_32767_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -2037,7 +2668,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_32768_poweroftwo_2_d41
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -2053,7 +2689,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_field_imm16_65535_max_2_d41fffe2()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -2069,7 +2710,12 @@ fn test_aarch64_system_exceptions_runtime_hvc_combo_0_2_d4000002() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_hvc
@@ -2104,7 +2750,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_0_zero_1_d4000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2120,7 +2771,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_1_poweroftwo_1_d400002
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2136,7 +2792,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_3_poweroftwominusone_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2152,7 +2813,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_4_poweroftwo_1_d400008
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2168,7 +2834,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_7_poweroftwominusone_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2184,7 +2855,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_8_poweroftwo_1_d400010
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2200,7 +2876,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_15_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2216,7 +2897,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_16_poweroftwo_1_d40002
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2232,7 +2918,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_31_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2248,7 +2939,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_32_poweroftwo_1_d40004
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2264,7 +2960,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_63_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2280,7 +2981,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_64_poweroftwo_1_d40008
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2296,7 +3002,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_127_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2312,7 +3023,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_128_poweroftwo_1_d4001
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2328,7 +3044,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_255_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2344,7 +3065,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_256_poweroftwo_1_d4002
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2360,7 +3086,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_511_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2376,7 +3107,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_512_poweroftwo_1_d4004
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2392,7 +3128,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_1023_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2408,7 +3149,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_1024_poweroftwo_1_d400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2424,7 +3170,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_2047_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2440,7 +3191,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_2048_poweroftwo_1_d401
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2456,7 +3212,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_4095_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2472,7 +3233,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_4096_poweroftwo_1_d402
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2488,7 +3254,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_8191_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2504,7 +3275,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_8192_poweroftwo_1_d404
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2520,7 +3296,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_16383_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2536,7 +3317,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_16384_poweroftwo_1_d40
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2552,7 +3338,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_32767_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2568,7 +3359,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_32768_poweroftwo_1_d41
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2584,7 +3380,12 @@ fn test_aarch64_system_exceptions_runtime_svc_field_imm16_65535_max_1_d41fffe1()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_runtime_svc
@@ -2600,7 +3401,12 @@ fn test_aarch64_system_exceptions_runtime_svc_combo_0_1_d4000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -2620,7 +3426,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_0_zero_0_d4a00000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2631,12 +3442,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_0_zero_0_d4a00000(
 fn test_aarch64_system_exceptions_debug_exception_field_imm16_1_poweroftwo_0_d4a00020() {
     // Encoding: 0xD4A00020
     // Test aarch64_system_exceptions_debug_exception field imm16 = 1 (PowerOfTwo)
-    // Fields: LL=0, imm16=1
+    // Fields: imm16=1, LL=0
     let encoding: u32 = 0xD4A00020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2647,12 +3463,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_1_poweroftwo_0_d4a
 fn test_aarch64_system_exceptions_debug_exception_field_imm16_3_poweroftwominusone_0_d4a00060() {
     // Encoding: 0xD4A00060
     // Test aarch64_system_exceptions_debug_exception field imm16 = 3 (PowerOfTwoMinusOne)
-    // Fields: imm16=3, LL=0
+    // Fields: LL=0, imm16=3
     let encoding: u32 = 0xD4A00060;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2668,7 +3489,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_4_poweroftwo_0_d4a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2679,12 +3505,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_4_poweroftwo_0_d4a
 fn test_aarch64_system_exceptions_debug_exception_field_imm16_7_poweroftwominusone_0_d4a000e0() {
     // Encoding: 0xD4A000E0
     // Test aarch64_system_exceptions_debug_exception field imm16 = 7 (PowerOfTwoMinusOne)
-    // Fields: imm16=7, LL=0
+    // Fields: LL=0, imm16=7
     let encoding: u32 = 0xD4A000E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2700,7 +3531,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_8_poweroftwo_0_d4a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2711,12 +3547,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_8_poweroftwo_0_d4a
 fn test_aarch64_system_exceptions_debug_exception_field_imm16_15_poweroftwominusone_0_d4a001e0() {
     // Encoding: 0xD4A001E0
     // Test aarch64_system_exceptions_debug_exception field imm16 = 15 (PowerOfTwoMinusOne)
-    // Fields: imm16=15, LL=0
+    // Fields: LL=0, imm16=15
     let encoding: u32 = 0xD4A001E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2732,7 +3573,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_16_poweroftwo_0_d4
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2743,12 +3589,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_16_poweroftwo_0_d4
 fn test_aarch64_system_exceptions_debug_exception_field_imm16_31_poweroftwominusone_0_d4a003e0() {
     // Encoding: 0xD4A003E0
     // Test aarch64_system_exceptions_debug_exception field imm16 = 31 (PowerOfTwoMinusOne)
-    // Fields: imm16=31, LL=0
+    // Fields: LL=0, imm16=31
     let encoding: u32 = 0xD4A003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2764,7 +3615,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_32_poweroftwo_0_d4
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2780,7 +3636,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_63_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2791,12 +3652,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_63_poweroftwominus
 fn test_aarch64_system_exceptions_debug_exception_field_imm16_64_poweroftwo_0_d4a00800() {
     // Encoding: 0xD4A00800
     // Test aarch64_system_exceptions_debug_exception field imm16 = 64 (PowerOfTwo)
-    // Fields: LL=0, imm16=64
+    // Fields: imm16=64, LL=0
     let encoding: u32 = 0xD4A00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2807,12 +3673,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_64_poweroftwo_0_d4
 fn test_aarch64_system_exceptions_debug_exception_field_imm16_127_poweroftwominusone_0_d4a00fe0() {
     // Encoding: 0xD4A00FE0
     // Test aarch64_system_exceptions_debug_exception field imm16 = 127 (PowerOfTwoMinusOne)
-    // Fields: LL=0, imm16=127
+    // Fields: imm16=127, LL=0
     let encoding: u32 = 0xD4A00FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2828,7 +3699,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_128_poweroftwo_0_d
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2844,7 +3720,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_255_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2855,12 +3736,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_255_poweroftwominu
 fn test_aarch64_system_exceptions_debug_exception_field_imm16_256_poweroftwo_0_d4a02000() {
     // Encoding: 0xD4A02000
     // Test aarch64_system_exceptions_debug_exception field imm16 = 256 (PowerOfTwo)
-    // Fields: imm16=256, LL=0
+    // Fields: LL=0, imm16=256
     let encoding: u32 = 0xD4A02000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2876,7 +3762,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_511_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2892,7 +3783,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_512_poweroftwo_0_d
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2908,7 +3804,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_1023_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2919,12 +3820,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_1023_poweroftwomin
 fn test_aarch64_system_exceptions_debug_exception_field_imm16_1024_poweroftwo_0_d4a08000() {
     // Encoding: 0xD4A08000
     // Test aarch64_system_exceptions_debug_exception field imm16 = 1024 (PowerOfTwo)
-    // Fields: imm16=1024, LL=0
+    // Fields: LL=0, imm16=1024
     let encoding: u32 = 0xD4A08000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2940,7 +3846,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_2047_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2956,7 +3867,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_2048_poweroftwo_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2967,12 +3883,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_2048_poweroftwo_0_
 fn test_aarch64_system_exceptions_debug_exception_field_imm16_4095_poweroftwominusone_0_d4a1ffe0() {
     // Encoding: 0xD4A1FFE0
     // Test aarch64_system_exceptions_debug_exception field imm16 = 4095 (PowerOfTwoMinusOne)
-    // Fields: LL=0, imm16=4095
+    // Fields: imm16=4095, LL=0
     let encoding: u32 = 0xD4A1FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2983,12 +3904,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_4095_poweroftwomin
 fn test_aarch64_system_exceptions_debug_exception_field_imm16_4096_poweroftwo_0_d4a20000() {
     // Encoding: 0xD4A20000
     // Test aarch64_system_exceptions_debug_exception field imm16 = 4096 (PowerOfTwo)
-    // Fields: imm16=4096, LL=0
+    // Fields: LL=0, imm16=4096
     let encoding: u32 = 0xD4A20000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -2999,12 +3925,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_4096_poweroftwo_0_
 fn test_aarch64_system_exceptions_debug_exception_field_imm16_8191_poweroftwominusone_0_d4a3ffe0() {
     // Encoding: 0xD4A3FFE0
     // Test aarch64_system_exceptions_debug_exception field imm16 = 8191 (PowerOfTwoMinusOne)
-    // Fields: imm16=8191, LL=0
+    // Fields: LL=0, imm16=8191
     let encoding: u32 = 0xD4A3FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -3015,12 +3946,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_8191_poweroftwomin
 fn test_aarch64_system_exceptions_debug_exception_field_imm16_8192_poweroftwo_0_d4a40000() {
     // Encoding: 0xD4A40000
     // Test aarch64_system_exceptions_debug_exception field imm16 = 8192 (PowerOfTwo)
-    // Fields: LL=0, imm16=8192
+    // Fields: imm16=8192, LL=0
     let encoding: u32 = 0xD4A40000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -3028,15 +3964,21 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_8192_poweroftwo_0_
 /// Requirement: FieldBoundary { field: "imm16", value: 16383, boundary: PowerOfTwoMinusOne }
 /// 2^14 - 1 = 16383
 #[test]
-fn test_aarch64_system_exceptions_debug_exception_field_imm16_16383_poweroftwominusone_0_d4a7ffe0() {
+fn test_aarch64_system_exceptions_debug_exception_field_imm16_16383_poweroftwominusone_0_d4a7ffe0()
+{
     // Encoding: 0xD4A7FFE0
     // Test aarch64_system_exceptions_debug_exception field imm16 = 16383 (PowerOfTwoMinusOne)
-    // Fields: LL=0, imm16=16383
+    // Fields: imm16=16383, LL=0
     let encoding: u32 = 0xD4A7FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -3052,7 +3994,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_16384_poweroftwo_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -3060,7 +4007,8 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_16384_poweroftwo_0
 /// Requirement: FieldBoundary { field: "imm16", value: 32767, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (32767)
 #[test]
-fn test_aarch64_system_exceptions_debug_exception_field_imm16_32767_poweroftwominusone_0_d4afffe0() {
+fn test_aarch64_system_exceptions_debug_exception_field_imm16_32767_poweroftwominusone_0_d4afffe0()
+{
     // Encoding: 0xD4AFFFE0
     // Test aarch64_system_exceptions_debug_exception field imm16 = 32767 (PowerOfTwoMinusOne)
     // Fields: imm16=32767, LL=0
@@ -3068,7 +4016,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_32767_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -3084,7 +4037,12 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_32768_poweroftwo_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -3095,12 +4053,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_32768_poweroftwo_0
 fn test_aarch64_system_exceptions_debug_exception_field_imm16_65535_max_0_d4bfffe0() {
     // Encoding: 0xD4BFFFE0
     // Test aarch64_system_exceptions_debug_exception field imm16 = 65535 (Max)
-    // Fields: imm16=65535, LL=0
+    // Fields: LL=0, imm16=65535
     let encoding: u32 = 0xD4BFFFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -3111,12 +4074,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_imm16_65535_max_0_d4bfff
 fn test_aarch64_system_exceptions_debug_exception_field_ll_0_min_0_d4a00000() {
     // Encoding: 0xD4A00000
     // Test aarch64_system_exceptions_debug_exception field LL = 0 (Min)
-    // Fields: imm16=0, LL=0
+    // Fields: LL=0, imm16=0
     let encoding: u32 = 0xD4A00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -3127,12 +4095,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_ll_0_min_0_d4a00000() {
 fn test_aarch64_system_exceptions_debug_exception_field_ll_1_poweroftwo_0_d4a00001() {
     // Encoding: 0xD4A00001
     // Test aarch64_system_exceptions_debug_exception field LL = 1 (PowerOfTwo)
-    // Fields: imm16=0, LL=1
+    // Fields: LL=1, imm16=0
     let encoding: u32 = 0xD4A00001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -3143,12 +4116,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_ll_1_poweroftwo_0_d4a000
 fn test_aarch64_system_exceptions_debug_exception_field_ll_3_max_0_d4a00003() {
     // Encoding: 0xD4A00003
     // Test aarch64_system_exceptions_debug_exception field LL = 3 (Max)
-    // Fields: LL=3, imm16=0
+    // Fields: imm16=0, LL=3
     let encoding: u32 = 0xD4A00003;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -3159,12 +4137,17 @@ fn test_aarch64_system_exceptions_debug_exception_field_ll_3_max_0_d4a00003() {
 fn test_aarch64_system_exceptions_debug_exception_combo_0_0_d4a00000() {
     // Encoding: 0xD4A00000
     // Test aarch64_system_exceptions_debug_exception field combination: imm16=0, LL=0
-    // Fields: imm16=0, LL=0
+    // Fields: LL=0, imm16=0
     let encoding: u32 = 0xD4A00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -3180,7 +4163,11 @@ fn test_aarch64_system_exceptions_debug_exception_invalid_0_0_d4a00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_system_exceptions_debug_exception
@@ -3191,11 +4178,14 @@ fn test_aarch64_system_exceptions_debug_exception_invalid_0_0_d4a00000() {
 fn test_aarch64_system_exceptions_debug_exception_invalid_1_0_d4a00000() {
     // Encoding: 0xD4A00000
     // Test aarch64_system_exceptions_debug_exception invalid encoding: Unconditional UNDEFINED
-    // Fields: imm16=0, LL=0
+    // Fields: LL=0, imm16=0
     let encoding: u32 = 0xD4A00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+    assert!(
+        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
+        "expected UNDEFINED for encoding 0x{:08X}",
+        encoding
+    );
 }
-

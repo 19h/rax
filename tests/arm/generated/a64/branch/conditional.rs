@@ -20,12 +20,17 @@ use crate::generated::test_helpers::*;
 fn test_aarch64_branch_conditional_cond_field_imm19_0_zero_0_54000000() {
     // Encoding: 0x54000000
     // Test aarch64_branch_conditional_cond field imm19 = 0 (Zero)
-    // Fields: imm19=0, cond=0
+    // Fields: cond=0, imm19=0
     let encoding: u32 = 0x54000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -36,12 +41,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_0_zero_0_54000000() {
 fn test_aarch64_branch_conditional_cond_field_imm19_1_poweroftwo_0_54000020() {
     // Encoding: 0x54000020
     // Test aarch64_branch_conditional_cond field imm19 = 1 (PowerOfTwo)
-    // Fields: cond=0, imm19=1
+    // Fields: imm19=1, cond=0
     let encoding: u32 = 0x54000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -57,7 +67,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_3_poweroftwominusone_0_54000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -73,7 +88,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_4_poweroftwo_0_54000080() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -84,12 +104,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_4_poweroftwo_0_54000080() {
 fn test_aarch64_branch_conditional_cond_field_imm19_7_poweroftwominusone_0_540000e0() {
     // Encoding: 0x540000E0
     // Test aarch64_branch_conditional_cond field imm19 = 7 (PowerOfTwoMinusOne)
-    // Fields: imm19=7, cond=0
+    // Fields: cond=0, imm19=7
     let encoding: u32 = 0x540000E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -105,7 +130,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_8_poweroftwo_0_54000100() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -116,12 +146,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_8_poweroftwo_0_54000100() {
 fn test_aarch64_branch_conditional_cond_field_imm19_15_poweroftwominusone_0_540001e0() {
     // Encoding: 0x540001E0
     // Test aarch64_branch_conditional_cond field imm19 = 15 (PowerOfTwoMinusOne)
-    // Fields: cond=0, imm19=15
+    // Fields: imm19=15, cond=0
     let encoding: u32 = 0x540001E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -132,12 +167,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_15_poweroftwominusone_0_5400
 fn test_aarch64_branch_conditional_cond_field_imm19_16_poweroftwo_0_54000200() {
     // Encoding: 0x54000200
     // Test aarch64_branch_conditional_cond field imm19 = 16 (PowerOfTwo)
-    // Fields: imm19=16, cond=0
+    // Fields: cond=0, imm19=16
     let encoding: u32 = 0x54000200;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -153,7 +193,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_31_poweroftwominusone_0_5400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -164,12 +209,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_31_poweroftwominusone_0_5400
 fn test_aarch64_branch_conditional_cond_field_imm19_32_poweroftwo_0_54000400() {
     // Encoding: 0x54000400
     // Test aarch64_branch_conditional_cond field imm19 = 32 (PowerOfTwo)
-    // Fields: imm19=32, cond=0
+    // Fields: cond=0, imm19=32
     let encoding: u32 = 0x54000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -185,7 +235,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_63_poweroftwominusone_0_5400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -196,12 +251,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_63_poweroftwominusone_0_5400
 fn test_aarch64_branch_conditional_cond_field_imm19_64_poweroftwo_0_54000800() {
     // Encoding: 0x54000800
     // Test aarch64_branch_conditional_cond field imm19 = 64 (PowerOfTwo)
-    // Fields: imm19=64, cond=0
+    // Fields: cond=0, imm19=64
     let encoding: u32 = 0x54000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -217,7 +277,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_127_poweroftwominusone_0_540
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -228,12 +293,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_127_poweroftwominusone_0_540
 fn test_aarch64_branch_conditional_cond_field_imm19_128_poweroftwo_0_54001000() {
     // Encoding: 0x54001000
     // Test aarch64_branch_conditional_cond field imm19 = 128 (PowerOfTwo)
-    // Fields: cond=0, imm19=128
+    // Fields: imm19=128, cond=0
     let encoding: u32 = 0x54001000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -249,7 +319,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_255_poweroftwominusone_0_540
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -260,12 +335,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_255_poweroftwominusone_0_540
 fn test_aarch64_branch_conditional_cond_field_imm19_256_poweroftwo_0_54002000() {
     // Encoding: 0x54002000
     // Test aarch64_branch_conditional_cond field imm19 = 256 (PowerOfTwo)
-    // Fields: imm19=256, cond=0
+    // Fields: cond=0, imm19=256
     let encoding: u32 = 0x54002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -281,7 +361,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_511_poweroftwominusone_0_540
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -297,7 +382,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_512_poweroftwo_0_54004000() 
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -313,7 +403,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_1023_poweroftwominusone_0_54
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -324,12 +419,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_1023_poweroftwominusone_0_54
 fn test_aarch64_branch_conditional_cond_field_imm19_1024_poweroftwo_0_54008000() {
     // Encoding: 0x54008000
     // Test aarch64_branch_conditional_cond field imm19 = 1024 (PowerOfTwo)
-    // Fields: imm19=1024, cond=0
+    // Fields: cond=0, imm19=1024
     let encoding: u32 = 0x54008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -340,12 +440,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_1024_poweroftwo_0_54008000()
 fn test_aarch64_branch_conditional_cond_field_imm19_2047_poweroftwominusone_0_5400ffe0() {
     // Encoding: 0x5400FFE0
     // Test aarch64_branch_conditional_cond field imm19 = 2047 (PowerOfTwoMinusOne)
-    // Fields: cond=0, imm19=2047
+    // Fields: imm19=2047, cond=0
     let encoding: u32 = 0x5400FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -361,7 +466,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_2048_poweroftwo_0_54010000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -377,7 +487,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_4095_poweroftwominusone_0_54
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -393,7 +508,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_4096_poweroftwo_0_54020000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -404,12 +524,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_4096_poweroftwo_0_54020000()
 fn test_aarch64_branch_conditional_cond_field_imm19_8191_poweroftwominusone_0_5403ffe0() {
     // Encoding: 0x5403FFE0
     // Test aarch64_branch_conditional_cond field imm19 = 8191 (PowerOfTwoMinusOne)
-    // Fields: imm19=8191, cond=0
+    // Fields: cond=0, imm19=8191
     let encoding: u32 = 0x5403FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -420,12 +545,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_8191_poweroftwominusone_0_54
 fn test_aarch64_branch_conditional_cond_field_imm19_8192_poweroftwo_0_54040000() {
     // Encoding: 0x54040000
     // Test aarch64_branch_conditional_cond field imm19 = 8192 (PowerOfTwo)
-    // Fields: imm19=8192, cond=0
+    // Fields: cond=0, imm19=8192
     let encoding: u32 = 0x54040000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -441,7 +571,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_16383_poweroftwominusone_0_5
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -452,12 +587,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_16383_poweroftwominusone_0_5
 fn test_aarch64_branch_conditional_cond_field_imm19_16384_poweroftwo_0_54080000() {
     // Encoding: 0x54080000
     // Test aarch64_branch_conditional_cond field imm19 = 16384 (PowerOfTwo)
-    // Fields: imm19=16384, cond=0
+    // Fields: cond=0, imm19=16384
     let encoding: u32 = 0x54080000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -473,7 +613,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_32767_poweroftwominusone_0_5
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -484,12 +629,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_32767_poweroftwominusone_0_5
 fn test_aarch64_branch_conditional_cond_field_imm19_32768_poweroftwo_0_54100000() {
     // Encoding: 0x54100000
     // Test aarch64_branch_conditional_cond field imm19 = 32768 (PowerOfTwo)
-    // Fields: cond=0, imm19=32768
+    // Fields: imm19=32768, cond=0
     let encoding: u32 = 0x54100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -505,7 +655,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_65535_poweroftwominusone_0_5
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -521,7 +676,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_65536_poweroftwo_0_54200000(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -537,7 +697,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_131071_poweroftwominusone_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -548,12 +713,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_131071_poweroftwominusone_0_
 fn test_aarch64_branch_conditional_cond_field_imm19_131072_poweroftwo_0_54400000() {
     // Encoding: 0x54400000
     // Test aarch64_branch_conditional_cond field imm19 = 131072 (PowerOfTwo)
-    // Fields: imm19=131072, cond=0
+    // Fields: cond=0, imm19=131072
     let encoding: u32 = 0x54400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -569,7 +739,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_262143_poweroftwominusone_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -580,12 +755,17 @@ fn test_aarch64_branch_conditional_cond_field_imm19_262143_poweroftwominusone_0_
 fn test_aarch64_branch_conditional_cond_field_imm19_262144_poweroftwo_0_54800000() {
     // Encoding: 0x54800000
     // Test aarch64_branch_conditional_cond field imm19 = 262144 (PowerOfTwo)
-    // Fields: imm19=262144, cond=0
+    // Fields: cond=0, imm19=262144
     let encoding: u32 = 0x54800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -601,7 +781,12 @@ fn test_aarch64_branch_conditional_cond_field_imm19_524287_max_0_54ffffe0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -617,7 +802,12 @@ fn test_aarch64_branch_conditional_cond_field_cond_0_min_0_54000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -633,7 +823,12 @@ fn test_aarch64_branch_conditional_cond_field_cond_1_poweroftwo_0_54000001() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -649,7 +844,12 @@ fn test_aarch64_branch_conditional_cond_field_cond_2_poweroftwo_0_54000002() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -660,12 +860,17 @@ fn test_aarch64_branch_conditional_cond_field_cond_2_poweroftwo_0_54000002() {
 fn test_aarch64_branch_conditional_cond_field_cond_3_poweroftwo_0_54000003() {
     // Encoding: 0x54000003
     // Test aarch64_branch_conditional_cond field cond = 3 (PowerOfTwo)
-    // Fields: cond=3, imm19=0
+    // Fields: imm19=0, cond=3
     let encoding: u32 = 0x54000003;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -676,12 +881,17 @@ fn test_aarch64_branch_conditional_cond_field_cond_3_poweroftwo_0_54000003() {
 fn test_aarch64_branch_conditional_cond_field_cond_4_poweroftwo_0_54000004() {
     // Encoding: 0x54000004
     // Test aarch64_branch_conditional_cond field cond = 4 (PowerOfTwo)
-    // Fields: imm19=0, cond=4
+    // Fields: cond=4, imm19=0
     let encoding: u32 = 0x54000004;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -692,12 +902,17 @@ fn test_aarch64_branch_conditional_cond_field_cond_4_poweroftwo_0_54000004() {
 fn test_aarch64_branch_conditional_cond_field_cond_5_poweroftwo_0_54000005() {
     // Encoding: 0x54000005
     // Test aarch64_branch_conditional_cond field cond = 5 (PowerOfTwo)
-    // Fields: cond=5, imm19=0
+    // Fields: imm19=0, cond=5
     let encoding: u32 = 0x54000005;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -713,7 +928,12 @@ fn test_aarch64_branch_conditional_cond_field_cond_6_poweroftwo_0_54000006() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -729,7 +949,12 @@ fn test_aarch64_branch_conditional_cond_field_cond_7_poweroftwo_0_54000007() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -740,12 +965,17 @@ fn test_aarch64_branch_conditional_cond_field_cond_7_poweroftwo_0_54000007() {
 fn test_aarch64_branch_conditional_cond_field_cond_8_poweroftwo_0_54000008() {
     // Encoding: 0x54000008
     // Test aarch64_branch_conditional_cond field cond = 8 (PowerOfTwo)
-    // Fields: cond=8, imm19=0
+    // Fields: imm19=0, cond=8
     let encoding: u32 = 0x54000008;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -756,12 +986,17 @@ fn test_aarch64_branch_conditional_cond_field_cond_8_poweroftwo_0_54000008() {
 fn test_aarch64_branch_conditional_cond_field_cond_9_poweroftwo_0_54000009() {
     // Encoding: 0x54000009
     // Test aarch64_branch_conditional_cond field cond = 9 (PowerOfTwo)
-    // Fields: cond=9, imm19=0
+    // Fields: imm19=0, cond=9
     let encoding: u32 = 0x54000009;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -772,12 +1007,17 @@ fn test_aarch64_branch_conditional_cond_field_cond_9_poweroftwo_0_54000009() {
 fn test_aarch64_branch_conditional_cond_field_cond_10_poweroftwo_0_5400000a() {
     // Encoding: 0x5400000A
     // Test aarch64_branch_conditional_cond field cond = 10 (PowerOfTwo)
-    // Fields: cond=10, imm19=0
+    // Fields: imm19=0, cond=10
     let encoding: u32 = 0x5400000A;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -793,7 +1033,12 @@ fn test_aarch64_branch_conditional_cond_field_cond_11_poweroftwo_0_5400000b() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -804,12 +1049,17 @@ fn test_aarch64_branch_conditional_cond_field_cond_11_poweroftwo_0_5400000b() {
 fn test_aarch64_branch_conditional_cond_field_cond_12_poweroftwo_0_5400000c() {
     // Encoding: 0x5400000C
     // Test aarch64_branch_conditional_cond field cond = 12 (PowerOfTwo)
-    // Fields: cond=12, imm19=0
+    // Fields: imm19=0, cond=12
     let encoding: u32 = 0x5400000C;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -820,12 +1070,17 @@ fn test_aarch64_branch_conditional_cond_field_cond_12_poweroftwo_0_5400000c() {
 fn test_aarch64_branch_conditional_cond_field_cond_13_poweroftwo_0_5400000d() {
     // Encoding: 0x5400000D
     // Test aarch64_branch_conditional_cond field cond = 13 (PowerOfTwo)
-    // Fields: cond=13, imm19=0
+    // Fields: imm19=0, cond=13
     let encoding: u32 = 0x5400000D;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -841,7 +1096,12 @@ fn test_aarch64_branch_conditional_cond_field_cond_14_poweroftwo_0_5400000e() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -857,7 +1117,12 @@ fn test_aarch64_branch_conditional_cond_field_cond_15_max_0_5400000f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -868,12 +1133,17 @@ fn test_aarch64_branch_conditional_cond_field_cond_15_max_0_5400000f() {
 fn test_aarch64_branch_conditional_cond_combo_0_0_54000000() {
     // Encoding: 0x54000000
     // Test aarch64_branch_conditional_cond field combination: imm19=0, cond=0
-    // Fields: imm19=0, cond=0
+    // Fields: cond=0, imm19=0
     let encoding: u32 = 0x54000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -889,7 +1159,12 @@ fn test_aarch64_branch_conditional_cond_special_cond_0_condition_eq_0_54000000()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -905,7 +1180,12 @@ fn test_aarch64_branch_conditional_cond_special_cond_1_condition_ne_0_54000001()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -921,7 +1201,12 @@ fn test_aarch64_branch_conditional_cond_special_cond_2_condition_cs_hs_0_5400000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -937,7 +1222,12 @@ fn test_aarch64_branch_conditional_cond_special_cond_3_condition_cc_lo_0_5400000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -948,12 +1238,17 @@ fn test_aarch64_branch_conditional_cond_special_cond_3_condition_cc_lo_0_5400000
 fn test_aarch64_branch_conditional_cond_special_cond_4_condition_mi_0_54000004() {
     // Encoding: 0x54000004
     // Test aarch64_branch_conditional_cond special value cond = 4 (Condition MI)
-    // Fields: cond=4, imm19=0
+    // Fields: imm19=0, cond=4
     let encoding: u32 = 0x54000004;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -969,7 +1264,12 @@ fn test_aarch64_branch_conditional_cond_special_cond_5_condition_pl_0_54000005()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -980,12 +1280,17 @@ fn test_aarch64_branch_conditional_cond_special_cond_5_condition_pl_0_54000005()
 fn test_aarch64_branch_conditional_cond_special_cond_6_condition_vs_0_54000006() {
     // Encoding: 0x54000006
     // Test aarch64_branch_conditional_cond special value cond = 6 (Condition VS)
-    // Fields: imm19=0, cond=6
+    // Fields: cond=6, imm19=0
     let encoding: u32 = 0x54000006;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -996,12 +1301,17 @@ fn test_aarch64_branch_conditional_cond_special_cond_6_condition_vs_0_54000006()
 fn test_aarch64_branch_conditional_cond_special_cond_7_condition_vc_0_54000007() {
     // Encoding: 0x54000007
     // Test aarch64_branch_conditional_cond special value cond = 7 (Condition VC)
-    // Fields: cond=7, imm19=0
+    // Fields: imm19=0, cond=7
     let encoding: u32 = 0x54000007;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -1012,12 +1322,17 @@ fn test_aarch64_branch_conditional_cond_special_cond_7_condition_vc_0_54000007()
 fn test_aarch64_branch_conditional_cond_special_cond_8_condition_hi_0_54000008() {
     // Encoding: 0x54000008
     // Test aarch64_branch_conditional_cond special value cond = 8 (Condition HI)
-    // Fields: cond=8, imm19=0
+    // Fields: imm19=0, cond=8
     let encoding: u32 = 0x54000008;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -1028,12 +1343,17 @@ fn test_aarch64_branch_conditional_cond_special_cond_8_condition_hi_0_54000008()
 fn test_aarch64_branch_conditional_cond_special_cond_9_condition_ls_0_54000009() {
     // Encoding: 0x54000009
     // Test aarch64_branch_conditional_cond special value cond = 9 (Condition LS)
-    // Fields: imm19=0, cond=9
+    // Fields: cond=9, imm19=0
     let encoding: u32 = 0x54000009;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -1044,12 +1364,17 @@ fn test_aarch64_branch_conditional_cond_special_cond_9_condition_ls_0_54000009()
 fn test_aarch64_branch_conditional_cond_special_cond_10_condition_ge_0_5400000a() {
     // Encoding: 0x5400000A
     // Test aarch64_branch_conditional_cond special value cond = 10 (Condition GE)
-    // Fields: imm19=0, cond=10
+    // Fields: cond=10, imm19=0
     let encoding: u32 = 0x5400000A;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -1060,12 +1385,17 @@ fn test_aarch64_branch_conditional_cond_special_cond_10_condition_ge_0_5400000a(
 fn test_aarch64_branch_conditional_cond_special_cond_11_condition_lt_0_5400000b() {
     // Encoding: 0x5400000B
     // Test aarch64_branch_conditional_cond special value cond = 11 (Condition LT)
-    // Fields: imm19=0, cond=11
+    // Fields: cond=11, imm19=0
     let encoding: u32 = 0x5400000B;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -1081,7 +1411,12 @@ fn test_aarch64_branch_conditional_cond_special_cond_12_condition_gt_0_5400000c(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -1097,7 +1432,12 @@ fn test_aarch64_branch_conditional_cond_special_cond_13_condition_le_0_5400000d(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -1108,12 +1448,17 @@ fn test_aarch64_branch_conditional_cond_special_cond_13_condition_le_0_5400000d(
 fn test_aarch64_branch_conditional_cond_special_cond_14_condition_al_0_5400000e() {
     // Encoding: 0x5400000E
     // Test aarch64_branch_conditional_cond special value cond = 14 (Condition AL)
-    // Fields: cond=14, imm19=0
+    // Fields: imm19=0, cond=14
     let encoding: u32 = 0x5400000E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_cond
@@ -1129,7 +1474,12 @@ fn test_aarch64_branch_conditional_cond_special_cond_15_condition_nv_0_5400000f(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 // ============================================================================
@@ -1144,12 +1494,17 @@ fn test_aarch64_branch_conditional_cond_special_cond_15_condition_nv_0_5400000f(
 fn test_aarch64_branch_conditional_compare_field_sf_0_min_0_34000000() {
     // Encoding: 0x34000000
     // Test aarch64_branch_conditional_compare field sf = 0 (Min)
-    // Fields: Rt=0, op=0, imm19=0, sf=0
+    // Fields: Rt=0, sf=0, imm19=0, op=0
     let encoding: u32 = 0x34000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1160,12 +1515,17 @@ fn test_aarch64_branch_conditional_compare_field_sf_0_min_0_34000000() {
 fn test_aarch64_branch_conditional_compare_field_sf_1_max_0_b4000000() {
     // Encoding: 0xB4000000
     // Test aarch64_branch_conditional_compare field sf = 1 (Max)
-    // Fields: sf=1, imm19=0, op=0, Rt=0
+    // Fields: op=0, sf=1, imm19=0, Rt=0
     let encoding: u32 = 0xB4000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1176,12 +1536,17 @@ fn test_aarch64_branch_conditional_compare_field_sf_1_max_0_b4000000() {
 fn test_aarch64_branch_conditional_compare_field_op_0_min_0_34000000() {
     // Encoding: 0x34000000
     // Test aarch64_branch_conditional_compare field op = 0 (Min)
-    // Fields: op=0, sf=0, imm19=0, Rt=0
+    // Fields: imm19=0, sf=0, op=0, Rt=0
     let encoding: u32 = 0x34000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1192,12 +1557,17 @@ fn test_aarch64_branch_conditional_compare_field_op_0_min_0_34000000() {
 fn test_aarch64_branch_conditional_compare_field_op_1_max_0_35000000() {
     // Encoding: 0x35000000
     // Test aarch64_branch_conditional_compare field op = 1 (Max)
-    // Fields: sf=0, op=1, imm19=0, Rt=0
+    // Fields: op=1, sf=0, imm19=0, Rt=0
     let encoding: u32 = 0x35000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1208,12 +1578,17 @@ fn test_aarch64_branch_conditional_compare_field_op_1_max_0_35000000() {
 fn test_aarch64_branch_conditional_compare_field_imm19_0_zero_0_34000000() {
     // Encoding: 0x34000000
     // Test aarch64_branch_conditional_compare field imm19 = 0 (Zero)
-    // Fields: Rt=0, sf=0, imm19=0, op=0
+    // Fields: op=0, imm19=0, sf=0, Rt=0
     let encoding: u32 = 0x34000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1224,12 +1599,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_0_zero_0_34000000() {
 fn test_aarch64_branch_conditional_compare_field_imm19_1_poweroftwo_0_34000020() {
     // Encoding: 0x34000020
     // Test aarch64_branch_conditional_compare field imm19 = 1 (PowerOfTwo)
-    // Fields: op=0, sf=0, imm19=1, Rt=0
+    // Fields: imm19=1, Rt=0, sf=0, op=0
     let encoding: u32 = 0x34000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1245,7 +1625,12 @@ fn test_aarch64_branch_conditional_compare_field_imm19_3_poweroftwominusone_0_34
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1256,12 +1641,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_3_poweroftwominusone_0_34
 fn test_aarch64_branch_conditional_compare_field_imm19_4_poweroftwo_0_34000080() {
     // Encoding: 0x34000080
     // Test aarch64_branch_conditional_compare field imm19 = 4 (PowerOfTwo)
-    // Fields: sf=0, Rt=0, op=0, imm19=4
+    // Fields: Rt=0, op=0, sf=0, imm19=4
     let encoding: u32 = 0x34000080;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1272,12 +1662,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_4_poweroftwo_0_34000080()
 fn test_aarch64_branch_conditional_compare_field_imm19_7_poweroftwominusone_0_340000e0() {
     // Encoding: 0x340000E0
     // Test aarch64_branch_conditional_compare field imm19 = 7 (PowerOfTwoMinusOne)
-    // Fields: op=0, sf=0, Rt=0, imm19=7
+    // Fields: imm19=7, sf=0, op=0, Rt=0
     let encoding: u32 = 0x340000E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1288,12 +1683,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_7_poweroftwominusone_0_34
 fn test_aarch64_branch_conditional_compare_field_imm19_8_poweroftwo_0_34000100() {
     // Encoding: 0x34000100
     // Test aarch64_branch_conditional_compare field imm19 = 8 (PowerOfTwo)
-    // Fields: imm19=8, sf=0, op=0, Rt=0
+    // Fields: imm19=8, Rt=0, sf=0, op=0
     let encoding: u32 = 0x34000100;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1304,12 +1704,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_8_poweroftwo_0_34000100()
 fn test_aarch64_branch_conditional_compare_field_imm19_15_poweroftwominusone_0_340001e0() {
     // Encoding: 0x340001E0
     // Test aarch64_branch_conditional_compare field imm19 = 15 (PowerOfTwoMinusOne)
-    // Fields: imm19=15, op=0, sf=0, Rt=0
+    // Fields: imm19=15, op=0, Rt=0, sf=0
     let encoding: u32 = 0x340001E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1325,7 +1730,12 @@ fn test_aarch64_branch_conditional_compare_field_imm19_16_poweroftwo_0_34000200(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1336,12 +1746,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_16_poweroftwo_0_34000200(
 fn test_aarch64_branch_conditional_compare_field_imm19_31_poweroftwominusone_0_340003e0() {
     // Encoding: 0x340003E0
     // Test aarch64_branch_conditional_compare field imm19 = 31 (PowerOfTwoMinusOne)
-    // Fields: sf=0, Rt=0, op=0, imm19=31
+    // Fields: Rt=0, sf=0, op=0, imm19=31
     let encoding: u32 = 0x340003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1352,12 +1767,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_31_poweroftwominusone_0_3
 fn test_aarch64_branch_conditional_compare_field_imm19_32_poweroftwo_0_34000400() {
     // Encoding: 0x34000400
     // Test aarch64_branch_conditional_compare field imm19 = 32 (PowerOfTwo)
-    // Fields: Rt=0, op=0, sf=0, imm19=32
+    // Fields: op=0, sf=0, imm19=32, Rt=0
     let encoding: u32 = 0x34000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1368,12 +1788,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_32_poweroftwo_0_34000400(
 fn test_aarch64_branch_conditional_compare_field_imm19_63_poweroftwominusone_0_340007e0() {
     // Encoding: 0x340007E0
     // Test aarch64_branch_conditional_compare field imm19 = 63 (PowerOfTwoMinusOne)
-    // Fields: imm19=63, op=0, Rt=0, sf=0
+    // Fields: sf=0, op=0, imm19=63, Rt=0
     let encoding: u32 = 0x340007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1384,12 +1809,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_63_poweroftwominusone_0_3
 fn test_aarch64_branch_conditional_compare_field_imm19_64_poweroftwo_0_34000800() {
     // Encoding: 0x34000800
     // Test aarch64_branch_conditional_compare field imm19 = 64 (PowerOfTwo)
-    // Fields: imm19=64, Rt=0, sf=0, op=0
+    // Fields: imm19=64, sf=0, op=0, Rt=0
     let encoding: u32 = 0x34000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1400,12 +1830,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_64_poweroftwo_0_34000800(
 fn test_aarch64_branch_conditional_compare_field_imm19_127_poweroftwominusone_0_34000fe0() {
     // Encoding: 0x34000FE0
     // Test aarch64_branch_conditional_compare field imm19 = 127 (PowerOfTwoMinusOne)
-    // Fields: sf=0, Rt=0, imm19=127, op=0
+    // Fields: imm19=127, sf=0, op=0, Rt=0
     let encoding: u32 = 0x34000FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1416,12 +1851,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_127_poweroftwominusone_0_
 fn test_aarch64_branch_conditional_compare_field_imm19_128_poweroftwo_0_34001000() {
     // Encoding: 0x34001000
     // Test aarch64_branch_conditional_compare field imm19 = 128 (PowerOfTwo)
-    // Fields: sf=0, Rt=0, op=0, imm19=128
+    // Fields: sf=0, imm19=128, op=0, Rt=0
     let encoding: u32 = 0x34001000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1432,12 +1872,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_128_poweroftwo_0_34001000
 fn test_aarch64_branch_conditional_compare_field_imm19_255_poweroftwominusone_0_34001fe0() {
     // Encoding: 0x34001FE0
     // Test aarch64_branch_conditional_compare field imm19 = 255 (PowerOfTwoMinusOne)
-    // Fields: imm19=255, Rt=0, sf=0, op=0
+    // Fields: sf=0, op=0, imm19=255, Rt=0
     let encoding: u32 = 0x34001FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1448,12 +1893,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_255_poweroftwominusone_0_
 fn test_aarch64_branch_conditional_compare_field_imm19_256_poweroftwo_0_34002000() {
     // Encoding: 0x34002000
     // Test aarch64_branch_conditional_compare field imm19 = 256 (PowerOfTwo)
-    // Fields: Rt=0, op=0, sf=0, imm19=256
+    // Fields: Rt=0, imm19=256, sf=0, op=0
     let encoding: u32 = 0x34002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1464,12 +1914,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_256_poweroftwo_0_34002000
 fn test_aarch64_branch_conditional_compare_field_imm19_511_poweroftwominusone_0_34003fe0() {
     // Encoding: 0x34003FE0
     // Test aarch64_branch_conditional_compare field imm19 = 511 (PowerOfTwoMinusOne)
-    // Fields: sf=0, op=0, Rt=0, imm19=511
+    // Fields: op=0, imm19=511, sf=0, Rt=0
     let encoding: u32 = 0x34003FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1480,12 +1935,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_511_poweroftwominusone_0_
 fn test_aarch64_branch_conditional_compare_field_imm19_512_poweroftwo_0_34004000() {
     // Encoding: 0x34004000
     // Test aarch64_branch_conditional_compare field imm19 = 512 (PowerOfTwo)
-    // Fields: imm19=512, Rt=0, sf=0, op=0
+    // Fields: sf=0, op=0, Rt=0, imm19=512
     let encoding: u32 = 0x34004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1496,12 +1956,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_512_poweroftwo_0_34004000
 fn test_aarch64_branch_conditional_compare_field_imm19_1023_poweroftwominusone_0_34007fe0() {
     // Encoding: 0x34007FE0
     // Test aarch64_branch_conditional_compare field imm19 = 1023 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, imm19=1023, sf=0, op=0
+    // Fields: op=0, Rt=0, imm19=1023, sf=0
     let encoding: u32 = 0x34007FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1512,12 +1977,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_1023_poweroftwominusone_0
 fn test_aarch64_branch_conditional_compare_field_imm19_1024_poweroftwo_0_34008000() {
     // Encoding: 0x34008000
     // Test aarch64_branch_conditional_compare field imm19 = 1024 (PowerOfTwo)
-    // Fields: op=0, imm19=1024, sf=0, Rt=0
+    // Fields: op=0, Rt=0, sf=0, imm19=1024
     let encoding: u32 = 0x34008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1528,12 +1998,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_1024_poweroftwo_0_3400800
 fn test_aarch64_branch_conditional_compare_field_imm19_2047_poweroftwominusone_0_3400ffe0() {
     // Encoding: 0x3400FFE0
     // Test aarch64_branch_conditional_compare field imm19 = 2047 (PowerOfTwoMinusOne)
-    // Fields: sf=0, Rt=0, imm19=2047, op=0
+    // Fields: imm19=2047, sf=0, op=0, Rt=0
     let encoding: u32 = 0x3400FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1544,12 +2019,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_2047_poweroftwominusone_0
 fn test_aarch64_branch_conditional_compare_field_imm19_2048_poweroftwo_0_34010000() {
     // Encoding: 0x34010000
     // Test aarch64_branch_conditional_compare field imm19 = 2048 (PowerOfTwo)
-    // Fields: sf=0, op=0, imm19=2048, Rt=0
+    // Fields: sf=0, imm19=2048, op=0, Rt=0
     let encoding: u32 = 0x34010000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1560,12 +2040,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_2048_poweroftwo_0_3401000
 fn test_aarch64_branch_conditional_compare_field_imm19_4095_poweroftwominusone_0_3401ffe0() {
     // Encoding: 0x3401FFE0
     // Test aarch64_branch_conditional_compare field imm19 = 4095 (PowerOfTwoMinusOne)
-    // Fields: op=0, sf=0, imm19=4095, Rt=0
+    // Fields: op=0, sf=0, Rt=0, imm19=4095
     let encoding: u32 = 0x3401FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1576,12 +2061,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_4095_poweroftwominusone_0
 fn test_aarch64_branch_conditional_compare_field_imm19_4096_poweroftwo_0_34020000() {
     // Encoding: 0x34020000
     // Test aarch64_branch_conditional_compare field imm19 = 4096 (PowerOfTwo)
-    // Fields: sf=0, op=0, imm19=4096, Rt=0
+    // Fields: imm19=4096, sf=0, Rt=0, op=0
     let encoding: u32 = 0x34020000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1592,12 +2082,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_4096_poweroftwo_0_3402000
 fn test_aarch64_branch_conditional_compare_field_imm19_8191_poweroftwominusone_0_3403ffe0() {
     // Encoding: 0x3403FFE0
     // Test aarch64_branch_conditional_compare field imm19 = 8191 (PowerOfTwoMinusOne)
-    // Fields: sf=0, Rt=0, op=0, imm19=8191
+    // Fields: sf=0, imm19=8191, op=0, Rt=0
     let encoding: u32 = 0x3403FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1608,12 +2103,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_8191_poweroftwominusone_0
 fn test_aarch64_branch_conditional_compare_field_imm19_8192_poweroftwo_0_34040000() {
     // Encoding: 0x34040000
     // Test aarch64_branch_conditional_compare field imm19 = 8192 (PowerOfTwo)
-    // Fields: op=0, Rt=0, imm19=8192, sf=0
+    // Fields: op=0, Rt=0, sf=0, imm19=8192
     let encoding: u32 = 0x34040000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1624,12 +2124,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_8192_poweroftwo_0_3404000
 fn test_aarch64_branch_conditional_compare_field_imm19_16383_poweroftwominusone_0_3407ffe0() {
     // Encoding: 0x3407FFE0
     // Test aarch64_branch_conditional_compare field imm19 = 16383 (PowerOfTwoMinusOne)
-    // Fields: imm19=16383, op=0, sf=0, Rt=0
+    // Fields: sf=0, Rt=0, op=0, imm19=16383
     let encoding: u32 = 0x3407FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1640,12 +2145,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_16383_poweroftwominusone_
 fn test_aarch64_branch_conditional_compare_field_imm19_16384_poweroftwo_0_34080000() {
     // Encoding: 0x34080000
     // Test aarch64_branch_conditional_compare field imm19 = 16384 (PowerOfTwo)
-    // Fields: op=0, imm19=16384, Rt=0, sf=0
+    // Fields: op=0, sf=0, imm19=16384, Rt=0
     let encoding: u32 = 0x34080000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1656,12 +2166,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_16384_poweroftwo_0_340800
 fn test_aarch64_branch_conditional_compare_field_imm19_32767_poweroftwominusone_0_340fffe0() {
     // Encoding: 0x340FFFE0
     // Test aarch64_branch_conditional_compare field imm19 = 32767 (PowerOfTwoMinusOne)
-    // Fields: op=0, Rt=0, imm19=32767, sf=0
+    // Fields: sf=0, Rt=0, op=0, imm19=32767
     let encoding: u32 = 0x340FFFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1672,12 +2187,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_32767_poweroftwominusone_
 fn test_aarch64_branch_conditional_compare_field_imm19_32768_poweroftwo_0_34100000() {
     // Encoding: 0x34100000
     // Test aarch64_branch_conditional_compare field imm19 = 32768 (PowerOfTwo)
-    // Fields: sf=0, Rt=0, op=0, imm19=32768
+    // Fields: op=0, sf=0, imm19=32768, Rt=0
     let encoding: u32 = 0x34100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1688,12 +2208,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_32768_poweroftwo_0_341000
 fn test_aarch64_branch_conditional_compare_field_imm19_65535_poweroftwominusone_0_341fffe0() {
     // Encoding: 0x341FFFE0
     // Test aarch64_branch_conditional_compare field imm19 = 65535 (PowerOfTwoMinusOne)
-    // Fields: sf=0, Rt=0, op=0, imm19=65535
+    // Fields: op=0, sf=0, imm19=65535, Rt=0
     let encoding: u32 = 0x341FFFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1704,12 +2229,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_65535_poweroftwominusone_
 fn test_aarch64_branch_conditional_compare_field_imm19_65536_poweroftwo_0_34200000() {
     // Encoding: 0x34200000
     // Test aarch64_branch_conditional_compare field imm19 = 65536 (PowerOfTwo)
-    // Fields: imm19=65536, sf=0, op=0, Rt=0
+    // Fields: op=0, imm19=65536, Rt=0, sf=0
     let encoding: u32 = 0x34200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1720,12 +2250,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_65536_poweroftwo_0_342000
 fn test_aarch64_branch_conditional_compare_field_imm19_131071_poweroftwominusone_0_343fffe0() {
     // Encoding: 0x343FFFE0
     // Test aarch64_branch_conditional_compare field imm19 = 131071 (PowerOfTwoMinusOne)
-    // Fields: sf=0, Rt=0, op=0, imm19=131071
+    // Fields: Rt=0, sf=0, imm19=131071, op=0
     let encoding: u32 = 0x343FFFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1736,12 +2271,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_131071_poweroftwominusone
 fn test_aarch64_branch_conditional_compare_field_imm19_131072_poweroftwo_0_34400000() {
     // Encoding: 0x34400000
     // Test aarch64_branch_conditional_compare field imm19 = 131072 (PowerOfTwo)
-    // Fields: imm19=131072, sf=0, op=0, Rt=0
+    // Fields: Rt=0, sf=0, imm19=131072, op=0
     let encoding: u32 = 0x34400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1752,12 +2292,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_131072_poweroftwo_0_34400
 fn test_aarch64_branch_conditional_compare_field_imm19_262143_poweroftwominusone_0_347fffe0() {
     // Encoding: 0x347FFFE0
     // Test aarch64_branch_conditional_compare field imm19 = 262143 (PowerOfTwoMinusOne)
-    // Fields: imm19=262143, op=0, Rt=0, sf=0
+    // Fields: sf=0, imm19=262143, op=0, Rt=0
     let encoding: u32 = 0x347FFFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1768,12 +2313,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_262143_poweroftwominusone
 fn test_aarch64_branch_conditional_compare_field_imm19_262144_poweroftwo_0_34800000() {
     // Encoding: 0x34800000
     // Test aarch64_branch_conditional_compare field imm19 = 262144 (PowerOfTwo)
-    // Fields: Rt=0, sf=0, op=0, imm19=262144
+    // Fields: op=0, Rt=0, imm19=262144, sf=0
     let encoding: u32 = 0x34800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1784,12 +2334,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_262144_poweroftwo_0_34800
 fn test_aarch64_branch_conditional_compare_field_imm19_524287_max_0_34ffffe0() {
     // Encoding: 0x34FFFFE0
     // Test aarch64_branch_conditional_compare field imm19 = 524287 (Max)
-    // Fields: imm19=524287, op=0, Rt=0, sf=0
+    // Fields: Rt=0, op=0, sf=0, imm19=524287
     let encoding: u32 = 0x34FFFFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1800,12 +2355,17 @@ fn test_aarch64_branch_conditional_compare_field_imm19_524287_max_0_34ffffe0() {
 fn test_aarch64_branch_conditional_compare_field_rt_0_min_0_34000000() {
     // Encoding: 0x34000000
     // Test aarch64_branch_conditional_compare field Rt = 0 (Min)
-    // Fields: sf=0, imm19=0, Rt=0, op=0
+    // Fields: imm19=0, sf=0, Rt=0, op=0
     let encoding: u32 = 0x34000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1816,12 +2376,17 @@ fn test_aarch64_branch_conditional_compare_field_rt_0_min_0_34000000() {
 fn test_aarch64_branch_conditional_compare_field_rt_1_poweroftwo_0_34000001() {
     // Encoding: 0x34000001
     // Test aarch64_branch_conditional_compare field Rt = 1 (PowerOfTwo)
-    // Fields: op=0, Rt=1, imm19=0, sf=0
+    // Fields: sf=0, imm19=0, op=0, Rt=1
     let encoding: u32 = 0x34000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1832,12 +2397,17 @@ fn test_aarch64_branch_conditional_compare_field_rt_1_poweroftwo_0_34000001() {
 fn test_aarch64_branch_conditional_compare_field_rt_30_poweroftwominusone_0_3400001e() {
     // Encoding: 0x3400001E
     // Test aarch64_branch_conditional_compare field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: sf=0, Rt=30, op=0, imm19=0
+    // Fields: imm19=0, op=0, Rt=30, sf=0
     let encoding: u32 = 0x3400001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1848,12 +2418,17 @@ fn test_aarch64_branch_conditional_compare_field_rt_30_poweroftwominusone_0_3400
 fn test_aarch64_branch_conditional_compare_field_rt_31_max_0_3400001f() {
     // Encoding: 0x3400001F
     // Test aarch64_branch_conditional_compare field Rt = 31 (Max)
-    // Fields: op=0, imm19=0, Rt=31, sf=0
+    // Fields: sf=0, Rt=31, imm19=0, op=0
     let encoding: u32 = 0x3400001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1864,12 +2439,17 @@ fn test_aarch64_branch_conditional_compare_field_rt_31_max_0_3400001f() {
 fn test_aarch64_branch_conditional_compare_combo_0_0_34000000() {
     // Encoding: 0x34000000
     // Test aarch64_branch_conditional_compare field combination: sf=0, op=0, imm19=0, Rt=0
-    // Fields: sf=0, op=0, Rt=0, imm19=0
+    // Fields: sf=0, Rt=0, imm19=0, op=0
     let encoding: u32 = 0x34000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1880,12 +2460,17 @@ fn test_aarch64_branch_conditional_compare_combo_0_0_34000000() {
 fn test_aarch64_branch_conditional_compare_special_sf_0_size_variant_0_0_34000000() {
     // Encoding: 0x34000000
     // Test aarch64_branch_conditional_compare special value sf = 0 (Size variant 0)
-    // Fields: Rt=0, sf=0, imm19=0, op=0
+    // Fields: Rt=0, sf=0, op=0, imm19=0
     let encoding: u32 = 0x34000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1896,12 +2481,17 @@ fn test_aarch64_branch_conditional_compare_special_sf_0_size_variant_0_0_3400000
 fn test_aarch64_branch_conditional_compare_special_sf_1_size_variant_1_0_b4000000() {
     // Encoding: 0xB4000000
     // Test aarch64_branch_conditional_compare special value sf = 1 (Size variant 1)
-    // Fields: imm19=0, sf=1, op=0, Rt=0
+    // Fields: sf=1, Rt=0, op=0, imm19=0
     let encoding: u32 = 0xB4000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1909,15 +2499,21 @@ fn test_aarch64_branch_conditional_compare_special_sf_1_size_variant_1_0_b400000
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_branch_conditional_compare_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_3400001f() {
+fn test_aarch64_branch_conditional_compare_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_3400001f(
+) {
     // Encoding: 0x3400001F
     // Test aarch64_branch_conditional_compare special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rt=31, sf=0, op=0, imm19=0
+    // Fields: Rt=31, sf=0, imm19=0, op=0
     let encoding: u32 = 0x3400001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_compare
@@ -1948,12 +2544,17 @@ fn test_aarch64_branch_conditional_compare_zr_rt_3400001f() {
 fn test_aarch64_branch_conditional_test_field_b5_0_min_0_36000000() {
     // Encoding: 0x36000000
     // Test aarch64_branch_conditional_test field b5 = 0 (Min)
-    // Fields: b5=0, b40=0, imm14=0, Rt=0, op=0
+    // Fields: imm14=0, Rt=0, b5=0, b40=0, op=0
     let encoding: u32 = 0x36000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -1964,12 +2565,17 @@ fn test_aarch64_branch_conditional_test_field_b5_0_min_0_36000000() {
 fn test_aarch64_branch_conditional_test_field_b5_1_max_0_b6000000() {
     // Encoding: 0xB6000000
     // Test aarch64_branch_conditional_test field b5 = 1 (Max)
-    // Fields: Rt=0, b40=0, b5=1, imm14=0, op=0
+    // Fields: b5=1, b40=0, imm14=0, Rt=0, op=0
     let encoding: u32 = 0xB6000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -1980,12 +2586,17 @@ fn test_aarch64_branch_conditional_test_field_b5_1_max_0_b6000000() {
 fn test_aarch64_branch_conditional_test_field_op_0_min_0_36000000() {
     // Encoding: 0x36000000
     // Test aarch64_branch_conditional_test field op = 0 (Min)
-    // Fields: Rt=0, imm14=0, b40=0, b5=0, op=0
+    // Fields: imm14=0, Rt=0, op=0, b40=0, b5=0
     let encoding: u32 = 0x36000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -1996,12 +2607,17 @@ fn test_aarch64_branch_conditional_test_field_op_0_min_0_36000000() {
 fn test_aarch64_branch_conditional_test_field_op_1_max_0_37000000() {
     // Encoding: 0x37000000
     // Test aarch64_branch_conditional_test field op = 1 (Max)
-    // Fields: Rt=0, imm14=0, op=1, b40=0, b5=0
+    // Fields: b5=0, imm14=0, Rt=0, b40=0, op=1
     let encoding: u32 = 0x37000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2012,12 +2628,17 @@ fn test_aarch64_branch_conditional_test_field_op_1_max_0_37000000() {
 fn test_aarch64_branch_conditional_test_field_b40_0_min_0_36000000() {
     // Encoding: 0x36000000
     // Test aarch64_branch_conditional_test field b40 = 0 (Min)
-    // Fields: b5=0, b40=0, op=0, imm14=0, Rt=0
+    // Fields: op=0, b40=0, b5=0, imm14=0, Rt=0
     let encoding: u32 = 0x36000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2028,12 +2649,17 @@ fn test_aarch64_branch_conditional_test_field_b40_0_min_0_36000000() {
 fn test_aarch64_branch_conditional_test_field_b40_1_poweroftwo_0_36080000() {
     // Encoding: 0x36080000
     // Test aarch64_branch_conditional_test field b40 = 1 (PowerOfTwo)
-    // Fields: op=0, b5=0, imm14=0, Rt=0, b40=1
+    // Fields: b5=0, op=0, b40=1, imm14=0, Rt=0
     let encoding: u32 = 0x36080000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2044,12 +2670,17 @@ fn test_aarch64_branch_conditional_test_field_b40_1_poweroftwo_0_36080000() {
 fn test_aarch64_branch_conditional_test_field_b40_15_poweroftwominusone_0_36780000() {
     // Encoding: 0x36780000
     // Test aarch64_branch_conditional_test field b40 = 15 (PowerOfTwoMinusOne)
-    // Fields: b40=15, op=0, b5=0, imm14=0, Rt=0
+    // Fields: op=0, Rt=0, b40=15, imm14=0, b5=0
     let encoding: u32 = 0x36780000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2060,12 +2691,17 @@ fn test_aarch64_branch_conditional_test_field_b40_15_poweroftwominusone_0_367800
 fn test_aarch64_branch_conditional_test_field_b40_31_max_0_36f80000() {
     // Encoding: 0x36F80000
     // Test aarch64_branch_conditional_test field b40 = 31 (Max)
-    // Fields: Rt=0, b5=0, op=0, imm14=0, b40=31
+    // Fields: b5=0, Rt=0, op=0, b40=31, imm14=0
     let encoding: u32 = 0x36F80000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2076,12 +2712,17 @@ fn test_aarch64_branch_conditional_test_field_b40_31_max_0_36f80000() {
 fn test_aarch64_branch_conditional_test_field_imm14_0_zero_0_36000000() {
     // Encoding: 0x36000000
     // Test aarch64_branch_conditional_test field imm14 = 0 (Zero)
-    // Fields: Rt=0, op=0, b40=0, b5=0, imm14=0
+    // Fields: b5=0, op=0, imm14=0, b40=0, Rt=0
     let encoding: u32 = 0x36000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2092,12 +2733,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_0_zero_0_36000000() {
 fn test_aarch64_branch_conditional_test_field_imm14_1_poweroftwo_0_36000020() {
     // Encoding: 0x36000020
     // Test aarch64_branch_conditional_test field imm14 = 1 (PowerOfTwo)
-    // Fields: op=0, b5=0, b40=0, imm14=1, Rt=0
+    // Fields: b40=0, b5=0, imm14=1, Rt=0, op=0
     let encoding: u32 = 0x36000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2108,12 +2754,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_1_poweroftwo_0_36000020() {
 fn test_aarch64_branch_conditional_test_field_imm14_3_poweroftwominusone_0_36000060() {
     // Encoding: 0x36000060
     // Test aarch64_branch_conditional_test field imm14 = 3 (PowerOfTwoMinusOne)
-    // Fields: imm14=3, Rt=0, b5=0, b40=0, op=0
+    // Fields: b5=0, imm14=3, Rt=0, b40=0, op=0
     let encoding: u32 = 0x36000060;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2124,12 +2775,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_3_poweroftwominusone_0_36000
 fn test_aarch64_branch_conditional_test_field_imm14_4_poweroftwo_0_36000080() {
     // Encoding: 0x36000080
     // Test aarch64_branch_conditional_test field imm14 = 4 (PowerOfTwo)
-    // Fields: op=0, b5=0, imm14=4, Rt=0, b40=0
+    // Fields: imm14=4, b40=0, Rt=0, b5=0, op=0
     let encoding: u32 = 0x36000080;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2140,12 +2796,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_4_poweroftwo_0_36000080() {
 fn test_aarch64_branch_conditional_test_field_imm14_7_poweroftwominusone_0_360000e0() {
     // Encoding: 0x360000E0
     // Test aarch64_branch_conditional_test field imm14 = 7 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, op=0, b5=0, imm14=7, b40=0
+    // Fields: b40=0, imm14=7, op=0, b5=0, Rt=0
     let encoding: u32 = 0x360000E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2156,12 +2817,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_7_poweroftwominusone_0_36000
 fn test_aarch64_branch_conditional_test_field_imm14_8_poweroftwo_0_36000100() {
     // Encoding: 0x36000100
     // Test aarch64_branch_conditional_test field imm14 = 8 (PowerOfTwo)
-    // Fields: b5=0, op=0, Rt=0, b40=0, imm14=8
+    // Fields: b5=0, Rt=0, op=0, b40=0, imm14=8
     let encoding: u32 = 0x36000100;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2172,12 +2838,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_8_poweroftwo_0_36000100() {
 fn test_aarch64_branch_conditional_test_field_imm14_15_poweroftwominusone_0_360001e0() {
     // Encoding: 0x360001E0
     // Test aarch64_branch_conditional_test field imm14 = 15 (PowerOfTwoMinusOne)
-    // Fields: op=0, b5=0, imm14=15, b40=0, Rt=0
+    // Fields: Rt=0, b5=0, op=0, b40=0, imm14=15
     let encoding: u32 = 0x360001E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2188,12 +2859,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_15_poweroftwominusone_0_3600
 fn test_aarch64_branch_conditional_test_field_imm14_16_poweroftwo_0_36000200() {
     // Encoding: 0x36000200
     // Test aarch64_branch_conditional_test field imm14 = 16 (PowerOfTwo)
-    // Fields: b5=0, Rt=0, b40=0, op=0, imm14=16
+    // Fields: op=0, b5=0, Rt=0, imm14=16, b40=0
     let encoding: u32 = 0x36000200;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2204,12 +2880,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_16_poweroftwo_0_36000200() {
 fn test_aarch64_branch_conditional_test_field_imm14_31_poweroftwominusone_0_360003e0() {
     // Encoding: 0x360003E0
     // Test aarch64_branch_conditional_test field imm14 = 31 (PowerOfTwoMinusOne)
-    // Fields: op=0, Rt=0, imm14=31, b5=0, b40=0
+    // Fields: imm14=31, op=0, Rt=0, b5=0, b40=0
     let encoding: u32 = 0x360003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2220,12 +2901,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_31_poweroftwominusone_0_3600
 fn test_aarch64_branch_conditional_test_field_imm14_32_poweroftwo_0_36000400() {
     // Encoding: 0x36000400
     // Test aarch64_branch_conditional_test field imm14 = 32 (PowerOfTwo)
-    // Fields: Rt=0, op=0, imm14=32, b5=0, b40=0
+    // Fields: b40=0, b5=0, Rt=0, imm14=32, op=0
     let encoding: u32 = 0x36000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2236,12 +2922,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_32_poweroftwo_0_36000400() {
 fn test_aarch64_branch_conditional_test_field_imm14_63_poweroftwominusone_0_360007e0() {
     // Encoding: 0x360007E0
     // Test aarch64_branch_conditional_test field imm14 = 63 (PowerOfTwoMinusOne)
-    // Fields: op=0, b40=0, imm14=63, Rt=0, b5=0
+    // Fields: b5=0, imm14=63, Rt=0, op=0, b40=0
     let encoding: u32 = 0x360007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2252,12 +2943,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_63_poweroftwominusone_0_3600
 fn test_aarch64_branch_conditional_test_field_imm14_64_poweroftwo_0_36000800() {
     // Encoding: 0x36000800
     // Test aarch64_branch_conditional_test field imm14 = 64 (PowerOfTwo)
-    // Fields: op=0, imm14=64, Rt=0, b5=0, b40=0
+    // Fields: b5=0, op=0, imm14=64, Rt=0, b40=0
     let encoding: u32 = 0x36000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2268,12 +2964,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_64_poweroftwo_0_36000800() {
 fn test_aarch64_branch_conditional_test_field_imm14_127_poweroftwominusone_0_36000fe0() {
     // Encoding: 0x36000FE0
     // Test aarch64_branch_conditional_test field imm14 = 127 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, b5=0, imm14=127, b40=0, op=0
+    // Fields: b40=0, op=0, imm14=127, Rt=0, b5=0
     let encoding: u32 = 0x36000FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2284,12 +2985,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_127_poweroftwominusone_0_360
 fn test_aarch64_branch_conditional_test_field_imm14_128_poweroftwo_0_36001000() {
     // Encoding: 0x36001000
     // Test aarch64_branch_conditional_test field imm14 = 128 (PowerOfTwo)
-    // Fields: op=0, b5=0, b40=0, imm14=128, Rt=0
+    // Fields: b5=0, Rt=0, imm14=128, b40=0, op=0
     let encoding: u32 = 0x36001000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2300,12 +3006,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_128_poweroftwo_0_36001000() 
 fn test_aarch64_branch_conditional_test_field_imm14_255_poweroftwominusone_0_36001fe0() {
     // Encoding: 0x36001FE0
     // Test aarch64_branch_conditional_test field imm14 = 255 (PowerOfTwoMinusOne)
-    // Fields: b5=0, Rt=0, b40=0, op=0, imm14=255
+    // Fields: imm14=255, op=0, b5=0, Rt=0, b40=0
     let encoding: u32 = 0x36001FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2316,12 +3027,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_255_poweroftwominusone_0_360
 fn test_aarch64_branch_conditional_test_field_imm14_256_poweroftwo_0_36002000() {
     // Encoding: 0x36002000
     // Test aarch64_branch_conditional_test field imm14 = 256 (PowerOfTwo)
-    // Fields: b40=0, b5=0, op=0, imm14=256, Rt=0
+    // Fields: b40=0, op=0, b5=0, imm14=256, Rt=0
     let encoding: u32 = 0x36002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2332,12 +3048,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_256_poweroftwo_0_36002000() 
 fn test_aarch64_branch_conditional_test_field_imm14_511_poweroftwominusone_0_36003fe0() {
     // Encoding: 0x36003FE0
     // Test aarch64_branch_conditional_test field imm14 = 511 (PowerOfTwoMinusOne)
-    // Fields: b5=0, b40=0, imm14=511, op=0, Rt=0
+    // Fields: op=0, imm14=511, b5=0, b40=0, Rt=0
     let encoding: u32 = 0x36003FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2348,12 +3069,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_511_poweroftwominusone_0_360
 fn test_aarch64_branch_conditional_test_field_imm14_512_poweroftwo_0_36004000() {
     // Encoding: 0x36004000
     // Test aarch64_branch_conditional_test field imm14 = 512 (PowerOfTwo)
-    // Fields: Rt=0, b40=0, imm14=512, op=0, b5=0
+    // Fields: op=0, b40=0, b5=0, imm14=512, Rt=0
     let encoding: u32 = 0x36004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2364,12 +3090,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_512_poweroftwo_0_36004000() 
 fn test_aarch64_branch_conditional_test_field_imm14_1023_poweroftwominusone_0_36007fe0() {
     // Encoding: 0x36007FE0
     // Test aarch64_branch_conditional_test field imm14 = 1023 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, op=0, b5=0, b40=0, imm14=1023
+    // Fields: op=0, b5=0, imm14=1023, b40=0, Rt=0
     let encoding: u32 = 0x36007FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2380,12 +3111,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_1023_poweroftwominusone_0_36
 fn test_aarch64_branch_conditional_test_field_imm14_1024_poweroftwo_0_36008000() {
     // Encoding: 0x36008000
     // Test aarch64_branch_conditional_test field imm14 = 1024 (PowerOfTwo)
-    // Fields: Rt=0, b5=0, imm14=1024, b40=0, op=0
+    // Fields: b5=0, b40=0, op=0, Rt=0, imm14=1024
     let encoding: u32 = 0x36008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2396,12 +3132,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_1024_poweroftwo_0_36008000()
 fn test_aarch64_branch_conditional_test_field_imm14_2047_poweroftwominusone_0_3600ffe0() {
     // Encoding: 0x3600FFE0
     // Test aarch64_branch_conditional_test field imm14 = 2047 (PowerOfTwoMinusOne)
-    // Fields: op=0, Rt=0, b40=0, b5=0, imm14=2047
+    // Fields: Rt=0, imm14=2047, op=0, b40=0, b5=0
     let encoding: u32 = 0x3600FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2412,12 +3153,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_2047_poweroftwominusone_0_36
 fn test_aarch64_branch_conditional_test_field_imm14_2048_poweroftwo_0_36010000() {
     // Encoding: 0x36010000
     // Test aarch64_branch_conditional_test field imm14 = 2048 (PowerOfTwo)
-    // Fields: b40=0, imm14=2048, Rt=0, b5=0, op=0
+    // Fields: imm14=2048, Rt=0, b5=0, op=0, b40=0
     let encoding: u32 = 0x36010000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2428,12 +3174,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_2048_poweroftwo_0_36010000()
 fn test_aarch64_branch_conditional_test_field_imm14_4095_poweroftwominusone_0_3601ffe0() {
     // Encoding: 0x3601FFE0
     // Test aarch64_branch_conditional_test field imm14 = 4095 (PowerOfTwoMinusOne)
-    // Fields: op=0, b5=0, Rt=0, b40=0, imm14=4095
+    // Fields: op=0, imm14=4095, b5=0, b40=0, Rt=0
     let encoding: u32 = 0x3601FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2444,12 +3195,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_4095_poweroftwominusone_0_36
 fn test_aarch64_branch_conditional_test_field_imm14_4096_poweroftwo_0_36020000() {
     // Encoding: 0x36020000
     // Test aarch64_branch_conditional_test field imm14 = 4096 (PowerOfTwo)
-    // Fields: b5=0, imm14=4096, op=0, b40=0, Rt=0
+    // Fields: imm14=4096, Rt=0, op=0, b40=0, b5=0
     let encoding: u32 = 0x36020000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2460,12 +3216,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_4096_poweroftwo_0_36020000()
 fn test_aarch64_branch_conditional_test_field_imm14_8191_poweroftwominusone_0_3603ffe0() {
     // Encoding: 0x3603FFE0
     // Test aarch64_branch_conditional_test field imm14 = 8191 (PowerOfTwoMinusOne)
-    // Fields: imm14=8191, b40=0, Rt=0, b5=0, op=0
+    // Fields: imm14=8191, op=0, b40=0, b5=0, Rt=0
     let encoding: u32 = 0x3603FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2476,12 +3237,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_8191_poweroftwominusone_0_36
 fn test_aarch64_branch_conditional_test_field_imm14_8192_poweroftwo_0_36040000() {
     // Encoding: 0x36040000
     // Test aarch64_branch_conditional_test field imm14 = 8192 (PowerOfTwo)
-    // Fields: b5=0, imm14=8192, b40=0, Rt=0, op=0
+    // Fields: Rt=0, b40=0, b5=0, imm14=8192, op=0
     let encoding: u32 = 0x36040000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2492,12 +3258,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_8192_poweroftwo_0_36040000()
 fn test_aarch64_branch_conditional_test_field_imm14_16383_max_0_3607ffe0() {
     // Encoding: 0x3607FFE0
     // Test aarch64_branch_conditional_test field imm14 = 16383 (Max)
-    // Fields: imm14=16383, b40=0, op=0, Rt=0, b5=0
+    // Fields: op=0, b5=0, imm14=16383, Rt=0, b40=0
     let encoding: u32 = 0x3607FFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2508,12 +3279,17 @@ fn test_aarch64_branch_conditional_test_field_imm14_16383_max_0_3607ffe0() {
 fn test_aarch64_branch_conditional_test_field_rt_0_min_0_36000000() {
     // Encoding: 0x36000000
     // Test aarch64_branch_conditional_test field Rt = 0 (Min)
-    // Fields: op=0, Rt=0, b5=0, imm14=0, b40=0
+    // Fields: b40=0, b5=0, imm14=0, op=0, Rt=0
     let encoding: u32 = 0x36000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2524,12 +3300,17 @@ fn test_aarch64_branch_conditional_test_field_rt_0_min_0_36000000() {
 fn test_aarch64_branch_conditional_test_field_rt_1_poweroftwo_0_36000001() {
     // Encoding: 0x36000001
     // Test aarch64_branch_conditional_test field Rt = 1 (PowerOfTwo)
-    // Fields: op=0, imm14=0, b40=0, b5=0, Rt=1
+    // Fields: Rt=1, b40=0, imm14=0, b5=0, op=0
     let encoding: u32 = 0x36000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2540,12 +3321,17 @@ fn test_aarch64_branch_conditional_test_field_rt_1_poweroftwo_0_36000001() {
 fn test_aarch64_branch_conditional_test_field_rt_30_poweroftwominusone_0_3600001e() {
     // Encoding: 0x3600001E
     // Test aarch64_branch_conditional_test field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: b5=0, imm14=0, Rt=30, op=0, b40=0
+    // Fields: b40=0, b5=0, Rt=30, op=0, imm14=0
     let encoding: u32 = 0x3600001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2556,12 +3342,17 @@ fn test_aarch64_branch_conditional_test_field_rt_30_poweroftwominusone_0_3600001
 fn test_aarch64_branch_conditional_test_field_rt_31_max_0_3600001f() {
     // Encoding: 0x3600001F
     // Test aarch64_branch_conditional_test field Rt = 31 (Max)
-    // Fields: b5=0, Rt=31, b40=0, op=0, imm14=0
+    // Fields: imm14=0, b40=0, op=0, Rt=31, b5=0
     let encoding: u32 = 0x3600001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2572,12 +3363,17 @@ fn test_aarch64_branch_conditional_test_field_rt_31_max_0_3600001f() {
 fn test_aarch64_branch_conditional_test_combo_0_0_36000000() {
     // Encoding: 0x36000000
     // Test aarch64_branch_conditional_test field combination: b5=0, op=0, b40=0, imm14=0, Rt=0
-    // Fields: imm14=0, Rt=0, b5=0, b40=0, op=0
+    // Fields: b40=0, op=0, b5=0, imm14=0, Rt=0
     let encoding: u32 = 0x36000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2585,15 +3381,21 @@ fn test_aarch64_branch_conditional_test_combo_0_0_36000000() {
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_branch_conditional_test_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_3600001f() {
+fn test_aarch64_branch_conditional_test_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_3600001f(
+) {
     // Encoding: 0x3600001F
     // Test aarch64_branch_conditional_test special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: b5=0, Rt=31, b40=0, op=0, imm14=0
+    // Fields: op=0, imm14=0, b5=0, b40=0, Rt=31
     let encoding: u32 = 0x3600001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
+    assert_eq!(
+        exit,
+        CpuExit::Continue,
+        "instruction 0x{:08X} should execute successfully",
+        encoding
+    );
 }
 
 /// Provenance: aarch64_branch_conditional_test
@@ -2675,4 +3477,3 @@ fn test_aarch64_branch_conditional_test_zr_rt_3600001f() {
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
     assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
 }
-
