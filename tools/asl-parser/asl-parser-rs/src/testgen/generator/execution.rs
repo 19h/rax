@@ -716,6 +716,66 @@ pub fn generate_oracle_tests(
                 nonzero,
             ));
         }
+        InstructionPattern::TestBranch { nonzero } => {
+            tests.extend(generate_test_branch_oracle_tests(
+                instr,
+                enc_analysis,
+                &evaluator,
+                nonzero,
+            ));
+        }
+        InstructionPattern::BranchReg { link, is_ret } => {
+            tests.extend(generate_branch_reg_oracle_tests(
+                instr,
+                enc_analysis,
+                &evaluator,
+                link,
+                is_ret,
+            ));
+        }
+        InstructionPattern::AddSubExtendedReg { is_sub, set_flags } => {
+            tests.extend(generate_add_sub_extended_oracle_tests(
+                instr,
+                enc_analysis,
+                &evaluator,
+                is_sub,
+                set_flags,
+            ));
+        }
+        InstructionPattern::PcRelAddress { is_page } => {
+            tests.extend(generate_pcrel_oracle_tests(
+                instr,
+                enc_analysis,
+                &evaluator,
+                is_page,
+            ));
+        }
+        InstructionPattern::LoadPair { is_signed } => {
+            tests.extend(generate_load_pair_oracle_tests(
+                instr,
+                enc_analysis,
+                &evaluator,
+                is_signed,
+            ));
+        }
+        InstructionPattern::StorePair => {
+            tests.extend(generate_store_pair_oracle_tests(
+                instr,
+                enc_analysis,
+                &evaluator,
+            ));
+        }
+        InstructionPattern::Compare { is_neg } => {
+            tests.extend(generate_compare_oracle_tests(
+                instr,
+                enc_analysis,
+                &evaluator,
+                is_neg,
+            ));
+        }
+        InstructionPattern::Test => {
+            tests.extend(generate_test_oracle_tests(instr, enc_analysis, &evaluator));
+        }
         _ => {
             // Unknown pattern - skip oracle tests for A64
         }
@@ -754,20 +814,16 @@ pub fn generate_oracle_tests(
 }
 
 /// Generate oracle tests for ADD/SUB immediate instructions
+/// Generates tests for all 4 variants (ADD, ADDS, SUB, SUBS) since a single ASL encoding
+/// covers all variants via the op and S fields.
 fn generate_add_sub_imm_oracle_tests(
     instr: &Instruction,
     enc_analysis: &EncodingAnalysis,
     evaluator: &TestEvaluator,
-    is_sub: bool,
-    set_flags: bool,
+    _is_sub: bool,
+    _set_flags: bool,
 ) -> Vec<ExecutionTest> {
     let mut tests = Vec::new();
-    let op_name = match (is_sub, set_flags) {
-        (false, false) => "ADD",
-        (false, true) => "ADDS",
-        (true, false) => "SUB",
-        (true, true) => "SUBS",
-    };
 
     // Test cases: (operand1, imm12, shift, description)
     let test_cases: Vec<(u64, u64, u64, &str)> = vec![
@@ -792,87 +848,177 @@ fn generate_add_sub_imm_oracle_tests(
         (0xFFFF_FFFF, 1, 0, "unsigned overflow 32-bit"),
     ];
 
-    for (test_idx, (operand1, imm12, sh, description)) in test_cases.iter().enumerate() {
-        // Test both 32-bit and 64-bit variants
+    // Generate tests for ALL 4 variants: ADD, ADDS, SUB, SUBS
+    for (is_sub, set_flags) in [(false, false), (false, true), (true, false), (true, true)] {
+        let op_name = match (is_sub, set_flags) {
+            (false, false) => "ADD",
+            (false, true) => "ADDS",
+            (true, false) => "SUB",
+            (true, true) => "SUBS",
+        };
+
+        for (test_idx, (operand1, imm12, sh, description)) in test_cases.iter().enumerate() {
+            // Test both 32-bit and 64-bit variants
+            for sf in [0u64, 1u64] {
+                let width = if sf == 1 { 64 } else { 32 };
+
+                // Build encoding
+                let encoding = enc_analysis.opcode_pattern.fixed_value
+                    | (sf << 31)
+                    | ((is_sub as u64) << 30)
+                    | ((set_flags as u64) << 29)
+                    | (*sh << 22)
+                    | ((*imm12 & 0xFFF) << 10)
+                    | (1 << 5)  // Rn = X1
+                    | 0; // Rd = X0
+
+                // Set up initial state
+                let mut initial_state = ProcessorState::default();
+                let masked_operand = if width == 32 {
+                    *operand1 & 0xFFFF_FFFF
+                } else {
+                    *operand1
+                };
+                initial_state.gp_regs.insert(1, masked_operand);
+                initial_state.sp = Some(0x0000_8000_0000_0000); // Aligned SP
+
+                // Compute expected values using the evaluator
+                let (expected_state, assertions) =
+                    evaluator.compute_add_sub_imm_expected(encoding, &initial_state);
+
+                let size_suffix = if sf == 1 { "64" } else { "32" };
+                let provenance = Provenance::new(
+                    instr.name.as_str(),
+                    &enc_analysis.name,
+                    format!(
+                        "{} X{}, X{}, #{}{}",
+                        op_name,
+                        0,
+                        1,
+                        imm12,
+                        if *sh == 1 { ", LSL #12" } else { "" }
+                    ),
+                    if set_flags {
+                        Requirement::FlagComputation {
+                            flag: ProcessorFlag::N,
+                            scenario: FlagScenario::NonZeroResult,
+                        }
+                    } else {
+                        Requirement::RegisterWrite {
+                            reg_type: if sf == 1 {
+                                RegType::Gp64
+                            } else {
+                                RegType::Gp32
+                            },
+                            dest_field: "Rd".to_string(),
+                        }
+                    },
+                    format!("{} ({})", description, size_suffix),
+                );
+
+                let mut field_values = HashMap::new();
+                field_values.insert("sf".to_string(), sf);
+                field_values.insert("op".to_string(), is_sub as u64);
+                field_values.insert("S".to_string(), set_flags as u64);
+                field_values.insert("sh".to_string(), *sh);
+                field_values.insert("imm12".to_string(), *imm12);
+                field_values.insert("Rn".to_string(), 1);
+                field_values.insert("Rd".to_string(), 0);
+
+                tests.push(ExecutionTest {
+                    id: format!(
+                        "{}_{}_oracle_{}_{}",
+                        enc_analysis.name,
+                        op_name.to_lowercase(),
+                        size_suffix,
+                        test_idx
+                    ),
+                    provenance,
+                    description: format!(
+                        "Test {} {}-bit: {} (with oracle verification)",
+                        op_name, width, description
+                    ),
+                    encoding_name: enc_analysis.name.clone(),
+                    iset: enc_analysis.iset,
+                    encoding,
+                    encoding_width: enc_analysis.opcode_pattern.width,
+                    field_values,
+                    initial_state,
+                    expected_state,
+                    expected_memory: vec![],
+                    assertions,
+                    path_id: None,
+                    category: if set_flags {
+                        ExecutionTestCategory::Flags
+                    } else {
+                        ExecutionTestCategory::Normal
+                    },
+                });
+            }
+        }
+
+        // Generate ZR destination tests (CMP/CMN when set_flags=true)
         for sf in [0u64, 1u64] {
             let width = if sf == 1 { 64 } else { 32 };
 
-            // Build encoding
+            // Test Rd = 31 (ZR for ADDS/SUBS, SP for ADD/SUB)
             let encoding = enc_analysis.opcode_pattern.fixed_value
                 | (sf << 31)
                 | ((is_sub as u64) << 30)
                 | ((set_flags as u64) << 29)
-                | (*sh << 22)
-                | ((*imm12 & 0xFFF) << 10)
-                | (1 << 5)  // Rn = X1
-                | 0; // Rd = X0
+                | (0 << 22)  // sh = 0
+                | (10 << 10) // imm12 = 10
+                | (1 << 5)   // Rn = X1
+                | 31; // Rd = 31
 
-            // Set up initial state
             let mut initial_state = ProcessorState::default();
-            let masked_operand = if width == 32 {
-                *operand1 & 0xFFFF_FFFF
-            } else {
-                *operand1
-            };
-            initial_state.gp_regs.insert(1, masked_operand);
-            initial_state.sp = Some(0x0000_8000_0000_0000); // Aligned SP
+            initial_state.gp_regs.insert(1, 100);
+            initial_state.sp = Some(0x0000_8000_0000_0000);
 
-            // Compute expected values using the evaluator
             let (expected_state, assertions) =
                 evaluator.compute_add_sub_imm_expected(encoding, &initial_state);
 
             let size_suffix = if sf == 1 { "64" } else { "32" };
+            let dest_name = if set_flags { "ZR" } else { "SP" };
+
             let provenance = Provenance::new(
                 instr.name.as_str(),
                 &enc_analysis.name,
-                format!(
-                    "{} X{}, X{}, #{}{}",
-                    op_name,
-                    0,
-                    1,
-                    imm12,
-                    if *sh == 1 { ", LSL #12" } else { "" }
-                ),
-                if set_flags {
-                    Requirement::FlagComputation {
-                        flag: ProcessorFlag::N,
-                        scenario: FlagScenario::NonZeroResult,
-                    }
-                } else {
-                    Requirement::RegisterWrite {
-                        reg_type: if sf == 1 {
-                            RegType::Gp64
-                        } else {
-                            RegType::Gp32
-                        },
-                        dest_field: "Rd".to_string(),
-                    }
+                format!("{} {}, X1, #10", op_name, dest_name),
+                Requirement::RegisterSpecial {
+                    reg: if set_flags {
+                        SpecialReg::Zr
+                    } else {
+                        SpecialReg::Sp
+                    },
+                    behavior: if set_flags {
+                        "result discarded, flags set".to_string()
+                    } else {
+                        "writes to stack pointer".to_string()
+                    },
                 },
-                format!("{} ({})", description, size_suffix),
+                format!("{} destination ({})", dest_name, size_suffix),
             );
 
             let mut field_values = HashMap::new();
             field_values.insert("sf".to_string(), sf);
             field_values.insert("op".to_string(), is_sub as u64);
             field_values.insert("S".to_string(), set_flags as u64);
-            field_values.insert("sh".to_string(), *sh);
-            field_values.insert("imm12".to_string(), *imm12);
+            field_values.insert("sh".to_string(), 0);
+            field_values.insert("imm12".to_string(), 10);
             field_values.insert("Rn".to_string(), 1);
-            field_values.insert("Rd".to_string(), 0);
+            field_values.insert("Rd".to_string(), 31);
 
             tests.push(ExecutionTest {
                 id: format!(
-                    "{}_{}_oracle_{}_{}",
+                    "{}_{}_oracle_{}_rd31_{}",
                     enc_analysis.name,
                     op_name.to_lowercase(),
                     size_suffix,
-                    test_idx
+                    dest_name.to_lowercase()
                 ),
                 provenance,
-                description: format!(
-                    "Test {} {}-bit: {} (with oracle verification)",
-                    op_name, width, description
-                ),
+                description: format!("Test {} {}-bit with Rd=31 ({})", op_name, width, dest_name),
                 encoding_name: enc_analysis.name.clone(),
                 iset: enc_analysis.iset,
                 encoding,
@@ -883,89 +1029,9 @@ fn generate_add_sub_imm_oracle_tests(
                 expected_memory: vec![],
                 assertions,
                 path_id: None,
-                category: if set_flags {
-                    ExecutionTestCategory::Flags
-                } else {
-                    ExecutionTestCategory::Normal
-                },
+                category: ExecutionTestCategory::Normal,
             });
         }
-    }
-
-    // Generate ZR destination tests
-    for sf in [0u64, 1u64] {
-        let width = if sf == 1 { 64 } else { 32 };
-
-        // Test Rd = 31 (ZR for ADDS/SUBS, SP for ADD/SUB)
-        let encoding = enc_analysis.opcode_pattern.fixed_value
-            | (sf << 31)
-            | ((is_sub as u64) << 30)
-            | ((set_flags as u64) << 29)
-            | (0 << 22)  // sh = 0
-            | (10 << 10) // imm12 = 10
-            | (1 << 5)   // Rn = X1
-            | 31; // Rd = 31
-
-        let mut initial_state = ProcessorState::default();
-        initial_state.gp_regs.insert(1, 100);
-        initial_state.sp = Some(0x0000_8000_0000_0000);
-
-        let (expected_state, assertions) =
-            evaluator.compute_add_sub_imm_expected(encoding, &initial_state);
-
-        let size_suffix = if sf == 1 { "64" } else { "32" };
-        let dest_name = if set_flags { "ZR" } else { "SP" };
-
-        let provenance = Provenance::new(
-            instr.name.as_str(),
-            &enc_analysis.name,
-            format!("{} {}, X1, #10", op_name, dest_name),
-            Requirement::RegisterSpecial {
-                reg: if set_flags {
-                    SpecialReg::Zr
-                } else {
-                    SpecialReg::Sp
-                },
-                behavior: if set_flags {
-                    "result discarded, flags set".to_string()
-                } else {
-                    "writes to stack pointer".to_string()
-                },
-            },
-            format!("{} destination ({})", dest_name, size_suffix),
-        );
-
-        let mut field_values = HashMap::new();
-        field_values.insert("sf".to_string(), sf);
-        field_values.insert("op".to_string(), is_sub as u64);
-        field_values.insert("S".to_string(), set_flags as u64);
-        field_values.insert("sh".to_string(), 0);
-        field_values.insert("imm12".to_string(), 10);
-        field_values.insert("Rn".to_string(), 1);
-        field_values.insert("Rd".to_string(), 31);
-
-        tests.push(ExecutionTest {
-            id: format!(
-                "{}_{}_oracle_{}_rd31_{}",
-                enc_analysis.name,
-                op_name.to_lowercase(),
-                size_suffix,
-                dest_name.to_lowercase()
-            ),
-            provenance,
-            description: format!("Test {} {}-bit with Rd=31 ({})", op_name, width, dest_name),
-            encoding_name: enc_analysis.name.clone(),
-            iset: enc_analysis.iset,
-            encoding,
-            encoding_width: enc_analysis.opcode_pattern.width,
-            field_values,
-            initial_state,
-            expected_state,
-            expected_memory: vec![],
-            assertions,
-            path_id: None,
-            category: ExecutionTestCategory::Normal,
-        });
     }
 
     tests
@@ -1393,20 +1459,16 @@ fn generate_logical_shifted_oracle_tests(
 }
 
 /// Generate oracle tests for ADD/SUB shifted register instructions
+/// Generates tests for all 4 variants (ADD, ADDS, SUB, SUBS) since a single ASL encoding
+/// covers all variants via the op and S fields.
 fn generate_add_sub_shifted_oracle_tests(
     instr: &Instruction,
     enc_analysis: &EncodingAnalysis,
     evaluator: &TestEvaluator,
-    is_sub: bool,
-    set_flags: bool,
+    _is_sub: bool,
+    _set_flags: bool,
 ) -> Vec<ExecutionTest> {
     let mut tests = Vec::new();
-    let op_name = match (is_sub, set_flags) {
-        (false, false) => "ADD",
-        (false, true) => "ADDS",
-        (true, false) => "SUB",
-        (true, true) => "SUBS",
-    };
 
     // Test cases: (op1, op2, shift_amt, shift_type, description)
     let test_cases: Vec<(u64, u64, u32, u32, &str)> = vec![
@@ -1422,50 +1484,60 @@ fn generate_add_sub_shifted_oracle_tests(
         (0, 0xFFFF_FFFF_FFFF_FFFF, 0, 0, "subtract from zero"),
     ];
 
-    for (test_idx, (op1, op2, shift_amt, shift_type, description)) in test_cases.iter().enumerate()
-    {
-        for sf in [0u64, 1u64] {
-            let width = if sf == 1 { 64 } else { 32 };
-            let masked_op1 = if width == 32 {
-                *op1 & 0xFFFF_FFFF
-            } else {
-                *op1
-            };
-            let masked_op2 = if width == 32 {
-                *op2 & 0xFFFF_FFFF
-            } else {
-                *op2
-            };
+    // Generate tests for ALL 4 variants: ADD, ADDS, SUB, SUBS
+    for (is_sub, set_flags) in [(false, false), (false, true), (true, false), (true, true)] {
+        let op_name = match (is_sub, set_flags) {
+            (false, false) => "ADD",
+            (false, true) => "ADDS",
+            (true, false) => "SUB",
+            (true, true) => "SUBS",
+        };
 
-            // Apply shift to op2
-            let shifted_op2 = match shift_type {
-                0 => masked_op2.wrapping_shl(*shift_amt), // LSL
-                1 => masked_op2.wrapping_shr(*shift_amt), // LSR
-                2 => {
-                    // ASR: need proper sign extension for 32-bit
-                    if width == 32 {
-                        let signed = (masked_op2 as i32) as i64;
-                        (signed >> *shift_amt) as u64
-                    } else {
-                        ((masked_op2 as i64) >> *shift_amt) as u64
+        for (test_idx, (op1, op2, shift_amt, shift_type, description)) in
+            test_cases.iter().enumerate()
+        {
+            for sf in [0u64, 1u64] {
+                let width = if sf == 1 { 64 } else { 32 };
+                let masked_op1 = if width == 32 {
+                    *op1 & 0xFFFF_FFFF
+                } else {
+                    *op1
+                };
+                let masked_op2 = if width == 32 {
+                    *op2 & 0xFFFF_FFFF
+                } else {
+                    *op2
+                };
+
+                // Apply shift to op2
+                let shifted_op2 = match shift_type {
+                    0 => masked_op2.wrapping_shl(*shift_amt), // LSL
+                    1 => masked_op2.wrapping_shr(*shift_amt), // LSR
+                    2 => {
+                        // ASR: need proper sign extension for 32-bit
+                        if width == 32 {
+                            let signed = (masked_op2 as i32) as i64;
+                            (signed >> *shift_amt) as u64
+                        } else {
+                            ((masked_op2 as i64) >> *shift_amt) as u64
+                        }
                     }
-                }
-                _ => masked_op2,
-            };
-            let shifted_masked = if width == 32 {
-                shifted_op2 & 0xFFFF_FFFF
-            } else {
-                shifted_op2
-            };
+                    _ => masked_op2,
+                };
+                let shifted_masked = if width == 32 {
+                    shifted_op2 & 0xFFFF_FFFF
+                } else {
+                    shifted_op2
+                };
 
-            // Compute result and flags
-            let result = if is_sub {
-                evaluator.eval_sub(masked_op1, shifted_masked, width as u32, set_flags)
-            } else {
-                evaluator.eval_add(masked_op1, shifted_masked, width as u32, set_flags)
-            };
+                // Compute result and flags
+                let result = if is_sub {
+                    evaluator.eval_sub(masked_op1, shifted_masked, width as u32, set_flags)
+                } else {
+                    evaluator.eval_add(masked_op1, shifted_masked, width as u32, set_flags)
+                };
 
-            let encoding = enc_analysis.opcode_pattern.fixed_value
+                let encoding = enc_analysis.opcode_pattern.fixed_value
                 | (sf << 31)
                 | ((is_sub as u64) << 30)
                 | ((set_flags as u64) << 29)
@@ -1475,111 +1547,112 @@ fn generate_add_sub_shifted_oracle_tests(
                 | (1 << 5)  // Rn = X1
                 | 0; // Rd = X0
 
-            let mut initial_state = ProcessorState::default();
-            initial_state.gp_regs.insert(1, masked_op1);
-            initial_state.gp_regs.insert(2, masked_op2);
+                let mut initial_state = ProcessorState::default();
+                initial_state.gp_regs.insert(1, masked_op1);
+                initial_state.gp_regs.insert(2, masked_op2);
 
-            let mut expected_state = ProcessorState::default();
-            let final_result = if width == 32 {
-                result.dest_value & 0xFFFF_FFFF
-            } else {
-                result.dest_value
-            };
-            expected_state.gp_regs.insert(0, final_result);
-
-            let mut assertions = Vec::new();
-            if width == 32 {
-                assertions.push(TestAssertion {
-                    check: AssertionCheck::GpReg32(0),
-                    expected: AssertionValue::U32(final_result as u32),
-                    message: format!("W0 should be 0x{:08X}", final_result as u32),
-                });
-            } else {
-                assertions.push(TestAssertion {
-                    check: AssertionCheck::GpReg(0),
-                    expected: AssertionValue::U64(final_result),
-                    message: format!("X0 should be 0x{:016X}", final_result),
-                });
-            }
-
-            if let Some(nzcv) = result.nzcv {
-                assertions.push(TestAssertion {
-                    check: AssertionCheck::Flag(ProcessorFlag::N),
-                    expected: AssertionValue::Bool(nzcv.n),
-                    message: format!("N flag should be {}", nzcv.n),
-                });
-                assertions.push(TestAssertion {
-                    check: AssertionCheck::Flag(ProcessorFlag::Z),
-                    expected: AssertionValue::Bool(nzcv.z),
-                    message: format!("Z flag should be {}", nzcv.z),
-                });
-                assertions.push(TestAssertion {
-                    check: AssertionCheck::Flag(ProcessorFlag::C),
-                    expected: AssertionValue::Bool(nzcv.c),
-                    message: format!("C flag should be {}", nzcv.c),
-                });
-                assertions.push(TestAssertion {
-                    check: AssertionCheck::Flag(ProcessorFlag::V),
-                    expected: AssertionValue::Bool(nzcv.v),
-                    message: format!("V flag should be {}", nzcv.v),
-                });
-            }
-
-            let size_suffix = if sf == 1 { "64" } else { "32" };
-            let provenance = Provenance::new(
-                instr.name.as_str(),
-                &enc_analysis.name,
-                format!("{} X0, X1, X2, shift #{}", op_name, shift_amt),
-                Requirement::RegisterWrite {
-                    reg_type: if sf == 1 {
-                        RegType::Gp64
-                    } else {
-                        RegType::Gp32
-                    },
-                    dest_field: "Rd".to_string(),
-                },
-                format!("{} ({})", description, size_suffix),
-            );
-
-            let mut field_values = HashMap::new();
-            field_values.insert("sf".to_string(), sf);
-            field_values.insert("op".to_string(), is_sub as u64);
-            field_values.insert("S".to_string(), set_flags as u64);
-            field_values.insert("shift".to_string(), *shift_type as u64);
-            field_values.insert("imm6".to_string(), *shift_amt as u64);
-            field_values.insert("Rm".to_string(), 2);
-            field_values.insert("Rn".to_string(), 1);
-            field_values.insert("Rd".to_string(), 0);
-
-            tests.push(ExecutionTest {
-                id: format!(
-                    "{}_{}_shifted_oracle_{}_{}",
-                    enc_analysis.name,
-                    op_name.to_lowercase(),
-                    size_suffix,
-                    test_idx
-                ),
-                provenance,
-                description: format!(
-                    "Test {} shifted {}-bit: {} (oracle)",
-                    op_name, width, description
-                ),
-                encoding_name: enc_analysis.name.clone(),
-                iset: enc_analysis.iset,
-                encoding,
-                encoding_width: enc_analysis.opcode_pattern.width,
-                field_values,
-                initial_state,
-                expected_state,
-                expected_memory: vec![],
-                assertions,
-                path_id: None,
-                category: if set_flags {
-                    ExecutionTestCategory::Flags
+                let mut expected_state = ProcessorState::default();
+                let final_result = if width == 32 {
+                    result.dest_value & 0xFFFF_FFFF
                 } else {
-                    ExecutionTestCategory::Normal
-                },
-            });
+                    result.dest_value
+                };
+                expected_state.gp_regs.insert(0, final_result);
+
+                let mut assertions = Vec::new();
+                if width == 32 {
+                    assertions.push(TestAssertion {
+                        check: AssertionCheck::GpReg32(0),
+                        expected: AssertionValue::U32(final_result as u32),
+                        message: format!("W0 should be 0x{:08X}", final_result as u32),
+                    });
+                } else {
+                    assertions.push(TestAssertion {
+                        check: AssertionCheck::GpReg(0),
+                        expected: AssertionValue::U64(final_result),
+                        message: format!("X0 should be 0x{:016X}", final_result),
+                    });
+                }
+
+                if let Some(nzcv) = result.nzcv {
+                    assertions.push(TestAssertion {
+                        check: AssertionCheck::Flag(ProcessorFlag::N),
+                        expected: AssertionValue::Bool(nzcv.n),
+                        message: format!("N flag should be {}", nzcv.n),
+                    });
+                    assertions.push(TestAssertion {
+                        check: AssertionCheck::Flag(ProcessorFlag::Z),
+                        expected: AssertionValue::Bool(nzcv.z),
+                        message: format!("Z flag should be {}", nzcv.z),
+                    });
+                    assertions.push(TestAssertion {
+                        check: AssertionCheck::Flag(ProcessorFlag::C),
+                        expected: AssertionValue::Bool(nzcv.c),
+                        message: format!("C flag should be {}", nzcv.c),
+                    });
+                    assertions.push(TestAssertion {
+                        check: AssertionCheck::Flag(ProcessorFlag::V),
+                        expected: AssertionValue::Bool(nzcv.v),
+                        message: format!("V flag should be {}", nzcv.v),
+                    });
+                }
+
+                let size_suffix = if sf == 1 { "64" } else { "32" };
+                let provenance = Provenance::new(
+                    instr.name.as_str(),
+                    &enc_analysis.name,
+                    format!("{} X0, X1, X2, shift #{}", op_name, shift_amt),
+                    Requirement::RegisterWrite {
+                        reg_type: if sf == 1 {
+                            RegType::Gp64
+                        } else {
+                            RegType::Gp32
+                        },
+                        dest_field: "Rd".to_string(),
+                    },
+                    format!("{} ({})", description, size_suffix),
+                );
+
+                let mut field_values = HashMap::new();
+                field_values.insert("sf".to_string(), sf);
+                field_values.insert("op".to_string(), is_sub as u64);
+                field_values.insert("S".to_string(), set_flags as u64);
+                field_values.insert("shift".to_string(), *shift_type as u64);
+                field_values.insert("imm6".to_string(), *shift_amt as u64);
+                field_values.insert("Rm".to_string(), 2);
+                field_values.insert("Rn".to_string(), 1);
+                field_values.insert("Rd".to_string(), 0);
+
+                tests.push(ExecutionTest {
+                    id: format!(
+                        "{}_{}_shifted_oracle_{}_{}",
+                        enc_analysis.name,
+                        op_name.to_lowercase(),
+                        size_suffix,
+                        test_idx
+                    ),
+                    provenance,
+                    description: format!(
+                        "Test {} shifted {}-bit: {} (oracle)",
+                        op_name, width, description
+                    ),
+                    encoding_name: enc_analysis.name.clone(),
+                    iset: enc_analysis.iset,
+                    encoding,
+                    encoding_width: enc_analysis.opcode_pattern.width,
+                    field_values,
+                    initial_state,
+                    expected_state,
+                    expected_memory: vec![],
+                    assertions,
+                    path_id: None,
+                    category: if set_flags {
+                        ExecutionTestCategory::Flags
+                    } else {
+                        ExecutionTestCategory::Normal
+                    },
+                });
+            }
         }
     }
 
@@ -4151,6 +4224,662 @@ fn generate_t16_oracle_tests(
             }
         }
         _ => {}
+    }
+
+    tests
+}
+
+/// Generate oracle tests for TBZ/TBNZ (test and branch)
+fn generate_test_branch_oracle_tests(
+    instr: &Instruction,
+    enc_analysis: &EncodingAnalysis,
+    _evaluator: &TestEvaluator,
+    nonzero: bool,
+) -> Vec<ExecutionTest> {
+    let mut tests = Vec::new();
+    let op_name = if nonzero { "TBNZ" } else { "TBZ" };
+
+    // Test cases: (value, bit_pos, description)
+    let test_cases: Vec<(u64, u8, &str)> = vec![
+        (0, 0, "zero value, bit 0"),
+        (1, 0, "bit 0 set"),
+        (0x8000_0000_0000_0000, 63, "bit 63 set"),
+        (0, 63, "zero, testing bit 63"),
+    ];
+
+    for (test_idx, (value, bit_pos, description)) in test_cases.iter().enumerate() {
+        // TBZ/TBNZ: b5[31] | 011011 | op[24] | b40[23:19] | imm14[18:5] | Rt[4:0]
+        let b5 = (bit_pos >> 5) as u64;
+        let b40 = (bit_pos & 0x1F) as u64;
+        let op = if nonzero { 1u64 } else { 0u64 };
+
+        let encoding = (b5 << 31)
+            | (0b011011u64 << 25)
+            | (op << 24)
+            | (b40 << 19)
+            | (0 << 5) // imm14 = 0 (branch offset)
+            | 0; // Rt = X0
+
+        let mut initial_state = ProcessorState::default();
+        initial_state.gp_regs.insert(0, *value);
+
+        let bit_set = (value >> bit_pos) & 1 == 1;
+        let will_branch = if nonzero { bit_set } else { !bit_set };
+
+        let provenance = Provenance::new(
+            instr.name.as_str(),
+            &enc_analysis.name,
+            format!("{} X0, #{}, label", op_name, bit_pos),
+            Requirement::RegisterRead {
+                reg_type: RegType::Gp64,
+                source_field: "Rt".to_string(),
+            },
+            format!("{} (branch={})", description, will_branch),
+        );
+
+        tests.push(ExecutionTest {
+            id: format!("{}_oracle_{}", enc_analysis.name, test_idx),
+            provenance,
+            description: format!("Test {}: {} (oracle)", op_name, description),
+            encoding_name: enc_analysis.name.clone(),
+            iset: enc_analysis.iset,
+            encoding,
+            encoding_width: enc_analysis.opcode_pattern.width,
+            field_values: HashMap::new(),
+            initial_state,
+            expected_state: ProcessorState::default(),
+            expected_memory: vec![],
+            assertions: vec![],
+            path_id: None,
+            category: ExecutionTestCategory::Normal,
+        });
+    }
+
+    tests
+}
+
+/// Generate oracle tests for BR/BLR/RET (branch to register)
+fn generate_branch_reg_oracle_tests(
+    instr: &Instruction,
+    enc_analysis: &EncodingAnalysis,
+    _evaluator: &TestEvaluator,
+    link: bool,
+    is_ret: bool,
+) -> Vec<ExecutionTest> {
+    let mut tests = Vec::new();
+    let op_name = if is_ret {
+        "RET"
+    } else if link {
+        "BLR"
+    } else {
+        "BR"
+    };
+
+    // Test cases: target address
+    let test_cases: Vec<(u64, &str)> = vec![(0x1000, "low address"), (0x8000_0000, "mid address")];
+
+    for (test_idx, (target, description)) in test_cases.iter().enumerate() {
+        // BR/BLR/RET: 1101011 | Z[24] | 0 | op[22:21] | 11111 | 0000 | A[10] | M[9] | Rn[4:0] | 00000
+        // BR: Z=0, op=00, A=0, M=0
+        // BLR: Z=0, op=01, A=0, M=0
+        // RET: Z=0, op=10, A=0, M=0
+        let op = if is_ret {
+            0b10u64
+        } else if link {
+            0b01u64
+        } else {
+            0b00u64
+        };
+
+        let encoding = (0b1101011u64 << 25)
+            | (0u64 << 24) // Z
+            | (0u64 << 23)
+            | (op << 21)
+            | (0b11111u64 << 16)
+            | (0b0000u64 << 12)
+            | (0u64 << 10) // A
+            | (0u64 << 9)  // M
+            | (30u64 << 5) // Rn = X30 for RET, can be any for BR/BLR
+            | 0;
+
+        let mut initial_state = ProcessorState::default();
+        initial_state.gp_regs.insert(30, *target);
+
+        let provenance = Provenance::new(
+            instr.name.as_str(),
+            &enc_analysis.name,
+            format!("{} X30", op_name),
+            Requirement::RegisterRead {
+                reg_type: RegType::Gp64,
+                source_field: "Rn".to_string(),
+            },
+            description.to_string(),
+        );
+
+        tests.push(ExecutionTest {
+            id: format!("{}_oracle_{}", enc_analysis.name, test_idx),
+            provenance,
+            description: format!("Test {}: {} (oracle)", op_name, description),
+            encoding_name: enc_analysis.name.clone(),
+            iset: enc_analysis.iset,
+            encoding,
+            encoding_width: enc_analysis.opcode_pattern.width,
+            field_values: HashMap::new(),
+            initial_state,
+            expected_state: ProcessorState::default(),
+            expected_memory: vec![],
+            assertions: vec![],
+            path_id: None,
+            category: ExecutionTestCategory::Normal,
+        });
+    }
+
+    tests
+}
+
+/// Generate oracle tests for ADD/SUB extended register
+/// Generates tests for all 4 variants (ADD, ADDS, SUB, SUBS) since a single ASL encoding
+/// covers all variants via the op and S fields.
+fn generate_add_sub_extended_oracle_tests(
+    instr: &Instruction,
+    enc_analysis: &EncodingAnalysis,
+    evaluator: &TestEvaluator,
+    _is_sub: bool,
+    _set_flags: bool,
+) -> Vec<ExecutionTest> {
+    let mut tests = Vec::new();
+
+    // Test with UXTW extension
+    let test_cases: Vec<(u64, u64, &str)> = vec![
+        (0x1000, 0x100, "simple values"),
+        (0xFFFF_FFFF_FFFF_FFFF, 1, "max + 1"),
+    ];
+
+    // Generate tests for ALL 4 variants: ADD, ADDS, SUB, SUBS
+    for (is_sub, set_flags) in [(false, false), (false, true), (true, false), (true, true)] {
+        let op_name = match (is_sub, set_flags) {
+            (false, false) => "ADD",
+            (false, true) => "ADDS",
+            (true, false) => "SUB",
+            (true, true) => "SUBS",
+        };
+
+        for (test_idx, (op1, op2, description)) in test_cases.iter().enumerate() {
+            // ADD/SUB extended: sf[31] | op[30] | S[29] | 01011 | 001 | Rm[20:16] | option[15:13] | imm3[12:10] | Rn[9:5] | Rd[4:0]
+            let sf = 1u64;
+            let op = if is_sub { 1u64 } else { 0u64 };
+            let s = if set_flags { 1u64 } else { 0u64 };
+
+            let encoding = (sf << 31)
+            | (op << 30)
+            | (s << 29)
+            | (0b01011u64 << 24)
+            | (0b001u64 << 21)
+            | (2u64 << 16) // Rm = X2
+            | (0b011u64 << 13) // option = UXTW
+            | (0u64 << 10) // imm3 = 0
+            | (1u64 << 5) // Rn = X1
+            | 0; // Rd = X0
+
+            let extended_op2 = *op2 & 0xFFFF_FFFF; // UXTW extension
+            let arith_result = if is_sub {
+                evaluator.eval_sub(*op1, extended_op2, 64, set_flags)
+            } else {
+                evaluator.eval_add(*op1, extended_op2, 64, set_flags)
+            };
+
+            let mut initial_state = ProcessorState::default();
+            initial_state.gp_regs.insert(1, *op1);
+            initial_state.gp_regs.insert(2, *op2);
+
+            let mut expected_state = ProcessorState::default();
+            expected_state.gp_regs.insert(0, arith_result.dest_value);
+            if set_flags {
+                if let Some(flags) = arith_result.nzcv {
+                    expected_state.nzcv = Some(flags.to_u8());
+                }
+            }
+
+            let mut assertions = Vec::new();
+            assertions.push(TestAssertion {
+                check: AssertionCheck::GpReg(0),
+                expected: AssertionValue::U64(arith_result.dest_value),
+                message: format!("X0 should be 0x{:016X}", arith_result.dest_value),
+            });
+
+            let provenance = Provenance::new(
+                instr.name.as_str(),
+                &enc_analysis.name,
+                format!("{} X0, X1, W2, UXTW", op_name),
+                Requirement::RegisterWrite {
+                    reg_type: RegType::Gp64,
+                    dest_field: "Rd".to_string(),
+                },
+                description.to_string(),
+            );
+
+            tests.push(ExecutionTest {
+                id: format!("{}_oracle_{}", enc_analysis.name, test_idx),
+                provenance,
+                description: format!("Test {} extended: {} (oracle)", op_name, description),
+                encoding_name: enc_analysis.name.clone(),
+                iset: enc_analysis.iset,
+                encoding,
+                encoding_width: enc_analysis.opcode_pattern.width,
+                field_values: HashMap::new(),
+                initial_state,
+                expected_state,
+                expected_memory: vec![],
+                assertions,
+                path_id: None,
+                category: ExecutionTestCategory::Normal,
+            });
+        }
+    }
+
+    tests
+}
+
+/// Generate oracle tests for ADR/ADRP (PC-relative address)
+fn generate_pcrel_oracle_tests(
+    instr: &Instruction,
+    enc_analysis: &EncodingAnalysis,
+    _evaluator: &TestEvaluator,
+    is_page: bool,
+) -> Vec<ExecutionTest> {
+    let mut tests = Vec::new();
+    let op_name = if is_page { "ADRP" } else { "ADR" };
+
+    // Simple test - the result depends on PC which we set to 0
+    let test_cases: Vec<(i64, &str)> = vec![
+        (0, "zero offset"),
+        (4, "small positive"),
+        (-4, "small negative"),
+    ];
+
+    for (test_idx, (imm, description)) in test_cases.iter().enumerate() {
+        // ADR: 0 | immlo[30:29] | 10000 | immhi[23:5] | Rd[4:0]
+        // ADRP: 1 | immlo[30:29] | 10000 | immhi[23:5] | Rd[4:0]
+        let op = if is_page { 1u64 } else { 0u64 };
+        let imm_val = *imm as u64;
+        let immlo = imm_val & 0x3;
+        let immhi = (imm_val >> 2) & 0x7FFFF;
+
+        let encoding = (op << 31) | (immlo << 29) | (0b10000u64 << 24) | (immhi << 5) | 0; // Rd = X0
+
+        let initial_state = ProcessorState::default();
+
+        let provenance = Provenance::new(
+            instr.name.as_str(),
+            &enc_analysis.name,
+            format!("{} X0, #{}", op_name, imm),
+            Requirement::RegisterWrite {
+                reg_type: RegType::Gp64,
+                dest_field: "Rd".to_string(),
+            },
+            description.to_string(),
+        );
+
+        tests.push(ExecutionTest {
+            id: format!("{}_oracle_{}", enc_analysis.name, test_idx),
+            provenance,
+            description: format!("Test {}: {} (oracle)", op_name, description),
+            encoding_name: enc_analysis.name.clone(),
+            iset: enc_analysis.iset,
+            encoding,
+            encoding_width: enc_analysis.opcode_pattern.width,
+            field_values: HashMap::new(),
+            initial_state,
+            expected_state: ProcessorState::default(),
+            expected_memory: vec![],
+            assertions: vec![],
+            path_id: None,
+            category: ExecutionTestCategory::Normal,
+        });
+    }
+
+    tests
+}
+
+/// Generate oracle tests for LDP (load pair)
+fn generate_load_pair_oracle_tests(
+    instr: &Instruction,
+    enc_analysis: &EncodingAnalysis,
+    _evaluator: &TestEvaluator,
+    _is_signed: bool,
+) -> Vec<ExecutionTest> {
+    let mut tests = Vec::new();
+
+    // LDP: opc[31:30] | 101 | V[26] | 0 | L[22] | imm7[21:15] | Rt2[14:10] | Rn[9:5] | Rt[4:0]
+    // opc=10 for 64-bit, L=1 for load
+    let encoding = (0b10u64 << 30)
+        | (0b101u64 << 27)
+        | (0u64 << 26) // V=0 (not SIMD)
+        | (0u64 << 24)
+        | (1u64 << 22) // L=1 (load)
+        | (2u64 << 15) // imm7=2 (offset = 16 bytes)
+        | (1u64 << 10) // Rt2 = X1
+        | (2u64 << 5)  // Rn = X2 (base)
+        | 0; // Rt = X0
+
+    let mut initial_state = ProcessorState::default();
+    initial_state.gp_regs.insert(2, 0x8000); // Base address
+
+    let provenance = Provenance::new(
+        instr.name.as_str(),
+        &enc_analysis.name,
+        "LDP X0, X1, [X2, #16]".to_string(),
+        Requirement::RegisterWrite {
+            reg_type: RegType::Gp64,
+            dest_field: "Rt".to_string(),
+        },
+        "load pair with offset".to_string(),
+    );
+
+    tests.push(ExecutionTest {
+        id: format!("{}_oracle_0", enc_analysis.name),
+        provenance,
+        description: "Test LDP: load pair with offset (oracle)".to_string(),
+        encoding_name: enc_analysis.name.clone(),
+        iset: enc_analysis.iset,
+        encoding,
+        encoding_width: enc_analysis.opcode_pattern.width,
+        field_values: HashMap::new(),
+        initial_state,
+        expected_state: ProcessorState::default(),
+        expected_memory: vec![],
+        assertions: vec![],
+        path_id: None,
+        category: ExecutionTestCategory::Memory,
+    });
+
+    tests
+}
+
+/// Generate oracle tests for STP (store pair)
+fn generate_store_pair_oracle_tests(
+    instr: &Instruction,
+    enc_analysis: &EncodingAnalysis,
+    _evaluator: &TestEvaluator,
+) -> Vec<ExecutionTest> {
+    let mut tests = Vec::new();
+
+    // STP: opc[31:30] | 101 | V[26] | 0 | L[22] | imm7[21:15] | Rt2[14:10] | Rn[9:5] | Rt[4:0]
+    // opc=10 for 64-bit, L=0 for store
+    let encoding = (0b10u64 << 30)
+        | (0b101u64 << 27)
+        | (0u64 << 26) // V=0 (not SIMD)
+        | (0u64 << 24)
+        | (0u64 << 22) // L=0 (store)
+        | (2u64 << 15) // imm7=2 (offset = 16 bytes)
+        | (1u64 << 10) // Rt2 = X1
+        | (2u64 << 5)  // Rn = X2 (base)
+        | 0; // Rt = X0
+
+    let mut initial_state = ProcessorState::default();
+    initial_state.gp_regs.insert(0, 0xDEAD_BEEF);
+    initial_state.gp_regs.insert(1, 0xCAFE_BABE);
+    initial_state.gp_regs.insert(2, 0x8000); // Base address
+
+    let provenance = Provenance::new(
+        instr.name.as_str(),
+        &enc_analysis.name,
+        "STP X0, X1, [X2, #16]".to_string(),
+        Requirement::MemoryAccess {
+            op: MemOp::StorePair,
+            size_bits: 128, // Two 64-bit registers
+            addressing: "signed offset".to_string(),
+        },
+        "store pair with offset".to_string(),
+    );
+
+    tests.push(ExecutionTest {
+        id: format!("{}_oracle_0", enc_analysis.name),
+        provenance,
+        description: "Test STP: store pair with offset (oracle)".to_string(),
+        encoding_name: enc_analysis.name.clone(),
+        iset: enc_analysis.iset,
+        encoding,
+        encoding_width: enc_analysis.opcode_pattern.width,
+        field_values: HashMap::new(),
+        initial_state,
+        expected_state: ProcessorState::default(),
+        expected_memory: vec![],
+        assertions: vec![],
+        path_id: None,
+        category: ExecutionTestCategory::Memory,
+    });
+
+    tests
+}
+
+/// Generate oracle tests for CMP/CMN (compare instructions)
+/// CMP is an alias for SUBS with Rd=ZR, CMN is an alias for ADDS with Rd=ZR
+fn generate_compare_oracle_tests(
+    instr: &Instruction,
+    enc_analysis: &EncodingAnalysis,
+    evaluator: &TestEvaluator,
+    is_neg: bool,
+) -> Vec<ExecutionTest> {
+    let mut tests = Vec::new();
+    let op_name = if is_neg { "CMN" } else { "CMP" };
+
+    // Test cases: (operand1, operand2, description)
+    let test_cases: Vec<(u64, u64, &str)> = vec![
+        (0, 0, "zero == zero"),
+        (1, 1, "equal values"),
+        (10, 5, "greater than"),
+        (5, 10, "less than"),
+        (0xFFFF_FFFF_FFFF_FFFF, 1, "max value"),
+        (0x8000_0000_0000_0000, 0, "negative (MSB set)"),
+        (0x7FFF_FFFF_FFFF_FFFF, 1, "overflow boundary"),
+    ];
+
+    for (test_idx, (op1, op2, description)) in test_cases.iter().enumerate() {
+        // For both 32-bit and 64-bit versions
+        for sf in [0u64, 1u64] {
+            let width = if sf == 1 { 64 } else { 32 };
+            let mask = if width == 32 { 0xFFFF_FFFF } else { u64::MAX };
+            let masked_op1 = *op1 & mask;
+            let masked_op2 = *op2 & mask;
+
+            // CMP: SUBS with Rd=ZR (result discarded, only flags matter)
+            // CMN: ADDS with Rd=ZR
+            let arith_result = if is_neg {
+                // CMN = ADDS
+                evaluator.eval_add(masked_op1, masked_op2, width, true)
+            } else {
+                // CMP = SUBS
+                evaluator.eval_sub(masked_op1, masked_op2, width, true)
+            };
+
+            // CMP/CMN immediate: sf[31] | op[30] | 1 | 11000 | shift[22] | imm12[21:10] | Rn[9:5] | Rd[4:0]
+            // For simplicity, use register form: sf[31] | op[30] | 1 | 01011 | shift[23:22] | 0 | Rm[20:16] | imm6[15:10] | Rn[9:5] | Rd[4:0]
+            let op = if is_neg { 0u64 } else { 1u64 }; // CMN=ADD, CMP=SUB
+            let encoding = (sf << 31)
+                | (op << 30)
+                | (1u64 << 29) // S=1 (set flags)
+                | (0b01011u64 << 24)
+                | (0b00u64 << 22) // shift = LSL
+                | (0u64 << 21)
+                | (2u64 << 16) // Rm = X2
+                | (0u64 << 10) // imm6 = 0
+                | (1u64 << 5) // Rn = X1
+                | 31; // Rd = XZR (register 31 = zero register when not SP context)
+
+            let mut initial_state = ProcessorState::default();
+            initial_state.gp_regs.insert(1, masked_op1);
+            initial_state.gp_regs.insert(2, masked_op2);
+
+            let mut expected_state = ProcessorState::default();
+            if let Some(flags) = arith_result.nzcv {
+                expected_state.nzcv = Some(flags.to_u8());
+            }
+
+            let mut assertions = Vec::new();
+            if let Some(flags) = arith_result.nzcv {
+                assertions.push(TestAssertion {
+                    check: AssertionCheck::Flag(ProcessorFlag::N),
+                    expected: AssertionValue::Bool(flags.n),
+                    message: format!("N flag should be {}", flags.n),
+                });
+                assertions.push(TestAssertion {
+                    check: AssertionCheck::Flag(ProcessorFlag::Z),
+                    expected: AssertionValue::Bool(flags.z),
+                    message: format!("Z flag should be {}", flags.z),
+                });
+                assertions.push(TestAssertion {
+                    check: AssertionCheck::Flag(ProcessorFlag::C),
+                    expected: AssertionValue::Bool(flags.c),
+                    message: format!("C flag should be {}", flags.c),
+                });
+                assertions.push(TestAssertion {
+                    check: AssertionCheck::Flag(ProcessorFlag::V),
+                    expected: AssertionValue::Bool(flags.v),
+                    message: format!("V flag should be {}", flags.v),
+                });
+            }
+
+            let size_suffix = if sf == 1 { "64" } else { "32" };
+            let provenance = Provenance::new(
+                instr.name.as_str(),
+                &enc_analysis.name,
+                format!("{} X1, X2", op_name),
+                Requirement::FlagComputation {
+                    flag: ProcessorFlag::Z,
+                    scenario: FlagScenario::ZeroResult,
+                },
+                format!("{} ({}-bit)", description, width),
+            );
+
+            tests.push(ExecutionTest {
+                id: format!("{}_oracle_{}_{}", enc_analysis.name, size_suffix, test_idx),
+                provenance,
+                description: format!("Test {} {}-bit: {} (oracle)", op_name, width, description),
+                encoding_name: enc_analysis.name.clone(),
+                iset: enc_analysis.iset,
+                encoding,
+                encoding_width: enc_analysis.opcode_pattern.width,
+                field_values: HashMap::new(),
+                initial_state,
+                expected_state,
+                expected_memory: vec![],
+                assertions,
+                path_id: None,
+                category: ExecutionTestCategory::Flags,
+            });
+        }
+    }
+
+    tests
+}
+
+/// Generate oracle tests for TST (test bits - AND with flags, result discarded)
+/// TST is an alias for ANDS with Rd=ZR
+fn generate_test_oracle_tests(
+    instr: &Instruction,
+    enc_analysis: &EncodingAnalysis,
+    evaluator: &TestEvaluator,
+) -> Vec<ExecutionTest> {
+    let mut tests = Vec::new();
+
+    // Test cases: (operand1, operand2, description)
+    let test_cases: Vec<(u64, u64, &str)> = vec![
+        (0, 0, "zero AND zero"),
+        (0xFF, 0x0F, "partial overlap"),
+        (0xFF, 0x00, "no overlap"),
+        (0x8000_0000_0000_0000, 0x8000_0000_0000_0000, "MSB set"),
+        (0xFFFF_FFFF_FFFF_FFFF, 0xFFFF_FFFF_FFFF_FFFF, "all ones"),
+        (
+            0xAAAA_AAAA_AAAA_AAAA,
+            0x5555_5555_5555_5555,
+            "alternating (no match)",
+        ),
+    ];
+
+    for (test_idx, (op1, op2, description)) in test_cases.iter().enumerate() {
+        for sf in [0u64, 1u64] {
+            let width = if sf == 1 { 64 } else { 32 };
+            let mask = if width == 32 { 0xFFFF_FFFF } else { u64::MAX };
+            let masked_op1 = *op1 & mask;
+            let masked_op2 = *op2 & mask;
+
+            // TST = ANDS with Rd=ZR
+            let result = masked_op1 & masked_op2;
+            let n = if width == 32 {
+                (result >> 31) & 1 == 1
+            } else {
+                (result >> 63) & 1 == 1
+            };
+            let z = result == 0;
+
+            // TST (shifted register): sf[31] | 11 | 01010 | shift[23:22] | 0 | Rm[20:16] | imm6[15:10] | Rn[9:5] | Rd[4:0]
+            let encoding = (sf << 31)
+                | (0b11u64 << 29) // opc=11 for ANDS
+                | (0b01010u64 << 24)
+                | (0b00u64 << 22) // shift = LSL
+                | (0u64 << 21)
+                | (2u64 << 16) // Rm = X2
+                | (0u64 << 10) // imm6 = 0
+                | (1u64 << 5) // Rn = X1
+                | 31; // Rd = XZR
+
+            let mut initial_state = ProcessorState::default();
+            initial_state.gp_regs.insert(1, masked_op1);
+            initial_state.gp_regs.insert(2, masked_op2);
+
+            let mut assertions = Vec::new();
+            assertions.push(TestAssertion {
+                check: AssertionCheck::Flag(ProcessorFlag::N),
+                expected: AssertionValue::Bool(n),
+                message: format!("N flag should be {}", n),
+            });
+            assertions.push(TestAssertion {
+                check: AssertionCheck::Flag(ProcessorFlag::Z),
+                expected: AssertionValue::Bool(z),
+                message: format!("Z flag should be {}", z),
+            });
+            // C and V are always 0 for TST
+            assertions.push(TestAssertion {
+                check: AssertionCheck::Flag(ProcessorFlag::C),
+                expected: AssertionValue::Bool(false),
+                message: "C flag should be 0".to_string(),
+            });
+            assertions.push(TestAssertion {
+                check: AssertionCheck::Flag(ProcessorFlag::V),
+                expected: AssertionValue::Bool(false),
+                message: "V flag should be 0".to_string(),
+            });
+
+            let size_suffix = if sf == 1 { "64" } else { "32" };
+            let provenance = Provenance::new(
+                instr.name.as_str(),
+                &enc_analysis.name,
+                "TST X1, X2".to_string(),
+                Requirement::FlagComputation {
+                    flag: ProcessorFlag::Z,
+                    scenario: FlagScenario::ZeroResult,
+                },
+                format!("{} ({}-bit)", description, width),
+            );
+
+            tests.push(ExecutionTest {
+                id: format!("{}_oracle_{}_{}", enc_analysis.name, size_suffix, test_idx),
+                provenance,
+                description: format!("Test TST {}-bit: {} (oracle)", width, description),
+                encoding_name: enc_analysis.name.clone(),
+                iset: enc_analysis.iset,
+                encoding,
+                encoding_width: enc_analysis.opcode_pattern.width,
+                field_values: HashMap::new(),
+                initial_state,
+                expected_state: ProcessorState::default(),
+                expected_memory: vec![],
+                assertions,
+                path_id: None,
+                category: ExecutionTestCategory::Flags,
+            });
+        }
     }
 
     tests

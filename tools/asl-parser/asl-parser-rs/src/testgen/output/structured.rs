@@ -79,6 +79,93 @@ pub fn categorize_instruction(name: &str, iset: InstructionSet) -> TestCategory 
 }
 
 fn categorize_a64(name: &str) -> (String, String) {
+    // Check for SVE instructions first - they have distinctive naming patterns
+    // Examples: ADD_Z.P.ZZ__, LDNT1D_Z.P.BR_Contiguous, CMPEQ_P.P.ZZ__, FMLA_Z.ZZZi_S
+    // Also scalar SVE ops: ADDPL_R.RI__, CNTB_R.S__, PRFB_I.P.AI_S, RDVL_R.I__
+    let is_sve = name.contains("_Z.")
+        || name.contains("_P.")
+        || name.contains(".Z__")
+        || name.contains(".P__")
+        || name.contains("_R.")
+        || name.contains("_I.P.")
+        || name.contains("_F__")
+        || name.starts_with("PRF")
+        || name.starts_with("CNT")
+        || name.starts_with("RDVL")
+        || name.starts_with("ADDVL")
+        || name.starts_with("ADDPL")
+        || name.starts_with("SQINC")
+        || name.starts_with("SQDEC")
+        || name.starts_with("UQINC")
+        || name.starts_with("UQDEC")
+        || name.starts_with("INC")
+        || name.starts_with("DEC")
+        || name.starts_with("CTERM")
+        || name.starts_with("SETFFR")
+        || name.starts_with("WRFFR")
+        || name.starts_with("PFALSE");
+
+    if is_sve {
+        // SVE instruction - categorize by operation type
+        let subcategory = if name.starts_with("LD")
+            || name.starts_with("LDNT")
+            || name.starts_with("LDFF")
+            || name.starts_with("LD1")
+            || name.starts_with("LD2")
+            || name.starts_with("LD3")
+            || name.starts_with("LD4")
+        {
+            "load"
+        } else if name.starts_with("ST") || name.starts_with("STNT") {
+            "store"
+        } else if name.starts_with("PRF") {
+            "prefetch"
+        } else if name.starts_with("ADD")
+            || name.starts_with("SUB")
+            || name.starts_with("MUL")
+            || name.starts_with("MLA")
+            || name.starts_with("MLS")
+        {
+            "arithmetic"
+        } else if name.starts_with("AND")
+            || name.starts_with("ORR")
+            || name.starts_with("EOR")
+            || name.starts_with("BIC")
+            || name.starts_with("NOT")
+        {
+            "logical"
+        } else if name.starts_with("CMP") || name.starts_with("FCM") || name.starts_with("CTERM") {
+            "compare"
+        } else if name.starts_with("F") {
+            "float"
+        } else if name.contains("CVT") || name.contains("XTN") || name.contains("XTL") {
+            "convert"
+        } else if name.contains("_P.P.")
+            || name.starts_with("BRK")
+            || name.starts_with("PTEST")
+            || name.starts_with("PFALSE")
+            || name.starts_with("PTRUE")
+            || name.starts_with("SETFFR")
+            || name.starts_with("WRFFR")
+            || name.starts_with("RDFFR")
+        {
+            "predicate"
+        } else if name.starts_with("CNT")
+            || name.starts_with("RDVL")
+            || name.starts_with("INC")
+            || name.starts_with("DEC")
+            || name.starts_with("SQINC")
+            || name.starts_with("SQDEC")
+            || name.starts_with("UQINC")
+            || name.starts_with("UQDEC")
+        {
+            "scalar"
+        } else {
+            "other"
+        };
+        return ("sve".to_string(), subcategory.to_string());
+    }
+
     // Parse the hierarchical name: aarch64_category_subcategory_...
     let parts: Vec<&str> = name.split('_').collect();
 
@@ -388,9 +475,27 @@ pub fn generate_structured_output(suites: &[InstructionTestSuite]) -> Vec<Output
     .unwrap();
     writeln!(root_mod, "//! DO NOT EDIT MANUALLY.").unwrap();
     writeln!(root_mod).unwrap();
+
+    // Include test helper modules based on which ISETs are present
     let mut isets: Vec<_> = iset_categories.keys().collect();
     isets.sort();
-    for iset in isets {
+
+    // Add A64 helpers if we have A64 tests
+    if isets.iter().any(|s| *s == "a64") {
+        writeln!(root_mod, "pub mod test_helpers;").unwrap();
+    }
+
+    // Add A32/T32/T16 helpers if we have any 32-bit tests
+    if isets
+        .iter()
+        .any(|s| *s == "a32" || *s == "t32" || *s == "t16")
+    {
+        writeln!(root_mod, "pub mod test_helpers_32;").unwrap();
+    }
+
+    writeln!(root_mod).unwrap();
+
+    for iset in &isets {
         writeln!(root_mod, "pub mod {};", iset).unwrap();
     }
     files.push(OutputFile {
@@ -438,6 +543,8 @@ fn generate_category_files_split(
     category: &TestCategory,
     suites: &[&InstructionTestSuite],
 ) -> Vec<String> {
+    use std::collections::HashSet;
+
     // First, try generating as a single file
     let single_content = generate_category_file(category, suites);
 
@@ -446,13 +553,19 @@ fn generate_category_files_split(
     }
 
     // Need to split - generate each suite's tests separately and batch them
+    // Use a shared set for deduplication across all parts
+    let mut seen_fn_names: HashSet<String> = HashSet::new();
     let mut result = Vec::new();
     let mut current_content = generate_category_header(category);
     let mut current_size = current_content.len();
 
     for suite in suites {
         let mut suite_content = String::new();
-        super::rust::write_instruction_tests_to_string(&mut suite_content, suite);
+        super::rust::write_instruction_tests_with_dedup(
+            &mut suite_content,
+            suite,
+            &mut seen_fn_names,
+        );
 
         // Check if adding this suite would exceed the limit
         if current_size + suite_content.len() > MAX_FILE_SIZE && current_size > 1000 {
@@ -511,11 +624,14 @@ fn generate_category_header(category: &TestCategory) -> String {
 
 /// Generate a single category file
 fn generate_category_file(category: &TestCategory, suites: &[&InstructionTestSuite]) -> String {
-    let mut output = generate_category_header(category);
+    use std::collections::HashSet;
 
-    // Generate tests for each suite
+    let mut output = generate_category_header(category);
+    let mut seen_fn_names: HashSet<String> = HashSet::new();
+
+    // Generate tests for each suite with deduplication across all suites
     for suite in suites {
-        super::rust::write_instruction_tests_to_string(&mut output, suite);
+        super::rust::write_instruction_tests_with_dedup(&mut output, suite, &mut seen_fn_names);
     }
 
     output

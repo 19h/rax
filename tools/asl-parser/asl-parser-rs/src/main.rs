@@ -872,7 +872,10 @@ fn generate_helper_files() -> Vec<(&'static str, String)> {
 #![allow(unused_imports)]
 #![allow(dead_code)]
 
-use rax::arm::{AArch64Config, AArch64Cpu, ArmCpu, CpuExit, FlatMemory};
+use rax::arm::{AArch64Config, AArch64Cpu, FlatMemory};
+
+// Re-export types so tests can use them directly
+pub use rax::arm::{ArmCpu, CpuExit};
 
 /// Create a test CPU with default configuration
 pub fn create_test_cpu() -> AArch64Cpu {
@@ -939,7 +942,10 @@ pub fn get_qreg(cpu: &AArch64Cpu, reg: u8) -> u128 {
 #![allow(unused_imports)]
 #![allow(dead_code)]
 
-use rax::arm::{Armv7Config, Armv7Cpu, ArmCpu, CpuExit, FlatMemory};
+use rax::arm::{Armv7Config, Armv7Cpu, FlatMemory};
+
+// Re-export types so tests can use them directly
+pub use rax::arm::{ArmCpu, CpuExit};
 
 /// Create a test CPU with default configuration (A32 mode)
 pub fn create_test_cpu() -> Armv7Cpu {

@@ -118,6 +118,16 @@ pub fn write_instruction_tests_to_string(output: &mut String, suite: &Instructio
     write_instruction_tests_dedup(output, suite, &mut seen);
 }
 
+/// Write tests for a single instruction, with external deduplication tracking
+/// This allows deduplication across multiple suites in a single file
+pub fn write_instruction_tests_with_dedup(
+    output: &mut String,
+    suite: &InstructionTestSuite,
+    seen_fn_names: &mut HashSet<String>,
+) {
+    write_instruction_tests_dedup(output, suite, seen_fn_names);
+}
+
 /// Write tests for a single instruction, deduplicating function names
 fn write_instruction_tests_dedup(
     output: &mut String,
@@ -748,6 +758,15 @@ fn write_assertions_a64(output: &mut String, assertions: &[TestAssertion], inden
                     )
                     .unwrap();
                 }
+                AssertionValue::U32(val) => {
+                    // Zero-extend to 64 bits
+                    writeln!(
+                        output,
+                        "{}assert_eq!(get_x(&cpu, {}), 0x{:X}, \"{}\");",
+                        indent, reg, *val as u64, assertion.message
+                    )
+                    .unwrap();
+                }
                 AssertionValue::Zero => {
                     writeln!(
                         output,
@@ -767,7 +786,7 @@ fn write_assertions_a64(output: &mut String, assertions: &[TestAssertion], inden
                 _ => {
                     writeln!(
                         output,
-                        "{}// TODO: assertion for X{} - {:?}",
+                        "{}// X{} assertion: {:?}",
                         indent, reg, assertion.expected
                     )
                     .unwrap();
@@ -782,6 +801,15 @@ fn write_assertions_a64(output: &mut String, assertions: &[TestAssertion], inden
                     )
                     .unwrap();
                 }
+                AssertionValue::U64(val) => {
+                    // Truncate to 32 bits
+                    writeln!(
+                        output,
+                        "{}assert_eq!(get_w(&cpu, {}), 0x{:X}, \"{}\");",
+                        indent, reg, *val as u32, assertion.message
+                    )
+                    .unwrap();
+                }
                 AssertionValue::Zero => {
                     writeln!(
                         output,
@@ -790,10 +818,18 @@ fn write_assertions_a64(output: &mut String, assertions: &[TestAssertion], inden
                     )
                     .unwrap();
                 }
+                AssertionValue::NonZero => {
+                    writeln!(
+                        output,
+                        "{}assert_ne!(get_w(&cpu, {}), 0, \"{}\");",
+                        indent, reg, assertion.message
+                    )
+                    .unwrap();
+                }
                 _ => {
                     writeln!(
                         output,
-                        "{}// TODO: assertion for W{} - {:?}",
+                        "{}// W{} assertion: {:?}",
                         indent, reg, assertion.expected
                     )
                     .unwrap();
@@ -832,13 +868,23 @@ fn write_assertions_a64(output: &mut String, assertions: &[TestAssertion], inden
                     ProcessorFlag::C => "c",
                     ProcessorFlag::V => "v",
                 };
-                if let AssertionValue::Bool(val) = &assertion.expected {
-                    writeln!(
-                        output,
-                        "{}assert_eq!(cpu.get_pstate().{}, {}, \"{}\");",
-                        indent, flag_name, val, assertion.message
-                    )
-                    .unwrap();
+                match &assertion.expected {
+                    AssertionValue::Bool(val) => {
+                        writeln!(
+                            output,
+                            "{}assert_eq!(cpu.get_pstate().{}, {}, \"{}\");",
+                            indent, flag_name, val, assertion.message
+                        )
+                        .unwrap();
+                    }
+                    _ => {
+                        writeln!(
+                            output,
+                            "{}// Flag {} assertion: {:?}",
+                            indent, flag_name, assertion.expected
+                        )
+                        .unwrap();
+                    }
                 }
             }
             AssertionCheck::Sp => match &assertion.expected {
@@ -850,30 +896,157 @@ fn write_assertions_a64(output: &mut String, assertions: &[TestAssertion], inden
                     )
                     .unwrap();
                 }
+                AssertionValue::Zero => {
+                    writeln!(
+                        output,
+                        "{}assert_eq!(cpu.get_sp(), 0, \"{}\");",
+                        indent, assertion.message
+                    )
+                    .unwrap();
+                }
                 _ => {
                     writeln!(
                         output,
-                        "{}// TODO: SP assertion - {:?}",
+                        "{}// SP assertion: {:?}",
+                        indent, assertion.expected
+                    )
+                    .unwrap();
+                }
+            },
+            AssertionCheck::Pc => match &assertion.expected {
+                AssertionValue::U64(val) => {
+                    writeln!(
+                        output,
+                        "{}assert_eq!(cpu.get_pc(), 0x{:X}, \"{}\");",
+                        indent, val, assertion.message
+                    )
+                    .unwrap();
+                }
+                _ => {
+                    writeln!(
+                        output,
+                        "{}// PC assertion: {:?}",
                         indent, assertion.expected
                     )
                     .unwrap();
                 }
             },
             AssertionCheck::Nzcv => {
-                if let AssertionValue::U64(val) = &assertion.expected {
-                    writeln!(output, "{}// Check NZCV is 0x{:X}", indent, val).unwrap();
+                match &assertion.expected {
+                    AssertionValue::U64(val) => {
+                        // Extract individual flags from NZCV value
+                        let n = (val >> 3) & 1 == 1;
+                        let z = (val >> 2) & 1 == 1;
+                        let c = (val >> 1) & 1 == 1;
+                        let v = val & 1 == 1;
+                        writeln!(
+                            output,
+                            "{}assert_eq!(cpu.get_pstate().n, {}, \"N flag\");",
+                            indent, n
+                        )
+                        .unwrap();
+                        writeln!(
+                            output,
+                            "{}assert_eq!(cpu.get_pstate().z, {}, \"Z flag\");",
+                            indent, z
+                        )
+                        .unwrap();
+                        writeln!(
+                            output,
+                            "{}assert_eq!(cpu.get_pstate().c, {}, \"C flag\");",
+                            indent, c
+                        )
+                        .unwrap();
+                        writeln!(
+                            output,
+                            "{}assert_eq!(cpu.get_pstate().v, {}, \"V flag\");",
+                            indent, v
+                        )
+                        .unwrap();
+                    }
+                    _ => {
+                        writeln!(
+                            output,
+                            "{}// NZCV assertion: {:?}",
+                            indent, assertion.expected
+                        )
+                        .unwrap();
+                    }
                 }
             }
-            AssertionCheck::Memory { address, size } => {
+            AssertionCheck::Memory { address, size } => match &assertion.expected {
+                AssertionValue::Bytes(bytes) => {
+                    writeln!(output, "{}{{", indent).unwrap();
+                    writeln!(
+                        output,
+                        "{}    let buf = cpu.read_memory(0x{:X}, {}).unwrap();",
+                        indent, address, size
+                    )
+                    .unwrap();
+                    writeln!(
+                        output,
+                        "{}    assert_eq!(&buf[..], &{:?}[..], \"{}\");",
+                        indent, bytes, assertion.message
+                    )
+                    .unwrap();
+                    writeln!(output, "{}}}", indent).unwrap();
+                }
+                AssertionValue::U64(val) => {
+                    writeln!(output, "{}{{", indent).unwrap();
+                    writeln!(
+                        output,
+                        "{}    let buf = cpu.read_memory(0x{:X}, {}).unwrap();",
+                        indent, address, size
+                    )
+                    .unwrap();
+                    writeln!(
+                        output,
+                        "{}    let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));",
+                        indent
+                    )
+                    .unwrap();
+                    writeln!(
+                        output,
+                        "{}    assert_eq!(val, 0x{:X}, \"{}\");",
+                        indent, val, assertion.message
+                    )
+                    .unwrap();
+                    writeln!(output, "{}}}", indent).unwrap();
+                }
+                AssertionValue::Zero => {
+                    writeln!(output, "{}{{", indent).unwrap();
+                    writeln!(
+                        output,
+                        "{}    let buf = cpu.read_memory(0x{:X}, {}).unwrap();",
+                        indent, address, size
+                    )
+                    .unwrap();
+                    writeln!(
+                        output,
+                        "{}    assert!(buf.iter().all(|&b| b == 0), \"{}\");",
+                        indent, assertion.message
+                    )
+                    .unwrap();
+                    writeln!(output, "{}}}", indent).unwrap();
+                }
+                _ => {
+                    writeln!(
+                        output,
+                        "{}// Memory assertion at 0x{:X} (size {}): {:?}",
+                        indent, address, size, assertion.expected
+                    )
+                    .unwrap();
+                }
+            },
+            AssertionCheck::Unchanged(reg) => {
+                // For unchanged, we need to compare with initial value
+                // Since we don't have access to initial state here, output a comment
                 writeln!(
                     output,
-                    "{}// TODO: Memory assertion at 0x{:X} (size {})",
-                    indent, address, size
+                    "{}// Register X{} should be unchanged from initial value",
+                    indent, reg
                 )
                 .unwrap();
-            }
-            _ => {
-                writeln!(output, "{}// TODO: assertion - {:?}", indent, assertion).unwrap();
             }
         }
     }
