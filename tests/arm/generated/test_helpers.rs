@@ -6,7 +6,10 @@
 #![allow(unused_imports)]
 #![allow(dead_code)]
 
-use rax::arm::{AArch64Config, AArch64Cpu, ArmCpu, CpuExit, FlatMemory};
+use rax::arm::{AArch64Config, AArch64Cpu, FlatMemory};
+
+// Re-export types so tests can use them directly
+pub use rax::arm::{ArmCpu, CpuExit};
 
 /// Create a test CPU with default configuration
 pub fn create_test_cpu() -> AArch64Cpu {

@@ -20,17 +20,12 @@ use crate::generated::test_helpers::*;
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_0_zero_400_d9e00400() {
     // Encoding: 0xD9E00400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field imm9 = 0 (Zero)
-    // Fields: Xt=0, Xn=0, imm9=0
+    // Fields: Xn=0, imm9=0, Xt=0
     let encoding: u32 = 0xD9E00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -46,12 +41,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_1_poweroftwo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -59,21 +49,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_1_poweroftwo
 /// Requirement: FieldBoundary { field: "imm9", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_3_poweroftwominusone_400_d9e03400(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_3_poweroftwominusone_400_d9e03400() {
     // Encoding: 0xD9E03400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=0, imm9=3
+    // Fields: imm9=3, Xn=0, Xt=0
     let encoding: u32 = 0xD9E03400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -84,17 +68,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_3_poweroftwo
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_4_poweroftwo_400_d9e04400() {
     // Encoding: 0xD9E04400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field imm9 = 4 (PowerOfTwo)
-    // Fields: imm9=4, Xn=0, Xt=0
+    // Fields: imm9=4, Xt=0, Xn=0
     let encoding: u32 = 0xD9E04400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -102,21 +81,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_4_poweroftwo
 /// Requirement: FieldBoundary { field: "imm9", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_7_poweroftwominusone_400_d9e07400(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_7_poweroftwominusone_400_d9e07400() {
     // Encoding: 0xD9E07400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, Xn=0, imm9=7
+    // Fields: Xn=0, Xt=0, imm9=7
     let encoding: u32 = 0xD9E07400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -127,17 +100,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_7_poweroftwo
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_8_poweroftwo_400_d9e08400() {
     // Encoding: 0xD9E08400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field imm9 = 8 (PowerOfTwo)
-    // Fields: imm9=8, Xt=0, Xn=0
+    // Fields: imm9=8, Xn=0, Xt=0
     let encoding: u32 = 0xD9E08400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -145,21 +113,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_8_poweroftwo
 /// Requirement: FieldBoundary { field: "imm9", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_15_poweroftwominusone_400_d9e0f400(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_15_poweroftwominusone_400_d9e0f400() {
     // Encoding: 0xD9E0F400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, imm9=15, Xt=0
+    // Fields: Xt=0, Xn=0, imm9=15
     let encoding: u32 = 0xD9E0F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -175,12 +137,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_16_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -188,21 +145,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_16_poweroftw
 /// Requirement: FieldBoundary { field: "imm9", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_31_poweroftwominusone_400_d9e1f400(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_31_poweroftwominusone_400_d9e1f400() {
     // Encoding: 0xD9E1F400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: imm9=31, Xt=0, Xn=0
+    // Fields: imm9=31, Xn=0, Xt=0
     let encoding: u32 = 0xD9E1F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -218,12 +169,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_32_poweroftw
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -231,21 +177,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_32_poweroftw
 /// Requirement: FieldBoundary { field: "imm9", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_63_poweroftwominusone_400_d9e3f400(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_63_poweroftwominusone_400_d9e3f400() {
     // Encoding: 0xD9E3F400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=63, Xn=0
+    // Fields: imm9=63, Xn=0, Xt=0
     let encoding: u32 = 0xD9E3F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -256,17 +196,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_63_poweroftw
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_64_poweroftwo_400_d9e40400() {
     // Encoding: 0xD9E40400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field imm9 = 64 (PowerOfTwo)
-    // Fields: Xn=0, imm9=64, Xt=0
+    // Fields: Xt=0, imm9=64, Xn=0
     let encoding: u32 = 0xD9E40400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -274,21 +209,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_64_poweroftw
 /// Requirement: FieldBoundary { field: "imm9", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_127_poweroftwominusone_400_d9e7f400(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_127_poweroftwominusone_400_d9e7f400() {
     // Encoding: 0xD9E7F400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, Xn=0, imm9=127
+    // Fields: imm9=127, Xn=0, Xt=0
     let encoding: u32 = 0xD9E7F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -304,12 +233,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_128_poweroft
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -317,21 +241,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_128_poweroft
 /// Requirement: FieldBoundary { field: "imm9", value: 255, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (255)
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_255_poweroftwominusone_400_d9eff400(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_255_poweroftwominusone_400_d9eff400() {
     // Encoding: 0xD9EFF400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: imm9=255, Xt=0, Xn=0
+    // Fields: imm9=255, Xn=0, Xt=0
     let encoding: u32 = 0xD9EFF400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -342,17 +260,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_255_poweroft
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_256_poweroftwo_400_d9f00400() {
     // Encoding: 0xD9F00400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field imm9 = 256 (PowerOfTwo)
-    // Fields: Xn=0, Xt=0, imm9=256
+    // Fields: Xt=0, imm9=256, Xn=0
     let encoding: u32 = 0xD9F00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -363,17 +276,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_256_poweroft
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_511_max_400_d9fff400() {
     // Encoding: 0xD9FFF400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field imm9 = 511 (Max)
-    // Fields: imm9=511, Xn=0, Xt=0
+    // Fields: Xt=0, Xn=0, imm9=511
     let encoding: u32 = 0xD9FFF400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -384,17 +292,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_imm9_511_max_400_
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xn_0_min_400_d9e00400() {
     // Encoding: 0xD9E00400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field Xn = 0 (Min)
-    // Fields: imm9=0, Xn=0, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=0
     let encoding: u32 = 0xD9E00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -405,17 +308,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xn_0_min_400_d9e0
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xn_1_poweroftwo_400_d9e00420() {
     // Encoding: 0xD9E00420
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field Xn = 1 (PowerOfTwo)
-    // Fields: imm9=0, Xt=0, Xn=1
+    // Fields: Xn=1, Xt=0, imm9=0
     let encoding: u32 = 0xD9E00420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -423,21 +321,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xn_1_poweroftwo_4
 /// Requirement: FieldBoundary { field: "Xn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xn_30_poweroftwominusone_400_d9e007c0(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xn_30_poweroftwominusone_400_d9e007c0() {
     // Encoding: 0xD9E007C0
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xn=30, Xt=0, imm9=0
+    // Fields: imm9=0, Xn=30, Xt=0
     let encoding: u32 = 0xD9E007C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -448,17 +340,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xn_30_poweroftwom
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xn_31_max_400_d9e007e0() {
     // Encoding: 0xD9E007E0
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field Xn = 31 (Max)
-    // Fields: imm9=0, Xn=31, Xt=0
+    // Fields: Xt=0, Xn=31, imm9=0
     let encoding: u32 = 0xD9E007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -469,17 +356,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xn_31_max_400_d9e
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xt_0_min_400_d9e00400() {
     // Encoding: 0xD9E00400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field Xt = 0 (Min)
-    // Fields: imm9=0, Xn=0, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=0
     let encoding: u32 = 0xD9E00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -490,17 +372,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xt_0_min_400_d9e0
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xt_1_poweroftwo_400_d9e00401() {
     // Encoding: 0xD9E00401
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field Xt = 1 (PowerOfTwo)
-    // Fields: Xt=1, imm9=0, Xn=0
+    // Fields: imm9=0, Xt=1, Xn=0
     let encoding: u32 = 0xD9E00401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -508,21 +385,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xt_1_poweroftwo_4
 /// Requirement: FieldBoundary { field: "Xt", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xt_30_poweroftwominusone_400_d9e0041e(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xt_30_poweroftwominusone_400_d9e0041e() {
     // Encoding: 0xD9E0041E
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field Xt = 30 (PowerOfTwoMinusOne)
-    // Fields: imm9=0, Xn=0, Xt=30
+    // Fields: Xt=30, Xn=0, imm9=0
     let encoding: u32 = 0xD9E0041E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -533,17 +404,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xt_30_poweroftwom
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xt_31_max_400_d9e0041f() {
     // Encoding: 0xD9E0041F
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field Xt = 31 (Max)
-    // Fields: Xn=0, Xt=31, imm9=0
+    // Fields: Xt=31, imm9=0, Xn=0
     let encoding: u32 = 0xD9E0041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -554,206 +420,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_field_xt_31_max_400_d9e
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_combo_0_400_d9e00400() {
     // Encoding: 0xD9E00400
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost field combination: imm9=0, Xn=0, Xt=0
-    // Fields: imm9=0, Xt=0, Xn=0
+    // Fields: Xt=0, imm9=0, Xn=0
     let encoding: u32 = 0xD9E00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_combo_1_400_d9e01400() {
-    // Encoding: 0xD9E01400
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapost field combination: imm9=1, Xn=0, Xt=0
-    // Fields: imm9=1, Xn=0, Xt=0
-    let encoding: u32 = 0xD9E01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=3 (2^2 - 1 = 3)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_combo_2_400_d9e03400() {
-    // Encoding: 0xD9E03400
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapost field combination: imm9=3, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=3
-    let encoding: u32 = 0xD9E03400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=4 (power of 2 (2^2 = 4))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_combo_3_400_d9e04400() {
-    // Encoding: 0xD9E04400
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapost field combination: imm9=4, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=4
-    let encoding: u32 = 0xD9E04400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=7 (2^3 - 1 = 7)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_combo_4_400_d9e07400() {
-    // Encoding: 0xD9E07400
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapost field combination: imm9=7, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=7
-    let encoding: u32 = 0xD9E07400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=8 (power of 2 (2^3 = 8))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_combo_5_400_d9e08400() {
-    // Encoding: 0xD9E08400
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapost field combination: imm9=8, Xn=0, Xt=0
-    // Fields: imm9=8, Xn=0, Xt=0
-    let encoding: u32 = 0xD9E08400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=15 (2^4 - 1 = 15)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_combo_6_400_d9e0f400() {
-    // Encoding: 0xD9E0F400
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapost field combination: imm9=15, Xn=0, Xt=0
-    // Fields: imm9=15, Xt=0, Xn=0
-    let encoding: u32 = 0xD9E0F400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=16 (power of 2 (2^4 = 16))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_combo_7_400_d9e10400() {
-    // Encoding: 0xD9E10400
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapost field combination: imm9=16, Xn=0, Xt=0
-    // Fields: imm9=16, Xn=0, Xt=0
-    let encoding: u32 = 0xD9E10400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=31 (2^5 - 1 = 31)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_combo_8_400_d9e1f400() {
-    // Encoding: 0xD9E1F400
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapost field combination: imm9=31, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=31, Xn=0
-    let encoding: u32 = 0xD9E1F400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=32 (power of 2 (2^5 = 32))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_combo_9_400_d9e20400() {
-    // Encoding: 0xD9E20400
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapost field combination: imm9=32, Xn=0, Xt=0
-    // Fields: imm9=32, Xn=0, Xt=0
-    let encoding: u32 = 0xD9E20400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -761,21 +433,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_combo_9_400_d9e20400() 
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_special_xn_31_stack_pointer_sp_may_require_alignment_1024_d9e007e0(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_special_xn_31_stack_pointer_sp_may_require_alignment_1024_d9e007e0() {
     // Encoding: 0xD9E007E0
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: imm9=0, Xn=31, Xt=0
+    // Fields: Xt=0, imm9=0, Xn=31
     let encoding: u32 = 0xD9E007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -786,17 +452,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_special_xn_31_stack_poi
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_0_zero_c00_d9e00c00() {
     // Encoding: 0xD9E00C00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field imm9 = 0 (Zero)
-    // Fields: Xt=0, imm9=0, Xn=0
+    // Fields: Xn=0, imm9=0, Xt=0
     let encoding: u32 = 0xD9E00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -807,17 +468,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_0_zero_c00_d9
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_1_poweroftwo_c00_d9e01c00() {
     // Encoding: 0xD9E01C00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field imm9 = 1 (PowerOfTwo)
-    // Fields: imm9=1, Xt=0, Xn=0
+    // Fields: imm9=1, Xn=0, Xt=0
     let encoding: u32 = 0xD9E01C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -825,21 +481,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_1_poweroftwo_
 /// Requirement: FieldBoundary { field: "imm9", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_3_poweroftwominusone_c00_d9e03c00(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_3_poweroftwominusone_c00_d9e03c00() {
     // Encoding: 0xD9E03C00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, imm9=3, Xt=0
+    // Fields: Xt=0, imm9=3, Xn=0
     let encoding: u32 = 0xD9E03C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -850,17 +500,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_3_poweroftwom
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_4_poweroftwo_c00_d9e04c00() {
     // Encoding: 0xD9E04C00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field imm9 = 4 (PowerOfTwo)
-    // Fields: Xn=0, Xt=0, imm9=4
+    // Fields: imm9=4, Xt=0, Xn=0
     let encoding: u32 = 0xD9E04C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -868,21 +513,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_4_poweroftwo_
 /// Requirement: FieldBoundary { field: "imm9", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_7_poweroftwominusone_c00_d9e07c00(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_7_poweroftwominusone_c00_d9e07c00() {
     // Encoding: 0xD9E07C00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=7, Xn=0
+    // Fields: Xn=0, imm9=7, Xt=0
     let encoding: u32 = 0xD9E07C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -893,17 +532,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_7_poweroftwom
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_8_poweroftwo_c00_d9e08c00() {
     // Encoding: 0xD9E08C00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field imm9 = 8 (PowerOfTwo)
-    // Fields: Xn=0, Xt=0, imm9=8
+    // Fields: Xt=0, imm9=8, Xn=0
     let encoding: u32 = 0xD9E08C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -911,21 +545,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_8_poweroftwo_
 /// Requirement: FieldBoundary { field: "imm9", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_15_poweroftwominusone_c00_d9e0fc00(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_15_poweroftwominusone_c00_d9e0fc00() {
     // Encoding: 0xD9E0FC00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, imm9=15, Xt=0
+    // Fields: Xt=0, imm9=15, Xn=0
     let encoding: u32 = 0xD9E0FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -936,17 +564,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_15_poweroftwo
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_16_poweroftwo_c00_d9e10c00() {
     // Encoding: 0xD9E10C00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field imm9 = 16 (PowerOfTwo)
-    // Fields: Xt=0, Xn=0, imm9=16
+    // Fields: imm9=16, Xn=0, Xt=0
     let encoding: u32 = 0xD9E10C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -954,8 +577,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_16_poweroftwo
 /// Requirement: FieldBoundary { field: "imm9", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_31_poweroftwominusone_c00_d9e1fc00(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_31_poweroftwominusone_c00_d9e1fc00() {
     // Encoding: 0xD9E1FC00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field imm9 = 31 (PowerOfTwoMinusOne)
     // Fields: Xt=0, imm9=31, Xn=0
@@ -963,12 +585,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_31_poweroftwo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -984,12 +601,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_32_poweroftwo
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -997,21 +609,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_32_poweroftwo
 /// Requirement: FieldBoundary { field: "imm9", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_63_poweroftwominusone_c00_d9e3fc00(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_63_poweroftwominusone_c00_d9e3fc00() {
     // Encoding: 0xD9E3FC00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=0, imm9=63
+    // Fields: Xt=0, Xn=0, imm9=63
     let encoding: u32 = 0xD9E3FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1022,17 +628,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_63_poweroftwo
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_64_poweroftwo_c00_d9e40c00() {
     // Encoding: 0xD9E40C00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field imm9 = 64 (PowerOfTwo)
-    // Fields: imm9=64, Xn=0, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=64
     let encoding: u32 = 0xD9E40C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1040,21 +641,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_64_poweroftwo
 /// Requirement: FieldBoundary { field: "imm9", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_127_poweroftwominusone_c00_d9e7fc00(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_127_poweroftwominusone_c00_d9e7fc00() {
     // Encoding: 0xD9E7FC00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: imm9=127, Xt=0, Xn=0
+    // Fields: imm9=127, Xn=0, Xt=0
     let encoding: u32 = 0xD9E7FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1065,17 +660,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_127_poweroftw
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_128_poweroftwo_c00_d9e80c00() {
     // Encoding: 0xD9E80C00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field imm9 = 128 (PowerOfTwo)
-    // Fields: Xn=0, imm9=128, Xt=0
+    // Fields: Xt=0, imm9=128, Xn=0
     let encoding: u32 = 0xD9E80C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1083,21 +673,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_128_poweroftw
 /// Requirement: FieldBoundary { field: "imm9", value: 255, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (255)
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_255_poweroftwominusone_c00_d9effc00(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_255_poweroftwominusone_c00_d9effc00() {
     // Encoding: 0xD9EFFC00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, Xn=0, imm9=255
+    // Fields: Xt=0, imm9=255, Xn=0
     let encoding: u32 = 0xD9EFFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1108,17 +692,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_255_poweroftw
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_256_poweroftwo_c00_d9f00c00() {
     // Encoding: 0xD9F00C00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field imm9 = 256 (PowerOfTwo)
-    // Fields: Xt=0, imm9=256, Xn=0
+    // Fields: imm9=256, Xn=0, Xt=0
     let encoding: u32 = 0xD9F00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1134,12 +713,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_511_max_c00_d
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1150,17 +724,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_imm9_511_max_c00_d
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xn_0_min_c00_d9e00c00() {
     // Encoding: 0xD9E00C00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field Xn = 0 (Min)
-    // Fields: imm9=0, Xn=0, Xt=0
+    // Fields: imm9=0, Xt=0, Xn=0
     let encoding: u32 = 0xD9E00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1171,17 +740,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xn_0_min_c00_d9e00
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xn_1_poweroftwo_c00_d9e00c20() {
     // Encoding: 0xD9E00C20
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field Xn = 1 (PowerOfTwo)
-    // Fields: imm9=0, Xn=1, Xt=0
+    // Fields: imm9=0, Xt=0, Xn=1
     let encoding: u32 = 0xD9E00C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1189,21 +753,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xn_1_poweroftwo_c0
 /// Requirement: FieldBoundary { field: "Xn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xn_30_poweroftwominusone_c00_d9e00fc0(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xn_30_poweroftwominusone_c00_d9e00fc0() {
     // Encoding: 0xD9E00FC0
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=0, Xn=30
+    // Fields: imm9=0, Xt=0, Xn=30
     let encoding: u32 = 0xD9E00FC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1214,17 +772,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xn_30_poweroftwomi
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xn_31_max_c00_d9e00fe0() {
     // Encoding: 0xD9E00FE0
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field Xn = 31 (Max)
-    // Fields: Xn=31, imm9=0, Xt=0
+    // Fields: Xn=31, Xt=0, imm9=0
     let encoding: u32 = 0xD9E00FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1235,17 +788,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xn_31_max_c00_d9e0
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xt_0_min_c00_d9e00c00() {
     // Encoding: 0xD9E00C00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field Xt = 0 (Min)
-    // Fields: Xn=0, imm9=0, Xt=0
+    // Fields: imm9=0, Xt=0, Xn=0
     let encoding: u32 = 0xD9E00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1261,12 +809,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xt_1_poweroftwo_c0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1274,21 +817,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xt_1_poweroftwo_c0
 /// Requirement: FieldBoundary { field: "Xt", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xt_30_poweroftwominusone_c00_d9e00c1e(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xt_30_poweroftwominusone_c00_d9e00c1e() {
     // Encoding: 0xD9E00C1E
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field Xt = 30 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, imm9=0, Xt=30
+    // Fields: Xt=30, Xn=0, imm9=0
     let encoding: u32 = 0xD9E00C1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1299,17 +836,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xt_30_poweroftwomi
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xt_31_max_c00_d9e00c1f() {
     // Encoding: 0xD9E00C1F
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field Xt = 31 (Max)
-    // Fields: Xn=0, imm9=0, Xt=31
+    // Fields: Xt=31, imm9=0, Xn=0
     let encoding: u32 = 0xD9E00C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1320,206 +852,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_field_xt_31_max_c00_d9e0
 fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_combo_0_c00_d9e00c00() {
     // Encoding: 0xD9E00C00
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre field combination: imm9=0, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=0
+    // Fields: imm9=0, Xt=0, Xn=0
     let encoding: u32 = 0xD9E00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_combo_1_c00_d9e01c00() {
-    // Encoding: 0xD9E01C00
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapre field combination: imm9=1, Xn=0, Xt=0
-    // Fields: imm9=1, Xn=0, Xt=0
-    let encoding: u32 = 0xD9E01C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=3 (2^2 - 1 = 3)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_combo_2_c00_d9e03c00() {
-    // Encoding: 0xD9E03C00
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapre field combination: imm9=3, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=3
-    let encoding: u32 = 0xD9E03C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=4 (power of 2 (2^2 = 4))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_combo_3_c00_d9e04c00() {
-    // Encoding: 0xD9E04C00
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapre field combination: imm9=4, Xn=0, Xt=0
-    // Fields: imm9=4, Xt=0, Xn=0
-    let encoding: u32 = 0xD9E04C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=7 (2^3 - 1 = 7)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_combo_4_c00_d9e07c00() {
-    // Encoding: 0xD9E07C00
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapre field combination: imm9=7, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=7
-    let encoding: u32 = 0xD9E07C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=8 (power of 2 (2^3 = 8))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_combo_5_c00_d9e08c00() {
-    // Encoding: 0xD9E08C00
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapre field combination: imm9=8, Xn=0, Xt=0
-    // Fields: imm9=8, Xt=0, Xn=0
-    let encoding: u32 = 0xD9E08C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=15 (2^4 - 1 = 15)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_combo_6_c00_d9e0fc00() {
-    // Encoding: 0xD9E0FC00
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapre field combination: imm9=15, Xn=0, Xt=0
-    // Fields: imm9=15, Xn=0, Xt=0
-    let encoding: u32 = 0xD9E0FC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=16 (power of 2 (2^4 = 16))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_combo_7_c00_d9e10c00() {
-    // Encoding: 0xD9E10C00
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapre field combination: imm9=16, Xn=0, Xt=0
-    // Fields: imm9=16, Xt=0, Xn=0
-    let encoding: u32 = 0xD9E10C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=31 (2^5 - 1 = 31)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_combo_8_c00_d9e1fc00() {
-    // Encoding: 0xD9E1FC00
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapre field combination: imm9=31, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=31, Xt=0
-    let encoding: u32 = 0xD9E1FC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=32 (power of 2 (2^5 = 32))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_combo_9_c00_d9e20c00() {
-    // Encoding: 0xD9E20C00
-    // Test aarch64_integer_tags_mcsettagpairandzerodatapre field combination: imm9=32, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=32
-    let encoding: u32 = 0xD9E20C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapre
@@ -1527,21 +865,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_combo_9_c00_d9e20c00() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_special_xn_31_stack_pointer_sp_may_require_alignment_3072_d9e00fe0(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodatapre_special_xn_31_stack_pointer_sp_may_require_alignment_3072_d9e00fe0() {
     // Encoding: 0xD9E00FE0
     // Test aarch64_integer_tags_mcsettagpairandzerodatapre special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: imm9=0, Xt=0, Xn=31
+    // Fields: imm9=0, Xn=31, Xt=0
     let encoding: u32 = 0xD9E00FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1557,12 +889,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_0_zero_800_d9e00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1573,17 +900,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_0_zero_800_d9e00
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_1_poweroftwo_800_d9e01800() {
     // Encoding: 0xD9E01800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 1 (PowerOfTwo)
-    // Fields: Xt=0, Xn=0, imm9=1
+    // Fields: Xt=0, imm9=1, Xn=0
     let encoding: u32 = 0xD9E01800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1591,21 +913,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_1_poweroftwo_800
 /// Requirement: FieldBoundary { field: "imm9", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_3_poweroftwominusone_800_d9e03800()
-{
+fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_3_poweroftwominusone_800_d9e03800() {
     // Encoding: 0xD9E03800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, Xn=0, imm9=3
+    // Fields: imm9=3, Xn=0, Xt=0
     let encoding: u32 = 0xD9E03800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1616,17 +932,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_3_poweroftwominu
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_4_poweroftwo_800_d9e04800() {
     // Encoding: 0xD9E04800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 4 (PowerOfTwo)
-    // Fields: Xn=0, imm9=4, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=4
     let encoding: u32 = 0xD9E04800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1634,21 +945,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_4_poweroftwo_800
 /// Requirement: FieldBoundary { field: "imm9", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_7_poweroftwominusone_800_d9e07800()
-{
+fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_7_poweroftwominusone_800_d9e07800() {
     // Encoding: 0xD9E07800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, imm9=7, Xt=0
+    // Fields: Xt=0, imm9=7, Xn=0
     let encoding: u32 = 0xD9E07800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1659,17 +964,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_7_poweroftwominu
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_8_poweroftwo_800_d9e08800() {
     // Encoding: 0xD9E08800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 8 (PowerOfTwo)
-    // Fields: Xt=0, Xn=0, imm9=8
+    // Fields: imm9=8, Xn=0, Xt=0
     let encoding: u32 = 0xD9E08800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1677,21 +977,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_8_poweroftwo_800
 /// Requirement: FieldBoundary { field: "imm9", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_15_poweroftwominusone_800_d9e0f800()
-{
+fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_15_poweroftwominusone_800_d9e0f800() {
     // Encoding: 0xD9E0F800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: imm9=15, Xt=0, Xn=0
+    // Fields: Xn=0, imm9=15, Xt=0
     let encoding: u32 = 0xD9E0F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1702,17 +996,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_15_poweroftwomin
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_16_poweroftwo_800_d9e10800() {
     // Encoding: 0xD9E10800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 16 (PowerOfTwo)
-    // Fields: Xn=0, imm9=16, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=16
     let encoding: u32 = 0xD9E10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1720,8 +1009,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_16_poweroftwo_80
 /// Requirement: FieldBoundary { field: "imm9", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_31_poweroftwominusone_800_d9e1f800()
-{
+fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_31_poweroftwominusone_800_d9e1f800() {
     // Encoding: 0xD9E1F800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 31 (PowerOfTwoMinusOne)
     // Fields: imm9=31, Xn=0, Xt=0
@@ -1729,12 +1017,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_31_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1745,17 +1028,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_31_poweroftwomin
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_32_poweroftwo_800_d9e20800() {
     // Encoding: 0xD9E20800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 32 (PowerOfTwo)
-    // Fields: imm9=32, Xt=0, Xn=0
+    // Fields: Xt=0, Xn=0, imm9=32
     let encoding: u32 = 0xD9E20800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1763,21 +1041,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_32_poweroftwo_80
 /// Requirement: FieldBoundary { field: "imm9", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_63_poweroftwominusone_800_d9e3f800()
-{
+fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_63_poweroftwominusone_800_d9e3f800() {
     // Encoding: 0xD9E3F800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=0, imm9=63
+    // Fields: imm9=63, Xn=0, Xt=0
     let encoding: u32 = 0xD9E3F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1788,17 +1060,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_63_poweroftwomin
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_64_poweroftwo_800_d9e40800() {
     // Encoding: 0xD9E40800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 64 (PowerOfTwo)
-    // Fields: Xn=0, imm9=64, Xt=0
+    // Fields: imm9=64, Xt=0, Xn=0
     let encoding: u32 = 0xD9E40800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1806,21 +1073,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_64_poweroftwo_80
 /// Requirement: FieldBoundary { field: "imm9", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_127_poweroftwominusone_800_d9e7f800(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_127_poweroftwominusone_800_d9e7f800() {
     // Encoding: 0xD9E7F800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: imm9=127, Xt=0, Xn=0
+    // Fields: imm9=127, Xn=0, Xt=0
     let encoding: u32 = 0xD9E7F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1831,17 +1092,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_127_poweroftwomi
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_128_poweroftwo_800_d9e80800() {
     // Encoding: 0xD9E80800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 128 (PowerOfTwo)
-    // Fields: Xn=0, Xt=0, imm9=128
+    // Fields: imm9=128, Xt=0, Xn=0
     let encoding: u32 = 0xD9E80800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1849,21 +1105,15 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_128_poweroftwo_8
 /// Requirement: FieldBoundary { field: "imm9", value: 255, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (255)
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_255_poweroftwominusone_800_d9eff800(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_255_poweroftwominusone_800_d9eff800() {
     // Encoding: 0xD9EFF800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, Xn=0, imm9=255
+    // Fields: imm9=255, Xn=0, Xt=0
     let encoding: u32 = 0xD9EFF800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1874,17 +1124,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_255_poweroftwomi
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_256_poweroftwo_800_d9f00800() {
     // Encoding: 0xD9F00800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 256 (PowerOfTwo)
-    // Fields: Xn=0, imm9=256, Xt=0
+    // Fields: Xt=0, imm9=256, Xn=0
     let encoding: u32 = 0xD9F00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1895,17 +1140,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_256_poweroftwo_8
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_511_max_800_d9fff800() {
     // Encoding: 0xD9FFF800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field imm9 = 511 (Max)
-    // Fields: imm9=511, Xn=0, Xt=0
+    // Fields: imm9=511, Xt=0, Xn=0
     let encoding: u32 = 0xD9FFF800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1916,17 +1156,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_imm9_511_max_800_d9ff
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_xn_0_min_800_d9e00800() {
     // Encoding: 0xD9E00800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field Xn = 0 (Min)
-    // Fields: Xt=0, Xn=0, imm9=0
+    // Fields: imm9=0, Xn=0, Xt=0
     let encoding: u32 = 0xD9E00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1937,17 +1172,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_xn_0_min_800_d9e00800
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_xn_1_poweroftwo_800_d9e00820() {
     // Encoding: 0xD9E00820
     // Test aarch64_integer_tags_mcsettagpairandzerodata field Xn = 1 (PowerOfTwo)
-    // Fields: imm9=0, Xn=1, Xt=0
+    // Fields: Xn=1, imm9=0, Xt=0
     let encoding: u32 = 0xD9E00820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1958,17 +1188,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_xn_1_poweroftwo_800_d
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_xn_30_poweroftwominusone_800_d9e00bc0() {
     // Encoding: 0xD9E00BC0
     // Test aarch64_integer_tags_mcsettagpairandzerodata field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xn=30, Xt=0, imm9=0
+    // Fields: Xn=30, imm9=0, Xt=0
     let encoding: u32 = 0xD9E00BC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -1984,12 +1209,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_xn_31_max_800_d9e00be
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -2000,17 +1220,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_xn_31_max_800_d9e00be
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_xt_0_min_800_d9e00800() {
     // Encoding: 0xD9E00800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field Xt = 0 (Min)
-    // Fields: Xn=0, imm9=0, Xt=0
+    // Fields: Xt=0, imm9=0, Xn=0
     let encoding: u32 = 0xD9E00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -2021,17 +1236,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_xt_0_min_800_d9e00800
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_xt_1_poweroftwo_800_d9e00801() {
     // Encoding: 0xD9E00801
     // Test aarch64_integer_tags_mcsettagpairandzerodata field Xt = 1 (PowerOfTwo)
-    // Fields: imm9=0, Xn=0, Xt=1
+    // Fields: Xt=1, imm9=0, Xn=0
     let encoding: u32 = 0xD9E00801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -2047,12 +1257,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_xt_30_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -2063,17 +1268,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_xt_30_poweroftwominus
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_xt_31_max_800_d9e0081f() {
     // Encoding: 0xD9E0081F
     // Test aarch64_integer_tags_mcsettagpairandzerodata field Xt = 31 (Max)
-    // Fields: imm9=0, Xn=0, Xt=31
+    // Fields: imm9=0, Xt=31, Xn=0
     let encoding: u32 = 0xD9E0081F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -2084,206 +1284,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_field_xt_31_max_800_d9e0081
 fn test_aarch64_integer_tags_mcsettagpairandzerodata_combo_0_800_d9e00800() {
     // Encoding: 0xD9E00800
     // Test aarch64_integer_tags_mcsettagpairandzerodata field combination: imm9=0, Xn=0, Xt=0
-    // Fields: imm9=0, Xt=0, Xn=0
+    // Fields: Xt=0, imm9=0, Xn=0
     let encoding: u32 = 0xD9E00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_combo_1_800_d9e01800() {
-    // Encoding: 0xD9E01800
-    // Test aarch64_integer_tags_mcsettagpairandzerodata field combination: imm9=1, Xn=0, Xt=0
-    // Fields: imm9=1, Xn=0, Xt=0
-    let encoding: u32 = 0xD9E01800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=3 (2^2 - 1 = 3)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_combo_2_800_d9e03800() {
-    // Encoding: 0xD9E03800
-    // Test aarch64_integer_tags_mcsettagpairandzerodata field combination: imm9=3, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=3, Xn=0
-    let encoding: u32 = 0xD9E03800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=4 (power of 2 (2^2 = 4))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_combo_3_800_d9e04800() {
-    // Encoding: 0xD9E04800
-    // Test aarch64_integer_tags_mcsettagpairandzerodata field combination: imm9=4, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=4
-    let encoding: u32 = 0xD9E04800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=7 (2^3 - 1 = 7)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_combo_4_800_d9e07800() {
-    // Encoding: 0xD9E07800
-    // Test aarch64_integer_tags_mcsettagpairandzerodata field combination: imm9=7, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=7
-    let encoding: u32 = 0xD9E07800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=8 (power of 2 (2^3 = 8))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_combo_5_800_d9e08800() {
-    // Encoding: 0xD9E08800
-    // Test aarch64_integer_tags_mcsettagpairandzerodata field combination: imm9=8, Xn=0, Xt=0
-    // Fields: imm9=8, Xn=0, Xt=0
-    let encoding: u32 = 0xD9E08800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=15 (2^4 - 1 = 15)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_combo_6_800_d9e0f800() {
-    // Encoding: 0xD9E0F800
-    // Test aarch64_integer_tags_mcsettagpairandzerodata field combination: imm9=15, Xn=0, Xt=0
-    // Fields: imm9=15, Xn=0, Xt=0
-    let encoding: u32 = 0xD9E0F800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=16 (power of 2 (2^4 = 16))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_combo_7_800_d9e10800() {
-    // Encoding: 0xD9E10800
-    // Test aarch64_integer_tags_mcsettagpairandzerodata field combination: imm9=16, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=16, Xt=0
-    let encoding: u32 = 0xD9E10800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=31 (2^5 - 1 = 31)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_combo_8_800_d9e1f800() {
-    // Encoding: 0xD9E1F800
-    // Test aarch64_integer_tags_mcsettagpairandzerodata field combination: imm9=31, Xn=0, Xt=0
-    // Fields: imm9=31, Xn=0, Xt=0
-    let encoding: u32 = 0xD9E1F800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=32 (power of 2 (2^5 = 32))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_combo_9_800_d9e20800() {
-    // Encoding: 0xD9E20800
-    // Test aarch64_integer_tags_mcsettagpairandzerodata field combination: imm9=32, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=32
-    let encoding: u32 = 0xD9E20800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodata
@@ -2291,8 +1297,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_combo_9_800_d9e20800() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairandzerodata_special_xn_31_stack_pointer_sp_may_require_alignment_2048_d9e00be0(
-) {
+fn test_aarch64_integer_tags_mcsettagpairandzerodata_special_xn_31_stack_pointer_sp_may_require_alignment_2048_d9e00be0() {
     // Encoding: 0xD9E00BE0
     // Test aarch64_integer_tags_mcsettagpairandzerodata special value Xn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: imm9=0, Xn=31, Xt=0
@@ -2300,12 +1305,7 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_special_xn_31_stack_pointer
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairandzerodatapost
@@ -2362,8 +1362,8 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_store_0_d9e00400() {
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost memory store: 8 bytes
     // Encoding: 0xD9E00400
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x100000000000);
     set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
+    set_x(&mut cpu, 1, 0x100000000000);
     let encoding: u32 = 0xD9E00400;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -2379,8 +1379,8 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodatapost_store_1_d9e00400() {
     // Test aarch64_integer_tags_mcsettagpairandzerodatapost memory store: 8 bytes
     // Encoding: 0xD9E00400
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x100000000000);
     set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
+    set_x(&mut cpu, 1, 0x100000000000);
     let encoding: u32 = 0xD9E00400;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -2537,8 +1537,8 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_store_1_d9e00800() {
     // Test aarch64_integer_tags_mcsettagpairandzerodata memory store: 8 bytes
     // Encoding: 0xD9E00800
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     set_x(&mut cpu, 1, 0x100000000000);
+    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     let encoding: u32 = 0xD9E00800;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -2557,17 +1557,12 @@ fn test_aarch64_integer_tags_mcsettagpairandzerodata_store_1_d9e00800() {
 fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_0_zero_400_d9600400() {
     // Encoding: 0xD9600400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field imm9 = 0 (Zero)
-    // Fields: imm9=0, Xt=0, Xn=0
+    // Fields: Xn=0, Xt=0, imm9=0
     let encoding: u32 = 0xD9600400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2578,17 +1573,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_0_zero_400_d9600
 fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_1_poweroftwo_400_d9601400() {
     // Encoding: 0xD9601400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field imm9 = 1 (PowerOfTwo)
-    // Fields: Xn=0, Xt=0, imm9=1
+    // Fields: imm9=1, Xn=0, Xt=0
     let encoding: u32 = 0xD9601400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2596,21 +1586,15 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_1_poweroftwo_400
 /// Requirement: FieldBoundary { field: "imm9", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_3_poweroftwominusone_400_d9603400()
-{
+fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_3_poweroftwominusone_400_d9603400() {
     // Encoding: 0xD9603400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=0, imm9=3
+    // Fields: Xt=0, Xn=0, imm9=3
     let encoding: u32 = 0xD9603400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2626,12 +1610,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_4_poweroftwo_400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2639,21 +1618,15 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_4_poweroftwo_400
 /// Requirement: FieldBoundary { field: "imm9", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_7_poweroftwominusone_400_d9607400()
-{
+fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_7_poweroftwominusone_400_d9607400() {
     // Encoding: 0xD9607400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: imm9=7, Xt=0, Xn=0
+    // Fields: Xn=0, Xt=0, imm9=7
     let encoding: u32 = 0xD9607400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2669,12 +1642,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_8_poweroftwo_400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2682,21 +1650,15 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_8_poweroftwo_400
 /// Requirement: FieldBoundary { field: "imm9", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_15_poweroftwominusone_400_d960f400()
-{
+fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_15_poweroftwominusone_400_d960f400() {
     // Encoding: 0xD960F400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: imm9=15, Xn=0, Xt=0
+    // Fields: Xt=0, Xn=0, imm9=15
     let encoding: u32 = 0xD960F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2707,17 +1669,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_15_poweroftwomin
 fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_16_poweroftwo_400_d9610400() {
     // Encoding: 0xD9610400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field imm9 = 16 (PowerOfTwo)
-    // Fields: Xt=0, Xn=0, imm9=16
+    // Fields: imm9=16, Xt=0, Xn=0
     let encoding: u32 = 0xD9610400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2725,8 +1682,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_16_poweroftwo_40
 /// Requirement: FieldBoundary { field: "imm9", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_31_poweroftwominusone_400_d961f400()
-{
+fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_31_poweroftwominusone_400_d961f400() {
     // Encoding: 0xD961F400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field imm9 = 31 (PowerOfTwoMinusOne)
     // Fields: Xt=0, imm9=31, Xn=0
@@ -2734,12 +1690,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_31_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2750,17 +1701,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_31_poweroftwomin
 fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_32_poweroftwo_400_d9620400() {
     // Encoding: 0xD9620400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field imm9 = 32 (PowerOfTwo)
-    // Fields: imm9=32, Xt=0, Xn=0
+    // Fields: Xt=0, Xn=0, imm9=32
     let encoding: u32 = 0xD9620400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2768,21 +1714,15 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_32_poweroftwo_40
 /// Requirement: FieldBoundary { field: "imm9", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_63_poweroftwominusone_400_d963f400()
-{
+fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_63_poweroftwominusone_400_d963f400() {
     // Encoding: 0xD963F400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=0, imm9=63
+    // Fields: Xt=0, imm9=63, Xn=0
     let encoding: u32 = 0xD963F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2793,17 +1733,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_63_poweroftwomin
 fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_64_poweroftwo_400_d9640400() {
     // Encoding: 0xD9640400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field imm9 = 64 (PowerOfTwo)
-    // Fields: imm9=64, Xn=0, Xt=0
+    // Fields: Xn=0, imm9=64, Xt=0
     let encoding: u32 = 0xD9640400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2811,8 +1746,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_64_poweroftwo_40
 /// Requirement: FieldBoundary { field: "imm9", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_127_poweroftwominusone_400_d967f400(
-) {
+fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_127_poweroftwominusone_400_d967f400() {
     // Encoding: 0xD967F400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field imm9 = 127 (PowerOfTwoMinusOne)
     // Fields: imm9=127, Xn=0, Xt=0
@@ -2820,12 +1754,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_127_poweroftwomi
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2836,17 +1765,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_127_poweroftwomi
 fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_128_poweroftwo_400_d9680400() {
     // Encoding: 0xD9680400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field imm9 = 128 (PowerOfTwo)
-    // Fields: imm9=128, Xn=0, Xt=0
+    // Fields: Xn=0, imm9=128, Xt=0
     let encoding: u32 = 0xD9680400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2854,21 +1778,15 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_128_poweroftwo_4
 /// Requirement: FieldBoundary { field: "imm9", value: 255, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (255)
 #[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_255_poweroftwominusone_400_d96ff400(
-) {
+fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_255_poweroftwominusone_400_d96ff400() {
     // Encoding: 0xD96FF400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=0, imm9=255
+    // Fields: imm9=255, Xn=0, Xt=0
     let encoding: u32 = 0xD96FF400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2879,17 +1797,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_255_poweroftwomi
 fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_256_poweroftwo_400_d9700400() {
     // Encoding: 0xD9700400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field imm9 = 256 (PowerOfTwo)
-    // Fields: imm9=256, Xt=0, Xn=0
+    // Fields: Xt=0, Xn=0, imm9=256
     let encoding: u32 = 0xD9700400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2900,17 +1813,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_256_poweroftwo_4
 fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_imm9_511_max_400_d97ff400() {
     // Encoding: 0xD97FF400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field imm9 = 511 (Max)
-    // Fields: imm9=511, Xn=0, Xt=0
+    // Fields: Xn=0, imm9=511, Xt=0
     let encoding: u32 = 0xD97FF400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2926,12 +1834,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_xn_0_min_400_d9600400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2942,17 +1845,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_xn_0_min_400_d9600400
 fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_xn_1_poweroftwo_400_d9600420() {
     // Encoding: 0xD9600420
     // Test aarch64_integer_tags_mcsettagandzerodatapost field Xn = 1 (PowerOfTwo)
-    // Fields: Xn=1, imm9=0, Xt=0
+    // Fields: Xt=0, imm9=0, Xn=1
     let encoding: u32 = 0xD9600420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2963,17 +1861,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_xn_1_poweroftwo_400_d
 fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_xn_30_poweroftwominusone_400_d96007c0() {
     // Encoding: 0xD96007C0
     // Test aarch64_integer_tags_mcsettagandzerodatapost field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, Xn=30, imm9=0
+    // Fields: Xt=0, imm9=0, Xn=30
     let encoding: u32 = 0xD96007C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -2984,17 +1877,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_xn_30_poweroftwominus
 fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_xn_31_max_400_d96007e0() {
     // Encoding: 0xD96007E0
     // Test aarch64_integer_tags_mcsettagandzerodatapost field Xn = 31 (Max)
-    // Fields: imm9=0, Xn=31, Xt=0
+    // Fields: Xn=31, Xt=0, imm9=0
     let encoding: u32 = 0xD96007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -3010,12 +1898,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_xt_0_min_400_d9600400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -3026,17 +1909,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_xt_0_min_400_d9600400
 fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_xt_1_poweroftwo_400_d9600401() {
     // Encoding: 0xD9600401
     // Test aarch64_integer_tags_mcsettagandzerodatapost field Xt = 1 (PowerOfTwo)
-    // Fields: imm9=0, Xn=0, Xt=1
+    // Fields: Xn=0, Xt=1, imm9=0
     let encoding: u32 = 0xD9600401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -3047,17 +1925,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_xt_1_poweroftwo_400_d
 fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_xt_30_poweroftwominusone_400_d960041e() {
     // Encoding: 0xD960041E
     // Test aarch64_integer_tags_mcsettagandzerodatapost field Xt = 30 (PowerOfTwoMinusOne)
-    // Fields: imm9=0, Xt=30, Xn=0
+    // Fields: Xt=30, imm9=0, Xn=0
     let encoding: u32 = 0xD960041E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -3068,17 +1941,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_xt_30_poweroftwominus
 fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_xt_31_max_400_d960041f() {
     // Encoding: 0xD960041F
     // Test aarch64_integer_tags_mcsettagandzerodatapost field Xt = 31 (Max)
-    // Fields: Xn=0, Xt=31, imm9=0
+    // Fields: imm9=0, Xn=0, Xt=31
     let encoding: u32 = 0xD960041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -3089,206 +1957,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_field_xt_31_max_400_d960041
 fn test_aarch64_integer_tags_mcsettagandzerodatapost_combo_0_400_d9600400() {
     // Encoding: 0xD9600400
     // Test aarch64_integer_tags_mcsettagandzerodatapost field combination: imm9=0, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=0
+    // Fields: Xn=0, Xt=0, imm9=0
     let encoding: u32 = 0xD9600400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_combo_1_400_d9601400() {
-    // Encoding: 0xD9601400
-    // Test aarch64_integer_tags_mcsettagandzerodatapost field combination: imm9=1, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=1, Xt=0
-    let encoding: u32 = 0xD9601400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=3 (2^2 - 1 = 3)
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_combo_2_400_d9603400() {
-    // Encoding: 0xD9603400
-    // Test aarch64_integer_tags_mcsettagandzerodatapost field combination: imm9=3, Xn=0, Xt=0
-    // Fields: imm9=3, Xn=0, Xt=0
-    let encoding: u32 = 0xD9603400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=4 (power of 2 (2^2 = 4))
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_combo_3_400_d9604400() {
-    // Encoding: 0xD9604400
-    // Test aarch64_integer_tags_mcsettagandzerodatapost field combination: imm9=4, Xn=0, Xt=0
-    // Fields: imm9=4, Xt=0, Xn=0
-    let encoding: u32 = 0xD9604400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=7 (2^3 - 1 = 7)
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_combo_4_400_d9607400() {
-    // Encoding: 0xD9607400
-    // Test aarch64_integer_tags_mcsettagandzerodatapost field combination: imm9=7, Xn=0, Xt=0
-    // Fields: imm9=7, Xt=0, Xn=0
-    let encoding: u32 = 0xD9607400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=8 (power of 2 (2^3 = 8))
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_combo_5_400_d9608400() {
-    // Encoding: 0xD9608400
-    // Test aarch64_integer_tags_mcsettagandzerodatapost field combination: imm9=8, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=8, Xt=0
-    let encoding: u32 = 0xD9608400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=15 (2^4 - 1 = 15)
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_combo_6_400_d960f400() {
-    // Encoding: 0xD960F400
-    // Test aarch64_integer_tags_mcsettagandzerodatapost field combination: imm9=15, Xn=0, Xt=0
-    // Fields: imm9=15, Xn=0, Xt=0
-    let encoding: u32 = 0xD960F400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=16 (power of 2 (2^4 = 16))
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_combo_7_400_d9610400() {
-    // Encoding: 0xD9610400
-    // Test aarch64_integer_tags_mcsettagandzerodatapost field combination: imm9=16, Xn=0, Xt=0
-    // Fields: imm9=16, Xn=0, Xt=0
-    let encoding: u32 = 0xD9610400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=31 (2^5 - 1 = 31)
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_combo_8_400_d961f400() {
-    // Encoding: 0xD961F400
-    // Test aarch64_integer_tags_mcsettagandzerodatapost field combination: imm9=31, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=31
-    let encoding: u32 = 0xD961F400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=32 (power of 2 (2^5 = 32))
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_combo_9_400_d9620400() {
-    // Encoding: 0xD9620400
-    // Test aarch64_integer_tags_mcsettagandzerodatapost field combination: imm9=32, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=32
-    let encoding: u32 = 0xD9620400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -3296,21 +1970,15 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_combo_9_400_d9620400() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapost_special_xn_31_stack_pointer_sp_may_require_alignment_1024_d96007e0(
-) {
+fn test_aarch64_integer_tags_mcsettagandzerodatapost_special_xn_31_stack_pointer_sp_may_require_alignment_1024_d96007e0() {
     // Encoding: 0xD96007E0
     // Test aarch64_integer_tags_mcsettagandzerodatapost special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: imm9=0, Xt=0, Xn=31
+    // Fields: Xn=31, Xt=0, imm9=0
     let encoding: u32 = 0xD96007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3321,17 +1989,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_special_xn_31_stack_pointer
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_0_zero_c00_d9600c00() {
     // Encoding: 0xD9600C00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 0 (Zero)
-    // Fields: Xt=0, imm9=0, Xn=0
+    // Fields: imm9=0, Xn=0, Xt=0
     let encoding: u32 = 0xD9600C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3342,17 +2005,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_0_zero_c00_d9600c
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_1_poweroftwo_c00_d9601c00() {
     // Encoding: 0xD9601C00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 1 (PowerOfTwo)
-    // Fields: imm9=1, Xn=0, Xt=0
+    // Fields: Xn=0, imm9=1, Xt=0
     let encoding: u32 = 0xD9601C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3368,12 +2026,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_3_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3384,17 +2037,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_3_poweroftwominus
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_4_poweroftwo_c00_d9604c00() {
     // Encoding: 0xD9604C00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 4 (PowerOfTwo)
-    // Fields: Xn=0, imm9=4, Xt=0
+    // Fields: imm9=4, Xt=0, Xn=0
     let encoding: u32 = 0xD9604C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3405,17 +2053,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_4_poweroftwo_c00_
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_7_poweroftwominusone_c00_d9607c00() {
     // Encoding: 0xD9607C00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, Xn=0, imm9=7
+    // Fields: imm9=7, Xn=0, Xt=0
     let encoding: u32 = 0xD9607C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3426,17 +2069,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_7_poweroftwominus
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_8_poweroftwo_c00_d9608c00() {
     // Encoding: 0xD9608C00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 8 (PowerOfTwo)
-    // Fields: imm9=8, Xt=0, Xn=0
+    // Fields: imm9=8, Xn=0, Xt=0
     let encoding: u32 = 0xD9608C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3444,21 +2082,15 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_8_poweroftwo_c00_
 /// Requirement: FieldBoundary { field: "imm9", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_15_poweroftwominusone_c00_d960fc00()
-{
+fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_15_poweroftwominusone_c00_d960fc00() {
     // Encoding: 0xD960FC00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=15, Xn=0
+    // Fields: Xn=0, imm9=15, Xt=0
     let encoding: u32 = 0xD960FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3469,17 +2101,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_15_poweroftwominu
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_16_poweroftwo_c00_d9610c00() {
     // Encoding: 0xD9610C00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 16 (PowerOfTwo)
-    // Fields: Xn=0, Xt=0, imm9=16
+    // Fields: imm9=16, Xt=0, Xn=0
     let encoding: u32 = 0xD9610C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3487,21 +2114,15 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_16_poweroftwo_c00
 /// Requirement: FieldBoundary { field: "imm9", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_31_poweroftwominusone_c00_d961fc00()
-{
+fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_31_poweroftwominusone_c00_d961fc00() {
     // Encoding: 0xD961FC00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: imm9=31, Xt=0, Xn=0
+    // Fields: imm9=31, Xn=0, Xt=0
     let encoding: u32 = 0xD961FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3512,17 +2133,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_31_poweroftwominu
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_32_poweroftwo_c00_d9620c00() {
     // Encoding: 0xD9620C00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 32 (PowerOfTwo)
-    // Fields: Xn=0, Xt=0, imm9=32
+    // Fields: Xt=0, Xn=0, imm9=32
     let encoding: u32 = 0xD9620C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3530,21 +2146,15 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_32_poweroftwo_c00
 /// Requirement: FieldBoundary { field: "imm9", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_63_poweroftwominusone_c00_d963fc00()
-{
+fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_63_poweroftwominusone_c00_d963fc00() {
     // Encoding: 0xD963FC00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, Xn=0, imm9=63
+    // Fields: imm9=63, Xn=0, Xt=0
     let encoding: u32 = 0xD963FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3555,17 +2165,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_63_poweroftwominu
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_64_poweroftwo_c00_d9640c00() {
     // Encoding: 0xD9640C00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 64 (PowerOfTwo)
-    // Fields: Xn=0, imm9=64, Xt=0
+    // Fields: imm9=64, Xn=0, Xt=0
     let encoding: u32 = 0xD9640C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3573,21 +2178,15 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_64_poweroftwo_c00
 /// Requirement: FieldBoundary { field: "imm9", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_127_poweroftwominusone_c00_d967fc00()
-{
+fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_127_poweroftwominusone_c00_d967fc00() {
     // Encoding: 0xD967FC00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=0, imm9=127
+    // Fields: Xn=0, imm9=127, Xt=0
     let encoding: u32 = 0xD967FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3598,17 +2197,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_127_poweroftwomin
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_128_poweroftwo_c00_d9680c00() {
     // Encoding: 0xD9680C00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 128 (PowerOfTwo)
-    // Fields: Xt=0, imm9=128, Xn=0
+    // Fields: Xn=0, imm9=128, Xt=0
     let encoding: u32 = 0xD9680C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3616,21 +2210,15 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_128_poweroftwo_c0
 /// Requirement: FieldBoundary { field: "imm9", value: 255, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (255)
 #[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_255_poweroftwominusone_c00_d96ffc00()
-{
+fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_255_poweroftwominusone_c00_d96ffc00() {
     // Encoding: 0xD96FFC00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: imm9=255, Xt=0, Xn=0
+    // Fields: Xt=0, Xn=0, imm9=255
     let encoding: u32 = 0xD96FFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3641,17 +2229,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_255_poweroftwomin
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_256_poweroftwo_c00_d9700c00() {
     // Encoding: 0xD9700C00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 256 (PowerOfTwo)
-    // Fields: imm9=256, Xt=0, Xn=0
+    // Fields: Xt=0, imm9=256, Xn=0
     let encoding: u32 = 0xD9700C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3662,17 +2245,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_256_poweroftwo_c0
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_511_max_c00_d97ffc00() {
     // Encoding: 0xD97FFC00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field imm9 = 511 (Max)
-    // Fields: Xt=0, Xn=0, imm9=511
+    // Fields: Xt=0, imm9=511, Xn=0
     let encoding: u32 = 0xD97FFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3683,17 +2261,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_imm9_511_max_c00_d97ff
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xn_0_min_c00_d9600c00() {
     // Encoding: 0xD9600C00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field Xn = 0 (Min)
-    // Fields: Xt=0, imm9=0, Xn=0
+    // Fields: Xn=0, imm9=0, Xt=0
     let encoding: u32 = 0xD9600C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3704,17 +2277,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xn_0_min_c00_d9600c00(
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xn_1_poweroftwo_c00_d9600c20() {
     // Encoding: 0xD9600C20
     // Test aarch64_integer_tags_mcsettagandzerodatapre field Xn = 1 (PowerOfTwo)
-    // Fields: Xn=1, imm9=0, Xt=0
+    // Fields: Xt=0, imm9=0, Xn=1
     let encoding: u32 = 0xD9600C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3725,17 +2293,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xn_1_poweroftwo_c00_d9
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xn_30_poweroftwominusone_c00_d9600fc0() {
     // Encoding: 0xD9600FC0
     // Test aarch64_integer_tags_mcsettagandzerodatapre field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xn=30, imm9=0, Xt=0
+    // Fields: Xt=0, Xn=30, imm9=0
     let encoding: u32 = 0xD9600FC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3746,17 +2309,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xn_30_poweroftwominuso
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xn_31_max_c00_d9600fe0() {
     // Encoding: 0xD9600FE0
     // Test aarch64_integer_tags_mcsettagandzerodatapre field Xn = 31 (Max)
-    // Fields: Xt=0, Xn=31, imm9=0
+    // Fields: Xn=31, Xt=0, imm9=0
     let encoding: u32 = 0xD9600FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3767,17 +2325,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xn_31_max_c00_d9600fe0
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xt_0_min_c00_d9600c00() {
     // Encoding: 0xD9600C00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field Xt = 0 (Min)
-    // Fields: imm9=0, Xt=0, Xn=0
+    // Fields: Xn=0, imm9=0, Xt=0
     let encoding: u32 = 0xD9600C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3788,17 +2341,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xt_0_min_c00_d9600c00(
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xt_1_poweroftwo_c00_d9600c01() {
     // Encoding: 0xD9600C01
     // Test aarch64_integer_tags_mcsettagandzerodatapre field Xt = 1 (PowerOfTwo)
-    // Fields: Xn=0, imm9=0, Xt=1
+    // Fields: Xn=0, Xt=1, imm9=0
     let encoding: u32 = 0xD9600C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3809,17 +2357,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xt_1_poweroftwo_c00_d9
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xt_30_poweroftwominusone_c00_d9600c1e() {
     // Encoding: 0xD9600C1E
     // Test aarch64_integer_tags_mcsettagandzerodatapre field Xt = 30 (PowerOfTwoMinusOne)
-    // Fields: Xt=30, imm9=0, Xn=0
+    // Fields: Xt=30, Xn=0, imm9=0
     let encoding: u32 = 0xD9600C1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3830,17 +2373,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xt_30_poweroftwominuso
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xt_31_max_c00_d9600c1f() {
     // Encoding: 0xD9600C1F
     // Test aarch64_integer_tags_mcsettagandzerodatapre field Xt = 31 (Max)
-    // Fields: Xt=31, imm9=0, Xn=0
+    // Fields: imm9=0, Xt=31, Xn=0
     let encoding: u32 = 0xD9600C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -3851,206 +2389,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_field_xt_31_max_c00_d9600c1f
 fn test_aarch64_integer_tags_mcsettagandzerodatapre_combo_0_c00_d9600c00() {
     // Encoding: 0xD9600C00
     // Test aarch64_integer_tags_mcsettagandzerodatapre field combination: imm9=0, Xn=0, Xt=0
-    // Fields: imm9=0, Xn=0, Xt=0
+    // Fields: Xn=0, imm9=0, Xt=0
     let encoding: u32 = 0xD9600C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapre_combo_1_c00_d9601c00() {
-    // Encoding: 0xD9601C00
-    // Test aarch64_integer_tags_mcsettagandzerodatapre field combination: imm9=1, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=1, Xn=0
-    let encoding: u32 = 0xD9601C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=3 (2^2 - 1 = 3)
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapre_combo_2_c00_d9603c00() {
-    // Encoding: 0xD9603C00
-    // Test aarch64_integer_tags_mcsettagandzerodatapre field combination: imm9=3, Xn=0, Xt=0
-    // Fields: imm9=3, Xn=0, Xt=0
-    let encoding: u32 = 0xD9603C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=4 (power of 2 (2^2 = 4))
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapre_combo_3_c00_d9604c00() {
-    // Encoding: 0xD9604C00
-    // Test aarch64_integer_tags_mcsettagandzerodatapre field combination: imm9=4, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=4
-    let encoding: u32 = 0xD9604C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=7 (2^3 - 1 = 7)
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapre_combo_4_c00_d9607c00() {
-    // Encoding: 0xD9607C00
-    // Test aarch64_integer_tags_mcsettagandzerodatapre field combination: imm9=7, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=7, Xn=0
-    let encoding: u32 = 0xD9607C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=8 (power of 2 (2^3 = 8))
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapre_combo_5_c00_d9608c00() {
-    // Encoding: 0xD9608C00
-    // Test aarch64_integer_tags_mcsettagandzerodatapre field combination: imm9=8, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=8
-    let encoding: u32 = 0xD9608C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=15 (2^4 - 1 = 15)
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapre_combo_6_c00_d960fc00() {
-    // Encoding: 0xD960FC00
-    // Test aarch64_integer_tags_mcsettagandzerodatapre field combination: imm9=15, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=15, Xn=0
-    let encoding: u32 = 0xD960FC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=16 (power of 2 (2^4 = 16))
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapre_combo_7_c00_d9610c00() {
-    // Encoding: 0xD9610C00
-    // Test aarch64_integer_tags_mcsettagandzerodatapre field combination: imm9=16, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=16, Xn=0
-    let encoding: u32 = 0xD9610C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=31 (2^5 - 1 = 31)
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapre_combo_8_c00_d961fc00() {
-    // Encoding: 0xD961FC00
-    // Test aarch64_integer_tags_mcsettagandzerodatapre field combination: imm9=31, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=31, Xt=0
-    let encoding: u32 = 0xD961FC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=32 (power of 2 (2^5 = 32))
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapre_combo_9_c00_d9620c00() {
-    // Encoding: 0xD9620C00
-    // Test aarch64_integer_tags_mcsettagandzerodatapre field combination: imm9=32, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=32
-    let encoding: u32 = 0xD9620C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -4058,21 +2402,15 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_combo_9_c00_d9620c00() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettagandzerodatapre_special_xn_31_stack_pointer_sp_may_require_alignment_3072_d9600fe0(
-) {
+fn test_aarch64_integer_tags_mcsettagandzerodatapre_special_xn_31_stack_pointer_sp_may_require_alignment_3072_d9600fe0() {
     // Encoding: 0xD9600FE0
     // Test aarch64_integer_tags_mcsettagandzerodatapre special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: imm9=0, Xt=0, Xn=31
+    // Fields: imm9=0, Xn=31, Xt=0
     let encoding: u32 = 0xD9600FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4083,17 +2421,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_special_xn_31_stack_pointer_
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_0_zero_800_d9600800() {
     // Encoding: 0xD9600800
     // Test aarch64_integer_tags_mcsettagandzerodata field imm9 = 0 (Zero)
-    // Fields: imm9=0, Xt=0, Xn=0
+    // Fields: Xn=0, imm9=0, Xt=0
     let encoding: u32 = 0xD9600800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4104,17 +2437,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_0_zero_800_d9600800(
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_1_poweroftwo_800_d9601800() {
     // Encoding: 0xD9601800
     // Test aarch64_integer_tags_mcsettagandzerodata field imm9 = 1 (PowerOfTwo)
-    // Fields: Xn=0, imm9=1, Xt=0
+    // Fields: Xt=0, Xn=0, imm9=1
     let encoding: u32 = 0xD9601800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4125,17 +2453,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_1_poweroftwo_800_d96
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_3_poweroftwominusone_800_d9603800() {
     // Encoding: 0xD9603800
     // Test aarch64_integer_tags_mcsettagandzerodata field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=0, imm9=3
+    // Fields: imm9=3, Xn=0, Xt=0
     let encoding: u32 = 0xD9603800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4146,17 +2469,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_3_poweroftwominusone
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_4_poweroftwo_800_d9604800() {
     // Encoding: 0xD9604800
     // Test aarch64_integer_tags_mcsettagandzerodata field imm9 = 4 (PowerOfTwo)
-    // Fields: Xn=0, imm9=4, Xt=0
+    // Fields: Xt=0, imm9=4, Xn=0
     let encoding: u32 = 0xD9604800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4172,12 +2490,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_7_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4193,12 +2506,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_8_poweroftwo_800_d96
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4209,17 +2517,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_8_poweroftwo_800_d96
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_15_poweroftwominusone_800_d960f800() {
     // Encoding: 0xD960F800
     // Test aarch64_integer_tags_mcsettagandzerodata field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: imm9=15, Xn=0, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=15
     let encoding: u32 = 0xD960F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4230,17 +2533,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_15_poweroftwominuson
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_16_poweroftwo_800_d9610800() {
     // Encoding: 0xD9610800
     // Test aarch64_integer_tags_mcsettagandzerodata field imm9 = 16 (PowerOfTwo)
-    // Fields: imm9=16, Xn=0, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=16
     let encoding: u32 = 0xD9610800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4256,12 +2554,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_31_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4277,12 +2570,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_32_poweroftwo_800_d9
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4293,17 +2581,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_32_poweroftwo_800_d9
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_63_poweroftwominusone_800_d963f800() {
     // Encoding: 0xD963F800
     // Test aarch64_integer_tags_mcsettagandzerodata field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=0, imm9=63
+    // Fields: Xt=0, Xn=0, imm9=63
     let encoding: u32 = 0xD963F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4314,17 +2597,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_63_poweroftwominuson
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_64_poweroftwo_800_d9640800() {
     // Encoding: 0xD9640800
     // Test aarch64_integer_tags_mcsettagandzerodata field imm9 = 64 (PowerOfTwo)
-    // Fields: Xt=0, Xn=0, imm9=64
+    // Fields: imm9=64, Xn=0, Xt=0
     let encoding: u32 = 0xD9640800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4335,17 +2613,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_64_poweroftwo_800_d9
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_127_poweroftwominusone_800_d967f800() {
     // Encoding: 0xD967F800
     // Test aarch64_integer_tags_mcsettagandzerodata field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: imm9=127, Xn=0, Xt=0
+    // Fields: Xt=0, imm9=127, Xn=0
     let encoding: u32 = 0xD967F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4356,17 +2629,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_127_poweroftwominuso
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_128_poweroftwo_800_d9680800() {
     // Encoding: 0xD9680800
     // Test aarch64_integer_tags_mcsettagandzerodata field imm9 = 128 (PowerOfTwo)
-    // Fields: imm9=128, Xn=0, Xt=0
+    // Fields: Xt=0, imm9=128, Xn=0
     let encoding: u32 = 0xD9680800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4377,17 +2645,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_128_poweroftwo_800_d
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_255_poweroftwominusone_800_d96ff800() {
     // Encoding: 0xD96FF800
     // Test aarch64_integer_tags_mcsettagandzerodata field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, imm9=255, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=255
     let encoding: u32 = 0xD96FF800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4398,17 +2661,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_255_poweroftwominuso
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_256_poweroftwo_800_d9700800() {
     // Encoding: 0xD9700800
     // Test aarch64_integer_tags_mcsettagandzerodata field imm9 = 256 (PowerOfTwo)
-    // Fields: imm9=256, Xn=0, Xt=0
+    // Fields: imm9=256, Xt=0, Xn=0
     let encoding: u32 = 0xD9700800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4419,17 +2677,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_256_poweroftwo_800_d
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_511_max_800_d97ff800() {
     // Encoding: 0xD97FF800
     // Test aarch64_integer_tags_mcsettagandzerodata field imm9 = 511 (Max)
-    // Fields: imm9=511, Xt=0, Xn=0
+    // Fields: Xn=0, Xt=0, imm9=511
     let encoding: u32 = 0xD97FF800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4440,17 +2693,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_imm9_511_max_800_d97ff800
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_xn_0_min_800_d9600800() {
     // Encoding: 0xD9600800
     // Test aarch64_integer_tags_mcsettagandzerodata field Xn = 0 (Min)
-    // Fields: Xt=0, imm9=0, Xn=0
+    // Fields: Xt=0, Xn=0, imm9=0
     let encoding: u32 = 0xD9600800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4461,17 +2709,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_xn_0_min_800_d9600800() {
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_xn_1_poweroftwo_800_d9600820() {
     // Encoding: 0xD9600820
     // Test aarch64_integer_tags_mcsettagandzerodata field Xn = 1 (PowerOfTwo)
-    // Fields: Xt=0, Xn=1, imm9=0
+    // Fields: Xt=0, imm9=0, Xn=1
     let encoding: u32 = 0xD9600820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4482,17 +2725,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_xn_1_poweroftwo_800_d9600
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_xn_30_poweroftwominusone_800_d9600bc0() {
     // Encoding: 0xD9600BC0
     // Test aarch64_integer_tags_mcsettagandzerodata field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, Xn=30, imm9=0
+    // Fields: imm9=0, Xt=0, Xn=30
     let encoding: u32 = 0xD9600BC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4503,17 +2741,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_xn_30_poweroftwominusone_
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_xn_31_max_800_d9600be0() {
     // Encoding: 0xD9600BE0
     // Test aarch64_integer_tags_mcsettagandzerodata field Xn = 31 (Max)
-    // Fields: Xt=0, imm9=0, Xn=31
+    // Fields: Xn=31, imm9=0, Xt=0
     let encoding: u32 = 0xD9600BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4524,17 +2757,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_xn_31_max_800_d9600be0() 
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_xt_0_min_800_d9600800() {
     // Encoding: 0xD9600800
     // Test aarch64_integer_tags_mcsettagandzerodata field Xt = 0 (Min)
-    // Fields: Xn=0, Xt=0, imm9=0
+    // Fields: imm9=0, Xn=0, Xt=0
     let encoding: u32 = 0xD9600800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4545,17 +2773,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_xt_0_min_800_d9600800() {
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_xt_1_poweroftwo_800_d9600801() {
     // Encoding: 0xD9600801
     // Test aarch64_integer_tags_mcsettagandzerodata field Xt = 1 (PowerOfTwo)
-    // Fields: Xt=1, Xn=0, imm9=0
+    // Fields: Xn=0, Xt=1, imm9=0
     let encoding: u32 = 0xD9600801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4566,17 +2789,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_xt_1_poweroftwo_800_d9600
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_xt_30_poweroftwominusone_800_d960081e() {
     // Encoding: 0xD960081E
     // Test aarch64_integer_tags_mcsettagandzerodata field Xt = 30 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, imm9=0, Xt=30
+    // Fields: Xn=0, Xt=30, imm9=0
     let encoding: u32 = 0xD960081E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4587,17 +2805,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_xt_30_poweroftwominusone_
 fn test_aarch64_integer_tags_mcsettagandzerodata_field_xt_31_max_800_d960081f() {
     // Encoding: 0xD960081F
     // Test aarch64_integer_tags_mcsettagandzerodata field Xt = 31 (Max)
-    // Fields: imm9=0, Xt=31, Xn=0
+    // Fields: Xt=31, imm9=0, Xn=0
     let encoding: u32 = 0xD960081F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4608,206 +2821,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_field_xt_31_max_800_d960081f() 
 fn test_aarch64_integer_tags_mcsettagandzerodata_combo_0_800_d9600800() {
     // Encoding: 0xD9600800
     // Test aarch64_integer_tags_mcsettagandzerodata field combination: imm9=0, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=0
+    // Fields: imm9=0, Xt=0, Xn=0
     let encoding: u32 = 0xD9600800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodata
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodata_combo_1_800_d9601800() {
-    // Encoding: 0xD9601800
-    // Test aarch64_integer_tags_mcsettagandzerodata field combination: imm9=1, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=1, Xn=0
-    let encoding: u32 = 0xD9601800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodata
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=3 (2^2 - 1 = 3)
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodata_combo_2_800_d9603800() {
-    // Encoding: 0xD9603800
-    // Test aarch64_integer_tags_mcsettagandzerodata field combination: imm9=3, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=3, Xt=0
-    let encoding: u32 = 0xD9603800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodata
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=4 (power of 2 (2^2 = 4))
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodata_combo_3_800_d9604800() {
-    // Encoding: 0xD9604800
-    // Test aarch64_integer_tags_mcsettagandzerodata field combination: imm9=4, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=4
-    let encoding: u32 = 0xD9604800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodata
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=7 (2^3 - 1 = 7)
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodata_combo_4_800_d9607800() {
-    // Encoding: 0xD9607800
-    // Test aarch64_integer_tags_mcsettagandzerodata field combination: imm9=7, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=7, Xn=0
-    let encoding: u32 = 0xD9607800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodata
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=8 (power of 2 (2^3 = 8))
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodata_combo_5_800_d9608800() {
-    // Encoding: 0xD9608800
-    // Test aarch64_integer_tags_mcsettagandzerodata field combination: imm9=8, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=8, Xt=0
-    let encoding: u32 = 0xD9608800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodata
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=15 (2^4 - 1 = 15)
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodata_combo_6_800_d960f800() {
-    // Encoding: 0xD960F800
-    // Test aarch64_integer_tags_mcsettagandzerodata field combination: imm9=15, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=15, Xt=0
-    let encoding: u32 = 0xD960F800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodata
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=16 (power of 2 (2^4 = 16))
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodata_combo_7_800_d9610800() {
-    // Encoding: 0xD9610800
-    // Test aarch64_integer_tags_mcsettagandzerodata field combination: imm9=16, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=16, Xn=0
-    let encoding: u32 = 0xD9610800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodata
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=31 (2^5 - 1 = 31)
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodata_combo_8_800_d961f800() {
-    // Encoding: 0xD961F800
-    // Test aarch64_integer_tags_mcsettagandzerodata field combination: imm9=31, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=31
-    let encoding: u32 = 0xD961F800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagandzerodata
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=32 (power of 2 (2^5 = 32))
-#[test]
-fn test_aarch64_integer_tags_mcsettagandzerodata_combo_9_800_d9620800() {
-    // Encoding: 0xD9620800
-    // Test aarch64_integer_tags_mcsettagandzerodata field combination: imm9=32, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=32
-    let encoding: u32 = 0xD9620800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -4815,21 +2834,15 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_combo_9_800_d9620800() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettagandzerodata_special_xn_31_stack_pointer_sp_may_require_alignment_2048_d9600be0(
-) {
+fn test_aarch64_integer_tags_mcsettagandzerodata_special_xn_31_stack_pointer_sp_may_require_alignment_2048_d9600be0() {
     // Encoding: 0xD9600BE0
     // Test aarch64_integer_tags_mcsettagandzerodata special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: imm9=0, Xn=31, Xt=0
+    // Fields: Xn=31, Xt=0, imm9=0
     let encoding: u32 = 0xD9600BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -4860,8 +2873,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_ldr_oracle_1_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -4879,8 +2891,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_ldr_oracle_2_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -4898,17 +2909,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_ldr_oracle_3_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFF,
-        "X0 should be 0x00000000FFFFFFFF"
-    );
+    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFF, "X0 should be 0x00000000FFFFFFFF");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -4921,17 +2927,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_ldr_oracle_4_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18])
-        .unwrap();
+    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x123456789ABCDEF0,
-        "X0 should be 0x123456789ABCDEF0"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x123456789ABCDEF0, "X0 should be 0x123456789ABCDEF0");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -4944,8 +2945,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_ldr_oracle_5_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -4963,8 +2963,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_ldr_oracle_6_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -4982,17 +2981,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapost_ldr_oracle_7_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x80000000,
-        "X0 should be 0x0000000080000000"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x80000000, "X0 should be 0x0000000080000000");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapost
@@ -5085,8 +3079,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_ldr_oracle_1_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -5104,8 +3097,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_ldr_oracle_2_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -5123,17 +3115,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_ldr_oracle_3_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFF,
-        "X0 should be 0x00000000FFFFFFFF"
-    );
+    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFF, "X0 should be 0x00000000FFFFFFFF");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -5146,17 +3133,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_ldr_oracle_4_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18])
-        .unwrap();
+    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x123456789ABCDEF0,
-        "X0 should be 0x123456789ABCDEF0"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x123456789ABCDEF0, "X0 should be 0x123456789ABCDEF0");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -5169,8 +3151,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_ldr_oracle_5_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -5188,8 +3169,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_ldr_oracle_6_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -5207,17 +3187,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_ldr_oracle_7_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x80000000,
-        "X0 should be 0x0000000080000000"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x80000000, "X0 should be 0x0000000080000000");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodatapre
@@ -5274,8 +3249,8 @@ fn test_aarch64_integer_tags_mcsettagandzerodatapre_store_0_d9600c00() {
     // Test aarch64_integer_tags_mcsettagandzerodatapre memory store: 8 bytes
     // Encoding: 0xD9600C00
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x100000000000);
     set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
+    set_x(&mut cpu, 1, 0x100000000000);
     let encoding: u32 = 0xD9600C00;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -5310,8 +3285,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_ldr_oracle_1_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -5329,8 +3303,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_ldr_oracle_2_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -5348,17 +3321,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_ldr_oracle_3_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFF,
-        "X0 should be 0x00000000FFFFFFFF"
-    );
+    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFF, "X0 should be 0x00000000FFFFFFFF");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -5371,17 +3339,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_ldr_oracle_4_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18])
-        .unwrap();
+    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x123456789ABCDEF0,
-        "X0 should be 0x123456789ABCDEF0"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x123456789ABCDEF0, "X0 should be 0x123456789ABCDEF0");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -5394,8 +3357,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_ldr_oracle_5_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -5413,8 +3375,7 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_ldr_oracle_6_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -5432,17 +3393,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_ldr_oracle_7_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x80000000,
-        "X0 should be 0x0000000080000000"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x80000000, "X0 should be 0x0000000080000000");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagandzerodata
@@ -5499,8 +3455,8 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_store_0_d9600800() {
     // Test aarch64_integer_tags_mcsettagandzerodata memory store: 8 bytes
     // Encoding: 0xD9600800
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     set_x(&mut cpu, 1, 0x100000000000);
+    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     let encoding: u32 = 0xD9600800;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -5519,17 +3475,12 @@ fn test_aarch64_integer_tags_mcsettagandzerodata_store_0_d9600800() {
 fn test_aarch64_integer_tags_mcinsertrandomtag_field_xm_0_min_1000_9ac01000() {
     // Encoding: 0x9AC01000
     // Test aarch64_integer_tags_mcinsertrandomtag field Xm = 0 (Min)
-    // Fields: Xn=0, Xd=0, Xm=0
+    // Fields: Xd=0, Xm=0, Xn=0
     let encoding: u32 = 0x9AC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -5540,17 +3491,12 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_field_xm_0_min_1000_9ac01000() {
 fn test_aarch64_integer_tags_mcinsertrandomtag_field_xm_1_poweroftwo_1000_9ac11000() {
     // Encoding: 0x9AC11000
     // Test aarch64_integer_tags_mcinsertrandomtag field Xm = 1 (PowerOfTwo)
-    // Fields: Xn=0, Xm=1, Xd=0
+    // Fields: Xn=0, Xd=0, Xm=1
     let encoding: u32 = 0x9AC11000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -5561,17 +3507,12 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_field_xm_1_poweroftwo_1000_9ac110
 fn test_aarch64_integer_tags_mcinsertrandomtag_field_xm_30_poweroftwominusone_1000_9ade1000() {
     // Encoding: 0x9ADE1000
     // Test aarch64_integer_tags_mcinsertrandomtag field Xm = 30 (PowerOfTwoMinusOne)
-    // Fields: Xd=0, Xn=0, Xm=30
+    // Fields: Xm=30, Xd=0, Xn=0
     let encoding: u32 = 0x9ADE1000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -5582,17 +3523,12 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_field_xm_30_poweroftwominusone_10
 fn test_aarch64_integer_tags_mcinsertrandomtag_field_xm_31_max_1000_9adf1000() {
     // Encoding: 0x9ADF1000
     // Test aarch64_integer_tags_mcinsertrandomtag field Xm = 31 (Max)
-    // Fields: Xm=31, Xd=0, Xn=0
+    // Fields: Xn=0, Xd=0, Xm=31
     let encoding: u32 = 0x9ADF1000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -5603,17 +3539,12 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_field_xm_31_max_1000_9adf1000() {
 fn test_aarch64_integer_tags_mcinsertrandomtag_field_xn_0_min_1000_9ac01000() {
     // Encoding: 0x9AC01000
     // Test aarch64_integer_tags_mcinsertrandomtag field Xn = 0 (Min)
-    // Fields: Xn=0, Xm=0, Xd=0
+    // Fields: Xm=0, Xd=0, Xn=0
     let encoding: u32 = 0x9AC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -5624,17 +3555,12 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_field_xn_0_min_1000_9ac01000() {
 fn test_aarch64_integer_tags_mcinsertrandomtag_field_xn_1_poweroftwo_1000_9ac01020() {
     // Encoding: 0x9AC01020
     // Test aarch64_integer_tags_mcinsertrandomtag field Xn = 1 (PowerOfTwo)
-    // Fields: Xd=0, Xn=1, Xm=0
+    // Fields: Xm=0, Xd=0, Xn=1
     let encoding: u32 = 0x9AC01020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -5645,17 +3571,12 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_field_xn_1_poweroftwo_1000_9ac010
 fn test_aarch64_integer_tags_mcinsertrandomtag_field_xn_30_poweroftwominusone_1000_9ac013c0() {
     // Encoding: 0x9AC013C0
     // Test aarch64_integer_tags_mcinsertrandomtag field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xd=0, Xm=0, Xn=30
+    // Fields: Xm=0, Xn=30, Xd=0
     let encoding: u32 = 0x9AC013C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -5666,17 +3587,12 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_field_xn_30_poweroftwominusone_10
 fn test_aarch64_integer_tags_mcinsertrandomtag_field_xn_31_max_1000_9ac013e0() {
     // Encoding: 0x9AC013E0
     // Test aarch64_integer_tags_mcinsertrandomtag field Xn = 31 (Max)
-    // Fields: Xm=0, Xd=0, Xn=31
+    // Fields: Xm=0, Xn=31, Xd=0
     let encoding: u32 = 0x9AC013E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -5687,17 +3603,12 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_field_xn_31_max_1000_9ac013e0() {
 fn test_aarch64_integer_tags_mcinsertrandomtag_field_xd_0_min_1000_9ac01000() {
     // Encoding: 0x9AC01000
     // Test aarch64_integer_tags_mcinsertrandomtag field Xd = 0 (Min)
-    // Fields: Xn=0, Xm=0, Xd=0
+    // Fields: Xd=0, Xm=0, Xn=0
     let encoding: u32 = 0x9AC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -5708,17 +3619,12 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_field_xd_0_min_1000_9ac01000() {
 fn test_aarch64_integer_tags_mcinsertrandomtag_field_xd_1_poweroftwo_1000_9ac01001() {
     // Encoding: 0x9AC01001
     // Test aarch64_integer_tags_mcinsertrandomtag field Xd = 1 (PowerOfTwo)
-    // Fields: Xm=0, Xd=1, Xn=0
+    // Fields: Xd=1, Xm=0, Xn=0
     let encoding: u32 = 0x9AC01001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -5729,17 +3635,12 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_field_xd_1_poweroftwo_1000_9ac010
 fn test_aarch64_integer_tags_mcinsertrandomtag_field_xd_30_poweroftwominusone_1000_9ac0101e() {
     // Encoding: 0x9AC0101E
     // Test aarch64_integer_tags_mcinsertrandomtag field Xd = 30 (PowerOfTwoMinusOne)
-    // Fields: Xm=0, Xn=0, Xd=30
+    // Fields: Xn=0, Xd=30, Xm=0
     let encoding: u32 = 0x9AC0101E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -5755,12 +3656,7 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_field_xd_31_max_1000_9ac0101f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -5771,206 +3667,12 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_field_xd_31_max_1000_9ac0101f() {
 fn test_aarch64_integer_tags_mcinsertrandomtag_combo_0_1000_9ac01000() {
     // Encoding: 0x9AC01000
     // Test aarch64_integer_tags_mcinsertrandomtag field combination: Xm=0, Xn=0, Xd=0
-    // Fields: Xd=0, Xm=0, Xn=0
+    // Fields: Xm=0, Xn=0, Xd=0
     let encoding: u32 = 0x9AC01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinsertrandomtag
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_integer_tags_mcinsertrandomtag_combo_1_1000_9ac11000() {
-    // Encoding: 0x9AC11000
-    // Test aarch64_integer_tags_mcinsertrandomtag field combination: Xm=1, Xn=0, Xd=0
-    // Fields: Xm=1, Xn=0, Xd=0
-    let encoding: u32 = 0x9AC11000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinsertrandomtag
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xm=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_integer_tags_mcinsertrandomtag_combo_2_1000_9ade1000() {
-    // Encoding: 0x9ADE1000
-    // Test aarch64_integer_tags_mcinsertrandomtag field combination: Xm=30, Xn=0, Xd=0
-    // Fields: Xn=0, Xd=0, Xm=30
-    let encoding: u32 = 0x9ADE1000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinsertrandomtag
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xm=31 (register index 31 (special))
-#[test]
-fn test_aarch64_integer_tags_mcinsertrandomtag_combo_3_1000_9adf1000() {
-    // Encoding: 0x9ADF1000
-    // Test aarch64_integer_tags_mcinsertrandomtag field combination: Xm=31, Xn=0, Xd=0
-    // Fields: Xm=31, Xd=0, Xn=0
-    let encoding: u32 = 0x9ADF1000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinsertrandomtag
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_integer_tags_mcinsertrandomtag_combo_4_1000_9ac01000() {
-    // Encoding: 0x9AC01000
-    // Test aarch64_integer_tags_mcinsertrandomtag field combination: Xm=0, Xn=0, Xd=0
-    // Fields: Xn=0, Xm=0, Xd=0
-    let encoding: u32 = 0x9AC01000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinsertrandomtag
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_integer_tags_mcinsertrandomtag_combo_5_1000_9ac01020() {
-    // Encoding: 0x9AC01020
-    // Test aarch64_integer_tags_mcinsertrandomtag field combination: Xm=0, Xn=1, Xd=0
-    // Fields: Xn=1, Xm=0, Xd=0
-    let encoding: u32 = 0x9AC01020;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinsertrandomtag
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_integer_tags_mcinsertrandomtag_combo_6_1000_9ac013c0() {
-    // Encoding: 0x9AC013C0
-    // Test aarch64_integer_tags_mcinsertrandomtag field combination: Xm=0, Xn=30, Xd=0
-    // Fields: Xd=0, Xn=30, Xm=0
-    let encoding: u32 = 0x9AC013C0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinsertrandomtag
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=31 (register index 31 (SP - stack pointer))
-#[test]
-fn test_aarch64_integer_tags_mcinsertrandomtag_combo_7_1000_9ac013e0() {
-    // Encoding: 0x9AC013E0
-    // Test aarch64_integer_tags_mcinsertrandomtag field combination: Xm=0, Xn=31, Xd=0
-    // Fields: Xm=0, Xn=31, Xd=0
-    let encoding: u32 = 0x9AC013E0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinsertrandomtag
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xd=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_integer_tags_mcinsertrandomtag_combo_8_1000_9ac01000() {
-    // Encoding: 0x9AC01000
-    // Test aarch64_integer_tags_mcinsertrandomtag field combination: Xm=0, Xn=0, Xd=0
-    // Fields: Xd=0, Xm=0, Xn=0
-    let encoding: u32 = 0x9AC01000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinsertrandomtag
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xd=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_integer_tags_mcinsertrandomtag_combo_9_1000_9ac01001() {
-    // Encoding: 0x9AC01001
-    // Test aarch64_integer_tags_mcinsertrandomtag field combination: Xm=0, Xn=0, Xd=1
-    // Fields: Xd=1, Xn=0, Xm=0
-    let encoding: u32 = 0x9AC01001;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -5978,21 +3680,15 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_combo_9_1000_9ac01001() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcinsertrandomtag_special_xn_31_stack_pointer_sp_may_require_alignment_4096_9ac013e0(
-) {
+fn test_aarch64_integer_tags_mcinsertrandomtag_special_xn_31_stack_pointer_sp_may_require_alignment_4096_9ac013e0() {
     // Encoding: 0x9AC013E0
     // Test aarch64_integer_tags_mcinsertrandomtag special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Xn=31, Xm=0, Xd=0
+    // Fields: Xd=0, Xm=0, Xn=31
     let encoding: u32 = 0x9AC013E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -6046,11 +3742,7 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_umulh_oracle_2_9bc27c20() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFFFFFFFFFE,
-        "X0 should be 0xFFFFFFFFFFFFFFFE"
-    );
+    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFFE, "X0 should be 0xFFFFFFFFFFFFFFFE");
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -6068,11 +3760,7 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_umulh_oracle_3_9bc27c20() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x3FFFFFFFFFFFFFFF,
-        "X0 should be 0x3FFFFFFFFFFFFFFF"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x3FFFFFFFFFFFFFFF, "X0 should be 0x3FFFFFFFFFFFFFFF");
 }
 
 /// Provenance: aarch64_integer_tags_mcinsertrandomtag
@@ -6084,8 +3772,8 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_umulh_oracle_4_9bc27c20() {
     // Test UMULH: 2^32 * 2^32 (oracle)
     // Encoding: 0x9BC27C20
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x100000000);
     set_x(&mut cpu, 1, 0x100000000);
+    set_x(&mut cpu, 2, 0x100000000);
     let encoding: u32 = 0x9BC27C20;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -6150,17 +3838,12 @@ fn test_aarch64_integer_tags_mcinsertrandomtag_sp_xn_9ac013e0() {
 fn test_aarch64_integer_tags_mcsettagpost_field_imm9_0_zero_400_d9200400() {
     // Encoding: 0xD9200400
     // Test aarch64_integer_tags_mcsettagpost field imm9 = 0 (Zero)
-    // Fields: Xt=0, Xn=0, imm9=0
+    // Fields: imm9=0, Xt=0, Xn=0
     let encoding: u32 = 0xD9200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6171,17 +3854,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_0_zero_400_d9200400() {
 fn test_aarch64_integer_tags_mcsettagpost_field_imm9_1_poweroftwo_400_d9201400() {
     // Encoding: 0xD9201400
     // Test aarch64_integer_tags_mcsettagpost field imm9 = 1 (PowerOfTwo)
-    // Fields: Xt=0, imm9=1, Xn=0
+    // Fields: imm9=1, Xn=0, Xt=0
     let encoding: u32 = 0xD9201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6192,17 +3870,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_1_poweroftwo_400_d9201400()
 fn test_aarch64_integer_tags_mcsettagpost_field_imm9_3_poweroftwominusone_400_d9203400() {
     // Encoding: 0xD9203400
     // Test aarch64_integer_tags_mcsettagpost field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: imm9=3, Xn=0, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=3
     let encoding: u32 = 0xD9203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6213,17 +3886,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_3_poweroftwominusone_400_d9
 fn test_aarch64_integer_tags_mcsettagpost_field_imm9_4_poweroftwo_400_d9204400() {
     // Encoding: 0xD9204400
     // Test aarch64_integer_tags_mcsettagpost field imm9 = 4 (PowerOfTwo)
-    // Fields: Xn=0, Xt=0, imm9=4
+    // Fields: Xt=0, imm9=4, Xn=0
     let encoding: u32 = 0xD9204400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6234,17 +3902,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_4_poweroftwo_400_d9204400()
 fn test_aarch64_integer_tags_mcsettagpost_field_imm9_7_poweroftwominusone_400_d9207400() {
     // Encoding: 0xD9207400
     // Test aarch64_integer_tags_mcsettagpost field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, imm9=7, Xt=0
+    // Fields: Xt=0, imm9=7, Xn=0
     let encoding: u32 = 0xD9207400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6255,17 +3918,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_7_poweroftwominusone_400_d9
 fn test_aarch64_integer_tags_mcsettagpost_field_imm9_8_poweroftwo_400_d9208400() {
     // Encoding: 0xD9208400
     // Test aarch64_integer_tags_mcsettagpost field imm9 = 8 (PowerOfTwo)
-    // Fields: imm9=8, Xt=0, Xn=0
+    // Fields: Xn=0, Xt=0, imm9=8
     let encoding: u32 = 0xD9208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6276,17 +3934,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_8_poweroftwo_400_d9208400()
 fn test_aarch64_integer_tags_mcsettagpost_field_imm9_15_poweroftwominusone_400_d920f400() {
     // Encoding: 0xD920F400
     // Test aarch64_integer_tags_mcsettagpost field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: imm9=15, Xt=0, Xn=0
+    // Fields: Xn=0, Xt=0, imm9=15
     let encoding: u32 = 0xD920F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6302,12 +3955,7 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_16_poweroftwo_400_d9210400(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6318,17 +3966,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_16_poweroftwo_400_d9210400(
 fn test_aarch64_integer_tags_mcsettagpost_field_imm9_31_poweroftwominusone_400_d921f400() {
     // Encoding: 0xD921F400
     // Test aarch64_integer_tags_mcsettagpost field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: imm9=31, Xn=0, Xt=0
+    // Fields: Xt=0, Xn=0, imm9=31
     let encoding: u32 = 0xD921F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6339,17 +3982,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_31_poweroftwominusone_400_d
 fn test_aarch64_integer_tags_mcsettagpost_field_imm9_32_poweroftwo_400_d9220400() {
     // Encoding: 0xD9220400
     // Test aarch64_integer_tags_mcsettagpost field imm9 = 32 (PowerOfTwo)
-    // Fields: imm9=32, Xn=0, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=32
     let encoding: u32 = 0xD9220400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6365,12 +4003,7 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_63_poweroftwominusone_400_d
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6381,17 +4014,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_63_poweroftwominusone_400_d
 fn test_aarch64_integer_tags_mcsettagpost_field_imm9_64_poweroftwo_400_d9240400() {
     // Encoding: 0xD9240400
     // Test aarch64_integer_tags_mcsettagpost field imm9 = 64 (PowerOfTwo)
-    // Fields: Xn=0, imm9=64, Xt=0
+    // Fields: imm9=64, Xn=0, Xt=0
     let encoding: u32 = 0xD9240400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6407,12 +4035,7 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_127_poweroftwominusone_400_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6423,17 +4046,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_127_poweroftwominusone_400_
 fn test_aarch64_integer_tags_mcsettagpost_field_imm9_128_poweroftwo_400_d9280400() {
     // Encoding: 0xD9280400
     // Test aarch64_integer_tags_mcsettagpost field imm9 = 128 (PowerOfTwo)
-    // Fields: Xt=0, imm9=128, Xn=0
+    // Fields: Xn=0, Xt=0, imm9=128
     let encoding: u32 = 0xD9280400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6444,17 +4062,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_128_poweroftwo_400_d9280400
 fn test_aarch64_integer_tags_mcsettagpost_field_imm9_255_poweroftwominusone_400_d92ff400() {
     // Encoding: 0xD92FF400
     // Test aarch64_integer_tags_mcsettagpost field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=0, imm9=255
+    // Fields: Xn=0, imm9=255, Xt=0
     let encoding: u32 = 0xD92FF400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6465,17 +4078,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_255_poweroftwominusone_400_
 fn test_aarch64_integer_tags_mcsettagpost_field_imm9_256_poweroftwo_400_d9300400() {
     // Encoding: 0xD9300400
     // Test aarch64_integer_tags_mcsettagpost field imm9 = 256 (PowerOfTwo)
-    // Fields: Xt=0, Xn=0, imm9=256
+    // Fields: Xt=0, imm9=256, Xn=0
     let encoding: u32 = 0xD9300400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6486,17 +4094,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_256_poweroftwo_400_d9300400
 fn test_aarch64_integer_tags_mcsettagpost_field_imm9_511_max_400_d93ff400() {
     // Encoding: 0xD93FF400
     // Test aarch64_integer_tags_mcsettagpost field imm9 = 511 (Max)
-    // Fields: imm9=511, Xn=0, Xt=0
+    // Fields: imm9=511, Xt=0, Xn=0
     let encoding: u32 = 0xD93FF400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6507,17 +4110,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_imm9_511_max_400_d93ff400() {
 fn test_aarch64_integer_tags_mcsettagpost_field_xn_0_min_400_d9200400() {
     // Encoding: 0xD9200400
     // Test aarch64_integer_tags_mcsettagpost field Xn = 0 (Min)
-    // Fields: Xn=0, Xt=0, imm9=0
+    // Fields: Xt=0, imm9=0, Xn=0
     let encoding: u32 = 0xD9200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6533,12 +4131,7 @@ fn test_aarch64_integer_tags_mcsettagpost_field_xn_1_poweroftwo_400_d9200420() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6549,17 +4142,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_xn_1_poweroftwo_400_d9200420() {
 fn test_aarch64_integer_tags_mcsettagpost_field_xn_30_poweroftwominusone_400_d92007c0() {
     // Encoding: 0xD92007C0
     // Test aarch64_integer_tags_mcsettagpost field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: imm9=0, Xt=0, Xn=30
+    // Fields: Xn=30, Xt=0, imm9=0
     let encoding: u32 = 0xD92007C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6570,17 +4158,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_xn_30_poweroftwominusone_400_d92
 fn test_aarch64_integer_tags_mcsettagpost_field_xn_31_max_400_d92007e0() {
     // Encoding: 0xD92007E0
     // Test aarch64_integer_tags_mcsettagpost field Xn = 31 (Max)
-    // Fields: Xn=31, Xt=0, imm9=0
+    // Fields: Xn=31, imm9=0, Xt=0
     let encoding: u32 = 0xD92007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6591,17 +4174,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_xn_31_max_400_d92007e0() {
 fn test_aarch64_integer_tags_mcsettagpost_field_xt_0_min_400_d9200400() {
     // Encoding: 0xD9200400
     // Test aarch64_integer_tags_mcsettagpost field Xt = 0 (Min)
-    // Fields: Xt=0, Xn=0, imm9=0
+    // Fields: Xn=0, Xt=0, imm9=0
     let encoding: u32 = 0xD9200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6617,12 +4195,7 @@ fn test_aarch64_integer_tags_mcsettagpost_field_xt_1_poweroftwo_400_d9200401() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6638,12 +4211,7 @@ fn test_aarch64_integer_tags_mcsettagpost_field_xt_30_poweroftwominusone_400_d92
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6654,17 +4222,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_xt_30_poweroftwominusone_400_d92
 fn test_aarch64_integer_tags_mcsettagpost_field_xt_31_max_400_d920041f() {
     // Encoding: 0xD920041F
     // Test aarch64_integer_tags_mcsettagpost field Xt = 31 (Max)
-    // Fields: Xt=31, imm9=0, Xn=0
+    // Fields: imm9=0, Xn=0, Xt=31
     let encoding: u32 = 0xD920041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6675,206 +4238,12 @@ fn test_aarch64_integer_tags_mcsettagpost_field_xt_31_max_400_d920041f() {
 fn test_aarch64_integer_tags_mcsettagpost_combo_0_400_d9200400() {
     // Encoding: 0xD9200400
     // Test aarch64_integer_tags_mcsettagpost field combination: imm9=0, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=0
+    // Fields: Xn=0, Xt=0, imm9=0
     let encoding: u32 = 0xD9200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpost
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpost_combo_1_400_d9201400() {
-    // Encoding: 0xD9201400
-    // Test aarch64_integer_tags_mcsettagpost field combination: imm9=1, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=1, Xt=0
-    let encoding: u32 = 0xD9201400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpost
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=3 (2^2 - 1 = 3)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpost_combo_2_400_d9203400() {
-    // Encoding: 0xD9203400
-    // Test aarch64_integer_tags_mcsettagpost field combination: imm9=3, Xn=0, Xt=0
-    // Fields: imm9=3, Xn=0, Xt=0
-    let encoding: u32 = 0xD9203400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpost
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=4 (power of 2 (2^2 = 4))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpost_combo_3_400_d9204400() {
-    // Encoding: 0xD9204400
-    // Test aarch64_integer_tags_mcsettagpost field combination: imm9=4, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=4, Xt=0
-    let encoding: u32 = 0xD9204400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpost
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=7 (2^3 - 1 = 7)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpost_combo_4_400_d9207400() {
-    // Encoding: 0xD9207400
-    // Test aarch64_integer_tags_mcsettagpost field combination: imm9=7, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=7, Xn=0
-    let encoding: u32 = 0xD9207400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpost
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=8 (power of 2 (2^3 = 8))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpost_combo_5_400_d9208400() {
-    // Encoding: 0xD9208400
-    // Test aarch64_integer_tags_mcsettagpost field combination: imm9=8, Xn=0, Xt=0
-    // Fields: imm9=8, Xn=0, Xt=0
-    let encoding: u32 = 0xD9208400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpost
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=15 (2^4 - 1 = 15)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpost_combo_6_400_d920f400() {
-    // Encoding: 0xD920F400
-    // Test aarch64_integer_tags_mcsettagpost field combination: imm9=15, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=15, Xt=0
-    let encoding: u32 = 0xD920F400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpost
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=16 (power of 2 (2^4 = 16))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpost_combo_7_400_d9210400() {
-    // Encoding: 0xD9210400
-    // Test aarch64_integer_tags_mcsettagpost field combination: imm9=16, Xn=0, Xt=0
-    // Fields: imm9=16, Xn=0, Xt=0
-    let encoding: u32 = 0xD9210400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpost
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=31 (2^5 - 1 = 31)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpost_combo_8_400_d921f400() {
-    // Encoding: 0xD921F400
-    // Test aarch64_integer_tags_mcsettagpost field combination: imm9=31, Xn=0, Xt=0
-    // Fields: imm9=31, Xn=0, Xt=0
-    let encoding: u32 = 0xD921F400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpost
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=32 (power of 2 (2^5 = 32))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpost_combo_9_400_d9220400() {
-    // Encoding: 0xD9220400
-    // Test aarch64_integer_tags_mcsettagpost field combination: imm9=32, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=32
-    let encoding: u32 = 0xD9220400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -6882,21 +4251,15 @@ fn test_aarch64_integer_tags_mcsettagpost_combo_9_400_d9220400() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettagpost_special_xn_31_stack_pointer_sp_may_require_alignment_1024_d92007e0(
-) {
+fn test_aarch64_integer_tags_mcsettagpost_special_xn_31_stack_pointer_sp_may_require_alignment_1024_d92007e0() {
     // Encoding: 0xD92007E0
     // Test aarch64_integer_tags_mcsettagpost special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Xn=31, imm9=0, Xt=0
+    // Fields: imm9=0, Xn=31, Xt=0
     let encoding: u32 = 0xD92007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -6907,17 +4270,12 @@ fn test_aarch64_integer_tags_mcsettagpost_special_xn_31_stack_pointer_sp_may_req
 fn test_aarch64_integer_tags_mcsettagpre_field_imm9_0_zero_c00_d9200c00() {
     // Encoding: 0xD9200C00
     // Test aarch64_integer_tags_mcsettagpre field imm9 = 0 (Zero)
-    // Fields: Xn=0, imm9=0, Xt=0
+    // Fields: imm9=0, Xn=0, Xt=0
     let encoding: u32 = 0xD9200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -6928,17 +4286,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_0_zero_c00_d9200c00() {
 fn test_aarch64_integer_tags_mcsettagpre_field_imm9_1_poweroftwo_c00_d9201c00() {
     // Encoding: 0xD9201C00
     // Test aarch64_integer_tags_mcsettagpre field imm9 = 1 (PowerOfTwo)
-    // Fields: Xt=0, Xn=0, imm9=1
+    // Fields: imm9=1, Xn=0, Xt=0
     let encoding: u32 = 0xD9201C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -6949,17 +4302,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_1_poweroftwo_c00_d9201c00() 
 fn test_aarch64_integer_tags_mcsettagpre_field_imm9_3_poweroftwominusone_c00_d9203c00() {
     // Encoding: 0xD9203C00
     // Test aarch64_integer_tags_mcsettagpre field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, imm9=3, Xt=0
+    // Fields: Xt=0, imm9=3, Xn=0
     let encoding: u32 = 0xD9203C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -6970,17 +4318,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_3_poweroftwominusone_c00_d92
 fn test_aarch64_integer_tags_mcsettagpre_field_imm9_4_poweroftwo_c00_d9204c00() {
     // Encoding: 0xD9204C00
     // Test aarch64_integer_tags_mcsettagpre field imm9 = 4 (PowerOfTwo)
-    // Fields: imm9=4, Xn=0, Xt=0
+    // Fields: Xt=0, imm9=4, Xn=0
     let encoding: u32 = 0xD9204C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -6991,17 +4334,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_4_poweroftwo_c00_d9204c00() 
 fn test_aarch64_integer_tags_mcsettagpre_field_imm9_7_poweroftwominusone_c00_d9207c00() {
     // Encoding: 0xD9207C00
     // Test aarch64_integer_tags_mcsettagpre field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, imm9=7, Xt=0
+    // Fields: Xt=0, Xn=0, imm9=7
     let encoding: u32 = 0xD9207C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7012,17 +4350,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_7_poweroftwominusone_c00_d92
 fn test_aarch64_integer_tags_mcsettagpre_field_imm9_8_poweroftwo_c00_d9208c00() {
     // Encoding: 0xD9208C00
     // Test aarch64_integer_tags_mcsettagpre field imm9 = 8 (PowerOfTwo)
-    // Fields: imm9=8, Xn=0, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=8
     let encoding: u32 = 0xD9208C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7033,17 +4366,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_8_poweroftwo_c00_d9208c00() 
 fn test_aarch64_integer_tags_mcsettagpre_field_imm9_15_poweroftwominusone_c00_d920fc00() {
     // Encoding: 0xD920FC00
     // Test aarch64_integer_tags_mcsettagpre field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: imm9=15, Xn=0, Xt=0
+    // Fields: Xn=0, imm9=15, Xt=0
     let encoding: u32 = 0xD920FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7054,17 +4382,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_15_poweroftwominusone_c00_d9
 fn test_aarch64_integer_tags_mcsettagpre_field_imm9_16_poweroftwo_c00_d9210c00() {
     // Encoding: 0xD9210C00
     // Test aarch64_integer_tags_mcsettagpre field imm9 = 16 (PowerOfTwo)
-    // Fields: Xt=0, imm9=16, Xn=0
+    // Fields: imm9=16, Xt=0, Xn=0
     let encoding: u32 = 0xD9210C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7075,17 +4398,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_16_poweroftwo_c00_d9210c00()
 fn test_aarch64_integer_tags_mcsettagpre_field_imm9_31_poweroftwominusone_c00_d921fc00() {
     // Encoding: 0xD921FC00
     // Test aarch64_integer_tags_mcsettagpre field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=31, Xn=0
+    // Fields: Xn=0, imm9=31, Xt=0
     let encoding: u32 = 0xD921FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7101,12 +4419,7 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_32_poweroftwo_c00_d9220c00()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7117,17 +4430,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_32_poweroftwo_c00_d9220c00()
 fn test_aarch64_integer_tags_mcsettagpre_field_imm9_63_poweroftwominusone_c00_d923fc00() {
     // Encoding: 0xD923FC00
     // Test aarch64_integer_tags_mcsettagpre field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, Xn=0, imm9=63
+    // Fields: Xn=0, Xt=0, imm9=63
     let encoding: u32 = 0xD923FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7138,17 +4446,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_63_poweroftwominusone_c00_d9
 fn test_aarch64_integer_tags_mcsettagpre_field_imm9_64_poweroftwo_c00_d9240c00() {
     // Encoding: 0xD9240C00
     // Test aarch64_integer_tags_mcsettagpre field imm9 = 64 (PowerOfTwo)
-    // Fields: Xt=0, imm9=64, Xn=0
+    // Fields: imm9=64, Xn=0, Xt=0
     let encoding: u32 = 0xD9240C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7159,17 +4462,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_64_poweroftwo_c00_d9240c00()
 fn test_aarch64_integer_tags_mcsettagpre_field_imm9_127_poweroftwominusone_c00_d927fc00() {
     // Encoding: 0xD927FC00
     // Test aarch64_integer_tags_mcsettagpre field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=127, Xn=0
+    // Fields: Xn=0, Xt=0, imm9=127
     let encoding: u32 = 0xD927FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7180,17 +4478,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_127_poweroftwominusone_c00_d
 fn test_aarch64_integer_tags_mcsettagpre_field_imm9_128_poweroftwo_c00_d9280c00() {
     // Encoding: 0xD9280C00
     // Test aarch64_integer_tags_mcsettagpre field imm9 = 128 (PowerOfTwo)
-    // Fields: Xt=0, imm9=128, Xn=0
+    // Fields: imm9=128, Xn=0, Xt=0
     let encoding: u32 = 0xD9280C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7201,17 +4494,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_128_poweroftwo_c00_d9280c00(
 fn test_aarch64_integer_tags_mcsettagpre_field_imm9_255_poweroftwominusone_c00_d92ffc00() {
     // Encoding: 0xD92FFC00
     // Test aarch64_integer_tags_mcsettagpre field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=0, imm9=255
+    // Fields: imm9=255, Xn=0, Xt=0
     let encoding: u32 = 0xD92FFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7227,12 +4515,7 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_256_poweroftwo_c00_d9300c00(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7243,17 +4526,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_256_poweroftwo_c00_d9300c00(
 fn test_aarch64_integer_tags_mcsettagpre_field_imm9_511_max_c00_d93ffc00() {
     // Encoding: 0xD93FFC00
     // Test aarch64_integer_tags_mcsettagpre field imm9 = 511 (Max)
-    // Fields: imm9=511, Xn=0, Xt=0
+    // Fields: imm9=511, Xt=0, Xn=0
     let encoding: u32 = 0xD93FFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7264,17 +4542,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_imm9_511_max_c00_d93ffc00() {
 fn test_aarch64_integer_tags_mcsettagpre_field_xn_0_min_c00_d9200c00() {
     // Encoding: 0xD9200C00
     // Test aarch64_integer_tags_mcsettagpre field Xn = 0 (Min)
-    // Fields: Xn=0, Xt=0, imm9=0
+    // Fields: imm9=0, Xn=0, Xt=0
     let encoding: u32 = 0xD9200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7290,12 +4563,7 @@ fn test_aarch64_integer_tags_mcsettagpre_field_xn_1_poweroftwo_c00_d9200c20() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7306,17 +4574,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_xn_1_poweroftwo_c00_d9200c20() {
 fn test_aarch64_integer_tags_mcsettagpre_field_xn_30_poweroftwominusone_c00_d9200fc0() {
     // Encoding: 0xD9200FC0
     // Test aarch64_integer_tags_mcsettagpre field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xn=30, Xt=0, imm9=0
+    // Fields: Xn=30, imm9=0, Xt=0
     let encoding: u32 = 0xD9200FC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7327,17 +4590,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_xn_30_poweroftwominusone_c00_d920
 fn test_aarch64_integer_tags_mcsettagpre_field_xn_31_max_c00_d9200fe0() {
     // Encoding: 0xD9200FE0
     // Test aarch64_integer_tags_mcsettagpre field Xn = 31 (Max)
-    // Fields: Xn=31, Xt=0, imm9=0
+    // Fields: Xt=0, Xn=31, imm9=0
     let encoding: u32 = 0xD9200FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7353,12 +4611,7 @@ fn test_aarch64_integer_tags_mcsettagpre_field_xt_0_min_c00_d9200c00() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7369,17 +4622,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_xt_0_min_c00_d9200c00() {
 fn test_aarch64_integer_tags_mcsettagpre_field_xt_1_poweroftwo_c00_d9200c01() {
     // Encoding: 0xD9200C01
     // Test aarch64_integer_tags_mcsettagpre field Xt = 1 (PowerOfTwo)
-    // Fields: Xt=1, Xn=0, imm9=0
+    // Fields: imm9=0, Xn=0, Xt=1
     let encoding: u32 = 0xD9200C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7390,17 +4638,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_xt_1_poweroftwo_c00_d9200c01() {
 fn test_aarch64_integer_tags_mcsettagpre_field_xt_30_poweroftwominusone_c00_d9200c1e() {
     // Encoding: 0xD9200C1E
     // Test aarch64_integer_tags_mcsettagpre field Xt = 30 (PowerOfTwoMinusOne)
-    // Fields: Xt=30, Xn=0, imm9=0
+    // Fields: imm9=0, Xn=0, Xt=30
     let encoding: u32 = 0xD9200C1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7411,17 +4654,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_xt_30_poweroftwominusone_c00_d920
 fn test_aarch64_integer_tags_mcsettagpre_field_xt_31_max_c00_d9200c1f() {
     // Encoding: 0xD9200C1F
     // Test aarch64_integer_tags_mcsettagpre field Xt = 31 (Max)
-    // Fields: Xn=0, Xt=31, imm9=0
+    // Fields: Xt=31, Xn=0, imm9=0
     let encoding: u32 = 0xD9200C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7432,206 +4670,12 @@ fn test_aarch64_integer_tags_mcsettagpre_field_xt_31_max_c00_d9200c1f() {
 fn test_aarch64_integer_tags_mcsettagpre_combo_0_c00_d9200c00() {
     // Encoding: 0xD9200C00
     // Test aarch64_integer_tags_mcsettagpre field combination: imm9=0, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=0
+    // Fields: imm9=0, Xn=0, Xt=0
     let encoding: u32 = 0xD9200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpre
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpre_combo_1_c00_d9201c00() {
-    // Encoding: 0xD9201C00
-    // Test aarch64_integer_tags_mcsettagpre field combination: imm9=1, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=1
-    let encoding: u32 = 0xD9201C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpre
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=3 (2^2 - 1 = 3)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpre_combo_2_c00_d9203c00() {
-    // Encoding: 0xD9203C00
-    // Test aarch64_integer_tags_mcsettagpre field combination: imm9=3, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=3
-    let encoding: u32 = 0xD9203C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpre
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=4 (power of 2 (2^2 = 4))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpre_combo_3_c00_d9204c00() {
-    // Encoding: 0xD9204C00
-    // Test aarch64_integer_tags_mcsettagpre field combination: imm9=4, Xn=0, Xt=0
-    // Fields: imm9=4, Xn=0, Xt=0
-    let encoding: u32 = 0xD9204C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpre
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=7 (2^3 - 1 = 7)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpre_combo_4_c00_d9207c00() {
-    // Encoding: 0xD9207C00
-    // Test aarch64_integer_tags_mcsettagpre field combination: imm9=7, Xn=0, Xt=0
-    // Fields: imm9=7, Xn=0, Xt=0
-    let encoding: u32 = 0xD9207C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpre
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=8 (power of 2 (2^3 = 8))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpre_combo_5_c00_d9208c00() {
-    // Encoding: 0xD9208C00
-    // Test aarch64_integer_tags_mcsettagpre field combination: imm9=8, Xn=0, Xt=0
-    // Fields: imm9=8, Xt=0, Xn=0
-    let encoding: u32 = 0xD9208C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpre
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=15 (2^4 - 1 = 15)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpre_combo_6_c00_d920fc00() {
-    // Encoding: 0xD920FC00
-    // Test aarch64_integer_tags_mcsettagpre field combination: imm9=15, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=15
-    let encoding: u32 = 0xD920FC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpre
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=16 (power of 2 (2^4 = 16))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpre_combo_7_c00_d9210c00() {
-    // Encoding: 0xD9210C00
-    // Test aarch64_integer_tags_mcsettagpre field combination: imm9=16, Xn=0, Xt=0
-    // Fields: imm9=16, Xn=0, Xt=0
-    let encoding: u32 = 0xD9210C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpre
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=31 (2^5 - 1 = 31)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpre_combo_8_c00_d921fc00() {
-    // Encoding: 0xD921FC00
-    // Test aarch64_integer_tags_mcsettagpre field combination: imm9=31, Xn=0, Xt=0
-    // Fields: imm9=31, Xt=0, Xn=0
-    let encoding: u32 = 0xD921FC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpre
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=32 (power of 2 (2^5 = 32))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpre_combo_9_c00_d9220c00() {
-    // Encoding: 0xD9220C00
-    // Test aarch64_integer_tags_mcsettagpre field combination: imm9=32, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=32, Xt=0
-    let encoding: u32 = 0xD9220C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -7639,21 +4683,15 @@ fn test_aarch64_integer_tags_mcsettagpre_combo_9_c00_d9220c00() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettagpre_special_xn_31_stack_pointer_sp_may_require_alignment_3072_d9200fe0(
-) {
+fn test_aarch64_integer_tags_mcsettagpre_special_xn_31_stack_pointer_sp_may_require_alignment_3072_d9200fe0() {
     // Encoding: 0xD9200FE0
     // Test aarch64_integer_tags_mcsettagpre special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: imm9=0, Xn=31, Xt=0
+    // Fields: Xt=0, imm9=0, Xn=31
     let encoding: u32 = 0xD9200FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7664,17 +4702,12 @@ fn test_aarch64_integer_tags_mcsettagpre_special_xn_31_stack_pointer_sp_may_requ
 fn test_aarch64_integer_tags_mcsettag_field_imm9_0_zero_800_d9200800() {
     // Encoding: 0xD9200800
     // Test aarch64_integer_tags_mcsettag field imm9 = 0 (Zero)
-    // Fields: Xt=0, Xn=0, imm9=0
+    // Fields: imm9=0, Xt=0, Xn=0
     let encoding: u32 = 0xD9200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7685,17 +4718,12 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_0_zero_800_d9200800() {
 fn test_aarch64_integer_tags_mcsettag_field_imm9_1_poweroftwo_800_d9201800() {
     // Encoding: 0xD9201800
     // Test aarch64_integer_tags_mcsettag field imm9 = 1 (PowerOfTwo)
-    // Fields: Xn=0, imm9=1, Xt=0
+    // Fields: imm9=1, Xt=0, Xn=0
     let encoding: u32 = 0xD9201800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7706,17 +4734,12 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_1_poweroftwo_800_d9201800() {
 fn test_aarch64_integer_tags_mcsettag_field_imm9_3_poweroftwominusone_800_d9203800() {
     // Encoding: 0xD9203800
     // Test aarch64_integer_tags_mcsettag field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, imm9=3, Xt=0
+    // Fields: imm9=3, Xn=0, Xt=0
     let encoding: u32 = 0xD9203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7732,12 +4755,7 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_4_poweroftwo_800_d9204800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7748,17 +4766,12 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_4_poweroftwo_800_d9204800() {
 fn test_aarch64_integer_tags_mcsettag_field_imm9_7_poweroftwominusone_800_d9207800() {
     // Encoding: 0xD9207800
     // Test aarch64_integer_tags_mcsettag field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=7, Xn=0
+    // Fields: Xt=0, Xn=0, imm9=7
     let encoding: u32 = 0xD9207800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7774,12 +4787,7 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_8_poweroftwo_800_d9208800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7790,17 +4798,12 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_8_poweroftwo_800_d9208800() {
 fn test_aarch64_integer_tags_mcsettag_field_imm9_15_poweroftwominusone_800_d920f800() {
     // Encoding: 0xD920F800
     // Test aarch64_integer_tags_mcsettag field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: imm9=15, Xt=0, Xn=0
+    // Fields: Xn=0, Xt=0, imm9=15
     let encoding: u32 = 0xD920F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7811,17 +4814,12 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_15_poweroftwominusone_800_d920f
 fn test_aarch64_integer_tags_mcsettag_field_imm9_16_poweroftwo_800_d9210800() {
     // Encoding: 0xD9210800
     // Test aarch64_integer_tags_mcsettag field imm9 = 16 (PowerOfTwo)
-    // Fields: Xt=0, Xn=0, imm9=16
+    // Fields: imm9=16, Xt=0, Xn=0
     let encoding: u32 = 0xD9210800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7837,12 +4835,7 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_31_poweroftwominusone_800_d921f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7853,17 +4846,12 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_31_poweroftwominusone_800_d921f
 fn test_aarch64_integer_tags_mcsettag_field_imm9_32_poweroftwo_800_d9220800() {
     // Encoding: 0xD9220800
     // Test aarch64_integer_tags_mcsettag field imm9 = 32 (PowerOfTwo)
-    // Fields: imm9=32, Xt=0, Xn=0
+    // Fields: Xn=0, imm9=32, Xt=0
     let encoding: u32 = 0xD9220800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7874,17 +4862,12 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_32_poweroftwo_800_d9220800() {
 fn test_aarch64_integer_tags_mcsettag_field_imm9_63_poweroftwominusone_800_d923f800() {
     // Encoding: 0xD923F800
     // Test aarch64_integer_tags_mcsettag field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=63, Xn=0
+    // Fields: imm9=63, Xn=0, Xt=0
     let encoding: u32 = 0xD923F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7895,17 +4878,12 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_63_poweroftwominusone_800_d923f
 fn test_aarch64_integer_tags_mcsettag_field_imm9_64_poweroftwo_800_d9240800() {
     // Encoding: 0xD9240800
     // Test aarch64_integer_tags_mcsettag field imm9 = 64 (PowerOfTwo)
-    // Fields: imm9=64, Xt=0, Xn=0
+    // Fields: imm9=64, Xn=0, Xt=0
     let encoding: u32 = 0xD9240800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7916,17 +4894,12 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_64_poweroftwo_800_d9240800() {
 fn test_aarch64_integer_tags_mcsettag_field_imm9_127_poweroftwominusone_800_d927f800() {
     // Encoding: 0xD927F800
     // Test aarch64_integer_tags_mcsettag field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, imm9=127, Xt=0
+    // Fields: imm9=127, Xt=0, Xn=0
     let encoding: u32 = 0xD927F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7937,17 +4910,12 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_127_poweroftwominusone_800_d927
 fn test_aarch64_integer_tags_mcsettag_field_imm9_128_poweroftwo_800_d9280800() {
     // Encoding: 0xD9280800
     // Test aarch64_integer_tags_mcsettag field imm9 = 128 (PowerOfTwo)
-    // Fields: imm9=128, Xt=0, Xn=0
+    // Fields: Xn=0, Xt=0, imm9=128
     let encoding: u32 = 0xD9280800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7958,17 +4926,12 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_128_poweroftwo_800_d9280800() {
 fn test_aarch64_integer_tags_mcsettag_field_imm9_255_poweroftwominusone_800_d92ff800() {
     // Encoding: 0xD92FF800
     // Test aarch64_integer_tags_mcsettag field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=255, Xn=0
+    // Fields: imm9=255, Xt=0, Xn=0
     let encoding: u32 = 0xD92FF800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -7984,12 +4947,7 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_256_poweroftwo_800_d9300800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8000,17 +4958,12 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_256_poweroftwo_800_d9300800() {
 fn test_aarch64_integer_tags_mcsettag_field_imm9_511_max_800_d93ff800() {
     // Encoding: 0xD93FF800
     // Test aarch64_integer_tags_mcsettag field imm9 = 511 (Max)
-    // Fields: Xt=0, imm9=511, Xn=0
+    // Fields: imm9=511, Xt=0, Xn=0
     let encoding: u32 = 0xD93FF800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8021,17 +4974,12 @@ fn test_aarch64_integer_tags_mcsettag_field_imm9_511_max_800_d93ff800() {
 fn test_aarch64_integer_tags_mcsettag_field_xn_0_min_800_d9200800() {
     // Encoding: 0xD9200800
     // Test aarch64_integer_tags_mcsettag field Xn = 0 (Min)
-    // Fields: Xn=0, Xt=0, imm9=0
+    // Fields: Xn=0, imm9=0, Xt=0
     let encoding: u32 = 0xD9200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8042,17 +4990,12 @@ fn test_aarch64_integer_tags_mcsettag_field_xn_0_min_800_d9200800() {
 fn test_aarch64_integer_tags_mcsettag_field_xn_1_poweroftwo_800_d9200820() {
     // Encoding: 0xD9200820
     // Test aarch64_integer_tags_mcsettag field Xn = 1 (PowerOfTwo)
-    // Fields: imm9=0, Xn=1, Xt=0
+    // Fields: Xn=1, Xt=0, imm9=0
     let encoding: u32 = 0xD9200820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8063,17 +5006,12 @@ fn test_aarch64_integer_tags_mcsettag_field_xn_1_poweroftwo_800_d9200820() {
 fn test_aarch64_integer_tags_mcsettag_field_xn_30_poweroftwominusone_800_d9200bc0() {
     // Encoding: 0xD9200BC0
     // Test aarch64_integer_tags_mcsettag field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xn=30, Xt=0, imm9=0
+    // Fields: Xt=0, Xn=30, imm9=0
     let encoding: u32 = 0xD9200BC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8084,17 +5022,12 @@ fn test_aarch64_integer_tags_mcsettag_field_xn_30_poweroftwominusone_800_d9200bc
 fn test_aarch64_integer_tags_mcsettag_field_xn_31_max_800_d9200be0() {
     // Encoding: 0xD9200BE0
     // Test aarch64_integer_tags_mcsettag field Xn = 31 (Max)
-    // Fields: Xt=0, Xn=31, imm9=0
+    // Fields: imm9=0, Xn=31, Xt=0
     let encoding: u32 = 0xD9200BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8105,17 +5038,12 @@ fn test_aarch64_integer_tags_mcsettag_field_xn_31_max_800_d9200be0() {
 fn test_aarch64_integer_tags_mcsettag_field_xt_0_min_800_d9200800() {
     // Encoding: 0xD9200800
     // Test aarch64_integer_tags_mcsettag field Xt = 0 (Min)
-    // Fields: imm9=0, Xt=0, Xn=0
+    // Fields: imm9=0, Xn=0, Xt=0
     let encoding: u32 = 0xD9200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8126,17 +5054,12 @@ fn test_aarch64_integer_tags_mcsettag_field_xt_0_min_800_d9200800() {
 fn test_aarch64_integer_tags_mcsettag_field_xt_1_poweroftwo_800_d9200801() {
     // Encoding: 0xD9200801
     // Test aarch64_integer_tags_mcsettag field Xt = 1 (PowerOfTwo)
-    // Fields: imm9=0, Xn=0, Xt=1
+    // Fields: Xt=1, Xn=0, imm9=0
     let encoding: u32 = 0xD9200801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8147,17 +5070,12 @@ fn test_aarch64_integer_tags_mcsettag_field_xt_1_poweroftwo_800_d9200801() {
 fn test_aarch64_integer_tags_mcsettag_field_xt_30_poweroftwominusone_800_d920081e() {
     // Encoding: 0xD920081E
     // Test aarch64_integer_tags_mcsettag field Xt = 30 (PowerOfTwoMinusOne)
-    // Fields: imm9=0, Xn=0, Xt=30
+    // Fields: Xt=30, Xn=0, imm9=0
     let encoding: u32 = 0xD920081E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8168,17 +5086,12 @@ fn test_aarch64_integer_tags_mcsettag_field_xt_30_poweroftwominusone_800_d920081
 fn test_aarch64_integer_tags_mcsettag_field_xt_31_max_800_d920081f() {
     // Encoding: 0xD920081F
     // Test aarch64_integer_tags_mcsettag field Xt = 31 (Max)
-    // Fields: Xt=31, imm9=0, Xn=0
+    // Fields: Xn=0, imm9=0, Xt=31
     let encoding: u32 = 0xD920081F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8194,201 +5107,7 @@ fn test_aarch64_integer_tags_mcsettag_combo_0_800_d9200800() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettag
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettag_combo_1_800_d9201800() {
-    // Encoding: 0xD9201800
-    // Test aarch64_integer_tags_mcsettag field combination: imm9=1, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=1, Xt=0
-    let encoding: u32 = 0xD9201800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettag
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=3 (2^2 - 1 = 3)
-#[test]
-fn test_aarch64_integer_tags_mcsettag_combo_2_800_d9203800() {
-    // Encoding: 0xD9203800
-    // Test aarch64_integer_tags_mcsettag field combination: imm9=3, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=3
-    let encoding: u32 = 0xD9203800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettag
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=4 (power of 2 (2^2 = 4))
-#[test]
-fn test_aarch64_integer_tags_mcsettag_combo_3_800_d9204800() {
-    // Encoding: 0xD9204800
-    // Test aarch64_integer_tags_mcsettag field combination: imm9=4, Xn=0, Xt=0
-    // Fields: imm9=4, Xn=0, Xt=0
-    let encoding: u32 = 0xD9204800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettag
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=7 (2^3 - 1 = 7)
-#[test]
-fn test_aarch64_integer_tags_mcsettag_combo_4_800_d9207800() {
-    // Encoding: 0xD9207800
-    // Test aarch64_integer_tags_mcsettag field combination: imm9=7, Xn=0, Xt=0
-    // Fields: imm9=7, Xt=0, Xn=0
-    let encoding: u32 = 0xD9207800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettag
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=8 (power of 2 (2^3 = 8))
-#[test]
-fn test_aarch64_integer_tags_mcsettag_combo_5_800_d9208800() {
-    // Encoding: 0xD9208800
-    // Test aarch64_integer_tags_mcsettag field combination: imm9=8, Xn=0, Xt=0
-    // Fields: imm9=8, Xn=0, Xt=0
-    let encoding: u32 = 0xD9208800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettag
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=15 (2^4 - 1 = 15)
-#[test]
-fn test_aarch64_integer_tags_mcsettag_combo_6_800_d920f800() {
-    // Encoding: 0xD920F800
-    // Test aarch64_integer_tags_mcsettag field combination: imm9=15, Xn=0, Xt=0
-    // Fields: imm9=15, Xn=0, Xt=0
-    let encoding: u32 = 0xD920F800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettag
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=16 (power of 2 (2^4 = 16))
-#[test]
-fn test_aarch64_integer_tags_mcsettag_combo_7_800_d9210800() {
-    // Encoding: 0xD9210800
-    // Test aarch64_integer_tags_mcsettag field combination: imm9=16, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=16, Xn=0
-    let encoding: u32 = 0xD9210800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettag
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=31 (2^5 - 1 = 31)
-#[test]
-fn test_aarch64_integer_tags_mcsettag_combo_8_800_d921f800() {
-    // Encoding: 0xD921F800
-    // Test aarch64_integer_tags_mcsettag field combination: imm9=31, Xn=0, Xt=0
-    // Fields: imm9=31, Xt=0, Xn=0
-    let encoding: u32 = 0xD921F800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettag
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=32 (power of 2 (2^5 = 32))
-#[test]
-fn test_aarch64_integer_tags_mcsettag_combo_9_800_d9220800() {
-    // Encoding: 0xD9220800
-    // Test aarch64_integer_tags_mcsettag field combination: imm9=32, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=32
-    let encoding: u32 = 0xD9220800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8396,8 +5115,7 @@ fn test_aarch64_integer_tags_mcsettag_combo_9_800_d9220800() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettag_special_xn_31_stack_pointer_sp_may_require_alignment_2048_d9200be0(
-) {
+fn test_aarch64_integer_tags_mcsettag_special_xn_31_stack_pointer_sp_may_require_alignment_2048_d9200be0() {
     // Encoding: 0xD9200BE0
     // Test aarch64_integer_tags_mcsettag special value Xn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: imm9=0, Xn=31, Xt=0
@@ -8405,12 +5123,7 @@ fn test_aarch64_integer_tags_mcsettag_special_xn_31_stack_pointer_sp_may_require
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -8422,13 +5135,17 @@ fn test_aarch64_integer_tags_mcsettagpost_str_oracle_0_f9000020() {
     // Test STR: zero value (oracle)
     // Encoding: 0xF9000020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1000);
     set_x(&mut cpu, 0, 0x0);
+    set_x(&mut cpu, 1, 0x1000);
     let encoding: u32 = 0xF9000020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 8)
+    {
+        let buf = cpu.read_memory(0x1000, 8).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x0, "Memory at 0x1000 should be 0x0");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -8446,7 +5163,11 @@ fn test_aarch64_integer_tags_mcsettagpost_str_oracle_1_f9000020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 8)
+    {
+        let buf = cpu.read_memory(0x1000, 8).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0xFF, "Memory at 0x1000 should be 0xFF");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -8464,7 +5185,11 @@ fn test_aarch64_integer_tags_mcsettagpost_str_oracle_2_f9000020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 8)
+    {
+        let buf = cpu.read_memory(0x1000, 8).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x1234, "Memory at 0x1000 should be 0x1234");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -8482,7 +5207,11 @@ fn test_aarch64_integer_tags_mcsettagpost_str_oracle_3_f9000020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 8)
+    {
+        let buf = cpu.read_memory(0x1000, 8).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x12345678, "Memory at 0x1000 should be 0x12345678");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -8494,13 +5223,17 @@ fn test_aarch64_integer_tags_mcsettagpost_str_oracle_4_f9000020() {
     // Test STR: doubleword value (oracle)
     // Encoding: 0xF9000020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1000);
     set_x(&mut cpu, 0, 0x123456789ABCDEF0);
+    set_x(&mut cpu, 1, 0x1000);
     let encoding: u32 = 0xF9000020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 8)
+    {
+        let buf = cpu.read_memory(0x1000, 8).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x123456789ABCDEF0, "Memory at 0x1000 should be 0x123456789ABCDEF0");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpost
@@ -8557,8 +5290,8 @@ fn test_aarch64_integer_tags_mcsettagpost_store_0_d9200400() {
     // Test aarch64_integer_tags_mcsettagpost memory store: 8 bytes
     // Encoding: 0xD9200400
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     set_x(&mut cpu, 1, 0x100000000000);
+    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     let encoding: u32 = 0xD9200400;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8574,13 +5307,17 @@ fn test_aarch64_integer_tags_mcsettagpre_str_oracle_0_f9000020() {
     // Test STR: zero value (oracle)
     // Encoding: 0xF9000020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1000);
     set_x(&mut cpu, 0, 0x0);
+    set_x(&mut cpu, 1, 0x1000);
     let encoding: u32 = 0xF9000020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 8)
+    {
+        let buf = cpu.read_memory(0x1000, 8).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x0, "Memory at 0x1000 should be 0x0");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -8598,7 +5335,11 @@ fn test_aarch64_integer_tags_mcsettagpre_str_oracle_1_f9000020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 8)
+    {
+        let buf = cpu.read_memory(0x1000, 8).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0xFF, "Memory at 0x1000 should be 0xFF");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -8616,7 +5357,11 @@ fn test_aarch64_integer_tags_mcsettagpre_str_oracle_2_f9000020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 8)
+    {
+        let buf = cpu.read_memory(0x1000, 8).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x1234, "Memory at 0x1000 should be 0x1234");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -8634,7 +5379,11 @@ fn test_aarch64_integer_tags_mcsettagpre_str_oracle_3_f9000020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 8)
+    {
+        let buf = cpu.read_memory(0x1000, 8).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x12345678, "Memory at 0x1000 should be 0x12345678");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -8652,7 +5401,11 @@ fn test_aarch64_integer_tags_mcsettagpre_str_oracle_4_f9000020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 8)
+    {
+        let buf = cpu.read_memory(0x1000, 8).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x123456789ABCDEF0, "Memory at 0x1000 should be 0x123456789ABCDEF0");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpre
@@ -8726,13 +5479,17 @@ fn test_aarch64_integer_tags_mcsettag_str_oracle_0_f9000020() {
     // Test STR: zero value (oracle)
     // Encoding: 0xF9000020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0x0);
     set_x(&mut cpu, 1, 0x1000);
+    set_x(&mut cpu, 0, 0x0);
     let encoding: u32 = 0xF9000020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 8)
+    {
+        let buf = cpu.read_memory(0x1000, 8).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x0, "Memory at 0x1000 should be 0x0");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8744,13 +5501,17 @@ fn test_aarch64_integer_tags_mcsettag_str_oracle_1_f9000020() {
     // Test STR: byte value (oracle)
     // Encoding: 0xF9000020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1000);
     set_x(&mut cpu, 0, 0xFF);
+    set_x(&mut cpu, 1, 0x1000);
     let encoding: u32 = 0xF9000020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 8)
+    {
+        let buf = cpu.read_memory(0x1000, 8).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0xFF, "Memory at 0x1000 should be 0xFF");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8762,13 +5523,17 @@ fn test_aarch64_integer_tags_mcsettag_str_oracle_2_f9000020() {
     // Test STR: halfword value (oracle)
     // Encoding: 0xF9000020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1000);
     set_x(&mut cpu, 0, 0x1234);
+    set_x(&mut cpu, 1, 0x1000);
     let encoding: u32 = 0xF9000020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 8)
+    {
+        let buf = cpu.read_memory(0x1000, 8).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x1234, "Memory at 0x1000 should be 0x1234");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8786,7 +5551,11 @@ fn test_aarch64_integer_tags_mcsettag_str_oracle_3_f9000020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 8)
+    {
+        let buf = cpu.read_memory(0x1000, 8).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x12345678, "Memory at 0x1000 should be 0x12345678");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8804,7 +5573,11 @@ fn test_aarch64_integer_tags_mcsettag_str_oracle_4_f9000020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 8)
+    {
+        let buf = cpu.read_memory(0x1000, 8).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x123456789ABCDEF0, "Memory at 0x1000 should be 0x123456789ABCDEF0");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettag
@@ -8861,8 +5634,8 @@ fn test_aarch64_integer_tags_mcsettag_store_0_d9200800() {
     // Test aarch64_integer_tags_mcsettag memory store: 8 bytes
     // Encoding: 0xD9200800
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     set_x(&mut cpu, 1, 0x100000000000);
+    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     let encoding: u32 = 0xD9200800;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -8881,17 +5654,12 @@ fn test_aarch64_integer_tags_mcsettag_store_0_d9200800() {
 fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_0_zero_400_d9a00400() {
     // Encoding: 0xD9A00400
     // Test aarch64_integer_tags_mcsettagpairpost field imm9 = 0 (Zero)
-    // Fields: Xt=0, Xn=0, imm9=0
+    // Fields: imm9=0, Xn=0, Xt=0
     let encoding: u32 = 0xD9A00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -8902,17 +5670,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_0_zero_400_d9a00400() {
 fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_1_poweroftwo_400_d9a01400() {
     // Encoding: 0xD9A01400
     // Test aarch64_integer_tags_mcsettagpairpost field imm9 = 1 (PowerOfTwo)
-    // Fields: Xt=0, Xn=0, imm9=1
+    // Fields: imm9=1, Xn=0, Xt=0
     let encoding: u32 = 0xD9A01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -8928,12 +5691,7 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_3_poweroftwominusone_40
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -8944,17 +5702,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_3_poweroftwominusone_40
 fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_4_poweroftwo_400_d9a04400() {
     // Encoding: 0xD9A04400
     // Test aarch64_integer_tags_mcsettagpairpost field imm9 = 4 (PowerOfTwo)
-    // Fields: Xn=0, Xt=0, imm9=4
+    // Fields: Xt=0, Xn=0, imm9=4
     let encoding: u32 = 0xD9A04400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -8965,17 +5718,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_4_poweroftwo_400_d9a044
 fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_7_poweroftwominusone_400_d9a07400() {
     // Encoding: 0xD9A07400
     // Test aarch64_integer_tags_mcsettagpairpost field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: imm9=7, Xn=0, Xt=0
+    // Fields: Xt=0, imm9=7, Xn=0
     let encoding: u32 = 0xD9A07400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -8986,17 +5734,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_7_poweroftwominusone_40
 fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_8_poweroftwo_400_d9a08400() {
     // Encoding: 0xD9A08400
     // Test aarch64_integer_tags_mcsettagpairpost field imm9 = 8 (PowerOfTwo)
-    // Fields: Xn=0, imm9=8, Xt=0
+    // Fields: Xt=0, Xn=0, imm9=8
     let encoding: u32 = 0xD9A08400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9007,17 +5750,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_8_poweroftwo_400_d9a084
 fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_15_poweroftwominusone_400_d9a0f400() {
     // Encoding: 0xD9A0F400
     // Test aarch64_integer_tags_mcsettagpairpost field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: imm9=15, Xn=0, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=15
     let encoding: u32 = 0xD9A0F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9028,17 +5766,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_15_poweroftwominusone_4
 fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_16_poweroftwo_400_d9a10400() {
     // Encoding: 0xD9A10400
     // Test aarch64_integer_tags_mcsettagpairpost field imm9 = 16 (PowerOfTwo)
-    // Fields: Xt=0, Xn=0, imm9=16
+    // Fields: imm9=16, Xt=0, Xn=0
     let encoding: u32 = 0xD9A10400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9049,17 +5782,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_16_poweroftwo_400_d9a10
 fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_31_poweroftwominusone_400_d9a1f400() {
     // Encoding: 0xD9A1F400
     // Test aarch64_integer_tags_mcsettagpairpost field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=0, imm9=31
+    // Fields: Xn=0, imm9=31, Xt=0
     let encoding: u32 = 0xD9A1F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9075,12 +5803,7 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_32_poweroftwo_400_d9a20
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9091,17 +5814,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_32_poweroftwo_400_d9a20
 fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_63_poweroftwominusone_400_d9a3f400() {
     // Encoding: 0xD9A3F400
     // Test aarch64_integer_tags_mcsettagpairpost field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=63, Xn=0
+    // Fields: Xn=0, imm9=63, Xt=0
     let encoding: u32 = 0xD9A3F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9117,12 +5835,7 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_64_poweroftwo_400_d9a40
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9138,12 +5851,7 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_127_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9154,17 +5862,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_127_poweroftwominusone_
 fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_128_poweroftwo_400_d9a80400() {
     // Encoding: 0xD9A80400
     // Test aarch64_integer_tags_mcsettagpairpost field imm9 = 128 (PowerOfTwo)
-    // Fields: imm9=128, Xn=0, Xt=0
+    // Fields: Xt=0, imm9=128, Xn=0
     let encoding: u32 = 0xD9A80400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9180,12 +5883,7 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_255_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9196,17 +5894,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_255_poweroftwominusone_
 fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_256_poweroftwo_400_d9b00400() {
     // Encoding: 0xD9B00400
     // Test aarch64_integer_tags_mcsettagpairpost field imm9 = 256 (PowerOfTwo)
-    // Fields: imm9=256, Xn=0, Xt=0
+    // Fields: imm9=256, Xt=0, Xn=0
     let encoding: u32 = 0xD9B00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9217,17 +5910,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_256_poweroftwo_400_d9b0
 fn test_aarch64_integer_tags_mcsettagpairpost_field_imm9_511_max_400_d9bff400() {
     // Encoding: 0xD9BFF400
     // Test aarch64_integer_tags_mcsettagpairpost field imm9 = 511 (Max)
-    // Fields: imm9=511, Xn=0, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=511
     let encoding: u32 = 0xD9BFF400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9243,12 +5931,7 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_xn_0_min_400_d9a00400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9259,17 +5942,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_xn_0_min_400_d9a00400() {
 fn test_aarch64_integer_tags_mcsettagpairpost_field_xn_1_poweroftwo_400_d9a00420() {
     // Encoding: 0xD9A00420
     // Test aarch64_integer_tags_mcsettagpairpost field Xn = 1 (PowerOfTwo)
-    // Fields: imm9=0, Xn=1, Xt=0
+    // Fields: Xt=0, Xn=1, imm9=0
     let encoding: u32 = 0xD9A00420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9280,17 +5958,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_xn_1_poweroftwo_400_d9a00420
 fn test_aarch64_integer_tags_mcsettagpairpost_field_xn_30_poweroftwominusone_400_d9a007c0() {
     // Encoding: 0xD9A007C0
     // Test aarch64_integer_tags_mcsettagpairpost field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=0, Xn=30
+    // Fields: Xn=30, imm9=0, Xt=0
     let encoding: u32 = 0xD9A007C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9301,17 +5974,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_xn_30_poweroftwominusone_400
 fn test_aarch64_integer_tags_mcsettagpairpost_field_xn_31_max_400_d9a007e0() {
     // Encoding: 0xD9A007E0
     // Test aarch64_integer_tags_mcsettagpairpost field Xn = 31 (Max)
-    // Fields: Xn=31, Xt=0, imm9=0
+    // Fields: Xt=0, Xn=31, imm9=0
     let encoding: u32 = 0xD9A007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9322,17 +5990,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_xn_31_max_400_d9a007e0() {
 fn test_aarch64_integer_tags_mcsettagpairpost_field_xt_0_min_400_d9a00400() {
     // Encoding: 0xD9A00400
     // Test aarch64_integer_tags_mcsettagpairpost field Xt = 0 (Min)
-    // Fields: Xn=0, Xt=0, imm9=0
+    // Fields: imm9=0, Xn=0, Xt=0
     let encoding: u32 = 0xD9A00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9348,12 +6011,7 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_xt_1_poweroftwo_400_d9a00401
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9364,17 +6022,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_xt_1_poweroftwo_400_d9a00401
 fn test_aarch64_integer_tags_mcsettagpairpost_field_xt_30_poweroftwominusone_400_d9a0041e() {
     // Encoding: 0xD9A0041E
     // Test aarch64_integer_tags_mcsettagpairpost field Xt = 30 (PowerOfTwoMinusOne)
-    // Fields: imm9=0, Xt=30, Xn=0
+    // Fields: Xt=30, imm9=0, Xn=0
     let encoding: u32 = 0xD9A0041E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9385,17 +6038,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_field_xt_30_poweroftwominusone_400
 fn test_aarch64_integer_tags_mcsettagpairpost_field_xt_31_max_400_d9a0041f() {
     // Encoding: 0xD9A0041F
     // Test aarch64_integer_tags_mcsettagpairpost field Xt = 31 (Max)
-    // Fields: Xn=0, imm9=0, Xt=31
+    // Fields: imm9=0, Xn=0, Xt=31
     let encoding: u32 = 0xD9A0041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9411,201 +6059,7 @@ fn test_aarch64_integer_tags_mcsettagpairpost_combo_0_400_d9a00400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpost
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpost_combo_1_400_d9a01400() {
-    // Encoding: 0xD9A01400
-    // Test aarch64_integer_tags_mcsettagpairpost field combination: imm9=1, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=1
-    let encoding: u32 = 0xD9A01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpost
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=3 (2^2 - 1 = 3)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpost_combo_2_400_d9a03400() {
-    // Encoding: 0xD9A03400
-    // Test aarch64_integer_tags_mcsettagpairpost field combination: imm9=3, Xn=0, Xt=0
-    // Fields: imm9=3, Xt=0, Xn=0
-    let encoding: u32 = 0xD9A03400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpost
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=4 (power of 2 (2^2 = 4))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpost_combo_3_400_d9a04400() {
-    // Encoding: 0xD9A04400
-    // Test aarch64_integer_tags_mcsettagpairpost field combination: imm9=4, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=4, Xt=0
-    let encoding: u32 = 0xD9A04400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpost
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=7 (2^3 - 1 = 7)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpost_combo_4_400_d9a07400() {
-    // Encoding: 0xD9A07400
-    // Test aarch64_integer_tags_mcsettagpairpost field combination: imm9=7, Xn=0, Xt=0
-    // Fields: imm9=7, Xn=0, Xt=0
-    let encoding: u32 = 0xD9A07400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpost
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=8 (power of 2 (2^3 = 8))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpost_combo_5_400_d9a08400() {
-    // Encoding: 0xD9A08400
-    // Test aarch64_integer_tags_mcsettagpairpost field combination: imm9=8, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=8
-    let encoding: u32 = 0xD9A08400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpost
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=15 (2^4 - 1 = 15)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpost_combo_6_400_d9a0f400() {
-    // Encoding: 0xD9A0F400
-    // Test aarch64_integer_tags_mcsettagpairpost field combination: imm9=15, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=15, Xn=0
-    let encoding: u32 = 0xD9A0F400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpost
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=16 (power of 2 (2^4 = 16))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpost_combo_7_400_d9a10400() {
-    // Encoding: 0xD9A10400
-    // Test aarch64_integer_tags_mcsettagpairpost field combination: imm9=16, Xn=0, Xt=0
-    // Fields: imm9=16, Xn=0, Xt=0
-    let encoding: u32 = 0xD9A10400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpost
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=31 (2^5 - 1 = 31)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpost_combo_8_400_d9a1f400() {
-    // Encoding: 0xD9A1F400
-    // Test aarch64_integer_tags_mcsettagpairpost field combination: imm9=31, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=31
-    let encoding: u32 = 0xD9A1F400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpost
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=32 (power of 2 (2^5 = 32))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpost_combo_9_400_d9a20400() {
-    // Encoding: 0xD9A20400
-    // Test aarch64_integer_tags_mcsettagpairpost field combination: imm9=32, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=32
-    let encoding: u32 = 0xD9A20400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -9613,21 +6067,15 @@ fn test_aarch64_integer_tags_mcsettagpairpost_combo_9_400_d9a20400() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairpost_special_xn_31_stack_pointer_sp_may_require_alignment_1024_d9a007e0(
-) {
+fn test_aarch64_integer_tags_mcsettagpairpost_special_xn_31_stack_pointer_sp_may_require_alignment_1024_d9a007e0() {
     // Encoding: 0xD9A007E0
     // Test aarch64_integer_tags_mcsettagpairpost special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: imm9=0, Xn=31, Xt=0
+    // Fields: Xt=0, Xn=31, imm9=0
     let encoding: u32 = 0xD9A007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9638,17 +6086,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_special_xn_31_stack_pointer_sp_may
 fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_0_zero_c00_d9a00c00() {
     // Encoding: 0xD9A00C00
     // Test aarch64_integer_tags_mcsettagpairpre field imm9 = 0 (Zero)
-    // Fields: imm9=0, Xn=0, Xt=0
+    // Fields: Xt=0, imm9=0, Xn=0
     let encoding: u32 = 0xD9A00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9659,17 +6102,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_0_zero_c00_d9a00c00() {
 fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_1_poweroftwo_c00_d9a01c00() {
     // Encoding: 0xD9A01C00
     // Test aarch64_integer_tags_mcsettagpairpre field imm9 = 1 (PowerOfTwo)
-    // Fields: Xt=0, Xn=0, imm9=1
+    // Fields: imm9=1, Xt=0, Xn=0
     let encoding: u32 = 0xD9A01C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9680,17 +6118,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_1_poweroftwo_c00_d9a01c0
 fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_3_poweroftwominusone_c00_d9a03c00() {
     // Encoding: 0xD9A03C00
     // Test aarch64_integer_tags_mcsettagpairpre field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: imm9=3, Xn=0, Xt=0
+    // Fields: Xt=0, imm9=3, Xn=0
     let encoding: u32 = 0xD9A03C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9701,17 +6134,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_3_poweroftwominusone_c00
 fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_4_poweroftwo_c00_d9a04c00() {
     // Encoding: 0xD9A04C00
     // Test aarch64_integer_tags_mcsettagpairpre field imm9 = 4 (PowerOfTwo)
-    // Fields: imm9=4, Xt=0, Xn=0
+    // Fields: Xt=0, Xn=0, imm9=4
     let encoding: u32 = 0xD9A04C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9722,17 +6150,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_4_poweroftwo_c00_d9a04c0
 fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_7_poweroftwominusone_c00_d9a07c00() {
     // Encoding: 0xD9A07C00
     // Test aarch64_integer_tags_mcsettagpairpre field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: imm9=7, Xn=0, Xt=0
+    // Fields: Xt=0, Xn=0, imm9=7
     let encoding: u32 = 0xD9A07C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9743,17 +6166,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_7_poweroftwominusone_c00
 fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_8_poweroftwo_c00_d9a08c00() {
     // Encoding: 0xD9A08C00
     // Test aarch64_integer_tags_mcsettagpairpre field imm9 = 8 (PowerOfTwo)
-    // Fields: Xt=0, imm9=8, Xn=0
+    // Fields: imm9=8, Xn=0, Xt=0
     let encoding: u32 = 0xD9A08C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9764,17 +6182,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_8_poweroftwo_c00_d9a08c0
 fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_15_poweroftwominusone_c00_d9a0fc00() {
     // Encoding: 0xD9A0FC00
     // Test aarch64_integer_tags_mcsettagpairpre field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=15, Xn=0
+    // Fields: imm9=15, Xn=0, Xt=0
     let encoding: u32 = 0xD9A0FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9790,12 +6203,7 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_16_poweroftwo_c00_d9a10c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9806,17 +6214,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_16_poweroftwo_c00_d9a10c
 fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_31_poweroftwominusone_c00_d9a1fc00() {
     // Encoding: 0xD9A1FC00
     // Test aarch64_integer_tags_mcsettagpairpre field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: imm9=31, Xn=0, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=31
     let encoding: u32 = 0xD9A1FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9827,17 +6230,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_31_poweroftwominusone_c0
 fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_32_poweroftwo_c00_d9a20c00() {
     // Encoding: 0xD9A20C00
     // Test aarch64_integer_tags_mcsettagpairpre field imm9 = 32 (PowerOfTwo)
-    // Fields: imm9=32, Xt=0, Xn=0
+    // Fields: Xt=0, imm9=32, Xn=0
     let encoding: u32 = 0xD9A20C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9848,17 +6246,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_32_poweroftwo_c00_d9a20c
 fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_63_poweroftwominusone_c00_d9a3fc00() {
     // Encoding: 0xD9A3FC00
     // Test aarch64_integer_tags_mcsettagpairpre field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: imm9=63, Xn=0, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=63
     let encoding: u32 = 0xD9A3FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9874,12 +6267,7 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_64_poweroftwo_c00_d9a40c
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9890,17 +6278,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_64_poweroftwo_c00_d9a40c
 fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_127_poweroftwominusone_c00_d9a7fc00() {
     // Encoding: 0xD9A7FC00
     // Test aarch64_integer_tags_mcsettagpairpre field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=127, Xn=0
+    // Fields: imm9=127, Xn=0, Xt=0
     let encoding: u32 = 0xD9A7FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9911,17 +6294,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_127_poweroftwominusone_c
 fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_128_poweroftwo_c00_d9a80c00() {
     // Encoding: 0xD9A80C00
     // Test aarch64_integer_tags_mcsettagpairpre field imm9 = 128 (PowerOfTwo)
-    // Fields: Xt=0, Xn=0, imm9=128
+    // Fields: Xn=0, imm9=128, Xt=0
     let encoding: u32 = 0xD9A80C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9932,17 +6310,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_128_poweroftwo_c00_d9a80
 fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_255_poweroftwominusone_c00_d9affc00() {
     // Encoding: 0xD9AFFC00
     // Test aarch64_integer_tags_mcsettagpairpre field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=255, Xn=0
+    // Fields: imm9=255, Xn=0, Xt=0
     let encoding: u32 = 0xD9AFFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9953,17 +6326,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_255_poweroftwominusone_c
 fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_256_poweroftwo_c00_d9b00c00() {
     // Encoding: 0xD9B00C00
     // Test aarch64_integer_tags_mcsettagpairpre field imm9 = 256 (PowerOfTwo)
-    // Fields: Xt=0, imm9=256, Xn=0
+    // Fields: imm9=256, Xn=0, Xt=0
     let encoding: u32 = 0xD9B00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9974,17 +6342,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_256_poweroftwo_c00_d9b00
 fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_511_max_c00_d9bffc00() {
     // Encoding: 0xD9BFFC00
     // Test aarch64_integer_tags_mcsettagpairpre field imm9 = 511 (Max)
-    // Fields: Xn=0, Xt=0, imm9=511
+    // Fields: Xt=0, imm9=511, Xn=0
     let encoding: u32 = 0xD9BFFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -9995,17 +6358,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_imm9_511_max_c00_d9bffc00() {
 fn test_aarch64_integer_tags_mcsettagpairpre_field_xn_0_min_c00_d9a00c00() {
     // Encoding: 0xD9A00C00
     // Test aarch64_integer_tags_mcsettagpairpre field Xn = 0 (Min)
-    // Fields: Xt=0, imm9=0, Xn=0
+    // Fields: Xn=0, Xt=0, imm9=0
     let encoding: u32 = 0xD9A00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -10016,17 +6374,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_xn_0_min_c00_d9a00c00() {
 fn test_aarch64_integer_tags_mcsettagpairpre_field_xn_1_poweroftwo_c00_d9a00c20() {
     // Encoding: 0xD9A00C20
     // Test aarch64_integer_tags_mcsettagpairpre field Xn = 1 (PowerOfTwo)
-    // Fields: Xt=0, imm9=0, Xn=1
+    // Fields: Xt=0, Xn=1, imm9=0
     let encoding: u32 = 0xD9A00C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -10037,17 +6390,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_xn_1_poweroftwo_c00_d9a00c20(
 fn test_aarch64_integer_tags_mcsettagpairpre_field_xn_30_poweroftwominusone_c00_d9a00fc0() {
     // Encoding: 0xD9A00FC0
     // Test aarch64_integer_tags_mcsettagpairpre field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, Xn=30, imm9=0
+    // Fields: imm9=0, Xt=0, Xn=30
     let encoding: u32 = 0xD9A00FC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -10058,17 +6406,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_xn_30_poweroftwominusone_c00_
 fn test_aarch64_integer_tags_mcsettagpairpre_field_xn_31_max_c00_d9a00fe0() {
     // Encoding: 0xD9A00FE0
     // Test aarch64_integer_tags_mcsettagpairpre field Xn = 31 (Max)
-    // Fields: Xt=0, imm9=0, Xn=31
+    // Fields: Xt=0, Xn=31, imm9=0
     let encoding: u32 = 0xD9A00FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -10079,17 +6422,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_xn_31_max_c00_d9a00fe0() {
 fn test_aarch64_integer_tags_mcsettagpairpre_field_xt_0_min_c00_d9a00c00() {
     // Encoding: 0xD9A00C00
     // Test aarch64_integer_tags_mcsettagpairpre field Xt = 0 (Min)
-    // Fields: imm9=0, Xn=0, Xt=0
+    // Fields: Xt=0, Xn=0, imm9=0
     let encoding: u32 = 0xD9A00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -10100,17 +6438,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_xt_0_min_c00_d9a00c00() {
 fn test_aarch64_integer_tags_mcsettagpairpre_field_xt_1_poweroftwo_c00_d9a00c01() {
     // Encoding: 0xD9A00C01
     // Test aarch64_integer_tags_mcsettagpairpre field Xt = 1 (PowerOfTwo)
-    // Fields: Xn=0, imm9=0, Xt=1
+    // Fields: imm9=0, Xn=0, Xt=1
     let encoding: u32 = 0xD9A00C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -10126,12 +6459,7 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_xt_30_poweroftwominusone_c00_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -10142,17 +6470,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_xt_30_poweroftwominusone_c00_
 fn test_aarch64_integer_tags_mcsettagpairpre_field_xt_31_max_c00_d9a00c1f() {
     // Encoding: 0xD9A00C1F
     // Test aarch64_integer_tags_mcsettagpairpre field Xt = 31 (Max)
-    // Fields: imm9=0, Xn=0, Xt=31
+    // Fields: Xn=0, imm9=0, Xt=31
     let encoding: u32 = 0xD9A00C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -10163,206 +6486,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_field_xt_31_max_c00_d9a00c1f() {
 fn test_aarch64_integer_tags_mcsettagpairpre_combo_0_c00_d9a00c00() {
     // Encoding: 0xD9A00C00
     // Test aarch64_integer_tags_mcsettagpairpre field combination: imm9=0, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=0
+    // Fields: imm9=0, Xn=0, Xt=0
     let encoding: u32 = 0xD9A00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpre
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpre_combo_1_c00_d9a01c00() {
-    // Encoding: 0xD9A01C00
-    // Test aarch64_integer_tags_mcsettagpairpre field combination: imm9=1, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=1, Xn=0
-    let encoding: u32 = 0xD9A01C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpre
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=3 (2^2 - 1 = 3)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpre_combo_2_c00_d9a03c00() {
-    // Encoding: 0xD9A03C00
-    // Test aarch64_integer_tags_mcsettagpairpre field combination: imm9=3, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=3, Xt=0
-    let encoding: u32 = 0xD9A03C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpre
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=4 (power of 2 (2^2 = 4))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpre_combo_3_c00_d9a04c00() {
-    // Encoding: 0xD9A04C00
-    // Test aarch64_integer_tags_mcsettagpairpre field combination: imm9=4, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=4
-    let encoding: u32 = 0xD9A04C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpre
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=7 (2^3 - 1 = 7)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpre_combo_4_c00_d9a07c00() {
-    // Encoding: 0xD9A07C00
-    // Test aarch64_integer_tags_mcsettagpairpre field combination: imm9=7, Xn=0, Xt=0
-    // Fields: imm9=7, Xn=0, Xt=0
-    let encoding: u32 = 0xD9A07C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpre
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=8 (power of 2 (2^3 = 8))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpre_combo_5_c00_d9a08c00() {
-    // Encoding: 0xD9A08C00
-    // Test aarch64_integer_tags_mcsettagpairpre field combination: imm9=8, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=8
-    let encoding: u32 = 0xD9A08C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpre
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=15 (2^4 - 1 = 15)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpre_combo_6_c00_d9a0fc00() {
-    // Encoding: 0xD9A0FC00
-    // Test aarch64_integer_tags_mcsettagpairpre field combination: imm9=15, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=15, Xn=0
-    let encoding: u32 = 0xD9A0FC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpre
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=16 (power of 2 (2^4 = 16))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpre_combo_7_c00_d9a10c00() {
-    // Encoding: 0xD9A10C00
-    // Test aarch64_integer_tags_mcsettagpairpre field combination: imm9=16, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=16
-    let encoding: u32 = 0xD9A10C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpre
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=31 (2^5 - 1 = 31)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpre_combo_8_c00_d9a1fc00() {
-    // Encoding: 0xD9A1FC00
-    // Test aarch64_integer_tags_mcsettagpairpre field combination: imm9=31, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=31
-    let encoding: u32 = 0xD9A1FC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpairpre
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=32 (power of 2 (2^5 = 32))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpairpre_combo_9_c00_d9a20c00() {
-    // Encoding: 0xD9A20C00
-    // Test aarch64_integer_tags_mcsettagpairpre field combination: imm9=32, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=32, Xn=0
-    let encoding: u32 = 0xD9A20C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -10370,21 +6499,15 @@ fn test_aarch64_integer_tags_mcsettagpairpre_combo_9_c00_d9a20c00() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettagpairpre_special_xn_31_stack_pointer_sp_may_require_alignment_3072_d9a00fe0(
-) {
+fn test_aarch64_integer_tags_mcsettagpairpre_special_xn_31_stack_pointer_sp_may_require_alignment_3072_d9a00fe0() {
     // Encoding: 0xD9A00FE0
     // Test aarch64_integer_tags_mcsettagpairpre special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Xt=0, imm9=0, Xn=31
+    // Fields: Xt=0, Xn=31, imm9=0
     let encoding: u32 = 0xD9A00FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10395,17 +6518,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_special_xn_31_stack_pointer_sp_may_
 fn test_aarch64_integer_tags_mcsettagpair_field_imm9_0_zero_800_d9a00800() {
     // Encoding: 0xD9A00800
     // Test aarch64_integer_tags_mcsettagpair field imm9 = 0 (Zero)
-    // Fields: imm9=0, Xn=0, Xt=0
+    // Fields: Xt=0, imm9=0, Xn=0
     let encoding: u32 = 0xD9A00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10416,17 +6534,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_0_zero_800_d9a00800() {
 fn test_aarch64_integer_tags_mcsettagpair_field_imm9_1_poweroftwo_800_d9a01800() {
     // Encoding: 0xD9A01800
     // Test aarch64_integer_tags_mcsettagpair field imm9 = 1 (PowerOfTwo)
-    // Fields: imm9=1, Xt=0, Xn=0
+    // Fields: Xt=0, imm9=1, Xn=0
     let encoding: u32 = 0xD9A01800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10442,12 +6555,7 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_3_poweroftwominusone_800_d9
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10458,17 +6566,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_3_poweroftwominusone_800_d9
 fn test_aarch64_integer_tags_mcsettagpair_field_imm9_4_poweroftwo_800_d9a04800() {
     // Encoding: 0xD9A04800
     // Test aarch64_integer_tags_mcsettagpair field imm9 = 4 (PowerOfTwo)
-    // Fields: Xt=0, Xn=0, imm9=4
+    // Fields: Xn=0, Xt=0, imm9=4
     let encoding: u32 = 0xD9A04800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10484,12 +6587,7 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_7_poweroftwominusone_800_d9
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10500,17 +6598,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_7_poweroftwominusone_800_d9
 fn test_aarch64_integer_tags_mcsettagpair_field_imm9_8_poweroftwo_800_d9a08800() {
     // Encoding: 0xD9A08800
     // Test aarch64_integer_tags_mcsettagpair field imm9 = 8 (PowerOfTwo)
-    // Fields: Xn=0, Xt=0, imm9=8
+    // Fields: Xt=0, Xn=0, imm9=8
     let encoding: u32 = 0xD9A08800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10521,17 +6614,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_8_poweroftwo_800_d9a08800()
 fn test_aarch64_integer_tags_mcsettagpair_field_imm9_15_poweroftwominusone_800_d9a0f800() {
     // Encoding: 0xD9A0F800
     // Test aarch64_integer_tags_mcsettagpair field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=15, Xn=0
+    // Fields: Xn=0, Xt=0, imm9=15
     let encoding: u32 = 0xD9A0F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10542,17 +6630,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_15_poweroftwominusone_800_d
 fn test_aarch64_integer_tags_mcsettagpair_field_imm9_16_poweroftwo_800_d9a10800() {
     // Encoding: 0xD9A10800
     // Test aarch64_integer_tags_mcsettagpair field imm9 = 16 (PowerOfTwo)
-    // Fields: Xn=0, Xt=0, imm9=16
+    // Fields: Xt=0, imm9=16, Xn=0
     let encoding: u32 = 0xD9A10800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10563,17 +6646,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_16_poweroftwo_800_d9a10800(
 fn test_aarch64_integer_tags_mcsettagpair_field_imm9_31_poweroftwominusone_800_d9a1f800() {
     // Encoding: 0xD9A1F800
     // Test aarch64_integer_tags_mcsettagpair field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, imm9=31, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=31
     let encoding: u32 = 0xD9A1F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10589,12 +6667,7 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_32_poweroftwo_800_d9a20800(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10605,17 +6678,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_32_poweroftwo_800_d9a20800(
 fn test_aarch64_integer_tags_mcsettagpair_field_imm9_63_poweroftwominusone_800_d9a3f800() {
     // Encoding: 0xD9A3F800
     // Test aarch64_integer_tags_mcsettagpair field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=0, imm9=63
+    // Fields: imm9=63, Xn=0, Xt=0
     let encoding: u32 = 0xD9A3F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10631,12 +6699,7 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_64_poweroftwo_800_d9a40800(
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10652,12 +6715,7 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_127_poweroftwominusone_800_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10673,12 +6731,7 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_128_poweroftwo_800_d9a80800
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10689,17 +6742,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_128_poweroftwo_800_d9a80800
 fn test_aarch64_integer_tags_mcsettagpair_field_imm9_255_poweroftwominusone_800_d9aff800() {
     // Encoding: 0xD9AFF800
     // Test aarch64_integer_tags_mcsettagpair field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=255, Xn=0
+    // Fields: imm9=255, Xt=0, Xn=0
     let encoding: u32 = 0xD9AFF800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10710,17 +6758,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_255_poweroftwominusone_800_
 fn test_aarch64_integer_tags_mcsettagpair_field_imm9_256_poweroftwo_800_d9b00800() {
     // Encoding: 0xD9B00800
     // Test aarch64_integer_tags_mcsettagpair field imm9 = 256 (PowerOfTwo)
-    // Fields: imm9=256, Xn=0, Xt=0
+    // Fields: Xn=0, imm9=256, Xt=0
     let encoding: u32 = 0xD9B00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10731,17 +6774,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_256_poweroftwo_800_d9b00800
 fn test_aarch64_integer_tags_mcsettagpair_field_imm9_511_max_800_d9bff800() {
     // Encoding: 0xD9BFF800
     // Test aarch64_integer_tags_mcsettagpair field imm9 = 511 (Max)
-    // Fields: Xt=0, Xn=0, imm9=511
+    // Fields: imm9=511, Xn=0, Xt=0
     let encoding: u32 = 0xD9BFF800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10752,17 +6790,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_imm9_511_max_800_d9bff800() {
 fn test_aarch64_integer_tags_mcsettagpair_field_xn_0_min_800_d9a00800() {
     // Encoding: 0xD9A00800
     // Test aarch64_integer_tags_mcsettagpair field Xn = 0 (Min)
-    // Fields: imm9=0, Xt=0, Xn=0
+    // Fields: Xn=0, Xt=0, imm9=0
     let encoding: u32 = 0xD9A00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10773,17 +6806,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_xn_0_min_800_d9a00800() {
 fn test_aarch64_integer_tags_mcsettagpair_field_xn_1_poweroftwo_800_d9a00820() {
     // Encoding: 0xD9A00820
     // Test aarch64_integer_tags_mcsettagpair field Xn = 1 (PowerOfTwo)
-    // Fields: Xn=1, Xt=0, imm9=0
+    // Fields: imm9=0, Xn=1, Xt=0
     let encoding: u32 = 0xD9A00820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10794,17 +6822,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_xn_1_poweroftwo_800_d9a00820() {
 fn test_aarch64_integer_tags_mcsettagpair_field_xn_30_poweroftwominusone_800_d9a00bc0() {
     // Encoding: 0xD9A00BC0
     // Test aarch64_integer_tags_mcsettagpair field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xn=30, imm9=0, Xt=0
+    // Fields: imm9=0, Xn=30, Xt=0
     let encoding: u32 = 0xD9A00BC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10815,17 +6838,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_xn_30_poweroftwominusone_800_d9a
 fn test_aarch64_integer_tags_mcsettagpair_field_xn_31_max_800_d9a00be0() {
     // Encoding: 0xD9A00BE0
     // Test aarch64_integer_tags_mcsettagpair field Xn = 31 (Max)
-    // Fields: Xt=0, imm9=0, Xn=31
+    // Fields: Xt=0, Xn=31, imm9=0
     let encoding: u32 = 0xD9A00BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10836,17 +6854,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_xn_31_max_800_d9a00be0() {
 fn test_aarch64_integer_tags_mcsettagpair_field_xt_0_min_800_d9a00800() {
     // Encoding: 0xD9A00800
     // Test aarch64_integer_tags_mcsettagpair field Xt = 0 (Min)
-    // Fields: Xt=0, imm9=0, Xn=0
+    // Fields: imm9=0, Xn=0, Xt=0
     let encoding: u32 = 0xD9A00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10857,17 +6870,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_xt_0_min_800_d9a00800() {
 fn test_aarch64_integer_tags_mcsettagpair_field_xt_1_poweroftwo_800_d9a00801() {
     // Encoding: 0xD9A00801
     // Test aarch64_integer_tags_mcsettagpair field Xt = 1 (PowerOfTwo)
-    // Fields: imm9=0, Xt=1, Xn=0
+    // Fields: Xn=0, Xt=1, imm9=0
     let encoding: u32 = 0xD9A00801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10883,12 +6891,7 @@ fn test_aarch64_integer_tags_mcsettagpair_field_xt_30_poweroftwominusone_800_d9a
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10899,17 +6902,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_xt_30_poweroftwominusone_800_d9a
 fn test_aarch64_integer_tags_mcsettagpair_field_xt_31_max_800_d9a0081f() {
     // Encoding: 0xD9A0081F
     // Test aarch64_integer_tags_mcsettagpair field Xt = 31 (Max)
-    // Fields: imm9=0, Xn=0, Xt=31
+    // Fields: Xt=31, Xn=0, imm9=0
     let encoding: u32 = 0xD9A0081F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -10920,206 +6918,12 @@ fn test_aarch64_integer_tags_mcsettagpair_field_xt_31_max_800_d9a0081f() {
 fn test_aarch64_integer_tags_mcsettagpair_combo_0_800_d9a00800() {
     // Encoding: 0xD9A00800
     // Test aarch64_integer_tags_mcsettagpair field combination: imm9=0, Xn=0, Xt=0
-    // Fields: Xn=0, imm9=0, Xt=0
+    // Fields: Xt=0, imm9=0, Xn=0
     let encoding: u32 = 0xD9A00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpair
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpair_combo_1_800_d9a01800() {
-    // Encoding: 0xD9A01800
-    // Test aarch64_integer_tags_mcsettagpair field combination: imm9=1, Xn=0, Xt=0
-    // Fields: imm9=1, Xt=0, Xn=0
-    let encoding: u32 = 0xD9A01800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpair
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=3 (2^2 - 1 = 3)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpair_combo_2_800_d9a03800() {
-    // Encoding: 0xD9A03800
-    // Test aarch64_integer_tags_mcsettagpair field combination: imm9=3, Xn=0, Xt=0
-    // Fields: imm9=3, Xt=0, Xn=0
-    let encoding: u32 = 0xD9A03800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpair
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=4 (power of 2 (2^2 = 4))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpair_combo_3_800_d9a04800() {
-    // Encoding: 0xD9A04800
-    // Test aarch64_integer_tags_mcsettagpair field combination: imm9=4, Xn=0, Xt=0
-    // Fields: imm9=4, Xt=0, Xn=0
-    let encoding: u32 = 0xD9A04800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpair
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=7 (2^3 - 1 = 7)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpair_combo_4_800_d9a07800() {
-    // Encoding: 0xD9A07800
-    // Test aarch64_integer_tags_mcsettagpair field combination: imm9=7, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=7
-    let encoding: u32 = 0xD9A07800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpair
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=8 (power of 2 (2^3 = 8))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpair_combo_5_800_d9a08800() {
-    // Encoding: 0xD9A08800
-    // Test aarch64_integer_tags_mcsettagpair field combination: imm9=8, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, imm9=8
-    let encoding: u32 = 0xD9A08800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpair
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=15 (2^4 - 1 = 15)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpair_combo_6_800_d9a0f800() {
-    // Encoding: 0xD9A0F800
-    // Test aarch64_integer_tags_mcsettagpair field combination: imm9=15, Xn=0, Xt=0
-    // Fields: imm9=15, Xn=0, Xt=0
-    let encoding: u32 = 0xD9A0F800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpair
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=16 (power of 2 (2^4 = 16))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpair_combo_7_800_d9a10800() {
-    // Encoding: 0xD9A10800
-    // Test aarch64_integer_tags_mcsettagpair field combination: imm9=16, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=16
-    let encoding: u32 = 0xD9A10800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpair
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=31 (2^5 - 1 = 31)
-#[test]
-fn test_aarch64_integer_tags_mcsettagpair_combo_8_800_d9a1f800() {
-    // Encoding: 0xD9A1F800
-    // Test aarch64_integer_tags_mcsettagpair field combination: imm9=31, Xn=0, Xt=0
-    // Fields: imm9=31, Xn=0, Xt=0
-    let encoding: u32 = 0xD9A1F800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagpair
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=32 (power of 2 (2^5 = 32))
-#[test]
-fn test_aarch64_integer_tags_mcsettagpair_combo_9_800_d9a20800() {
-    // Encoding: 0xD9A20800
-    // Test aarch64_integer_tags_mcsettagpair field combination: imm9=32, Xn=0, Xt=0
-    // Fields: imm9=32, Xn=0, Xt=0
-    let encoding: u32 = 0xD9A20800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -11127,21 +6931,15 @@ fn test_aarch64_integer_tags_mcsettagpair_combo_9_800_d9a20800() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettagpair_special_xn_31_stack_pointer_sp_may_require_alignment_2048_d9a00be0(
-) {
+fn test_aarch64_integer_tags_mcsettagpair_special_xn_31_stack_pointer_sp_may_require_alignment_2048_d9a00be0() {
     // Encoding: 0xD9A00BE0
     // Test aarch64_integer_tags_mcsettagpair special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Xn=31, Xt=0, imm9=0
+    // Fields: Xt=0, Xn=31, imm9=0
     let encoding: u32 = 0xD9A00BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -11172,8 +6970,7 @@ fn test_aarch64_integer_tags_mcsettagpairpost_ldr_oracle_1_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11191,8 +6988,7 @@ fn test_aarch64_integer_tags_mcsettagpairpost_ldr_oracle_2_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11210,17 +7006,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_ldr_oracle_3_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFF,
-        "X0 should be 0x00000000FFFFFFFF"
-    );
+    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFF, "X0 should be 0x00000000FFFFFFFF");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -11233,17 +7024,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_ldr_oracle_4_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18])
-        .unwrap();
+    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x123456789ABCDEF0,
-        "X0 should be 0x123456789ABCDEF0"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x123456789ABCDEF0, "X0 should be 0x123456789ABCDEF0");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -11256,8 +7042,7 @@ fn test_aarch64_integer_tags_mcsettagpairpost_ldr_oracle_5_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11275,8 +7060,7 @@ fn test_aarch64_integer_tags_mcsettagpairpost_ldr_oracle_6_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11294,17 +7078,12 @@ fn test_aarch64_integer_tags_mcsettagpairpost_ldr_oracle_7_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x80000000,
-        "X0 should be 0x0000000080000000"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x80000000, "X0 should be 0x0000000080000000");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpost
@@ -11414,8 +7193,7 @@ fn test_aarch64_integer_tags_mcsettagpairpre_ldr_oracle_1_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11433,8 +7211,7 @@ fn test_aarch64_integer_tags_mcsettagpairpre_ldr_oracle_2_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11452,17 +7229,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_ldr_oracle_3_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFF,
-        "X0 should be 0x00000000FFFFFFFF"
-    );
+    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFF, "X0 should be 0x00000000FFFFFFFF");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -11475,17 +7247,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_ldr_oracle_4_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18])
-        .unwrap();
+    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x123456789ABCDEF0,
-        "X0 should be 0x123456789ABCDEF0"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x123456789ABCDEF0, "X0 should be 0x123456789ABCDEF0");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -11498,8 +7265,7 @@ fn test_aarch64_integer_tags_mcsettagpairpre_ldr_oracle_5_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11517,8 +7283,7 @@ fn test_aarch64_integer_tags_mcsettagpairpre_ldr_oracle_6_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11536,17 +7301,12 @@ fn test_aarch64_integer_tags_mcsettagpairpre_ldr_oracle_7_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x80000000,
-        "X0 should be 0x0000000080000000"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x80000000, "X0 should be 0x0000000080000000");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpairpre
@@ -11603,8 +7363,8 @@ fn test_aarch64_integer_tags_mcsettagpairpre_store_0_d9a00c00() {
     // Test aarch64_integer_tags_mcsettagpairpre memory store: 8 bytes
     // Encoding: 0xD9A00C00
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     set_x(&mut cpu, 1, 0x100000000000);
+    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     let encoding: u32 = 0xD9A00C00;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11656,8 +7416,7 @@ fn test_aarch64_integer_tags_mcsettagpair_ldr_oracle_1_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11675,8 +7434,7 @@ fn test_aarch64_integer_tags_mcsettagpair_ldr_oracle_2_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11694,17 +7452,12 @@ fn test_aarch64_integer_tags_mcsettagpair_ldr_oracle_3_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFF,
-        "X0 should be 0x00000000FFFFFFFF"
-    );
+    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFF, "X0 should be 0x00000000FFFFFFFF");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -11717,17 +7470,12 @@ fn test_aarch64_integer_tags_mcsettagpair_ldr_oracle_4_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18])
-        .unwrap();
+    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x123456789ABCDEF0,
-        "X0 should be 0x123456789ABCDEF0"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x123456789ABCDEF0, "X0 should be 0x123456789ABCDEF0");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -11740,8 +7488,7 @@ fn test_aarch64_integer_tags_mcsettagpair_ldr_oracle_5_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11759,8 +7506,7 @@ fn test_aarch64_integer_tags_mcsettagpair_ldr_oracle_6_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11778,17 +7524,12 @@ fn test_aarch64_integer_tags_mcsettagpair_ldr_oracle_7_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x80000000,
-        "X0 should be 0x0000000080000000"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x80000000, "X0 should be 0x0000000080000000");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagpair
@@ -11845,8 +7586,8 @@ fn test_aarch64_integer_tags_mcsettagpair_store_0_d9a00800() {
     // Test aarch64_integer_tags_mcsettagpair memory store: 8 bytes
     // Encoding: 0xD9A00800
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x100000000000);
     set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
+    set_x(&mut cpu, 1, 0x100000000000);
     let encoding: u32 = 0xD9A00800;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11862,8 +7603,8 @@ fn test_aarch64_integer_tags_mcsettagpair_store_1_d9a00800() {
     // Test aarch64_integer_tags_mcsettagpair memory store: 8 bytes
     // Encoding: 0xD9A00800
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     set_x(&mut cpu, 1, 0x100000000000);
+    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     let encoding: u32 = 0xD9A00800;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -11882,17 +7623,12 @@ fn test_aarch64_integer_tags_mcsettagpair_store_1_d9a00800() {
 fn test_aarch64_integer_tags_mcinserttagmask_field_xm_0_min_1400_9ac01400() {
     // Encoding: 0x9AC01400
     // Test aarch64_integer_tags_mcinserttagmask field Xm = 0 (Min)
-    // Fields: Xn=0, Xm=0, Xd=0
+    // Fields: Xm=0, Xn=0, Xd=0
     let encoding: u32 = 0x9AC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -11908,12 +7644,7 @@ fn test_aarch64_integer_tags_mcinserttagmask_field_xm_1_poweroftwo_1400_9ac11400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -11924,17 +7655,12 @@ fn test_aarch64_integer_tags_mcinserttagmask_field_xm_1_poweroftwo_1400_9ac11400
 fn test_aarch64_integer_tags_mcinserttagmask_field_xm_30_poweroftwominusone_1400_9ade1400() {
     // Encoding: 0x9ADE1400
     // Test aarch64_integer_tags_mcinserttagmask field Xm = 30 (PowerOfTwoMinusOne)
-    // Fields: Xm=30, Xn=0, Xd=0
+    // Fields: Xn=0, Xd=0, Xm=30
     let encoding: u32 = 0x9ADE1400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -11945,17 +7671,12 @@ fn test_aarch64_integer_tags_mcinserttagmask_field_xm_30_poweroftwominusone_1400
 fn test_aarch64_integer_tags_mcinserttagmask_field_xm_31_max_1400_9adf1400() {
     // Encoding: 0x9ADF1400
     // Test aarch64_integer_tags_mcinserttagmask field Xm = 31 (Max)
-    // Fields: Xm=31, Xn=0, Xd=0
+    // Fields: Xn=0, Xm=31, Xd=0
     let encoding: u32 = 0x9ADF1400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -11966,17 +7687,12 @@ fn test_aarch64_integer_tags_mcinserttagmask_field_xm_31_max_1400_9adf1400() {
 fn test_aarch64_integer_tags_mcinserttagmask_field_xn_0_min_1400_9ac01400() {
     // Encoding: 0x9AC01400
     // Test aarch64_integer_tags_mcinserttagmask field Xn = 0 (Min)
-    // Fields: Xd=0, Xm=0, Xn=0
+    // Fields: Xm=0, Xd=0, Xn=0
     let encoding: u32 = 0x9AC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -11987,17 +7703,12 @@ fn test_aarch64_integer_tags_mcinserttagmask_field_xn_0_min_1400_9ac01400() {
 fn test_aarch64_integer_tags_mcinserttagmask_field_xn_1_poweroftwo_1400_9ac01420() {
     // Encoding: 0x9AC01420
     // Test aarch64_integer_tags_mcinserttagmask field Xn = 1 (PowerOfTwo)
-    // Fields: Xd=0, Xn=1, Xm=0
+    // Fields: Xm=0, Xn=1, Xd=0
     let encoding: u32 = 0x9AC01420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -12008,17 +7719,12 @@ fn test_aarch64_integer_tags_mcinserttagmask_field_xn_1_poweroftwo_1400_9ac01420
 fn test_aarch64_integer_tags_mcinserttagmask_field_xn_30_poweroftwominusone_1400_9ac017c0() {
     // Encoding: 0x9AC017C0
     // Test aarch64_integer_tags_mcinserttagmask field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xm=0, Xd=0, Xn=30
+    // Fields: Xm=0, Xn=30, Xd=0
     let encoding: u32 = 0x9AC017C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -12029,17 +7735,12 @@ fn test_aarch64_integer_tags_mcinserttagmask_field_xn_30_poweroftwominusone_1400
 fn test_aarch64_integer_tags_mcinserttagmask_field_xn_31_max_1400_9ac017e0() {
     // Encoding: 0x9AC017E0
     // Test aarch64_integer_tags_mcinserttagmask field Xn = 31 (Max)
-    // Fields: Xn=31, Xd=0, Xm=0
+    // Fields: Xm=0, Xd=0, Xn=31
     let encoding: u32 = 0x9AC017E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -12050,17 +7751,12 @@ fn test_aarch64_integer_tags_mcinserttagmask_field_xn_31_max_1400_9ac017e0() {
 fn test_aarch64_integer_tags_mcinserttagmask_field_xd_0_min_1400_9ac01400() {
     // Encoding: 0x9AC01400
     // Test aarch64_integer_tags_mcinserttagmask field Xd = 0 (Min)
-    // Fields: Xn=0, Xd=0, Xm=0
+    // Fields: Xn=0, Xm=0, Xd=0
     let encoding: u32 = 0x9AC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -12071,17 +7767,12 @@ fn test_aarch64_integer_tags_mcinserttagmask_field_xd_0_min_1400_9ac01400() {
 fn test_aarch64_integer_tags_mcinserttagmask_field_xd_1_poweroftwo_1400_9ac01401() {
     // Encoding: 0x9AC01401
     // Test aarch64_integer_tags_mcinserttagmask field Xd = 1 (PowerOfTwo)
-    // Fields: Xd=1, Xm=0, Xn=0
+    // Fields: Xm=0, Xn=0, Xd=1
     let encoding: u32 = 0x9AC01401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -12092,17 +7783,12 @@ fn test_aarch64_integer_tags_mcinserttagmask_field_xd_1_poweroftwo_1400_9ac01401
 fn test_aarch64_integer_tags_mcinserttagmask_field_xd_30_poweroftwominusone_1400_9ac0141e() {
     // Encoding: 0x9AC0141E
     // Test aarch64_integer_tags_mcinserttagmask field Xd = 30 (PowerOfTwoMinusOne)
-    // Fields: Xm=0, Xn=0, Xd=30
+    // Fields: Xd=30, Xn=0, Xm=0
     let encoding: u32 = 0x9AC0141E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -12113,17 +7799,12 @@ fn test_aarch64_integer_tags_mcinserttagmask_field_xd_30_poweroftwominusone_1400
 fn test_aarch64_integer_tags_mcinserttagmask_field_xd_31_max_1400_9ac0141f() {
     // Encoding: 0x9AC0141F
     // Test aarch64_integer_tags_mcinserttagmask field Xd = 31 (Max)
-    // Fields: Xm=0, Xd=31, Xn=0
+    // Fields: Xm=0, Xn=0, Xd=31
     let encoding: u32 = 0x9AC0141F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -12134,206 +7815,12 @@ fn test_aarch64_integer_tags_mcinserttagmask_field_xd_31_max_1400_9ac0141f() {
 fn test_aarch64_integer_tags_mcinserttagmask_combo_0_1400_9ac01400() {
     // Encoding: 0x9AC01400
     // Test aarch64_integer_tags_mcinserttagmask field combination: Xm=0, Xn=0, Xd=0
-    // Fields: Xn=0, Xd=0, Xm=0
+    // Fields: Xm=0, Xn=0, Xd=0
     let encoding: u32 = 0x9AC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinserttagmask
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_integer_tags_mcinserttagmask_combo_1_1400_9ac11400() {
-    // Encoding: 0x9AC11400
-    // Test aarch64_integer_tags_mcinserttagmask field combination: Xm=1, Xn=0, Xd=0
-    // Fields: Xn=0, Xm=1, Xd=0
-    let encoding: u32 = 0x9AC11400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinserttagmask
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xm=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_integer_tags_mcinserttagmask_combo_2_1400_9ade1400() {
-    // Encoding: 0x9ADE1400
-    // Test aarch64_integer_tags_mcinserttagmask field combination: Xm=30, Xn=0, Xd=0
-    // Fields: Xm=30, Xn=0, Xd=0
-    let encoding: u32 = 0x9ADE1400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinserttagmask
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xm=31 (register index 31 (special))
-#[test]
-fn test_aarch64_integer_tags_mcinserttagmask_combo_3_1400_9adf1400() {
-    // Encoding: 0x9ADF1400
-    // Test aarch64_integer_tags_mcinserttagmask field combination: Xm=31, Xn=0, Xd=0
-    // Fields: Xm=31, Xn=0, Xd=0
-    let encoding: u32 = 0x9ADF1400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinserttagmask
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_integer_tags_mcinserttagmask_combo_4_1400_9ac01400() {
-    // Encoding: 0x9AC01400
-    // Test aarch64_integer_tags_mcinserttagmask field combination: Xm=0, Xn=0, Xd=0
-    // Fields: Xn=0, Xd=0, Xm=0
-    let encoding: u32 = 0x9AC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinserttagmask
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_integer_tags_mcinserttagmask_combo_5_1400_9ac01420() {
-    // Encoding: 0x9AC01420
-    // Test aarch64_integer_tags_mcinserttagmask field combination: Xm=0, Xn=1, Xd=0
-    // Fields: Xn=1, Xd=0, Xm=0
-    let encoding: u32 = 0x9AC01420;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinserttagmask
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_integer_tags_mcinserttagmask_combo_6_1400_9ac017c0() {
-    // Encoding: 0x9AC017C0
-    // Test aarch64_integer_tags_mcinserttagmask field combination: Xm=0, Xn=30, Xd=0
-    // Fields: Xn=30, Xd=0, Xm=0
-    let encoding: u32 = 0x9AC017C0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinserttagmask
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=31 (register index 31 (SP - stack pointer))
-#[test]
-fn test_aarch64_integer_tags_mcinserttagmask_combo_7_1400_9ac017e0() {
-    // Encoding: 0x9AC017E0
-    // Test aarch64_integer_tags_mcinserttagmask field combination: Xm=0, Xn=31, Xd=0
-    // Fields: Xn=31, Xm=0, Xd=0
-    let encoding: u32 = 0x9AC017E0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinserttagmask
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xd=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_integer_tags_mcinserttagmask_combo_8_1400_9ac01400() {
-    // Encoding: 0x9AC01400
-    // Test aarch64_integer_tags_mcinserttagmask field combination: Xm=0, Xn=0, Xd=0
-    // Fields: Xn=0, Xd=0, Xm=0
-    let encoding: u32 = 0x9AC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcinserttagmask
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xd=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_integer_tags_mcinserttagmask_combo_9_1400_9ac01401() {
-    // Encoding: 0x9AC01401
-    // Test aarch64_integer_tags_mcinserttagmask field combination: Xm=0, Xn=0, Xd=1
-    // Fields: Xn=0, Xm=0, Xd=1
-    let encoding: u32 = 0x9AC01401;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -12341,21 +7828,15 @@ fn test_aarch64_integer_tags_mcinserttagmask_combo_9_1400_9ac01401() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcinserttagmask_special_xn_31_stack_pointer_sp_may_require_alignment_5120_9ac017e0(
-) {
+fn test_aarch64_integer_tags_mcinserttagmask_special_xn_31_stack_pointer_sp_may_require_alignment_5120_9ac017e0() {
     // Encoding: 0x9AC017E0
     // Test aarch64_integer_tags_mcinserttagmask special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Xm=0, Xn=31, Xd=0
+    // Fields: Xd=0, Xm=0, Xn=31
     let encoding: u32 = 0x9AC017E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -12367,8 +7848,8 @@ fn test_aarch64_integer_tags_mcinserttagmask_umulh_oracle_0_9bc27c20() {
     // Test UMULH: small values - high bits zero (oracle)
     // Encoding: 0x9BC27C20
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x2);
     set_x(&mut cpu, 2, 0x3);
+    set_x(&mut cpu, 1, 0x2);
     let encoding: u32 = 0x9BC27C20;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -12409,11 +7890,7 @@ fn test_aarch64_integer_tags_mcinserttagmask_umulh_oracle_2_9bc27c20() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFFFFFFFFFE,
-        "X0 should be 0xFFFFFFFFFFFFFFFE"
-    );
+    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFFE, "X0 should be 0xFFFFFFFFFFFFFFFE");
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -12425,17 +7902,13 @@ fn test_aarch64_integer_tags_mcinserttagmask_umulh_oracle_3_9bc27c20() {
     // Test UMULH: max positive * max positive (oracle)
     // Encoding: 0x9BC27C20
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x7FFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x7FFFFFFFFFFFFFFF);
     let encoding: u32 = 0x9BC27C20;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x3FFFFFFFFFFFFFFF,
-        "X0 should be 0x3FFFFFFFFFFFFFFF"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x3FFFFFFFFFFFFFFF, "X0 should be 0x3FFFFFFFFFFFFFFF");
 }
 
 /// Provenance: aarch64_integer_tags_mcinserttagmask
@@ -12498,17 +7971,12 @@ fn test_aarch64_integer_tags_mcinserttagmask_sp_xn_9ac017e0() {
 fn test_aarch64_integer_tags_mcsubtag_field_uimm6_0_min_0_d1800000() {
     // Encoding: 0xD1800000
     // Test aarch64_integer_tags_mcsubtag field uimm6 = 0 (Min)
-    // Fields: op3=0, Xn=0, Xd=0, uimm6=0, uimm4=0
+    // Fields: uimm4=0, Xd=0, uimm6=0, Xn=0, op3=0
     let encoding: u32 = 0xD1800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12519,17 +7987,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_uimm6_0_min_0_d1800000() {
 fn test_aarch64_integer_tags_mcsubtag_field_uimm6_1_poweroftwo_0_d1810000() {
     // Encoding: 0xD1810000
     // Test aarch64_integer_tags_mcsubtag field uimm6 = 1 (PowerOfTwo)
-    // Fields: uimm6=1, op3=0, Xd=0, uimm4=0, Xn=0
+    // Fields: uimm4=0, uimm6=1, op3=0, Xd=0, Xn=0
     let encoding: u32 = 0xD1810000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12540,17 +8003,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_uimm6_1_poweroftwo_0_d1810000() {
 fn test_aarch64_integer_tags_mcsubtag_field_uimm6_31_poweroftwominusone_0_d19f0000() {
     // Encoding: 0xD19F0000
     // Test aarch64_integer_tags_mcsubtag field uimm6 = 31 (PowerOfTwoMinusOne)
-    // Fields: uimm6=31, uimm4=0, op3=0, Xn=0, Xd=0
+    // Fields: uimm6=31, op3=0, Xn=0, Xd=0, uimm4=0
     let encoding: u32 = 0xD19F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12561,17 +8019,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_uimm6_31_poweroftwominusone_0_d19f00
 fn test_aarch64_integer_tags_mcsubtag_field_uimm6_63_max_0_d1bf0000() {
     // Encoding: 0xD1BF0000
     // Test aarch64_integer_tags_mcsubtag field uimm6 = 63 (Max)
-    // Fields: uimm6=63, op3=0, uimm4=0, Xn=0, Xd=0
+    // Fields: uimm4=0, op3=0, uimm6=63, Xn=0, Xd=0
     let encoding: u32 = 0xD1BF0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12582,17 +8035,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_uimm6_63_max_0_d1bf0000() {
 fn test_aarch64_integer_tags_mcsubtag_field_op3_0_min_0_d1800000() {
     // Encoding: 0xD1800000
     // Test aarch64_integer_tags_mcsubtag field op3 = 0 (Min)
-    // Fields: op3=0, Xd=0, uimm4=0, uimm6=0, Xn=0
+    // Fields: uimm4=0, Xd=0, uimm6=0, op3=0, Xn=0
     let encoding: u32 = 0xD1800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12603,17 +8051,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_op3_0_min_0_d1800000() {
 fn test_aarch64_integer_tags_mcsubtag_field_op3_1_poweroftwo_0_d1804000() {
     // Encoding: 0xD1804000
     // Test aarch64_integer_tags_mcsubtag field op3 = 1 (PowerOfTwo)
-    // Fields: uimm6=0, Xn=0, Xd=0, uimm4=0, op3=1
+    // Fields: uimm4=0, uimm6=0, Xn=0, op3=1, Xd=0
     let encoding: u32 = 0xD1804000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12624,17 +8067,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_op3_1_poweroftwo_0_d1804000() {
 fn test_aarch64_integer_tags_mcsubtag_field_op3_3_max_0_d180c000() {
     // Encoding: 0xD180C000
     // Test aarch64_integer_tags_mcsubtag field op3 = 3 (Max)
-    // Fields: uimm6=0, Xn=0, Xd=0, op3=3, uimm4=0
+    // Fields: Xd=0, uimm6=0, op3=3, uimm4=0, Xn=0
     let encoding: u32 = 0xD180C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12645,17 +8083,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_op3_3_max_0_d180c000() {
 fn test_aarch64_integer_tags_mcsubtag_field_uimm4_0_min_0_d1800000() {
     // Encoding: 0xD1800000
     // Test aarch64_integer_tags_mcsubtag field uimm4 = 0 (Min)
-    // Fields: uimm4=0, Xd=0, uimm6=0, Xn=0, op3=0
+    // Fields: uimm6=0, uimm4=0, op3=0, Xn=0, Xd=0
     let encoding: u32 = 0xD1800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12666,17 +8099,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_uimm4_0_min_0_d1800000() {
 fn test_aarch64_integer_tags_mcsubtag_field_uimm4_1_poweroftwo_0_d1800400() {
     // Encoding: 0xD1800400
     // Test aarch64_integer_tags_mcsubtag field uimm4 = 1 (PowerOfTwo)
-    // Fields: Xn=0, op3=0, uimm6=0, Xd=0, uimm4=1
+    // Fields: Xn=0, op3=0, uimm4=1, uimm6=0, Xd=0
     let encoding: u32 = 0xD1800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12687,17 +8115,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_uimm4_1_poweroftwo_0_d1800400() {
 fn test_aarch64_integer_tags_mcsubtag_field_uimm4_7_poweroftwominusone_0_d1801c00() {
     // Encoding: 0xD1801C00
     // Test aarch64_integer_tags_mcsubtag field uimm4 = 7 (PowerOfTwoMinusOne)
-    // Fields: op3=0, Xn=0, Xd=0, uimm6=0, uimm4=7
+    // Fields: uimm4=7, Xd=0, op3=0, Xn=0, uimm6=0
     let encoding: u32 = 0xD1801C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12708,17 +8131,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_uimm4_7_poweroftwominusone_0_d1801c0
 fn test_aarch64_integer_tags_mcsubtag_field_uimm4_15_max_0_d1803c00() {
     // Encoding: 0xD1803C00
     // Test aarch64_integer_tags_mcsubtag field uimm4 = 15 (Max)
-    // Fields: op3=0, uimm4=15, Xd=0, Xn=0, uimm6=0
+    // Fields: op3=0, Xd=0, uimm4=15, Xn=0, uimm6=0
     let encoding: u32 = 0xD1803C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12729,17 +8147,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_uimm4_15_max_0_d1803c00() {
 fn test_aarch64_integer_tags_mcsubtag_field_xn_0_min_0_d1800000() {
     // Encoding: 0xD1800000
     // Test aarch64_integer_tags_mcsubtag field Xn = 0 (Min)
-    // Fields: uimm6=0, Xn=0, op3=0, Xd=0, uimm4=0
+    // Fields: uimm4=0, uimm6=0, op3=0, Xn=0, Xd=0
     let encoding: u32 = 0xD1800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12750,17 +8163,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_xn_0_min_0_d1800000() {
 fn test_aarch64_integer_tags_mcsubtag_field_xn_1_poweroftwo_0_d1800020() {
     // Encoding: 0xD1800020
     // Test aarch64_integer_tags_mcsubtag field Xn = 1 (PowerOfTwo)
-    // Fields: Xd=0, Xn=1, op3=0, uimm6=0, uimm4=0
+    // Fields: uimm6=0, Xd=0, op3=0, Xn=1, uimm4=0
     let encoding: u32 = 0xD1800020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12771,17 +8179,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_xn_1_poweroftwo_0_d1800020() {
 fn test_aarch64_integer_tags_mcsubtag_field_xn_30_poweroftwominusone_0_d18003c0() {
     // Encoding: 0xD18003C0
     // Test aarch64_integer_tags_mcsubtag field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: op3=0, Xd=0, Xn=30, uimm4=0, uimm6=0
+    // Fields: uimm4=0, op3=0, uimm6=0, Xn=30, Xd=0
     let encoding: u32 = 0xD18003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12792,17 +8195,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_xn_30_poweroftwominusone_0_d18003c0(
 fn test_aarch64_integer_tags_mcsubtag_field_xn_31_max_0_d18003e0() {
     // Encoding: 0xD18003E0
     // Test aarch64_integer_tags_mcsubtag field Xn = 31 (Max)
-    // Fields: op3=0, uimm4=0, uimm6=0, Xn=31, Xd=0
+    // Fields: op3=0, uimm4=0, uimm6=0, Xd=0, Xn=31
     let encoding: u32 = 0xD18003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12813,17 +8211,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_xn_31_max_0_d18003e0() {
 fn test_aarch64_integer_tags_mcsubtag_field_xd_0_min_0_d1800000() {
     // Encoding: 0xD1800000
     // Test aarch64_integer_tags_mcsubtag field Xd = 0 (Min)
-    // Fields: op3=0, Xd=0, uimm6=0, Xn=0, uimm4=0
+    // Fields: uimm6=0, uimm4=0, Xn=0, Xd=0, op3=0
     let encoding: u32 = 0xD1800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12834,17 +8227,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_xd_0_min_0_d1800000() {
 fn test_aarch64_integer_tags_mcsubtag_field_xd_1_poweroftwo_0_d1800001() {
     // Encoding: 0xD1800001
     // Test aarch64_integer_tags_mcsubtag field Xd = 1 (PowerOfTwo)
-    // Fields: uimm6=0, op3=0, Xd=1, uimm4=0, Xn=0
+    // Fields: uimm6=0, uimm4=0, Xn=0, Xd=1, op3=0
     let encoding: u32 = 0xD1800001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12855,17 +8243,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_xd_1_poweroftwo_0_d1800001() {
 fn test_aarch64_integer_tags_mcsubtag_field_xd_30_poweroftwominusone_0_d180001e() {
     // Encoding: 0xD180001E
     // Test aarch64_integer_tags_mcsubtag field Xd = 30 (PowerOfTwoMinusOne)
-    // Fields: uimm6=0, op3=0, uimm4=0, Xn=0, Xd=30
+    // Fields: Xd=30, uimm6=0, op3=0, uimm4=0, Xn=0
     let encoding: u32 = 0xD180001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12876,17 +8259,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_xd_30_poweroftwominusone_0_d180001e(
 fn test_aarch64_integer_tags_mcsubtag_field_xd_31_max_0_d180001f() {
     // Encoding: 0xD180001F
     // Test aarch64_integer_tags_mcsubtag field Xd = 31 (Max)
-    // Fields: op3=0, uimm4=0, Xn=0, uimm6=0, Xd=31
+    // Fields: Xd=31, uimm4=0, op3=0, Xn=0, uimm6=0
     let encoding: u32 = 0xD180001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -12897,206 +8275,12 @@ fn test_aarch64_integer_tags_mcsubtag_field_xd_31_max_0_d180001f() {
 fn test_aarch64_integer_tags_mcsubtag_combo_0_0_d1800000() {
     // Encoding: 0xD1800000
     // Test aarch64_integer_tags_mcsubtag field combination: uimm6=0, op3=0, uimm4=0, Xn=0, Xd=0
-    // Fields: uimm4=0, Xd=0, op3=0, uimm6=0, Xn=0
+    // Fields: Xd=0, uimm4=0, Xn=0, op3=0, uimm6=0
     let encoding: u32 = 0xD1800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsubtag
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// uimm6=1 (value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsubtag_combo_1_0_d1810000() {
-    // Encoding: 0xD1810000
-    // Test aarch64_integer_tags_mcsubtag field combination: uimm6=1, op3=0, uimm4=0, Xn=0, Xd=0
-    // Fields: Xd=0, Xn=0, uimm6=1, op3=0, uimm4=0
-    let encoding: u32 = 0xD1810000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsubtag
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// uimm6=31 (midpoint (31))
-#[test]
-fn test_aarch64_integer_tags_mcsubtag_combo_2_0_d19f0000() {
-    // Encoding: 0xD19F0000
-    // Test aarch64_integer_tags_mcsubtag field combination: uimm6=31, op3=0, uimm4=0, Xn=0, Xd=0
-    // Fields: Xd=0, op3=0, Xn=0, uimm4=0, uimm6=31
-    let encoding: u32 = 0xD19F0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsubtag
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// uimm6=63 (maximum value (63))
-#[test]
-fn test_aarch64_integer_tags_mcsubtag_combo_3_0_d1bf0000() {
-    // Encoding: 0xD1BF0000
-    // Test aarch64_integer_tags_mcsubtag field combination: uimm6=63, op3=0, uimm4=0, Xn=0, Xd=0
-    // Fields: uimm6=63, Xn=0, Xd=0, op3=0, uimm4=0
-    let encoding: u32 = 0xD1BF0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsubtag
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// op3=0 (minimum value)
-#[test]
-fn test_aarch64_integer_tags_mcsubtag_combo_4_0_d1800000() {
-    // Encoding: 0xD1800000
-    // Test aarch64_integer_tags_mcsubtag field combination: uimm6=0, op3=0, uimm4=0, Xn=0, Xd=0
-    // Fields: uimm6=0, op3=0, Xd=0, Xn=0, uimm4=0
-    let encoding: u32 = 0xD1800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsubtag
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// op3=1 (value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsubtag_combo_5_0_d1804000() {
-    // Encoding: 0xD1804000
-    // Test aarch64_integer_tags_mcsubtag field combination: uimm6=0, op3=1, uimm4=0, Xn=0, Xd=0
-    // Fields: Xd=0, Xn=0, op3=1, uimm4=0, uimm6=0
-    let encoding: u32 = 0xD1804000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsubtag
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// op3=3 (maximum value (3))
-#[test]
-fn test_aarch64_integer_tags_mcsubtag_combo_6_0_d180c000() {
-    // Encoding: 0xD180C000
-    // Test aarch64_integer_tags_mcsubtag field combination: uimm6=0, op3=3, uimm4=0, Xn=0, Xd=0
-    // Fields: uimm4=0, op3=3, uimm6=0, Xn=0, Xd=0
-    let encoding: u32 = 0xD180C000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsubtag
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// uimm4=0 (minimum value)
-#[test]
-fn test_aarch64_integer_tags_mcsubtag_combo_7_0_d1800000() {
-    // Encoding: 0xD1800000
-    // Test aarch64_integer_tags_mcsubtag field combination: uimm6=0, op3=0, uimm4=0, Xn=0, Xd=0
-    // Fields: Xd=0, Xn=0, op3=0, uimm6=0, uimm4=0
-    let encoding: u32 = 0xD1800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsubtag
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// uimm4=1 (value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsubtag_combo_8_0_d1800400() {
-    // Encoding: 0xD1800400
-    // Test aarch64_integer_tags_mcsubtag field combination: uimm6=0, op3=0, uimm4=1, Xn=0, Xd=0
-    // Fields: Xn=0, Xd=0, op3=0, uimm4=1, uimm6=0
-    let encoding: u32 = 0xD1800400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsubtag
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// uimm4=7 (midpoint (7))
-#[test]
-fn test_aarch64_integer_tags_mcsubtag_combo_9_0_d1801c00() {
-    // Encoding: 0xD1801C00
-    // Test aarch64_integer_tags_mcsubtag field combination: uimm6=0, op3=0, uimm4=7, Xn=0, Xd=0
-    // Fields: uimm6=0, op3=0, uimm4=7, Xn=0, Xd=0
-    let encoding: u32 = 0xD1801C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -13104,21 +8288,15 @@ fn test_aarch64_integer_tags_mcsubtag_combo_9_0_d1801c00() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsubtag_special_xn_31_stack_pointer_sp_may_require_alignment_0_d18003e0(
-) {
+fn test_aarch64_integer_tags_mcsubtag_special_xn_31_stack_pointer_sp_may_require_alignment_0_d18003e0() {
     // Encoding: 0xD18003E0
     // Test aarch64_integer_tags_mcsubtag special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: uimm4=0, Xn=31, Xd=0, uimm6=0, op3=0
+    // Fields: uimm6=0, Xd=0, Xn=31, op3=0, uimm4=0
     let encoding: u32 = 0xD18003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsubtag
@@ -13178,17 +8356,12 @@ fn test_aarch64_integer_tags_mcsubtag_sp_xn_d18003e0() {
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_simm7_0_min_0_68800000() {
     // Encoding: 0x68800000
     // Test aarch64_integer_tags_mcsettaganddatapairpost field simm7 = 0 (Min)
-    // Fields: Xt=0, simm7=0, Xn=0, Xt2=0
+    // Fields: Xt2=0, simm7=0, Xt=0, Xn=0
     let encoding: u32 = 0x68800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13199,17 +8372,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_simm7_0_min_0_6880000
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_simm7_1_poweroftwo_0_68808000() {
     // Encoding: 0x68808000
     // Test aarch64_integer_tags_mcsettaganddatapairpost field simm7 = 1 (PowerOfTwo)
-    // Fields: Xn=0, Xt2=0, simm7=1, Xt=0
+    // Fields: Xn=0, simm7=1, Xt2=0, Xt=0
     let encoding: u32 = 0x68808000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13217,21 +8385,15 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_simm7_1_poweroftwo_0_
 /// Requirement: FieldBoundary { field: "simm7", value: 63, boundary: PowerOfTwoMinusOne }
 /// midpoint (63)
 #[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_simm7_63_poweroftwominusone_0_689f8000()
-{
+fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_simm7_63_poweroftwominusone_0_689f8000() {
     // Encoding: 0x689F8000
     // Test aarch64_integer_tags_mcsettaganddatapairpost field simm7 = 63 (PowerOfTwoMinusOne)
-    // Fields: Xt2=0, Xn=0, simm7=63, Xt=0
+    // Fields: simm7=63, Xn=0, Xt=0, Xt2=0
     let encoding: u32 = 0x689F8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13242,17 +8404,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_simm7_63_poweroftwomi
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_simm7_127_max_0_68bf8000() {
     // Encoding: 0x68BF8000
     // Test aarch64_integer_tags_mcsettaganddatapairpost field simm7 = 127 (Max)
-    // Fields: Xn=0, simm7=127, Xt2=0, Xt=0
+    // Fields: simm7=127, Xt=0, Xn=0, Xt2=0
     let encoding: u32 = 0x68BF8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13263,17 +8420,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_simm7_127_max_0_68bf8
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt2_0_min_0_68800000() {
     // Encoding: 0x68800000
     // Test aarch64_integer_tags_mcsettaganddatapairpost field Xt2 = 0 (Min)
-    // Fields: simm7=0, Xt=0, Xn=0, Xt2=0
+    // Fields: simm7=0, Xt2=0, Xt=0, Xn=0
     let encoding: u32 = 0x68800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13284,17 +8436,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt2_0_min_0_68800000(
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt2_1_poweroftwo_0_68800400() {
     // Encoding: 0x68800400
     // Test aarch64_integer_tags_mcsettaganddatapairpost field Xt2 = 1 (PowerOfTwo)
-    // Fields: simm7=0, Xt2=1, Xn=0, Xt=0
+    // Fields: Xt2=1, simm7=0, Xn=0, Xt=0
     let encoding: u32 = 0x68800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13305,17 +8452,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt2_1_poweroftwo_0_68
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt2_15_poweroftwominusone_0_68803c00() {
     // Encoding: 0x68803C00
     // Test aarch64_integer_tags_mcsettaganddatapairpost field Xt2 = 15 (PowerOfTwoMinusOne)
-    // Fields: Xt2=15, Xn=0, Xt=0, simm7=0
+    // Fields: Xn=0, Xt2=15, simm7=0, Xt=0
     let encoding: u32 = 0x68803C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13326,17 +8468,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt2_15_poweroftwominu
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt2_31_max_0_68807c00() {
     // Encoding: 0x68807C00
     // Test aarch64_integer_tags_mcsettaganddatapairpost field Xt2 = 31 (Max)
-    // Fields: simm7=0, Xt=0, Xt2=31, Xn=0
+    // Fields: Xt2=31, Xt=0, simm7=0, Xn=0
     let encoding: u32 = 0x68807C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13347,17 +8484,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt2_31_max_0_68807c00
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xn_0_min_0_68800000() {
     // Encoding: 0x68800000
     // Test aarch64_integer_tags_mcsettaganddatapairpost field Xn = 0 (Min)
-    // Fields: Xt=0, Xn=0, Xt2=0, simm7=0
+    // Fields: Xt=0, simm7=0, Xt2=0, Xn=0
     let encoding: u32 = 0x68800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13368,17 +8500,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xn_0_min_0_68800000()
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xn_1_poweroftwo_0_68800020() {
     // Encoding: 0x68800020
     // Test aarch64_integer_tags_mcsettaganddatapairpost field Xn = 1 (PowerOfTwo)
-    // Fields: simm7=0, Xt2=0, Xn=1, Xt=0
+    // Fields: Xn=1, Xt=0, Xt2=0, simm7=0
     let encoding: u32 = 0x68800020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13389,17 +8516,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xn_1_poweroftwo_0_688
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xn_30_poweroftwominusone_0_688003c0() {
     // Encoding: 0x688003C0
     // Test aarch64_integer_tags_mcsettaganddatapairpost field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xt2=0, Xn=30, Xt=0, simm7=0
+    // Fields: Xt=0, Xt2=0, Xn=30, simm7=0
     let encoding: u32 = 0x688003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13410,17 +8532,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xn_30_poweroftwominus
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xn_31_max_0_688003e0() {
     // Encoding: 0x688003E0
     // Test aarch64_integer_tags_mcsettaganddatapairpost field Xn = 31 (Max)
-    // Fields: Xn=31, simm7=0, Xt=0, Xt2=0
+    // Fields: simm7=0, Xt=0, Xt2=0, Xn=31
     let encoding: u32 = 0x688003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13431,17 +8548,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xn_31_max_0_688003e0(
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt_0_min_0_68800000() {
     // Encoding: 0x68800000
     // Test aarch64_integer_tags_mcsettaganddatapairpost field Xt = 0 (Min)
-    // Fields: Xt=0, Xt2=0, Xn=0, simm7=0
+    // Fields: Xt2=0, Xn=0, Xt=0, simm7=0
     let encoding: u32 = 0x68800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13452,17 +8564,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt_0_min_0_68800000()
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt_1_poweroftwo_0_68800001() {
     // Encoding: 0x68800001
     // Test aarch64_integer_tags_mcsettaganddatapairpost field Xt = 1 (PowerOfTwo)
-    // Fields: simm7=0, Xn=0, Xt2=0, Xt=1
+    // Fields: Xn=0, simm7=0, Xt2=0, Xt=1
     let encoding: u32 = 0x68800001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13473,17 +8580,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt_1_poweroftwo_0_688
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt_30_poweroftwominusone_0_6880001e() {
     // Encoding: 0x6880001E
     // Test aarch64_integer_tags_mcsettaganddatapairpost field Xt = 30 (PowerOfTwoMinusOne)
-    // Fields: simm7=0, Xn=0, Xt=30, Xt2=0
+    // Fields: Xt=30, simm7=0, Xt2=0, Xn=0
     let encoding: u32 = 0x6880001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13494,17 +8596,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt_30_poweroftwominus
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt_31_max_0_6880001f() {
     // Encoding: 0x6880001F
     // Test aarch64_integer_tags_mcsettaganddatapairpost field Xt = 31 (Max)
-    // Fields: Xt2=0, Xt=31, simm7=0, Xn=0
+    // Fields: Xt2=0, Xt=31, Xn=0, simm7=0
     let encoding: u32 = 0x6880001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13515,206 +8612,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_field_xt_31_max_0_6880001f(
 fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_0_0_68800000() {
     // Encoding: 0x68800000
     // Test aarch64_integer_tags_mcsettaganddatapairpost field combination: simm7=0, Xt2=0, Xn=0, Xt=0
-    // Fields: Xt=0, simm7=0, Xt2=0, Xn=0
+    // Fields: Xt=0, simm7=0, Xn=0, Xt2=0
     let encoding: u32 = 0x68800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// simm7=1 (value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_1_0_68808000() {
-    // Encoding: 0x68808000
-    // Test aarch64_integer_tags_mcsettaganddatapairpost field combination: simm7=1, Xt2=0, Xn=0, Xt=0
-    // Fields: Xt2=0, Xn=0, simm7=1, Xt=0
-    let encoding: u32 = 0x68808000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// simm7=63 (midpoint (63))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_2_0_689f8000() {
-    // Encoding: 0x689F8000
-    // Test aarch64_integer_tags_mcsettaganddatapairpost field combination: simm7=63, Xt2=0, Xn=0, Xt=0
-    // Fields: Xt2=0, Xn=0, simm7=63, Xt=0
-    let encoding: u32 = 0x689F8000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// simm7=127 (maximum value (127))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_3_0_68bf8000() {
-    // Encoding: 0x68BF8000
-    // Test aarch64_integer_tags_mcsettaganddatapairpost field combination: simm7=127, Xt2=0, Xn=0, Xt=0
-    // Fields: Xn=0, simm7=127, Xt=0, Xt2=0
-    let encoding: u32 = 0x68BF8000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt2=0 (minimum value)
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_4_0_68800000() {
-    // Encoding: 0x68800000
-    // Test aarch64_integer_tags_mcsettaganddatapairpost field combination: simm7=0, Xt2=0, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, Xt2=0, simm7=0
-    let encoding: u32 = 0x68800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt2=1 (value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_5_0_68800400() {
-    // Encoding: 0x68800400
-    // Test aarch64_integer_tags_mcsettaganddatapairpost field combination: simm7=0, Xt2=1, Xn=0, Xt=0
-    // Fields: simm7=0, Xn=0, Xt2=1, Xt=0
-    let encoding: u32 = 0x68800400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt2=15 (midpoint (15))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_6_0_68803c00() {
-    // Encoding: 0x68803C00
-    // Test aarch64_integer_tags_mcsettaganddatapairpost field combination: simm7=0, Xt2=15, Xn=0, Xt=0
-    // Fields: Xn=0, simm7=0, Xt=0, Xt2=15
-    let encoding: u32 = 0x68803C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt2=31 (maximum value (31))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_7_0_68807c00() {
-    // Encoding: 0x68807C00
-    // Test aarch64_integer_tags_mcsettaganddatapairpost field combination: simm7=0, Xt2=31, Xn=0, Xt=0
-    // Fields: Xn=0, Xt2=31, simm7=0, Xt=0
-    let encoding: u32 = 0x68807C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_8_0_68800000() {
-    // Encoding: 0x68800000
-    // Test aarch64_integer_tags_mcsettaganddatapairpost field combination: simm7=0, Xt2=0, Xn=0, Xt=0
-    // Fields: Xn=0, simm7=0, Xt2=0, Xt=0
-    let encoding: u32 = 0x68800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_9_0_68800020() {
-    // Encoding: 0x68800020
-    // Test aarch64_integer_tags_mcsettaganddatapairpost field combination: simm7=0, Xt2=0, Xn=1, Xt=0
-    // Fields: simm7=0, Xt=0, Xt2=0, Xn=1
-    let encoding: u32 = 0x68800020;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -13722,21 +8625,15 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_combo_9_0_68800020() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpost_special_xn_31_stack_pointer_sp_may_require_alignment_0_688003e0(
-) {
+fn test_aarch64_integer_tags_mcsettaganddatapairpost_special_xn_31_stack_pointer_sp_may_require_alignment_0_688003e0() {
     // Encoding: 0x688003E0
     // Test aarch64_integer_tags_mcsettaganddatapairpost special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Xn=31, Xt=0, simm7=0, Xt2=0
+    // Fields: Xn=31, Xt2=0, simm7=0, Xt=0
     let encoding: u32 = 0x688003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -13747,17 +8644,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpost_special_xn_31_stack_pointer
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_simm7_0_min_0_69800000() {
     // Encoding: 0x69800000
     // Test aarch64_integer_tags_mcsettaganddatapairpre field simm7 = 0 (Min)
-    // Fields: Xt2=0, Xt=0, simm7=0, Xn=0
+    // Fields: Xt=0, Xn=0, Xt2=0, simm7=0
     let encoding: u32 = 0x69800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -13768,17 +8660,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_simm7_0_min_0_69800000
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_simm7_1_poweroftwo_0_69808000() {
     // Encoding: 0x69808000
     // Test aarch64_integer_tags_mcsettaganddatapairpre field simm7 = 1 (PowerOfTwo)
-    // Fields: simm7=1, Xt=0, Xt2=0, Xn=0
+    // Fields: simm7=1, Xn=0, Xt=0, Xt2=0
     let encoding: u32 = 0x69808000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -13789,17 +8676,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_simm7_1_poweroftwo_0_6
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_simm7_63_poweroftwominusone_0_699f8000() {
     // Encoding: 0x699F8000
     // Test aarch64_integer_tags_mcsettaganddatapairpre field simm7 = 63 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, Xn=0, simm7=63, Xt2=0
+    // Fields: Xt2=0, Xn=0, Xt=0, simm7=63
     let encoding: u32 = 0x699F8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -13810,17 +8692,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_simm7_63_poweroftwomin
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_simm7_127_max_0_69bf8000() {
     // Encoding: 0x69BF8000
     // Test aarch64_integer_tags_mcsettaganddatapairpre field simm7 = 127 (Max)
-    // Fields: Xn=0, simm7=127, Xt2=0, Xt=0
+    // Fields: Xt2=0, simm7=127, Xn=0, Xt=0
     let encoding: u32 = 0x69BF8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -13831,17 +8708,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_simm7_127_max_0_69bf80
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt2_0_min_0_69800000() {
     // Encoding: 0x69800000
     // Test aarch64_integer_tags_mcsettaganddatapairpre field Xt2 = 0 (Min)
-    // Fields: simm7=0, Xt2=0, Xt=0, Xn=0
+    // Fields: Xt=0, Xt2=0, simm7=0, Xn=0
     let encoding: u32 = 0x69800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -13852,17 +8724,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt2_0_min_0_69800000()
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt2_1_poweroftwo_0_69800400() {
     // Encoding: 0x69800400
     // Test aarch64_integer_tags_mcsettaganddatapairpre field Xt2 = 1 (PowerOfTwo)
-    // Fields: Xt2=1, Xt=0, Xn=0, simm7=0
+    // Fields: Xt2=1, Xn=0, Xt=0, simm7=0
     let encoding: u32 = 0x69800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -13873,17 +8740,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt2_1_poweroftwo_0_698
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt2_15_poweroftwominusone_0_69803c00() {
     // Encoding: 0x69803C00
     // Test aarch64_integer_tags_mcsettaganddatapairpre field Xt2 = 15 (PowerOfTwoMinusOne)
-    // Fields: Xt2=15, Xt=0, Xn=0, simm7=0
+    // Fields: simm7=0, Xn=0, Xt=0, Xt2=15
     let encoding: u32 = 0x69803C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -13894,17 +8756,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt2_15_poweroftwominus
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt2_31_max_0_69807c00() {
     // Encoding: 0x69807C00
     // Test aarch64_integer_tags_mcsettaganddatapairpre field Xt2 = 31 (Max)
-    // Fields: Xt=0, simm7=0, Xn=0, Xt2=31
+    // Fields: Xt2=31, Xt=0, simm7=0, Xn=0
     let encoding: u32 = 0x69807C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -13915,17 +8772,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt2_31_max_0_69807c00(
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xn_0_min_0_69800000() {
     // Encoding: 0x69800000
     // Test aarch64_integer_tags_mcsettaganddatapairpre field Xn = 0 (Min)
-    // Fields: simm7=0, Xt2=0, Xn=0, Xt=0
+    // Fields: Xt2=0, Xn=0, Xt=0, simm7=0
     let encoding: u32 = 0x69800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -13936,17 +8788,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xn_0_min_0_69800000() 
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xn_1_poweroftwo_0_69800020() {
     // Encoding: 0x69800020
     // Test aarch64_integer_tags_mcsettaganddatapairpre field Xn = 1 (PowerOfTwo)
-    // Fields: Xn=1, Xt2=0, Xt=0, simm7=0
+    // Fields: simm7=0, Xt=0, Xt2=0, Xn=1
     let encoding: u32 = 0x69800020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -13957,17 +8804,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xn_1_poweroftwo_0_6980
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xn_30_poweroftwominusone_0_698003c0() {
     // Encoding: 0x698003C0
     // Test aarch64_integer_tags_mcsettaganddatapairpre field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xt2=0, Xn=30, simm7=0, Xt=0
+    // Fields: Xn=30, Xt=0, Xt2=0, simm7=0
     let encoding: u32 = 0x698003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -13978,17 +8820,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xn_30_poweroftwominuso
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xn_31_max_0_698003e0() {
     // Encoding: 0x698003E0
     // Test aarch64_integer_tags_mcsettaganddatapairpre field Xn = 31 (Max)
-    // Fields: Xn=31, simm7=0, Xt=0, Xt2=0
+    // Fields: simm7=0, Xt2=0, Xn=31, Xt=0
     let encoding: u32 = 0x698003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -13999,17 +8836,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xn_31_max_0_698003e0()
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt_0_min_0_69800000() {
     // Encoding: 0x69800000
     // Test aarch64_integer_tags_mcsettaganddatapairpre field Xt = 0 (Min)
-    // Fields: simm7=0, Xt=0, Xt2=0, Xn=0
+    // Fields: simm7=0, Xt=0, Xn=0, Xt2=0
     let encoding: u32 = 0x69800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -14020,17 +8852,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt_0_min_0_69800000() 
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt_1_poweroftwo_0_69800001() {
     // Encoding: 0x69800001
     // Test aarch64_integer_tags_mcsettaganddatapairpre field Xt = 1 (PowerOfTwo)
-    // Fields: Xn=0, simm7=0, Xt=1, Xt2=0
+    // Fields: Xt2=0, Xt=1, simm7=0, Xn=0
     let encoding: u32 = 0x69800001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -14041,17 +8868,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt_1_poweroftwo_0_6980
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt_30_poweroftwominusone_0_6980001e() {
     // Encoding: 0x6980001E
     // Test aarch64_integer_tags_mcsettaganddatapairpre field Xt = 30 (PowerOfTwoMinusOne)
-    // Fields: Xt2=0, Xt=30, simm7=0, Xn=0
+    // Fields: Xn=0, simm7=0, Xt=30, Xt2=0
     let encoding: u32 = 0x6980001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -14062,17 +8884,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt_30_poweroftwominuso
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt_31_max_0_6980001f() {
     // Encoding: 0x6980001F
     // Test aarch64_integer_tags_mcsettaganddatapairpre field Xt = 31 (Max)
-    // Fields: simm7=0, Xt2=0, Xt=31, Xn=0
+    // Fields: Xt2=0, Xn=0, Xt=31, simm7=0
     let encoding: u32 = 0x6980001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -14083,206 +8900,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_field_xt_31_max_0_6980001f()
 fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_0_0_69800000() {
     // Encoding: 0x69800000
     // Test aarch64_integer_tags_mcsettaganddatapairpre field combination: simm7=0, Xt2=0, Xn=0, Xt=0
-    // Fields: Xn=0, simm7=0, Xt2=0, Xt=0
+    // Fields: Xt=0, Xt2=0, simm7=0, Xn=0
     let encoding: u32 = 0x69800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// simm7=1 (value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_1_0_69808000() {
-    // Encoding: 0x69808000
-    // Test aarch64_integer_tags_mcsettaganddatapairpre field combination: simm7=1, Xt2=0, Xn=0, Xt=0
-    // Fields: Xt2=0, Xn=0, simm7=1, Xt=0
-    let encoding: u32 = 0x69808000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// simm7=63 (midpoint (63))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_2_0_699f8000() {
-    // Encoding: 0x699F8000
-    // Test aarch64_integer_tags_mcsettaganddatapairpre field combination: simm7=63, Xt2=0, Xn=0, Xt=0
-    // Fields: Xn=0, simm7=63, Xt2=0, Xt=0
-    let encoding: u32 = 0x699F8000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// simm7=127 (maximum value (127))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_3_0_69bf8000() {
-    // Encoding: 0x69BF8000
-    // Test aarch64_integer_tags_mcsettaganddatapairpre field combination: simm7=127, Xt2=0, Xn=0, Xt=0
-    // Fields: Xt2=0, simm7=127, Xn=0, Xt=0
-    let encoding: u32 = 0x69BF8000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt2=0 (minimum value)
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_4_0_69800000() {
-    // Encoding: 0x69800000
-    // Test aarch64_integer_tags_mcsettaganddatapairpre field combination: simm7=0, Xt2=0, Xn=0, Xt=0
-    // Fields: simm7=0, Xn=0, Xt=0, Xt2=0
-    let encoding: u32 = 0x69800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt2=1 (value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_5_0_69800400() {
-    // Encoding: 0x69800400
-    // Test aarch64_integer_tags_mcsettaganddatapairpre field combination: simm7=0, Xt2=1, Xn=0, Xt=0
-    // Fields: Xt2=1, Xn=0, Xt=0, simm7=0
-    let encoding: u32 = 0x69800400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt2=15 (midpoint (15))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_6_0_69803c00() {
-    // Encoding: 0x69803C00
-    // Test aarch64_integer_tags_mcsettaganddatapairpre field combination: simm7=0, Xt2=15, Xn=0, Xt=0
-    // Fields: Xn=0, Xt2=15, simm7=0, Xt=0
-    let encoding: u32 = 0x69803C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt2=31 (maximum value (31))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_7_0_69807c00() {
-    // Encoding: 0x69807C00
-    // Test aarch64_integer_tags_mcsettaganddatapairpre field combination: simm7=0, Xt2=31, Xn=0, Xt=0
-    // Fields: simm7=0, Xt=0, Xt2=31, Xn=0
-    let encoding: u32 = 0x69807C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_8_0_69800000() {
-    // Encoding: 0x69800000
-    // Test aarch64_integer_tags_mcsettaganddatapairpre field combination: simm7=0, Xt2=0, Xn=0, Xt=0
-    // Fields: simm7=0, Xt=0, Xt2=0, Xn=0
-    let encoding: u32 = 0x69800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_9_0_69800020() {
-    // Encoding: 0x69800020
-    // Test aarch64_integer_tags_mcsettaganddatapairpre field combination: simm7=0, Xt2=0, Xn=1, Xt=0
-    // Fields: Xt2=0, Xn=1, Xt=0, simm7=0
-    let encoding: u32 = 0x69800020;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -14290,8 +8913,7 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_combo_9_0_69800020() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettaganddatapairpre_special_xn_31_stack_pointer_sp_may_require_alignment_0_698003e0(
-) {
+fn test_aarch64_integer_tags_mcsettaganddatapairpre_special_xn_31_stack_pointer_sp_may_require_alignment_0_698003e0() {
     // Encoding: 0x698003E0
     // Test aarch64_integer_tags_mcsettaganddatapairpre special value Xn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Xt2=0, simm7=0, Xt=0, Xn=31
@@ -14299,12 +8921,7 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_special_xn_31_stack_pointer_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14315,17 +8932,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_special_xn_31_stack_pointer_
 fn test_aarch64_integer_tags_mcsettaganddatapair_field_simm7_0_min_0_69000000() {
     // Encoding: 0x69000000
     // Test aarch64_integer_tags_mcsettaganddatapair field simm7 = 0 (Min)
-    // Fields: Xt=0, simm7=0, Xt2=0, Xn=0
+    // Fields: Xn=0, Xt=0, Xt2=0, simm7=0
     let encoding: u32 = 0x69000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14336,17 +8948,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_simm7_0_min_0_69000000() 
 fn test_aarch64_integer_tags_mcsettaganddatapair_field_simm7_1_poweroftwo_0_69008000() {
     // Encoding: 0x69008000
     // Test aarch64_integer_tags_mcsettaganddatapair field simm7 = 1 (PowerOfTwo)
-    // Fields: simm7=1, Xt=0, Xn=0, Xt2=0
+    // Fields: Xt=0, simm7=1, Xn=0, Xt2=0
     let encoding: u32 = 0x69008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14357,17 +8964,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_simm7_1_poweroftwo_0_6900
 fn test_aarch64_integer_tags_mcsettaganddatapair_field_simm7_63_poweroftwominusone_0_691f8000() {
     // Encoding: 0x691F8000
     // Test aarch64_integer_tags_mcsettaganddatapair field simm7 = 63 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=0, Xt2=0, simm7=63
+    // Fields: Xt=0, Xn=0, simm7=63, Xt2=0
     let encoding: u32 = 0x691F8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14378,17 +8980,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_simm7_63_poweroftwominuso
 fn test_aarch64_integer_tags_mcsettaganddatapair_field_simm7_127_max_0_693f8000() {
     // Encoding: 0x693F8000
     // Test aarch64_integer_tags_mcsettaganddatapair field simm7 = 127 (Max)
-    // Fields: Xn=0, simm7=127, Xt2=0, Xt=0
+    // Fields: simm7=127, Xt2=0, Xn=0, Xt=0
     let encoding: u32 = 0x693F8000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14404,12 +9001,7 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt2_0_min_0_69000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14425,12 +9017,7 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt2_1_poweroftwo_0_690004
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14441,17 +9028,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt2_1_poweroftwo_0_690004
 fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt2_15_poweroftwominusone_0_69003c00() {
     // Encoding: 0x69003C00
     // Test aarch64_integer_tags_mcsettaganddatapair field Xt2 = 15 (PowerOfTwoMinusOne)
-    // Fields: Xt2=15, Xt=0, Xn=0, simm7=0
+    // Fields: Xt=0, simm7=0, Xt2=15, Xn=0
     let encoding: u32 = 0x69003C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14462,17 +9044,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt2_15_poweroftwominusone
 fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt2_31_max_0_69007c00() {
     // Encoding: 0x69007C00
     // Test aarch64_integer_tags_mcsettaganddatapair field Xt2 = 31 (Max)
-    // Fields: Xn=0, Xt2=31, simm7=0, Xt=0
+    // Fields: simm7=0, Xt=0, Xn=0, Xt2=31
     let encoding: u32 = 0x69007C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14483,17 +9060,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt2_31_max_0_69007c00() {
 fn test_aarch64_integer_tags_mcsettaganddatapair_field_xn_0_min_0_69000000() {
     // Encoding: 0x69000000
     // Test aarch64_integer_tags_mcsettaganddatapair field Xn = 0 (Min)
-    // Fields: Xt2=0, simm7=0, Xn=0, Xt=0
+    // Fields: Xn=0, Xt2=0, Xt=0, simm7=0
     let encoding: u32 = 0x69000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14504,17 +9076,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xn_0_min_0_69000000() {
 fn test_aarch64_integer_tags_mcsettaganddatapair_field_xn_1_poweroftwo_0_69000020() {
     // Encoding: 0x69000020
     // Test aarch64_integer_tags_mcsettaganddatapair field Xn = 1 (PowerOfTwo)
-    // Fields: Xt=0, simm7=0, Xt2=0, Xn=1
+    // Fields: Xt2=0, Xt=0, Xn=1, simm7=0
     let encoding: u32 = 0x69000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14525,17 +9092,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xn_1_poweroftwo_0_6900002
 fn test_aarch64_integer_tags_mcsettaganddatapair_field_xn_30_poweroftwominusone_0_690003c0() {
     // Encoding: 0x690003C0
     // Test aarch64_integer_tags_mcsettaganddatapair field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xn=30, Xt2=0, Xt=0, simm7=0
+    // Fields: Xt2=0, Xt=0, Xn=30, simm7=0
     let encoding: u32 = 0x690003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14546,17 +9108,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xn_30_poweroftwominusone_
 fn test_aarch64_integer_tags_mcsettaganddatapair_field_xn_31_max_0_690003e0() {
     // Encoding: 0x690003E0
     // Test aarch64_integer_tags_mcsettaganddatapair field Xn = 31 (Max)
-    // Fields: Xn=31, simm7=0, Xt=0, Xt2=0
+    // Fields: Xn=31, Xt=0, simm7=0, Xt2=0
     let encoding: u32 = 0x690003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14567,17 +9124,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xn_31_max_0_690003e0() {
 fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt_0_min_0_69000000() {
     // Encoding: 0x69000000
     // Test aarch64_integer_tags_mcsettaganddatapair field Xt = 0 (Min)
-    // Fields: simm7=0, Xt2=0, Xn=0, Xt=0
+    // Fields: Xt2=0, simm7=0, Xn=0, Xt=0
     let encoding: u32 = 0x69000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14588,17 +9140,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt_0_min_0_69000000() {
 fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt_1_poweroftwo_0_69000001() {
     // Encoding: 0x69000001
     // Test aarch64_integer_tags_mcsettaganddatapair field Xt = 1 (PowerOfTwo)
-    // Fields: Xt2=0, Xt=1, Xn=0, simm7=0
+    // Fields: Xt=1, Xt2=0, Xn=0, simm7=0
     let encoding: u32 = 0x69000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14614,12 +9161,7 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt_30_poweroftwominusone_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14630,17 +9172,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt_30_poweroftwominusone_
 fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt_31_max_0_6900001f() {
     // Encoding: 0x6900001F
     // Test aarch64_integer_tags_mcsettaganddatapair field Xt = 31 (Max)
-    // Fields: Xt=31, Xn=0, Xt2=0, simm7=0
+    // Fields: simm7=0, Xt2=0, Xn=0, Xt=31
     let encoding: u32 = 0x6900001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14651,206 +9188,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_field_xt_31_max_0_6900001f() {
 fn test_aarch64_integer_tags_mcsettaganddatapair_combo_0_0_69000000() {
     // Encoding: 0x69000000
     // Test aarch64_integer_tags_mcsettaganddatapair field combination: simm7=0, Xt2=0, Xn=0, Xt=0
-    // Fields: simm7=0, Xn=0, Xt2=0, Xt=0
+    // Fields: Xt2=0, simm7=0, Xn=0, Xt=0
     let encoding: u32 = 0x69000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapair
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// simm7=1 (value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapair_combo_1_0_69008000() {
-    // Encoding: 0x69008000
-    // Test aarch64_integer_tags_mcsettaganddatapair field combination: simm7=1, Xt2=0, Xn=0, Xt=0
-    // Fields: simm7=1, Xt=0, Xn=0, Xt2=0
-    let encoding: u32 = 0x69008000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapair
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// simm7=63 (midpoint (63))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapair_combo_2_0_691f8000() {
-    // Encoding: 0x691F8000
-    // Test aarch64_integer_tags_mcsettaganddatapair field combination: simm7=63, Xt2=0, Xn=0, Xt=0
-    // Fields: Xn=0, Xt2=0, Xt=0, simm7=63
-    let encoding: u32 = 0x691F8000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapair
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// simm7=127 (maximum value (127))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapair_combo_3_0_693f8000() {
-    // Encoding: 0x693F8000
-    // Test aarch64_integer_tags_mcsettaganddatapair field combination: simm7=127, Xt2=0, Xn=0, Xt=0
-    // Fields: simm7=127, Xt=0, Xt2=0, Xn=0
-    let encoding: u32 = 0x693F8000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapair
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt2=0 (minimum value)
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapair_combo_4_0_69000000() {
-    // Encoding: 0x69000000
-    // Test aarch64_integer_tags_mcsettaganddatapair field combination: simm7=0, Xt2=0, Xn=0, Xt=0
-    // Fields: Xt2=0, Xn=0, Xt=0, simm7=0
-    let encoding: u32 = 0x69000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapair
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt2=1 (value 1)
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapair_combo_5_0_69000400() {
-    // Encoding: 0x69000400
-    // Test aarch64_integer_tags_mcsettaganddatapair field combination: simm7=0, Xt2=1, Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0, simm7=0, Xt2=1
-    let encoding: u32 = 0x69000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapair
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt2=15 (midpoint (15))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapair_combo_6_0_69003c00() {
-    // Encoding: 0x69003C00
-    // Test aarch64_integer_tags_mcsettaganddatapair field combination: simm7=0, Xt2=15, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, simm7=0, Xt2=15
-    let encoding: u32 = 0x69003C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapair
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt2=31 (maximum value (31))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapair_combo_7_0_69007c00() {
-    // Encoding: 0x69007C00
-    // Test aarch64_integer_tags_mcsettaganddatapair field combination: simm7=0, Xt2=31, Xn=0, Xt=0
-    // Fields: simm7=0, Xt=0, Xn=0, Xt2=31
-    let encoding: u32 = 0x69007C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapair
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapair_combo_8_0_69000000() {
-    // Encoding: 0x69000000
-    // Test aarch64_integer_tags_mcsettaganddatapair field combination: simm7=0, Xt2=0, Xn=0, Xt=0
-    // Fields: Xt2=0, Xn=0, simm7=0, Xt=0
-    let encoding: u32 = 0x69000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettaganddatapair
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_integer_tags_mcsettaganddatapair_combo_9_0_69000020() {
-    // Encoding: 0x69000020
-    // Test aarch64_integer_tags_mcsettaganddatapair field combination: simm7=0, Xt2=0, Xn=1, Xt=0
-    // Fields: Xt=0, Xn=1, simm7=0, Xt2=0
-    let encoding: u32 = 0x69000020;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -14858,21 +9201,15 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_combo_9_0_69000020() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettaganddatapair_special_xn_31_stack_pointer_sp_may_require_alignment_0_690003e0(
-) {
+fn test_aarch64_integer_tags_mcsettaganddatapair_special_xn_31_stack_pointer_sp_may_require_alignment_0_690003e0() {
     // Encoding: 0x690003E0
     // Test aarch64_integer_tags_mcsettaganddatapair special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Xn=31, Xt2=0, simm7=0, Xt=0
+    // Fields: Xn=31, simm7=0, Xt2=0, Xt=0
     let encoding: u32 = 0x690003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpost
@@ -15005,11 +9342,7 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_ldr_oracle_2_79800020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFFFFFFFFFF,
-        "X0 should be 0xFFFFFFFFFFFFFFFF"
-    );
+    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFFF, "X0 should be 0xFFFFFFFFFFFFFFFF");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -15027,11 +9360,7 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_ldr_oracle_3_79800020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFFFFFFFFFF,
-        "X0 should be 0xFFFFFFFFFFFFFFFF"
-    );
+    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFFFFF, "X0 should be 0xFFFFFFFFFFFFFFFF");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -15049,11 +9378,7 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_ldr_oracle_4_79800020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFFFFFFDEF0,
-        "X0 should be 0xFFFFFFFFFFFFDEF0"
-    );
+    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFFDEF0, "X0 should be 0xFFFFFFFFFFFFDEF0");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -15089,11 +9414,7 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_ldr_oracle_6_79800020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFFFFFF8000,
-        "X0 should be 0xFFFFFFFFFFFF8000"
-    );
+    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFFFFFF8000, "X0 should be 0xFFFFFFFFFFFF8000");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapairpre
@@ -15168,8 +9489,8 @@ fn test_aarch64_integer_tags_mcsettaganddatapairpre_store_0_69800000() {
     // Test aarch64_integer_tags_mcsettaganddatapairpre memory store: 8 bytes
     // Encoding: 0x69800000
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     set_x(&mut cpu, 1, 0x100000000000);
+    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     let encoding: u32 = 0x69800000;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -15202,13 +9523,17 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_str_oracle_0_79000020() {
     // Test STRH: zero value (oracle)
     // Encoding: 0x79000020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0x0);
     set_x(&mut cpu, 1, 0x1000);
+    set_x(&mut cpu, 0, 0x0);
     let encoding: u32 = 0x79000020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 2)
+    {
+        let buf = cpu.read_memory(0x1000, 2).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x0, "Memory at 0x1000 should be 0x0");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -15226,7 +9551,11 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_str_oracle_1_79000020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 2)
+    {
+        let buf = cpu.read_memory(0x1000, 2).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0xFF, "Memory at 0x1000 should be 0xFF");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -15244,7 +9573,11 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_str_oracle_2_79000020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 2)
+    {
+        let buf = cpu.read_memory(0x1000, 2).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x1234, "Memory at 0x1000 should be 0x1234");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -15262,7 +9595,11 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_str_oracle_3_79000020() {
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 2)
+    {
+        let buf = cpu.read_memory(0x1000, 2).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x5678, "Memory at 0x1000 should be 0x5678");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -15274,13 +9611,17 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_str_oracle_4_79000020() {
     // Test STRH: doubleword value (oracle)
     // Encoding: 0x79000020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1000);
     set_x(&mut cpu, 0, 0x123456789ABCDEF0);
+    set_x(&mut cpu, 1, 0x1000);
     let encoding: u32 = 0x79000020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 2)
+    {
+        let buf = cpu.read_memory(0x1000, 2).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0xDEF0, "Memory at 0x1000 should be 0xDEF0");
+    }
 }
 
 /// Provenance: aarch64_integer_tags_mcsettaganddatapair
@@ -15374,17 +9715,12 @@ fn test_aarch64_integer_tags_mcsettaganddatapair_store_1_69000000() {
 fn test_aarch64_integer_tags_mcaddtag_field_uimm6_0_min_0_91800000() {
     // Encoding: 0x91800000
     // Test aarch64_integer_tags_mcaddtag field uimm6 = 0 (Min)
-    // Fields: uimm6=0, uimm4=0, Xn=0, Xd=0, op3=0
+    // Fields: uimm6=0, op3=0, Xn=0, Xd=0, uimm4=0
     let encoding: u32 = 0x91800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15395,17 +9731,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_uimm6_0_min_0_91800000() {
 fn test_aarch64_integer_tags_mcaddtag_field_uimm6_1_poweroftwo_0_91810000() {
     // Encoding: 0x91810000
     // Test aarch64_integer_tags_mcaddtag field uimm6 = 1 (PowerOfTwo)
-    // Fields: op3=0, uimm6=1, uimm4=0, Xn=0, Xd=0
+    // Fields: uimm6=1, Xd=0, Xn=0, op3=0, uimm4=0
     let encoding: u32 = 0x91810000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15416,17 +9747,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_uimm6_1_poweroftwo_0_91810000() {
 fn test_aarch64_integer_tags_mcaddtag_field_uimm6_31_poweroftwominusone_0_919f0000() {
     // Encoding: 0x919F0000
     // Test aarch64_integer_tags_mcaddtag field uimm6 = 31 (PowerOfTwoMinusOne)
-    // Fields: uimm4=0, Xd=0, op3=0, Xn=0, uimm6=31
+    // Fields: Xd=0, op3=0, uimm4=0, uimm6=31, Xn=0
     let encoding: u32 = 0x919F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15437,17 +9763,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_uimm6_31_poweroftwominusone_0_919f00
 fn test_aarch64_integer_tags_mcaddtag_field_uimm6_63_max_0_91bf0000() {
     // Encoding: 0x91BF0000
     // Test aarch64_integer_tags_mcaddtag field uimm6 = 63 (Max)
-    // Fields: uimm6=63, uimm4=0, Xd=0, op3=0, Xn=0
+    // Fields: uimm4=0, Xd=0, Xn=0, uimm6=63, op3=0
     let encoding: u32 = 0x91BF0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15458,17 +9779,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_uimm6_63_max_0_91bf0000() {
 fn test_aarch64_integer_tags_mcaddtag_field_op3_0_min_0_91800000() {
     // Encoding: 0x91800000
     // Test aarch64_integer_tags_mcaddtag field op3 = 0 (Min)
-    // Fields: Xn=0, uimm6=0, uimm4=0, Xd=0, op3=0
+    // Fields: Xd=0, Xn=0, uimm6=0, op3=0, uimm4=0
     let encoding: u32 = 0x91800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15479,17 +9795,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_op3_0_min_0_91800000() {
 fn test_aarch64_integer_tags_mcaddtag_field_op3_1_poweroftwo_0_91804000() {
     // Encoding: 0x91804000
     // Test aarch64_integer_tags_mcaddtag field op3 = 1 (PowerOfTwo)
-    // Fields: uimm4=0, uimm6=0, Xd=0, Xn=0, op3=1
+    // Fields: Xn=0, Xd=0, uimm6=0, uimm4=0, op3=1
     let encoding: u32 = 0x91804000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15500,17 +9811,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_op3_1_poweroftwo_0_91804000() {
 fn test_aarch64_integer_tags_mcaddtag_field_op3_3_max_0_9180c000() {
     // Encoding: 0x9180C000
     // Test aarch64_integer_tags_mcaddtag field op3 = 3 (Max)
-    // Fields: Xd=0, uimm6=0, uimm4=0, op3=3, Xn=0
+    // Fields: Xn=0, Xd=0, uimm6=0, op3=3, uimm4=0
     let encoding: u32 = 0x9180C000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15521,17 +9827,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_op3_3_max_0_9180c000() {
 fn test_aarch64_integer_tags_mcaddtag_field_uimm4_0_min_0_91800000() {
     // Encoding: 0x91800000
     // Test aarch64_integer_tags_mcaddtag field uimm4 = 0 (Min)
-    // Fields: Xd=0, Xn=0, uimm6=0, op3=0, uimm4=0
+    // Fields: Xn=0, uimm6=0, op3=0, uimm4=0, Xd=0
     let encoding: u32 = 0x91800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15542,17 +9843,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_uimm4_0_min_0_91800000() {
 fn test_aarch64_integer_tags_mcaddtag_field_uimm4_1_poweroftwo_0_91800400() {
     // Encoding: 0x91800400
     // Test aarch64_integer_tags_mcaddtag field uimm4 = 1 (PowerOfTwo)
-    // Fields: Xn=0, uimm4=1, uimm6=0, Xd=0, op3=0
+    // Fields: uimm4=1, uimm6=0, op3=0, Xn=0, Xd=0
     let encoding: u32 = 0x91800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15563,17 +9859,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_uimm4_1_poweroftwo_0_91800400() {
 fn test_aarch64_integer_tags_mcaddtag_field_uimm4_7_poweroftwominusone_0_91801c00() {
     // Encoding: 0x91801C00
     // Test aarch64_integer_tags_mcaddtag field uimm4 = 7 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, op3=0, Xd=0, uimm4=7, uimm6=0
+    // Fields: op3=0, Xn=0, Xd=0, uimm6=0, uimm4=7
     let encoding: u32 = 0x91801C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15584,17 +9875,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_uimm4_7_poweroftwominusone_0_91801c0
 fn test_aarch64_integer_tags_mcaddtag_field_uimm4_15_max_0_91803c00() {
     // Encoding: 0x91803C00
     // Test aarch64_integer_tags_mcaddtag field uimm4 = 15 (Max)
-    // Fields: op3=0, Xd=0, uimm6=0, Xn=0, uimm4=15
+    // Fields: uimm6=0, Xn=0, op3=0, uimm4=15, Xd=0
     let encoding: u32 = 0x91803C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15605,17 +9891,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_uimm4_15_max_0_91803c00() {
 fn test_aarch64_integer_tags_mcaddtag_field_xn_0_min_0_91800000() {
     // Encoding: 0x91800000
     // Test aarch64_integer_tags_mcaddtag field Xn = 0 (Min)
-    // Fields: uimm4=0, uimm6=0, Xn=0, Xd=0, op3=0
+    // Fields: uimm6=0, Xd=0, uimm4=0, op3=0, Xn=0
     let encoding: u32 = 0x91800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15626,17 +9907,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_xn_0_min_0_91800000() {
 fn test_aarch64_integer_tags_mcaddtag_field_xn_1_poweroftwo_0_91800020() {
     // Encoding: 0x91800020
     // Test aarch64_integer_tags_mcaddtag field Xn = 1 (PowerOfTwo)
-    // Fields: Xd=0, uimm4=0, uimm6=0, Xn=1, op3=0
+    // Fields: op3=0, uimm6=0, Xn=1, Xd=0, uimm4=0
     let encoding: u32 = 0x91800020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15647,17 +9923,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_xn_1_poweroftwo_0_91800020() {
 fn test_aarch64_integer_tags_mcaddtag_field_xn_30_poweroftwominusone_0_918003c0() {
     // Encoding: 0x918003C0
     // Test aarch64_integer_tags_mcaddtag field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: op3=0, Xn=30, uimm6=0, uimm4=0, Xd=0
+    // Fields: Xd=0, Xn=30, op3=0, uimm6=0, uimm4=0
     let encoding: u32 = 0x918003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15668,17 +9939,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_xn_30_poweroftwominusone_0_918003c0(
 fn test_aarch64_integer_tags_mcaddtag_field_xn_31_max_0_918003e0() {
     // Encoding: 0x918003E0
     // Test aarch64_integer_tags_mcaddtag field Xn = 31 (Max)
-    // Fields: uimm6=0, Xn=31, Xd=0, uimm4=0, op3=0
+    // Fields: op3=0, Xd=0, uimm6=0, Xn=31, uimm4=0
     let encoding: u32 = 0x918003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15689,17 +9955,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_xn_31_max_0_918003e0() {
 fn test_aarch64_integer_tags_mcaddtag_field_xd_0_min_0_91800000() {
     // Encoding: 0x91800000
     // Test aarch64_integer_tags_mcaddtag field Xd = 0 (Min)
-    // Fields: uimm6=0, Xn=0, Xd=0, op3=0, uimm4=0
+    // Fields: Xd=0, op3=0, uimm4=0, uimm6=0, Xn=0
     let encoding: u32 = 0x91800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15710,17 +9971,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_xd_0_min_0_91800000() {
 fn test_aarch64_integer_tags_mcaddtag_field_xd_1_poweroftwo_0_91800001() {
     // Encoding: 0x91800001
     // Test aarch64_integer_tags_mcaddtag field Xd = 1 (PowerOfTwo)
-    // Fields: Xd=1, Xn=0, uimm6=0, op3=0, uimm4=0
+    // Fields: op3=0, Xn=0, uimm6=0, uimm4=0, Xd=1
     let encoding: u32 = 0x91800001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15731,17 +9987,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_xd_1_poweroftwo_0_91800001() {
 fn test_aarch64_integer_tags_mcaddtag_field_xd_30_poweroftwominusone_0_9180001e() {
     // Encoding: 0x9180001E
     // Test aarch64_integer_tags_mcaddtag field Xd = 30 (PowerOfTwoMinusOne)
-    // Fields: uimm4=0, Xd=30, op3=0, Xn=0, uimm6=0
+    // Fields: op3=0, Xn=0, Xd=30, uimm4=0, uimm6=0
     let encoding: u32 = 0x9180001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15752,17 +10003,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_xd_30_poweroftwominusone_0_9180001e(
 fn test_aarch64_integer_tags_mcaddtag_field_xd_31_max_0_9180001f() {
     // Encoding: 0x9180001F
     // Test aarch64_integer_tags_mcaddtag field Xd = 31 (Max)
-    // Fields: op3=0, Xn=0, uimm4=0, uimm6=0, Xd=31
+    // Fields: Xd=31, op3=0, uimm6=0, uimm4=0, Xn=0
     let encoding: u32 = 0x9180001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15773,206 +10019,12 @@ fn test_aarch64_integer_tags_mcaddtag_field_xd_31_max_0_9180001f() {
 fn test_aarch64_integer_tags_mcaddtag_combo_0_0_91800000() {
     // Encoding: 0x91800000
     // Test aarch64_integer_tags_mcaddtag field combination: uimm6=0, op3=0, uimm4=0, Xn=0, Xd=0
-    // Fields: Xn=0, uimm4=0, op3=0, Xd=0, uimm6=0
+    // Fields: Xd=0, uimm4=0, Xn=0, op3=0, uimm6=0
     let encoding: u32 = 0x91800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcaddtag
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// uimm6=1 (value 1)
-#[test]
-fn test_aarch64_integer_tags_mcaddtag_combo_1_0_91810000() {
-    // Encoding: 0x91810000
-    // Test aarch64_integer_tags_mcaddtag field combination: uimm6=1, op3=0, uimm4=0, Xn=0, Xd=0
-    // Fields: Xn=0, op3=0, uimm6=1, uimm4=0, Xd=0
-    let encoding: u32 = 0x91810000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcaddtag
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// uimm6=31 (midpoint (31))
-#[test]
-fn test_aarch64_integer_tags_mcaddtag_combo_2_0_919f0000() {
-    // Encoding: 0x919F0000
-    // Test aarch64_integer_tags_mcaddtag field combination: uimm6=31, op3=0, uimm4=0, Xn=0, Xd=0
-    // Fields: op3=0, Xd=0, uimm6=31, Xn=0, uimm4=0
-    let encoding: u32 = 0x919F0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcaddtag
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// uimm6=63 (maximum value (63))
-#[test]
-fn test_aarch64_integer_tags_mcaddtag_combo_3_0_91bf0000() {
-    // Encoding: 0x91BF0000
-    // Test aarch64_integer_tags_mcaddtag field combination: uimm6=63, op3=0, uimm4=0, Xn=0, Xd=0
-    // Fields: Xn=0, Xd=0, op3=0, uimm4=0, uimm6=63
-    let encoding: u32 = 0x91BF0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcaddtag
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// op3=0 (minimum value)
-#[test]
-fn test_aarch64_integer_tags_mcaddtag_combo_4_0_91800000() {
-    // Encoding: 0x91800000
-    // Test aarch64_integer_tags_mcaddtag field combination: uimm6=0, op3=0, uimm4=0, Xn=0, Xd=0
-    // Fields: uimm4=0, uimm6=0, Xn=0, Xd=0, op3=0
-    let encoding: u32 = 0x91800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcaddtag
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// op3=1 (value 1)
-#[test]
-fn test_aarch64_integer_tags_mcaddtag_combo_5_0_91804000() {
-    // Encoding: 0x91804000
-    // Test aarch64_integer_tags_mcaddtag field combination: uimm6=0, op3=1, uimm4=0, Xn=0, Xd=0
-    // Fields: Xn=0, uimm4=0, op3=1, Xd=0, uimm6=0
-    let encoding: u32 = 0x91804000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcaddtag
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// op3=3 (maximum value (3))
-#[test]
-fn test_aarch64_integer_tags_mcaddtag_combo_6_0_9180c000() {
-    // Encoding: 0x9180C000
-    // Test aarch64_integer_tags_mcaddtag field combination: uimm6=0, op3=3, uimm4=0, Xn=0, Xd=0
-    // Fields: Xd=0, uimm6=0, uimm4=0, op3=3, Xn=0
-    let encoding: u32 = 0x9180C000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcaddtag
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// uimm4=0 (minimum value)
-#[test]
-fn test_aarch64_integer_tags_mcaddtag_combo_7_0_91800000() {
-    // Encoding: 0x91800000
-    // Test aarch64_integer_tags_mcaddtag field combination: uimm6=0, op3=0, uimm4=0, Xn=0, Xd=0
-    // Fields: uimm6=0, op3=0, Xn=0, uimm4=0, Xd=0
-    let encoding: u32 = 0x91800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcaddtag
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// uimm4=1 (value 1)
-#[test]
-fn test_aarch64_integer_tags_mcaddtag_combo_8_0_91800400() {
-    // Encoding: 0x91800400
-    // Test aarch64_integer_tags_mcaddtag field combination: uimm6=0, op3=0, uimm4=1, Xn=0, Xd=0
-    // Fields: Xd=0, op3=0, uimm6=0, uimm4=1, Xn=0
-    let encoding: u32 = 0x91800400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcaddtag
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// uimm4=7 (midpoint (7))
-#[test]
-fn test_aarch64_integer_tags_mcaddtag_combo_9_0_91801c00() {
-    // Encoding: 0x91801C00
-    // Test aarch64_integer_tags_mcaddtag field combination: uimm6=0, op3=0, uimm4=7, Xn=0, Xd=0
-    // Fields: uimm6=0, op3=0, Xn=0, Xd=0, uimm4=7
-    let encoding: u32 = 0x91801C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -15980,21 +10032,15 @@ fn test_aarch64_integer_tags_mcaddtag_combo_9_0_91801c00() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcaddtag_special_xn_31_stack_pointer_sp_may_require_alignment_0_918003e0(
-) {
+fn test_aarch64_integer_tags_mcaddtag_special_xn_31_stack_pointer_sp_may_require_alignment_0_918003e0() {
     // Encoding: 0x918003E0
     // Test aarch64_integer_tags_mcaddtag special value Xn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: uimm6=0, uimm4=0, Xn=31, Xd=0, op3=0
+    // Fields: uimm6=0, Xn=31, uimm4=0, op3=0, Xd=0
     let encoding: u32 = 0x918003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcaddtag
@@ -16054,17 +10100,12 @@ fn test_aarch64_integer_tags_mcaddtag_sp_xn_918003e0() {
 fn test_aarch64_integer_tags_mcgettag_field_imm9_0_zero_0_d9600000() {
     // Encoding: 0xD9600000
     // Test aarch64_integer_tags_mcgettag field imm9 = 0 (Zero)
-    // Fields: imm9=0, Xt=0, Xn=0
+    // Fields: Xn=0, imm9=0, Xt=0
     let encoding: u32 = 0xD9600000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16075,17 +10116,12 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_0_zero_0_d9600000() {
 fn test_aarch64_integer_tags_mcgettag_field_imm9_1_poweroftwo_0_d9601000() {
     // Encoding: 0xD9601000
     // Test aarch64_integer_tags_mcgettag field imm9 = 1 (PowerOfTwo)
-    // Fields: imm9=1, Xt=0, Xn=0
+    // Fields: Xn=0, imm9=1, Xt=0
     let encoding: u32 = 0xD9601000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16096,17 +10132,12 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_1_poweroftwo_0_d9601000() {
 fn test_aarch64_integer_tags_mcgettag_field_imm9_3_poweroftwominusone_0_d9603000() {
     // Encoding: 0xD9603000
     // Test aarch64_integer_tags_mcgettag field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, imm9=3, Xt=0
+    // Fields: Xt=0, imm9=3, Xn=0
     let encoding: u32 = 0xD9603000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16117,17 +10148,12 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_3_poweroftwominusone_0_d9603000
 fn test_aarch64_integer_tags_mcgettag_field_imm9_4_poweroftwo_0_d9604000() {
     // Encoding: 0xD9604000
     // Test aarch64_integer_tags_mcgettag field imm9 = 4 (PowerOfTwo)
-    // Fields: Xt=0, Xn=0, imm9=4
+    // Fields: Xn=0, imm9=4, Xt=0
     let encoding: u32 = 0xD9604000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16138,17 +10164,12 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_4_poweroftwo_0_d9604000() {
 fn test_aarch64_integer_tags_mcgettag_field_imm9_7_poweroftwominusone_0_d9607000() {
     // Encoding: 0xD9607000
     // Test aarch64_integer_tags_mcgettag field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, imm9=7, Xn=0
+    // Fields: Xn=0, Xt=0, imm9=7
     let encoding: u32 = 0xD9607000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16159,17 +10180,12 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_7_poweroftwominusone_0_d9607000
 fn test_aarch64_integer_tags_mcgettag_field_imm9_8_poweroftwo_0_d9608000() {
     // Encoding: 0xD9608000
     // Test aarch64_integer_tags_mcgettag field imm9 = 8 (PowerOfTwo)
-    // Fields: Xn=0, Xt=0, imm9=8
+    // Fields: imm9=8, Xn=0, Xt=0
     let encoding: u32 = 0xD9608000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16185,12 +10201,7 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_15_poweroftwominusone_0_d960f00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16201,17 +10212,12 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_15_poweroftwominusone_0_d960f00
 fn test_aarch64_integer_tags_mcgettag_field_imm9_16_poweroftwo_0_d9610000() {
     // Encoding: 0xD9610000
     // Test aarch64_integer_tags_mcgettag field imm9 = 16 (PowerOfTwo)
-    // Fields: Xn=0, imm9=16, Xt=0
+    // Fields: Xt=0, imm9=16, Xn=0
     let encoding: u32 = 0xD9610000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16227,12 +10233,7 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_31_poweroftwominusone_0_d961f00
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16243,17 +10244,12 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_31_poweroftwominusone_0_d961f00
 fn test_aarch64_integer_tags_mcgettag_field_imm9_32_poweroftwo_0_d9620000() {
     // Encoding: 0xD9620000
     // Test aarch64_integer_tags_mcgettag field imm9 = 32 (PowerOfTwo)
-    // Fields: imm9=32, Xt=0, Xn=0
+    // Fields: imm9=32, Xn=0, Xt=0
     let encoding: u32 = 0xD9620000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16264,17 +10260,12 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_32_poweroftwo_0_d9620000() {
 fn test_aarch64_integer_tags_mcgettag_field_imm9_63_poweroftwominusone_0_d963f000() {
     // Encoding: 0xD963F000
     // Test aarch64_integer_tags_mcgettag field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=0, imm9=63
+    // Fields: Xt=0, imm9=63, Xn=0
     let encoding: u32 = 0xD963F000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16285,17 +10276,12 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_63_poweroftwominusone_0_d963f00
 fn test_aarch64_integer_tags_mcgettag_field_imm9_64_poweroftwo_0_d9640000() {
     // Encoding: 0xD9640000
     // Test aarch64_integer_tags_mcgettag field imm9 = 64 (PowerOfTwo)
-    // Fields: Xt=0, imm9=64, Xn=0
+    // Fields: Xt=0, Xn=0, imm9=64
     let encoding: u32 = 0xD9640000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16306,17 +10292,12 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_64_poweroftwo_0_d9640000() {
 fn test_aarch64_integer_tags_mcgettag_field_imm9_127_poweroftwominusone_0_d967f000() {
     // Encoding: 0xD967F000
     // Test aarch64_integer_tags_mcgettag field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, imm9=127, Xt=0
+    // Fields: Xt=0, Xn=0, imm9=127
     let encoding: u32 = 0xD967F000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16327,17 +10308,12 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_127_poweroftwominusone_0_d967f0
 fn test_aarch64_integer_tags_mcgettag_field_imm9_128_poweroftwo_0_d9680000() {
     // Encoding: 0xD9680000
     // Test aarch64_integer_tags_mcgettag field imm9 = 128 (PowerOfTwo)
-    // Fields: imm9=128, Xn=0, Xt=0
+    // Fields: imm9=128, Xt=0, Xn=0
     let encoding: u32 = 0xD9680000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16353,12 +10329,7 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_255_poweroftwominusone_0_d96ff0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16369,17 +10340,12 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_255_poweroftwominusone_0_d96ff0
 fn test_aarch64_integer_tags_mcgettag_field_imm9_256_poweroftwo_0_d9700000() {
     // Encoding: 0xD9700000
     // Test aarch64_integer_tags_mcgettag field imm9 = 256 (PowerOfTwo)
-    // Fields: Xn=0, imm9=256, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=256
     let encoding: u32 = 0xD9700000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16390,17 +10356,12 @@ fn test_aarch64_integer_tags_mcgettag_field_imm9_256_poweroftwo_0_d9700000() {
 fn test_aarch64_integer_tags_mcgettag_field_imm9_511_max_0_d97ff000() {
     // Encoding: 0xD97FF000
     // Test aarch64_integer_tags_mcgettag field imm9 = 511 (Max)
-    // Fields: Xt=0, Xn=0, imm9=511
+    // Fields: Xn=0, Xt=0, imm9=511
     let encoding: u32 = 0xD97FF000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16416,12 +10377,7 @@ fn test_aarch64_integer_tags_mcgettag_field_xn_0_min_0_d9600000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16432,17 +10388,12 @@ fn test_aarch64_integer_tags_mcgettag_field_xn_0_min_0_d9600000() {
 fn test_aarch64_integer_tags_mcgettag_field_xn_1_poweroftwo_0_d9600020() {
     // Encoding: 0xD9600020
     // Test aarch64_integer_tags_mcgettag field Xn = 1 (PowerOfTwo)
-    // Fields: imm9=0, Xn=1, Xt=0
+    // Fields: Xt=0, imm9=0, Xn=1
     let encoding: u32 = 0xD9600020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16453,17 +10404,12 @@ fn test_aarch64_integer_tags_mcgettag_field_xn_1_poweroftwo_0_d9600020() {
 fn test_aarch64_integer_tags_mcgettag_field_xn_30_poweroftwominusone_0_d96003c0() {
     // Encoding: 0xD96003C0
     // Test aarch64_integer_tags_mcgettag field Xn = 30 (PowerOfTwoMinusOne)
-    // Fields: Xt=0, Xn=30, imm9=0
+    // Fields: Xn=30, imm9=0, Xt=0
     let encoding: u32 = 0xD96003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16474,17 +10420,12 @@ fn test_aarch64_integer_tags_mcgettag_field_xn_30_poweroftwominusone_0_d96003c0(
 fn test_aarch64_integer_tags_mcgettag_field_xn_31_max_0_d96003e0() {
     // Encoding: 0xD96003E0
     // Test aarch64_integer_tags_mcgettag field Xn = 31 (Max)
-    // Fields: imm9=0, Xn=31, Xt=0
+    // Fields: Xn=31, Xt=0, imm9=0
     let encoding: u32 = 0xD96003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16495,17 +10436,12 @@ fn test_aarch64_integer_tags_mcgettag_field_xn_31_max_0_d96003e0() {
 fn test_aarch64_integer_tags_mcgettag_field_xt_0_min_0_d9600000() {
     // Encoding: 0xD9600000
     // Test aarch64_integer_tags_mcgettag field Xt = 0 (Min)
-    // Fields: imm9=0, Xn=0, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=0
     let encoding: u32 = 0xD9600000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16516,17 +10452,12 @@ fn test_aarch64_integer_tags_mcgettag_field_xt_0_min_0_d9600000() {
 fn test_aarch64_integer_tags_mcgettag_field_xt_1_poweroftwo_0_d9600001() {
     // Encoding: 0xD9600001
     // Test aarch64_integer_tags_mcgettag field Xt = 1 (PowerOfTwo)
-    // Fields: Xn=0, Xt=1, imm9=0
+    // Fields: imm9=0, Xn=0, Xt=1
     let encoding: u32 = 0xD9600001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16537,17 +10468,12 @@ fn test_aarch64_integer_tags_mcgettag_field_xt_1_poweroftwo_0_d9600001() {
 fn test_aarch64_integer_tags_mcgettag_field_xt_30_poweroftwominusone_0_d960001e() {
     // Encoding: 0xD960001E
     // Test aarch64_integer_tags_mcgettag field Xt = 30 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=30, imm9=0
+    // Fields: Xt=30, imm9=0, Xn=0
     let encoding: u32 = 0xD960001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16558,17 +10484,12 @@ fn test_aarch64_integer_tags_mcgettag_field_xt_30_poweroftwominusone_0_d960001e(
 fn test_aarch64_integer_tags_mcgettag_field_xt_31_max_0_d960001f() {
     // Encoding: 0xD960001F
     // Test aarch64_integer_tags_mcgettag field Xt = 31 (Max)
-    // Fields: imm9=0, Xt=31, Xn=0
+    // Fields: imm9=0, Xn=0, Xt=31
     let encoding: u32 = 0xD960001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16579,206 +10500,12 @@ fn test_aarch64_integer_tags_mcgettag_field_xt_31_max_0_d960001f() {
 fn test_aarch64_integer_tags_mcgettag_combo_0_0_d9600000() {
     // Encoding: 0xD9600000
     // Test aarch64_integer_tags_mcgettag field combination: imm9=0, Xn=0, Xt=0
-    // Fields: imm9=0, Xn=0, Xt=0
+    // Fields: Xn=0, Xt=0, imm9=0
     let encoding: u32 = 0xD9600000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettag
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_integer_tags_mcgettag_combo_1_0_d9601000() {
-    // Encoding: 0xD9601000
-    // Test aarch64_integer_tags_mcgettag field combination: imm9=1, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=1
-    let encoding: u32 = 0xD9601000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettag
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=3 (2^2 - 1 = 3)
-#[test]
-fn test_aarch64_integer_tags_mcgettag_combo_2_0_d9603000() {
-    // Encoding: 0xD9603000
-    // Test aarch64_integer_tags_mcgettag field combination: imm9=3, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=3, Xn=0
-    let encoding: u32 = 0xD9603000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettag
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=4 (power of 2 (2^2 = 4))
-#[test]
-fn test_aarch64_integer_tags_mcgettag_combo_3_0_d9604000() {
-    // Encoding: 0xD9604000
-    // Test aarch64_integer_tags_mcgettag field combination: imm9=4, Xn=0, Xt=0
-    // Fields: imm9=4, Xt=0, Xn=0
-    let encoding: u32 = 0xD9604000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettag
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=7 (2^3 - 1 = 7)
-#[test]
-fn test_aarch64_integer_tags_mcgettag_combo_4_0_d9607000() {
-    // Encoding: 0xD9607000
-    // Test aarch64_integer_tags_mcgettag field combination: imm9=7, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=7
-    let encoding: u32 = 0xD9607000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettag
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=8 (power of 2 (2^3 = 8))
-#[test]
-fn test_aarch64_integer_tags_mcgettag_combo_5_0_d9608000() {
-    // Encoding: 0xD9608000
-    // Test aarch64_integer_tags_mcgettag field combination: imm9=8, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=8
-    let encoding: u32 = 0xD9608000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettag
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=15 (2^4 - 1 = 15)
-#[test]
-fn test_aarch64_integer_tags_mcgettag_combo_6_0_d960f000() {
-    // Encoding: 0xD960F000
-    // Test aarch64_integer_tags_mcgettag field combination: imm9=15, Xn=0, Xt=0
-    // Fields: imm9=15, Xn=0, Xt=0
-    let encoding: u32 = 0xD960F000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettag
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=16 (power of 2 (2^4 = 16))
-#[test]
-fn test_aarch64_integer_tags_mcgettag_combo_7_0_d9610000() {
-    // Encoding: 0xD9610000
-    // Test aarch64_integer_tags_mcgettag field combination: imm9=16, Xn=0, Xt=0
-    // Fields: imm9=16, Xn=0, Xt=0
-    let encoding: u32 = 0xD9610000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettag
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=31 (2^5 - 1 = 31)
-#[test]
-fn test_aarch64_integer_tags_mcgettag_combo_8_0_d961f000() {
-    // Encoding: 0xD961F000
-    // Test aarch64_integer_tags_mcgettag field combination: imm9=31, Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0, imm9=31
-    let encoding: u32 = 0xD961F000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettag
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=32 (power of 2 (2^5 = 32))
-#[test]
-fn test_aarch64_integer_tags_mcgettag_combo_9_0_d9620000() {
-    // Encoding: 0xD9620000
-    // Test aarch64_integer_tags_mcgettag field combination: imm9=32, Xn=0, Xt=0
-    // Fields: Xt=0, imm9=32, Xn=0
-    let encoding: u32 = 0xD9620000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16786,8 +10513,7 @@ fn test_aarch64_integer_tags_mcgettag_combo_9_0_d9620000() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcgettag_special_xn_31_stack_pointer_sp_may_require_alignment_0_d96003e0(
-) {
+fn test_aarch64_integer_tags_mcgettag_special_xn_31_stack_pointer_sp_may_require_alignment_0_d96003e0() {
     // Encoding: 0xD96003E0
     // Test aarch64_integer_tags_mcgettag special value Xn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Xt=0, imm9=0, Xn=31
@@ -16795,12 +10521,7 @@ fn test_aarch64_integer_tags_mcgettag_special_xn_31_stack_pointer_sp_may_require
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16831,8 +10552,7 @@ fn test_aarch64_integer_tags_mcgettag_ldr_oracle_1_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -16850,8 +10570,7 @@ fn test_aarch64_integer_tags_mcgettag_ldr_oracle_2_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -16869,17 +10588,12 @@ fn test_aarch64_integer_tags_mcgettag_ldr_oracle_3_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFF,
-        "X0 should be 0x00000000FFFFFFFF"
-    );
+    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFF, "X0 should be 0x00000000FFFFFFFF");
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16892,17 +10606,12 @@ fn test_aarch64_integer_tags_mcgettag_ldr_oracle_4_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18])
-        .unwrap();
+    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x123456789ABCDEF0,
-        "X0 should be 0x123456789ABCDEF0"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x123456789ABCDEF0, "X0 should be 0x123456789ABCDEF0");
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -16915,8 +10624,7 @@ fn test_aarch64_integer_tags_mcgettag_ldr_oracle_5_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -16934,8 +10642,7 @@ fn test_aarch64_integer_tags_mcgettag_ldr_oracle_6_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -16953,17 +10660,12 @@ fn test_aarch64_integer_tags_mcgettag_ldr_oracle_7_f9400020() {
     // Encoding: 0xF9400020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9400020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x80000000,
-        "X0 should be 0x0000000080000000"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x80000000, "X0 should be 0x0000000080000000");
 }
 
 /// Provenance: aarch64_integer_tags_mcgettag
@@ -17008,17 +10710,12 @@ fn test_aarch64_integer_tags_mcgettag_sp_xn_d96003e0() {
 fn test_aarch64_integer_tags_mcsettagarray_field_xn_0_min_0_d9a00000() {
     // Encoding: 0xD9A00000
     // Test aarch64_integer_tags_mcsettagarray field Xn = 0 (Min)
-    // Fields: Xn=0, Xt=0
+    // Fields: Xt=0, Xn=0
     let encoding: u32 = 0xD9A00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagarray
@@ -17029,17 +10726,12 @@ fn test_aarch64_integer_tags_mcsettagarray_field_xn_0_min_0_d9a00000() {
 fn test_aarch64_integer_tags_mcsettagarray_field_xn_1_poweroftwo_0_d9a00020() {
     // Encoding: 0xD9A00020
     // Test aarch64_integer_tags_mcsettagarray field Xn = 1 (PowerOfTwo)
-    // Fields: Xn=1, Xt=0
+    // Fields: Xt=0, Xn=1
     let encoding: u32 = 0xD9A00020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagarray
@@ -17055,12 +10747,7 @@ fn test_aarch64_integer_tags_mcsettagarray_field_xn_30_poweroftwominusone_0_d9a0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagarray
@@ -17071,17 +10758,12 @@ fn test_aarch64_integer_tags_mcsettagarray_field_xn_30_poweroftwominusone_0_d9a0
 fn test_aarch64_integer_tags_mcsettagarray_field_xn_31_max_0_d9a003e0() {
     // Encoding: 0xD9A003E0
     // Test aarch64_integer_tags_mcsettagarray field Xn = 31 (Max)
-    // Fields: Xt=0, Xn=31
+    // Fields: Xn=31, Xt=0
     let encoding: u32 = 0xD9A003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagarray
@@ -17092,17 +10774,12 @@ fn test_aarch64_integer_tags_mcsettagarray_field_xn_31_max_0_d9a003e0() {
 fn test_aarch64_integer_tags_mcsettagarray_field_xt_0_min_0_d9a00000() {
     // Encoding: 0xD9A00000
     // Test aarch64_integer_tags_mcsettagarray field Xt = 0 (Min)
-    // Fields: Xn=0, Xt=0
+    // Fields: Xt=0, Xn=0
     let encoding: u32 = 0xD9A00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagarray
@@ -17113,17 +10790,12 @@ fn test_aarch64_integer_tags_mcsettagarray_field_xt_0_min_0_d9a00000() {
 fn test_aarch64_integer_tags_mcsettagarray_field_xt_1_poweroftwo_0_d9a00001() {
     // Encoding: 0xD9A00001
     // Test aarch64_integer_tags_mcsettagarray field Xt = 1 (PowerOfTwo)
-    // Fields: Xn=0, Xt=1
+    // Fields: Xt=1, Xn=0
     let encoding: u32 = 0xD9A00001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagarray
@@ -17139,12 +10811,7 @@ fn test_aarch64_integer_tags_mcsettagarray_field_xt_30_poweroftwominusone_0_d9a0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagarray
@@ -17155,17 +10822,12 @@ fn test_aarch64_integer_tags_mcsettagarray_field_xt_30_poweroftwominusone_0_d9a0
 fn test_aarch64_integer_tags_mcsettagarray_field_xt_31_max_0_d9a0001f() {
     // Encoding: 0xD9A0001F
     // Test aarch64_integer_tags_mcsettagarray field Xt = 31 (Max)
-    // Fields: Xn=0, Xt=31
+    // Fields: Xt=31, Xn=0
     let encoding: u32 = 0xD9A0001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagarray
@@ -17181,201 +10843,7 @@ fn test_aarch64_integer_tags_mcsettagarray_combo_0_0_d9a00000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagarray
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_integer_tags_mcsettagarray_combo_1_0_d9a00020() {
-    // Encoding: 0xD9A00020
-    // Test aarch64_integer_tags_mcsettagarray field combination: Xn=1, Xt=0
-    // Fields: Xn=1, Xt=0
-    let encoding: u32 = 0xD9A00020;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagarray
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_integer_tags_mcsettagarray_combo_2_0_d9a003c0() {
-    // Encoding: 0xD9A003C0
-    // Test aarch64_integer_tags_mcsettagarray field combination: Xn=30, Xt=0
-    // Fields: Xn=30, Xt=0
-    let encoding: u32 = 0xD9A003C0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagarray
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=31 (register index 31 (SP - stack pointer))
-#[test]
-fn test_aarch64_integer_tags_mcsettagarray_combo_3_0_d9a003e0() {
-    // Encoding: 0xD9A003E0
-    // Test aarch64_integer_tags_mcsettagarray field combination: Xn=31, Xt=0
-    // Fields: Xn=31, Xt=0
-    let encoding: u32 = 0xD9A003E0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagarray
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_integer_tags_mcsettagarray_combo_4_0_d9a00000() {
-    // Encoding: 0xD9A00000
-    // Test aarch64_integer_tags_mcsettagarray field combination: Xn=0, Xt=0
-    // Fields: Xt=0, Xn=0
-    let encoding: u32 = 0xD9A00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagarray
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_integer_tags_mcsettagarray_combo_5_0_d9a00001() {
-    // Encoding: 0xD9A00001
-    // Test aarch64_integer_tags_mcsettagarray field combination: Xn=0, Xt=1
-    // Fields: Xn=0, Xt=1
-    let encoding: u32 = 0xD9A00001;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagarray
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_integer_tags_mcsettagarray_combo_6_0_d9a0001e() {
-    // Encoding: 0xD9A0001E
-    // Test aarch64_integer_tags_mcsettagarray field combination: Xn=0, Xt=30
-    // Fields: Xn=0, Xt=30
-    let encoding: u32 = 0xD9A0001E;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagarray
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt=31 (register index 31 (special))
-#[test]
-fn test_aarch64_integer_tags_mcsettagarray_combo_7_0_d9a0001f() {
-    // Encoding: 0xD9A0001F
-    // Test aarch64_integer_tags_mcsettagarray field combination: Xn=0, Xt=31
-    // Fields: Xt=31, Xn=0
-    let encoding: u32 = 0xD9A0001F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagarray
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=1 (same register test (reg=1)), Xt=1 (same register test (reg=1))
-#[test]
-fn test_aarch64_integer_tags_mcsettagarray_combo_8_0_d9a00021() {
-    // Encoding: 0xD9A00021
-    // Test aarch64_integer_tags_mcsettagarray field combination: Xn=1, Xt=1
-    // Fields: Xt=1, Xn=1
-    let encoding: u32 = 0xD9A00021;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcsettagarray
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=31 (same register test (reg=31)), Xt=31 (same register test (reg=31))
-#[test]
-fn test_aarch64_integer_tags_mcsettagarray_combo_9_0_d9a003ff() {
-    // Encoding: 0xD9A003FF
-    // Test aarch64_integer_tags_mcsettagarray field combination: Xn=31, Xt=31
-    // Fields: Xn=31, Xt=31
-    let encoding: u32 = 0xD9A003FF;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagarray
@@ -17383,8 +10851,7 @@ fn test_aarch64_integer_tags_mcsettagarray_combo_9_0_d9a003ff() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcsettagarray_special_xn_31_stack_pointer_sp_may_require_alignment_0_d9a003e0(
-) {
+fn test_aarch64_integer_tags_mcsettagarray_special_xn_31_stack_pointer_sp_may_require_alignment_0_d9a003e0() {
     // Encoding: 0xD9A003E0
     // Test aarch64_integer_tags_mcsettagarray special value Xn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Xn=31, Xt=0
@@ -17392,12 +10859,7 @@ fn test_aarch64_integer_tags_mcsettagarray_special_xn_31_stack_pointer_sp_may_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagarray
@@ -17428,8 +10890,7 @@ fn test_aarch64_integer_tags_mcsettagarray_ldr_oracle_1_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -17447,8 +10908,7 @@ fn test_aarch64_integer_tags_mcsettagarray_ldr_oracle_2_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -17466,17 +10926,12 @@ fn test_aarch64_integer_tags_mcsettagarray_ldr_oracle_3_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[255, 255, 255, 255, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFF,
-        "X0 should be 0x00000000FFFFFFFF"
-    );
+    assert_eq!(get_x(&cpu, 0), 0xFFFFFFFF, "X0 should be 0x00000000FFFFFFFF");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagarray
@@ -17489,17 +10944,12 @@ fn test_aarch64_integer_tags_mcsettagarray_ldr_oracle_4_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18])
-        .unwrap();
+    cpu.write_memory(0x1000, &[240, 222, 188, 154, 120, 86, 52, 18]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x123456789ABCDEF0,
-        "X0 should be 0x123456789ABCDEF0"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x123456789ABCDEF0, "X0 should be 0x123456789ABCDEF0");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagarray
@@ -17512,8 +10962,7 @@ fn test_aarch64_integer_tags_mcsettagarray_ldr_oracle_5_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[128, 0, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -17531,8 +10980,7 @@ fn test_aarch64_integer_tags_mcsettagarray_ldr_oracle_6_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 128, 0, 0, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -17550,17 +10998,12 @@ fn test_aarch64_integer_tags_mcsettagarray_ldr_oracle_7_f9800020() {
     // Encoding: 0xF9800020
     let mut cpu = create_test_cpu();
     set_x(&mut cpu, 1, 0x1000);
-    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0])
-        .unwrap();
+    cpu.write_memory(0x1000, &[0, 0, 0, 128, 0, 0, 0, 0]).unwrap();
     let encoding: u32 = 0xF9800020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x80000000,
-        "X0 should be 0x0000000080000000"
-    );
+    assert_eq!(get_x(&cpu, 0), 0x80000000, "X0 should be 0x0000000080000000");
 }
 
 /// Provenance: aarch64_integer_tags_mcsettagarray
@@ -17620,17 +11063,12 @@ fn test_aarch64_integer_tags_mcsettagarray_sp_xn_d9a003e0() {
 fn test_aarch64_integer_tags_mcgettagarray_field_xn_0_min_0_d9e00000() {
     // Encoding: 0xD9E00000
     // Test aarch64_integer_tags_mcgettagarray field Xn = 0 (Min)
-    // Fields: Xn=0, Xt=0
+    // Fields: Xt=0, Xn=0
     let encoding: u32 = 0xD9E00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettagarray
@@ -17641,17 +11079,12 @@ fn test_aarch64_integer_tags_mcgettagarray_field_xn_0_min_0_d9e00000() {
 fn test_aarch64_integer_tags_mcgettagarray_field_xn_1_poweroftwo_0_d9e00020() {
     // Encoding: 0xD9E00020
     // Test aarch64_integer_tags_mcgettagarray field Xn = 1 (PowerOfTwo)
-    // Fields: Xt=0, Xn=1
+    // Fields: Xn=1, Xt=0
     let encoding: u32 = 0xD9E00020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettagarray
@@ -17667,12 +11100,7 @@ fn test_aarch64_integer_tags_mcgettagarray_field_xn_30_poweroftwominusone_0_d9e0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettagarray
@@ -17683,17 +11111,12 @@ fn test_aarch64_integer_tags_mcgettagarray_field_xn_30_poweroftwominusone_0_d9e0
 fn test_aarch64_integer_tags_mcgettagarray_field_xn_31_max_0_d9e003e0() {
     // Encoding: 0xD9E003E0
     // Test aarch64_integer_tags_mcgettagarray field Xn = 31 (Max)
-    // Fields: Xt=0, Xn=31
+    // Fields: Xn=31, Xt=0
     let encoding: u32 = 0xD9E003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettagarray
@@ -17704,17 +11127,12 @@ fn test_aarch64_integer_tags_mcgettagarray_field_xn_31_max_0_d9e003e0() {
 fn test_aarch64_integer_tags_mcgettagarray_field_xt_0_min_0_d9e00000() {
     // Encoding: 0xD9E00000
     // Test aarch64_integer_tags_mcgettagarray field Xt = 0 (Min)
-    // Fields: Xt=0, Xn=0
+    // Fields: Xn=0, Xt=0
     let encoding: u32 = 0xD9E00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettagarray
@@ -17725,17 +11143,12 @@ fn test_aarch64_integer_tags_mcgettagarray_field_xt_0_min_0_d9e00000() {
 fn test_aarch64_integer_tags_mcgettagarray_field_xt_1_poweroftwo_0_d9e00001() {
     // Encoding: 0xD9E00001
     // Test aarch64_integer_tags_mcgettagarray field Xt = 1 (PowerOfTwo)
-    // Fields: Xn=0, Xt=1
+    // Fields: Xt=1, Xn=0
     let encoding: u32 = 0xD9E00001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettagarray
@@ -17746,17 +11159,12 @@ fn test_aarch64_integer_tags_mcgettagarray_field_xt_1_poweroftwo_0_d9e00001() {
 fn test_aarch64_integer_tags_mcgettagarray_field_xt_30_poweroftwominusone_0_d9e0001e() {
     // Encoding: 0xD9E0001E
     // Test aarch64_integer_tags_mcgettagarray field Xt = 30 (PowerOfTwoMinusOne)
-    // Fields: Xn=0, Xt=30
+    // Fields: Xt=30, Xn=0
     let encoding: u32 = 0xD9E0001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettagarray
@@ -17772,12 +11180,7 @@ fn test_aarch64_integer_tags_mcgettagarray_field_xt_31_max_0_d9e0001f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettagarray
@@ -17788,206 +11191,12 @@ fn test_aarch64_integer_tags_mcgettagarray_field_xt_31_max_0_d9e0001f() {
 fn test_aarch64_integer_tags_mcgettagarray_combo_0_0_d9e00000() {
     // Encoding: 0xD9E00000
     // Test aarch64_integer_tags_mcgettagarray field combination: Xn=0, Xt=0
-    // Fields: Xn=0, Xt=0
-    let encoding: u32 = 0xD9E00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettagarray
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_integer_tags_mcgettagarray_combo_1_0_d9e00020() {
-    // Encoding: 0xD9E00020
-    // Test aarch64_integer_tags_mcgettagarray field combination: Xn=1, Xt=0
-    // Fields: Xn=1, Xt=0
-    let encoding: u32 = 0xD9E00020;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettagarray
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_integer_tags_mcgettagarray_combo_2_0_d9e003c0() {
-    // Encoding: 0xD9E003C0
-    // Test aarch64_integer_tags_mcgettagarray field combination: Xn=30, Xt=0
-    // Fields: Xn=30, Xt=0
-    let encoding: u32 = 0xD9E003C0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettagarray
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=31 (register index 31 (SP - stack pointer))
-#[test]
-fn test_aarch64_integer_tags_mcgettagarray_combo_3_0_d9e003e0() {
-    // Encoding: 0xD9E003E0
-    // Test aarch64_integer_tags_mcgettagarray field combination: Xn=31, Xt=0
-    // Fields: Xn=31, Xt=0
-    let encoding: u32 = 0xD9E003E0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettagarray
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_integer_tags_mcgettagarray_combo_4_0_d9e00000() {
-    // Encoding: 0xD9E00000
-    // Test aarch64_integer_tags_mcgettagarray field combination: Xn=0, Xt=0
     // Fields: Xt=0, Xn=0
     let encoding: u32 = 0xD9E00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettagarray
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_integer_tags_mcgettagarray_combo_5_0_d9e00001() {
-    // Encoding: 0xD9E00001
-    // Test aarch64_integer_tags_mcgettagarray field combination: Xn=0, Xt=1
-    // Fields: Xn=0, Xt=1
-    let encoding: u32 = 0xD9E00001;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettagarray
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_integer_tags_mcgettagarray_combo_6_0_d9e0001e() {
-    // Encoding: 0xD9E0001E
-    // Test aarch64_integer_tags_mcgettagarray field combination: Xn=0, Xt=30
-    // Fields: Xt=30, Xn=0
-    let encoding: u32 = 0xD9E0001E;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettagarray
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xt=31 (register index 31 (special))
-#[test]
-fn test_aarch64_integer_tags_mcgettagarray_combo_7_0_d9e0001f() {
-    // Encoding: 0xD9E0001F
-    // Test aarch64_integer_tags_mcgettagarray field combination: Xn=0, Xt=31
-    // Fields: Xn=0, Xt=31
-    let encoding: u32 = 0xD9E0001F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettagarray
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=1 (same register test (reg=1)), Xt=1 (same register test (reg=1))
-#[test]
-fn test_aarch64_integer_tags_mcgettagarray_combo_8_0_d9e00021() {
-    // Encoding: 0xD9E00021
-    // Test aarch64_integer_tags_mcgettagarray field combination: Xn=1, Xt=1
-    // Fields: Xn=1, Xt=1
-    let encoding: u32 = 0xD9E00021;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_tags_mcgettagarray
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Xn=31 (same register test (reg=31)), Xt=31 (same register test (reg=31))
-#[test]
-fn test_aarch64_integer_tags_mcgettagarray_combo_9_0_d9e003ff() {
-    // Encoding: 0xD9E003FF
-    // Test aarch64_integer_tags_mcgettagarray field combination: Xn=31, Xt=31
-    // Fields: Xn=31, Xt=31
-    let encoding: u32 = 0xD9E003FF;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettagarray
@@ -17995,8 +11204,7 @@ fn test_aarch64_integer_tags_mcgettagarray_combo_9_0_d9e003ff() {
 /// Requirement: FieldSpecial { field: "Xn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_tags_mcgettagarray_special_xn_31_stack_pointer_sp_may_require_alignment_0_d9e003e0(
-) {
+fn test_aarch64_integer_tags_mcgettagarray_special_xn_31_stack_pointer_sp_may_require_alignment_0_d9e003e0() {
     // Encoding: 0xD9E003E0
     // Test aarch64_integer_tags_mcgettagarray special value Xn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Xt=0, Xn=31
@@ -18004,12 +11212,7 @@ fn test_aarch64_integer_tags_mcgettagarray_special_xn_31_stack_pointer_sp_may_re
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_tags_mcgettagarray
@@ -18071,3 +11274,4 @@ fn test_aarch64_integer_tags_mcgettagarray_sp_xn_d9e003e0() {
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
 }
+

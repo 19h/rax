@@ -20,17 +20,12 @@ use crate::generated::test_helpers::*;
 fn test_aarch64_memory_exclusive_single_field_size_0_min_0_08000000() {
     // Encoding: 0x08000000
     // Test aarch64_memory_exclusive_single field size = 0 (Min)
-    // Fields: L=0, Rt=0, Rt2=0, o0=0, size=0, Rs=0, Rn=0
+    // Fields: size=0, L=0, Rs=0, o0=0, Rn=0, Rt2=0, Rt=0
     let encoding: u32 = 0x08000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -41,17 +36,12 @@ fn test_aarch64_memory_exclusive_single_field_size_0_min_0_08000000() {
 fn test_aarch64_memory_exclusive_single_field_size_1_poweroftwo_0_48000000() {
     // Encoding: 0x48000000
     // Test aarch64_memory_exclusive_single field size = 1 (PowerOfTwo)
-    // Fields: Rs=0, o0=0, size=1, L=0, Rt2=0, Rn=0, Rt=0
+    // Fields: size=1, Rs=0, L=0, Rt=0, o0=0, Rt2=0, Rn=0
     let encoding: u32 = 0x48000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -62,17 +52,12 @@ fn test_aarch64_memory_exclusive_single_field_size_1_poweroftwo_0_48000000() {
 fn test_aarch64_memory_exclusive_single_field_size_2_poweroftwo_0_88000000() {
     // Encoding: 0x88000000
     // Test aarch64_memory_exclusive_single field size = 2 (PowerOfTwo)
-    // Fields: size=2, Rn=0, Rt=0, o0=0, Rt2=0, L=0, Rs=0
+    // Fields: Rs=0, size=2, L=0, Rt2=0, Rn=0, Rt=0, o0=0
     let encoding: u32 = 0x88000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -83,17 +68,12 @@ fn test_aarch64_memory_exclusive_single_field_size_2_poweroftwo_0_88000000() {
 fn test_aarch64_memory_exclusive_single_field_size_3_max_0_c8000000() {
     // Encoding: 0xC8000000
     // Test aarch64_memory_exclusive_single field size = 3 (Max)
-    // Fields: size=3, L=0, Rt2=0, Rs=0, o0=0, Rn=0, Rt=0
+    // Fields: Rn=0, Rt=0, Rs=0, o0=0, size=3, L=0, Rt2=0
     let encoding: u32 = 0xC8000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -104,17 +84,12 @@ fn test_aarch64_memory_exclusive_single_field_size_3_max_0_c8000000() {
 fn test_aarch64_memory_exclusive_single_field_l_0_min_0_08000000() {
     // Encoding: 0x08000000
     // Test aarch64_memory_exclusive_single field L = 0 (Min)
-    // Fields: Rn=0, L=0, size=0, Rt2=0, Rt=0, Rs=0, o0=0
+    // Fields: L=0, Rt=0, size=0, Rs=0, o0=0, Rt2=0, Rn=0
     let encoding: u32 = 0x08000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -125,17 +100,12 @@ fn test_aarch64_memory_exclusive_single_field_l_0_min_0_08000000() {
 fn test_aarch64_memory_exclusive_single_field_l_1_max_0_08400000() {
     // Encoding: 0x08400000
     // Test aarch64_memory_exclusive_single field L = 1 (Max)
-    // Fields: L=1, Rs=0, Rn=0, o0=0, size=0, Rt2=0, Rt=0
+    // Fields: Rn=0, Rt=0, size=0, Rs=0, o0=0, Rt2=0, L=1
     let encoding: u32 = 0x08400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -146,17 +116,12 @@ fn test_aarch64_memory_exclusive_single_field_l_1_max_0_08400000() {
 fn test_aarch64_memory_exclusive_single_field_rs_0_min_0_08000000() {
     // Encoding: 0x08000000
     // Test aarch64_memory_exclusive_single field Rs = 0 (Min)
-    // Fields: Rt=0, Rt2=0, size=0, o0=0, Rs=0, Rn=0, L=0
+    // Fields: Rt2=0, Rn=0, Rs=0, Rt=0, o0=0, size=0, L=0
     let encoding: u32 = 0x08000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -167,17 +132,12 @@ fn test_aarch64_memory_exclusive_single_field_rs_0_min_0_08000000() {
 fn test_aarch64_memory_exclusive_single_field_rs_1_poweroftwo_0_08010000() {
     // Encoding: 0x08010000
     // Test aarch64_memory_exclusive_single field Rs = 1 (PowerOfTwo)
-    // Fields: Rt2=0, L=0, Rs=1, o0=0, size=0, Rn=0, Rt=0
+    // Fields: Rn=0, Rs=1, Rt=0, L=0, size=0, o0=0, Rt2=0
     let encoding: u32 = 0x08010000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -188,17 +148,12 @@ fn test_aarch64_memory_exclusive_single_field_rs_1_poweroftwo_0_08010000() {
 fn test_aarch64_memory_exclusive_single_field_rs_30_poweroftwominusone_0_081e0000() {
     // Encoding: 0x081E0000
     // Test aarch64_memory_exclusive_single field Rs = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rs=30, Rt2=0, L=0, o0=0, Rn=0, Rt=0
+    // Fields: Rn=0, L=0, Rt=0, Rs=30, Rt2=0, o0=0, size=0
     let encoding: u32 = 0x081E0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -209,17 +164,12 @@ fn test_aarch64_memory_exclusive_single_field_rs_30_poweroftwominusone_0_081e000
 fn test_aarch64_memory_exclusive_single_field_rs_31_max_0_081f0000() {
     // Encoding: 0x081F0000
     // Test aarch64_memory_exclusive_single field Rs = 31 (Max)
-    // Fields: size=0, o0=0, L=0, Rt=0, Rs=31, Rn=0, Rt2=0
+    // Fields: o0=0, size=0, L=0, Rt2=0, Rn=0, Rs=31, Rt=0
     let encoding: u32 = 0x081F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -230,17 +180,12 @@ fn test_aarch64_memory_exclusive_single_field_rs_31_max_0_081f0000() {
 fn test_aarch64_memory_exclusive_single_field_o0_0_min_0_08000000() {
     // Encoding: 0x08000000
     // Test aarch64_memory_exclusive_single field o0 = 0 (Min)
-    // Fields: Rn=0, size=0, L=0, Rs=0, o0=0, Rt2=0, Rt=0
+    // Fields: Rt=0, o0=0, size=0, Rt2=0, L=0, Rs=0, Rn=0
     let encoding: u32 = 0x08000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -251,17 +196,12 @@ fn test_aarch64_memory_exclusive_single_field_o0_0_min_0_08000000() {
 fn test_aarch64_memory_exclusive_single_field_o0_1_max_0_08008000() {
     // Encoding: 0x08008000
     // Test aarch64_memory_exclusive_single field o0 = 1 (Max)
-    // Fields: Rs=0, Rt2=0, size=0, Rn=0, Rt=0, o0=1, L=0
+    // Fields: o0=1, Rt=0, Rn=0, L=0, Rt2=0, Rs=0, size=0
     let encoding: u32 = 0x08008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -272,17 +212,12 @@ fn test_aarch64_memory_exclusive_single_field_o0_1_max_0_08008000() {
 fn test_aarch64_memory_exclusive_single_field_rt2_0_min_0_08000000() {
     // Encoding: 0x08000000
     // Test aarch64_memory_exclusive_single field Rt2 = 0 (Min)
-    // Fields: Rn=0, Rt=0, L=0, size=0, Rs=0, o0=0, Rt2=0
+    // Fields: Rt2=0, Rn=0, L=0, o0=0, Rt=0, Rs=0, size=0
     let encoding: u32 = 0x08000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -293,17 +228,12 @@ fn test_aarch64_memory_exclusive_single_field_rt2_0_min_0_08000000() {
 fn test_aarch64_memory_exclusive_single_field_rt2_1_poweroftwo_0_08000400() {
     // Encoding: 0x08000400
     // Test aarch64_memory_exclusive_single field Rt2 = 1 (PowerOfTwo)
-    // Fields: Rt2=1, Rn=0, size=0, Rt=0, L=0, o0=0, Rs=0
+    // Fields: size=0, o0=0, Rs=0, Rt=0, L=0, Rt2=1, Rn=0
     let encoding: u32 = 0x08000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -314,17 +244,12 @@ fn test_aarch64_memory_exclusive_single_field_rt2_1_poweroftwo_0_08000400() {
 fn test_aarch64_memory_exclusive_single_field_rt2_30_poweroftwominusone_0_08007800() {
     // Encoding: 0x08007800
     // Test aarch64_memory_exclusive_single field Rt2 = 30 (PowerOfTwoMinusOne)
-    // Fields: Rs=0, Rt=0, size=0, o0=0, L=0, Rt2=30, Rn=0
+    // Fields: Rs=0, L=0, o0=0, Rt2=30, size=0, Rn=0, Rt=0
     let encoding: u32 = 0x08007800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -335,17 +260,12 @@ fn test_aarch64_memory_exclusive_single_field_rt2_30_poweroftwominusone_0_080078
 fn test_aarch64_memory_exclusive_single_field_rt2_31_max_0_08007c00() {
     // Encoding: 0x08007C00
     // Test aarch64_memory_exclusive_single field Rt2 = 31 (Max)
-    // Fields: Rt2=31, Rs=0, L=0, Rn=0, o0=0, size=0, Rt=0
+    // Fields: size=0, L=0, Rn=0, Rt2=31, Rs=0, o0=0, Rt=0
     let encoding: u32 = 0x08007C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -356,17 +276,12 @@ fn test_aarch64_memory_exclusive_single_field_rt2_31_max_0_08007c00() {
 fn test_aarch64_memory_exclusive_single_field_rn_0_min_0_08000000() {
     // Encoding: 0x08000000
     // Test aarch64_memory_exclusive_single field Rn = 0 (Min)
-    // Fields: o0=0, Rt2=0, Rt=0, L=0, Rn=0, Rs=0, size=0
+    // Fields: Rt=0, size=0, L=0, o0=0, Rn=0, Rs=0, Rt2=0
     let encoding: u32 = 0x08000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -377,17 +292,12 @@ fn test_aarch64_memory_exclusive_single_field_rn_0_min_0_08000000() {
 fn test_aarch64_memory_exclusive_single_field_rn_1_poweroftwo_0_08000020() {
     // Encoding: 0x08000020
     // Test aarch64_memory_exclusive_single field Rn = 1 (PowerOfTwo)
-    // Fields: o0=0, Rs=0, Rt2=0, L=0, Rt=0, Rn=1, size=0
+    // Fields: o0=0, L=0, Rt2=0, Rn=1, size=0, Rs=0, Rt=0
     let encoding: u32 = 0x08000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -398,17 +308,12 @@ fn test_aarch64_memory_exclusive_single_field_rn_1_poweroftwo_0_08000020() {
 fn test_aarch64_memory_exclusive_single_field_rn_30_poweroftwominusone_0_080003c0() {
     // Encoding: 0x080003C0
     // Test aarch64_memory_exclusive_single field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, size=0, o0=0, Rs=0, L=0, Rn=30, Rt2=0
+    // Fields: o0=0, L=0, size=0, Rs=0, Rt2=0, Rn=30, Rt=0
     let encoding: u32 = 0x080003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -419,17 +324,12 @@ fn test_aarch64_memory_exclusive_single_field_rn_30_poweroftwominusone_0_080003c
 fn test_aarch64_memory_exclusive_single_field_rn_31_max_0_080003e0() {
     // Encoding: 0x080003E0
     // Test aarch64_memory_exclusive_single field Rn = 31 (Max)
-    // Fields: Rt2=0, L=0, Rs=0, o0=0, Rn=31, Rt=0, size=0
+    // Fields: L=0, Rn=31, size=0, o0=0, Rt2=0, Rt=0, Rs=0
     let encoding: u32 = 0x080003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -440,17 +340,12 @@ fn test_aarch64_memory_exclusive_single_field_rn_31_max_0_080003e0() {
 fn test_aarch64_memory_exclusive_single_field_rt_0_min_0_08000000() {
     // Encoding: 0x08000000
     // Test aarch64_memory_exclusive_single field Rt = 0 (Min)
-    // Fields: Rs=0, Rt2=0, Rt=0, size=0, o0=0, L=0, Rn=0
+    // Fields: size=0, L=0, Rs=0, o0=0, Rt2=0, Rt=0, Rn=0
     let encoding: u32 = 0x08000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -461,17 +356,12 @@ fn test_aarch64_memory_exclusive_single_field_rt_0_min_0_08000000() {
 fn test_aarch64_memory_exclusive_single_field_rt_1_poweroftwo_0_08000001() {
     // Encoding: 0x08000001
     // Test aarch64_memory_exclusive_single field Rt = 1 (PowerOfTwo)
-    // Fields: size=0, Rs=0, o0=0, Rn=0, Rt2=0, Rt=1, L=0
+    // Fields: Rn=0, size=0, Rs=0, o0=0, L=0, Rt2=0, Rt=1
     let encoding: u32 = 0x08000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -482,17 +372,12 @@ fn test_aarch64_memory_exclusive_single_field_rt_1_poweroftwo_0_08000001() {
 fn test_aarch64_memory_exclusive_single_field_rt_30_poweroftwominusone_0_0800001e() {
     // Encoding: 0x0800001E
     // Test aarch64_memory_exclusive_single field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rt=30, Rn=0, Rs=0, L=0, o0=0, Rt2=0
+    // Fields: size=0, Rs=0, o0=0, Rt2=0, Rt=30, Rn=0, L=0
     let encoding: u32 = 0x0800001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -503,17 +388,12 @@ fn test_aarch64_memory_exclusive_single_field_rt_30_poweroftwominusone_0_0800001
 fn test_aarch64_memory_exclusive_single_field_rt_31_max_0_0800001f() {
     // Encoding: 0x0800001F
     // Test aarch64_memory_exclusive_single field Rt = 31 (Max)
-    // Fields: L=0, Rn=0, Rt2=0, Rs=0, size=0, o0=0, Rt=31
+    // Fields: Rt=31, L=0, Rs=0, size=0, o0=0, Rt2=0, Rn=0
     let encoding: u32 = 0x0800001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -524,206 +404,12 @@ fn test_aarch64_memory_exclusive_single_field_rt_31_max_0_0800001f() {
 fn test_aarch64_memory_exclusive_single_combo_0_0_08000000() {
     // Encoding: 0x08000000
     // Test aarch64_memory_exclusive_single field combination: size=0, L=0, Rs=0, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: o0=0, Rt2=0, Rs=0, size=0, L=0, Rt=0, Rn=0
+    // Fields: size=0, Rt2=0, Rs=0, L=0, o0=0, Rn=0, Rt=0
     let encoding: u32 = 0x08000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_single
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_exclusive_single_combo_1_0_48000000() {
-    // Encoding: 0x48000000
-    // Test aarch64_memory_exclusive_single field combination: size=1, L=0, Rs=0, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: Rs=0, o0=0, Rt2=0, Rn=0, size=1, L=0, Rt=0
-    let encoding: u32 = 0x48000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_single
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_exclusive_single_combo_2_0_88000000() {
-    // Encoding: 0x88000000
-    // Test aarch64_memory_exclusive_single field combination: size=2, L=0, Rs=0, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: Rn=0, size=2, Rs=0, L=0, o0=0, Rt=0, Rt2=0
-    let encoding: u32 = 0x88000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_single
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_exclusive_single_combo_3_0_c8000000() {
-    // Encoding: 0xC8000000
-    // Test aarch64_memory_exclusive_single field combination: size=3, L=0, Rs=0, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: Rs=0, Rt=0, size=3, Rt2=0, Rn=0, L=0, o0=0
-    let encoding: u32 = 0xC8000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_single
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// L=0 (minimum value)
-#[test]
-fn test_aarch64_memory_exclusive_single_combo_4_0_08000000() {
-    // Encoding: 0x08000000
-    // Test aarch64_memory_exclusive_single field combination: size=0, L=0, Rs=0, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: Rs=0, L=0, o0=0, Rt=0, size=0, Rt2=0, Rn=0
-    let encoding: u32 = 0x08000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_single
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// L=1 (maximum value (1))
-#[test]
-fn test_aarch64_memory_exclusive_single_combo_5_0_08400000() {
-    // Encoding: 0x08400000
-    // Test aarch64_memory_exclusive_single field combination: size=0, L=1, Rs=0, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: Rt2=0, Rs=0, size=0, Rn=0, L=1, Rt=0, o0=0
-    let encoding: u32 = 0x08400000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_single
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rs=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_memory_exclusive_single_combo_6_0_08000000() {
-    // Encoding: 0x08000000
-    // Test aarch64_memory_exclusive_single field combination: size=0, L=0, Rs=0, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: o0=0, size=0, Rt=0, Rs=0, L=0, Rt2=0, Rn=0
-    let encoding: u32 = 0x08000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_single
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rs=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_memory_exclusive_single_combo_7_0_08010000() {
-    // Encoding: 0x08010000
-    // Test aarch64_memory_exclusive_single field combination: size=0, L=0, Rs=1, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: o0=0, Rs=1, L=0, size=0, Rt2=0, Rt=0, Rn=0
-    let encoding: u32 = 0x08010000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_single
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rs=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_memory_exclusive_single_combo_8_0_081e0000() {
-    // Encoding: 0x081E0000
-    // Test aarch64_memory_exclusive_single field combination: size=0, L=0, Rs=30, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: L=0, Rs=30, Rt2=0, size=0, o0=0, Rn=0, Rt=0
-    let encoding: u32 = 0x081E0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_single
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rs=31 (register index 31 (special))
-#[test]
-fn test_aarch64_memory_exclusive_single_combo_9_0_081f0000() {
-    // Encoding: 0x081F0000
-    // Test aarch64_memory_exclusive_single field combination: size=0, L=0, Rs=31, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: L=0, o0=0, size=0, Rt=0, Rt2=0, Rn=0, Rs=31
-    let encoding: u32 = 0x081F0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -734,17 +420,12 @@ fn test_aarch64_memory_exclusive_single_combo_9_0_081f0000() {
 fn test_aarch64_memory_exclusive_single_special_size_0_size_variant_0_0_08000000() {
     // Encoding: 0x08000000
     // Test aarch64_memory_exclusive_single special value size = 0 (Size variant 0)
-    // Fields: o0=0, Rt2=0, Rn=0, Rt=0, Rs=0, size=0, L=0
+    // Fields: L=0, Rn=0, size=0, o0=0, Rt2=0, Rt=0, Rs=0
     let encoding: u32 = 0x08000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -755,17 +436,12 @@ fn test_aarch64_memory_exclusive_single_special_size_0_size_variant_0_0_08000000
 fn test_aarch64_memory_exclusive_single_special_size_1_size_variant_1_0_48000000() {
     // Encoding: 0x48000000
     // Test aarch64_memory_exclusive_single special value size = 1 (Size variant 1)
-    // Fields: Rt=0, size=1, Rn=0, Rs=0, o0=0, L=0, Rt2=0
+    // Fields: size=1, Rs=0, o0=0, Rt2=0, Rt=0, L=0, Rn=0
     let encoding: u32 = 0x48000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -776,17 +452,12 @@ fn test_aarch64_memory_exclusive_single_special_size_1_size_variant_1_0_48000000
 fn test_aarch64_memory_exclusive_single_special_size_2_size_variant_2_0_88000000() {
     // Encoding: 0x88000000
     // Test aarch64_memory_exclusive_single special value size = 2 (Size variant 2)
-    // Fields: Rn=0, Rt=0, L=0, size=2, o0=0, Rs=0, Rt2=0
+    // Fields: Rt2=0, L=0, Rt=0, Rs=0, Rn=0, o0=0, size=2
     let encoding: u32 = 0x88000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -797,17 +468,12 @@ fn test_aarch64_memory_exclusive_single_special_size_2_size_variant_2_0_88000000
 fn test_aarch64_memory_exclusive_single_special_size_3_size_variant_3_0_c8000000() {
     // Encoding: 0xC8000000
     // Test aarch64_memory_exclusive_single special value size = 3 (Size variant 3)
-    // Fields: Rs=0, o0=0, Rn=0, Rt=0, Rt2=0, L=0, size=3
+    // Fields: Rt=0, Rs=0, L=0, Rt2=0, o0=0, Rn=0, size=3
     let encoding: u32 = 0xC8000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -815,21 +481,15 @@ fn test_aarch64_memory_exclusive_single_special_size_3_size_variant_3_0_c8000000
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_exclusive_single_special_rn_31_stack_pointer_sp_may_require_alignment_0_080003e0(
-) {
+fn test_aarch64_memory_exclusive_single_special_rn_31_stack_pointer_sp_may_require_alignment_0_080003e0() {
     // Encoding: 0x080003E0
     // Test aarch64_memory_exclusive_single special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: o0=0, L=0, Rt2=0, Rn=31, Rs=0, size=0, Rt=0
+    // Fields: Rt2=0, Rn=31, Rt=0, size=0, o0=0, Rs=0, L=0
     let encoding: u32 = 0x080003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -837,21 +497,15 @@ fn test_aarch64_memory_exclusive_single_special_rn_31_stack_pointer_sp_may_requi
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_exclusive_single_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_0800001f(
-) {
+fn test_aarch64_memory_exclusive_single_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_0800001f() {
     // Encoding: 0x0800001F
     // Test aarch64_memory_exclusive_single special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: size=0, Rn=0, Rt=31, Rs=0, L=0, o0=0, Rt2=0
+    // Fields: Rt=31, Rt2=0, Rs=0, L=0, o0=0, size=0, Rn=0
     let encoding: u32 = 0x0800001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_single
@@ -1094,17 +748,12 @@ fn test_aarch64_memory_exclusive_single_exception_2_08000000() {
 fn test_aarch64_memory_exclusive_pair_field_sz_0_min_0_88200000() {
     // Encoding: 0x88200000
     // Test aarch64_memory_exclusive_pair field sz = 0 (Min)
-    // Fields: o0=0, sz=0, Rn=0, Rs=0, Rt2=0, L=0, Rt=0
+    // Fields: o0=0, L=0, Rt=0, Rs=0, Rt2=0, Rn=0, sz=0
     let encoding: u32 = 0x88200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1115,17 +764,12 @@ fn test_aarch64_memory_exclusive_pair_field_sz_0_min_0_88200000() {
 fn test_aarch64_memory_exclusive_pair_field_sz_1_max_0_c8200000() {
     // Encoding: 0xC8200000
     // Test aarch64_memory_exclusive_pair field sz = 1 (Max)
-    // Fields: Rt=0, sz=1, o0=0, L=0, Rn=0, Rs=0, Rt2=0
+    // Fields: Rs=0, o0=0, Rn=0, Rt=0, L=0, sz=1, Rt2=0
     let encoding: u32 = 0xC8200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1136,17 +780,12 @@ fn test_aarch64_memory_exclusive_pair_field_sz_1_max_0_c8200000() {
 fn test_aarch64_memory_exclusive_pair_field_l_0_min_0_88200000() {
     // Encoding: 0x88200000
     // Test aarch64_memory_exclusive_pair field L = 0 (Min)
-    // Fields: Rt2=0, Rn=0, Rs=0, o0=0, Rt=0, L=0, sz=0
+    // Fields: sz=0, Rn=0, Rt=0, Rt2=0, Rs=0, o0=0, L=0
     let encoding: u32 = 0x88200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1157,17 +796,12 @@ fn test_aarch64_memory_exclusive_pair_field_l_0_min_0_88200000() {
 fn test_aarch64_memory_exclusive_pair_field_l_1_max_0_88600000() {
     // Encoding: 0x88600000
     // Test aarch64_memory_exclusive_pair field L = 1 (Max)
-    // Fields: Rt=0, sz=0, L=1, o0=0, Rs=0, Rt2=0, Rn=0
+    // Fields: Rs=0, Rt2=0, sz=0, Rn=0, L=1, Rt=0, o0=0
     let encoding: u32 = 0x88600000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1178,17 +812,12 @@ fn test_aarch64_memory_exclusive_pair_field_l_1_max_0_88600000() {
 fn test_aarch64_memory_exclusive_pair_field_rs_0_min_0_88200000() {
     // Encoding: 0x88200000
     // Test aarch64_memory_exclusive_pair field Rs = 0 (Min)
-    // Fields: Rt=0, L=0, Rn=0, Rs=0, o0=0, sz=0, Rt2=0
+    // Fields: sz=0, Rt2=0, L=0, Rn=0, Rt=0, Rs=0, o0=0
     let encoding: u32 = 0x88200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1199,17 +828,12 @@ fn test_aarch64_memory_exclusive_pair_field_rs_0_min_0_88200000() {
 fn test_aarch64_memory_exclusive_pair_field_rs_1_poweroftwo_0_88210000() {
     // Encoding: 0x88210000
     // Test aarch64_memory_exclusive_pair field Rs = 1 (PowerOfTwo)
-    // Fields: Rs=1, Rt=0, Rn=0, L=0, o0=0, sz=0, Rt2=0
+    // Fields: Rt=0, Rs=1, sz=0, L=0, o0=0, Rn=0, Rt2=0
     let encoding: u32 = 0x88210000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1220,17 +844,12 @@ fn test_aarch64_memory_exclusive_pair_field_rs_1_poweroftwo_0_88210000() {
 fn test_aarch64_memory_exclusive_pair_field_rs_30_poweroftwominusone_0_883e0000() {
     // Encoding: 0x883E0000
     // Test aarch64_memory_exclusive_pair field Rs = 30 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, Rn=0, Rt2=0, sz=0, Rs=30, o0=0, L=0
+    // Fields: Rn=0, Rt=0, Rt2=0, sz=0, Rs=30, L=0, o0=0
     let encoding: u32 = 0x883E0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1241,17 +860,12 @@ fn test_aarch64_memory_exclusive_pair_field_rs_30_poweroftwominusone_0_883e0000(
 fn test_aarch64_memory_exclusive_pair_field_rs_31_max_0_883f0000() {
     // Encoding: 0x883F0000
     // Test aarch64_memory_exclusive_pair field Rs = 31 (Max)
-    // Fields: o0=0, Rt2=0, Rs=31, Rn=0, Rt=0, sz=0, L=0
+    // Fields: Rn=0, L=0, Rt=0, sz=0, Rs=31, o0=0, Rt2=0
     let encoding: u32 = 0x883F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1262,17 +876,12 @@ fn test_aarch64_memory_exclusive_pair_field_rs_31_max_0_883f0000() {
 fn test_aarch64_memory_exclusive_pair_field_o0_0_min_0_88200000() {
     // Encoding: 0x88200000
     // Test aarch64_memory_exclusive_pair field o0 = 0 (Min)
-    // Fields: L=0, Rs=0, o0=0, Rt2=0, sz=0, Rn=0, Rt=0
+    // Fields: L=0, Rt2=0, sz=0, Rn=0, o0=0, Rt=0, Rs=0
     let encoding: u32 = 0x88200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1283,17 +892,12 @@ fn test_aarch64_memory_exclusive_pair_field_o0_0_min_0_88200000() {
 fn test_aarch64_memory_exclusive_pair_field_o0_1_max_0_88208000() {
     // Encoding: 0x88208000
     // Test aarch64_memory_exclusive_pair field o0 = 1 (Max)
-    // Fields: o0=1, sz=0, Rn=0, Rt=0, L=0, Rt2=0, Rs=0
+    // Fields: Rt=0, sz=0, o0=1, Rt2=0, Rn=0, L=0, Rs=0
     let encoding: u32 = 0x88208000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1304,17 +908,12 @@ fn test_aarch64_memory_exclusive_pair_field_o0_1_max_0_88208000() {
 fn test_aarch64_memory_exclusive_pair_field_rt2_0_min_0_88200000() {
     // Encoding: 0x88200000
     // Test aarch64_memory_exclusive_pair field Rt2 = 0 (Min)
-    // Fields: Rs=0, o0=0, Rt2=0, sz=0, Rn=0, Rt=0, L=0
+    // Fields: Rs=0, o0=0, Rt2=0, Rn=0, Rt=0, sz=0, L=0
     let encoding: u32 = 0x88200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1325,17 +924,12 @@ fn test_aarch64_memory_exclusive_pair_field_rt2_0_min_0_88200000() {
 fn test_aarch64_memory_exclusive_pair_field_rt2_1_poweroftwo_0_88200400() {
     // Encoding: 0x88200400
     // Test aarch64_memory_exclusive_pair field Rt2 = 1 (PowerOfTwo)
-    // Fields: L=0, sz=0, Rs=0, o0=0, Rt2=1, Rn=0, Rt=0
+    // Fields: Rn=0, Rt=0, Rt2=1, Rs=0, o0=0, sz=0, L=0
     let encoding: u32 = 0x88200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1346,17 +940,12 @@ fn test_aarch64_memory_exclusive_pair_field_rt2_1_poweroftwo_0_88200400() {
 fn test_aarch64_memory_exclusive_pair_field_rt2_30_poweroftwominusone_0_88207800() {
     // Encoding: 0x88207800
     // Test aarch64_memory_exclusive_pair field Rt2 = 30 (PowerOfTwoMinusOne)
-    // Fields: L=0, Rs=0, Rn=0, o0=0, sz=0, Rt2=30, Rt=0
+    // Fields: Rt2=30, o0=0, Rs=0, L=0, Rt=0, sz=0, Rn=0
     let encoding: u32 = 0x88207800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1367,17 +956,12 @@ fn test_aarch64_memory_exclusive_pair_field_rt2_30_poweroftwominusone_0_88207800
 fn test_aarch64_memory_exclusive_pair_field_rt2_31_max_0_88207c00() {
     // Encoding: 0x88207C00
     // Test aarch64_memory_exclusive_pair field Rt2 = 31 (Max)
-    // Fields: Rs=0, sz=0, L=0, o0=0, Rt2=31, Rn=0, Rt=0
+    // Fields: o0=0, Rt2=31, Rt=0, Rn=0, L=0, sz=0, Rs=0
     let encoding: u32 = 0x88207C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1388,17 +972,12 @@ fn test_aarch64_memory_exclusive_pair_field_rt2_31_max_0_88207c00() {
 fn test_aarch64_memory_exclusive_pair_field_rn_0_min_0_88200000() {
     // Encoding: 0x88200000
     // Test aarch64_memory_exclusive_pair field Rn = 0 (Min)
-    // Fields: Rt=0, L=0, o0=0, sz=0, Rt2=0, Rs=0, Rn=0
+    // Fields: Rn=0, Rt=0, L=0, sz=0, Rs=0, o0=0, Rt2=0
     let encoding: u32 = 0x88200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1409,17 +988,12 @@ fn test_aarch64_memory_exclusive_pair_field_rn_0_min_0_88200000() {
 fn test_aarch64_memory_exclusive_pair_field_rn_1_poweroftwo_0_88200020() {
     // Encoding: 0x88200020
     // Test aarch64_memory_exclusive_pair field Rn = 1 (PowerOfTwo)
-    // Fields: L=0, sz=0, o0=0, Rn=1, Rt2=0, Rt=0, Rs=0
+    // Fields: Rs=0, Rt=0, o0=0, sz=0, Rn=1, L=0, Rt2=0
     let encoding: u32 = 0x88200020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1430,17 +1004,12 @@ fn test_aarch64_memory_exclusive_pair_field_rn_1_poweroftwo_0_88200020() {
 fn test_aarch64_memory_exclusive_pair_field_rn_30_poweroftwominusone_0_882003c0() {
     // Encoding: 0x882003C0
     // Test aarch64_memory_exclusive_pair field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=30, Rt=0, Rs=0, sz=0, o0=0, Rt2=0, L=0
+    // Fields: Rt2=0, sz=0, Rs=0, Rn=30, L=0, o0=0, Rt=0
     let encoding: u32 = 0x882003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1451,17 +1020,12 @@ fn test_aarch64_memory_exclusive_pair_field_rn_30_poweroftwominusone_0_882003c0(
 fn test_aarch64_memory_exclusive_pair_field_rn_31_max_0_882003e0() {
     // Encoding: 0x882003E0
     // Test aarch64_memory_exclusive_pair field Rn = 31 (Max)
-    // Fields: sz=0, L=0, o0=0, Rt2=0, Rs=0, Rn=31, Rt=0
+    // Fields: Rt=0, sz=0, Rs=0, Rn=31, L=0, o0=0, Rt2=0
     let encoding: u32 = 0x882003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1472,17 +1036,12 @@ fn test_aarch64_memory_exclusive_pair_field_rn_31_max_0_882003e0() {
 fn test_aarch64_memory_exclusive_pair_field_rt_0_min_0_88200000() {
     // Encoding: 0x88200000
     // Test aarch64_memory_exclusive_pair field Rt = 0 (Min)
-    // Fields: sz=0, o0=0, Rn=0, L=0, Rt=0, Rt2=0, Rs=0
+    // Fields: o0=0, Rt2=0, Rt=0, Rn=0, L=0, Rs=0, sz=0
     let encoding: u32 = 0x88200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1493,17 +1052,12 @@ fn test_aarch64_memory_exclusive_pair_field_rt_0_min_0_88200000() {
 fn test_aarch64_memory_exclusive_pair_field_rt_1_poweroftwo_0_88200001() {
     // Encoding: 0x88200001
     // Test aarch64_memory_exclusive_pair field Rt = 1 (PowerOfTwo)
-    // Fields: Rs=0, Rt2=0, Rn=0, sz=0, o0=0, L=0, Rt=1
+    // Fields: Rt=1, Rt2=0, o0=0, Rs=0, sz=0, L=0, Rn=0
     let encoding: u32 = 0x88200001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1514,17 +1068,12 @@ fn test_aarch64_memory_exclusive_pair_field_rt_1_poweroftwo_0_88200001() {
 fn test_aarch64_memory_exclusive_pair_field_rt_30_poweroftwominusone_0_8820001e() {
     // Encoding: 0x8820001E
     // Test aarch64_memory_exclusive_pair field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: Rt2=0, Rn=0, L=0, Rt=30, Rs=0, o0=0, sz=0
+    // Fields: Rn=0, sz=0, L=0, Rs=0, Rt2=0, o0=0, Rt=30
     let encoding: u32 = 0x8820001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1535,17 +1084,12 @@ fn test_aarch64_memory_exclusive_pair_field_rt_30_poweroftwominusone_0_8820001e(
 fn test_aarch64_memory_exclusive_pair_field_rt_31_max_0_8820001f() {
     // Encoding: 0x8820001F
     // Test aarch64_memory_exclusive_pair field Rt = 31 (Max)
-    // Fields: Rs=0, Rt2=0, Rt=31, sz=0, Rn=0, o0=0, L=0
+    // Fields: Rn=0, L=0, sz=0, Rt=31, Rs=0, o0=0, Rt2=0
     let encoding: u32 = 0x8820001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1556,206 +1100,12 @@ fn test_aarch64_memory_exclusive_pair_field_rt_31_max_0_8820001f() {
 fn test_aarch64_memory_exclusive_pair_combo_0_0_88200000() {
     // Encoding: 0x88200000
     // Test aarch64_memory_exclusive_pair field combination: sz=0, L=0, Rs=0, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: o0=0, sz=0, Rs=0, L=0, Rt=0, Rt2=0, Rn=0
+    // Fields: Rn=0, L=0, Rt=0, o0=0, sz=0, Rs=0, Rt2=0
     let encoding: u32 = 0x88200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_pair
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// sz=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_exclusive_pair_combo_1_0_c8200000() {
-    // Encoding: 0xC8200000
-    // Test aarch64_memory_exclusive_pair field combination: sz=1, L=0, Rs=0, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: sz=1, L=0, Rt=0, Rt2=0, o0=0, Rn=0, Rs=0
-    let encoding: u32 = 0xC8200000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_pair
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// L=0 (minimum value)
-#[test]
-fn test_aarch64_memory_exclusive_pair_combo_2_0_88200000() {
-    // Encoding: 0x88200000
-    // Test aarch64_memory_exclusive_pair field combination: sz=0, L=0, Rs=0, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: Rt2=0, Rt=0, Rs=0, Rn=0, o0=0, sz=0, L=0
-    let encoding: u32 = 0x88200000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_pair
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// L=1 (maximum value (1))
-#[test]
-fn test_aarch64_memory_exclusive_pair_combo_3_0_88600000() {
-    // Encoding: 0x88600000
-    // Test aarch64_memory_exclusive_pair field combination: sz=0, L=1, Rs=0, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: Rt2=0, L=1, sz=0, Rn=0, Rt=0, o0=0, Rs=0
-    let encoding: u32 = 0x88600000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_pair
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rs=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_memory_exclusive_pair_combo_4_0_88200000() {
-    // Encoding: 0x88200000
-    // Test aarch64_memory_exclusive_pair field combination: sz=0, L=0, Rs=0, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: Rn=0, Rs=0, Rt2=0, Rt=0, o0=0, sz=0, L=0
-    let encoding: u32 = 0x88200000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_pair
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rs=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_memory_exclusive_pair_combo_5_0_88210000() {
-    // Encoding: 0x88210000
-    // Test aarch64_memory_exclusive_pair field combination: sz=0, L=0, Rs=1, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: sz=0, Rn=0, o0=0, Rt2=0, Rt=0, L=0, Rs=1
-    let encoding: u32 = 0x88210000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_pair
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rs=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_memory_exclusive_pair_combo_6_0_883e0000() {
-    // Encoding: 0x883E0000
-    // Test aarch64_memory_exclusive_pair field combination: sz=0, L=0, Rs=30, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: Rt=0, Rt2=0, Rs=30, sz=0, L=0, o0=0, Rn=0
-    let encoding: u32 = 0x883E0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_pair
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rs=31 (register index 31 (special))
-#[test]
-fn test_aarch64_memory_exclusive_pair_combo_7_0_883f0000() {
-    // Encoding: 0x883F0000
-    // Test aarch64_memory_exclusive_pair field combination: sz=0, L=0, Rs=31, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: Rt2=0, Rn=0, Rt=0, o0=0, sz=0, Rs=31, L=0
-    let encoding: u32 = 0x883F0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_pair
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// o0=0 (minimum value)
-#[test]
-fn test_aarch64_memory_exclusive_pair_combo_8_0_88200000() {
-    // Encoding: 0x88200000
-    // Test aarch64_memory_exclusive_pair field combination: sz=0, L=0, Rs=0, o0=0, Rt2=0, Rn=0, Rt=0
-    // Fields: Rt2=0, Rs=0, o0=0, Rn=0, Rt=0, sz=0, L=0
-    let encoding: u32 = 0x88200000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_exclusive_pair
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// o0=1 (maximum value (1))
-#[test]
-fn test_aarch64_memory_exclusive_pair_combo_9_0_88208000() {
-    // Encoding: 0x88208000
-    // Test aarch64_memory_exclusive_pair field combination: sz=0, L=0, Rs=0, o0=1, Rt2=0, Rn=0, Rt=0
-    // Fields: sz=0, L=0, o0=1, Rt2=0, Rn=0, Rt=0, Rs=0
-    let encoding: u32 = 0x88208000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1766,17 +1116,12 @@ fn test_aarch64_memory_exclusive_pair_combo_9_0_88208000() {
 fn test_aarch64_memory_exclusive_pair_special_sz_0_size_variant_0_0_88200000() {
     // Encoding: 0x88200000
     // Test aarch64_memory_exclusive_pair special value sz = 0 (Size variant 0)
-    // Fields: Rs=0, o0=0, Rt2=0, L=0, Rt=0, sz=0, Rn=0
+    // Fields: Rt2=0, sz=0, o0=0, Rn=0, L=0, Rs=0, Rt=0
     let encoding: u32 = 0x88200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1787,17 +1132,12 @@ fn test_aarch64_memory_exclusive_pair_special_sz_0_size_variant_0_0_88200000() {
 fn test_aarch64_memory_exclusive_pair_special_sz_1_size_variant_1_0_c8200000() {
     // Encoding: 0xC8200000
     // Test aarch64_memory_exclusive_pair special value sz = 1 (Size variant 1)
-    // Fields: Rt=0, sz=1, Rt2=0, L=0, Rs=0, o0=0, Rn=0
+    // Fields: o0=0, Rs=0, Rn=0, sz=1, Rt=0, L=0, Rt2=0
     let encoding: u32 = 0xC8200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1805,21 +1145,15 @@ fn test_aarch64_memory_exclusive_pair_special_sz_1_size_variant_1_0_c8200000() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_exclusive_pair_special_rn_31_stack_pointer_sp_may_require_alignment_0_882003e0(
-) {
+fn test_aarch64_memory_exclusive_pair_special_rn_31_stack_pointer_sp_may_require_alignment_0_882003e0() {
     // Encoding: 0x882003E0
     // Test aarch64_memory_exclusive_pair special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: o0=0, sz=0, L=0, Rt2=0, Rt=0, Rn=31, Rs=0
+    // Fields: Rn=31, L=0, sz=0, Rt=0, o0=0, Rt2=0, Rs=0
     let encoding: u32 = 0x882003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -1827,21 +1161,15 @@ fn test_aarch64_memory_exclusive_pair_special_rn_31_stack_pointer_sp_may_require
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_exclusive_pair_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_8820001f(
-) {
+fn test_aarch64_memory_exclusive_pair_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_8820001f() {
     // Encoding: 0x8820001F
     // Test aarch64_memory_exclusive_pair special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: L=0, sz=0, Rs=0, Rt2=0, o0=0, Rn=0, Rt=31
+    // Fields: Rs=0, sz=0, o0=0, Rt2=0, L=0, Rt=31, Rn=0
     let encoding: u32 = 0x8820001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_exclusive_pair
@@ -2071,3 +1399,4 @@ fn test_aarch64_memory_exclusive_pair_exception_2_88200000() {
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
 }
+
