@@ -1767,10 +1767,15 @@ pub fn identify_a64_pattern(encoding: u64) -> InstructionPattern {
     // Values 10/11 indicate ADDG/SUBG (memory tagging) which we don't handle
     let op_28_24 = (encoding >> 24) & 0x1F;
     let shift = (encoding >> 22) & 0x3;
+    let rd = encoding & 0x1F;
     if op_28_24 == 0b10001 && shift <= 1 {
         // Add/subtract immediate (shift = 0 or 1 means no shift or LSL #12)
         let op = (encoding >> 30) & 1;
         let s = (encoding >> 29) & 1;
+        // Check for CMP/CMN (SUBS/ADDS with Rd=31 i.e. zero register)
+        if s == 1 && rd == 31 {
+            return InstructionPattern::Compare { is_neg: op == 0 }; // CMN is op=0 (ADD), CMP is op=1 (SUB)
+        }
         return InstructionPattern::AddSubImmediate {
             is_sub: op == 1,
             set_flags: s == 1,
@@ -1781,6 +1786,10 @@ pub fn identify_a64_pattern(encoding: u64) -> InstructionPattern {
     let op_28_23 = (encoding >> 23) & 0x3F;
     if op_28_23 == 0b100100 {
         let opc = (encoding >> 29) & 3;
+        // Check for TST (ANDS with Rd=31 i.e. zero register)
+        if opc == 0b11 && rd == 31 {
+            return InstructionPattern::Test;
+        }
         return InstructionPattern::LogicalImmediate {
             op: match opc {
                 0b00 => LogicalOp::And,
@@ -1843,6 +1852,10 @@ pub fn identify_a64_pattern(encoding: u64) -> InstructionPattern {
             if op1 == 0b0000 {
                 // Logical shifted register
                 let opc = (encoding >> 29) & 3;
+                // Check for TST (ANDS shifted reg with Rd=31)
+                if opc == 0b11 && rd == 31 {
+                    return InstructionPattern::Test;
+                }
                 InstructionPattern::LogicalShiftedReg {
                     op: match opc {
                         0b00 => LogicalOp::And,
@@ -1856,6 +1869,10 @@ pub fn identify_a64_pattern(encoding: u64) -> InstructionPattern {
                 // Add/subtract shifted register
                 let op = (encoding >> 30) & 1;
                 let s = (encoding >> 29) & 1;
+                // Check for CMP/CMN (SUBS/ADDS shifted reg with Rd=31)
+                if s == 1 && rd == 31 {
+                    return InstructionPattern::Compare { is_neg: op == 0 };
+                }
                 InstructionPattern::AddSubShiftedReg {
                     is_sub: op == 1,
                     set_flags: s == 1,
@@ -1864,6 +1881,10 @@ pub fn identify_a64_pattern(encoding: u64) -> InstructionPattern {
                 // Add/subtract extended register
                 let op = (encoding >> 30) & 1;
                 let s = (encoding >> 29) & 1;
+                // Check for CMP/CMN (SUBS/ADDS extended reg with Rd=31)
+                if s == 1 && rd == 31 {
+                    return InstructionPattern::Compare { is_neg: op == 0 };
+                }
                 InstructionPattern::AddSubExtendedReg {
                     is_sub: op == 1,
                     set_flags: s == 1,
@@ -1959,13 +1980,19 @@ pub fn identify_a64_pattern(encoding: u64) -> InstructionPattern {
             InstructionPattern::Unknown
         }
         // Data processing - 1 source (CLZ, CLS, RBIT, REV, etc.)
+        // Encoding: sf 1 S 11010110 00000 opcode Rn Rd
+        // Need to verify bits 29:21 = 1_11010110 (0x1D6) to distinguish from other op0=0b1010 instructions
         0b1010 | 0b0110 => {
             let sf = (encoding >> 31) & 1;
             let s = (encoding >> 29) & 1;
             let opcode2 = (encoding >> 16) & 0x1F;
             let opcode = (encoding >> 10) & 0x3F;
+            // Check bits 29:21 to verify this is actually data processing 1-source
+            // Pattern: bit29=1, bits28:21=11010110 (0xD6)
+            let bits_29_21 = (encoding >> 21) & 0x1FF;
+            let dp1_pattern = 0b1_11010110; // 0x1D6
 
-            if s == 0 && opcode2 == 0 {
+            if bits_29_21 == dp1_pattern && s == 0 && opcode2 == 0 {
                 match opcode {
                     0b000000 => InstructionPattern::BitOp {
                         op: BitOpType::Rbit,
