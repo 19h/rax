@@ -20,17 +20,12 @@ use crate::generated::test_helpers::*;
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_q_0_min_1400_0e401400() {
     // Encoding: 0x0E401400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field Q = 0 (Min)
-    // Fields: Rd=0, Q=0, U=0, Rm=0, Rn=0
+    // Fields: Rn=0, Rd=0, Q=0, U=0, Rm=0
     let encoding: u32 = 0x0E401400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -41,17 +36,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_q_0_min_1400_0e4
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_q_1_max_1400_4e401400() {
     // Encoding: 0x4E401400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field Q = 1 (Max)
-    // Fields: Q=1, Rm=0, U=0, Rd=0, Rn=0
+    // Fields: Rd=0, Rm=0, Rn=0, Q=1, U=0
     let encoding: u32 = 0x4E401400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -62,17 +52,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_q_1_max_1400_4e4
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_u_0_min_1400_0e401400() {
     // Encoding: 0x0E401400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field U = 0 (Min)
-    // Fields: U=0, Rm=0, Rn=0, Rd=0, Q=0
+    // Fields: Rm=0, Q=0, U=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E401400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -83,17 +68,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_u_0_min_1400_0e4
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_u_1_max_1400_2e401400() {
     // Encoding: 0x2E401400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field U = 1 (Max)
-    // Fields: Rm=0, Rd=0, U=1, Rn=0, Q=0
+    // Fields: U=1, Q=0, Rd=0, Rm=0, Rn=0
     let encoding: u32 = 0x2E401400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -104,17 +84,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_u_1_max_1400_2e4
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rm_0_min_1400_0e401400() {
     // Encoding: 0x0E401400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field Rm = 0 (Min)
-    // Fields: U=0, Rm=0, Q=0, Rd=0, Rn=0
+    // Fields: Rd=0, Rm=0, Q=0, U=0, Rn=0
     let encoding: u32 = 0x0E401400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -125,17 +100,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rm_0_min_1400_0e
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rm_1_poweroftwo_1400_0e411400() {
     // Encoding: 0x0E411400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field Rm = 1 (PowerOfTwo)
-    // Fields: Q=0, Rn=0, U=0, Rd=0, Rm=1
+    // Fields: U=0, Q=0, Rm=1, Rn=0, Rd=0
     let encoding: u32 = 0x0E411400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -143,21 +113,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rm_1_poweroftwo_
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rm_30_poweroftwominusone_1400_0e5e1400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rm_30_poweroftwominusone_1400_0e5e1400() {
     // Encoding: 0x0E5E1400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=0, Q=0, Rm=30, U=0, Rn=0
+    // Fields: Rd=0, Rm=30, Q=0, U=0, Rn=0
     let encoding: u32 = 0x0E5E1400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -168,17 +132,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rm_30_poweroftwo
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rm_31_max_1400_0e5f1400() {
     // Encoding: 0x0E5F1400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field Rm = 31 (Max)
-    // Fields: Q=0, Rd=0, Rn=0, U=0, Rm=31
+    // Fields: Rn=0, Rd=0, Q=0, Rm=31, U=0
     let encoding: u32 = 0x0E5F1400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -189,17 +148,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rm_31_max_1400_0
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rn_0_min_1400_0e401400() {
     // Encoding: 0x0E401400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field Rn = 0 (Min)
-    // Fields: Rn=0, Rd=0, U=0, Q=0, Rm=0
+    // Fields: Rm=0, U=0, Q=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E401400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -210,17 +164,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rn_0_min_1400_0e
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rn_1_poweroftwo_1400_0e401420() {
     // Encoding: 0x0E401420
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field Rn = 1 (PowerOfTwo)
-    // Fields: Rd=0, Q=0, Rm=0, Rn=1, U=0
+    // Fields: Rm=0, U=0, Rn=1, Q=0, Rd=0
     let encoding: u32 = 0x0E401420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -228,21 +177,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rn_1_poweroftwo_
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rn_30_poweroftwominusone_1400_0e4017c0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rn_30_poweroftwominusone_1400_0e4017c0() {
     // Encoding: 0x0E4017C0
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=0, Q=0, Rd=0, U=0, Rn=30
+    // Fields: Rm=0, Q=0, Rn=30, Rd=0, U=0
     let encoding: u32 = 0x0E4017C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -253,17 +196,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rn_30_poweroftwo
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rn_31_max_1400_0e4017e0() {
     // Encoding: 0x0E4017E0
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field Rn = 31 (Max)
-    // Fields: Rn=31, U=0, Rd=0, Q=0, Rm=0
+    // Fields: Rm=0, Q=0, U=0, Rn=31, Rd=0
     let encoding: u32 = 0x0E4017E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -274,17 +212,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rn_31_max_1400_0
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rd_0_min_1400_0e401400() {
     // Encoding: 0x0E401400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field Rd = 0 (Min)
-    // Fields: Rd=0, Q=0, Rm=0, Rn=0, U=0
+    // Fields: Rm=0, Rd=0, Rn=0, Q=0, U=0
     let encoding: u32 = 0x0E401400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -295,17 +228,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rd_0_min_1400_0e
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rd_1_poweroftwo_1400_0e401401() {
     // Encoding: 0x0E401401
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field Rd = 1 (PowerOfTwo)
-    // Fields: Q=0, U=0, Rd=1, Rn=0, Rm=0
+    // Fields: Rn=0, Rd=1, Rm=0, Q=0, U=0
     let encoding: u32 = 0x0E401401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -313,21 +241,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rd_1_poweroftwo_
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rd_30_poweroftwominusone_1400_0e40141e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rd_30_poweroftwominusone_1400_0e40141e() {
     // Encoding: 0x0E40141E
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=30, Rm=0, Rn=0, Q=0, U=0
+    // Fields: Rd=30, Rn=0, Rm=0, U=0, Q=0
     let encoding: u32 = 0x0E40141E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -338,17 +260,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rd_30_poweroftwo
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rd_31_max_1400_0e40141f() {
     // Encoding: 0x0E40141F
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field Rd = 31 (Max)
-    // Fields: U=0, Rd=31, Q=0, Rm=0, Rn=0
+    // Fields: Q=0, U=0, Rm=0, Rn=0, Rd=31
     let encoding: u32 = 0x0E40141F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -359,206 +276,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_field_rd_31_max_1400_0
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_combo_0_1400_0e401400() {
     // Encoding: 0x0E401400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field combination: Q=0, U=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, Rm=0, Rd=0, Q=0, U=0
+    // Fields: Rm=0, Q=0, U=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E401400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_combo_1_1400_4e401400() {
-    // Encoding: 0x4E401400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field combination: Q=1, U=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, U=0, Rd=0, Rn=0, Q=1
-    let encoding: u32 = 0x4E401400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_combo_2_1400_0e401400() {
-    // Encoding: 0x0E401400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field combination: Q=0, U=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rd=0, Q=0, U=0, Rm=0, Rn=0
-    let encoding: u32 = 0x0E401400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_combo_3_1400_2e401400() {
-    // Encoding: 0x2E401400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field combination: Q=0, U=1, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, Rn=0, Rd=0, Rm=0, U=1
-    let encoding: u32 = 0x2E401400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_combo_4_1400_0e401400() {
-    // Encoding: 0x0E401400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field combination: Q=0, U=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, Q=0, U=0, Rm=0, Rd=0
-    let encoding: u32 = 0x0E401400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_combo_5_1400_0e411400() {
-    // Encoding: 0x0E411400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field combination: Q=0, U=0, Rm=1, Rn=0, Rd=0
-    // Fields: Rd=0, U=0, Rm=1, Q=0, Rn=0
-    let encoding: u32 = 0x0E411400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_combo_6_1400_0e5e1400() {
-    // Encoding: 0x0E5E1400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field combination: Q=0, U=0, Rm=30, Rn=0, Rd=0
-    // Fields: U=0, Q=0, Rn=0, Rd=0, Rm=30
-    let encoding: u32 = 0x0E5E1400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=31 (register index 31 (special))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_combo_7_1400_0e5f1400() {
-    // Encoding: 0x0E5F1400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field combination: Q=0, U=0, Rm=31, Rn=0, Rd=0
-    // Fields: Q=0, U=0, Rn=0, Rd=0, Rm=31
-    let encoding: u32 = 0x0E5F1400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_combo_8_1400_0e401400() {
-    // Encoding: 0x0E401400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field combination: Q=0, U=0, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, Rn=0, Rm=0, Rd=0, U=0
-    let encoding: u32 = 0x0E401400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_combo_9_1400_0e401420() {
-    // Encoding: 0x0E401420
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 field combination: Q=0, U=0, Rm=0, Rn=1, Rd=0
-    // Fields: U=0, Q=0, Rd=0, Rn=1, Rm=0
-    let encoding: u32 = 0x0E401420;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -566,21 +289,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_combo_9_1400_0e401420(
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_special_q_0_size_variant_0_5120_0e401400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_special_q_0_size_variant_0_5120_0e401400() {
     // Encoding: 0x0E401400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 special value Q = 0 (Size variant 0)
-    // Fields: Q=0, Rm=0, Rn=0, Rd=0, U=0
+    // Fields: U=0, Rn=0, Q=0, Rm=0, Rd=0
     let encoding: u32 = 0x0E401400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -588,21 +305,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_special_q_0_size_varia
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_special_q_1_size_variant_1_5120_4e401400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_special_q_1_size_variant_1_5120_4e401400() {
     // Encoding: 0x4E401400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 special value Q = 1 (Size variant 1)
-    // Fields: Q=1, U=0, Rm=0, Rd=0, Rn=0
+    // Fields: Rm=0, U=0, Rd=0, Rn=0, Q=1
     let encoding: u32 = 0x4E401400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -610,21 +321,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_special_q_1_size_varia
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_special_rn_31_stack_pointer_sp_may_require_alignment_5120_0e4017e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_special_rn_31_stack_pointer_sp_may_require_alignment_5120_0e4017e0() {
     // Encoding: 0x0E4017E0
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rm=0, Rd=0, U=0, Rn=31, Q=0
+    // Fields: Rm=0, U=0, Q=0, Rd=0, Rn=31
     let encoding: u32 = 0x0E4017E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -632,21 +337,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_special_rn_31_stack_po
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_5120_0e40141f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_5120_0e40141f() {
     // Encoding: 0x0E40141F
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rd=31, U=0, Rm=0, Rn=0, Q=0
+    // Fields: Rm=0, Q=0, U=0, Rn=0, Rd=31
     let encoding: u32 = 0x0E40141F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -657,16 +356,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_special_rd_31_zero_reg
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_invalid_0_1400_0e401400() {
     // Encoding: 0x0E401400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveFP16Ext" }, args: [] } }
-    // Fields: Q=0, Rm=0, Rn=0, Rd=0, U=0
+    // Fields: Rm=0, Q=0, Rd=0, U=0, Rn=0
     let encoding: u32 = 0x0E401400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -677,16 +372,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_invalid_0_1400_0e40140
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_invalid_1_1400_0e401400() {
     // Encoding: 0x0E401400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp16 invalid encoding: Unconditional UNDEFINED
-    // Fields: U=0, Q=0, Rm=0, Rn=0, Rd=0
+    // Fields: Q=0, Rm=0, Rn=0, U=0, Rd=0
     let encoding: u32 = 0x0E401400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -697,17 +388,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp16_invalid_1_1400_0e40140
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_q_0_min_d400_0e20d400() {
     // Encoding: 0x0E20D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field Q = 0 (Min)
-    // Fields: sz=0, Rm=0, U=0, Rn=0, Rd=0, Q=0
+    // Fields: sz=0, U=0, Q=0, Rm=0, Rd=0, Rn=0
     let encoding: u32 = 0x0E20D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -718,17 +404,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_q_0_min_d400_0e20d
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_q_1_max_d400_4e20d400() {
     // Encoding: 0x4E20D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field Q = 1 (Max)
-    // Fields: sz=0, Q=1, Rm=0, Rn=0, Rd=0, U=0
+    // Fields: U=0, Q=1, sz=0, Rm=0, Rn=0, Rd=0
     let encoding: u32 = 0x4E20D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -739,17 +420,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_q_1_max_d400_4e20d
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_u_0_min_d400_0e20d400() {
     // Encoding: 0x0E20D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field U = 0 (Min)
-    // Fields: Rn=0, U=0, Q=0, Rd=0, Rm=0, sz=0
+    // Fields: U=0, sz=0, Rm=0, Rd=0, Q=0, Rn=0
     let encoding: u32 = 0x0E20D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -760,17 +436,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_u_0_min_d400_0e20d
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_u_1_max_d400_2e20d400() {
     // Encoding: 0x2E20D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field U = 1 (Max)
-    // Fields: Rn=0, Q=0, Rm=0, sz=0, U=1, Rd=0
+    // Fields: Rm=0, Rn=0, sz=0, Q=0, U=1, Rd=0
     let encoding: u32 = 0x2E20D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -781,17 +452,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_u_1_max_d400_2e20d
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_sz_0_min_d400_0e20d400() {
     // Encoding: 0x0E20D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field sz = 0 (Min)
-    // Fields: Rm=0, Q=0, Rd=0, U=0, sz=0, Rn=0
+    // Fields: Rd=0, Rn=0, Rm=0, Q=0, sz=0, U=0
     let encoding: u32 = 0x0E20D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -802,17 +468,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_sz_0_min_d400_0e20
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_sz_1_max_d400_0e60d400() {
     // Encoding: 0x0E60D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field sz = 1 (Max)
-    // Fields: U=0, Rm=0, Rn=0, Rd=0, sz=1, Q=0
+    // Fields: U=0, Rm=0, Rn=0, sz=1, Rd=0, Q=0
     let encoding: u32 = 0x0E60D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -823,17 +484,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_sz_1_max_d400_0e60
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rm_0_min_d400_0e20d400() {
     // Encoding: 0x0E20D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field Rm = 0 (Min)
-    // Fields: sz=0, U=0, Q=0, Rm=0, Rn=0, Rd=0
+    // Fields: Rn=0, Rm=0, Q=0, sz=0, U=0, Rd=0
     let encoding: u32 = 0x0E20D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -844,17 +500,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rm_0_min_d400_0e20
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rm_1_poweroftwo_d400_0e21d400() {
     // Encoding: 0x0E21D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field Rm = 1 (PowerOfTwo)
-    // Fields: Rn=0, Rd=0, U=0, sz=0, Rm=1, Q=0
+    // Fields: Rd=0, U=0, sz=0, Rn=0, Q=0, Rm=1
     let encoding: u32 = 0x0E21D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -862,21 +513,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rm_1_poweroftwo_d4
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rm_30_poweroftwominusone_d400_0e3ed400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rm_30_poweroftwominusone_d400_0e3ed400() {
     // Encoding: 0x0E3ED400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: sz=0, Rm=30, U=0, Rn=0, Rd=0, Q=0
+    // Fields: Q=0, Rn=0, U=0, sz=0, Rm=30, Rd=0
     let encoding: u32 = 0x0E3ED400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -887,17 +532,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rm_30_poweroftwomi
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rm_31_max_d400_0e3fd400() {
     // Encoding: 0x0E3FD400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field Rm = 31 (Max)
-    // Fields: Rn=0, Q=0, sz=0, Rm=31, Rd=0, U=0
+    // Fields: Rn=0, sz=0, Rd=0, U=0, Q=0, Rm=31
     let encoding: u32 = 0x0E3FD400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -908,17 +548,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rm_31_max_d400_0e3
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rn_0_min_d400_0e20d400() {
     // Encoding: 0x0E20D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field Rn = 0 (Min)
-    // Fields: Rm=0, Q=0, U=0, Rd=0, sz=0, Rn=0
+    // Fields: Rd=0, Rm=0, U=0, Q=0, Rn=0, sz=0
     let encoding: u32 = 0x0E20D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -929,17 +564,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rn_0_min_d400_0e20
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rn_1_poweroftwo_d400_0e20d420() {
     // Encoding: 0x0E20D420
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field Rn = 1 (PowerOfTwo)
-    // Fields: Rm=0, U=0, sz=0, Q=0, Rd=0, Rn=1
+    // Fields: U=0, Rn=1, Rd=0, sz=0, Q=0, Rm=0
     let encoding: u32 = 0x0E20D420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -947,21 +577,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rn_1_poweroftwo_d4
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rn_30_poweroftwominusone_d400_0e20d7c0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rn_30_poweroftwominusone_d400_0e20d7c0() {
     // Encoding: 0x0E20D7C0
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: sz=0, Q=0, Rn=30, Rm=0, U=0, Rd=0
+    // Fields: Q=0, U=0, Rn=30, Rm=0, Rd=0, sz=0
     let encoding: u32 = 0x0E20D7C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -972,17 +596,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rn_30_poweroftwomi
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rn_31_max_d400_0e20d7e0() {
     // Encoding: 0x0E20D7E0
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field Rn = 31 (Max)
-    // Fields: Rd=0, U=0, sz=0, Q=0, Rm=0, Rn=31
+    // Fields: Rm=0, Q=0, sz=0, U=0, Rd=0, Rn=31
     let encoding: u32 = 0x0E20D7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -993,17 +612,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rn_31_max_d400_0e2
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rd_0_min_d400_0e20d400() {
     // Encoding: 0x0E20D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field Rd = 0 (Min)
-    // Fields: Q=0, Rd=0, sz=0, Rn=0, Rm=0, U=0
+    // Fields: U=0, Rd=0, Rn=0, Rm=0, Q=0, sz=0
     let encoding: u32 = 0x0E20D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -1014,17 +628,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rd_0_min_d400_0e20
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rd_1_poweroftwo_d400_0e20d401() {
     // Encoding: 0x0E20D401
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field Rd = 1 (PowerOfTwo)
-    // Fields: Rm=0, Q=0, sz=0, U=0, Rn=0, Rd=1
+    // Fields: sz=0, Rm=0, U=0, Q=0, Rn=0, Rd=1
     let encoding: u32 = 0x0E20D401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -1032,21 +641,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rd_1_poweroftwo_d4
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rd_30_poweroftwominusone_d400_0e20d41e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rd_30_poweroftwominusone_d400_0e20d41e() {
     // Encoding: 0x0E20D41E
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Q=0, U=0, sz=0, Rm=0, Rn=0, Rd=30
+    // Fields: Rd=30, Q=0, Rn=0, sz=0, Rm=0, U=0
     let encoding: u32 = 0x0E20D41E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -1057,17 +660,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rd_30_poweroftwomi
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rd_31_max_d400_0e20d41f() {
     // Encoding: 0x0E20D41F
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field Rd = 31 (Max)
-    // Fields: Q=0, Rd=31, Rm=0, Rn=0, sz=0, U=0
+    // Fields: Rm=0, Rn=0, Rd=31, Q=0, U=0, sz=0
     let encoding: u32 = 0x0E20D41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -1078,206 +676,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_field_rd_31_max_d400_0e2
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_combo_0_d400_0e20d400() {
     // Encoding: 0x0E20D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp field combination: Q=0, U=0, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, Q=0, sz=0, Rn=0, U=0, Rd=0
+    // Fields: Rm=0, Q=0, U=0, Rn=0, sz=0, Rd=0
     let encoding: u32 = 0x0E20D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_combo_1_d400_4e20d400() {
-    // Encoding: 0x4E20D400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp field combination: Q=1, U=0, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rd=0, Q=1, U=0, sz=0, Rn=0, Rm=0
-    let encoding: u32 = 0x4E20D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_combo_2_d400_0e20d400() {
-    // Encoding: 0x0E20D400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp field combination: Q=0, U=0, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, sz=0, Rm=0, Rn=0, Rd=0, U=0
-    let encoding: u32 = 0x0E20D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_combo_3_d400_2e20d400() {
-    // Encoding: 0x2E20D400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp field combination: Q=0, U=1, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, sz=0, Rd=0, Rm=0, U=1, Rn=0
-    let encoding: u32 = 0x2E20D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// sz=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_combo_4_d400_0e20d400() {
-    // Encoding: 0x0E20D400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp field combination: Q=0, U=0, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, sz=0, Rd=0, Rm=0, Q=0, Rn=0
-    let encoding: u32 = 0x0E20D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// sz=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_combo_5_d400_0e60d400() {
-    // Encoding: 0x0E60D400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp field combination: Q=0, U=0, sz=1, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, Rd=0, Rn=0, sz=1, Rm=0, Q=0
-    let encoding: u32 = 0x0E60D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_combo_6_d400_0e20d400() {
-    // Encoding: 0x0E20D400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp field combination: Q=0, U=0, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, sz=0, Rd=0, Rm=0, Q=0, U=0
-    let encoding: u32 = 0x0E20D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_combo_7_d400_0e21d400() {
-    // Encoding: 0x0E21D400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp field combination: Q=0, U=0, sz=0, Rm=1, Rn=0, Rd=0
-    // Fields: Rm=1, Q=0, sz=0, U=0, Rd=0, Rn=0
-    let encoding: u32 = 0x0E21D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_combo_8_d400_0e3ed400() {
-    // Encoding: 0x0E3ED400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp field combination: Q=0, U=0, sz=0, Rm=30, Rn=0, Rd=0
-    // Fields: Q=0, Rn=0, Rm=30, Rd=0, sz=0, U=0
-    let encoding: u32 = 0x0E3ED400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=31 (register index 31 (special))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_combo_9_d400_0e3fd400() {
-    // Encoding: 0x0E3FD400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp field combination: Q=0, U=0, sz=0, Rm=31, Rn=0, Rd=0
-    // Fields: Rn=0, Rd=0, Q=0, U=0, sz=0, Rm=31
-    let encoding: u32 = 0x0E3FD400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -1285,21 +689,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_combo_9_d400_0e3fd400() 
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_q_0_size_variant_0_54272_0e20d400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_q_0_size_variant_0_54272_0e20d400() {
     // Encoding: 0x0E20D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp special value Q = 0 (Size variant 0)
-    // Fields: Rd=0, U=0, sz=0, Q=0, Rm=0, Rn=0
+    // Fields: Q=0, Rm=0, Rn=0, Rd=0, sz=0, U=0
     let encoding: u32 = 0x0E20D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -1307,21 +705,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_q_0_size_variant
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_q_1_size_variant_1_54272_4e20d400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_q_1_size_variant_1_54272_4e20d400() {
     // Encoding: 0x4E20D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp special value Q = 1 (Size variant 1)
-    // Fields: Rm=0, sz=0, Rd=0, Q=1, U=0, Rn=0
+    // Fields: U=0, sz=0, Rm=0, Rd=0, Q=1, Rn=0
     let encoding: u32 = 0x4E20D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -1329,21 +721,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_q_1_size_variant
 /// Requirement: FieldSpecial { field: "sz", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_sz_0_size_variant_0_54272_0e20d400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_sz_0_size_variant_0_54272_0e20d400() {
     // Encoding: 0x0E20D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp special value sz = 0 (Size variant 0)
-    // Fields: Q=0, Rm=0, Rn=0, sz=0, U=0, Rd=0
+    // Fields: Rd=0, Rn=0, U=0, sz=0, Q=0, Rm=0
     let encoding: u32 = 0x0E20D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -1351,21 +737,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_sz_0_size_varian
 /// Requirement: FieldSpecial { field: "sz", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_sz_1_size_variant_1_54272_0e60d400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_sz_1_size_variant_1_54272_0e60d400() {
     // Encoding: 0x0E60D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp special value sz = 1 (Size variant 1)
-    // Fields: Rm=0, Rd=0, U=0, Q=0, sz=1, Rn=0
+    // Fields: Q=0, U=0, sz=1, Rn=0, Rm=0, Rd=0
     let encoding: u32 = 0x0E60D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -1373,21 +753,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_sz_1_size_varian
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_rn_31_stack_pointer_sp_may_require_alignment_54272_0e20d7e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_rn_31_stack_pointer_sp_may_require_alignment_54272_0e20d7e0() {
     // Encoding: 0x0E20D7E0
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: sz=0, Rd=0, U=0, Rm=0, Q=0, Rn=31
+    // Fields: Rm=0, Rn=31, sz=0, Q=0, U=0, Rd=0
     let encoding: u32 = 0x0E20D7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -1395,21 +769,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_rn_31_stack_poin
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_54272_0e20d41f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_54272_0e20d41f() {
     // Encoding: 0x0E20D41F
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: U=0, Rm=0, Q=0, sz=0, Rn=0, Rd=31
+    // Fields: Rn=0, sz=0, U=0, Rm=0, Rd=31, Q=0
     let encoding: u32 = 0x0E20D41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -1420,16 +788,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_special_rd_31_zero_regis
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_invalid_0_d400_0e20d400() {
     // Encoding: 0x0E20D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp invalid encoding: Binary { op: BitConcat, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "sz" }), rhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "Q" }), rhs: LitBits([true, false]) } }
-    // Fields: U=0, Rd=0, Rm=0, Q=0, sz=0, Rn=0
+    // Fields: sz=0, U=0, Rn=0, Rd=0, Q=0, Rm=0
     let encoding: u32 = 0x0E20D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp
@@ -1440,16 +804,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_invalid_0_d400_0e20d400(
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_invalid_1_d400_0e20d400() {
     // Encoding: 0x0E20D400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp invalid encoding: Unconditional UNDEFINED
-    // Fields: Rm=0, Rn=0, U=0, sz=0, Rd=0, Q=0
+    // Fields: U=0, Rn=0, Rd=0, sz=0, Rm=0, Q=0
     let encoding: u32 = 0x0E20D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp16
@@ -1556,17 +916,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_zr_rd_0e20d41f() {
 fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_u_0_min_c00_5e200c00() {
     // Encoding: 0x5E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field U = 0 (Min)
-    // Fields: Rd=0, U=0, Rm=0, size=0, Rn=0
+    // Fields: U=0, size=0, Rn=0, Rd=0, Rm=0
     let encoding: u32 = 0x5E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1577,17 +932,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_u_0_m
 fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_u_1_max_c00_7e200c00() {
     // Encoding: 0x7E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field U = 1 (Max)
-    // Fields: Rn=0, Rm=0, size=0, U=1, Rd=0
+    // Fields: Rd=0, size=0, U=1, Rm=0, Rn=0
     let encoding: u32 = 0x7E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1595,21 +945,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_u_1_m
 /// Requirement: FieldBoundary { field: "size", value: 0, boundary: Min }
 /// 8-bit / byte size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_size_0_min_c00_5e200c00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_size_0_min_c00_5e200c00() {
     // Encoding: 0x5E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field size = 0 (Min)
-    // Fields: size=0, Rd=0, Rn=0, U=0, Rm=0
+    // Fields: U=0, Rd=0, Rn=0, size=0, Rm=0
     let encoding: u32 = 0x5E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1617,21 +961,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_size_1_poweroftwo_c00_5e600c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_size_1_poweroftwo_c00_5e600c00() {
     // Encoding: 0x5E600C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field size = 1 (PowerOfTwo)
-    // Fields: Rn=0, size=1, Rm=0, Rd=0, U=0
+    // Fields: size=1, Rn=0, U=0, Rm=0, Rd=0
     let encoding: u32 = 0x5E600C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1639,21 +977,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_size_2_poweroftwo_c00_5ea00c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_size_2_poweroftwo_c00_5ea00c00() {
     // Encoding: 0x5EA00C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field size = 2 (PowerOfTwo)
-    // Fields: size=2, U=0, Rn=0, Rd=0, Rm=0
+    // Fields: size=2, Rn=0, Rm=0, Rd=0, U=0
     let encoding: u32 = 0x5EA00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1661,21 +993,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 3, boundary: Max }
 /// 64-bit / doubleword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_size_3_max_c00_5ee00c00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_size_3_max_c00_5ee00c00() {
     // Encoding: 0x5EE00C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field size = 3 (Max)
-    // Fields: Rm=0, Rn=0, U=0, size=3, Rd=0
+    // Fields: U=0, Rm=0, size=3, Rd=0, Rn=0
     let encoding: u32 = 0x5EE00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1686,17 +1012,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_size_
 fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rm_0_min_c00_5e200c00() {
     // Encoding: 0x5E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field Rm = 0 (Min)
-    // Fields: Rd=0, Rm=0, Rn=0, size=0, U=0
+    // Fields: U=0, Rm=0, Rn=0, Rd=0, size=0
     let encoding: u32 = 0x5E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1704,21 +1025,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rm_0_
 /// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rm_1_poweroftwo_c00_5e210c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rm_1_poweroftwo_c00_5e210c00() {
     // Encoding: 0x5E210C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field Rm = 1 (PowerOfTwo)
-    // Fields: U=0, size=0, Rn=0, Rd=0, Rm=1
+    // Fields: size=0, Rd=0, Rm=1, Rn=0, U=0
     let encoding: u32 = 0x5E210C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1726,21 +1041,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rm_1_
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rm_30_poweroftwominusone_c00_5e3e0c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rm_30_poweroftwominusone_c00_5e3e0c00() {
     // Encoding: 0x5E3E0C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rm=30, Rn=0, Rd=0, U=0
+    // Fields: U=0, Rn=0, Rm=30, Rd=0, size=0
     let encoding: u32 = 0x5E3E0C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1748,21 +1057,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rm_30
 /// Requirement: FieldBoundary { field: "Rm", value: 31, boundary: Max }
 /// register index 31 (special)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rm_31_max_c00_5e3f0c00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rm_31_max_c00_5e3f0c00() {
     // Encoding: 0x5E3F0C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field Rm = 31 (Max)
-    // Fields: U=0, Rn=0, Rm=31, Rd=0, size=0
+    // Fields: size=0, Rm=31, U=0, Rn=0, Rd=0
     let encoding: u32 = 0x5E3F0C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1773,17 +1076,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rm_31
 fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rn_0_min_c00_5e200c00() {
     // Encoding: 0x5E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field Rn = 0 (Min)
-    // Fields: Rm=0, Rn=0, size=0, U=0, Rd=0
+    // Fields: U=0, Rn=0, size=0, Rm=0, Rd=0
     let encoding: u32 = 0x5E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1791,21 +1089,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rn_0_
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rn_1_poweroftwo_c00_5e200c20(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rn_1_poweroftwo_c00_5e200c20() {
     // Encoding: 0x5E200C20
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field Rn = 1 (PowerOfTwo)
-    // Fields: U=0, Rn=1, Rm=0, size=0, Rd=0
+    // Fields: Rn=1, Rm=0, size=0, Rd=0, U=0
     let encoding: u32 = 0x5E200C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1813,21 +1105,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rn_1_
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rn_30_poweroftwominusone_c00_5e200fc0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rn_30_poweroftwominusone_c00_5e200fc0() {
     // Encoding: 0x5E200FC0
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=30, U=0, size=0, Rd=0, Rm=0
+    // Fields: Rn=30, Rd=0, Rm=0, size=0, U=0
     let encoding: u32 = 0x5E200FC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1835,21 +1121,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rn_30
 /// Requirement: FieldBoundary { field: "Rn", value: 31, boundary: Max }
 /// register index 31 (SP - stack pointer)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rn_31_max_c00_5e200fe0()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rn_31_max_c00_5e200fe0() {
     // Encoding: 0x5E200FE0
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field Rn = 31 (Max)
-    // Fields: Rm=0, Rn=31, U=0, size=0, Rd=0
+    // Fields: Rm=0, Rn=31, U=0, Rd=0, size=0
     let encoding: u32 = 0x5E200FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1865,12 +1145,7 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rd_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1878,21 +1153,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rd_0_
 /// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rd_1_poweroftwo_c00_5e200c01(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rd_1_poweroftwo_c00_5e200c01() {
     // Encoding: 0x5E200C01
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field Rd = 1 (PowerOfTwo)
-    // Fields: Rd=1, U=0, Rm=0, Rn=0, size=0
+    // Fields: U=0, size=0, Rd=1, Rn=0, Rm=0
     let encoding: u32 = 0x5E200C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1900,21 +1169,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rd_1_
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rd_30_poweroftwominusone_c00_5e200c1e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rd_30_poweroftwominusone_c00_5e200c1e() {
     // Encoding: 0x5E200C1E
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=30, U=0, size=0, Rn=0, Rm=0
+    // Fields: Rn=0, size=0, U=0, Rd=30, Rm=0
     let encoding: u32 = 0x5E200C1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1922,21 +1185,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rd_30
 /// Requirement: FieldBoundary { field: "Rd", value: 31, boundary: Max }
 /// register index 31 (ZR - zero register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rd_31_max_c00_5e200c1f()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rd_31_max_c00_5e200c1f() {
     // Encoding: 0x5E200C1F
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field Rd = 31 (Max)
-    // Fields: size=0, Rm=0, Rn=0, Rd=31, U=0
+    // Fields: size=0, U=0, Rn=0, Rd=31, Rm=0
     let encoding: u32 = 0x5E200C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -1947,206 +1204,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_field_rd_31
 fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_combo_0_c00_5e200c00() {
     // Encoding: 0x5E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field combination: U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, Rm=0, size=0, Rn=0, Rd=0
+    // Fields: Rd=0, Rm=0, U=0, Rn=0, size=0
     let encoding: u32 = 0x5E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_combo_1_c00_7e200c00() {
-    // Encoding: 0x7E200C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field combination: U=1, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=1, Rm=0, Rn=0, Rd=0, size=0
-    let encoding: u32 = 0x7E200C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_combo_2_c00_5e200c00() {
-    // Encoding: 0x5E200C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field combination: U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: size=0, Rn=0, U=0, Rm=0, Rd=0
-    let encoding: u32 = 0x5E200C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_combo_3_c00_5e600c00() {
-    // Encoding: 0x5E600C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field combination: U=0, size=1, Rm=0, Rn=0, Rd=0
-    // Fields: Rd=0, Rn=0, size=1, U=0, Rm=0
-    let encoding: u32 = 0x5E600C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_combo_4_c00_5ea00c00() {
-    // Encoding: 0x5EA00C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field combination: U=0, size=2, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, Rn=0, size=2, U=0, Rd=0
-    let encoding: u32 = 0x5EA00C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_combo_5_c00_5ee00c00() {
-    // Encoding: 0x5EE00C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field combination: U=0, size=3, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, U=0, Rd=0, size=3, Rm=0
-    let encoding: u32 = 0x5EE00C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_combo_6_c00_5e200c00() {
-    // Encoding: 0x5E200C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field combination: U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, Rn=0, Rm=0, size=0, Rd=0
-    let encoding: u32 = 0x5E200C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_combo_7_c00_5e210c00() {
-    // Encoding: 0x5E210C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field combination: U=0, size=0, Rm=1, Rn=0, Rd=0
-    // Fields: size=0, Rm=1, Rd=0, Rn=0, U=0
-    let encoding: u32 = 0x5E210C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_combo_8_c00_5e3e0c00() {
-    // Encoding: 0x5E3E0C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field combination: U=0, size=0, Rm=30, Rn=0, Rd=0
-    // Fields: U=0, Rd=0, Rm=30, Rn=0, size=0
-    let encoding: u32 = 0x5E3E0C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=31 (register index 31 (special))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_combo_9_c00_5e3f0c00() {
-    // Encoding: 0x5E3F0C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd field combination: U=0, size=0, Rm=31, Rn=0, Rd=0
-    // Fields: size=0, Rm=31, Rd=0, Rn=0, U=0
-    let encoding: u32 = 0x5E3F0C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -2154,21 +1217,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_combo_9_c00
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_size_0_size_variant_0_3072_5e200c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_size_0_size_variant_0_3072_5e200c00() {
     // Encoding: 0x5E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd special value size = 0 (Size variant 0)
-    // Fields: U=0, Rd=0, Rn=0, Rm=0, size=0
+    // Fields: U=0, Rd=0, Rn=0, size=0, Rm=0
     let encoding: u32 = 0x5E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -2176,21 +1233,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_size_1_size_variant_1_3072_5e600c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_size_1_size_variant_1_3072_5e600c00() {
     // Encoding: 0x5E600C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd special value size = 1 (Size variant 1)
-    // Fields: Rd=0, Rm=0, size=1, U=0, Rn=0
+    // Fields: Rd=0, size=1, Rm=0, Rn=0, U=0
     let encoding: u32 = 0x5E600C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -2198,21 +1249,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_size_2_size_variant_2_3072_5ea00c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_size_2_size_variant_2_3072_5ea00c00() {
     // Encoding: 0x5EA00C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd special value size = 2 (Size variant 2)
-    // Fields: size=2, Rd=0, U=0, Rm=0, Rn=0
+    // Fields: Rd=0, U=0, Rm=0, size=2, Rn=0
     let encoding: u32 = 0x5EA00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -2220,21 +1265,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_size_3_size_variant_3_3072_5ee00c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_size_3_size_variant_3_3072_5ee00c00() {
     // Encoding: 0x5EE00C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd special value size = 3 (Size variant 3)
-    // Fields: Rn=0, Rd=0, U=0, size=3, Rm=0
+    // Fields: Rn=0, Rd=0, size=3, Rm=0, U=0
     let encoding: u32 = 0x5EE00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -2242,21 +1281,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_siz
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_3072_5e200fe0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_3072_5e200fe0() {
     // Encoding: 0x5E200FE0
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rd=0, Rn=31, U=0, size=0, Rm=0
+    // Fields: size=0, Rn=31, U=0, Rd=0, Rm=0
     let encoding: u32 = 0x5E200FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -2264,21 +1297,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_rn_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_3072_5e200c1f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_3072_5e200c1f() {
     // Encoding: 0x5E200C1F
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rn=0, Rm=0, size=0, U=0, Rd=31
+    // Fields: U=0, Rn=0, Rd=31, size=0, Rm=0
     let encoding: u32 = 0x5E200C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2289,17 +1316,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd_special_rd_
 fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_q_0_min_c00_0e200c00() {
     // Encoding: 0x0E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field Q = 0 (Min)
-    // Fields: U=0, Rm=0, Q=0, Rn=0, Rd=0, size=0
+    // Fields: Q=0, size=0, Rm=0, Rn=0, Rd=0, U=0
     let encoding: u32 = 0x0E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2310,17 +1332,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_q_0_m
 fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_q_1_max_c00_4e200c00() {
     // Encoding: 0x4E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field Q = 1 (Max)
-    // Fields: Rm=0, Q=1, size=0, Rn=0, Rd=0, U=0
+    // Fields: Rd=0, Q=1, U=0, size=0, Rm=0, Rn=0
     let encoding: u32 = 0x4E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2331,17 +1348,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_q_1_m
 fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_u_0_min_c00_0e200c00() {
     // Encoding: 0x0E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field U = 0 (Min)
-    // Fields: U=0, size=0, Q=0, Rm=0, Rn=0, Rd=0
+    // Fields: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2352,17 +1364,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_u_0_m
 fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_u_1_max_c00_2e200c00() {
     // Encoding: 0x2E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field U = 1 (Max)
-    // Fields: Rm=0, Rd=0, size=0, Q=0, U=1, Rn=0
+    // Fields: U=1, size=0, Rm=0, Q=0, Rn=0, Rd=0
     let encoding: u32 = 0x2E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2370,21 +1377,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_u_1_m
 /// Requirement: FieldBoundary { field: "size", value: 0, boundary: Min }
 /// 8-bit / byte size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_size_0_min_c00_0e200c00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_size_0_min_c00_0e200c00() {
     // Encoding: 0x0E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field size = 0 (Min)
-    // Fields: Rd=0, U=0, Rm=0, Q=0, Rn=0, size=0
+    // Fields: Rm=0, Rn=0, Q=0, size=0, Rd=0, U=0
     let encoding: u32 = 0x0E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2392,21 +1393,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_size_1_poweroftwo_c00_0e600c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_size_1_poweroftwo_c00_0e600c00() {
     // Encoding: 0x0E600C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field size = 1 (PowerOfTwo)
-    // Fields: Q=0, Rm=0, size=1, Rn=0, U=0, Rd=0
+    // Fields: U=0, Rd=0, Rm=0, Q=0, Rn=0, size=1
     let encoding: u32 = 0x0E600C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2414,21 +1409,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_size_2_poweroftwo_c00_0ea00c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_size_2_poweroftwo_c00_0ea00c00() {
     // Encoding: 0x0EA00C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field size = 2 (PowerOfTwo)
-    // Fields: size=2, U=0, Rm=0, Rn=0, Rd=0, Q=0
+    // Fields: Rn=0, U=0, Rd=0, Q=0, size=2, Rm=0
     let encoding: u32 = 0x0EA00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2436,21 +1425,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 3, boundary: Max }
 /// 64-bit / doubleword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_size_3_max_c00_0ee00c00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_size_3_max_c00_0ee00c00() {
     // Encoding: 0x0EE00C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field size = 3 (Max)
-    // Fields: Rd=0, Rn=0, Q=0, Rm=0, size=3, U=0
+    // Fields: U=0, Q=0, size=3, Rd=0, Rm=0, Rn=0
     let encoding: u32 = 0x0EE00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2461,17 +1444,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_size_
 fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rm_0_min_c00_0e200c00() {
     // Encoding: 0x0E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field Rm = 0 (Min)
-    // Fields: Rd=0, U=0, Rn=0, Rm=0, size=0, Q=0
+    // Fields: Q=0, Rn=0, Rd=0, U=0, Rm=0, size=0
     let encoding: u32 = 0x0E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2479,21 +1457,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rm_0_
 /// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rm_1_poweroftwo_c00_0e210c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rm_1_poweroftwo_c00_0e210c00() {
     // Encoding: 0x0E210C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field Rm = 1 (PowerOfTwo)
-    // Fields: size=0, Rn=0, Rd=0, Rm=1, Q=0, U=0
+    // Fields: U=0, Rn=0, Rm=1, Rd=0, size=0, Q=0
     let encoding: u32 = 0x0E210C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2501,21 +1473,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rm_1_
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rm_30_poweroftwominusone_c00_0e3e0c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rm_30_poweroftwominusone_c00_0e3e0c00() {
     // Encoding: 0x0E3E0C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Q=0, Rn=0, Rd=0, Rm=30, size=0, U=0
+    // Fields: Q=0, U=0, Rm=30, Rd=0, Rn=0, size=0
     let encoding: u32 = 0x0E3E0C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2523,21 +1489,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rm_30
 /// Requirement: FieldBoundary { field: "Rm", value: 31, boundary: Max }
 /// register index 31 (special)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rm_31_max_c00_0e3f0c00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rm_31_max_c00_0e3f0c00() {
     // Encoding: 0x0E3F0C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field Rm = 31 (Max)
-    // Fields: Rd=0, U=0, Rn=0, Rm=31, size=0, Q=0
+    // Fields: Rm=31, Q=0, U=0, size=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E3F0C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2548,17 +1508,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rm_31
 fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rn_0_min_c00_0e200c00() {
     // Encoding: 0x0E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field Rn = 0 (Min)
-    // Fields: U=0, size=0, Rm=0, Q=0, Rn=0, Rd=0
+    // Fields: Rm=0, U=0, Rn=0, size=0, Rd=0, Q=0
     let encoding: u32 = 0x0E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2566,21 +1521,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rn_0_
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rn_1_poweroftwo_c00_0e200c20(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rn_1_poweroftwo_c00_0e200c20() {
     // Encoding: 0x0E200C20
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field Rn = 1 (PowerOfTwo)
-    // Fields: Rm=0, Rd=0, size=0, Q=0, U=0, Rn=1
+    // Fields: U=0, Rm=0, Rn=1, Q=0, size=0, Rd=0
     let encoding: u32 = 0x0E200C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2588,21 +1537,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rn_1_
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rn_30_poweroftwominusone_c00_0e200fc0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rn_30_poweroftwominusone_c00_0e200fc0() {
     // Encoding: 0x0E200FC0
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rn=30, Rd=0, Rm=0, Q=0, U=0
+    // Fields: U=0, Rd=0, Q=0, size=0, Rm=0, Rn=30
     let encoding: u32 = 0x0E200FC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2610,21 +1553,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rn_30
 /// Requirement: FieldBoundary { field: "Rn", value: 31, boundary: Max }
 /// register index 31 (SP - stack pointer)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rn_31_max_c00_0e200fe0()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rn_31_max_c00_0e200fe0() {
     // Encoding: 0x0E200FE0
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field Rn = 31 (Max)
-    // Fields: size=0, Rm=0, U=0, Q=0, Rn=31, Rd=0
+    // Fields: Q=0, Rd=0, size=0, U=0, Rm=0, Rn=31
     let encoding: u32 = 0x0E200FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2635,17 +1572,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rn_31
 fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rd_0_min_c00_0e200c00() {
     // Encoding: 0x0E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field Rd = 0 (Min)
-    // Fields: Q=0, U=0, Rm=0, Rn=0, Rd=0, size=0
+    // Fields: Q=0, Rn=0, U=0, Rd=0, Rm=0, size=0
     let encoding: u32 = 0x0E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2653,21 +1585,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rd_0_
 /// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rd_1_poweroftwo_c00_0e200c01(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rd_1_poweroftwo_c00_0e200c01() {
     // Encoding: 0x0E200C01
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field Rd = 1 (PowerOfTwo)
-    // Fields: Rd=1, Rm=0, size=0, Q=0, Rn=0, U=0
+    // Fields: Q=0, U=0, size=0, Rn=0, Rm=0, Rd=1
     let encoding: u32 = 0x0E200C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2675,21 +1601,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rd_1_
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rd_30_poweroftwominusone_c00_0e200c1e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rd_30_poweroftwominusone_c00_0e200c1e() {
     // Encoding: 0x0E200C1E
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=30, U=0, size=0, Rm=0, Rn=0, Q=0
+    // Fields: Q=0, Rm=0, U=0, size=0, Rn=0, Rd=30
     let encoding: u32 = 0x0E200C1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2697,21 +1617,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rd_30
 /// Requirement: FieldBoundary { field: "Rd", value: 31, boundary: Max }
 /// register index 31 (ZR - zero register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rd_31_max_c00_0e200c1f()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rd_31_max_c00_0e200c1f() {
     // Encoding: 0x0E200C1F
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field Rd = 31 (Max)
-    // Fields: U=0, size=0, Rm=0, Rd=31, Q=0, Rn=0
+    // Fields: Rm=0, Q=0, size=0, U=0, Rn=0, Rd=31
     let encoding: u32 = 0x0E200C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2722,206 +1636,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_field_rd_31
 fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_combo_0_c00_0e200c00() {
     // Encoding: 0x0E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, Rn=0, size=0, Q=0, U=0, Rd=0
+    // Fields: Q=0, Rd=0, U=0, Rm=0, Rn=0, size=0
     let encoding: u32 = 0x0E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_combo_1_c00_4e200c00() {
-    // Encoding: 0x4E200C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field combination: Q=1, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, Q=1, size=0, Rn=0, U=0, Rd=0
-    let encoding: u32 = 0x4E200C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_combo_2_c00_0e200c00() {
-    // Encoding: 0x0E200C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, Rn=0, Rd=0, Q=0, U=0, size=0
-    let encoding: u32 = 0x0E200C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_combo_3_c00_2e200c00() {
-    // Encoding: 0x2E200C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field combination: Q=0, U=1, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, Q=0, U=1, Rm=0, Rd=0, size=0
-    let encoding: u32 = 0x2E200C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_combo_4_c00_0e200c00() {
-    // Encoding: 0x0E200C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: size=0, Rd=0, U=0, Rn=0, Rm=0, Q=0
-    let encoding: u32 = 0x0E200C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_combo_5_c00_0e600c00() {
-    // Encoding: 0x0E600C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field combination: Q=0, U=0, size=1, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, Rm=0, Rn=0, Rd=0, U=0, size=1
-    let encoding: u32 = 0x0E600C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_combo_6_c00_0ea00c00() {
-    // Encoding: 0x0EA00C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field combination: Q=0, U=0, size=2, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, U=0, size=2, Rm=0, Rn=0, Rd=0
-    let encoding: u32 = 0x0EA00C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_combo_7_c00_0ee00c00() {
-    // Encoding: 0x0EE00C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field combination: Q=0, U=0, size=3, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, U=0, Q=0, Rm=0, Rd=0, size=3
-    let encoding: u32 = 0x0EE00C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_combo_8_c00_0e200c00() {
-    // Encoding: 0x0E200C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, Rm=0, Rn=0, Rd=0, Q=0, size=0
-    let encoding: u32 = 0x0E200C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_combo_9_c00_0e210c00() {
-    // Encoding: 0x0E210C00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd field combination: Q=0, U=0, size=0, Rm=1, Rn=0, Rd=0
-    // Fields: size=0, Rn=0, Q=0, U=0, Rm=1, Rd=0
-    let encoding: u32 = 0x0E210C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2929,21 +1649,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_combo_9_c00
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_q_0_size_variant_0_3072_0e200c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_q_0_size_variant_0_3072_0e200c00() {
     // Encoding: 0x0E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd special value Q = 0 (Size variant 0)
-    // Fields: U=0, Rn=0, Rm=0, size=0, Q=0, Rd=0
+    // Fields: U=0, size=0, Rm=0, Q=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2951,21 +1665,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_q_0
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_q_1_size_variant_1_3072_4e200c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_q_1_size_variant_1_3072_4e200c00() {
     // Encoding: 0x4E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd special value Q = 1 (Size variant 1)
-    // Fields: Rm=0, U=0, Rn=0, Rd=0, Q=1, size=0
+    // Fields: Rn=0, size=0, U=0, Rd=0, Rm=0, Q=1
     let encoding: u32 = 0x4E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2973,21 +1681,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_q_1
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_size_0_size_variant_0_3072_0e200c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_size_0_size_variant_0_3072_0e200c00() {
     // Encoding: 0x0E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd special value size = 0 (Size variant 0)
-    // Fields: U=0, Q=0, size=0, Rm=0, Rn=0, Rd=0
+    // Fields: U=0, Rd=0, Rm=0, Q=0, Rn=0, size=0
     let encoding: u32 = 0x0E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -2995,21 +1697,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_size_1_size_variant_1_3072_0e600c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_size_1_size_variant_1_3072_0e600c00() {
     // Encoding: 0x0E600C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd special value size = 1 (Size variant 1)
-    // Fields: Q=0, U=0, size=1, Rm=0, Rn=0, Rd=0
+    // Fields: Rn=0, U=0, size=1, Q=0, Rm=0, Rd=0
     let encoding: u32 = 0x0E600C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -3017,21 +1713,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_size_2_size_variant_2_3072_0ea00c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_size_2_size_variant_2_3072_0ea00c00() {
     // Encoding: 0x0EA00C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd special value size = 2 (Size variant 2)
-    // Fields: size=2, U=0, Q=0, Rm=0, Rn=0, Rd=0
+    // Fields: Rn=0, Q=0, size=2, Rm=0, U=0, Rd=0
     let encoding: u32 = 0x0EA00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -3039,21 +1729,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_size_3_size_variant_3_3072_0ee00c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_size_3_size_variant_3_3072_0ee00c00() {
     // Encoding: 0x0EE00C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd special value size = 3 (Size variant 3)
-    // Fields: size=3, Q=0, Rm=0, U=0, Rn=0, Rd=0
+    // Fields: Q=0, Rm=0, Rn=0, Rd=0, U=0, size=3
     let encoding: u32 = 0x0EE00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -3061,21 +1745,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_siz
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_rn_31_stack_pointer_sp_may_require_alignment_3072_0e200fe0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_rn_31_stack_pointer_sp_may_require_alignment_3072_0e200fe0() {
     // Encoding: 0x0E200FE0
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Q=0, Rd=0, size=0, U=0, Rm=0, Rn=31
+    // Fields: Rm=0, U=0, Q=0, Rn=31, Rd=0, size=0
     let encoding: u32 = 0x0E200FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -3083,21 +1761,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_rn_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_3072_0e200c1f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_3072_0e200c1f() {
     // Encoding: 0x0E200C1F
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rm=0, U=0, Rd=31, Q=0, size=0, Rn=0
+    // Fields: size=0, Rd=31, Q=0, Rn=0, U=0, Rm=0
     let encoding: u32 = 0x0E200C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -3108,16 +1780,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_special_rd_
 fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_invalid_0_c00_0e200c00() {
     // Encoding: 0x0E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd invalid encoding: Binary { op: BitConcat, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "Q" }), rhs: LitBits([true, true, false]) } }
-    // Fields: Q=0, U=0, size=0, Rn=0, Rm=0, Rd=0
+    // Fields: Rm=0, Rd=0, Rn=0, size=0, Q=0, U=0
     let encoding: u32 = 0x0E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_simd
@@ -3128,16 +1796,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_invalid_0_c
 fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_invalid_1_c00_0e200c00() {
     // Encoding: 0x0E200C00
     // Test aarch64_vector_arithmetic_binary_uniform_add_saturating_simd invalid encoding: Unconditional UNDEFINED
-    // Fields: Rm=0, Q=0, Rn=0, size=0, Rd=0, U=0
+    // Fields: size=0, Rn=0, Q=0, U=0, Rm=0, Rd=0
     let encoding: u32 = 0x0E200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_saturating_sisd
@@ -3244,17 +1908,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_saturating_simd_zr_rd_0e200
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_q_0_min_0_0e200000() {
     // Encoding: 0x0E200000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field Q = 0 (Min)
-    // Fields: Rn=0, Rm=0, o1=0, size=0, Q=0, Rd=0, U=0
+    // Fields: size=0, Rm=0, o1=0, Rn=0, Rd=0, Q=0, U=0
     let encoding: u32 = 0x0E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3265,17 +1924,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_q_0_min_0_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_q_1_max_0_4e200000() {
     // Encoding: 0x4E200000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field Q = 1 (Max)
-    // Fields: Rn=0, Q=1, U=0, o1=0, size=0, Rm=0, Rd=0
+    // Fields: Rd=0, o1=0, Q=1, Rm=0, Rn=0, size=0, U=0
     let encoding: u32 = 0x4E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3286,17 +1940,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_q_1_max_0_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_u_0_min_0_0e200000() {
     // Encoding: 0x0E200000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field U = 0 (Min)
-    // Fields: Q=0, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
+    // Fields: size=0, Q=0, o1=0, Rn=0, Rm=0, Rd=0, U=0
     let encoding: u32 = 0x0E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3307,17 +1956,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_u_0_min_0_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_u_1_max_0_2e200000() {
     // Encoding: 0x2E200000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field U = 1 (Max)
-    // Fields: Q=0, Rd=0, size=0, Rn=0, o1=0, Rm=0, U=1
+    // Fields: Rm=0, o1=0, Rn=0, Rd=0, Q=0, size=0, U=1
     let encoding: u32 = 0x2E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3328,17 +1972,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_u_1_max_0_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_size_0_min_0_0e200000() {
     // Encoding: 0x0E200000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field size = 0 (Min)
-    // Fields: o1=0, size=0, Q=0, Rn=0, U=0, Rm=0, Rd=0
+    // Fields: Rn=0, Rd=0, Q=0, Rm=0, U=0, size=0, o1=0
     let encoding: u32 = 0x0E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3346,21 +1985,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_size_0_min
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_size_1_poweroftwo_0_0e600000()
-{
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_size_1_poweroftwo_0_0e600000() {
     // Encoding: 0x0E600000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field size = 1 (PowerOfTwo)
-    // Fields: Rn=0, Rd=0, size=1, U=0, Q=0, Rm=0, o1=0
+    // Fields: o1=0, Rn=0, Q=0, Rd=0, size=1, Rm=0, U=0
     let encoding: u32 = 0x0E600000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3368,21 +2001,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_size_1_pow
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_size_2_poweroftwo_0_0ea00000()
-{
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_size_2_poweroftwo_0_0ea00000() {
     // Encoding: 0x0EA00000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field size = 2 (PowerOfTwo)
-    // Fields: U=0, o1=0, Rn=0, Rd=0, Rm=0, Q=0, size=2
+    // Fields: Rd=0, Q=0, U=0, size=2, o1=0, Rm=0, Rn=0
     let encoding: u32 = 0x0EA00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3393,17 +2020,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_size_2_pow
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_size_3_max_0_0ee00000() {
     // Encoding: 0x0EE00000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field size = 3 (Max)
-    // Fields: size=3, o1=0, Rn=0, Rd=0, Q=0, U=0, Rm=0
+    // Fields: Q=0, Rm=0, Rn=0, o1=0, size=3, Rd=0, U=0
     let encoding: u32 = 0x0EE00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3414,17 +2036,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_size_3_max
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rm_0_min_0_0e200000() {
     // Encoding: 0x0E200000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field Rm = 0 (Min)
-    // Fields: Rd=0, size=0, o1=0, U=0, Q=0, Rm=0, Rn=0
+    // Fields: Q=0, U=0, size=0, o1=0, Rn=0, Rm=0, Rd=0
     let encoding: u32 = 0x0E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3435,17 +2052,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rm_0_min_0
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rm_1_poweroftwo_0_0e210000() {
     // Encoding: 0x0E210000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field Rm = 1 (PowerOfTwo)
-    // Fields: Rm=1, Rd=0, U=0, Q=0, size=0, o1=0, Rn=0
+    // Fields: o1=0, U=0, size=0, Rm=1, Rd=0, Q=0, Rn=0
     let encoding: u32 = 0x0E210000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3453,21 +2065,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rm_1_power
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rm_30_poweroftwominusone_0_0e3e0000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rm_30_poweroftwominusone_0_0e3e0000() {
     // Encoding: 0x0E3E0000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Q=0, o1=0, Rm=30, Rn=0, Rd=0, U=0
+    // Fields: o1=0, Rd=0, size=0, U=0, Rm=30, Q=0, Rn=0
     let encoding: u32 = 0x0E3E0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3478,17 +2084,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rm_30_powe
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rm_31_max_0_0e3f0000() {
     // Encoding: 0x0E3F0000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field Rm = 31 (Max)
-    // Fields: Rm=31, o1=0, Q=0, U=0, size=0, Rn=0, Rd=0
+    // Fields: size=0, Rm=31, Rd=0, o1=0, Rn=0, Q=0, U=0
     let encoding: u32 = 0x0E3F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3499,17 +2100,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rm_31_max_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_o1_0_min_0_0e200000() {
     // Encoding: 0x0E200000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field o1 = 0 (Min)
-    // Fields: o1=0, U=0, Rm=0, Rn=0, Q=0, size=0, Rd=0
+    // Fields: Rd=0, o1=0, U=0, Q=0, Rn=0, size=0, Rm=0
     let encoding: u32 = 0x0E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3520,17 +2116,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_o1_0_min_0
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_o1_1_max_0_0e202000() {
     // Encoding: 0x0E202000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field o1 = 1 (Max)
-    // Fields: o1=1, size=0, U=0, Rd=0, Rn=0, Q=0, Rm=0
+    // Fields: Rd=0, o1=1, size=0, Rn=0, Rm=0, Q=0, U=0
     let encoding: u32 = 0x0E202000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3541,17 +2132,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_o1_1_max_0
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rn_0_min_0_0e200000() {
     // Encoding: 0x0E200000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field Rn = 0 (Min)
-    // Fields: Q=0, Rm=0, o1=0, Rn=0, Rd=0, U=0, size=0
+    // Fields: Rn=0, Rm=0, U=0, Q=0, Rd=0, size=0, o1=0
     let encoding: u32 = 0x0E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3562,17 +2148,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rn_0_min_0
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rn_1_poweroftwo_0_0e200020() {
     // Encoding: 0x0E200020
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field Rn = 1 (PowerOfTwo)
-    // Fields: Rn=1, o1=0, Rm=0, size=0, U=0, Q=0, Rd=0
+    // Fields: Rm=0, Rn=1, Rd=0, Q=0, U=0, o1=0, size=0
     let encoding: u32 = 0x0E200020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3580,21 +2161,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rn_1_power
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rn_30_poweroftwominusone_0_0e2003c0(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rn_30_poweroftwominusone_0_0e2003c0() {
     // Encoding: 0x0E2003C0
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: o1=0, U=0, Rn=30, size=0, Rm=0, Q=0, Rd=0
+    // Fields: Q=0, size=0, Rd=0, o1=0, Rn=30, Rm=0, U=0
     let encoding: u32 = 0x0E2003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3605,17 +2180,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rn_30_powe
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rn_31_max_0_0e2003e0() {
     // Encoding: 0x0E2003E0
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field Rn = 31 (Max)
-    // Fields: U=0, Rd=0, size=0, Rm=0, Q=0, Rn=31, o1=0
+    // Fields: Q=0, o1=0, U=0, Rn=31, size=0, Rd=0, Rm=0
     let encoding: u32 = 0x0E2003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3626,17 +2196,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rn_31_max_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rd_0_min_0_0e200000() {
     // Encoding: 0x0E200000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field Rd = 0 (Min)
-    // Fields: size=0, Rm=0, o1=0, Rd=0, U=0, Rn=0, Q=0
+    // Fields: Rd=0, U=0, Rn=0, size=0, Q=0, Rm=0, o1=0
     let encoding: u32 = 0x0E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3647,17 +2212,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rd_0_min_0
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rd_1_poweroftwo_0_0e200001() {
     // Encoding: 0x0E200001
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field Rd = 1 (PowerOfTwo)
-    // Fields: Rd=1, U=0, Rn=0, Q=0, Rm=0, size=0, o1=0
+    // Fields: Rm=0, Q=0, size=0, o1=0, Rn=0, Rd=1, U=0
     let encoding: u32 = 0x0E200001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3665,21 +2225,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rd_1_power
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rd_30_poweroftwominusone_0_0e20001e(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rd_30_poweroftwominusone_0_0e20001e() {
     // Encoding: 0x0E20001E
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: o1=0, Rn=0, Rm=0, Q=0, size=0, Rd=30, U=0
+    // Fields: size=0, Rn=0, Rm=0, Q=0, Rd=30, U=0, o1=0
     let encoding: u32 = 0x0E20001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3690,17 +2244,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rd_30_powe
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rd_31_max_0_0e20001f() {
     // Encoding: 0x0E20001F
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field Rd = 31 (Max)
-    // Fields: size=0, Q=0, U=0, Rd=31, Rm=0, Rn=0, o1=0
+    // Fields: size=0, Rn=0, Rd=31, Q=0, Rm=0, o1=0, U=0
     let encoding: u32 = 0x0E20001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3711,206 +2260,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_field_rd_31_max_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_combo_0_0_0e200000() {
     // Encoding: 0x0E200000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field combination: Q=0, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: Q=0, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
+    // Fields: Rm=0, size=0, o1=0, Rn=0, Rd=0, U=0, Q=0
     let encoding: u32 = 0x0E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_combo_1_0_4e200000() {
-    // Encoding: 0x4E200000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field combination: Q=1, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: size=0, Rd=0, Rm=0, U=0, o1=0, Q=1, Rn=0
-    let encoding: u32 = 0x4E200000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_combo_2_0_0e200000() {
-    // Encoding: 0x0E200000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field combination: Q=0, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: U=0, size=0, o1=0, Rn=0, Q=0, Rm=0, Rd=0
-    let encoding: u32 = 0x0E200000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_combo_3_0_2e200000() {
-    // Encoding: 0x2E200000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field combination: Q=0, U=1, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: o1=0, Rm=0, Rn=0, Rd=0, size=0, Q=0, U=1
-    let encoding: u32 = 0x2E200000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_combo_4_0_0e200000() {
-    // Encoding: 0x0E200000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field combination: Q=0, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: Q=0, U=0, Rm=0, o1=0, Rn=0, size=0, Rd=0
-    let encoding: u32 = 0x0E200000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_combo_5_0_0e600000() {
-    // Encoding: 0x0E600000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field combination: Q=0, U=0, size=1, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: U=0, Rm=0, size=1, o1=0, Rn=0, Rd=0, Q=0
-    let encoding: u32 = 0x0E600000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_combo_6_0_0ea00000() {
-    // Encoding: 0x0EA00000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field combination: Q=0, U=0, size=2, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: o1=0, size=2, Rd=0, Rn=0, Rm=0, U=0, Q=0
-    let encoding: u32 = 0x0EA00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_combo_7_0_0ee00000() {
-    // Encoding: 0x0EE00000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field combination: Q=0, U=0, size=3, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: Rn=0, Q=0, Rm=0, U=0, Rd=0, size=3, o1=0
-    let encoding: u32 = 0x0EE00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_combo_8_0_0e200000() {
-    // Encoding: 0x0E200000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field combination: Q=0, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: U=0, Q=0, o1=0, Rd=0, Rn=0, size=0, Rm=0
-    let encoding: u32 = 0x0E200000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_combo_9_0_0e210000() {
-    // Encoding: 0x0E210000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long field combination: Q=0, U=0, size=0, Rm=1, o1=0, Rn=0, Rd=0
-    // Fields: Rm=1, size=0, o1=0, U=0, Rn=0, Q=0, Rd=0
-    let encoding: u32 = 0x0E210000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3918,21 +2273,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_combo_9_0_0e2100
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_q_0_size_variant_0_0_0e200000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_q_0_size_variant_0_0_0e200000() {
     // Encoding: 0x0E200000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long special value Q = 0 (Size variant 0)
-    // Fields: Rm=0, U=0, size=0, o1=0, Rd=0, Q=0, Rn=0
+    // Fields: U=0, Q=0, o1=0, Rn=0, size=0, Rd=0, Rm=0
     let encoding: u32 = 0x0E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3940,21 +2289,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_q_0_size
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_q_1_size_variant_1_0_4e200000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_q_1_size_variant_1_0_4e200000() {
     // Encoding: 0x4E200000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long special value Q = 1 (Size variant 1)
-    // Fields: U=0, size=0, Rm=0, Rn=0, Q=1, o1=0, Rd=0
+    // Fields: Q=1, U=0, Rm=0, Rn=0, Rd=0, size=0, o1=0
     let encoding: u32 = 0x4E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3962,21 +2305,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_q_1_size
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_size_0_size_variant_0_0_0e200000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_size_0_size_variant_0_0_0e200000() {
     // Encoding: 0x0E200000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long special value size = 0 (Size variant 0)
-    // Fields: size=0, Rd=0, U=0, Rn=0, Rm=0, Q=0, o1=0
+    // Fields: Rn=0, Rd=0, U=0, Rm=0, o1=0, Q=0, size=0
     let encoding: u32 = 0x0E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -3984,21 +2321,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_size_0_s
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_size_1_size_variant_1_0_0e600000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_size_1_size_variant_1_0_0e600000() {
     // Encoding: 0x0E600000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long special value size = 1 (Size variant 1)
-    // Fields: Q=0, size=1, U=0, o1=0, Rm=0, Rn=0, Rd=0
+    // Fields: Rd=0, U=0, o1=0, Q=0, size=1, Rm=0, Rn=0
     let encoding: u32 = 0x0E600000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -4006,21 +2337,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_size_1_s
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_size_2_size_variant_2_0_0ea00000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_size_2_size_variant_2_0_0ea00000() {
     // Encoding: 0x0EA00000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long special value size = 2 (Size variant 2)
-    // Fields: o1=0, Rn=0, size=2, Rd=0, Q=0, U=0, Rm=0
+    // Fields: o1=0, Rd=0, U=0, size=2, Rm=0, Q=0, Rn=0
     let encoding: u32 = 0x0EA00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -4028,21 +2353,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_size_2_s
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_size_3_size_variant_3_0_0ee00000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_size_3_size_variant_3_0_0ee00000() {
     // Encoding: 0x0EE00000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long special value size = 3 (Size variant 3)
-    // Fields: Q=0, Rn=0, Rd=0, size=3, U=0, o1=0, Rm=0
+    // Fields: Q=0, Rn=0, size=3, Rm=0, Rd=0, U=0, o1=0
     let encoding: u32 = 0x0EE00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -4050,21 +2369,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_size_3_s
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_rn_31_stack_pointer_sp_may_require_alignment_0_0e2003e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_rn_31_stack_pointer_sp_may_require_alignment_0_0e2003e0() {
     // Encoding: 0x0E2003E0
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: size=0, U=0, Rm=0, Rn=31, o1=0, Rd=0, Q=0
+    // Fields: o1=0, Q=0, Rn=31, size=0, Rd=0, Rm=0, U=0
     let encoding: u32 = 0x0E2003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -4072,21 +2385,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_rn_31_st
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_0e20001f(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_0e20001f() {
     // Encoding: 0x0E20001F
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: o1=0, Q=0, Rn=0, Rd=31, U=0, size=0, Rm=0
+    // Fields: Q=0, size=0, Rm=0, o1=0, Rd=31, U=0, Rn=0
     let encoding: u32 = 0x0E20001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -4097,16 +2404,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_special_rd_31_ze
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_invalid_0_0_0e200000() {
     // Encoding: 0x0E200000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: Q=0, Rn=0, U=0, Rm=0, Rd=0, o1=0, size=0
+    // Fields: size=0, Q=0, U=0, Rm=0, o1=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -4117,16 +2420,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_invalid_0_0_0e20
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_invalid_1_0_0e200000() {
     // Encoding: 0x0E200000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_long invalid encoding: Unconditional UNDEFINED
-    // Fields: U=0, o1=0, Rn=0, Rd=0, Q=0, size=0, Rm=0
+    // Fields: Q=0, Rm=0, o1=0, U=0, size=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_long
@@ -4187,17 +2486,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_long_zr_rd_0e20001f()
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_q_0_min_2400_0e202400() {
     // Encoding: 0x0E202400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field Q = 0 (Min)
-    // Fields: U=0, size=0, Rm=0, Q=0, Rd=0, Rn=0
+    // Fields: Q=0, Rd=0, size=0, Rm=0, Rn=0, U=0
     let encoding: u32 = 0x0E202400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4208,17 +2502,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_q_0_min_2400_0e20
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_q_1_max_2400_4e202400() {
     // Encoding: 0x4E202400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field Q = 1 (Max)
-    // Fields: Q=1, Rd=0, size=0, Rm=0, Rn=0, U=0
+    // Fields: U=0, size=0, Q=1, Rn=0, Rm=0, Rd=0
     let encoding: u32 = 0x4E202400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4229,17 +2518,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_q_1_max_2400_4e20
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_u_0_min_2400_0e202400() {
     // Encoding: 0x0E202400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field U = 0 (Min)
-    // Fields: U=0, Rd=0, size=0, Q=0, Rm=0, Rn=0
+    // Fields: Rn=0, Q=0, Rm=0, Rd=0, U=0, size=0
     let encoding: u32 = 0x0E202400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4250,17 +2534,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_u_0_min_2400_0e20
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_u_1_max_2400_2e202400() {
     // Encoding: 0x2E202400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field U = 1 (Max)
-    // Fields: size=0, Q=0, Rm=0, Rn=0, Rd=0, U=1
+    // Fields: Rd=0, Rm=0, Q=0, size=0, U=1, Rn=0
     let encoding: u32 = 0x2E202400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4271,17 +2550,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_u_1_max_2400_2e20
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_size_0_min_2400_0e202400() {
     // Encoding: 0x0E202400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field size = 0 (Min)
-    // Fields: U=0, Rm=0, size=0, Rn=0, Rd=0, Q=0
+    // Fields: Rm=0, size=0, Q=0, Rd=0, Rn=0, U=0
     let encoding: u32 = 0x0E202400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4292,17 +2566,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_size_0_min_2400_0
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_size_1_poweroftwo_2400_0e602400() {
     // Encoding: 0x0E602400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field size = 1 (PowerOfTwo)
-    // Fields: U=0, Rn=0, Q=0, Rd=0, Rm=0, size=1
+    // Fields: Rd=0, Rn=0, Q=0, U=0, size=1, Rm=0
     let encoding: u32 = 0x0E602400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4313,17 +2582,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_size_1_poweroftwo
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_size_2_poweroftwo_2400_0ea02400() {
     // Encoding: 0x0EA02400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field size = 2 (PowerOfTwo)
-    // Fields: U=0, size=2, Rn=0, Q=0, Rm=0, Rd=0
+    // Fields: Rm=0, Q=0, U=0, Rn=0, Rd=0, size=2
     let encoding: u32 = 0x0EA02400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4334,17 +2598,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_size_2_poweroftwo
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_size_3_max_2400_0ee02400() {
     // Encoding: 0x0EE02400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field size = 3 (Max)
-    // Fields: Rn=0, Q=0, Rm=0, Rd=0, size=3, U=0
+    // Fields: Q=0, Rn=0, U=0, Rd=0, size=3, Rm=0
     let encoding: u32 = 0x0EE02400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4355,17 +2614,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_size_3_max_2400_0
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rm_0_min_2400_0e202400() {
     // Encoding: 0x0E202400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field Rm = 0 (Min)
-    // Fields: U=0, Rn=0, size=0, Rm=0, Q=0, Rd=0
+    // Fields: Rd=0, U=0, Rn=0, Q=0, size=0, Rm=0
     let encoding: u32 = 0x0E202400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4376,17 +2630,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rm_0_min_2400_0e2
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rm_1_poweroftwo_2400_0e212400() {
     // Encoding: 0x0E212400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field Rm = 1 (PowerOfTwo)
-    // Fields: U=0, Rd=0, size=0, Q=0, Rm=1, Rn=0
+    // Fields: U=0, size=0, Rn=0, Q=0, Rm=1, Rd=0
     let encoding: u32 = 0x0E212400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4394,21 +2643,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rm_1_poweroftwo_2
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rm_30_poweroftwominusone_2400_0e3e2400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rm_30_poweroftwominusone_2400_0e3e2400() {
     // Encoding: 0x0E3E2400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Q=0, size=0, Rn=0, U=0, Rm=30, Rd=0
+    // Fields: size=0, Rn=0, Rm=30, U=0, Q=0, Rd=0
     let encoding: u32 = 0x0E3E2400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4419,17 +2662,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rm_30_poweroftwom
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rm_31_max_2400_0e3f2400() {
     // Encoding: 0x0E3F2400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field Rm = 31 (Max)
-    // Fields: Q=0, U=0, size=0, Rm=31, Rd=0, Rn=0
+    // Fields: Q=0, Rd=0, Rn=0, size=0, Rm=31, U=0
     let encoding: u32 = 0x0E3F2400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4440,17 +2678,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rm_31_max_2400_0e
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rn_0_min_2400_0e202400() {
     // Encoding: 0x0E202400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field Rn = 0 (Min)
-    // Fields: Rn=0, size=0, Q=0, Rm=0, Rd=0, U=0
+    // Fields: Q=0, U=0, Rm=0, Rn=0, Rd=0, size=0
     let encoding: u32 = 0x0E202400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4461,17 +2694,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rn_0_min_2400_0e2
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rn_1_poweroftwo_2400_0e202420() {
     // Encoding: 0x0E202420
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field Rn = 1 (PowerOfTwo)
-    // Fields: Rd=0, U=0, Rm=0, Rn=1, Q=0, size=0
+    // Fields: U=0, Rm=0, Rn=1, size=0, Rd=0, Q=0
     let encoding: u32 = 0x0E202420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4479,21 +2707,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rn_1_poweroftwo_2
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rn_30_poweroftwominusone_2400_0e2027c0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rn_30_poweroftwominusone_2400_0e2027c0() {
     // Encoding: 0x0E2027C0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Q=0, size=0, Rm=0, Rd=0, Rn=30, U=0
+    // Fields: Rn=30, Q=0, size=0, Rd=0, U=0, Rm=0
     let encoding: u32 = 0x0E2027C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4504,17 +2726,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rn_30_poweroftwom
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rn_31_max_2400_0e2027e0() {
     // Encoding: 0x0E2027E0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field Rn = 31 (Max)
-    // Fields: U=0, Rd=0, size=0, Q=0, Rm=0, Rn=31
+    // Fields: Rm=0, U=0, Q=0, Rn=31, Rd=0, size=0
     let encoding: u32 = 0x0E2027E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4525,17 +2742,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rn_31_max_2400_0e
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rd_0_min_2400_0e202400() {
     // Encoding: 0x0E202400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field Rd = 0 (Min)
-    // Fields: Rn=0, Rd=0, U=0, Q=0, size=0, Rm=0
+    // Fields: Q=0, size=0, U=0, Rd=0, Rn=0, Rm=0
     let encoding: u32 = 0x0E202400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4546,17 +2758,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rd_0_min_2400_0e2
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rd_1_poweroftwo_2400_0e202401() {
     // Encoding: 0x0E202401
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field Rd = 1 (PowerOfTwo)
-    // Fields: Rm=0, U=0, Q=0, Rn=0, Rd=1, size=0
+    // Fields: Q=0, size=0, Rd=1, U=0, Rm=0, Rn=0
     let encoding: u32 = 0x0E202401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4564,21 +2771,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rd_1_poweroftwo_2
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rd_30_poweroftwominusone_2400_0e20241e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rd_30_poweroftwominusone_2400_0e20241e() {
     // Encoding: 0x0E20241E
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=0, Rn=0, Rd=30, Q=0, U=0, size=0
+    // Fields: Rm=0, Rn=0, U=0, Rd=30, Q=0, size=0
     let encoding: u32 = 0x0E20241E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4589,17 +2790,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rd_30_poweroftwom
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rd_31_max_2400_0e20241f() {
     // Encoding: 0x0E20241F
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field Rd = 31 (Max)
-    // Fields: Rn=0, Rd=31, size=0, U=0, Rm=0, Q=0
+    // Fields: Q=0, Rn=0, size=0, Rm=0, Rd=31, U=0
     let encoding: u32 = 0x0E20241F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4610,206 +2806,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_field_rd_31_max_2400_0e
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_combo_0_2400_0e202400() {
     // Encoding: 0x0E202400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, Q=0, Rn=0, size=0, Rd=0, U=0
+    // Fields: size=0, Rd=0, U=0, Rn=0, Q=0, Rm=0
     let encoding: u32 = 0x0E202400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_combo_1_2400_4e202400() {
-    // Encoding: 0x4E202400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_int field combination: Q=1, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, Rd=0, U=0, Q=1, size=0, Rm=0
-    let encoding: u32 = 0x4E202400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_combo_2_2400_0e202400() {
-    // Encoding: 0x0E202400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_int field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, U=0, size=0, Rd=0, Rm=0, Q=0
-    let encoding: u32 = 0x0E202400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_combo_3_2400_2e202400() {
-    // Encoding: 0x2E202400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_int field combination: Q=0, U=1, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, Rd=0, U=1, Q=0, size=0, Rm=0
-    let encoding: u32 = 0x2E202400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_combo_4_2400_0e202400() {
-    // Encoding: 0x0E202400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_int field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rd=0, U=0, Rm=0, Q=0, Rn=0, size=0
-    let encoding: u32 = 0x0E202400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_combo_5_2400_0e602400() {
-    // Encoding: 0x0E602400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_int field combination: Q=0, U=0, size=1, Rm=0, Rn=0, Rd=0
-    // Fields: size=1, U=0, Q=0, Rm=0, Rn=0, Rd=0
-    let encoding: u32 = 0x0E602400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_combo_6_2400_0ea02400() {
-    // Encoding: 0x0EA02400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_int field combination: Q=0, U=0, size=2, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, Rd=0, Rn=0, size=2, Rm=0, U=0
-    let encoding: u32 = 0x0EA02400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_combo_7_2400_0ee02400() {
-    // Encoding: 0x0EE02400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_int field combination: Q=0, U=0, size=3, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, U=0, Rm=0, Rn=0, Rd=0, size=3
-    let encoding: u32 = 0x0EE02400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_combo_8_2400_0e202400() {
-    // Encoding: 0x0E202400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_int field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, Rm=0, Rd=0, Q=0, size=0, Rn=0
-    let encoding: u32 = 0x0E202400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_combo_9_2400_0e212400() {
-    // Encoding: 0x0E212400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_int field combination: Q=0, U=0, size=0, Rm=1, Rn=0, Rd=0
-    // Fields: Q=0, size=0, U=0, Rm=1, Rn=0, Rd=0
-    let encoding: u32 = 0x0E212400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4817,21 +2819,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_combo_9_2400_0e212400()
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_q_0_size_variant_0_9216_0e202400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_q_0_size_variant_0_9216_0e202400() {
     // Encoding: 0x0E202400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int special value Q = 0 (Size variant 0)
-    // Fields: U=0, Rn=0, size=0, Rd=0, Q=0, Rm=0
+    // Fields: Rd=0, U=0, size=0, Q=0, Rm=0, Rn=0
     let encoding: u32 = 0x0E202400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4839,21 +2835,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_q_0_size_varian
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_q_1_size_variant_1_9216_4e202400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_q_1_size_variant_1_9216_4e202400() {
     // Encoding: 0x4E202400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int special value Q = 1 (Size variant 1)
-    // Fields: Rm=0, Rd=0, size=0, Rn=0, Q=1, U=0
+    // Fields: U=0, Rn=0, Rd=0, Rm=0, size=0, Q=1
     let encoding: u32 = 0x4E202400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4861,21 +2851,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_q_1_size_varian
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_size_0_size_variant_0_9216_0e202400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_size_0_size_variant_0_9216_0e202400() {
     // Encoding: 0x0E202400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int special value size = 0 (Size variant 0)
-    // Fields: Rd=0, size=0, Rm=0, Q=0, U=0, Rn=0
+    // Fields: Rn=0, Rd=0, U=0, Rm=0, Q=0, size=0
     let encoding: u32 = 0x0E202400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4883,21 +2867,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_size_0_size_var
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_size_1_size_variant_1_9216_0e602400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_size_1_size_variant_1_9216_0e602400() {
     // Encoding: 0x0E602400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int special value size = 1 (Size variant 1)
-    // Fields: Q=0, Rd=0, Rn=0, Rm=0, size=1, U=0
+    // Fields: Rd=0, size=1, U=0, Q=0, Rm=0, Rn=0
     let encoding: u32 = 0x0E602400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4905,21 +2883,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_size_1_size_var
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_size_2_size_variant_2_9216_0ea02400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_size_2_size_variant_2_9216_0ea02400() {
     // Encoding: 0x0EA02400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int special value size = 2 (Size variant 2)
-    // Fields: U=0, size=2, Rm=0, Q=0, Rd=0, Rn=0
+    // Fields: Rn=0, U=0, Rm=0, Q=0, Rd=0, size=2
     let encoding: u32 = 0x0EA02400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4927,21 +2899,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_size_2_size_var
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_size_3_size_variant_3_9216_0ee02400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_size_3_size_variant_3_9216_0ee02400() {
     // Encoding: 0x0EE02400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int special value size = 3 (Size variant 3)
-    // Fields: size=3, Rn=0, Rd=0, Q=0, Rm=0, U=0
+    // Fields: Rd=0, Q=0, size=3, U=0, Rn=0, Rm=0
     let encoding: u32 = 0x0EE02400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4949,21 +2915,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_size_3_size_var
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_rn_31_stack_pointer_sp_may_require_alignment_9216_0e2027e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_rn_31_stack_pointer_sp_may_require_alignment_9216_0e2027e0() {
     // Encoding: 0x0E2027E0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: U=0, size=0, Rm=0, Q=0, Rn=31, Rd=0
+    // Fields: Rd=0, Rm=0, Q=0, Rn=31, size=0, U=0
     let encoding: u32 = 0x0E2027E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4971,21 +2931,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_rn_31_stack_poi
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_9216_0e20241f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_9216_0e20241f() {
     // Encoding: 0x0E20241F
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rn=0, Rm=0, Rd=31, Q=0, U=0, size=0
+    // Fields: Rm=0, Rn=0, size=0, Rd=31, Q=0, U=0
     let encoding: u32 = 0x0E20241F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -4996,16 +2950,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_special_rd_31_zero_regi
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_invalid_0_2400_0e202400() {
     // Encoding: 0x0E202400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: size=0, Rm=0, Rd=0, Rn=0, U=0, Q=0
+    // Fields: Rd=0, Q=0, U=0, size=0, Rn=0, Rm=0
     let encoding: u32 = 0x0E202400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -5016,16 +2966,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_invalid_0_2400_0e202400
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_invalid_1_2400_0e202400() {
     // Encoding: 0x0E202400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_int invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, Rd=0, Q=0, size=0, Rm=0, U=0
+    // Fields: Rd=0, Q=0, Rm=0, size=0, U=0, Rn=0
     let encoding: u32 = 0x0E202400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_int
@@ -5086,17 +3032,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_int_zr_rd_0e20241f() {
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_q_0_min_4000_0e204000() {
     // Encoding: 0x0E204000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field Q = 0 (Min)
-    // Fields: o1=0, Rd=0, size=0, Rm=0, Rn=0, Q=0, U=0
+    // Fields: Rm=0, o1=0, Rn=0, Q=0, U=0, Rd=0, size=0
     let encoding: u32 = 0x0E204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5107,17 +3048,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_q_0_min_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_q_1_max_4000_4e204000() {
     // Encoding: 0x4E204000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field Q = 1 (Max)
-    // Fields: Rd=0, size=0, U=0, Rn=0, Q=1, Rm=0, o1=0
+    // Fields: size=0, o1=0, Rn=0, Rd=0, U=0, Rm=0, Q=1
     let encoding: u32 = 0x4E204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5128,17 +3064,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_q_1_max_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_u_0_min_4000_0e204000() {
     // Encoding: 0x0E204000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field U = 0 (Min)
-    // Fields: Rn=0, Q=0, U=0, size=0, Rm=0, o1=0, Rd=0
+    // Fields: Rd=0, size=0, Q=0, Rm=0, o1=0, Rn=0, U=0
     let encoding: u32 = 0x0E204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5149,17 +3080,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_u_0_min_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_u_1_max_4000_2e204000() {
     // Encoding: 0x2E204000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field U = 1 (Max)
-    // Fields: o1=0, size=0, Rm=0, Rn=0, Rd=0, Q=0, U=1
+    // Fields: size=0, Q=0, U=1, Rm=0, o1=0, Rn=0, Rd=0
     let encoding: u32 = 0x2E204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5170,17 +3096,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_u_1_max_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_size_0_min_4000_0e204000() {
     // Encoding: 0x0E204000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field size = 0 (Min)
-    // Fields: Q=0, size=0, Rn=0, Rm=0, o1=0, Rd=0, U=0
+    // Fields: U=0, Q=0, Rd=0, size=0, Rm=0, o1=0, Rn=0
     let encoding: u32 = 0x0E204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5188,21 +3109,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_size_0_m
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_size_1_poweroftwo_4000_0e604000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_size_1_poweroftwo_4000_0e604000() {
     // Encoding: 0x0E604000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field size = 1 (PowerOfTwo)
-    // Fields: size=1, o1=0, Q=0, Rm=0, Rn=0, Rd=0, U=0
+    // Fields: size=1, Rm=0, o1=0, Rn=0, Rd=0, Q=0, U=0
     let encoding: u32 = 0x0E604000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5210,21 +3125,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_size_1_p
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_size_2_poweroftwo_4000_0ea04000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_size_2_poweroftwo_4000_0ea04000() {
     // Encoding: 0x0EA04000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field size = 2 (PowerOfTwo)
-    // Fields: Q=0, Rm=0, Rd=0, Rn=0, U=0, o1=0, size=2
+    // Fields: Rn=0, U=0, Rd=0, Q=0, Rm=0, size=2, o1=0
     let encoding: u32 = 0x0EA04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5235,17 +3144,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_size_2_p
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_size_3_max_4000_0ee04000() {
     // Encoding: 0x0EE04000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field size = 3 (Max)
-    // Fields: Rd=0, U=0, size=3, o1=0, Rn=0, Q=0, Rm=0
+    // Fields: size=3, Q=0, U=0, Rm=0, o1=0, Rn=0, Rd=0
     let encoding: u32 = 0x0EE04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5256,17 +3160,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_size_3_m
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rm_0_min_4000_0e204000() {
     // Encoding: 0x0E204000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field Rm = 0 (Min)
-    // Fields: Rm=0, size=0, o1=0, Rn=0, U=0, Q=0, Rd=0
+    // Fields: size=0, o1=0, Rm=0, U=0, Q=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5274,21 +3173,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rm_0_min
 /// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rm_1_poweroftwo_4000_0e214000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rm_1_poweroftwo_4000_0e214000() {
     // Encoding: 0x0E214000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field Rm = 1 (PowerOfTwo)
-    // Fields: U=0, Rn=0, size=0, Q=0, Rm=1, Rd=0, o1=0
+    // Fields: Q=0, U=0, size=0, Rm=1, o1=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E214000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5296,21 +3189,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rm_1_pow
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rm_30_poweroftwominusone_4000_0e3e4000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rm_30_poweroftwominusone_4000_0e3e4000() {
     // Encoding: 0x0E3E4000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=30, o1=0, Rn=0, size=0, Rd=0, U=0, Q=0
+    // Fields: Q=0, U=0, Rm=30, Rd=0, size=0, o1=0, Rn=0
     let encoding: u32 = 0x0E3E4000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5321,17 +3208,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rm_30_po
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rm_31_max_4000_0e3f4000() {
     // Encoding: 0x0E3F4000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field Rm = 31 (Max)
-    // Fields: Rm=31, size=0, U=0, Q=0, o1=0, Rn=0, Rd=0
+    // Fields: Rd=0, o1=0, size=0, U=0, Rm=31, Rn=0, Q=0
     let encoding: u32 = 0x0E3F4000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5342,17 +3224,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rm_31_ma
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_o1_0_min_4000_0e204000() {
     // Encoding: 0x0E204000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field o1 = 0 (Min)
-    // Fields: U=0, Q=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
+    // Fields: size=0, Rd=0, Rm=0, Q=0, Rn=0, o1=0, U=0
     let encoding: u32 = 0x0E204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5363,17 +3240,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_o1_0_min
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_o1_1_max_4000_0e206000() {
     // Encoding: 0x0E206000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field o1 = 1 (Max)
-    // Fields: U=0, Rm=0, Q=0, Rn=0, Rd=0, o1=1, size=0
+    // Fields: Rm=0, Rd=0, Q=0, Rn=0, o1=1, size=0, U=0
     let encoding: u32 = 0x0E206000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5384,17 +3256,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_o1_1_max
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rn_0_min_4000_0e204000() {
     // Encoding: 0x0E204000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field Rn = 0 (Min)
-    // Fields: Rd=0, o1=0, size=0, Rn=0, Rm=0, Q=0, U=0
+    // Fields: Rd=0, Rn=0, size=0, Q=0, o1=0, U=0, Rm=0
     let encoding: u32 = 0x0E204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5402,21 +3269,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rn_0_min
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rn_1_poweroftwo_4000_0e204020(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rn_1_poweroftwo_4000_0e204020() {
     // Encoding: 0x0E204020
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field Rn = 1 (PowerOfTwo)
-    // Fields: Rm=0, o1=0, Q=0, Rn=1, U=0, size=0, Rd=0
+    // Fields: Q=0, o1=0, size=0, U=0, Rm=0, Rn=1, Rd=0
     let encoding: u32 = 0x0E204020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5424,21 +3285,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rn_1_pow
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rn_30_poweroftwominusone_4000_0e2043c0(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rn_30_poweroftwominusone_4000_0e2043c0() {
     // Encoding: 0x0E2043C0
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: U=0, Rm=0, size=0, o1=0, Rd=0, Rn=30, Q=0
+    // Fields: Rn=30, Rd=0, U=0, size=0, o1=0, Rm=0, Q=0
     let encoding: u32 = 0x0E2043C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5449,17 +3304,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rn_30_po
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rn_31_max_4000_0e2043e0() {
     // Encoding: 0x0E2043E0
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field Rn = 31 (Max)
-    // Fields: U=0, Q=0, size=0, o1=0, Rn=31, Rd=0, Rm=0
+    // Fields: U=0, o1=0, Rm=0, Rn=31, Rd=0, size=0, Q=0
     let encoding: u32 = 0x0E2043E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5470,17 +3320,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rn_31_ma
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rd_0_min_4000_0e204000() {
     // Encoding: 0x0E204000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field Rd = 0 (Min)
-    // Fields: o1=0, Rd=0, size=0, Rn=0, U=0, Rm=0, Q=0
+    // Fields: Q=0, Rn=0, Rm=0, size=0, U=0, Rd=0, o1=0
     let encoding: u32 = 0x0E204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5488,21 +3333,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rd_0_min
 /// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rd_1_poweroftwo_4000_0e204001(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rd_1_poweroftwo_4000_0e204001() {
     // Encoding: 0x0E204001
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field Rd = 1 (PowerOfTwo)
-    // Fields: Rn=0, Rd=1, o1=0, U=0, Rm=0, size=0, Q=0
+    // Fields: Rm=0, U=0, Rn=0, Rd=1, o1=0, size=0, Q=0
     let encoding: u32 = 0x0E204001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5510,21 +3349,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rd_1_pow
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rd_30_poweroftwominusone_4000_0e20401e(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rd_30_poweroftwominusone_4000_0e20401e() {
     // Encoding: 0x0E20401E
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: U=0, size=0, Q=0, o1=0, Rn=0, Rm=0, Rd=30
+    // Fields: Rm=0, Q=0, Rd=30, o1=0, size=0, Rn=0, U=0
     let encoding: u32 = 0x0E20401E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5535,17 +3368,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rd_30_po
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rd_31_max_4000_0e20401f() {
     // Encoding: 0x0E20401F
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field Rd = 31 (Max)
-    // Fields: Rd=31, Rm=0, o1=0, size=0, Q=0, Rn=0, U=0
+    // Fields: size=0, U=0, Q=0, Rm=0, Rn=0, Rd=31, o1=0
     let encoding: u32 = 0x0E20401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5556,206 +3384,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_field_rd_31_ma
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_combo_0_4000_0e204000() {
     // Encoding: 0x0E204000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field combination: Q=0, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: Q=0, Rm=0, o1=0, U=0, Rn=0, Rd=0, size=0
+    // Fields: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0, o1=0
     let encoding: u32 = 0x0E204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_combo_1_4000_4e204000() {
-    // Encoding: 0x4E204000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field combination: Q=1, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: Q=1, o1=0, Rd=0, Rm=0, U=0, Rn=0, size=0
-    let encoding: u32 = 0x4E204000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_combo_2_4000_0e204000() {
-    // Encoding: 0x0E204000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field combination: Q=0, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: U=0, Rn=0, Rd=0, o1=0, Q=0, Rm=0, size=0
-    let encoding: u32 = 0x0E204000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_combo_3_4000_2e204000() {
-    // Encoding: 0x2E204000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field combination: Q=0, U=1, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: Rn=0, U=1, size=0, Rm=0, o1=0, Q=0, Rd=0
-    let encoding: u32 = 0x2E204000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_combo_4_4000_0e204000() {
-    // Encoding: 0x0E204000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field combination: Q=0, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: Rm=0, o1=0, size=0, Q=0, U=0, Rd=0, Rn=0
-    let encoding: u32 = 0x0E204000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_combo_5_4000_0e604000() {
-    // Encoding: 0x0E604000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field combination: Q=0, U=0, size=1, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: o1=0, Q=0, U=0, Rm=0, Rn=0, Rd=0, size=1
-    let encoding: u32 = 0x0E604000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_combo_6_4000_0ea04000() {
-    // Encoding: 0x0EA04000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field combination: Q=0, U=0, size=2, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: Q=0, size=2, Rn=0, o1=0, Rd=0, Rm=0, U=0
-    let encoding: u32 = 0x0EA04000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_combo_7_4000_0ee04000() {
-    // Encoding: 0x0EE04000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field combination: Q=0, U=0, size=3, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: o1=0, Q=0, Rn=0, Rd=0, size=3, U=0, Rm=0
-    let encoding: u32 = 0x0EE04000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_combo_8_4000_0e204000() {
-    // Encoding: 0x0E204000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field combination: Q=0, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: Q=0, size=0, Rm=0, Rn=0, o1=0, Rd=0, U=0
-    let encoding: u32 = 0x0E204000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_combo_9_4000_0e214000() {
-    // Encoding: 0x0E214000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow field combination: Q=0, U=0, size=0, Rm=1, o1=0, Rn=0, Rd=0
-    // Fields: U=0, Rm=1, size=0, o1=0, Q=0, Rn=0, Rd=0
-    let encoding: u32 = 0x0E214000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5763,21 +3397,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_combo_9_4000_0
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_q_0_size_variant_0_16384_0e204000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_q_0_size_variant_0_16384_0e204000() {
     // Encoding: 0x0E204000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow special value Q = 0 (Size variant 0)
-    // Fields: o1=0, Rm=0, Rn=0, Rd=0, Q=0, U=0, size=0
+    // Fields: Q=0, size=0, Rm=0, U=0, o1=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5785,21 +3413,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_q_0_si
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_q_1_size_variant_1_16384_4e204000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_q_1_size_variant_1_16384_4e204000() {
     // Encoding: 0x4E204000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow special value Q = 1 (Size variant 1)
-    // Fields: Rn=0, Q=1, size=0, o1=0, U=0, Rd=0, Rm=0
+    // Fields: Q=1, Rd=0, Rn=0, U=0, Rm=0, size=0, o1=0
     let encoding: u32 = 0x4E204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5807,21 +3429,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_q_1_si
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_size_0_size_variant_0_16384_0e204000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_size_0_size_variant_0_16384_0e204000() {
     // Encoding: 0x0E204000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow special value size = 0 (Size variant 0)
-    // Fields: Rn=0, size=0, Rm=0, o1=0, Q=0, U=0, Rd=0
+    // Fields: Q=0, o1=0, Rm=0, Rn=0, Rd=0, size=0, U=0
     let encoding: u32 = 0x0E204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5829,21 +3445,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_size_0
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_size_1_size_variant_1_16384_0e604000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_size_1_size_variant_1_16384_0e604000() {
     // Encoding: 0x0E604000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow special value size = 1 (Size variant 1)
-    // Fields: size=1, o1=0, Rm=0, Rn=0, Q=0, U=0, Rd=0
+    // Fields: Rn=0, o1=0, Rd=0, Q=0, size=1, U=0, Rm=0
     let encoding: u32 = 0x0E604000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5851,21 +3461,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_size_1
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_size_2_size_variant_2_16384_0ea04000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_size_2_size_variant_2_16384_0ea04000() {
     // Encoding: 0x0EA04000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow special value size = 2 (Size variant 2)
-    // Fields: Rd=0, Q=0, Rm=0, U=0, o1=0, size=2, Rn=0
+    // Fields: U=0, Rd=0, o1=0, Rn=0, Q=0, Rm=0, size=2
     let encoding: u32 = 0x0EA04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5873,21 +3477,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_size_2
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_size_3_size_variant_3_16384_0ee04000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_size_3_size_variant_3_16384_0ee04000() {
     // Encoding: 0x0EE04000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow special value size = 3 (Size variant 3)
-    // Fields: o1=0, Rn=0, Rd=0, Q=0, Rm=0, U=0, size=3
+    // Fields: U=0, size=3, Rn=0, Rd=0, Q=0, Rm=0, o1=0
     let encoding: u32 = 0x0EE04000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5895,21 +3493,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_size_3
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_rn_31_stack_pointer_sp_may_require_alignment_16384_0e2043e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_rn_31_stack_pointer_sp_may_require_alignment_16384_0e2043e0() {
     // Encoding: 0x0E2043E0
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rm=0, Rd=0, Q=0, U=0, o1=0, Rn=31, size=0
+    // Fields: Q=0, U=0, Rm=0, Rd=0, o1=0, Rn=31, size=0
     let encoding: u32 = 0x0E2043E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5917,21 +3509,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_rn_31_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_16384_0e20401f(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_16384_0e20401f() {
     // Encoding: 0x0E20401F
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rd=31, o1=0, Rn=0, U=0, Q=0, size=0, Rm=0
+    // Fields: U=0, Q=0, size=0, Rm=0, o1=0, Rd=31, Rn=0
     let encoding: u32 = 0x0E20401F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5942,16 +3528,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_special_rd_31_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_invalid_0_4000_0e204000() {
     // Encoding: 0x0E204000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: Rd=0, U=0, size=0, Q=0, o1=0, Rm=0, Rn=0
+    // Fields: Q=0, Rd=0, o1=0, U=0, Rm=0, Rn=0, size=0
     let encoding: u32 = 0x0E204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -5962,16 +3544,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_invalid_0_4000
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_invalid_1_4000_0e204000() {
     // Encoding: 0x0E204000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_narrow invalid encoding: Unconditional UNDEFINED
-    // Fields: U=0, o1=0, size=0, Q=0, Rn=0, Rd=0, Rm=0
+    // Fields: U=0, Q=0, Rn=0, size=0, Rm=0, o1=0, Rd=0
     let encoding: u32 = 0x0E204000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_narrow
@@ -6017,17 +3595,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_narrow_zr_rd_0e20401f
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_q_0_min_2800_0e202800() {
     // Encoding: 0x0E202800
     // Test aarch64_vector_arithmetic_unary_add_pairwise field Q = 0 (Min)
-    // Fields: Q=0, U=0, size=0, op=0, Rd=0, Rn=0
+    // Fields: Rd=0, op=0, U=0, Rn=0, Q=0, size=0
     let encoding: u32 = 0x0E202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6038,17 +3611,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_q_0_min_2800_0e202800
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_q_1_max_2800_4e202800() {
     // Encoding: 0x4E202800
     // Test aarch64_vector_arithmetic_unary_add_pairwise field Q = 1 (Max)
-    // Fields: op=0, Q=1, U=0, Rn=0, Rd=0, size=0
+    // Fields: op=0, Q=1, Rd=0, size=0, U=0, Rn=0
     let encoding: u32 = 0x4E202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6059,17 +3627,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_q_1_max_2800_4e202800
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_u_0_min_2800_0e202800() {
     // Encoding: 0x0E202800
     // Test aarch64_vector_arithmetic_unary_add_pairwise field U = 0 (Min)
-    // Fields: Q=0, U=0, Rn=0, size=0, Rd=0, op=0
+    // Fields: Rn=0, op=0, U=0, size=0, Q=0, Rd=0
     let encoding: u32 = 0x0E202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6080,17 +3643,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_u_0_min_2800_0e202800
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_u_1_max_2800_2e202800() {
     // Encoding: 0x2E202800
     // Test aarch64_vector_arithmetic_unary_add_pairwise field U = 1 (Max)
-    // Fields: Q=0, size=0, U=1, op=0, Rn=0, Rd=0
+    // Fields: Rn=0, size=0, U=1, Q=0, op=0, Rd=0
     let encoding: u32 = 0x2E202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6101,17 +3659,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_u_1_max_2800_2e202800
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_size_0_min_2800_0e202800() {
     // Encoding: 0x0E202800
     // Test aarch64_vector_arithmetic_unary_add_pairwise field size = 0 (Min)
-    // Fields: size=0, Q=0, op=0, U=0, Rn=0, Rd=0
+    // Fields: Rn=0, Rd=0, op=0, size=0, Q=0, U=0
     let encoding: u32 = 0x0E202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6122,17 +3675,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_size_0_min_2800_0e202
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_size_1_poweroftwo_2800_0e602800() {
     // Encoding: 0x0E602800
     // Test aarch64_vector_arithmetic_unary_add_pairwise field size = 1 (PowerOfTwo)
-    // Fields: Q=0, U=0, op=0, Rn=0, Rd=0, size=1
+    // Fields: size=1, Rn=0, op=0, Rd=0, Q=0, U=0
     let encoding: u32 = 0x0E602800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6143,17 +3691,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_size_1_poweroftwo_280
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_size_2_poweroftwo_2800_0ea02800() {
     // Encoding: 0x0EA02800
     // Test aarch64_vector_arithmetic_unary_add_pairwise field size = 2 (PowerOfTwo)
-    // Fields: size=2, U=0, Rn=0, Rd=0, Q=0, op=0
+    // Fields: Rd=0, size=2, U=0, Rn=0, op=0, Q=0
     let encoding: u32 = 0x0EA02800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6164,17 +3707,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_size_2_poweroftwo_280
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_size_3_max_2800_0ee02800() {
     // Encoding: 0x0EE02800
     // Test aarch64_vector_arithmetic_unary_add_pairwise field size = 3 (Max)
-    // Fields: Rn=0, Q=0, op=0, Rd=0, size=3, U=0
+    // Fields: Q=0, size=3, U=0, op=0, Rn=0, Rd=0
     let encoding: u32 = 0x0EE02800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6185,17 +3723,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_size_3_max_2800_0ee02
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_op_0_min_2800_0e202800() {
     // Encoding: 0x0E202800
     // Test aarch64_vector_arithmetic_unary_add_pairwise field op = 0 (Min)
-    // Fields: op=0, Rn=0, U=0, Q=0, size=0, Rd=0
+    // Fields: Q=0, U=0, op=0, Rd=0, size=0, Rn=0
     let encoding: u32 = 0x0E202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6206,17 +3739,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_op_0_min_2800_0e20280
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_op_1_max_2800_0e206800() {
     // Encoding: 0x0E206800
     // Test aarch64_vector_arithmetic_unary_add_pairwise field op = 1 (Max)
-    // Fields: Rn=0, U=0, Rd=0, size=0, Q=0, op=1
+    // Fields: Rn=0, Q=0, Rd=0, op=1, U=0, size=0
     let encoding: u32 = 0x0E206800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6227,17 +3755,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_op_1_max_2800_0e20680
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rn_0_min_2800_0e202800() {
     // Encoding: 0x0E202800
     // Test aarch64_vector_arithmetic_unary_add_pairwise field Rn = 0 (Min)
-    // Fields: Q=0, U=0, Rn=0, size=0, op=0, Rd=0
+    // Fields: Rd=0, size=0, op=0, U=0, Q=0, Rn=0
     let encoding: u32 = 0x0E202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6248,17 +3771,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rn_0_min_2800_0e20280
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rn_1_poweroftwo_2800_0e202820() {
     // Encoding: 0x0E202820
     // Test aarch64_vector_arithmetic_unary_add_pairwise field Rn = 1 (PowerOfTwo)
-    // Fields: U=0, op=0, Rn=1, Rd=0, Q=0, size=0
+    // Fields: Rd=0, size=0, op=0, Rn=1, Q=0, U=0
     let encoding: u32 = 0x0E202820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6266,21 +3784,15 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rn_1_poweroftwo_2800_
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rn_30_poweroftwominusone_2800_0e202bc0()
-{
+fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rn_30_poweroftwominusone_2800_0e202bc0() {
     // Encoding: 0x0E202BC0
     // Test aarch64_vector_arithmetic_unary_add_pairwise field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=0, Q=0, size=0, op=0, U=0, Rn=30
+    // Fields: Q=0, op=0, size=0, U=0, Rn=30, Rd=0
     let encoding: u32 = 0x0E202BC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6291,17 +3803,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rn_30_poweroftwominus
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rn_31_max_2800_0e202be0() {
     // Encoding: 0x0E202BE0
     // Test aarch64_vector_arithmetic_unary_add_pairwise field Rn = 31 (Max)
-    // Fields: Rd=0, size=0, Q=0, U=0, op=0, Rn=31
+    // Fields: U=0, Q=0, op=0, Rd=0, Rn=31, size=0
     let encoding: u32 = 0x0E202BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6312,17 +3819,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rn_31_max_2800_0e202b
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rd_0_min_2800_0e202800() {
     // Encoding: 0x0E202800
     // Test aarch64_vector_arithmetic_unary_add_pairwise field Rd = 0 (Min)
-    // Fields: U=0, op=0, Rn=0, Rd=0, size=0, Q=0
+    // Fields: U=0, Rn=0, Rd=0, op=0, size=0, Q=0
     let encoding: u32 = 0x0E202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6333,17 +3835,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rd_0_min_2800_0e20280
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rd_1_poweroftwo_2800_0e202801() {
     // Encoding: 0x0E202801
     // Test aarch64_vector_arithmetic_unary_add_pairwise field Rd = 1 (PowerOfTwo)
-    // Fields: Q=0, size=0, op=0, Rd=1, Rn=0, U=0
+    // Fields: Q=0, op=0, Rn=0, Rd=1, size=0, U=0
     let encoding: u32 = 0x0E202801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6351,21 +3848,15 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rd_1_poweroftwo_2800_
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rd_30_poweroftwominusone_2800_0e20281e()
-{
+fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rd_30_poweroftwominusone_2800_0e20281e() {
     // Encoding: 0x0E20281E
     // Test aarch64_vector_arithmetic_unary_add_pairwise field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Q=0, op=0, Rn=0, U=0, size=0, Rd=30
+    // Fields: U=0, Q=0, size=0, op=0, Rn=0, Rd=30
     let encoding: u32 = 0x0E20281E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6376,17 +3867,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rd_30_poweroftwominus
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rd_31_max_2800_0e20281f() {
     // Encoding: 0x0E20281F
     // Test aarch64_vector_arithmetic_unary_add_pairwise field Rd = 31 (Max)
-    // Fields: size=0, Q=0, op=0, U=0, Rd=31, Rn=0
+    // Fields: Rd=31, U=0, size=0, op=0, Q=0, Rn=0
     let encoding: u32 = 0x0E20281F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6397,206 +3883,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_field_rd_31_max_2800_0e2028
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_combo_0_2800_0e202800() {
     // Encoding: 0x0E202800
     // Test aarch64_vector_arithmetic_unary_add_pairwise field combination: Q=0, U=0, size=0, op=0, Rn=0, Rd=0
-    // Fields: size=0, Rd=0, Q=0, U=0, Rn=0, op=0
+    // Fields: Q=0, size=0, op=0, U=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_combo_1_2800_4e202800() {
-    // Encoding: 0x4E202800
-    // Test aarch64_vector_arithmetic_unary_add_pairwise field combination: Q=1, U=0, size=0, op=0, Rn=0, Rd=0
-    // Fields: Q=1, U=0, op=0, size=0, Rn=0, Rd=0
-    let encoding: u32 = 0x4E202800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_combo_2_2800_0e202800() {
-    // Encoding: 0x0E202800
-    // Test aarch64_vector_arithmetic_unary_add_pairwise field combination: Q=0, U=0, size=0, op=0, Rn=0, Rd=0
-    // Fields: U=0, Q=0, Rn=0, Rd=0, size=0, op=0
-    let encoding: u32 = 0x0E202800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_combo_3_2800_2e202800() {
-    // Encoding: 0x2E202800
-    // Test aarch64_vector_arithmetic_unary_add_pairwise field combination: Q=0, U=1, size=0, op=0, Rn=0, Rd=0
-    // Fields: U=1, Rd=0, Rn=0, size=0, Q=0, op=0
-    let encoding: u32 = 0x2E202800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_combo_4_2800_0e202800() {
-    // Encoding: 0x0E202800
-    // Test aarch64_vector_arithmetic_unary_add_pairwise field combination: Q=0, U=0, size=0, op=0, Rn=0, Rd=0
-    // Fields: Q=0, op=0, Rn=0, U=0, Rd=0, size=0
-    let encoding: u32 = 0x0E202800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_combo_5_2800_0e602800() {
-    // Encoding: 0x0E602800
-    // Test aarch64_vector_arithmetic_unary_add_pairwise field combination: Q=0, U=0, size=1, op=0, Rn=0, Rd=0
-    // Fields: op=0, Rd=0, Rn=0, Q=0, U=0, size=1
-    let encoding: u32 = 0x0E602800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_combo_6_2800_0ea02800() {
-    // Encoding: 0x0EA02800
-    // Test aarch64_vector_arithmetic_unary_add_pairwise field combination: Q=0, U=0, size=2, op=0, Rn=0, Rd=0
-    // Fields: Rd=0, size=2, Q=0, U=0, Rn=0, op=0
-    let encoding: u32 = 0x0EA02800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_combo_7_2800_0ee02800() {
-    // Encoding: 0x0EE02800
-    // Test aarch64_vector_arithmetic_unary_add_pairwise field combination: Q=0, U=0, size=3, op=0, Rn=0, Rd=0
-    // Fields: Q=0, size=3, op=0, U=0, Rn=0, Rd=0
-    let encoding: u32 = 0x0EE02800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// op=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_combo_8_2800_0e202800() {
-    // Encoding: 0x0E202800
-    // Test aarch64_vector_arithmetic_unary_add_pairwise field combination: Q=0, U=0, size=0, op=0, Rn=0, Rd=0
-    // Fields: Rd=0, size=0, U=0, Q=0, op=0, Rn=0
-    let encoding: u32 = 0x0E202800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// op=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_combo_9_2800_0e206800() {
-    // Encoding: 0x0E206800
-    // Test aarch64_vector_arithmetic_unary_add_pairwise field combination: Q=0, U=0, size=0, op=1, Rn=0, Rd=0
-    // Fields: Rn=0, Rd=0, size=0, U=0, Q=0, op=1
-    let encoding: u32 = 0x0E206800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6607,17 +3899,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_combo_9_2800_0e206800() {
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_q_0_size_variant_0_10240_0e202800() {
     // Encoding: 0x0E202800
     // Test aarch64_vector_arithmetic_unary_add_pairwise special value Q = 0 (Size variant 0)
-    // Fields: U=0, op=0, Q=0, Rd=0, Rn=0, size=0
+    // Fields: U=0, size=0, Rn=0, Q=0, op=0, Rd=0
     let encoding: u32 = 0x0E202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6628,17 +3915,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_q_0_size_variant_0_
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_q_1_size_variant_1_10240_4e202800() {
     // Encoding: 0x4E202800
     // Test aarch64_vector_arithmetic_unary_add_pairwise special value Q = 1 (Size variant 1)
-    // Fields: op=0, Q=1, Rn=0, size=0, U=0, Rd=0
+    // Fields: op=0, Q=1, Rn=0, Rd=0, U=0, size=0
     let encoding: u32 = 0x4E202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6646,21 +3928,15 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_q_1_size_variant_1_
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_size_0_size_variant_0_10240_0e202800()
-{
+fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_size_0_size_variant_0_10240_0e202800() {
     // Encoding: 0x0E202800
     // Test aarch64_vector_arithmetic_unary_add_pairwise special value size = 0 (Size variant 0)
-    // Fields: Q=0, U=0, size=0, op=0, Rd=0, Rn=0
+    // Fields: U=0, Rn=0, op=0, size=0, Q=0, Rd=0
     let encoding: u32 = 0x0E202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6668,21 +3944,15 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_size_0_size_variant
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_size_1_size_variant_1_10240_0e602800()
-{
+fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_size_1_size_variant_1_10240_0e602800() {
     // Encoding: 0x0E602800
     // Test aarch64_vector_arithmetic_unary_add_pairwise special value size = 1 (Size variant 1)
-    // Fields: Q=0, size=1, U=0, Rd=0, Rn=0, op=0
+    // Fields: Q=0, size=1, Rd=0, U=0, op=0, Rn=0
     let encoding: u32 = 0x0E602800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6690,21 +3960,15 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_size_1_size_variant
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_size_2_size_variant_2_10240_0ea02800()
-{
+fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_size_2_size_variant_2_10240_0ea02800() {
     // Encoding: 0x0EA02800
     // Test aarch64_vector_arithmetic_unary_add_pairwise special value size = 2 (Size variant 2)
-    // Fields: Q=0, size=2, Rn=0, op=0, Rd=0, U=0
+    // Fields: size=2, U=0, Rd=0, Rn=0, op=0, Q=0
     let encoding: u32 = 0x0EA02800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6712,21 +3976,15 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_size_2_size_variant
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_size_3_size_variant_3_10240_0ee02800()
-{
+fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_size_3_size_variant_3_10240_0ee02800() {
     // Encoding: 0x0EE02800
     // Test aarch64_vector_arithmetic_unary_add_pairwise special value size = 3 (Size variant 3)
-    // Fields: Rn=0, U=0, size=3, Rd=0, op=0, Q=0
+    // Fields: Q=0, Rd=0, op=0, U=0, size=3, Rn=0
     let encoding: u32 = 0x0EE02800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6734,21 +3992,15 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_size_3_size_variant
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_rn_31_stack_pointer_sp_may_require_alignment_10240_0e202be0(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_rn_31_stack_pointer_sp_may_require_alignment_10240_0e202be0() {
     // Encoding: 0x0E202BE0
     // Test aarch64_vector_arithmetic_unary_add_pairwise special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rd=0, U=0, size=0, Q=0, op=0, Rn=31
+    // Fields: Q=0, Rd=0, U=0, size=0, Rn=31, op=0
     let encoding: u32 = 0x0E202BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6756,21 +4008,15 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_rn_31_stack_pointer
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_10240_0e20281f(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_10240_0e20281f() {
     // Encoding: 0x0E20281F
     // Test aarch64_vector_arithmetic_unary_add_pairwise special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: size=0, op=0, U=0, Rn=0, Rd=31, Q=0
+    // Fields: size=0, Rd=31, Rn=0, Q=0, op=0, U=0
     let encoding: u32 = 0x0E20281F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6781,16 +4027,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_special_rd_31_zero_register
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_invalid_0_2800_0e202800() {
     // Encoding: 0x0E202800
     // Test aarch64_vector_arithmetic_unary_add_pairwise invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: Q=0, U=0, op=0, Rn=0, size=0, Rd=0
+    // Fields: U=0, op=0, Rn=0, Rd=0, size=0, Q=0
     let encoding: u32 = 0x0E202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6801,16 +4043,12 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_invalid_0_2800_0e202800() {
 fn test_aarch64_vector_arithmetic_unary_add_pairwise_invalid_1_2800_0e202800() {
     // Encoding: 0x0E202800
     // Test aarch64_vector_arithmetic_unary_add_pairwise invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, Q=0, op=0, Rd=0, size=0, U=0
+    // Fields: Rn=0, Q=0, size=0, op=0, U=0, Rd=0
     let encoding: u32 = 0x0E202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_pairwise
@@ -6868,21 +4106,15 @@ fn test_aarch64_vector_arithmetic_unary_add_pairwise_zr_rd_0e20281f() {
 /// Requirement: FieldBoundary { field: "U", value: 0, boundary: Min }
 /// minimum value
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_u_0_min_8400_5e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_u_0_min_8400_5e208400() {
     // Encoding: 0x5E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field U = 0 (Min)
-    // Fields: U=0, size=0, Rm=0, Rn=0, Rd=0
+    // Fields: Rm=0, U=0, Rn=0, size=0, Rd=0
     let encoding: u32 = 0x5E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -6890,21 +4122,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "U", value: 1, boundary: Max }
 /// maximum value (1)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_u_1_max_8400_7e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_u_1_max_8400_7e208400() {
     // Encoding: 0x7E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field U = 1 (Max)
-    // Fields: Rd=0, size=0, Rm=0, U=1, Rn=0
+    // Fields: Rn=0, Rm=0, Rd=0, size=0, U=1
     let encoding: u32 = 0x7E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -6912,21 +4138,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "size", value: 0, boundary: Min }
 /// 8-bit / byte size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_size_0_min_8400_5e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_size_0_min_8400_5e208400() {
     // Encoding: 0x5E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field size = 0 (Min)
-    // Fields: Rd=0, size=0, Rm=0, U=0, Rn=0
+    // Fields: Rd=0, size=0, U=0, Rn=0, Rm=0
     let encoding: u32 = 0x5E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -6934,21 +4154,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_size_1_poweroftwo_8400_5e608400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_size_1_poweroftwo_8400_5e608400() {
     // Encoding: 0x5E608400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field size = 1 (PowerOfTwo)
-    // Fields: U=0, size=1, Rn=0, Rd=0, Rm=0
+    // Fields: Rn=0, U=0, Rd=0, Rm=0, size=1
     let encoding: u32 = 0x5E608400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -6956,21 +4170,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_size_2_poweroftwo_8400_5ea08400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_size_2_poweroftwo_8400_5ea08400() {
     // Encoding: 0x5EA08400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field size = 2 (PowerOfTwo)
-    // Fields: Rd=0, U=0, size=2, Rm=0, Rn=0
+    // Fields: Rn=0, Rm=0, Rd=0, size=2, U=0
     let encoding: u32 = 0x5EA08400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -6978,21 +4186,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "size", value: 3, boundary: Max }
 /// 64-bit / doubleword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_size_3_max_8400_5ee08400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_size_3_max_8400_5ee08400() {
     // Encoding: 0x5EE08400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field size = 3 (Max)
-    // Fields: U=0, size=3, Rm=0, Rn=0, Rd=0
+    // Fields: Rd=0, U=0, Rm=0, Rn=0, size=3
     let encoding: u32 = 0x5EE08400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7000,21 +4202,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "Rm", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rm_0_min_8400_5e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rm_0_min_8400_5e208400() {
     // Encoding: 0x5E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field Rm = 0 (Min)
-    // Fields: Rd=0, size=0, Rm=0, Rn=0, U=0
+    // Fields: Rn=0, Rd=0, U=0, size=0, Rm=0
     let encoding: u32 = 0x5E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7022,21 +4218,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rm_1_poweroftwo_8400_5e218400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rm_1_poweroftwo_8400_5e218400() {
     // Encoding: 0x5E218400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field Rm = 1 (PowerOfTwo)
-    // Fields: Rn=0, U=0, Rd=0, Rm=1, size=0
+    // Fields: Rd=0, size=0, Rm=1, Rn=0, U=0
     let encoding: u32 = 0x5E218400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7044,21 +4234,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rm_30_poweroftwominusone_8400_5e3e8400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rm_30_poweroftwominusone_8400_5e3e8400() {
     // Encoding: 0x5E3E8400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, U=0, size=0, Rm=30, Rd=0
+    // Fields: Rd=0, size=0, U=0, Rm=30, Rn=0
     let encoding: u32 = 0x5E3E8400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7066,21 +4250,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "Rm", value: 31, boundary: Max }
 /// register index 31 (special)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rm_31_max_8400_5e3f8400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rm_31_max_8400_5e3f8400() {
     // Encoding: 0x5E3F8400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field Rm = 31 (Max)
-    // Fields: size=0, Rd=0, Rn=0, U=0, Rm=31
+    // Fields: U=0, Rm=31, Rd=0, Rn=0, size=0
     let encoding: u32 = 0x5E3F8400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7088,21 +4266,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "Rn", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rn_0_min_8400_5e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rn_0_min_8400_5e208400() {
     // Encoding: 0x5E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field Rn = 0 (Min)
-    // Fields: U=0, size=0, Rn=0, Rd=0, Rm=0
+    // Fields: Rd=0, size=0, Rn=0, U=0, Rm=0
     let encoding: u32 = 0x5E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7110,21 +4282,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rn_1_poweroftwo_8400_5e208420(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rn_1_poweroftwo_8400_5e208420() {
     // Encoding: 0x5E208420
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field Rn = 1 (PowerOfTwo)
-    // Fields: U=0, size=0, Rm=0, Rn=1, Rd=0
+    // Fields: U=0, Rm=0, size=0, Rn=1, Rd=0
     let encoding: u32 = 0x5E208420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7132,21 +4298,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rn_30_poweroftwominusone_8400_5e2087c0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rn_30_poweroftwominusone_8400_5e2087c0() {
     // Encoding: 0x5E2087C0
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=0, U=0, Rn=30, size=0, Rd=0
+    // Fields: Rd=0, U=0, size=0, Rm=0, Rn=30
     let encoding: u32 = 0x5E2087C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7154,21 +4314,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "Rn", value: 31, boundary: Max }
 /// register index 31 (SP - stack pointer)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rn_31_max_8400_5e2087e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rn_31_max_8400_5e2087e0() {
     // Encoding: 0x5E2087E0
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field Rn = 31 (Max)
-    // Fields: Rn=31, Rm=0, Rd=0, U=0, size=0
+    // Fields: size=0, U=0, Rn=31, Rm=0, Rd=0
     let encoding: u32 = 0x5E2087E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7176,21 +4330,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "Rd", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rd_0_min_8400_5e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rd_0_min_8400_5e208400() {
     // Encoding: 0x5E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field Rd = 0 (Min)
-    // Fields: size=0, Rn=0, U=0, Rd=0, Rm=0
+    // Fields: Rd=0, Rn=0, U=0, size=0, Rm=0
     let encoding: u32 = 0x5E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7198,21 +4346,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rd_1_poweroftwo_8400_5e208401(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rd_1_poweroftwo_8400_5e208401() {
     // Encoding: 0x5E208401
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field Rd = 1 (PowerOfTwo)
-    // Fields: Rm=0, Rn=0, Rd=1, size=0, U=0
+    // Fields: U=0, size=0, Rm=0, Rn=0, Rd=1
     let encoding: u32 = 0x5E208401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7220,21 +4362,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rd_30_poweroftwominusone_8400_5e20841e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rd_30_poweroftwominusone_8400_5e20841e() {
     // Encoding: 0x5E20841E
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=0, U=0, size=0, Rn=0, Rd=30
+    // Fields: U=0, size=0, Rm=0, Rd=30, Rn=0
     let encoding: u32 = 0x5E20841E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7242,21 +4378,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 /// Requirement: FieldBoundary { field: "Rd", value: 31, boundary: Max }
 /// register index 31 (ZR - zero register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rd_31_max_8400_5e20841f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_rd_31_max_8400_5e20841f() {
     // Encoding: 0x5E20841F
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field Rd = 31 (Max)
-    // Fields: U=0, Rm=0, Rd=31, size=0, Rn=0
+    // Fields: size=0, Rd=31, Rn=0, U=0, Rm=0
     let encoding: u32 = 0x5E20841F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7267,206 +4397,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_field_
 fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_combo_0_8400_5e208400() {
     // Encoding: 0x5E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field combination: U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, Rn=0, Rd=0, Rm=0, size=0
+    // Fields: U=0, Rm=0, Rn=0, size=0, Rd=0
     let encoding: u32 = 0x5E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_combo_1_8400_7e208400() {
-    // Encoding: 0x7E208400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field combination: U=1, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=1, Rn=0, Rd=0, Rm=0, size=0
-    let encoding: u32 = 0x7E208400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_combo_2_8400_5e208400() {
-    // Encoding: 0x5E208400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field combination: U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, size=0, U=0, Rn=0, Rd=0
-    let encoding: u32 = 0x5E208400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_combo_3_8400_5e608400() {
-    // Encoding: 0x5E608400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field combination: U=0, size=1, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, size=1, U=0, Rd=0, Rm=0
-    let encoding: u32 = 0x5E608400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_combo_4_8400_5ea08400() {
-    // Encoding: 0x5EA08400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field combination: U=0, size=2, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, Rd=0, Rn=0, Rm=0, size=2
-    let encoding: u32 = 0x5EA08400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_combo_5_8400_5ee08400() {
-    // Encoding: 0x5EE08400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field combination: U=0, size=3, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, U=0, size=3, Rm=0, Rd=0
-    let encoding: u32 = 0x5EE08400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_combo_6_8400_5e208400() {
-    // Encoding: 0x5E208400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field combination: U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, Rd=0, Rm=0, Rn=0, size=0
-    let encoding: u32 = 0x5E208400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_combo_7_8400_5e218400() {
-    // Encoding: 0x5E218400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field combination: U=0, size=0, Rm=1, Rn=0, Rd=0
-    // Fields: Rd=0, size=0, U=0, Rm=1, Rn=0
-    let encoding: u32 = 0x5E218400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_combo_8_8400_5e3e8400() {
-    // Encoding: 0x5E3E8400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field combination: U=0, size=0, Rm=30, Rn=0, Rd=0
-    // Fields: size=0, Rd=0, U=0, Rn=0, Rm=30
-    let encoding: u32 = 0x5E3E8400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=31 (register index 31 (special))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_combo_9_8400_5e3f8400() {
-    // Encoding: 0x5E3F8400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd field combination: U=0, size=0, Rm=31, Rn=0, Rd=0
-    // Fields: Rm=31, Rn=0, U=0, Rd=0, size=0
-    let encoding: u32 = 0x5E3F8400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7474,21 +4410,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_combo_
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_special_size_0_size_variant_0_33792_5e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_special_size_0_size_variant_0_33792_5e208400() {
     // Encoding: 0x5E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd special value size = 0 (Size variant 0)
-    // Fields: size=0, Rm=0, Rn=0, Rd=0, U=0
+    // Fields: U=0, size=0, Rn=0, Rm=0, Rd=0
     let encoding: u32 = 0x5E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7496,21 +4426,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_specia
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_special_size_1_size_variant_1_33792_5e608400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_special_size_1_size_variant_1_33792_5e608400() {
     // Encoding: 0x5E608400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd special value size = 1 (Size variant 1)
-    // Fields: size=1, U=0, Rd=0, Rn=0, Rm=0
+    // Fields: U=0, Rd=0, Rm=0, Rn=0, size=1
     let encoding: u32 = 0x5E608400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7518,21 +4442,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_specia
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_special_size_2_size_variant_2_33792_5ea08400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_special_size_2_size_variant_2_33792_5ea08400() {
     // Encoding: 0x5EA08400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd special value size = 2 (Size variant 2)
-    // Fields: size=2, U=0, Rd=0, Rn=0, Rm=0
+    // Fields: size=2, Rd=0, U=0, Rm=0, Rn=0
     let encoding: u32 = 0x5EA08400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7540,21 +4458,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_specia
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_special_size_3_size_variant_3_33792_5ee08400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_special_size_3_size_variant_3_33792_5ee08400() {
     // Encoding: 0x5EE08400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd special value size = 3 (Size variant 3)
-    // Fields: U=0, size=3, Rm=0, Rn=0, Rd=0
+    // Fields: Rm=0, size=3, U=0, Rd=0, Rn=0
     let encoding: u32 = 0x5EE08400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7562,21 +4474,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_specia
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_33792_5e2087e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_33792_5e2087e0() {
     // Encoding: 0x5E2087E0
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: size=0, Rn=31, U=0, Rd=0, Rm=0
+    // Fields: Rd=0, Rm=0, Rn=31, size=0, U=0
     let encoding: u32 = 0x5E2087E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7584,21 +4490,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_specia
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_5e20841f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_5e20841f() {
     // Encoding: 0x5E20841F
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: U=0, Rm=0, Rn=0, Rd=31, size=0
+    // Fields: Rd=31, Rm=0, U=0, size=0, Rn=0
     let encoding: u32 = 0x5E20841F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7606,20 +4506,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_specia
 /// Requirement: UndefinedEncoding { condition: "Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: \"size\" }), rhs: LitBits([true, true]) }" }
 /// triggers Undefined
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_invalid_0_8400_5e208400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_invalid_0_8400_5e208400() {
     // Encoding: 0x5E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd invalid encoding: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: U=0, size=0, Rn=0, Rm=0, Rd=0
+    // Fields: Rd=0, Rm=0, U=0, size=0, Rn=0
     let encoding: u32 = 0x5E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -7627,20 +4522,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_invali
 /// Requirement: UndefinedEncoding { condition: "Unconditional UNDEFINED" }
 /// triggers Undefined
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_invalid_1_8400_5e208400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_invalid_1_8400_5e208400() {
     // Encoding: 0x5E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, size=0, Rm=0, U=0, Rd=0
+    // Fields: Rd=0, size=0, U=0, Rn=0, Rm=0
     let encoding: u32 = 0x5E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7648,21 +4538,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd_invali
 /// Requirement: FieldBoundary { field: "Q", value: 0, boundary: Min }
 /// 8-bit / byte size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_q_0_min_8400_0e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_q_0_min_8400_0e208400() {
     // Encoding: 0x0E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field Q = 0 (Min)
-    // Fields: Rd=0, U=0, Rm=0, Rn=0, Q=0, size=0
+    // Fields: Rd=0, U=0, Q=0, Rm=0, Rn=0, size=0
     let encoding: u32 = 0x0E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7670,21 +4554,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "Q", value: 1, boundary: Max }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_q_1_max_8400_4e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_q_1_max_8400_4e208400() {
     // Encoding: 0x4E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field Q = 1 (Max)
-    // Fields: Rd=0, Rm=0, U=0, size=0, Rn=0, Q=1
+    // Fields: U=0, Q=1, size=0, Rm=0, Rn=0, Rd=0
     let encoding: u32 = 0x4E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7692,21 +4570,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "U", value: 0, boundary: Min }
 /// minimum value
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_u_0_min_8400_0e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_u_0_min_8400_0e208400() {
     // Encoding: 0x0E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field U = 0 (Min)
-    // Fields: U=0, Q=0, size=0, Rd=0, Rm=0, Rn=0
+    // Fields: Q=0, size=0, Rd=0, U=0, Rm=0, Rn=0
     let encoding: u32 = 0x0E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7714,21 +4586,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "U", value: 1, boundary: Max }
 /// maximum value (1)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_u_1_max_8400_2e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_u_1_max_8400_2e208400() {
     // Encoding: 0x2E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field U = 1 (Max)
-    // Fields: Q=0, size=0, U=1, Rm=0, Rn=0, Rd=0
+    // Fields: Rd=0, U=1, size=0, Q=0, Rm=0, Rn=0
     let encoding: u32 = 0x2E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7736,21 +4602,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "size", value: 0, boundary: Min }
 /// 8-bit / byte size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_size_0_min_8400_0e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_size_0_min_8400_0e208400() {
     // Encoding: 0x0E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field size = 0 (Min)
-    // Fields: U=0, size=0, Rn=0, Rd=0, Q=0, Rm=0
+    // Fields: Rn=0, Rd=0, Q=0, U=0, size=0, Rm=0
     let encoding: u32 = 0x0E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7758,21 +4618,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_size_1_poweroftwo_8400_0e608400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_size_1_poweroftwo_8400_0e608400() {
     // Encoding: 0x0E608400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field size = 1 (PowerOfTwo)
-    // Fields: Rn=0, Rd=0, U=0, size=1, Rm=0, Q=0
+    // Fields: Q=0, U=0, Rn=0, Rd=0, size=1, Rm=0
     let encoding: u32 = 0x0E608400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7780,21 +4634,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_size_2_poweroftwo_8400_0ea08400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_size_2_poweroftwo_8400_0ea08400() {
     // Encoding: 0x0EA08400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field size = 2 (PowerOfTwo)
-    // Fields: Q=0, size=2, U=0, Rm=0, Rd=0, Rn=0
+    // Fields: size=2, Rm=0, Rd=0, U=0, Q=0, Rn=0
     let encoding: u32 = 0x0EA08400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7802,21 +4650,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "size", value: 3, boundary: Max }
 /// 64-bit / doubleword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_size_3_max_8400_0ee08400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_size_3_max_8400_0ee08400() {
     // Encoding: 0x0EE08400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field size = 3 (Max)
-    // Fields: Rd=0, Rm=0, Rn=0, U=0, size=3, Q=0
+    // Fields: U=0, size=3, Rd=0, Rn=0, Q=0, Rm=0
     let encoding: u32 = 0x0EE08400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7824,21 +4666,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "Rm", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rm_0_min_8400_0e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rm_0_min_8400_0e208400() {
     // Encoding: 0x0E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field Rm = 0 (Min)
-    // Fields: Rd=0, Rm=0, Q=0, Rn=0, size=0, U=0
+    // Fields: Rm=0, U=0, Rd=0, Q=0, Rn=0, size=0
     let encoding: u32 = 0x0E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7846,21 +4682,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rm_1_poweroftwo_8400_0e218400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rm_1_poweroftwo_8400_0e218400() {
     // Encoding: 0x0E218400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field Rm = 1 (PowerOfTwo)
-    // Fields: size=0, Rn=0, Q=0, Rm=1, Rd=0, U=0
+    // Fields: Q=0, U=0, size=0, Rm=1, Rd=0, Rn=0
     let encoding: u32 = 0x0E218400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7868,21 +4698,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rm_30_poweroftwominusone_8400_0e3e8400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rm_30_poweroftwominusone_8400_0e3e8400() {
     // Encoding: 0x0E3E8400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: U=0, Q=0, size=0, Rm=30, Rd=0, Rn=0
+    // Fields: U=0, Rd=0, Rn=0, Q=0, Rm=30, size=0
     let encoding: u32 = 0x0E3E8400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7890,21 +4714,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "Rm", value: 31, boundary: Max }
 /// register index 31 (special)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rm_31_max_8400_0e3f8400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rm_31_max_8400_0e3f8400() {
     // Encoding: 0x0E3F8400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field Rm = 31 (Max)
-    // Fields: Rd=0, Q=0, Rn=0, size=0, Rm=31, U=0
+    // Fields: Q=0, size=0, Rn=0, Rd=0, U=0, Rm=31
     let encoding: u32 = 0x0E3F8400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7912,21 +4730,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "Rn", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rn_0_min_8400_0e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rn_0_min_8400_0e208400() {
     // Encoding: 0x0E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field Rn = 0 (Min)
-    // Fields: size=0, Q=0, Rn=0, U=0, Rm=0, Rd=0
+    // Fields: Q=0, U=0, Rn=0, Rm=0, Rd=0, size=0
     let encoding: u32 = 0x0E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7934,21 +4746,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rn_1_poweroftwo_8400_0e208420(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rn_1_poweroftwo_8400_0e208420() {
     // Encoding: 0x0E208420
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field Rn = 1 (PowerOfTwo)
-    // Fields: Q=0, Rm=0, Rn=1, Rd=0, size=0, U=0
+    // Fields: size=0, Q=0, U=0, Rm=0, Rn=1, Rd=0
     let encoding: u32 = 0x0E208420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7956,21 +4762,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rn_30_poweroftwominusone_8400_0e2087c0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rn_30_poweroftwominusone_8400_0e2087c0() {
     // Encoding: 0x0E2087C0
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=0, Rd=0, Q=0, size=0, U=0, Rn=30
+    // Fields: Rd=0, Rm=0, Rn=30, U=0, Q=0, size=0
     let encoding: u32 = 0x0E2087C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -7978,21 +4778,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "Rn", value: 31, boundary: Max }
 /// register index 31 (SP - stack pointer)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rn_31_max_8400_0e2087e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rn_31_max_8400_0e2087e0() {
     // Encoding: 0x0E2087E0
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field Rn = 31 (Max)
-    // Fields: Rn=31, Rd=0, U=0, Q=0, size=0, Rm=0
+    // Fields: U=0, size=0, Q=0, Rm=0, Rn=31, Rd=0
     let encoding: u32 = 0x0E2087E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -8000,21 +4794,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "Rd", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rd_0_min_8400_0e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rd_0_min_8400_0e208400() {
     // Encoding: 0x0E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field Rd = 0 (Min)
-    // Fields: Q=0, size=0, Rm=0, Rn=0, Rd=0, U=0
+    // Fields: Rm=0, Rd=0, size=0, Q=0, U=0, Rn=0
     let encoding: u32 = 0x0E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -8022,21 +4810,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rd_1_poweroftwo_8400_0e208401(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rd_1_poweroftwo_8400_0e208401() {
     // Encoding: 0x0E208401
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field Rd = 1 (PowerOfTwo)
-    // Fields: Rn=0, size=0, Q=0, U=0, Rd=1, Rm=0
+    // Fields: U=0, size=0, Rm=0, Q=0, Rd=1, Rn=0
     let encoding: u32 = 0x0E208401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -8044,21 +4826,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rd_30_poweroftwominusone_8400_0e20841e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rd_30_poweroftwominusone_8400_0e20841e() {
     // Encoding: 0x0E20841E
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Q=0, Rm=0, U=0, size=0, Rn=0, Rd=30
+    // Fields: Rd=30, Rm=0, U=0, Q=0, size=0, Rn=0
     let encoding: u32 = 0x0E20841E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -8066,21 +4842,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 /// Requirement: FieldBoundary { field: "Rd", value: 31, boundary: Max }
 /// register index 31 (ZR - zero register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rd_31_max_8400_0e20841f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_rd_31_max_8400_0e20841f() {
     // Encoding: 0x0E20841F
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field Rd = 31 (Max)
-    // Fields: Rm=0, U=0, size=0, Rn=0, Q=0, Rd=31
+    // Fields: Rm=0, Rd=31, Rn=0, U=0, size=0, Q=0
     let encoding: u32 = 0x0E20841F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -8091,206 +4861,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_field_
 fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_combo_0_8400_0e208400() {
     // Encoding: 0x0E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, size=0, Q=0, Rd=0, Rn=0, Rm=0
+    // Fields: Q=0, Rm=0, Rd=0, size=0, Rn=0, U=0
     let encoding: u32 = 0x0E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_combo_1_8400_4e208400() {
-    // Encoding: 0x4E208400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field combination: Q=1, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: size=0, Q=1, Rm=0, U=0, Rd=0, Rn=0
-    let encoding: u32 = 0x4E208400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_combo_2_8400_0e208400() {
-    // Encoding: 0x0E208400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rd=0, size=0, Q=0, Rn=0, U=0, Rm=0
-    let encoding: u32 = 0x0E208400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_combo_3_8400_2e208400() {
-    // Encoding: 0x2E208400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field combination: Q=0, U=1, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, U=1, Q=0, Rn=0, size=0, Rd=0
-    let encoding: u32 = 0x2E208400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_combo_4_8400_0e208400() {
-    // Encoding: 0x0E208400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, Rd=0, Q=0, U=0, Rn=0, size=0
-    let encoding: u32 = 0x0E208400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_combo_5_8400_0e608400() {
-    // Encoding: 0x0E608400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field combination: Q=0, U=0, size=1, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, size=1, U=0, Rm=0, Rd=0, Rn=0
-    let encoding: u32 = 0x0E608400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_combo_6_8400_0ea08400() {
-    // Encoding: 0x0EA08400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field combination: Q=0, U=0, size=2, Rm=0, Rn=0, Rd=0
-    // Fields: size=2, U=0, Rm=0, Q=0, Rn=0, Rd=0
-    let encoding: u32 = 0x0EA08400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_combo_7_8400_0ee08400() {
-    // Encoding: 0x0EE08400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field combination: Q=0, U=0, size=3, Rm=0, Rn=0, Rd=0
-    // Fields: size=3, Q=0, Rm=0, Rn=0, U=0, Rd=0
-    let encoding: u32 = 0x0EE08400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_combo_8_8400_0e208400() {
-    // Encoding: 0x0E208400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, size=0, Q=0, U=0, Rd=0, Rn=0
-    let encoding: u32 = 0x0E208400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_combo_9_8400_0e218400() {
-    // Encoding: 0x0E218400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd field combination: Q=0, U=0, size=0, Rm=1, Rn=0, Rd=0
-    // Fields: size=0, Rm=1, U=0, Q=0, Rd=0, Rn=0
-    let encoding: u32 = 0x0E218400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -8298,21 +4874,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_combo_
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_q_0_size_variant_0_33792_0e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_q_0_size_variant_0_33792_0e208400() {
     // Encoding: 0x0E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd special value Q = 0 (Size variant 0)
-    // Fields: Rd=0, size=0, Q=0, Rm=0, U=0, Rn=0
+    // Fields: U=0, Q=0, Rd=0, Rm=0, size=0, Rn=0
     let encoding: u32 = 0x0E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -8320,21 +4890,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_specia
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_q_1_size_variant_1_33792_4e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_q_1_size_variant_1_33792_4e208400() {
     // Encoding: 0x4E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd special value Q = 1 (Size variant 1)
-    // Fields: Rd=0, Rm=0, size=0, Q=1, U=0, Rn=0
+    // Fields: Q=1, U=0, size=0, Rn=0, Rm=0, Rd=0
     let encoding: u32 = 0x4E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -8342,21 +4906,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_specia
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_size_0_size_variant_0_33792_0e208400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_size_0_size_variant_0_33792_0e208400() {
     // Encoding: 0x0E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd special value size = 0 (Size variant 0)
-    // Fields: Rm=0, Q=0, Rd=0, U=0, Rn=0, size=0
+    // Fields: Rm=0, size=0, Q=0, U=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -8364,21 +4922,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_specia
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_size_1_size_variant_1_33792_0e608400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_size_1_size_variant_1_33792_0e608400() {
     // Encoding: 0x0E608400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd special value size = 1 (Size variant 1)
-    // Fields: Rn=0, Rd=0, Q=0, U=0, size=1, Rm=0
+    // Fields: Rd=0, U=0, Q=0, size=1, Rm=0, Rn=0
     let encoding: u32 = 0x0E608400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -8386,21 +4938,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_specia
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_size_2_size_variant_2_33792_0ea08400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_size_2_size_variant_2_33792_0ea08400() {
     // Encoding: 0x0EA08400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd special value size = 2 (Size variant 2)
-    // Fields: Rn=0, Rd=0, Q=0, U=0, size=2, Rm=0
+    // Fields: Rd=0, U=0, size=2, Rm=0, Q=0, Rn=0
     let encoding: u32 = 0x0EA08400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -8408,21 +4954,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_specia
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_size_3_size_variant_3_33792_0ee08400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_size_3_size_variant_3_33792_0ee08400() {
     // Encoding: 0x0EE08400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd special value size = 3 (Size variant 3)
-    // Fields: Rd=0, Q=0, size=3, Rm=0, Rn=0, U=0
+    // Fields: Rn=0, Q=0, Rd=0, Rm=0, size=3, U=0
     let encoding: u32 = 0x0EE08400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -8430,21 +4970,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_specia
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_rn_31_stack_pointer_sp_may_require_alignment_33792_0e2087e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_rn_31_stack_pointer_sp_may_require_alignment_33792_0e2087e0() {
     // Encoding: 0x0E2087E0
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rn=31, Rd=0, size=0, Rm=0, U=0, Q=0
+    // Fields: Rm=0, Rn=31, U=0, Q=0, size=0, Rd=0
     let encoding: u32 = 0x0E2087E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -8452,21 +4986,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_specia
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_0e20841f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_33792_0e20841f() {
     // Encoding: 0x0E20841F
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rd=31, Rn=0, Rm=0, Q=0, U=0, size=0
+    // Fields: Q=0, Rm=0, size=0, Rn=0, Rd=31, U=0
     let encoding: u32 = 0x0E20841F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -8474,20 +5002,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_specia
 /// Requirement: UndefinedEncoding { condition: "Binary { op: BitConcat, lhs: Var(QualifiedIdentifier { qualifier: Any, name: \"size\" }), rhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: \"Q\" }), rhs: LitBits([true, true, false]) } }" }
 /// triggers Undefined
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_invalid_0_8400_0e208400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_invalid_0_8400_0e208400() {
     // Encoding: 0x0E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd invalid encoding: Binary { op: BitConcat, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "Q" }), rhs: LitBits([true, true, false]) } }
-    // Fields: Q=0, Rd=0, Rm=0, U=0, Rn=0, size=0
+    // Fields: Rm=0, Q=0, Rd=0, U=0, Rn=0, size=0
     let encoding: u32 = 0x0E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd
@@ -8495,20 +5018,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_invali
 /// Requirement: UndefinedEncoding { condition: "Unconditional UNDEFINED" }
 /// triggers Undefined
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_invalid_1_8400_0e208400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_invalid_1_8400_0e208400() {
     // Encoding: 0x0E208400
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd invalid encoding: Unconditional UNDEFINED
-    // Fields: Q=0, Rm=0, Rn=0, U=0, Rd=0, size=0
+    // Fields: U=0, Q=0, Rm=0, Rn=0, Rd=0, size=0
     let encoding: u32 = 0x0E208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_sisd
@@ -8615,17 +5133,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_single_simd_zr_rd_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_q_0_min_1000_0e201000() {
     // Encoding: 0x0E201000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field Q = 0 (Min)
-    // Fields: Q=0, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
+    // Fields: Rd=0, o1=0, U=0, Q=0, size=0, Rm=0, Rn=0
     let encoding: u32 = 0x0E201000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8636,17 +5149,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_q_0_min_10
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_q_1_max_1000_4e201000() {
     // Encoding: 0x4E201000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field Q = 1 (Max)
-    // Fields: Rd=0, Rm=0, o1=0, Q=1, U=0, size=0, Rn=0
+    // Fields: Rn=0, U=0, Q=1, size=0, Rm=0, Rd=0, o1=0
     let encoding: u32 = 0x4E201000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8657,17 +5165,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_q_1_max_10
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_u_0_min_1000_0e201000() {
     // Encoding: 0x0E201000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field U = 0 (Min)
-    // Fields: o1=0, U=0, size=0, Rm=0, Q=0, Rn=0, Rd=0
+    // Fields: o1=0, Rn=0, Rd=0, U=0, Q=0, size=0, Rm=0
     let encoding: u32 = 0x0E201000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8678,17 +5181,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_u_0_min_10
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_u_1_max_1000_2e201000() {
     // Encoding: 0x2E201000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field U = 1 (Max)
-    // Fields: Rd=0, o1=0, U=1, Rn=0, size=0, Q=0, Rm=0
+    // Fields: U=1, o1=0, size=0, Rm=0, Rn=0, Q=0, Rd=0
     let encoding: u32 = 0x2E201000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8699,17 +5197,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_u_1_max_10
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_size_0_min_1000_0e201000() {
     // Encoding: 0x0E201000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field size = 0 (Min)
-    // Fields: Rm=0, Q=0, Rd=0, size=0, U=0, Rn=0, o1=0
+    // Fields: U=0, Q=0, Rm=0, Rd=0, size=0, o1=0, Rn=0
     let encoding: u32 = 0x0E201000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8717,21 +5210,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_size_0_min
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_size_1_poweroftwo_1000_0e601000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_size_1_poweroftwo_1000_0e601000() {
     // Encoding: 0x0E601000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field size = 1 (PowerOfTwo)
-    // Fields: Rn=0, Rm=0, size=1, Rd=0, Q=0, U=0, o1=0
+    // Fields: Q=0, size=1, Rd=0, U=0, Rm=0, o1=0, Rn=0
     let encoding: u32 = 0x0E601000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8739,21 +5226,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_size_1_pow
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_size_2_poweroftwo_1000_0ea01000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_size_2_poweroftwo_1000_0ea01000() {
     // Encoding: 0x0EA01000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field size = 2 (PowerOfTwo)
-    // Fields: U=0, size=2, Q=0, Rm=0, Rn=0, o1=0, Rd=0
+    // Fields: o1=0, Rm=0, Rn=0, Rd=0, Q=0, U=0, size=2
     let encoding: u32 = 0x0EA01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8764,17 +5245,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_size_2_pow
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_size_3_max_1000_0ee01000() {
     // Encoding: 0x0EE01000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field size = 3 (Max)
-    // Fields: U=0, size=3, Rm=0, Q=0, o1=0, Rn=0, Rd=0
+    // Fields: size=3, o1=0, Q=0, Rm=0, U=0, Rd=0, Rn=0
     let encoding: u32 = 0x0EE01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8785,17 +5261,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_size_3_max
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rm_0_min_1000_0e201000() {
     // Encoding: 0x0E201000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field Rm = 0 (Min)
-    // Fields: Rn=0, size=0, Rd=0, Q=0, U=0, Rm=0, o1=0
+    // Fields: size=0, Rm=0, o1=0, Rn=0, Rd=0, U=0, Q=0
     let encoding: u32 = 0x0E201000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8803,21 +5274,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rm_0_min_1
 /// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rm_1_poweroftwo_1000_0e211000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rm_1_poweroftwo_1000_0e211000() {
     // Encoding: 0x0E211000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field Rm = 1 (PowerOfTwo)
-    // Fields: U=0, Q=0, Rn=0, size=0, Rd=0, Rm=1, o1=0
+    // Fields: Q=0, U=0, o1=0, size=0, Rn=0, Rd=0, Rm=1
     let encoding: u32 = 0x0E211000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8825,21 +5290,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rm_1_power
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rm_30_poweroftwominusone_1000_0e3e1000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rm_30_poweroftwominusone_1000_0e3e1000() {
     // Encoding: 0x0E3E1000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: U=0, Rn=0, Rd=0, o1=0, Q=0, size=0, Rm=30
+    // Fields: Rm=30, Rd=0, Q=0, o1=0, Rn=0, size=0, U=0
     let encoding: u32 = 0x0E3E1000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8850,17 +5309,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rm_30_powe
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rm_31_max_1000_0e3f1000() {
     // Encoding: 0x0E3F1000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field Rm = 31 (Max)
-    // Fields: Q=0, U=0, o1=0, Rn=0, Rd=0, Rm=31, size=0
+    // Fields: Rm=31, o1=0, Q=0, Rn=0, Rd=0, size=0, U=0
     let encoding: u32 = 0x0E3F1000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8871,17 +5325,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rm_31_max_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_o1_0_min_1000_0e201000() {
     // Encoding: 0x0E201000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field o1 = 0 (Min)
-    // Fields: U=0, o1=0, Rm=0, Rn=0, Rd=0, size=0, Q=0
+    // Fields: U=0, Q=0, size=0, Rn=0, o1=0, Rm=0, Rd=0
     let encoding: u32 = 0x0E201000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8892,17 +5341,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_o1_0_min_1
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_o1_1_max_1000_0e203000() {
     // Encoding: 0x0E203000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field o1 = 1 (Max)
-    // Fields: U=0, Q=0, Rd=0, Rn=0, o1=1, size=0, Rm=0
+    // Fields: Rm=0, Rd=0, Rn=0, size=0, o1=1, U=0, Q=0
     let encoding: u32 = 0x0E203000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8913,17 +5357,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_o1_1_max_1
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rn_0_min_1000_0e201000() {
     // Encoding: 0x0E201000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field Rn = 0 (Min)
-    // Fields: Q=0, U=0, size=0, Rn=0, Rd=0, Rm=0, o1=0
+    // Fields: Q=0, Rm=0, o1=0, Rd=0, U=0, Rn=0, size=0
     let encoding: u32 = 0x0E201000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8931,21 +5370,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rn_0_min_1
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rn_1_poweroftwo_1000_0e201020(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rn_1_poweroftwo_1000_0e201020() {
     // Encoding: 0x0E201020
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field Rn = 1 (PowerOfTwo)
-    // Fields: Rd=0, Rn=1, U=0, size=0, Q=0, Rm=0, o1=0
+    // Fields: o1=0, U=0, Q=0, Rd=0, Rm=0, Rn=1, size=0
     let encoding: u32 = 0x0E201020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8953,21 +5386,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rn_1_power
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rn_30_poweroftwominusone_1000_0e2013c0(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rn_30_poweroftwominusone_1000_0e2013c0() {
     // Encoding: 0x0E2013C0
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=30, size=0, Rd=0, Q=0, U=0, Rm=0, o1=0
+    // Fields: Rn=30, Rd=0, Rm=0, size=0, Q=0, U=0, o1=0
     let encoding: u32 = 0x0E2013C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8978,17 +5405,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rn_30_powe
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rn_31_max_1000_0e2013e0() {
     // Encoding: 0x0E2013E0
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field Rn = 31 (Max)
-    // Fields: size=0, Rm=0, o1=0, Rn=31, U=0, Rd=0, Q=0
+    // Fields: size=0, Rm=0, Rn=31, Q=0, U=0, o1=0, Rd=0
     let encoding: u32 = 0x0E2013E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -8999,17 +5421,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rn_31_max_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rd_0_min_1000_0e201000() {
     // Encoding: 0x0E201000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field Rd = 0 (Min)
-    // Fields: U=0, Rd=0, size=0, Q=0, o1=0, Rn=0, Rm=0
+    // Fields: Rm=0, size=0, Rn=0, U=0, o1=0, Q=0, Rd=0
     let encoding: u32 = 0x0E201000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -9017,21 +5434,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rd_0_min_1
 /// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rd_1_poweroftwo_1000_0e201001(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rd_1_poweroftwo_1000_0e201001() {
     // Encoding: 0x0E201001
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field Rd = 1 (PowerOfTwo)
-    // Fields: o1=0, size=0, Rm=0, Rd=1, Q=0, U=0, Rn=0
+    // Fields: Rd=1, o1=0, U=0, size=0, Rm=0, Q=0, Rn=0
     let encoding: u32 = 0x0E201001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -9039,21 +5450,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rd_1_power
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rd_30_poweroftwominusone_1000_0e20101e(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rd_30_poweroftwominusone_1000_0e20101e() {
     // Encoding: 0x0E20101E
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: o1=0, Q=0, size=0, U=0, Rn=0, Rm=0, Rd=30
+    // Fields: Rm=0, U=0, o1=0, Rd=30, Rn=0, Q=0, size=0
     let encoding: u32 = 0x0E20101E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -9064,17 +5469,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rd_30_powe
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rd_31_max_1000_0e20101f() {
     // Encoding: 0x0E20101F
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field Rd = 31 (Max)
-    // Fields: o1=0, Rd=31, Rn=0, Rm=0, U=0, Q=0, size=0
+    // Fields: Rd=31, o1=0, size=0, Q=0, U=0, Rn=0, Rm=0
     let encoding: u32 = 0x0E20101F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -9085,206 +5485,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_field_rd_31_max_
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_combo_0_1000_0e201000() {
     // Encoding: 0x0E201000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field combination: Q=0, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: Q=0, o1=0, Rn=0, Rd=0, Rm=0, U=0, size=0
+    // Fields: Rn=0, U=0, Rm=0, size=0, o1=0, Rd=0, Q=0
     let encoding: u32 = 0x0E201000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_combo_1_1000_4e201000() {
-    // Encoding: 0x4E201000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field combination: Q=1, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: o1=0, Rd=0, U=0, Rn=0, size=0, Q=1, Rm=0
-    let encoding: u32 = 0x4E201000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_combo_2_1000_0e201000() {
-    // Encoding: 0x0E201000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field combination: Q=0, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: Q=0, Rn=0, Rm=0, size=0, Rd=0, o1=0, U=0
-    let encoding: u32 = 0x0E201000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_combo_3_1000_2e201000() {
-    // Encoding: 0x2E201000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field combination: Q=0, U=1, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: Q=0, Rd=0, Rm=0, o1=0, Rn=0, size=0, U=1
-    let encoding: u32 = 0x2E201000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_combo_4_1000_0e201000() {
-    // Encoding: 0x0E201000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field combination: Q=0, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: U=0, Rm=0, o1=0, size=0, Rn=0, Rd=0, Q=0
-    let encoding: u32 = 0x0E201000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_combo_5_1000_0e601000() {
-    // Encoding: 0x0E601000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field combination: Q=0, U=0, size=1, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: Q=0, U=0, Rm=0, o1=0, Rn=0, Rd=0, size=1
-    let encoding: u32 = 0x0E601000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_combo_6_1000_0ea01000() {
-    // Encoding: 0x0EA01000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field combination: Q=0, U=0, size=2, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: Rn=0, Q=0, Rd=0, size=2, Rm=0, U=0, o1=0
-    let encoding: u32 = 0x0EA01000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_combo_7_1000_0ee01000() {
-    // Encoding: 0x0EE01000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field combination: Q=0, U=0, size=3, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: o1=0, U=0, size=3, Rm=0, Q=0, Rn=0, Rd=0
-    let encoding: u32 = 0x0EE01000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_combo_8_1000_0e201000() {
-    // Encoding: 0x0E201000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field combination: Q=0, U=0, size=0, Rm=0, o1=0, Rn=0, Rd=0
-    // Fields: size=0, Rd=0, Q=0, Rn=0, U=0, Rm=0, o1=0
-    let encoding: u32 = 0x0E201000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_combo_9_1000_0e211000() {
-    // Encoding: 0x0E211000
-    // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide field combination: Q=0, U=0, size=0, Rm=1, o1=0, Rn=0, Rd=0
-    // Fields: U=0, Q=0, Rd=0, size=0, Rn=0, Rm=1, o1=0
-    let encoding: u32 = 0x0E211000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -9292,21 +5498,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_combo_9_1000_0e2
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_q_0_size_variant_0_4096_0e201000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_q_0_size_variant_0_4096_0e201000() {
     // Encoding: 0x0E201000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide special value Q = 0 (Size variant 0)
-    // Fields: U=0, Rm=0, o1=0, size=0, Q=0, Rn=0, Rd=0
+    // Fields: Rn=0, Rd=0, U=0, Q=0, size=0, Rm=0, o1=0
     let encoding: u32 = 0x0E201000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -9314,21 +5514,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_q_0_size
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_q_1_size_variant_1_4096_4e201000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_q_1_size_variant_1_4096_4e201000() {
     // Encoding: 0x4E201000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide special value Q = 1 (Size variant 1)
-    // Fields: size=0, Rn=0, Rm=0, Rd=0, U=0, Q=1, o1=0
+    // Fields: Q=1, Rm=0, o1=0, Rn=0, U=0, size=0, Rd=0
     let encoding: u32 = 0x4E201000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -9336,21 +5530,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_q_1_size
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_size_0_size_variant_0_4096_0e201000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_size_0_size_variant_0_4096_0e201000() {
     // Encoding: 0x0E201000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide special value size = 0 (Size variant 0)
-    // Fields: Rm=0, U=0, size=0, Q=0, o1=0, Rn=0, Rd=0
+    // Fields: Q=0, Rn=0, Rd=0, o1=0, U=0, Rm=0, size=0
     let encoding: u32 = 0x0E201000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -9358,21 +5546,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_size_0_s
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_size_1_size_variant_1_4096_0e601000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_size_1_size_variant_1_4096_0e601000() {
     // Encoding: 0x0E601000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide special value size = 1 (Size variant 1)
-    // Fields: Rm=0, Rn=0, Q=0, Rd=0, o1=0, U=0, size=1
+    // Fields: Q=0, Rn=0, U=0, Rm=0, size=1, o1=0, Rd=0
     let encoding: u32 = 0x0E601000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -9380,21 +5562,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_size_1_s
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_size_2_size_variant_2_4096_0ea01000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_size_2_size_variant_2_4096_0ea01000() {
     // Encoding: 0x0EA01000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide special value size = 2 (Size variant 2)
-    // Fields: U=0, o1=0, size=2, Rm=0, Rn=0, Q=0, Rd=0
+    // Fields: Rn=0, Rd=0, size=2, Q=0, Rm=0, o1=0, U=0
     let encoding: u32 = 0x0EA01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -9402,21 +5578,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_size_2_s
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_size_3_size_variant_3_4096_0ee01000(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_size_3_size_variant_3_4096_0ee01000() {
     // Encoding: 0x0EE01000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide special value size = 3 (Size variant 3)
-    // Fields: Rm=0, U=0, size=3, Q=0, o1=0, Rn=0, Rd=0
+    // Fields: Q=0, Rn=0, U=0, size=3, Rm=0, o1=0, Rd=0
     let encoding: u32 = 0x0EE01000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -9424,21 +5594,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_size_3_s
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_rn_31_stack_pointer_sp_may_require_alignment_4096_0e2013e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_rn_31_stack_pointer_sp_may_require_alignment_4096_0e2013e0() {
     // Encoding: 0x0E2013E0
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rm=0, Rn=31, Rd=0, Q=0, U=0, size=0, o1=0
+    // Fields: Rd=0, Rm=0, o1=0, U=0, size=0, Q=0, Rn=31
     let encoding: u32 = 0x0E2013E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -9446,21 +5610,15 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_rn_31_st
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_4096_0e20101f(
-) {
+fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_4096_0e20101f() {
     // Encoding: 0x0E20101F
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Q=0, Rd=31, U=0, o1=0, Rn=0, Rm=0, size=0
+    // Fields: Rn=0, U=0, Rm=0, Rd=31, o1=0, Q=0, size=0
     let encoding: u32 = 0x0E20101F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -9471,16 +5629,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_special_rd_31_ze
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_invalid_0_1000_0e201000() {
     // Encoding: 0x0E201000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: Rn=0, Rd=0, size=0, Rm=0, Q=0, U=0, o1=0
+    // Fields: Q=0, U=0, o1=0, Rd=0, Rm=0, Rn=0, size=0
     let encoding: u32 = 0x0E201000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -9491,16 +5645,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_invalid_0_1000_0
 fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_invalid_1_1000_0e201000() {
     // Encoding: 0x0E201000
     // Test aarch64_vector_arithmetic_binary_disparate_add_sub_wide invalid encoding: Unconditional UNDEFINED
-    // Fields: U=0, Rd=0, Q=0, size=0, Rm=0, o1=0, Rn=0
+    // Fields: Rd=0, U=0, size=0, Rm=0, o1=0, Rn=0, Q=0
     let encoding: u32 = 0x0E201000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_disparate_add_sub_wide
@@ -9561,17 +5711,12 @@ fn test_aarch64_vector_arithmetic_binary_disparate_add_sub_wide_zr_rd_0e20101f()
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_q_0_min_1400_0ec01400() {
     // Encoding: 0x0EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Q = 0 (Min)
-    // Fields: Q=0, U=0, Rn=0, Rd=0, Rm=0
+    // Fields: U=0, Q=0, Rm=0, Rn=0, Rd=0
     let encoding: u32 = 0x0EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9582,17 +5727,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_q_0_min_140
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_q_1_max_1400_4ec01400() {
     // Encoding: 0x4EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Q = 1 (Max)
-    // Fields: Rm=0, Rd=0, Q=1, U=0, Rn=0
+    // Fields: Rm=0, Q=1, Rn=0, U=0, Rd=0
     let encoding: u32 = 0x4EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9603,17 +5743,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_q_1_max_140
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_u_0_min_1400_0ec01400() {
     // Encoding: 0x0EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field U = 0 (Min)
-    // Fields: Rn=0, Q=0, U=0, Rd=0, Rm=0
+    // Fields: Q=0, Rn=0, U=0, Rd=0, Rm=0
     let encoding: u32 = 0x0EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9624,17 +5759,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_u_0_min_140
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_u_1_max_1400_2ec01400() {
     // Encoding: 0x2EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field U = 1 (Max)
-    // Fields: Rm=0, Q=0, U=1, Rd=0, Rn=0
+    // Fields: Rn=0, Rd=0, Rm=0, Q=0, U=1
     let encoding: u32 = 0x2EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9645,17 +5775,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_u_1_max_140
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rm_0_min_1400_0ec01400() {
     // Encoding: 0x0EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rm = 0 (Min)
-    // Fields: Rm=0, Q=0, U=0, Rd=0, Rn=0
+    // Fields: Rd=0, Rm=0, Q=0, U=0, Rn=0
     let encoding: u32 = 0x0EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9663,21 +5788,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rm_0_min_14
 /// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rm_1_poweroftwo_1400_0ec11400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rm_1_poweroftwo_1400_0ec11400() {
     // Encoding: 0x0EC11400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rm = 1 (PowerOfTwo)
-    // Fields: Rd=0, Q=0, Rn=0, U=0, Rm=1
+    // Fields: Rm=1, U=0, Q=0, Rn=0, Rd=0
     let encoding: u32 = 0x0EC11400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9685,21 +5804,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rm_1_powero
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rm_30_poweroftwominusone_1400_0ede1400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rm_30_poweroftwominusone_1400_0ede1400() {
     // Encoding: 0x0EDE1400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Q=0, Rd=0, Rm=30, U=0
+    // Fields: Rd=0, Rn=0, Rm=30, Q=0, U=0
     let encoding: u32 = 0x0EDE1400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9710,17 +5823,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rm_30_power
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rm_31_max_1400_0edf1400() {
     // Encoding: 0x0EDF1400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rm = 31 (Max)
-    // Fields: U=0, Rm=31, Rn=0, Rd=0, Q=0
+    // Fields: Rn=0, Rm=31, U=0, Rd=0, Q=0
     let encoding: u32 = 0x0EDF1400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9731,17 +5839,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rm_31_max_1
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rn_0_min_1400_0ec01400() {
     // Encoding: 0x0EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rn = 0 (Min)
-    // Fields: U=0, Rn=0, Rd=0, Q=0, Rm=0
+    // Fields: Rm=0, Rn=0, Q=0, Rd=0, U=0
     let encoding: u32 = 0x0EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9749,21 +5852,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rn_0_min_14
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rn_1_poweroftwo_1400_0ec01420()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rn_1_poweroftwo_1400_0ec01420() {
     // Encoding: 0x0EC01420
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rn = 1 (PowerOfTwo)
-    // Fields: Q=0, U=0, Rm=0, Rn=1, Rd=0
+    // Fields: Q=0, Rn=1, Rd=0, U=0, Rm=0
     let encoding: u32 = 0x0EC01420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9771,8 +5868,7 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rn_1_powero
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rn_30_poweroftwominusone_1400_0ec017c0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rn_30_poweroftwominusone_1400_0ec017c0() {
     // Encoding: 0x0EC017C0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rn = 30 (PowerOfTwoMinusOne)
     // Fields: Q=0, Rn=30, Rd=0, Rm=0, U=0
@@ -9780,12 +5876,7 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rn_30_power
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9796,17 +5887,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rn_30_power
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rn_31_max_1400_0ec017e0() {
     // Encoding: 0x0EC017E0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rn = 31 (Max)
-    // Fields: Rn=31, Rm=0, U=0, Q=0, Rd=0
+    // Fields: Rm=0, U=0, Rn=31, Q=0, Rd=0
     let encoding: u32 = 0x0EC017E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9817,17 +5903,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rn_31_max_1
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rd_0_min_1400_0ec01400() {
     // Encoding: 0x0EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rd = 0 (Min)
-    // Fields: Rm=0, Q=0, Rn=0, Rd=0, U=0
+    // Fields: Q=0, U=0, Rm=0, Rd=0, Rn=0
     let encoding: u32 = 0x0EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9835,21 +5916,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rd_0_min_14
 /// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rd_1_poweroftwo_1400_0ec01401()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rd_1_poweroftwo_1400_0ec01401() {
     // Encoding: 0x0EC01401
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rd = 1 (PowerOfTwo)
-    // Fields: Q=0, U=0, Rn=0, Rd=1, Rm=0
+    // Fields: U=0, Rd=1, Q=0, Rn=0, Rm=0
     let encoding: u32 = 0x0EC01401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9857,21 +5932,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rd_1_powero
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rd_30_poweroftwominusone_1400_0ec0141e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rd_30_poweroftwominusone_1400_0ec0141e() {
     // Encoding: 0x0EC0141E
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Q=0, U=0, Rn=0, Rm=0, Rd=30
+    // Fields: Rn=0, Rd=30, Rm=0, Q=0, U=0
     let encoding: u32 = 0x0EC0141E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9882,17 +5951,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rd_30_power
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rd_31_max_1400_0ec0141f() {
     // Encoding: 0x0EC0141F
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rd = 31 (Max)
-    // Fields: U=0, Rm=0, Rn=0, Rd=31, Q=0
+    // Fields: U=0, Q=0, Rd=31, Rn=0, Rm=0
     let encoding: u32 = 0x0EC0141F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -9903,206 +5967,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rd_31_max_1
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_0_1400_0ec01400() {
     // Encoding: 0x0EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, Rm=0, Q=0, Rd=0, U=0
+    // Fields: U=0, Rm=0, Rn=0, Q=0, Rd=0
     let encoding: u32 = 0x0EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_1_1400_4ec01400() {
-    // Encoding: 0x4EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=1, U=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rd=0, Q=1, U=0, Rm=0, Rn=0
-    let encoding: u32 = 0x4EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_2_1400_0ec01400() {
-    // Encoding: 0x0EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, Rm=0, Rn=0, U=0, Rd=0
-    let encoding: u32 = 0x0EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_3_1400_2ec01400() {
-    // Encoding: 0x2EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=1, Rm=0, Rn=0, Rd=0
-    // Fields: U=1, Rn=0, Q=0, Rd=0, Rm=0
-    let encoding: u32 = 0x2EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_4_1400_0ec01400() {
-    // Encoding: 0x0EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, Rn=0, Q=0, Rd=0, Rm=0
-    let encoding: u32 = 0x0EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_5_1400_0ec11400() {
-    // Encoding: 0x0EC11400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=1, Rn=0, Rd=0
-    // Fields: Rd=0, Q=0, Rn=0, U=0, Rm=1
-    let encoding: u32 = 0x0EC11400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_6_1400_0ede1400() {
-    // Encoding: 0x0EDE1400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=30, Rn=0, Rd=0
-    // Fields: Q=0, Rd=0, Rm=30, U=0, Rn=0
-    let encoding: u32 = 0x0EDE1400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=31 (register index 31 (special))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_7_1400_0edf1400() {
-    // Encoding: 0x0EDF1400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=31, Rn=0, Rd=0
-    // Fields: U=0, Rm=31, Q=0, Rn=0, Rd=0
-    let encoding: u32 = 0x0EDF1400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_8_1400_0ec01400() {
-    // Encoding: 0x0EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, Rd=0, U=0, Rm=0, Rn=0
-    let encoding: u32 = 0x0EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_9_1400_0ec01420() {
-    // Encoding: 0x0EC01420
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=0, Rn=1, Rd=0
-    // Fields: Rm=0, Rn=1, Rd=0, Q=0, U=0
-    let encoding: u32 = 0x0EC01420;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -10110,21 +5980,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_9_1400_0ec0
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_q_0_size_variant_0_5120_0ec01400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_q_0_size_variant_0_5120_0ec01400() {
     // Encoding: 0x0EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd special value Q = 0 (Size variant 0)
-    // Fields: Rn=0, Q=0, U=0, Rm=0, Rd=0
+    // Fields: Rd=0, Rn=0, U=0, Q=0, Rm=0
     let encoding: u32 = 0x0EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -10132,21 +5996,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_q_0_size_
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_q_1_size_variant_1_5120_4ec01400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_q_1_size_variant_1_5120_4ec01400() {
     // Encoding: 0x4EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd special value Q = 1 (Size variant 1)
-    // Fields: Q=1, U=0, Rm=0, Rn=0, Rd=0
+    // Fields: Q=1, Rm=0, Rn=0, U=0, Rd=0
     let encoding: u32 = 0x4EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -10154,21 +6012,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_q_1_size_
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_rn_31_stack_pointer_sp_may_require_alignment_5120_0ec017e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_rn_31_stack_pointer_sp_may_require_alignment_5120_0ec017e0() {
     // Encoding: 0x0EC017E0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rn=31, Rd=0, Rm=0, Q=0, U=0
+    // Fields: Q=0, Rd=0, U=0, Rm=0, Rn=31
     let encoding: u32 = 0x0EC017E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -10176,21 +6028,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_rn_31_sta
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_5120_0ec0141f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_5120_0ec0141f() {
     // Encoding: 0x0EC0141F
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rn=0, Q=0, U=0, Rd=31, Rm=0
+    // Fields: Rn=0, Rd=31, Rm=0, Q=0, U=0
     let encoding: u32 = 0x0EC0141F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -10201,16 +6047,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_rd_31_zer
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_invalid_0_1400_0ec01400() {
     // Encoding: 0x0EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveFP16Ext" }, args: [] } }
-    // Fields: U=0, Rd=0, Q=0, Rm=0, Rn=0
+    // Fields: Rn=0, Rm=0, Q=0, U=0, Rd=0
     let encoding: u32 = 0x0EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -10221,16 +6063,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_invalid_0_1400_0e
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_invalid_1_1400_0ec01400() {
     // Encoding: 0x0EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd invalid encoding: Unconditional UNDEFINED
-    // Fields: Q=0, Rn=0, Rm=0, U=0, Rd=0
+    // Fields: Rd=0, Rm=0, U=0, Rn=0, Q=0
     let encoding: u32 = 0x0EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10241,17 +6079,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_invalid_1_1400_0e
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_q_0_min_d400_0ea0d400() {
     // Encoding: 0x0EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Q = 0 (Min)
-    // Fields: Rm=0, Rn=0, Rd=0, sz=0, U=0, Q=0
+    // Fields: Rm=0, Rn=0, Rd=0, U=0, Q=0, sz=0
     let encoding: u32 = 0x0EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10262,17 +6095,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_q_0_min_d400_
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_q_1_max_d400_4ea0d400() {
     // Encoding: 0x4EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Q = 1 (Max)
-    // Fields: U=0, Rm=0, Rn=0, Rd=0, Q=1, sz=0
+    // Fields: U=0, Rm=0, Rn=0, sz=0, Q=1, Rd=0
     let encoding: u32 = 0x4EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10283,17 +6111,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_q_1_max_d400_
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_u_0_min_d400_0ea0d400() {
     // Encoding: 0x0EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field U = 0 (Min)
-    // Fields: Q=0, Rn=0, sz=0, U=0, Rm=0, Rd=0
+    // Fields: U=0, Rd=0, Rn=0, Rm=0, sz=0, Q=0
     let encoding: u32 = 0x0EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10304,17 +6127,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_u_0_min_d400_
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_u_1_max_d400_2ea0d400() {
     // Encoding: 0x2EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field U = 1 (Max)
-    // Fields: U=1, Rm=0, sz=0, Rd=0, Rn=0, Q=0
+    // Fields: U=1, Rm=0, Rn=0, Q=0, sz=0, Rd=0
     let encoding: u32 = 0x2EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10325,17 +6143,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_u_1_max_d400_
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_sz_0_min_d400_0ea0d400() {
     // Encoding: 0x0EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field sz = 0 (Min)
-    // Fields: Rd=0, sz=0, Q=0, Rm=0, U=0, Rn=0
+    // Fields: Rn=0, Rd=0, sz=0, Q=0, U=0, Rm=0
     let encoding: u32 = 0x0EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10346,17 +6159,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_sz_0_min_d400
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_sz_1_max_d400_0ee0d400() {
     // Encoding: 0x0EE0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field sz = 1 (Max)
-    // Fields: Rm=0, U=0, Q=0, sz=1, Rn=0, Rd=0
+    // Fields: sz=1, Q=0, U=0, Rd=0, Rm=0, Rn=0
     let encoding: u32 = 0x0EE0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10367,17 +6175,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_sz_1_max_d400
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rm_0_min_d400_0ea0d400() {
     // Encoding: 0x0EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rm = 0 (Min)
-    // Fields: U=0, Rd=0, Q=0, sz=0, Rm=0, Rn=0
+    // Fields: U=0, Rm=0, sz=0, Q=0, Rd=0, Rn=0
     let encoding: u32 = 0x0EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10388,17 +6191,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rm_0_min_d400
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rm_1_poweroftwo_d400_0ea1d400() {
     // Encoding: 0x0EA1D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rm = 1 (PowerOfTwo)
-    // Fields: U=0, sz=0, Rm=1, Rn=0, Rd=0, Q=0
+    // Fields: Q=0, Rd=0, U=0, Rm=1, sz=0, Rn=0
     let encoding: u32 = 0x0EA1D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10406,21 +6204,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rm_1_poweroft
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rm_30_poweroftwominusone_d400_0ebed400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rm_30_poweroftwominusone_d400_0ebed400() {
     // Encoding: 0x0EBED400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=0, sz=0, Rn=0, Q=0, U=0, Rm=30
+    // Fields: sz=0, Q=0, Rn=0, Rd=0, Rm=30, U=0
     let encoding: u32 = 0x0EBED400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10431,17 +6223,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rm_30_powerof
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rm_31_max_d400_0ebfd400() {
     // Encoding: 0x0EBFD400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rm = 31 (Max)
-    // Fields: Rd=0, Rm=31, Q=0, U=0, sz=0, Rn=0
+    // Fields: U=0, Rd=0, Rn=0, Rm=31, sz=0, Q=0
     let encoding: u32 = 0x0EBFD400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10452,17 +6239,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rm_31_max_d40
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rn_0_min_d400_0ea0d400() {
     // Encoding: 0x0EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rn = 0 (Min)
-    // Fields: Q=0, U=0, Rn=0, Rd=0, sz=0, Rm=0
+    // Fields: Rm=0, U=0, Rn=0, Q=0, Rd=0, sz=0
     let encoding: u32 = 0x0EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10473,17 +6255,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rn_0_min_d400
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rn_1_poweroftwo_d400_0ea0d420() {
     // Encoding: 0x0EA0D420
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rn = 1 (PowerOfTwo)
-    // Fields: Rm=0, Rn=1, Q=0, U=0, sz=0, Rd=0
+    // Fields: Rd=0, Q=0, U=0, Rn=1, sz=0, Rm=0
     let encoding: u32 = 0x0EA0D420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10491,21 +6268,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rn_1_poweroft
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rn_30_poweroftwominusone_d400_0ea0d7c0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rn_30_poweroftwominusone_d400_0ea0d7c0() {
     // Encoding: 0x0EA0D7C0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=0, sz=0, U=0, Q=0, Rm=0, Rn=30
+    // Fields: Q=0, U=0, sz=0, Rn=30, Rd=0, Rm=0
     let encoding: u32 = 0x0EA0D7C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10516,17 +6287,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rn_30_powerof
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rn_31_max_d400_0ea0d7e0() {
     // Encoding: 0x0EA0D7E0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rn = 31 (Max)
-    // Fields: U=0, sz=0, Rm=0, Q=0, Rn=31, Rd=0
+    // Fields: sz=0, Rm=0, Rd=0, Q=0, U=0, Rn=31
     let encoding: u32 = 0x0EA0D7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10537,17 +6303,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rn_31_max_d40
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rd_0_min_d400_0ea0d400() {
     // Encoding: 0x0EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rd = 0 (Min)
-    // Fields: Rm=0, U=0, Q=0, Rn=0, Rd=0, sz=0
+    // Fields: Q=0, Rm=0, Rn=0, U=0, sz=0, Rd=0
     let encoding: u32 = 0x0EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10558,17 +6319,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rd_0_min_d400
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rd_1_poweroftwo_d400_0ea0d401() {
     // Encoding: 0x0EA0D401
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rd = 1 (PowerOfTwo)
-    // Fields: sz=0, Rm=0, Rn=0, Q=0, U=0, Rd=1
+    // Fields: Rn=0, Rm=0, sz=0, Rd=1, U=0, Q=0
     let encoding: u32 = 0x0EA0D401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10576,21 +6332,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rd_1_poweroft
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rd_30_poweroftwominusone_d400_0ea0d41e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rd_30_poweroftwominusone_d400_0ea0d41e() {
     // Encoding: 0x0EA0D41E
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Q=0, Rm=0, Rd=30, U=0, Rn=0, sz=0
+    // Fields: Rn=0, Rd=30, Q=0, U=0, sz=0, Rm=0
     let encoding: u32 = 0x0EA0D41E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10601,17 +6351,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rd_30_powerof
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rd_31_max_d400_0ea0d41f() {
     // Encoding: 0x0EA0D41F
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rd = 31 (Max)
-    // Fields: Rn=0, Rd=31, Q=0, sz=0, U=0, Rm=0
+    // Fields: sz=0, U=0, Q=0, Rm=0, Rn=0, Rd=31
     let encoding: u32 = 0x0EA0D41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10622,206 +6367,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rd_31_max_d40
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_0_d400_0ea0d400() {
     // Encoding: 0x0EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, sz=0, Rd=0, Q=0, U=0, Rm=0
+    // Fields: Rn=0, Rm=0, Rd=0, U=0, Q=0, sz=0
     let encoding: u32 = 0x0EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_1_d400_4ea0d400() {
-    // Encoding: 0x4EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=1, U=0, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, Rm=0, sz=0, U=0, Rd=0, Q=1
-    let encoding: u32 = 0x4EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_2_d400_0ea0d400() {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, U=0, Rd=0, Rn=0, Rm=0, sz=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_3_d400_2ea0d400() {
-    // Encoding: 0x2EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=1, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, Rn=0, Q=0, U=1, sz=0, Rd=0
-    let encoding: u32 = 0x2EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// sz=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_4_d400_0ea0d400() {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rd=0, sz=0, Q=0, U=0, Rm=0, Rn=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// sz=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_5_d400_0ee0d400() {
-    // Encoding: 0x0EE0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=1, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, Rm=0, Rn=0, U=0, sz=1, Rd=0
-    let encoding: u32 = 0x0EE0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_6_d400_0ea0d400() {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rd=0, Rm=0, sz=0, Q=0, Rn=0, U=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_7_d400_0ea1d400() {
-    // Encoding: 0x0EA1D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=0, Rm=1, Rn=0, Rd=0
-    // Fields: sz=0, U=0, Rd=0, Q=0, Rm=1, Rn=0
-    let encoding: u32 = 0x0EA1D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_8_d400_0ebed400() {
-    // Encoding: 0x0EBED400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=0, Rm=30, Rn=0, Rd=0
-    // Fields: Q=0, U=0, Rm=30, sz=0, Rn=0, Rd=0
-    let encoding: u32 = 0x0EBED400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=31 (register index 31 (special))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_9_d400_0ebfd400() {
-    // Encoding: 0x0EBFD400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=0, Rm=31, Rn=0, Rd=0
-    // Fields: Rd=0, U=0, Rm=31, sz=0, Q=0, Rn=0
-    let encoding: u32 = 0x0EBFD400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10829,21 +6380,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_9_d400_0ebfd4
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_q_0_size_variant_0_54272_0ea0d400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_q_0_size_variant_0_54272_0ea0d400() {
     // Encoding: 0x0EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd special value Q = 0 (Size variant 0)
-    // Fields: Q=0, Rm=0, sz=0, U=0, Rd=0, Rn=0
+    // Fields: Rn=0, U=0, sz=0, Rd=0, Q=0, Rm=0
     let encoding: u32 = 0x0EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10851,21 +6396,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_q_0_size_va
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_q_1_size_variant_1_54272_4ea0d400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_q_1_size_variant_1_54272_4ea0d400() {
     // Encoding: 0x4EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd special value Q = 1 (Size variant 1)
-    // Fields: Rn=0, Rd=0, Q=1, U=0, sz=0, Rm=0
+    // Fields: sz=0, Rd=0, Rm=0, U=0, Q=1, Rn=0
     let encoding: u32 = 0x4EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10873,21 +6412,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_q_1_size_va
 /// Requirement: FieldSpecial { field: "sz", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_sz_0_size_variant_0_54272_0ea0d400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_sz_0_size_variant_0_54272_0ea0d400() {
     // Encoding: 0x0EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd special value sz = 0 (Size variant 0)
-    // Fields: Q=0, Rm=0, Rn=0, Rd=0, sz=0, U=0
+    // Fields: Rn=0, sz=0, Rm=0, U=0, Rd=0, Q=0
     let encoding: u32 = 0x0EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10895,21 +6428,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_sz_0_size_v
 /// Requirement: FieldSpecial { field: "sz", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_sz_1_size_variant_1_54272_0ee0d400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_sz_1_size_variant_1_54272_0ee0d400() {
     // Encoding: 0x0EE0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd special value sz = 1 (Size variant 1)
-    // Fields: Rd=0, U=0, Rn=0, Rm=0, Q=0, sz=1
+    // Fields: Q=0, Rm=0, sz=1, U=0, Rd=0, Rn=0
     let encoding: u32 = 0x0EE0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10917,21 +6444,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_sz_1_size_v
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_rn_31_stack_pointer_sp_may_require_alignment_54272_0ea0d7e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_rn_31_stack_pointer_sp_may_require_alignment_54272_0ea0d7e0() {
     // Encoding: 0x0EA0D7E0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rd=0, sz=0, Q=0, U=0, Rm=0, Rn=31
+    // Fields: Rd=0, U=0, sz=0, Rm=0, Rn=31, Q=0
     let encoding: u32 = 0x0EA0D7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10939,21 +6460,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_rn_31_stack
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_54272_0ea0d41f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_54272_0ea0d41f() {
     // Encoding: 0x0EA0D41F
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: U=0, Rd=31, Rm=0, Rn=0, sz=0, Q=0
+    // Fields: Rm=0, Q=0, sz=0, Rn=0, U=0, Rd=31
     let encoding: u32 = 0x0EA0D41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10964,16 +6479,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_rd_31_zero_
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_invalid_0_d400_0ea0d400() {
     // Encoding: 0x0EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd invalid encoding: Binary { op: BitConcat, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "sz" }), rhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "Q" }), rhs: LitBits([true, false]) } }
-    // Fields: U=0, Rm=0, Rd=0, Q=0, sz=0, Rn=0
+    // Fields: Q=0, Rd=0, U=0, Rn=0, sz=0, Rm=0
     let encoding: u32 = 0x0EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
@@ -10984,16 +6495,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_invalid_0_d400_0ea0
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_invalid_1_d400_0ea0d400() {
     // Encoding: 0x0EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd invalid encoding: Unconditional UNDEFINED
-    // Fields: Q=0, U=0, Rn=0, Rd=0, Rm=0, sz=0
+    // Fields: U=0, Rm=0, Rd=0, Rn=0, Q=0, sz=0
     let encoding: u32 = 0x0EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
@@ -11100,17 +6607,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_zr_rd_0ea0d41f() {
 fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_u_0_min_3800_5e203800() {
     // Encoding: 0x5E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field U = 0 (Min)
-    // Fields: U=0, Rd=0, Rn=0, size=0
+    // Fields: size=0, U=0, Rd=0, Rn=0
     let encoding: u32 = 0x5E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11121,17 +6623,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_u_0_min_3800_5
 fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_u_1_max_3800_7e203800() {
     // Encoding: 0x7E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field U = 1 (Max)
-    // Fields: Rd=0, Rn=0, size=0, U=1
+    // Fields: Rd=0, size=0, Rn=0, U=1
     let encoding: u32 = 0x7E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11142,17 +6639,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_u_1_max_3800_7
 fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_size_0_min_3800_5e203800() {
     // Encoding: 0x5E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field size = 0 (Min)
-    // Fields: size=0, Rn=0, U=0, Rd=0
+    // Fields: size=0, Rn=0, Rd=0, U=0
     let encoding: u32 = 0x5E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11160,21 +6652,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_size_0_min_380
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_size_1_poweroftwo_3800_5e603800()
-{
+fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_size_1_poweroftwo_3800_5e603800() {
     // Encoding: 0x5E603800
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field size = 1 (PowerOfTwo)
-    // Fields: U=0, Rd=0, size=1, Rn=0
+    // Fields: size=1, Rd=0, Rn=0, U=0
     let encoding: u32 = 0x5E603800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11182,21 +6668,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_size_1_powerof
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_size_2_poweroftwo_3800_5ea03800()
-{
+fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_size_2_poweroftwo_3800_5ea03800() {
     // Encoding: 0x5EA03800
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field size = 2 (PowerOfTwo)
-    // Fields: Rd=0, U=0, size=2, Rn=0
+    // Fields: U=0, size=2, Rd=0, Rn=0
     let encoding: u32 = 0x5EA03800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11207,17 +6687,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_size_2_powerof
 fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_size_3_max_3800_5ee03800() {
     // Encoding: 0x5EE03800
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field size = 3 (Max)
-    // Fields: size=3, U=0, Rn=0, Rd=0
+    // Fields: Rn=0, U=0, size=3, Rd=0
     let encoding: u32 = 0x5EE03800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11228,17 +6703,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_size_3_max_380
 fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rn_0_min_3800_5e203800() {
     // Encoding: 0x5E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field Rn = 0 (Min)
-    // Fields: Rn=0, size=0, Rd=0, U=0
+    // Fields: Rn=0, Rd=0, U=0, size=0
     let encoding: u32 = 0x5E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11249,17 +6719,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rn_0_min_3800_
 fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rn_1_poweroftwo_3800_5e203820() {
     // Encoding: 0x5E203820
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field Rn = 1 (PowerOfTwo)
-    // Fields: Rn=1, size=0, Rd=0, U=0
+    // Fields: Rd=0, U=0, Rn=1, size=0
     let encoding: u32 = 0x5E203820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11267,21 +6732,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rn_1_poweroftw
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rn_30_poweroftwominusone_3800_5e203bc0(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rn_30_poweroftwominusone_3800_5e203bc0() {
     // Encoding: 0x5E203BC0
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, U=0, Rd=0, Rn=30
+    // Fields: U=0, Rn=30, size=0, Rd=0
     let encoding: u32 = 0x5E203BC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11292,17 +6751,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rn_30_poweroft
 fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rn_31_max_3800_5e203be0() {
     // Encoding: 0x5E203BE0
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field Rn = 31 (Max)
-    // Fields: Rn=31, U=0, size=0, Rd=0
+    // Fields: Rn=31, size=0, Rd=0, U=0
     let encoding: u32 = 0x5E203BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11313,17 +6767,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rn_31_max_3800
 fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rd_0_min_3800_5e203800() {
     // Encoding: 0x5E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field Rd = 0 (Min)
-    // Fields: size=0, Rd=0, U=0, Rn=0
+    // Fields: Rd=0, U=0, Rn=0, size=0
     let encoding: u32 = 0x5E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11334,17 +6783,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rd_0_min_3800_
 fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rd_1_poweroftwo_3800_5e203801() {
     // Encoding: 0x5E203801
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field Rd = 1 (PowerOfTwo)
-    // Fields: Rn=0, Rd=1, size=0, U=0
+    // Fields: U=0, Rn=0, size=0, Rd=1
     let encoding: u32 = 0x5E203801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11352,21 +6796,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rd_1_poweroftw
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rd_30_poweroftwominusone_3800_5e20381e(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rd_30_poweroftwominusone_3800_5e20381e() {
     // Encoding: 0x5E20381E
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, size=0, U=0, Rd=30
+    // Fields: U=0, size=0, Rd=30, Rn=0
     let encoding: u32 = 0x5E20381E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11377,17 +6815,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rd_30_poweroft
 fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rd_31_max_3800_5e20381f() {
     // Encoding: 0x5E20381F
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field Rd = 31 (Max)
-    // Fields: U=0, Rn=0, size=0, Rd=31
+    // Fields: Rd=31, U=0, Rn=0, size=0
     let encoding: u32 = 0x5E20381F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11398,206 +6831,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_field_rd_31_max_3800
 fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_combo_0_3800_5e203800() {
     // Encoding: 0x5E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field combination: U=0, size=0, Rn=0, Rd=0
-    // Fields: size=0, U=0, Rn=0, Rd=0
+    // Fields: Rn=0, U=0, size=0, Rd=0
     let encoding: u32 = 0x5E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_combo_1_3800_7e203800() {
-    // Encoding: 0x7E203800
-    // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field combination: U=1, size=0, Rn=0, Rd=0
-    // Fields: size=0, U=1, Rn=0, Rd=0
-    let encoding: u32 = 0x7E203800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_combo_2_3800_5e203800() {
-    // Encoding: 0x5E203800
-    // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field combination: U=0, size=0, Rn=0, Rd=0
-    // Fields: size=0, Rn=0, Rd=0, U=0
-    let encoding: u32 = 0x5E203800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_combo_3_3800_5e603800() {
-    // Encoding: 0x5E603800
-    // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field combination: U=0, size=1, Rn=0, Rd=0
-    // Fields: size=1, U=0, Rn=0, Rd=0
-    let encoding: u32 = 0x5E603800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_combo_4_3800_5ea03800() {
-    // Encoding: 0x5EA03800
-    // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field combination: U=0, size=2, Rn=0, Rd=0
-    // Fields: size=2, Rn=0, U=0, Rd=0
-    let encoding: u32 = 0x5EA03800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_combo_5_3800_5ee03800() {
-    // Encoding: 0x5EE03800
-    // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field combination: U=0, size=3, Rn=0, Rd=0
-    // Fields: size=3, Rn=0, U=0, Rd=0
-    let encoding: u32 = 0x5EE03800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_combo_6_3800_5e203800() {
-    // Encoding: 0x5E203800
-    // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field combination: U=0, size=0, Rn=0, Rd=0
-    // Fields: size=0, Rn=0, Rd=0, U=0
-    let encoding: u32 = 0x5E203800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_combo_7_3800_5e203820() {
-    // Encoding: 0x5E203820
-    // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field combination: U=0, size=0, Rn=1, Rd=0
-    // Fields: U=0, Rd=0, Rn=1, size=0
-    let encoding: u32 = 0x5E203820;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_combo_8_3800_5e203bc0() {
-    // Encoding: 0x5E203BC0
-    // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field combination: U=0, size=0, Rn=30, Rd=0
-    // Fields: size=0, U=0, Rd=0, Rn=30
-    let encoding: u32 = 0x5E203BC0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=31 (register index 31 (SP - stack pointer))
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_combo_9_3800_5e203be0() {
-    // Encoding: 0x5E203BE0
-    // Test aarch64_vector_arithmetic_unary_add_saturating_sisd field combination: U=0, size=0, Rn=31, Rd=0
-    // Fields: Rn=31, U=0, size=0, Rd=0
-    let encoding: u32 = 0x5E203BE0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11605,21 +6844,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_combo_9_3800_5e203be
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_size_0_size_variant_0_14336_5e203800(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_size_0_size_variant_0_14336_5e203800() {
     // Encoding: 0x5E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd special value size = 0 (Size variant 0)
-    // Fields: U=0, size=0, Rn=0, Rd=0
+    // Fields: size=0, Rn=0, U=0, Rd=0
     let encoding: u32 = 0x5E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11627,21 +6860,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_size_0_size_
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_size_1_size_variant_1_14336_5e603800(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_size_1_size_variant_1_14336_5e603800() {
     // Encoding: 0x5E603800
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd special value size = 1 (Size variant 1)
-    // Fields: U=0, size=1, Rn=0, Rd=0
+    // Fields: Rn=0, size=1, U=0, Rd=0
     let encoding: u32 = 0x5E603800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11649,21 +6876,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_size_1_size_
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_size_2_size_variant_2_14336_5ea03800(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_size_2_size_variant_2_14336_5ea03800() {
     // Encoding: 0x5EA03800
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd special value size = 2 (Size variant 2)
-    // Fields: Rn=0, Rd=0, size=2, U=0
+    // Fields: size=2, Rd=0, Rn=0, U=0
     let encoding: u32 = 0x5EA03800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11671,21 +6892,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_size_2_size_
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_size_3_size_variant_3_14336_5ee03800(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_size_3_size_variant_3_14336_5ee03800() {
     // Encoding: 0x5EE03800
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd special value size = 3 (Size variant 3)
-    // Fields: Rn=0, size=3, U=0, Rd=0
+    // Fields: Rd=0, U=0, Rn=0, size=3
     let encoding: u32 = 0x5EE03800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11693,21 +6908,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_size_3_size_
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_14336_5e203be0(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_14336_5e203be0() {
     // Encoding: 0x5E203BE0
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: U=0, size=0, Rd=0, Rn=31
+    // Fields: size=0, Rn=31, Rd=0, U=0
     let encoding: u32 = 0x5E203BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -11715,21 +6924,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_rn_31_stack_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_14336_5e20381f(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_14336_5e20381f() {
     // Encoding: 0x5E20381F
     // Test aarch64_vector_arithmetic_unary_add_saturating_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: U=0, Rn=0, size=0, Rd=31
+    // Fields: U=0, Rd=31, size=0, Rn=0
     let encoding: u32 = 0x5E20381F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -11740,17 +6943,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_sisd_special_rd_31_zero_r
 fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_q_0_min_3800_0e203800() {
     // Encoding: 0x0E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field Q = 0 (Min)
-    // Fields: Q=0, U=0, size=0, Rd=0, Rn=0
+    // Fields: U=0, Q=0, Rn=0, size=0, Rd=0
     let encoding: u32 = 0x0E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -11761,17 +6959,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_q_0_min_3800_0
 fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_q_1_max_3800_4e203800() {
     // Encoding: 0x4E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field Q = 1 (Max)
-    // Fields: U=0, size=0, Rn=0, Q=1, Rd=0
+    // Fields: Q=1, U=0, Rn=0, Rd=0, size=0
     let encoding: u32 = 0x4E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -11782,17 +6975,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_q_1_max_3800_4
 fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_u_0_min_3800_0e203800() {
     // Encoding: 0x0E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field U = 0 (Min)
-    // Fields: size=0, Q=0, U=0, Rn=0, Rd=0
+    // Fields: Rd=0, Q=0, Rn=0, U=0, size=0
     let encoding: u32 = 0x0E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -11803,17 +6991,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_u_0_min_3800_0
 fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_u_1_max_3800_2e203800() {
     // Encoding: 0x2E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field U = 1 (Max)
-    // Fields: Rn=0, U=1, Q=0, Rd=0, size=0
+    // Fields: Rd=0, Q=0, size=0, U=1, Rn=0
     let encoding: u32 = 0x2E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -11824,17 +7007,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_u_1_max_3800_2
 fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_size_0_min_3800_0e203800() {
     // Encoding: 0x0E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field size = 0 (Min)
-    // Fields: Rd=0, size=0, U=0, Rn=0, Q=0
+    // Fields: size=0, U=0, Rn=0, Rd=0, Q=0
     let encoding: u32 = 0x0E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -11842,21 +7020,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_size_0_min_380
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_size_1_poweroftwo_3800_0e603800()
-{
+fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_size_1_poweroftwo_3800_0e603800() {
     // Encoding: 0x0E603800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field size = 1 (PowerOfTwo)
-    // Fields: U=0, Rd=0, Rn=0, Q=0, size=1
+    // Fields: Q=0, Rn=0, Rd=0, size=1, U=0
     let encoding: u32 = 0x0E603800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -11864,21 +7036,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_size_1_powerof
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_size_2_poweroftwo_3800_0ea03800()
-{
+fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_size_2_poweroftwo_3800_0ea03800() {
     // Encoding: 0x0EA03800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field size = 2 (PowerOfTwo)
-    // Fields: U=0, size=2, Q=0, Rd=0, Rn=0
+    // Fields: U=0, Rd=0, Q=0, Rn=0, size=2
     let encoding: u32 = 0x0EA03800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -11889,17 +7055,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_size_2_powerof
 fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_size_3_max_3800_0ee03800() {
     // Encoding: 0x0EE03800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field size = 3 (Max)
-    // Fields: size=3, Q=0, Rn=0, U=0, Rd=0
+    // Fields: Rn=0, Rd=0, size=3, Q=0, U=0
     let encoding: u32 = 0x0EE03800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -11910,17 +7071,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_size_3_max_380
 fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rn_0_min_3800_0e203800() {
     // Encoding: 0x0E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field Rn = 0 (Min)
-    // Fields: Q=0, size=0, Rd=0, Rn=0, U=0
+    // Fields: Rd=0, Q=0, size=0, Rn=0, U=0
     let encoding: u32 = 0x0E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -11931,17 +7087,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rn_0_min_3800_
 fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rn_1_poweroftwo_3800_0e203820() {
     // Encoding: 0x0E203820
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field Rn = 1 (PowerOfTwo)
-    // Fields: Rn=1, Q=0, size=0, U=0, Rd=0
+    // Fields: U=0, Q=0, size=0, Rn=1, Rd=0
     let encoding: u32 = 0x0E203820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -11949,21 +7100,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rn_1_poweroftw
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rn_30_poweroftwominusone_3800_0e203bc0(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rn_30_poweroftwominusone_3800_0e203bc0() {
     // Encoding: 0x0E203BC0
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: U=0, size=0, Rn=30, Q=0, Rd=0
+    // Fields: size=0, Q=0, Rn=30, Rd=0, U=0
     let encoding: u32 = 0x0E203BC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -11974,17 +7119,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rn_30_poweroft
 fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rn_31_max_3800_0e203be0() {
     // Encoding: 0x0E203BE0
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field Rn = 31 (Max)
-    // Fields: size=0, Rn=31, Rd=0, U=0, Q=0
+    // Fields: U=0, size=0, Q=0, Rn=31, Rd=0
     let encoding: u32 = 0x0E203BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -11995,17 +7135,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rn_31_max_3800
 fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rd_0_min_3800_0e203800() {
     // Encoding: 0x0E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field Rd = 0 (Min)
-    // Fields: Q=0, U=0, Rn=0, Rd=0, size=0
+    // Fields: size=0, Rd=0, Rn=0, Q=0, U=0
     let encoding: u32 = 0x0E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -12016,17 +7151,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rd_0_min_3800_
 fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rd_1_poweroftwo_3800_0e203801() {
     // Encoding: 0x0E203801
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field Rd = 1 (PowerOfTwo)
-    // Fields: Q=0, size=0, Rn=0, Rd=1, U=0
+    // Fields: size=0, Q=0, U=0, Rn=0, Rd=1
     let encoding: u32 = 0x0E203801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -12034,21 +7164,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rd_1_poweroftw
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rd_30_poweroftwominusone_3800_0e20381e(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rd_30_poweroftwominusone_3800_0e20381e() {
     // Encoding: 0x0E20381E
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rd=30, U=0, Q=0, Rn=0
+    // Fields: Q=0, U=0, size=0, Rn=0, Rd=30
     let encoding: u32 = 0x0E20381E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -12059,17 +7183,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rd_30_poweroft
 fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rd_31_max_3800_0e20381f() {
     // Encoding: 0x0E20381F
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field Rd = 31 (Max)
-    // Fields: Q=0, U=0, size=0, Rd=31, Rn=0
+    // Fields: size=0, Rn=0, U=0, Q=0, Rd=31
     let encoding: u32 = 0x0E20381F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -12080,206 +7199,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_field_rd_31_max_3800
 fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_combo_0_3800_0e203800() {
     // Encoding: 0x0E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd field combination: Q=0, U=0, size=0, Rn=0, Rd=0
-    // Fields: Rd=0, Rn=0, U=0, size=0, Q=0
+    // Fields: Q=0, size=0, Rn=0, Rd=0, U=0
     let encoding: u32 = 0x0E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_combo_1_3800_4e203800() {
-    // Encoding: 0x4E203800
-    // Test aarch64_vector_arithmetic_unary_add_saturating_simd field combination: Q=1, U=0, size=0, Rn=0, Rd=0
-    // Fields: Rd=0, U=0, Rn=0, Q=1, size=0
-    let encoding: u32 = 0x4E203800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_combo_2_3800_0e203800() {
-    // Encoding: 0x0E203800
-    // Test aarch64_vector_arithmetic_unary_add_saturating_simd field combination: Q=0, U=0, size=0, Rn=0, Rd=0
-    // Fields: size=0, Rd=0, Rn=0, U=0, Q=0
-    let encoding: u32 = 0x0E203800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_combo_3_3800_2e203800() {
-    // Encoding: 0x2E203800
-    // Test aarch64_vector_arithmetic_unary_add_saturating_simd field combination: Q=0, U=1, size=0, Rn=0, Rd=0
-    // Fields: Rd=0, U=1, size=0, Rn=0, Q=0
-    let encoding: u32 = 0x2E203800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_combo_4_3800_0e203800() {
-    // Encoding: 0x0E203800
-    // Test aarch64_vector_arithmetic_unary_add_saturating_simd field combination: Q=0, U=0, size=0, Rn=0, Rd=0
-    // Fields: Rd=0, size=0, Rn=0, U=0, Q=0
-    let encoding: u32 = 0x0E203800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_combo_5_3800_0e603800() {
-    // Encoding: 0x0E603800
-    // Test aarch64_vector_arithmetic_unary_add_saturating_simd field combination: Q=0, U=0, size=1, Rn=0, Rd=0
-    // Fields: Rd=0, Rn=0, U=0, size=1, Q=0
-    let encoding: u32 = 0x0E603800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_combo_6_3800_0ea03800() {
-    // Encoding: 0x0EA03800
-    // Test aarch64_vector_arithmetic_unary_add_saturating_simd field combination: Q=0, U=0, size=2, Rn=0, Rd=0
-    // Fields: Rd=0, U=0, Q=0, Rn=0, size=2
-    let encoding: u32 = 0x0EA03800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_combo_7_3800_0ee03800() {
-    // Encoding: 0x0EE03800
-    // Test aarch64_vector_arithmetic_unary_add_saturating_simd field combination: Q=0, U=0, size=3, Rn=0, Rd=0
-    // Fields: size=3, Rn=0, Rd=0, Q=0, U=0
-    let encoding: u32 = 0x0EE03800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_combo_8_3800_0e203800() {
-    // Encoding: 0x0E203800
-    // Test aarch64_vector_arithmetic_unary_add_saturating_simd field combination: Q=0, U=0, size=0, Rn=0, Rd=0
-    // Fields: Q=0, Rd=0, size=0, Rn=0, U=0
-    let encoding: u32 = 0x0E203800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_combo_9_3800_0e203820() {
-    // Encoding: 0x0E203820
-    // Test aarch64_vector_arithmetic_unary_add_saturating_simd field combination: Q=0, U=0, size=0, Rn=1, Rd=0
-    // Fields: U=0, Q=0, size=0, Rd=0, Rn=1
-    let encoding: u32 = 0x0E203820;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -12287,21 +7212,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_combo_9_3800_0e20382
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_q_0_size_variant_0_14336_0e203800(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_q_0_size_variant_0_14336_0e203800() {
     // Encoding: 0x0E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd special value Q = 0 (Size variant 0)
-    // Fields: Rn=0, Rd=0, U=0, Q=0, size=0
+    // Fields: Q=0, size=0, Rn=0, Rd=0, U=0
     let encoding: u32 = 0x0E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -12309,21 +7228,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_q_0_size_var
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_q_1_size_variant_1_14336_4e203800(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_q_1_size_variant_1_14336_4e203800() {
     // Encoding: 0x4E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd special value Q = 1 (Size variant 1)
-    // Fields: Rd=0, size=0, Q=1, U=0, Rn=0
+    // Fields: U=0, Q=1, Rn=0, Rd=0, size=0
     let encoding: u32 = 0x4E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -12331,21 +7244,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_q_1_size_var
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_size_0_size_variant_0_14336_0e203800(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_size_0_size_variant_0_14336_0e203800() {
     // Encoding: 0x0E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd special value size = 0 (Size variant 0)
-    // Fields: Q=0, U=0, size=0, Rn=0, Rd=0
+    // Fields: size=0, Rn=0, U=0, Rd=0, Q=0
     let encoding: u32 = 0x0E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -12353,21 +7260,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_size_0_size_
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_size_1_size_variant_1_14336_0e603800(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_size_1_size_variant_1_14336_0e603800() {
     // Encoding: 0x0E603800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd special value size = 1 (Size variant 1)
-    // Fields: Rn=0, Q=0, size=1, U=0, Rd=0
+    // Fields: Rn=0, Rd=0, U=0, Q=0, size=1
     let encoding: u32 = 0x0E603800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -12375,21 +7276,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_size_1_size_
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_size_2_size_variant_2_14336_0ea03800(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_size_2_size_variant_2_14336_0ea03800() {
     // Encoding: 0x0EA03800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd special value size = 2 (Size variant 2)
-    // Fields: size=2, Rn=0, U=0, Rd=0, Q=0
+    // Fields: Rn=0, U=0, Rd=0, Q=0, size=2
     let encoding: u32 = 0x0EA03800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -12397,21 +7292,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_size_2_size_
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_size_3_size_variant_3_14336_0ee03800(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_size_3_size_variant_3_14336_0ee03800() {
     // Encoding: 0x0EE03800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd special value size = 3 (Size variant 3)
-    // Fields: Rn=0, size=3, Q=0, U=0, Rd=0
+    // Fields: Q=0, Rd=0, Rn=0, size=3, U=0
     let encoding: u32 = 0x0EE03800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -12419,21 +7308,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_size_3_size_
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_rn_31_stack_pointer_sp_may_require_alignment_14336_0e203be0(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_rn_31_stack_pointer_sp_may_require_alignment_14336_0e203be0() {
     // Encoding: 0x0E203BE0
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: U=0, Rn=31, Q=0, Rd=0, size=0
+    // Fields: U=0, Rd=0, Q=0, size=0, Rn=31
     let encoding: u32 = 0x0E203BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -12441,21 +7324,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_rn_31_stack_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_14336_0e20381f(
-) {
+fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_14336_0e20381f() {
     // Encoding: 0x0E20381F
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rn=0, Rd=31, U=0, Q=0, size=0
+    // Fields: Q=0, U=0, Rn=0, Rd=31, size=0
     let encoding: u32 = 0x0E20381F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -12466,16 +7343,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_special_rd_31_zero_r
 fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_invalid_0_3800_0e203800() {
     // Encoding: 0x0E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd invalid encoding: Binary { op: BitConcat, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "Q" }), rhs: LitBits([true, true, false]) } }
-    // Fields: Q=0, size=0, Rn=0, Rd=0, U=0
+    // Fields: size=0, Q=0, Rd=0, Rn=0, U=0
     let encoding: u32 = 0x0E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_simd
@@ -12486,16 +7359,12 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_invalid_0_3800_0e203
 fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_invalid_1_3800_0e203800() {
     // Encoding: 0x0E203800
     // Test aarch64_vector_arithmetic_unary_add_saturating_simd invalid encoding: Unconditional UNDEFINED
-    // Fields: U=0, Rd=0, Q=0, size=0, Rn=0
+    // Fields: U=0, Q=0, Rn=0, Rd=0, size=0
     let encoding: u32 = 0x0E203800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_unary_add_saturating_sisd
@@ -12599,21 +7468,15 @@ fn test_aarch64_vector_arithmetic_unary_add_saturating_simd_zr_rd_0e20381f() {
 /// Requirement: FieldBoundary { field: "Q", value: 0, boundary: Min }
 /// 8-bit / byte size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_q_0_min_1400_0e201400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_q_0_min_1400_0e201400() {
     // Encoding: 0x0E201400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field Q = 0 (Min)
-    // Fields: size=0, Rm=0, U=0, Rn=0, Rd=0, Q=0
+    // Fields: Q=0, size=0, U=0, Rm=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12621,21 +7484,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_q_0_
 /// Requirement: FieldBoundary { field: "Q", value: 1, boundary: Max }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_q_1_max_1400_4e201400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_q_1_max_1400_4e201400() {
     // Encoding: 0x4E201400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field Q = 1 (Max)
-    // Fields: Rm=0, Rn=0, Q=1, U=0, size=0, Rd=0
+    // Fields: Q=1, size=0, U=0, Rd=0, Rm=0, Rn=0
     let encoding: u32 = 0x4E201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12643,21 +7500,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_q_1_
 /// Requirement: FieldBoundary { field: "U", value: 0, boundary: Min }
 /// minimum value
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_u_0_min_1400_0e201400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_u_0_min_1400_0e201400() {
     // Encoding: 0x0E201400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field U = 0 (Min)
-    // Fields: Q=0, size=0, Rm=0, Rn=0, U=0, Rd=0
+    // Fields: Q=0, U=0, Rd=0, Rn=0, size=0, Rm=0
     let encoding: u32 = 0x0E201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12665,21 +7516,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_u_0_
 /// Requirement: FieldBoundary { field: "U", value: 1, boundary: Max }
 /// maximum value (1)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_u_1_max_1400_2e201400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_u_1_max_1400_2e201400() {
     // Encoding: 0x2E201400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field U = 1 (Max)
-    // Fields: Rn=0, Q=0, size=0, Rd=0, U=1, Rm=0
+    // Fields: Q=0, U=1, Rm=0, Rn=0, Rd=0, size=0
     let encoding: u32 = 0x2E201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12687,21 +7532,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_u_1_
 /// Requirement: FieldBoundary { field: "size", value: 0, boundary: Min }
 /// 8-bit / byte size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_size_0_min_1400_0e201400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_size_0_min_1400_0e201400() {
     // Encoding: 0x0E201400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field size = 0 (Min)
-    // Fields: Rm=0, size=0, Rn=0, U=0, Rd=0, Q=0
+    // Fields: size=0, Rm=0, U=0, Rn=0, Rd=0, Q=0
     let encoding: u32 = 0x0E201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12709,21 +7548,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_size
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_size_1_poweroftwo_1400_0e601400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_size_1_poweroftwo_1400_0e601400() {
     // Encoding: 0x0E601400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field size = 1 (PowerOfTwo)
-    // Fields: Rd=0, U=0, Q=0, Rn=0, size=1, Rm=0
+    // Fields: size=1, Rn=0, Rd=0, Q=0, U=0, Rm=0
     let encoding: u32 = 0x0E601400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12731,21 +7564,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_size
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_size_2_poweroftwo_1400_0ea01400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_size_2_poweroftwo_1400_0ea01400() {
     // Encoding: 0x0EA01400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field size = 2 (PowerOfTwo)
-    // Fields: Rn=0, Rd=0, Rm=0, Q=0, size=2, U=0
+    // Fields: Q=0, Rn=0, Rd=0, U=0, size=2, Rm=0
     let encoding: u32 = 0x0EA01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12753,21 +7580,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_size
 /// Requirement: FieldBoundary { field: "size", value: 3, boundary: Max }
 /// 64-bit / doubleword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_size_3_max_1400_0ee01400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_size_3_max_1400_0ee01400() {
     // Encoding: 0x0EE01400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field size = 3 (Max)
-    // Fields: U=0, Q=0, Rm=0, Rd=0, Rn=0, size=3
+    // Fields: Q=0, U=0, size=3, Rm=0, Rn=0, Rd=0
     let encoding: u32 = 0x0EE01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12775,21 +7596,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_size
 /// Requirement: FieldBoundary { field: "Rm", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rm_0_min_1400_0e201400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rm_0_min_1400_0e201400() {
     // Encoding: 0x0E201400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field Rm = 0 (Min)
-    // Fields: Rn=0, Rm=0, Rd=0, U=0, size=0, Q=0
+    // Fields: Rd=0, size=0, U=0, Rm=0, Rn=0, Q=0
     let encoding: u32 = 0x0E201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12797,21 +7612,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rm_0
 /// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rm_1_poweroftwo_1400_0e211400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rm_1_poweroftwo_1400_0e211400() {
     // Encoding: 0x0E211400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field Rm = 1 (PowerOfTwo)
-    // Fields: Rd=0, U=0, Q=0, Rn=0, size=0, Rm=1
+    // Fields: Q=0, U=0, Rm=1, Rn=0, Rd=0, size=0
     let encoding: u32 = 0x0E211400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12819,21 +7628,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rm_1
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rm_30_poweroftwominusone_1400_0e3e1400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rm_30_poweroftwominusone_1400_0e3e1400() {
     // Encoding: 0x0E3E1400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Q=0, size=0, Rm=30, Rn=0, Rd=0, U=0
+    // Fields: U=0, Q=0, Rm=30, Rn=0, Rd=0, size=0
     let encoding: u32 = 0x0E3E1400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12841,21 +7644,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rm_3
 /// Requirement: FieldBoundary { field: "Rm", value: 31, boundary: Max }
 /// register index 31 (special)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rm_31_max_1400_0e3f1400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rm_31_max_1400_0e3f1400() {
     // Encoding: 0x0E3F1400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field Rm = 31 (Max)
-    // Fields: size=0, Rn=0, U=0, Rd=0, Rm=31, Q=0
+    // Fields: Rn=0, Rm=31, Q=0, Rd=0, size=0, U=0
     let encoding: u32 = 0x0E3F1400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12863,21 +7660,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rm_3
 /// Requirement: FieldBoundary { field: "Rn", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rn_0_min_1400_0e201400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rn_0_min_1400_0e201400() {
     // Encoding: 0x0E201400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field Rn = 0 (Min)
-    // Fields: Rn=0, Rd=0, Rm=0, Q=0, U=0, size=0
+    // Fields: size=0, Rd=0, Q=0, U=0, Rn=0, Rm=0
     let encoding: u32 = 0x0E201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12885,21 +7676,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rn_0
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rn_1_poweroftwo_1400_0e201420(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rn_1_poweroftwo_1400_0e201420() {
     // Encoding: 0x0E201420
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field Rn = 1 (PowerOfTwo)
-    // Fields: Rn=1, Rd=0, U=0, size=0, Q=0, Rm=0
+    // Fields: Q=0, U=0, size=0, Rd=0, Rm=0, Rn=1
     let encoding: u32 = 0x0E201420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12907,21 +7692,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rn_1
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rn_30_poweroftwominusone_1400_0e2017c0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rn_30_poweroftwominusone_1400_0e2017c0() {
     // Encoding: 0x0E2017C0
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=0, Q=0, U=0, Rd=0, size=0, Rn=30
+    // Fields: Rd=0, size=0, Q=0, U=0, Rm=0, Rn=30
     let encoding: u32 = 0x0E2017C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12929,21 +7708,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rn_3
 /// Requirement: FieldBoundary { field: "Rn", value: 31, boundary: Max }
 /// register index 31 (SP - stack pointer)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rn_31_max_1400_0e2017e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rn_31_max_1400_0e2017e0() {
     // Encoding: 0x0E2017E0
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field Rn = 31 (Max)
-    // Fields: Q=0, Rd=0, Rn=31, U=0, Rm=0, size=0
+    // Fields: Rd=0, size=0, Q=0, U=0, Rn=31, Rm=0
     let encoding: u32 = 0x0E2017E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12951,21 +7724,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rn_3
 /// Requirement: FieldBoundary { field: "Rd", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rd_0_min_1400_0e201400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rd_0_min_1400_0e201400() {
     // Encoding: 0x0E201400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field Rd = 0 (Min)
-    // Fields: size=0, U=0, Rm=0, Rn=0, Q=0, Rd=0
+    // Fields: Rn=0, Q=0, size=0, U=0, Rd=0, Rm=0
     let encoding: u32 = 0x0E201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12973,21 +7740,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rd_0
 /// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rd_1_poweroftwo_1400_0e201401(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rd_1_poweroftwo_1400_0e201401() {
     // Encoding: 0x0E201401
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field Rd = 1 (PowerOfTwo)
-    // Fields: Q=0, U=0, Rm=0, Rn=0, size=0, Rd=1
+    // Fields: Rm=0, Rn=0, Rd=1, Q=0, U=0, size=0
     let encoding: u32 = 0x0E201401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -12995,21 +7756,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rd_1
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rd_30_poweroftwominusone_1400_0e20141e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rd_30_poweroftwominusone_1400_0e20141e() {
     // Encoding: 0x0E20141E
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=30, size=0, Rm=0, Q=0, Rn=0, U=0
+    // Fields: Rn=0, Q=0, Rm=0, U=0, Rd=30, size=0
     let encoding: u32 = 0x0E20141E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -13017,21 +7772,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rd_3
 /// Requirement: FieldBoundary { field: "Rd", value: 31, boundary: Max }
 /// register index 31 (ZR - zero register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rd_31_max_1400_0e20141f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rd_31_max_1400_0e20141f() {
     // Encoding: 0x0E20141F
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field Rd = 31 (Max)
-    // Fields: Rm=0, U=0, Q=0, Rn=0, size=0, Rd=31
+    // Fields: U=0, size=0, Rn=0, Rm=0, Q=0, Rd=31
     let encoding: u32 = 0x0E20141F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -13042,206 +7791,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_field_rd_3
 fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_combo_0_1400_0e201400() {
     // Encoding: 0x0E201400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, size=0, Rm=0, Q=0, Rd=0, Rn=0
+    // Fields: Rd=0, U=0, size=0, Rm=0, Q=0, Rn=0
     let encoding: u32 = 0x0E201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_combo_1_1400_4e201400() {
-    // Encoding: 0x4E201400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field combination: Q=1, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, Q=1, U=0, Rm=0, size=0, Rd=0
-    let encoding: u32 = 0x4E201400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_combo_2_1400_0e201400() {
-    // Encoding: 0x0E201400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, Rm=0, size=0, Rn=0, Rd=0, U=0
-    let encoding: u32 = 0x0E201400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_combo_3_1400_2e201400() {
-    // Encoding: 0x2E201400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field combination: Q=0, U=1, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, U=1, size=0, Rm=0, Rn=0, Rd=0
-    let encoding: u32 = 0x2E201400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_combo_4_1400_0e201400() {
-    // Encoding: 0x0E201400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, Rn=0, U=0, Rd=0, size=0, Q=0
-    let encoding: u32 = 0x0E201400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_combo_5_1400_0e601400() {
-    // Encoding: 0x0E601400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field combination: Q=0, U=0, size=1, Rm=0, Rn=0, Rd=0
-    // Fields: size=1, Q=0, Rm=0, Rn=0, U=0, Rd=0
-    let encoding: u32 = 0x0E601400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_combo_6_1400_0ea01400() {
-    // Encoding: 0x0EA01400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field combination: Q=0, U=0, size=2, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, Rm=0, Rd=0, Rn=0, U=0, size=2
-    let encoding: u32 = 0x0EA01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_combo_7_1400_0ee01400() {
-    // Encoding: 0x0EE01400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field combination: Q=0, U=0, size=3, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, Q=0, Rd=0, U=0, size=3, Rm=0
-    let encoding: u32 = 0x0EE01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_combo_8_1400_0e201400() {
-    // Encoding: 0x0E201400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, Rm=0, Rn=0, Q=0, Rd=0, size=0
-    let encoding: u32 = 0x0E201400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_combo_9_1400_0e211400() {
-    // Encoding: 0x0E211400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding field combination: Q=0, U=0, size=0, Rm=1, Rn=0, Rd=0
-    // Fields: Rn=0, Rd=0, U=0, size=0, Q=0, Rm=1
-    let encoding: u32 = 0x0E211400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -13249,21 +7804,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_combo_9_14
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_q_0_size_variant_0_5120_0e201400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_q_0_size_variant_0_5120_0e201400() {
     // Encoding: 0x0E201400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding special value Q = 0 (Size variant 0)
-    // Fields: Rd=0, Rm=0, Rn=0, Q=0, U=0, size=0
+    // Fields: Rd=0, Q=0, size=0, Rm=0, Rn=0, U=0
     let encoding: u32 = 0x0E201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -13271,21 +7820,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_q_
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_q_1_size_variant_1_5120_4e201400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_q_1_size_variant_1_5120_4e201400() {
     // Encoding: 0x4E201400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding special value Q = 1 (Size variant 1)
-    // Fields: size=0, Rm=0, Q=1, U=0, Rn=0, Rd=0
+    // Fields: size=0, Rm=0, U=0, Rd=0, Rn=0, Q=1
     let encoding: u32 = 0x4E201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -13293,21 +7836,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_q_
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_size_0_size_variant_0_5120_0e201400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_size_0_size_variant_0_5120_0e201400() {
     // Encoding: 0x0E201400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding special value size = 0 (Size variant 0)
-    // Fields: Rd=0, size=0, U=0, Rm=0, Q=0, Rn=0
+    // Fields: size=0, Rm=0, Rn=0, Q=0, U=0, Rd=0
     let encoding: u32 = 0x0E201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -13315,21 +7852,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_si
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_size_1_size_variant_1_5120_0e601400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_size_1_size_variant_1_5120_0e601400() {
     // Encoding: 0x0E601400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding special value size = 1 (Size variant 1)
-    // Fields: Rd=0, Q=0, U=0, size=1, Rm=0, Rn=0
+    // Fields: size=1, Q=0, Rm=0, U=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E601400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -13337,21 +7868,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_si
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_size_2_size_variant_2_5120_0ea01400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_size_2_size_variant_2_5120_0ea01400() {
     // Encoding: 0x0EA01400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding special value size = 2 (Size variant 2)
-    // Fields: Rm=0, Rd=0, Q=0, size=2, U=0, Rn=0
+    // Fields: size=2, Rm=0, Q=0, U=0, Rn=0, Rd=0
     let encoding: u32 = 0x0EA01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -13359,21 +7884,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_si
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_size_3_size_variant_3_5120_0ee01400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_size_3_size_variant_3_5120_0ee01400() {
     // Encoding: 0x0EE01400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding special value size = 3 (Size variant 3)
-    // Fields: U=0, Rd=0, size=3, Rm=0, Q=0, Rn=0
+    // Fields: Rd=0, Q=0, U=0, size=3, Rm=0, Rn=0
     let encoding: u32 = 0x0EE01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -13381,21 +7900,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_si
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_rn_31_stack_pointer_sp_may_require_alignment_5120_0e2017e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_rn_31_stack_pointer_sp_may_require_alignment_5120_0e2017e0() {
     // Encoding: 0x0E2017E0
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Q=0, size=0, U=0, Rd=0, Rm=0, Rn=31
+    // Fields: Q=0, U=0, size=0, Rm=0, Rn=31, Rd=0
     let encoding: u32 = 0x0E2017E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -13403,21 +7916,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_rn
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_5120_0e20141f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_5120_0e20141f() {
     // Encoding: 0x0E20141F
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Q=0, Rm=0, Rd=31, U=0, Rn=0, size=0
+    // Fields: Rm=0, U=0, size=0, Q=0, Rd=31, Rn=0
     let encoding: u32 = 0x0E20141F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -13428,16 +7935,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_special_rd
 fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_invalid_0_1400_0e201400() {
     // Encoding: 0x0E201400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: Rn=0, Rd=0, size=0, Rm=0, Q=0, U=0
+    // Fields: U=0, Rn=0, size=0, Q=0, Rm=0, Rd=0
     let encoding: u32 = 0x0E201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -13448,16 +7951,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_invalid_0_
 fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_invalid_1_1400_0e201400() {
     // Encoding: 0x0E201400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_rounding invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, Rd=0, Q=0, U=0, size=0, Rm=0
+    // Fields: Rd=0, size=0, Rm=0, Rn=0, Q=0, U=0
     let encoding: u32 = 0x0E201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_rounding
@@ -13518,17 +8017,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_rounding_zr_rd_0e20
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_u_0_min_2c00_5e202c00() {
     // Encoding: 0x5E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field U = 0 (Min)
-    // Fields: Rm=0, U=0, Rn=0, size=0, Rd=0
+    // Fields: Rn=0, Rd=0, U=0, Rm=0, size=0
     let encoding: u32 = 0x5E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13539,17 +8033,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_u_0_m
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_u_1_max_2c00_7e202c00() {
     // Encoding: 0x7E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field U = 1 (Max)
-    // Fields: Rn=0, U=1, Rm=0, size=0, Rd=0
+    // Fields: U=1, size=0, Rn=0, Rm=0, Rd=0
     let encoding: u32 = 0x7E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13557,21 +8046,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_u_1_m
 /// Requirement: FieldBoundary { field: "size", value: 0, boundary: Min }
 /// 8-bit / byte size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_size_0_min_2c00_5e202c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_size_0_min_2c00_5e202c00() {
     // Encoding: 0x5E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field size = 0 (Min)
-    // Fields: size=0, Rn=0, U=0, Rd=0, Rm=0
+    // Fields: Rn=0, U=0, Rd=0, size=0, Rm=0
     let encoding: u32 = 0x5E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13579,21 +8062,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_size_1_poweroftwo_2c00_5e602c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_size_1_poweroftwo_2c00_5e602c00() {
     // Encoding: 0x5E602C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field size = 1 (PowerOfTwo)
-    // Fields: Rd=0, U=0, Rm=0, size=1, Rn=0
+    // Fields: Rd=0, U=0, size=1, Rn=0, Rm=0
     let encoding: u32 = 0x5E602C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13601,21 +8078,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_size_2_poweroftwo_2c00_5ea02c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_size_2_poweroftwo_2c00_5ea02c00() {
     // Encoding: 0x5EA02C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field size = 2 (PowerOfTwo)
-    // Fields: Rn=0, U=0, Rd=0, Rm=0, size=2
+    // Fields: U=0, size=2, Rm=0, Rn=0, Rd=0
     let encoding: u32 = 0x5EA02C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13623,21 +8094,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 3, boundary: Max }
 /// 64-bit / doubleword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_size_3_max_2c00_5ee02c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_size_3_max_2c00_5ee02c00() {
     // Encoding: 0x5EE02C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field size = 3 (Max)
-    // Fields: Rn=0, U=0, Rd=0, size=3, Rm=0
+    // Fields: U=0, Rm=0, Rn=0, size=3, Rd=0
     let encoding: u32 = 0x5EE02C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13645,21 +8110,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_size_
 /// Requirement: FieldBoundary { field: "Rm", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rm_0_min_2c00_5e202c00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rm_0_min_2c00_5e202c00() {
     // Encoding: 0x5E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field Rm = 0 (Min)
-    // Fields: Rm=0, Rd=0, size=0, U=0, Rn=0
+    // Fields: size=0, Rd=0, Rm=0, U=0, Rn=0
     let encoding: u32 = 0x5E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13667,8 +8126,7 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rm_0_
 /// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rm_1_poweroftwo_2c00_5e212c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rm_1_poweroftwo_2c00_5e212c00() {
     // Encoding: 0x5E212C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field Rm = 1 (PowerOfTwo)
     // Fields: Rn=0, Rm=1, size=0, U=0, Rd=0
@@ -13676,12 +8134,7 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rm_1_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13689,21 +8142,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rm_1_
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rm_30_poweroftwominusone_2c00_5e3e2c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rm_30_poweroftwominusone_2c00_5e3e2c00() {
     // Encoding: 0x5E3E2C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: U=0, size=0, Rm=30, Rn=0, Rd=0
+    // Fields: size=0, Rn=0, U=0, Rm=30, Rd=0
     let encoding: u32 = 0x5E3E2C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13711,21 +8158,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rm_30
 /// Requirement: FieldBoundary { field: "Rm", value: 31, boundary: Max }
 /// register index 31 (special)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rm_31_max_2c00_5e3f2c00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rm_31_max_2c00_5e3f2c00() {
     // Encoding: 0x5E3F2C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field Rm = 31 (Max)
-    // Fields: size=0, Rn=0, Rm=31, U=0, Rd=0
+    // Fields: Rm=31, U=0, Rn=0, Rd=0, size=0
     let encoding: u32 = 0x5E3F2C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13733,21 +8174,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rm_31
 /// Requirement: FieldBoundary { field: "Rn", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rn_0_min_2c00_5e202c00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rn_0_min_2c00_5e202c00() {
     // Encoding: 0x5E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field Rn = 0 (Min)
-    // Fields: size=0, Rm=0, U=0, Rn=0, Rd=0
+    // Fields: size=0, U=0, Rd=0, Rm=0, Rn=0
     let encoding: u32 = 0x5E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13755,21 +8190,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rn_0_
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rn_1_poweroftwo_2c00_5e202c20(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rn_1_poweroftwo_2c00_5e202c20() {
     // Encoding: 0x5E202C20
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field Rn = 1 (PowerOfTwo)
-    // Fields: U=0, size=0, Rm=0, Rn=1, Rd=0
+    // Fields: Rn=1, U=0, Rd=0, Rm=0, size=0
     let encoding: u32 = 0x5E202C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13777,21 +8206,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rn_1_
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rn_30_poweroftwominusone_2c00_5e202fc0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rn_30_poweroftwominusone_2c00_5e202fc0() {
     // Encoding: 0x5E202FC0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=0, Rn=30, U=0, size=0, Rm=0
+    // Fields: size=0, Rd=0, U=0, Rn=30, Rm=0
     let encoding: u32 = 0x5E202FC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13799,21 +8222,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rn_30
 /// Requirement: FieldBoundary { field: "Rn", value: 31, boundary: Max }
 /// register index 31 (SP - stack pointer)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rn_31_max_2c00_5e202fe0()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rn_31_max_2c00_5e202fe0() {
     // Encoding: 0x5E202FE0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field Rn = 31 (Max)
-    // Fields: size=0, Rn=31, Rd=0, U=0, Rm=0
+    // Fields: Rd=0, Rm=0, U=0, size=0, Rn=31
     let encoding: u32 = 0x5E202FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13821,21 +8238,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rn_31
 /// Requirement: FieldBoundary { field: "Rd", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rd_0_min_2c00_5e202c00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rd_0_min_2c00_5e202c00() {
     // Encoding: 0x5E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field Rd = 0 (Min)
-    // Fields: U=0, size=0, Rd=0, Rm=0, Rn=0
+    // Fields: Rm=0, Rn=0, Rd=0, U=0, size=0
     let encoding: u32 = 0x5E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13843,21 +8254,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rd_0_
 /// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rd_1_poweroftwo_2c00_5e202c01(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rd_1_poweroftwo_2c00_5e202c01() {
     // Encoding: 0x5E202C01
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field Rd = 1 (PowerOfTwo)
-    // Fields: Rn=0, Rd=1, size=0, U=0, Rm=0
+    // Fields: size=0, Rm=0, Rn=0, U=0, Rd=1
     let encoding: u32 = 0x5E202C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13865,21 +8270,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rd_1_
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rd_30_poweroftwominusone_2c00_5e202c1e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rd_30_poweroftwominusone_2c00_5e202c1e() {
     // Encoding: 0x5E202C1E
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rd=30, Rm=0, Rn=0, U=0
+    // Fields: U=0, size=0, Rd=30, Rn=0, Rm=0
     let encoding: u32 = 0x5E202C1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13887,21 +8286,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rd_30
 /// Requirement: FieldBoundary { field: "Rd", value: 31, boundary: Max }
 /// register index 31 (ZR - zero register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rd_31_max_2c00_5e202c1f()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rd_31_max_2c00_5e202c1f() {
     // Encoding: 0x5E202C1F
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field Rd = 31 (Max)
-    // Fields: U=0, Rn=0, size=0, Rd=31, Rm=0
+    // Fields: Rm=0, U=0, size=0, Rd=31, Rn=0
     let encoding: u32 = 0x5E202C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -13912,206 +8305,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_field_rd_31
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_combo_0_2c00_5e202c00() {
     // Encoding: 0x5E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field combination: U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, size=0, Rm=0, U=0, Rd=0
+    // Fields: Rd=0, Rm=0, Rn=0, U=0, size=0
     let encoding: u32 = 0x5E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_combo_1_2c00_7e202c00() {
-    // Encoding: 0x7E202C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field combination: U=1, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: size=0, U=1, Rd=0, Rm=0, Rn=0
-    let encoding: u32 = 0x7E202C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_combo_2_2c00_5e202c00() {
-    // Encoding: 0x5E202C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field combination: U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rd=0, Rm=0, U=0, size=0, Rn=0
-    let encoding: u32 = 0x5E202C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_combo_3_2c00_5e602c00() {
-    // Encoding: 0x5E602C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field combination: U=0, size=1, Rm=0, Rn=0, Rd=0
-    // Fields: size=1, Rn=0, Rm=0, U=0, Rd=0
-    let encoding: u32 = 0x5E602C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_combo_4_2c00_5ea02c00() {
-    // Encoding: 0x5EA02C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field combination: U=0, size=2, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, Rm=0, size=2, Rn=0, Rd=0
-    let encoding: u32 = 0x5EA02C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_combo_5_2c00_5ee02c00() {
-    // Encoding: 0x5EE02C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field combination: U=0, size=3, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, Rn=0, Rd=0, size=3, Rm=0
-    let encoding: u32 = 0x5EE02C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_combo_6_2c00_5e202c00() {
-    // Encoding: 0x5E202C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field combination: U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, U=0, Rd=0, Rn=0, size=0
-    let encoding: u32 = 0x5E202C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_combo_7_2c00_5e212c00() {
-    // Encoding: 0x5E212C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field combination: U=0, size=0, Rm=1, Rn=0, Rd=0
-    // Fields: Rd=0, size=0, Rm=1, U=0, Rn=0
-    let encoding: u32 = 0x5E212C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_combo_8_2c00_5e3e2c00() {
-    // Encoding: 0x5E3E2C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field combination: U=0, size=0, Rm=30, Rn=0, Rd=0
-    // Fields: Rd=0, U=0, Rm=30, Rn=0, size=0
-    let encoding: u32 = 0x5E3E2C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=31 (register index 31 (special))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_combo_9_2c00_5e3f2c00() {
-    // Encoding: 0x5E3F2C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd field combination: U=0, size=0, Rm=31, Rn=0, Rd=0
-    // Fields: U=0, Rn=0, size=0, Rd=0, Rm=31
-    let encoding: u32 = 0x5E3F2C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -14119,21 +8318,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_combo_9_2c0
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_size_0_size_variant_0_11264_5e202c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_size_0_size_variant_0_11264_5e202c00() {
     // Encoding: 0x5E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd special value size = 0 (Size variant 0)
-    // Fields: size=0, Rm=0, U=0, Rd=0, Rn=0
+    // Fields: size=0, Rm=0, Rn=0, U=0, Rd=0
     let encoding: u32 = 0x5E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -14141,8 +8334,7 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_size_1_size_variant_1_11264_5e602c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_size_1_size_variant_1_11264_5e602c00() {
     // Encoding: 0x5E602C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd special value size = 1 (Size variant 1)
     // Fields: U=0, Rn=0, size=1, Rm=0, Rd=0
@@ -14150,12 +8342,7 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_siz
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -14163,21 +8350,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_size_2_size_variant_2_11264_5ea02c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_size_2_size_variant_2_11264_5ea02c00() {
     // Encoding: 0x5EA02C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd special value size = 2 (Size variant 2)
-    // Fields: size=2, Rm=0, U=0, Rn=0, Rd=0
+    // Fields: Rm=0, Rn=0, Rd=0, U=0, size=2
     let encoding: u32 = 0x5EA02C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -14185,21 +8366,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_size_3_size_variant_3_11264_5ee02c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_size_3_size_variant_3_11264_5ee02c00() {
     // Encoding: 0x5EE02C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd special value size = 3 (Size variant 3)
-    // Fields: Rd=0, U=0, Rm=0, Rn=0, size=3
+    // Fields: Rd=0, size=3, Rn=0, Rm=0, U=0
     let encoding: u32 = 0x5EE02C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -14207,21 +8382,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_siz
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_11264_5e202fe0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_11264_5e202fe0() {
     // Encoding: 0x5E202FE0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: size=0, Rm=0, Rd=0, U=0, Rn=31
+    // Fields: Rn=31, Rd=0, Rm=0, size=0, U=0
     let encoding: u32 = 0x5E202FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -14229,21 +8398,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_rn_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_11264_5e202c1f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_11264_5e202c1f() {
     // Encoding: 0x5E202C1F
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rm=0, size=0, Rn=0, U=0, Rd=31
+    // Fields: Rd=31, U=0, Rm=0, Rn=0, size=0
     let encoding: u32 = 0x5E202C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14254,17 +8417,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd_special_rd_
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_q_0_min_2c00_0e202c00() {
     // Encoding: 0x0E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field Q = 0 (Min)
-    // Fields: Rm=0, Q=0, U=0, size=0, Rn=0, Rd=0
+    // Fields: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
     let encoding: u32 = 0x0E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14275,17 +8433,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_q_0_m
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_q_1_max_2c00_4e202c00() {
     // Encoding: 0x4E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field Q = 1 (Max)
-    // Fields: Q=1, size=0, Rm=0, U=0, Rn=0, Rd=0
+    // Fields: Rm=0, Rn=0, U=0, Rd=0, Q=1, size=0
     let encoding: u32 = 0x4E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14296,17 +8449,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_q_1_m
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_u_0_min_2c00_0e202c00() {
     // Encoding: 0x0E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field U = 0 (Min)
-    // Fields: size=0, Rm=0, U=0, Q=0, Rd=0, Rn=0
+    // Fields: Q=0, size=0, Rm=0, Rd=0, Rn=0, U=0
     let encoding: u32 = 0x0E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14317,17 +8465,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_u_0_m
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_u_1_max_2c00_2e202c00() {
     // Encoding: 0x2E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field U = 1 (Max)
-    // Fields: Rn=0, Rd=0, size=0, Q=0, U=1, Rm=0
+    // Fields: Rd=0, Q=0, Rn=0, U=1, size=0, Rm=0
     let encoding: u32 = 0x2E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14335,21 +8478,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_u_1_m
 /// Requirement: FieldBoundary { field: "size", value: 0, boundary: Min }
 /// 8-bit / byte size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_size_0_min_2c00_0e202c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_size_0_min_2c00_0e202c00() {
     // Encoding: 0x0E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field size = 0 (Min)
-    // Fields: Rd=0, Rn=0, Q=0, Rm=0, size=0, U=0
+    // Fields: Rd=0, Rn=0, Q=0, size=0, U=0, Rm=0
     let encoding: u32 = 0x0E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14357,21 +8494,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_size_1_poweroftwo_2c00_0e602c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_size_1_poweroftwo_2c00_0e602c00() {
     // Encoding: 0x0E602C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field size = 1 (PowerOfTwo)
-    // Fields: Rm=0, size=1, Rd=0, Rn=0, Q=0, U=0
+    // Fields: Rn=0, size=1, Q=0, Rm=0, Rd=0, U=0
     let encoding: u32 = 0x0E602C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14379,21 +8510,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_size_2_poweroftwo_2c00_0ea02c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_size_2_poweroftwo_2c00_0ea02c00() {
     // Encoding: 0x0EA02C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field size = 2 (PowerOfTwo)
-    // Fields: size=2, Rm=0, Rn=0, Q=0, U=0, Rd=0
+    // Fields: Rn=0, Rm=0, Rd=0, Q=0, U=0, size=2
     let encoding: u32 = 0x0EA02C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14401,21 +8526,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 3, boundary: Max }
 /// 64-bit / doubleword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_size_3_max_2c00_0ee02c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_size_3_max_2c00_0ee02c00() {
     // Encoding: 0x0EE02C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field size = 3 (Max)
-    // Fields: U=0, Rm=0, Rn=0, Rd=0, Q=0, size=3
+    // Fields: Rn=0, Q=0, size=3, U=0, Rm=0, Rd=0
     let encoding: u32 = 0x0EE02C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14423,21 +8542,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_size_
 /// Requirement: FieldBoundary { field: "Rm", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rm_0_min_2c00_0e202c00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rm_0_min_2c00_0e202c00() {
     // Encoding: 0x0E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field Rm = 0 (Min)
-    // Fields: Rm=0, Rd=0, Q=0, U=0, size=0, Rn=0
+    // Fields: Q=0, Rd=0, U=0, Rm=0, size=0, Rn=0
     let encoding: u32 = 0x0E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14445,21 +8558,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rm_0_
 /// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rm_1_poweroftwo_2c00_0e212c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rm_1_poweroftwo_2c00_0e212c00() {
     // Encoding: 0x0E212C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field Rm = 1 (PowerOfTwo)
-    // Fields: Q=0, Rm=1, size=0, U=0, Rd=0, Rn=0
+    // Fields: U=0, Rm=1, size=0, Rn=0, Rd=0, Q=0
     let encoding: u32 = 0x0E212C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14467,21 +8574,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rm_1_
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rm_30_poweroftwominusone_2c00_0e3e2c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rm_30_poweroftwominusone_2c00_0e3e2c00() {
     // Encoding: 0x0E3E2C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=0, U=0, size=0, Q=0, Rm=30, Rn=0
+    // Fields: U=0, Rn=0, Rd=0, Rm=30, Q=0, size=0
     let encoding: u32 = 0x0E3E2C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14489,21 +8590,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rm_30
 /// Requirement: FieldBoundary { field: "Rm", value: 31, boundary: Max }
 /// register index 31 (special)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rm_31_max_2c00_0e3f2c00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rm_31_max_2c00_0e3f2c00() {
     // Encoding: 0x0E3F2C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field Rm = 31 (Max)
-    // Fields: Q=0, U=0, Rn=0, size=0, Rm=31, Rd=0
+    // Fields: Rn=0, U=0, Q=0, Rd=0, Rm=31, size=0
     let encoding: u32 = 0x0E3F2C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14511,21 +8606,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rm_31
 /// Requirement: FieldBoundary { field: "Rn", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rn_0_min_2c00_0e202c00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rn_0_min_2c00_0e202c00() {
     // Encoding: 0x0E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field Rn = 0 (Min)
-    // Fields: Rn=0, Rd=0, U=0, Q=0, size=0, Rm=0
+    // Fields: Rd=0, Rn=0, Q=0, U=0, size=0, Rm=0
     let encoding: u32 = 0x0E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14533,21 +8622,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rn_0_
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rn_1_poweroftwo_2c00_0e202c20(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rn_1_poweroftwo_2c00_0e202c20() {
     // Encoding: 0x0E202C20
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field Rn = 1 (PowerOfTwo)
-    // Fields: size=0, U=0, Q=0, Rm=0, Rn=1, Rd=0
+    // Fields: size=0, Q=0, Rd=0, U=0, Rm=0, Rn=1
     let encoding: u32 = 0x0E202C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14555,21 +8638,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rn_1_
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rn_30_poweroftwominusone_2c00_0e202fc0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rn_30_poweroftwominusone_2c00_0e202fc0() {
     // Encoding: 0x0E202FC0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=0, Rn=30, size=0, Rm=0, Q=0, U=0
+    // Fields: Rn=30, size=0, Rd=0, Rm=0, U=0, Q=0
     let encoding: u32 = 0x0E202FC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14577,21 +8654,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rn_30
 /// Requirement: FieldBoundary { field: "Rn", value: 31, boundary: Max }
 /// register index 31 (SP - stack pointer)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rn_31_max_2c00_0e202fe0()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rn_31_max_2c00_0e202fe0() {
     // Encoding: 0x0E202FE0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field Rn = 31 (Max)
-    // Fields: size=0, Q=0, Rm=0, Rd=0, U=0, Rn=31
+    // Fields: size=0, Q=0, Rm=0, Rn=31, Rd=0, U=0
     let encoding: u32 = 0x0E202FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14599,21 +8670,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rn_31
 /// Requirement: FieldBoundary { field: "Rd", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rd_0_min_2c00_0e202c00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rd_0_min_2c00_0e202c00() {
     // Encoding: 0x0E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field Rd = 0 (Min)
-    // Fields: Q=0, Rd=0, Rn=0, size=0, Rm=0, U=0
+    // Fields: Rd=0, Rn=0, U=0, Rm=0, Q=0, size=0
     let encoding: u32 = 0x0E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14621,21 +8686,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rd_0_
 /// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rd_1_poweroftwo_2c00_0e202c01(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rd_1_poweroftwo_2c00_0e202c01() {
     // Encoding: 0x0E202C01
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field Rd = 1 (PowerOfTwo)
-    // Fields: Rm=0, Q=0, Rn=0, Rd=1, U=0, size=0
+    // Fields: Q=0, U=0, Rn=0, Rd=1, Rm=0, size=0
     let encoding: u32 = 0x0E202C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14643,21 +8702,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rd_1_
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rd_30_poweroftwominusone_2c00_0e202c1e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rd_30_poweroftwominusone_2c00_0e202c1e() {
     // Encoding: 0x0E202C1E
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Q=0, Rm=0, Rd=30, size=0, U=0
+    // Fields: Rm=0, Rd=30, Q=0, Rn=0, size=0, U=0
     let encoding: u32 = 0x0E202C1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14665,21 +8718,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rd_30
 /// Requirement: FieldBoundary { field: "Rd", value: 31, boundary: Max }
 /// register index 31 (ZR - zero register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rd_31_max_2c00_0e202c1f()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rd_31_max_2c00_0e202c1f() {
     // Encoding: 0x0E202C1F
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field Rd = 31 (Max)
-    // Fields: Q=0, Rn=0, Rd=31, U=0, Rm=0, size=0
+    // Fields: U=0, Rm=0, Q=0, size=0, Rn=0, Rd=31
     let encoding: u32 = 0x0E202C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14690,206 +8737,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_field_rd_31
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_combo_0_2c00_0e202c00() {
     // Encoding: 0x0E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, Rm=0, Q=0, Rd=0, Rn=0, size=0
+    // Fields: size=0, Rm=0, Rd=0, Rn=0, Q=0, U=0
     let encoding: u32 = 0x0E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_combo_1_2c00_4e202c00() {
-    // Encoding: 0x4E202C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field combination: Q=1, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Q=1, Rn=0, U=0, Rd=0, Rm=0, size=0
-    let encoding: u32 = 0x4E202C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_combo_2_2c00_0e202c00() {
-    // Encoding: 0x0E202C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, size=0, Rm=0, Rn=0, Rd=0, Q=0
-    let encoding: u32 = 0x0E202C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_combo_3_2c00_2e202c00() {
-    // Encoding: 0x2E202C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field combination: Q=0, U=1, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rd=0, Q=0, U=1, Rm=0, size=0, Rn=0
-    let encoding: u32 = 0x2E202C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_combo_4_2c00_0e202c00() {
-    // Encoding: 0x0E202C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, Rd=0, size=0, U=0, Rn=0, Q=0
-    let encoding: u32 = 0x0E202C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_combo_5_2c00_0e602c00() {
-    // Encoding: 0x0E602C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field combination: Q=0, U=0, size=1, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, size=1, Q=0, Rm=0, Rn=0, Rd=0
-    let encoding: u32 = 0x0E602C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_combo_6_2c00_0ea02c00() {
-    // Encoding: 0x0EA02C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field combination: Q=0, U=0, size=2, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, size=2, U=0, Rm=0, Q=0, Rd=0
-    let encoding: u32 = 0x0EA02C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_combo_7_2c00_0ee02c00() {
-    // Encoding: 0x0EE02C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field combination: Q=0, U=0, size=3, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, size=3, Rm=0, U=0, Rd=0, Q=0
-    let encoding: u32 = 0x0EE02C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_combo_8_2c00_0e202c00() {
-    // Encoding: 0x0E202C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, U=0, Rm=0, Rn=0, size=0, Rd=0
-    let encoding: u32 = 0x0E202C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_combo_9_2c00_0e212c00() {
-    // Encoding: 0x0E212C00
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd field combination: Q=0, U=0, size=0, Rm=1, Rn=0, Rd=0
-    // Fields: Rd=0, Rm=1, Rn=0, Q=0, size=0, U=0
-    let encoding: u32 = 0x0E212C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14897,21 +8750,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_combo_9_2c0
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_q_0_size_variant_0_11264_0e202c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_q_0_size_variant_0_11264_0e202c00() {
     // Encoding: 0x0E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd special value Q = 0 (Size variant 0)
-    // Fields: U=0, Q=0, Rn=0, size=0, Rd=0, Rm=0
+    // Fields: Rn=0, Rd=0, Rm=0, U=0, size=0, Q=0
     let encoding: u32 = 0x0E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14919,21 +8766,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_q_0
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_q_1_size_variant_1_11264_4e202c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_q_1_size_variant_1_11264_4e202c00() {
     // Encoding: 0x4E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd special value Q = 1 (Size variant 1)
-    // Fields: Q=1, Rm=0, Rn=0, U=0, size=0, Rd=0
+    // Fields: size=0, Rd=0, Rn=0, Q=1, U=0, Rm=0
     let encoding: u32 = 0x4E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14941,21 +8782,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_q_1
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_size_0_size_variant_0_11264_0e202c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_size_0_size_variant_0_11264_0e202c00() {
     // Encoding: 0x0E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd special value size = 0 (Size variant 0)
-    // Fields: U=0, size=0, Rn=0, Rm=0, Rd=0, Q=0
+    // Fields: size=0, Rm=0, U=0, Rd=0, Q=0, Rn=0
     let encoding: u32 = 0x0E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14963,21 +8798,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_size_1_size_variant_1_11264_0e602c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_size_1_size_variant_1_11264_0e602c00() {
     // Encoding: 0x0E602C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd special value size = 1 (Size variant 1)
-    // Fields: size=1, Rd=0, U=0, Rm=0, Rn=0, Q=0
+    // Fields: Rd=0, U=0, Rn=0, size=1, Q=0, Rm=0
     let encoding: u32 = 0x0E602C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -14985,21 +8814,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_size_2_size_variant_2_11264_0ea02c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_size_2_size_variant_2_11264_0ea02c00() {
     // Encoding: 0x0EA02C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd special value size = 2 (Size variant 2)
-    // Fields: Rn=0, size=2, Q=0, Rm=0, Rd=0, U=0
+    // Fields: Rn=0, U=0, Q=0, size=2, Rm=0, Rd=0
     let encoding: u32 = 0x0EA02C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -15007,21 +8830,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_size_3_size_variant_3_11264_0ee02c00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_size_3_size_variant_3_11264_0ee02c00() {
     // Encoding: 0x0EE02C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd special value size = 3 (Size variant 3)
-    // Fields: Rn=0, Rd=0, U=0, Q=0, size=3, Rm=0
+    // Fields: U=0, Q=0, Rd=0, Rn=0, size=3, Rm=0
     let encoding: u32 = 0x0EE02C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -15029,21 +8846,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_siz
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_rn_31_stack_pointer_sp_may_require_alignment_11264_0e202fe0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_rn_31_stack_pointer_sp_may_require_alignment_11264_0e202fe0() {
     // Encoding: 0x0E202FE0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Q=0, U=0, Rm=0, size=0, Rn=31, Rd=0
+    // Fields: Rm=0, Q=0, size=0, Rn=31, Rd=0, U=0
     let encoding: u32 = 0x0E202FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -15051,21 +8862,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_rn_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_11264_0e202c1f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_11264_0e202c1f() {
     // Encoding: 0x0E202C1F
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rn=0, size=0, Q=0, Rm=0, U=0, Rd=31
+    // Fields: size=0, U=0, Q=0, Rn=0, Rd=31, Rm=0
     let encoding: u32 = 0x0E202C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -15076,16 +8881,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_special_rd_
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_invalid_0_2c00_0e202c00() {
     // Encoding: 0x0E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd invalid encoding: Binary { op: BitConcat, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "Q" }), rhs: LitBits([true, true, false]) } }
-    // Fields: Rm=0, Rn=0, size=0, U=0, Q=0, Rd=0
+    // Fields: Rd=0, Rn=0, size=0, U=0, Q=0, Rm=0
     let encoding: u32 = 0x0E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd
@@ -15096,16 +8897,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_invalid_0_2
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_invalid_1_2c00_0e202c00() {
     // Encoding: 0x0E202C00
     // Test aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, Rm=0, Rd=0, Q=0, U=0, size=0
+    // Fields: U=0, Rm=0, Rn=0, Rd=0, size=0, Q=0
     let encoding: u32 = 0x0E202C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_saturating_sisd
@@ -15209,21 +9006,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_saturating_simd_zr_rd_0e202
 /// Requirement: FieldBoundary { field: "Q", value: 0, boundary: Min }
 /// 8-bit / byte size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_q_0_min_400_0e200400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_q_0_min_400_0e200400() {
     // Encoding: 0x0E200400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field Q = 0 (Min)
-    // Fields: Q=0, size=0, Rm=0, Rn=0, Rd=0, U=0
+    // Fields: Rm=0, U=0, Q=0, Rn=0, size=0, Rd=0
     let encoding: u32 = 0x0E200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15231,21 +9022,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_q_
 /// Requirement: FieldBoundary { field: "Q", value: 1, boundary: Max }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_q_1_max_400_4e200400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_q_1_max_400_4e200400() {
     // Encoding: 0x4E200400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field Q = 1 (Max)
-    // Fields: size=0, Rd=0, Rn=0, Q=1, U=0, Rm=0
+    // Fields: U=0, Rm=0, Rn=0, Rd=0, Q=1, size=0
     let encoding: u32 = 0x4E200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15253,21 +9038,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_q_
 /// Requirement: FieldBoundary { field: "U", value: 0, boundary: Min }
 /// minimum value
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_u_0_min_400_0e200400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_u_0_min_400_0e200400() {
     // Encoding: 0x0E200400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field U = 0 (Min)
-    // Fields: Rm=0, Rd=0, size=0, Rn=0, U=0, Q=0
+    // Fields: Q=0, U=0, size=0, Rm=0, Rd=0, Rn=0
     let encoding: u32 = 0x0E200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15275,21 +9054,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_u_
 /// Requirement: FieldBoundary { field: "U", value: 1, boundary: Max }
 /// maximum value (1)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_u_1_max_400_2e200400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_u_1_max_400_2e200400() {
     // Encoding: 0x2E200400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field U = 1 (Max)
-    // Fields: size=0, Rd=0, Rm=0, U=1, Q=0, Rn=0
+    // Fields: Rn=0, U=1, Q=0, Rm=0, size=0, Rd=0
     let encoding: u32 = 0x2E200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15297,21 +9070,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_u_
 /// Requirement: FieldBoundary { field: "size", value: 0, boundary: Min }
 /// 8-bit / byte size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_size_0_min_400_0e200400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_size_0_min_400_0e200400() {
     // Encoding: 0x0E200400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field size = 0 (Min)
-    // Fields: Rn=0, Rd=0, size=0, U=0, Q=0, Rm=0
+    // Fields: Rd=0, Rm=0, U=0, Q=0, Rn=0, size=0
     let encoding: u32 = 0x0E200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15319,21 +9086,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_si
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_size_1_poweroftwo_400_0e600400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_size_1_poweroftwo_400_0e600400() {
     // Encoding: 0x0E600400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field size = 1 (PowerOfTwo)
-    // Fields: Rm=0, U=0, Rn=0, Rd=0, size=1, Q=0
+    // Fields: Rn=0, Q=0, size=1, Rd=0, U=0, Rm=0
     let encoding: u32 = 0x0E600400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15341,21 +9102,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_si
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_size_2_poweroftwo_400_0ea00400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_size_2_poweroftwo_400_0ea00400() {
     // Encoding: 0x0EA00400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field size = 2 (PowerOfTwo)
-    // Fields: Q=0, Rm=0, Rd=0, Rn=0, size=2, U=0
+    // Fields: size=2, U=0, Rn=0, Q=0, Rm=0, Rd=0
     let encoding: u32 = 0x0EA00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15363,21 +9118,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_si
 /// Requirement: FieldBoundary { field: "size", value: 3, boundary: Max }
 /// 64-bit / doubleword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_size_3_max_400_0ee00400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_size_3_max_400_0ee00400() {
     // Encoding: 0x0EE00400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field size = 3 (Max)
-    // Fields: size=3, Rn=0, Rd=0, U=0, Rm=0, Q=0
+    // Fields: Q=0, size=3, U=0, Rn=0, Rd=0, Rm=0
     let encoding: u32 = 0x0EE00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15385,21 +9134,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_si
 /// Requirement: FieldBoundary { field: "Rm", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rm_0_min_400_0e200400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rm_0_min_400_0e200400() {
     // Encoding: 0x0E200400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field Rm = 0 (Min)
-    // Fields: U=0, Q=0, size=0, Rm=0, Rn=0, Rd=0
+    // Fields: U=0, Rm=0, Rn=0, Q=0, size=0, Rd=0
     let encoding: u32 = 0x0E200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15407,21 +9150,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rm
 /// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rm_1_poweroftwo_400_0e210400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rm_1_poweroftwo_400_0e210400() {
     // Encoding: 0x0E210400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field Rm = 1 (PowerOfTwo)
-    // Fields: Rm=1, U=0, Rn=0, Rd=0, Q=0, size=0
+    // Fields: U=0, Rm=1, size=0, Rn=0, Q=0, Rd=0
     let encoding: u32 = 0x0E210400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15429,21 +9166,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rm
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rm_30_poweroftwominusone_400_0e3e0400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rm_30_poweroftwominusone_400_0e3e0400() {
     // Encoding: 0x0E3E0400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: U=0, Q=0, size=0, Rm=30, Rn=0, Rd=0
+    // Fields: Rd=0, Q=0, U=0, size=0, Rn=0, Rm=30
     let encoding: u32 = 0x0E3E0400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15451,21 +9182,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rm
 /// Requirement: FieldBoundary { field: "Rm", value: 31, boundary: Max }
 /// register index 31 (special)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rm_31_max_400_0e3f0400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rm_31_max_400_0e3f0400() {
     // Encoding: 0x0E3F0400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field Rm = 31 (Max)
-    // Fields: Rm=31, Rd=0, U=0, Rn=0, Q=0, size=0
+    // Fields: Rn=0, Rd=0, size=0, Q=0, U=0, Rm=31
     let encoding: u32 = 0x0E3F0400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15473,21 +9198,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rm
 /// Requirement: FieldBoundary { field: "Rn", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rn_0_min_400_0e200400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rn_0_min_400_0e200400() {
     // Encoding: 0x0E200400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field Rn = 0 (Min)
-    // Fields: Rd=0, U=0, Rm=0, Q=0, Rn=0, size=0
+    // Fields: Rd=0, Q=0, U=0, size=0, Rn=0, Rm=0
     let encoding: u32 = 0x0E200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15495,21 +9214,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rn
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rn_1_poweroftwo_400_0e200420(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rn_1_poweroftwo_400_0e200420() {
     // Encoding: 0x0E200420
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field Rn = 1 (PowerOfTwo)
-    // Fields: Rm=0, Q=0, size=0, Rn=1, Rd=0, U=0
+    // Fields: Rm=0, size=0, Q=0, Rd=0, U=0, Rn=1
     let encoding: u32 = 0x0E200420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15517,21 +9230,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rn
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rn_30_poweroftwominusone_400_0e2007c0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rn_30_poweroftwominusone_400_0e2007c0() {
     // Encoding: 0x0E2007C0
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rm=0, Rn=30, Rd=0, Q=0, U=0
+    // Fields: U=0, Rd=0, size=0, Q=0, Rn=30, Rm=0
     let encoding: u32 = 0x0E2007C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15539,21 +9246,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rn
 /// Requirement: FieldBoundary { field: "Rn", value: 31, boundary: Max }
 /// register index 31 (SP - stack pointer)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rn_31_max_400_0e2007e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rn_31_max_400_0e2007e0() {
     // Encoding: 0x0E2007E0
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field Rn = 31 (Max)
-    // Fields: Rm=0, Q=0, U=0, Rd=0, Rn=31, size=0
+    // Fields: Q=0, U=0, Rm=0, Rn=31, size=0, Rd=0
     let encoding: u32 = 0x0E2007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15561,21 +9262,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rn
 /// Requirement: FieldBoundary { field: "Rd", value: 0, boundary: Min }
 /// register index 0 (first register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rd_0_min_400_0e200400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rd_0_min_400_0e200400() {
     // Encoding: 0x0E200400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field Rd = 0 (Min)
-    // Fields: Rm=0, U=0, Rd=0, Q=0, size=0, Rn=0
+    // Fields: Rd=0, U=0, Q=0, size=0, Rm=0, Rn=0
     let encoding: u32 = 0x0E200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15583,21 +9278,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rd
 /// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rd_1_poweroftwo_400_0e200401(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rd_1_poweroftwo_400_0e200401() {
     // Encoding: 0x0E200401
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field Rd = 1 (PowerOfTwo)
-    // Fields: size=0, Rn=0, Rd=1, U=0, Rm=0, Q=0
+    // Fields: U=0, Rm=0, Rn=0, Rd=1, size=0, Q=0
     let encoding: u32 = 0x0E200401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15605,21 +9294,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rd
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rd_30_poweroftwominusone_400_0e20041e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rd_30_poweroftwominusone_400_0e20041e() {
     // Encoding: 0x0E20041E
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rm=0, Q=0, U=0, Rd=30, size=0
+    // Fields: Q=0, Rm=0, Rd=30, Rn=0, U=0, size=0
     let encoding: u32 = 0x0E20041E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15627,21 +9310,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rd
 /// Requirement: FieldBoundary { field: "Rd", value: 31, boundary: Max }
 /// register index 31 (ZR - zero register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rd_31_max_400_0e20041f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rd_31_max_400_0e20041f() {
     // Encoding: 0x0E20041F
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field Rd = 31 (Max)
-    // Fields: Rm=0, size=0, Rn=0, Q=0, Rd=31, U=0
+    // Fields: Q=0, Rm=0, U=0, Rd=31, Rn=0, size=0
     let encoding: u32 = 0x0E20041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15652,206 +9329,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_field_rd
 fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_combo_0_400_0e200400() {
     // Encoding: 0x0E200400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, size=0, Rd=0, Q=0, Rn=0, Rm=0
+    // Fields: Q=0, size=0, Rd=0, Rn=0, Rm=0, U=0
     let encoding: u32 = 0x0E200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_combo_1_400_4e200400() {
-    // Encoding: 0x4E200400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field combination: Q=1, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, U=0, size=0, Rn=0, Q=1, Rd=0
-    let encoding: u32 = 0x4E200400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_combo_2_400_0e200400() {
-    // Encoding: 0x0E200400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: size=0, U=0, Rm=0, Q=0, Rn=0, Rd=0
-    let encoding: u32 = 0x0E200400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_combo_3_400_2e200400() {
-    // Encoding: 0x2E200400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field combination: Q=0, U=1, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=1, size=0, Rm=0, Rn=0, Rd=0, Q=0
-    let encoding: u32 = 0x2E200400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_combo_4_400_0e200400() {
-    // Encoding: 0x0E200400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: size=0, Rn=0, U=0, Q=0, Rm=0, Rd=0
-    let encoding: u32 = 0x0E200400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_combo_5_400_0e600400() {
-    // Encoding: 0x0E600400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field combination: Q=0, U=0, size=1, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, size=1, Rm=0, Rn=0, U=0, Rd=0
-    let encoding: u32 = 0x0E600400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_combo_6_400_0ea00400() {
-    // Encoding: 0x0EA00400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field combination: Q=0, U=0, size=2, Rm=0, Rn=0, Rd=0
-    // Fields: size=2, Rd=0, Rn=0, U=0, Q=0, Rm=0
-    let encoding: u32 = 0x0EA00400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_combo_7_400_0ee00400() {
-    // Encoding: 0x0EE00400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field combination: Q=0, U=0, size=3, Rm=0, Rn=0, Rd=0
-    // Fields: size=3, U=0, Rd=0, Q=0, Rn=0, Rm=0
-    let encoding: u32 = 0x0EE00400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_combo_8_400_0e200400() {
-    // Encoding: 0x0E200400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field combination: Q=0, U=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, U=0, Rd=0, Rm=0, Rn=0, size=0
-    let encoding: u32 = 0x0E200400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_combo_9_400_0e210400() {
-    // Encoding: 0x0E210400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating field combination: Q=0, U=0, size=0, Rm=1, Rn=0, Rd=0
-    // Fields: Rn=0, Rd=0, Q=0, U=0, Rm=1, size=0
-    let encoding: u32 = 0x0E210400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15859,21 +9342,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_combo_9_
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_q_0_size_variant_0_1024_0e200400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_q_0_size_variant_0_1024_0e200400() {
     // Encoding: 0x0E200400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating special value Q = 0 (Size variant 0)
-    // Fields: size=0, Rn=0, U=0, Q=0, Rm=0, Rd=0
+    // Fields: U=0, Q=0, Rm=0, Rn=0, Rd=0, size=0
     let encoding: u32 = 0x0E200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15881,21 +9358,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_q_1_size_variant_1_1024_4e200400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_q_1_size_variant_1_1024_4e200400() {
     // Encoding: 0x4E200400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating special value Q = 1 (Size variant 1)
-    // Fields: size=0, Rn=0, U=0, Q=1, Rm=0, Rd=0
+    // Fields: Rd=0, size=0, U=0, Rn=0, Q=1, Rm=0
     let encoding: u32 = 0x4E200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15903,21 +9374,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_size_0_size_variant_0_1024_0e200400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_size_0_size_variant_0_1024_0e200400() {
     // Encoding: 0x0E200400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating special value size = 0 (Size variant 0)
-    // Fields: U=0, Rm=0, Q=0, Rn=0, Rd=0, size=0
+    // Fields: size=0, U=0, Rn=0, Q=0, Rm=0, Rd=0
     let encoding: u32 = 0x0E200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15925,21 +9390,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_size_1_size_variant_1_1024_0e600400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_size_1_size_variant_1_1024_0e600400() {
     // Encoding: 0x0E600400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating special value size = 1 (Size variant 1)
-    // Fields: U=0, Q=0, size=1, Rm=0, Rd=0, Rn=0
+    // Fields: Rm=0, Rn=0, Rd=0, U=0, Q=0, size=1
     let encoding: u32 = 0x0E600400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15947,21 +9406,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_size_2_size_variant_2_1024_0ea00400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_size_2_size_variant_2_1024_0ea00400() {
     // Encoding: 0x0EA00400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating special value size = 2 (Size variant 2)
-    // Fields: Rn=0, size=2, Rm=0, Q=0, Rd=0, U=0
+    // Fields: size=2, Rm=0, Rn=0, Rd=0, Q=0, U=0
     let encoding: u32 = 0x0EA00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15969,21 +9422,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_size_3_size_variant_3_1024_0ee00400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_size_3_size_variant_3_1024_0ee00400() {
     // Encoding: 0x0EE00400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating special value size = 3 (Size variant 3)
-    // Fields: Rn=0, U=0, Rm=0, Q=0, size=3, Rd=0
+    // Fields: Rm=0, U=0, Rd=0, Q=0, size=3, Rn=0
     let encoding: u32 = 0x0EE00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -15991,21 +9438,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_rn_31_stack_pointer_sp_may_require_alignment_1024_0e2007e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_rn_31_stack_pointer_sp_may_require_alignment_1024_0e2007e0() {
     // Encoding: 0x0E2007E0
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: U=0, Rd=0, Rm=0, Rn=31, size=0, Q=0
+    // Fields: Q=0, U=0, Rd=0, size=0, Rm=0, Rn=31
     let encoding: u32 = 0x0E2007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -16013,21 +9454,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_0e20041f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_0e20041f() {
     // Encoding: 0x0E20041F
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rm=0, U=0, Rn=0, Q=0, Rd=31, size=0
+    // Fields: size=0, Rm=0, Q=0, U=0, Rd=31, Rn=0
     let encoding: u32 = 0x0E20041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -16038,16 +9473,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_special_
 fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_invalid_0_400_0e200400() {
     // Encoding: 0x0E200400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([true, true]) }
-    // Fields: U=0, Rn=0, Rm=0, Q=0, size=0, Rd=0
+    // Fields: U=0, Q=0, Rn=0, Rm=0, Rd=0, size=0
     let encoding: u32 = 0x0E200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -16058,16 +9489,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_invalid_
 fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_invalid_1_400_0e200400() {
     // Encoding: 0x0E200400
     // Test aarch64_vector_arithmetic_binary_uniform_add_halving_truncating invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, Rd=0, Rm=0, U=0, size=0, Q=0
+    // Fields: Rn=0, Rd=0, Rm=0, Q=0, U=0, size=0
     let encoding: u32 = 0x0E200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_halving_truncating
@@ -16128,17 +9555,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_halving_truncating_zr_rd_0e
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rm_0_min_1400_7ec01400() {
     // Encoding: 0x7EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field Rm = 0 (Min)
-    // Fields: Rd=0, Rn=0, Rm=0
+    // Fields: Rm=0, Rn=0, Rd=0
     let encoding: u32 = 0x7EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16146,21 +9568,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rm_0_min_14
 /// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rm_1_poweroftwo_1400_7ec11400()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rm_1_poweroftwo_1400_7ec11400() {
     // Encoding: 0x7EC11400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field Rm = 1 (PowerOfTwo)
-    // Fields: Rm=1, Rd=0, Rn=0
+    // Fields: Rd=0, Rm=1, Rn=0
     let encoding: u32 = 0x7EC11400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16168,21 +9584,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rm_1_powero
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rm_30_poweroftwominusone_1400_7ede1400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rm_30_poweroftwominusone_1400_7ede1400() {
     // Encoding: 0x7EDE1400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=0, Rm=30, Rn=0
+    // Fields: Rn=0, Rd=0, Rm=30
     let encoding: u32 = 0x7EDE1400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16193,17 +9603,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rm_30_power
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rm_31_max_1400_7edf1400() {
     // Encoding: 0x7EDF1400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field Rm = 31 (Max)
-    // Fields: Rn=0, Rd=0, Rm=31
+    // Fields: Rd=0, Rn=0, Rm=31
     let encoding: u32 = 0x7EDF1400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16214,17 +9619,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rm_31_max_1
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rn_0_min_1400_7ec01400() {
     // Encoding: 0x7EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field Rn = 0 (Min)
-    // Fields: Rm=0, Rn=0, Rd=0
+    // Fields: Rm=0, Rd=0, Rn=0
     let encoding: u32 = 0x7EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16232,21 +9632,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rn_0_min_14
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rn_1_poweroftwo_1400_7ec01420()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rn_1_poweroftwo_1400_7ec01420() {
     // Encoding: 0x7EC01420
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field Rn = 1 (PowerOfTwo)
-    // Fields: Rm=0, Rd=0, Rn=1
+    // Fields: Rn=1, Rd=0, Rm=0
     let encoding: u32 = 0x7EC01420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16254,21 +9648,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rn_1_powero
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rn_30_poweroftwominusone_1400_7ec017c0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rn_30_poweroftwominusone_1400_7ec017c0() {
     // Encoding: 0x7EC017C0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=30, Rd=0, Rm=0
+    // Fields: Rd=0, Rn=30, Rm=0
     let encoding: u32 = 0x7EC017C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16279,17 +9667,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rn_30_power
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rn_31_max_1400_7ec017e0() {
     // Encoding: 0x7EC017E0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field Rn = 31 (Max)
-    // Fields: Rd=0, Rm=0, Rn=31
+    // Fields: Rd=0, Rn=31, Rm=0
     let encoding: u32 = 0x7EC017E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16300,17 +9683,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rn_31_max_1
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rd_0_min_1400_7ec01400() {
     // Encoding: 0x7EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field Rd = 0 (Min)
-    // Fields: Rm=0, Rn=0, Rd=0
+    // Fields: Rm=0, Rd=0, Rn=0
     let encoding: u32 = 0x7EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16318,8 +9696,7 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rd_0_min_14
 /// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rd_1_poweroftwo_1400_7ec01401()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rd_1_poweroftwo_1400_7ec01401() {
     // Encoding: 0x7EC01401
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field Rd = 1 (PowerOfTwo)
     // Fields: Rn=0, Rd=1, Rm=0
@@ -16327,12 +9704,7 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rd_1_powero
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16340,8 +9712,7 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rd_1_powero
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rd_30_poweroftwominusone_1400_7ec0141e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rd_30_poweroftwominusone_1400_7ec0141e() {
     // Encoding: 0x7EC0141E
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field Rd = 30 (PowerOfTwoMinusOne)
     // Fields: Rd=30, Rm=0, Rn=0
@@ -16349,12 +9720,7 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rd_30_power
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16370,12 +9736,7 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rd_31_max_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16386,206 +9747,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_field_rd_31_max_1
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_combo_0_1400_7ec01400() {
     // Encoding: 0x7EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field combination: Rm=0, Rn=0, Rd=0
-    // Fields: Rd=0, Rn=0, Rm=0
-    let encoding: u32 = 0x7EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_combo_1_1400_7ec11400() {
-    // Encoding: 0x7EC11400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field combination: Rm=1, Rn=0, Rd=0
-    // Fields: Rm=1, Rn=0, Rd=0
-    let encoding: u32 = 0x7EC11400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_combo_2_1400_7ede1400() {
-    // Encoding: 0x7EDE1400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field combination: Rm=30, Rn=0, Rd=0
-    // Fields: Rm=30, Rd=0, Rn=0
-    let encoding: u32 = 0x7EDE1400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=31 (register index 31 (special))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_combo_3_1400_7edf1400() {
-    // Encoding: 0x7EDF1400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field combination: Rm=31, Rn=0, Rd=0
-    // Fields: Rm=31, Rn=0, Rd=0
-    let encoding: u32 = 0x7EDF1400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_combo_4_1400_7ec01400() {
-    // Encoding: 0x7EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field combination: Rm=0, Rn=0, Rd=0
     // Fields: Rn=0, Rd=0, Rm=0
     let encoding: u32 = 0x7EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_combo_5_1400_7ec01420() {
-    // Encoding: 0x7EC01420
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field combination: Rm=0, Rn=1, Rd=0
-    // Fields: Rm=0, Rn=1, Rd=0
-    let encoding: u32 = 0x7EC01420;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_combo_6_1400_7ec017c0() {
-    // Encoding: 0x7EC017C0
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field combination: Rm=0, Rn=30, Rd=0
-    // Fields: Rd=0, Rn=30, Rm=0
-    let encoding: u32 = 0x7EC017C0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=31 (register index 31 (SP - stack pointer))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_combo_7_1400_7ec017e0() {
-    // Encoding: 0x7EC017E0
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field combination: Rm=0, Rn=31, Rd=0
-    // Fields: Rm=0, Rn=31, Rd=0
-    let encoding: u32 = 0x7EC017E0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rd=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_combo_8_1400_7ec01400() {
-    // Encoding: 0x7EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field combination: Rm=0, Rn=0, Rd=0
-    // Fields: Rd=0, Rn=0, Rm=0
-    let encoding: u32 = 0x7EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rd=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_combo_9_1400_7ec01401() {
-    // Encoding: 0x7EC01401
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd field combination: Rm=0, Rn=0, Rd=1
-    // Fields: Rn=0, Rd=1, Rm=0
-    let encoding: u32 = 0x7EC01401;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16593,21 +9760,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_combo_9_1400_7ec0
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_5120_7ec017e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_5120_7ec017e0() {
     // Encoding: 0x7EC017E0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rd=0, Rm=0, Rn=31
+    // Fields: Rn=31, Rm=0, Rd=0
     let encoding: u32 = 0x7EC017E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16615,21 +9776,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_special_rn_31_sta
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_5120_7ec0141f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_5120_7ec0141f() {
     // Encoding: 0x7EC0141F
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rm=0, Rn=0, Rd=31
+    // Fields: Rn=0, Rm=0, Rd=31
     let encoding: u32 = 0x7EC0141F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16640,16 +9795,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_special_rd_31_zer
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_invalid_0_1400_7ec01400() {
     // Encoding: 0x7EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveFP16Ext" }, args: [] } }
-    // Fields: Rm=0, Rn=0, Rd=0
+    // Fields: Rd=0, Rm=0, Rn=0
     let encoding: u32 = 0x7EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -16660,16 +9811,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_invalid_0_1400_7e
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_invalid_1_1400_7ec01400() {
     // Encoding: 0x7EC01400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd invalid encoding: Unconditional UNDEFINED
-    // Fields: Rm=0, Rn=0, Rd=0
+    // Fields: Rn=0, Rm=0, Rd=0
     let encoding: u32 = 0x7EC01400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -16680,17 +9827,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd_invalid_1_1400_7e
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_sz_0_min_d400_7ea0d400() {
     // Encoding: 0x7EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field sz = 0 (Min)
-    // Fields: sz=0, Rn=0, Rm=0, Rd=0
+    // Fields: Rm=0, Rn=0, Rd=0, sz=0
     let encoding: u32 = 0x7EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -16701,17 +9843,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_sz_0_min_d400
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_sz_1_max_d400_7ee0d400() {
     // Encoding: 0x7EE0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field sz = 1 (Max)
-    // Fields: Rm=0, Rd=0, sz=1, Rn=0
+    // Fields: Rm=0, Rn=0, sz=1, Rd=0
     let encoding: u32 = 0x7EE0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -16722,17 +9859,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_sz_1_max_d400
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rm_0_min_d400_7ea0d400() {
     // Encoding: 0x7EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field Rm = 0 (Min)
-    // Fields: Rn=0, Rd=0, sz=0, Rm=0
+    // Fields: Rm=0, Rd=0, sz=0, Rn=0
     let encoding: u32 = 0x7EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -16743,17 +9875,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rm_0_min_d400
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rm_1_poweroftwo_d400_7ea1d400() {
     // Encoding: 0x7EA1D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field Rm = 1 (PowerOfTwo)
-    // Fields: sz=0, Rd=0, Rm=1, Rn=0
+    // Fields: Rn=0, sz=0, Rd=0, Rm=1
     let encoding: u32 = 0x7EA1D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -16761,21 +9888,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rm_1_poweroft
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rm_30_poweroftwominusone_d400_7ebed400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rm_30_poweroftwominusone_d400_7ebed400() {
     // Encoding: 0x7EBED400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=30, sz=0, Rd=0, Rn=0
+    // Fields: Rn=0, Rm=30, Rd=0, sz=0
     let encoding: u32 = 0x7EBED400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -16786,17 +9907,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rm_30_powerof
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rm_31_max_d400_7ebfd400() {
     // Encoding: 0x7EBFD400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field Rm = 31 (Max)
-    // Fields: sz=0, Rn=0, Rd=0, Rm=31
+    // Fields: sz=0, Rm=31, Rd=0, Rn=0
     let encoding: u32 = 0x7EBFD400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -16807,17 +9923,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rm_31_max_d40
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rn_0_min_d400_7ea0d400() {
     // Encoding: 0x7EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field Rn = 0 (Min)
-    // Fields: Rn=0, Rd=0, sz=0, Rm=0
+    // Fields: Rm=0, Rn=0, Rd=0, sz=0
     let encoding: u32 = 0x7EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -16828,17 +9939,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rn_0_min_d400
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rn_1_poweroftwo_d400_7ea0d420() {
     // Encoding: 0x7EA0D420
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field Rn = 1 (PowerOfTwo)
-    // Fields: sz=0, Rm=0, Rn=1, Rd=0
+    // Fields: Rn=1, Rd=0, sz=0, Rm=0
     let encoding: u32 = 0x7EA0D420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -16846,21 +9952,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rn_1_poweroft
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rn_30_poweroftwominusone_d400_7ea0d7c0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rn_30_poweroftwominusone_d400_7ea0d7c0() {
     // Encoding: 0x7EA0D7C0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=0, Rn=30, Rd=0, sz=0
+    // Fields: Rd=0, Rm=0, Rn=30, sz=0
     let encoding: u32 = 0x7EA0D7C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -16871,17 +9971,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rn_30_powerof
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rn_31_max_d400_7ea0d7e0() {
     // Encoding: 0x7EA0D7E0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field Rn = 31 (Max)
-    // Fields: sz=0, Rn=31, Rd=0, Rm=0
+    // Fields: Rn=31, Rm=0, Rd=0, sz=0
     let encoding: u32 = 0x7EA0D7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -16892,17 +9987,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rn_31_max_d40
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rd_0_min_d400_7ea0d400() {
     // Encoding: 0x7EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field Rd = 0 (Min)
-    // Fields: Rd=0, Rn=0, Rm=0, sz=0
+    // Fields: Rd=0, Rm=0, Rn=0, sz=0
     let encoding: u32 = 0x7EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -16913,17 +10003,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rd_0_min_d400
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rd_1_poweroftwo_d400_7ea0d401() {
     // Encoding: 0x7EA0D401
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field Rd = 1 (PowerOfTwo)
-    // Fields: Rn=0, sz=0, Rd=1, Rm=0
+    // Fields: sz=0, Rm=0, Rn=0, Rd=1
     let encoding: u32 = 0x7EA0D401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -16931,21 +10016,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rd_1_poweroft
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rd_30_poweroftwominusone_d400_7ea0d41e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rd_30_poweroftwominusone_d400_7ea0d41e() {
     // Encoding: 0x7EA0D41E
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=30, sz=0, Rn=0, Rm=0
+    // Fields: Rn=0, Rm=0, Rd=30, sz=0
     let encoding: u32 = 0x7EA0D41E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -16956,17 +10035,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rd_30_powerof
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rd_31_max_d400_7ea0d41f() {
     // Encoding: 0x7EA0D41F
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field Rd = 31 (Max)
-    // Fields: Rn=0, Rd=31, Rm=0, sz=0
+    // Fields: Rn=0, Rm=0, sz=0, Rd=31
     let encoding: u32 = 0x7EA0D41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -16977,206 +10051,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_field_rd_31_max_d40
 fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_combo_0_d400_7ea0d400() {
     // Encoding: 0x7EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field combination: sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: sz=0, Rm=0, Rn=0, Rd=0
+    // Fields: Rd=0, sz=0, Rm=0, Rn=0
     let encoding: u32 = 0x7EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// sz=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_combo_1_d400_7ee0d400() {
-    // Encoding: 0x7EE0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field combination: sz=1, Rm=0, Rn=0, Rd=0
-    // Fields: sz=1, Rn=0, Rd=0, Rm=0
-    let encoding: u32 = 0x7EE0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_combo_2_d400_7ea0d400() {
-    // Encoding: 0x7EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field combination: sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: sz=0, Rm=0, Rn=0, Rd=0
-    let encoding: u32 = 0x7EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_combo_3_d400_7ea1d400() {
-    // Encoding: 0x7EA1D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field combination: sz=0, Rm=1, Rn=0, Rd=0
-    // Fields: sz=0, Rm=1, Rd=0, Rn=0
-    let encoding: u32 = 0x7EA1D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_combo_4_d400_7ebed400() {
-    // Encoding: 0x7EBED400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field combination: sz=0, Rm=30, Rn=0, Rd=0
-    // Fields: Rm=30, Rn=0, sz=0, Rd=0
-    let encoding: u32 = 0x7EBED400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=31 (register index 31 (special))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_combo_5_d400_7ebfd400() {
-    // Encoding: 0x7EBFD400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field combination: sz=0, Rm=31, Rn=0, Rd=0
-    // Fields: Rd=0, Rm=31, sz=0, Rn=0
-    let encoding: u32 = 0x7EBFD400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_combo_6_d400_7ea0d400() {
-    // Encoding: 0x7EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field combination: sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, Rm=0, Rd=0, sz=0
-    let encoding: u32 = 0x7EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_combo_7_d400_7ea0d420() {
-    // Encoding: 0x7EA0D420
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field combination: sz=0, Rm=0, Rn=1, Rd=0
-    // Fields: sz=0, Rn=1, Rd=0, Rm=0
-    let encoding: u32 = 0x7EA0D420;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_combo_8_d400_7ea0d7c0() {
-    // Encoding: 0x7EA0D7C0
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field combination: sz=0, Rm=0, Rn=30, Rd=0
-    // Fields: Rm=0, sz=0, Rd=0, Rn=30
-    let encoding: u32 = 0x7EA0D7C0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=31 (register index 31 (SP - stack pointer))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_combo_9_d400_7ea0d7e0() {
-    // Encoding: 0x7EA0D7E0
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd field combination: sz=0, Rm=0, Rn=31, Rd=0
-    // Fields: Rd=0, Rn=31, Rm=0, sz=0
-    let encoding: u32 = 0x7EA0D7E0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -17184,21 +10064,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_combo_9_d400_7ea0d7
 /// Requirement: FieldSpecial { field: "sz", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_special_sz_0_size_variant_0_54272_7ea0d400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_special_sz_0_size_variant_0_54272_7ea0d400() {
     // Encoding: 0x7EA0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd special value sz = 0 (Size variant 0)
-    // Fields: Rm=0, sz=0, Rn=0, Rd=0
+    // Fields: Rd=0, sz=0, Rm=0, Rn=0
     let encoding: u32 = 0x7EA0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -17206,21 +10080,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_special_sz_0_size_v
 /// Requirement: FieldSpecial { field: "sz", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_special_sz_1_size_variant_1_54272_7ee0d400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_special_sz_1_size_variant_1_54272_7ee0d400() {
     // Encoding: 0x7EE0D400
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd special value sz = 1 (Size variant 1)
-    // Fields: sz=1, Rd=0, Rm=0, Rn=0
+    // Fields: sz=1, Rn=0, Rd=0, Rm=0
     let encoding: u32 = 0x7EE0D400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -17228,8 +10096,7 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_special_sz_1_size_v
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_54272_7ea0d7e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_special_rn_31_stack_pointer_sp_may_require_alignment_54272_7ea0d7e0() {
     // Encoding: 0x7EA0D7E0
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd special value Rn = 31 (Stack pointer (SP) - may require alignment)
     // Fields: Rm=0, Rd=0, sz=0, Rn=31
@@ -17237,12 +10104,7 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_special_rn_31_stack
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd
@@ -17250,1464 +10112,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_special_rn_31_stack
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_54272_7ea0d41f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_54272_7ea0d41f() {
     // Encoding: 0x7EA0D41F
     // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rm=0, sz=0, Rn=0, Rd=31
+    // Fields: Rm=0, Rn=0, sz=0, Rd=31
     let encoding: u32 = 0x7EA0D41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Q 30 +: 1`
-/// Requirement: FieldBoundary { field: "Q", value: 0, boundary: Min }
-/// 8-bit / byte size
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_q_0_min_1400_0ec01400() {
-    // Encoding: 0x0EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Q = 0 (Min)
-    // Fields: Rn=0, Rm=0, Q=0, U=0, Rd=0
-    let encoding: u32 = 0x0EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Q 30 +: 1`
-/// Requirement: FieldBoundary { field: "Q", value: 1, boundary: Max }
-/// 16-bit / halfword size
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_q_1_max_1400_4ec01400() {
-    // Encoding: 0x4EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Q = 1 (Max)
-    // Fields: U=0, Rm=0, Rd=0, Q=1, Rn=0
-    let encoding: u32 = 0x4EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field U 29 +: 1`
-/// Requirement: FieldBoundary { field: "U", value: 0, boundary: Min }
-/// minimum value
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_u_0_min_1400_0ec01400() {
-    // Encoding: 0x0EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field U = 0 (Min)
-    // Fields: U=0, Rm=0, Rn=0, Q=0, Rd=0
-    let encoding: u32 = 0x0EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field U 29 +: 1`
-/// Requirement: FieldBoundary { field: "U", value: 1, boundary: Max }
-/// maximum value (1)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_u_1_max_1400_2ec01400() {
-    // Encoding: 0x2EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field U = 1 (Max)
-    // Fields: Rm=0, Rd=0, Rn=0, Q=0, U=1
-    let encoding: u32 = 0x2EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Rm 16 +: 5`
-/// Requirement: FieldBoundary { field: "Rm", value: 0, boundary: Min }
-/// register index 0 (first register)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rm_0_min_1400_0ec01400() {
-    // Encoding: 0x0EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rm = 0 (Min)
-    // Fields: Rn=0, Rd=0, U=0, Rm=0, Q=0
-    let encoding: u32 = 0x0EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Rm 16 +: 5`
-/// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
-/// register index 1 (second register)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rm_1_poweroftwo_1400_0ec11400()
-{
-    // Encoding: 0x0EC11400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rm = 1 (PowerOfTwo)
-    // Fields: Rm=1, Rd=0, Rn=0, Q=0, U=0
-    let encoding: u32 = 0x0EC11400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Rm 16 +: 5`
-/// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
-/// register index 30 (LR in some contexts)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rm_30_poweroftwominusone_1400_0ede1400(
-) {
-    // Encoding: 0x0EDE1400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Q=0, U=0, Rn=0, Rd=0, Rm=30
-    let encoding: u32 = 0x0EDE1400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Rm 16 +: 5`
-/// Requirement: FieldBoundary { field: "Rm", value: 31, boundary: Max }
-/// register index 31 (special)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rm_31_max_1400_0edf1400() {
-    // Encoding: 0x0EDF1400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rm = 31 (Max)
-    // Fields: Q=0, Rn=0, U=0, Rd=0, Rm=31
-    let encoding: u32 = 0x0EDF1400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Rn 5 +: 5`
-/// Requirement: FieldBoundary { field: "Rn", value: 0, boundary: Min }
-/// register index 0 (first register)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rn_0_min_1400_0ec01400() {
-    // Encoding: 0x0EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rn = 0 (Min)
-    // Fields: Q=0, U=0, Rm=0, Rd=0, Rn=0
-    let encoding: u32 = 0x0EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Rn 5 +: 5`
-/// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
-/// register index 1 (second register)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rn_1_poweroftwo_1400_0ec01420()
-{
-    // Encoding: 0x0EC01420
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rn = 1 (PowerOfTwo)
-    // Fields: Rm=0, U=0, Q=0, Rn=1, Rd=0
-    let encoding: u32 = 0x0EC01420;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Rn 5 +: 5`
-/// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
-/// register index 30 (LR in some contexts)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rn_30_poweroftwominusone_1400_0ec017c0(
-) {
-    // Encoding: 0x0EC017C0
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=0, Q=0, Rn=30, U=0, Rd=0
-    let encoding: u32 = 0x0EC017C0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Rn 5 +: 5`
-/// Requirement: FieldBoundary { field: "Rn", value: 31, boundary: Max }
-/// register index 31 (SP - stack pointer)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rn_31_max_1400_0ec017e0() {
-    // Encoding: 0x0EC017E0
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rn = 31 (Max)
-    // Fields: Rd=0, Rm=0, Rn=31, Q=0, U=0
-    let encoding: u32 = 0x0EC017E0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Rd 0 +: 5`
-/// Requirement: FieldBoundary { field: "Rd", value: 0, boundary: Min }
-/// register index 0 (first register)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rd_0_min_1400_0ec01400() {
-    // Encoding: 0x0EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rd = 0 (Min)
-    // Fields: Rn=0, Rd=0, Q=0, Rm=0, U=0
-    let encoding: u32 = 0x0EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Rd 0 +: 5`
-/// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
-/// register index 1 (second register)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rd_1_poweroftwo_1400_0ec01401()
-{
-    // Encoding: 0x0EC01401
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rd = 1 (PowerOfTwo)
-    // Fields: Rd=1, U=0, Q=0, Rm=0, Rn=0
-    let encoding: u32 = 0x0EC01401;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Rd 0 +: 5`
-/// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
-/// register index 30 (LR in some contexts)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rd_30_poweroftwominusone_1400_0ec0141e(
-) {
-    // Encoding: 0x0EC0141E
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=0, Q=0, Rn=0, Rd=30, U=0
-    let encoding: u32 = 0x0EC0141E;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Rd 0 +: 5`
-/// Requirement: FieldBoundary { field: "Rd", value: 31, boundary: Max }
-/// register index 31 (ZR - zero register)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_field_rd_31_max_1400_0ec0141f() {
-    // Encoding: 0x0EC0141F
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field Rd = 31 (Max)
-    // Fields: Rd=31, U=0, Q=0, Rm=0, Rn=0
-    let encoding: u32 = 0x0EC0141F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 0`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_0_1400_0ec01400() {
-    // Encoding: 0x0EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, Rd=0, Rm=0, Q=0, Rn=0
-    let encoding: u32 = 0x0EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_1_1400_4ec01400() {
-    // Encoding: 0x4EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=1, U=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, Rd=0, Rn=0, Q=1, U=0
-    let encoding: u32 = 0x4EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_2_1400_0ec01400() {
-    // Encoding: 0x0EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rd=0, U=0, Rm=0, Rn=0, Q=0
-    let encoding: u32 = 0x0EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_3_1400_2ec01400() {
-    // Encoding: 0x2EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=1, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, Q=0, Rn=0, Rd=0, U=1
-    let encoding: u32 = 0x2EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_4_1400_0ec01400() {
-    // Encoding: 0x0EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rd=0, Q=0, Rn=0, U=0, Rm=0
-    let encoding: u32 = 0x0EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_5_1400_0ec11400() {
-    // Encoding: 0x0EC11400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=1, Rn=0, Rd=0
-    // Fields: U=0, Q=0, Rn=0, Rm=1, Rd=0
-    let encoding: u32 = 0x0EC11400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_6_1400_0ede1400() {
-    // Encoding: 0x0EDE1400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=30, Rn=0, Rd=0
-    // Fields: U=0, Rd=0, Q=0, Rn=0, Rm=30
-    let encoding: u32 = 0x0EDE1400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=31 (register index 31 (special))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_7_1400_0edf1400() {
-    // Encoding: 0x0EDF1400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=31, Rn=0, Rd=0
-    // Fields: U=0, Rn=0, Rd=0, Q=0, Rm=31
-    let encoding: u32 = 0x0EDF1400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_8_1400_0ec01400() {
-    // Encoding: 0x0EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, Q=0, U=0, Rm=0, Rd=0
-    let encoding: u32 = 0x0EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_combo_9_1400_0ec01420() {
-    // Encoding: 0x0EC01420
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd field combination: Q=0, U=0, Rm=0, Rn=1, Rd=0
-    // Fields: Rn=1, U=0, Rm=0, Rd=0, Q=0
-    let encoding: u32 = 0x0EC01420;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Q = 0 (Size variant 0)`
-/// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
-/// Size variant 0
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_q_0_size_variant_0_5120_0ec01400(
-) {
-    // Encoding: 0x0EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd special value Q = 0 (Size variant 0)
-    // Fields: Rd=0, Rm=0, Q=0, Rn=0, U=0
-    let encoding: u32 = 0x0EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Q = 1 (Size variant 1)`
-/// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
-/// Size variant 1
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_q_1_size_variant_1_5120_4ec01400(
-) {
-    // Encoding: 0x4EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd special value Q = 1 (Size variant 1)
-    // Fields: Rm=0, U=0, Rn=0, Q=1, Rd=0
-    let encoding: u32 = 0x4EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Rn = 31 (Stack pointer (SP) - may require alignment)`
-/// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
-/// Stack pointer (SP) - may require alignment
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_rn_31_stack_pointer_sp_may_require_alignment_5120_0ec017e0(
-) {
-    // Encoding: 0x0EC017E0
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Q=0, Rm=0, U=0, Rn=31, Rd=0
-    let encoding: u32 = 0x0EC017E0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `field Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)`
-/// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
-/// Zero register (XZR/WZR) - reads as 0, writes discarded
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_5120_0ec0141f(
-) {
-    // Encoding: 0x0EC0141F
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Q=0, Rm=0, Rn=0, Rd=31, U=0
-    let encoding: u32 = 0x0EC0141F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveFP16Ext" }, args: [] } }`
-/// Requirement: UndefinedEncoding { condition: "Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: \"HaveFP16Ext\" }, args: [] } }" }
-/// triggers Undefined
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_invalid_0_1400_0ec01400() {
-    // Encoding: 0x0EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveFP16Ext" }, args: [] } }
-    // Fields: Rn=0, Q=0, Rm=0, U=0, Rd=0
-    let encoding: u32 = 0x0EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `Unconditional UNDEFINED`
-/// Requirement: UndefinedEncoding { condition: "Unconditional UNDEFINED" }
-/// triggers Undefined
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_invalid_1_1400_0ec01400() {
-    // Encoding: 0x0EC01400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, Rm=0, U=0, Rd=0, Q=0
-    let encoding: u32 = 0x0EC01400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Q 30 +: 1`
-/// Requirement: FieldBoundary { field: "Q", value: 0, boundary: Min }
-/// 8-bit / byte size
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_q_0_min_d400_0ea0d400() {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Q = 0 (Min)
-    // Fields: Q=0, Rn=0, Rd=0, U=0, Rm=0, sz=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Q 30 +: 1`
-/// Requirement: FieldBoundary { field: "Q", value: 1, boundary: Max }
-/// 16-bit / halfword size
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_q_1_max_d400_4ea0d400() {
-    // Encoding: 0x4EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Q = 1 (Max)
-    // Fields: Q=1, sz=0, Rn=0, U=0, Rd=0, Rm=0
-    let encoding: u32 = 0x4EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field U 29 +: 1`
-/// Requirement: FieldBoundary { field: "U", value: 0, boundary: Min }
-/// minimum value
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_u_0_min_d400_0ea0d400() {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field U = 0 (Min)
-    // Fields: sz=0, Q=0, Rm=0, U=0, Rn=0, Rd=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field U 29 +: 1`
-/// Requirement: FieldBoundary { field: "U", value: 1, boundary: Max }
-/// maximum value (1)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_u_1_max_d400_2ea0d400() {
-    // Encoding: 0x2EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field U = 1 (Max)
-    // Fields: Rm=0, Rd=0, Q=0, Rn=0, sz=0, U=1
-    let encoding: u32 = 0x2EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field sz 22 +: 1`
-/// Requirement: FieldBoundary { field: "sz", value: 0, boundary: Min }
-/// 8-bit / byte size
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_sz_0_min_d400_0ea0d400() {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field sz = 0 (Min)
-    // Fields: U=0, Rm=0, sz=0, Q=0, Rn=0, Rd=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field sz 22 +: 1`
-/// Requirement: FieldBoundary { field: "sz", value: 1, boundary: Max }
-/// 16-bit / halfword size
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_sz_1_max_d400_0ee0d400() {
-    // Encoding: 0x0EE0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field sz = 1 (Max)
-    // Fields: U=0, Rm=0, Q=0, Rn=0, sz=1, Rd=0
-    let encoding: u32 = 0x0EE0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Rm 16 +: 5`
-/// Requirement: FieldBoundary { field: "Rm", value: 0, boundary: Min }
-/// register index 0 (first register)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rm_0_min_d400_0ea0d400() {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rm = 0 (Min)
-    // Fields: U=0, Rm=0, Q=0, Rn=0, sz=0, Rd=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Rm 16 +: 5`
-/// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
-/// register index 1 (second register)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rm_1_poweroftwo_d400_0ea1d400() {
-    // Encoding: 0x0EA1D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rm = 1 (PowerOfTwo)
-    // Fields: U=0, Rd=0, Q=0, sz=0, Rm=1, Rn=0
-    let encoding: u32 = 0x0EA1D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Rm 16 +: 5`
-/// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
-/// register index 30 (LR in some contexts)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rm_30_poweroftwominusone_d400_0ebed400(
-) {
-    // Encoding: 0x0EBED400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: U=0, Rn=0, Rm=30, sz=0, Rd=0, Q=0
-    let encoding: u32 = 0x0EBED400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Rm 16 +: 5`
-/// Requirement: FieldBoundary { field: "Rm", value: 31, boundary: Max }
-/// register index 31 (special)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rm_31_max_d400_0ebfd400() {
-    // Encoding: 0x0EBFD400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rm = 31 (Max)
-    // Fields: Q=0, Rn=0, Rm=31, Rd=0, U=0, sz=0
-    let encoding: u32 = 0x0EBFD400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Rn 5 +: 5`
-/// Requirement: FieldBoundary { field: "Rn", value: 0, boundary: Min }
-/// register index 0 (first register)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rn_0_min_d400_0ea0d400() {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rn = 0 (Min)
-    // Fields: U=0, Rd=0, Q=0, Rm=0, Rn=0, sz=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Rn 5 +: 5`
-/// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
-/// register index 1 (second register)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rn_1_poweroftwo_d400_0ea0d420() {
-    // Encoding: 0x0EA0D420
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rn = 1 (PowerOfTwo)
-    // Fields: U=0, Rd=0, sz=0, Q=0, Rm=0, Rn=1
-    let encoding: u32 = 0x0EA0D420;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Rn 5 +: 5`
-/// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
-/// register index 30 (LR in some contexts)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rn_30_poweroftwominusone_d400_0ea0d7c0(
-) {
-    // Encoding: 0x0EA0D7C0
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: U=0, Q=0, Rn=30, sz=0, Rd=0, Rm=0
-    let encoding: u32 = 0x0EA0D7C0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Rn 5 +: 5`
-/// Requirement: FieldBoundary { field: "Rn", value: 31, boundary: Max }
-/// register index 31 (SP - stack pointer)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rn_31_max_d400_0ea0d7e0() {
-    // Encoding: 0x0EA0D7E0
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rn = 31 (Max)
-    // Fields: U=0, sz=0, Rn=31, Rd=0, Q=0, Rm=0
-    let encoding: u32 = 0x0EA0D7E0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Rd 0 +: 5`
-/// Requirement: FieldBoundary { field: "Rd", value: 0, boundary: Min }
-/// register index 0 (first register)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rd_0_min_d400_0ea0d400() {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rd = 0 (Min)
-    // Fields: Rd=0, Q=0, sz=0, Rm=0, Rn=0, U=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Rd 0 +: 5`
-/// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
-/// register index 1 (second register)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rd_1_poweroftwo_d400_0ea0d401() {
-    // Encoding: 0x0EA0D401
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rd = 1 (PowerOfTwo)
-    // Fields: U=0, sz=0, Rn=0, Rd=1, Rm=0, Q=0
-    let encoding: u32 = 0x0EA0D401;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Rd 0 +: 5`
-/// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
-/// register index 30 (LR in some contexts)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rd_30_poweroftwominusone_d400_0ea0d41e(
-) {
-    // Encoding: 0x0EA0D41E
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: sz=0, Rm=0, Rn=0, Q=0, U=0, Rd=30
-    let encoding: u32 = 0x0EA0D41E;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Rd 0 +: 5`
-/// Requirement: FieldBoundary { field: "Rd", value: 31, boundary: Max }
-/// register index 31 (ZR - zero register)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_field_rd_31_max_d400_0ea0d41f() {
-    // Encoding: 0x0EA0D41F
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field Rd = 31 (Max)
-    // Fields: Rd=31, Rm=0, sz=0, Q=0, Rn=0, U=0
-    let encoding: u32 = 0x0EA0D41F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 0`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_0_d400_0ea0d400() {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: sz=0, Rn=0, Rd=0, U=0, Q=0, Rm=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_1_d400_4ea0d400() {
-    // Encoding: 0x4EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=1, U=0, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, Q=1, Rm=0, Rd=0, U=0, sz=0
-    let encoding: u32 = 0x4EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=0 (minimum value)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_2_d400_0ea0d400() {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, sz=0, Q=0, U=0, Rm=0, Rd=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// U=1 (maximum value (1))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_3_d400_2ea0d400() {
-    // Encoding: 0x2EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=1, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: U=1, Rm=0, Rd=0, Q=0, Rn=0, sz=0
-    let encoding: u32 = 0x2EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// sz=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_4_d400_0ea0d400() {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, Rn=0, Rd=0, U=0, Q=0, sz=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// sz=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_5_d400_0ee0d400() {
-    // Encoding: 0x0EE0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=1, Rm=0, Rn=0, Rd=0
-    // Fields: U=0, Q=0, Rd=0, Rm=0, Rn=0, sz=1
-    let encoding: u32 = 0x0EE0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_6_d400_0ea0d400() {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rd=0, sz=0, Rn=0, U=0, Q=0, Rm=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_7_d400_0ea1d400() {
-    // Encoding: 0x0EA1D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=0, Rm=1, Rn=0, Rd=0
-    // Fields: Rd=0, U=0, Q=0, sz=0, Rm=1, Rn=0
-    let encoding: u32 = 0x0EA1D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_8_d400_0ebed400() {
-    // Encoding: 0x0EBED400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=0, Rm=30, Rn=0, Rd=0
-    // Fields: Q=0, Rn=0, U=0, Rd=0, sz=0, Rm=30
-    let encoding: u32 = 0x0EBED400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=31 (register index 31 (special))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_combo_9_d400_0ebfd400() {
-    // Encoding: 0x0EBFD400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd field combination: Q=0, U=0, sz=0, Rm=31, Rn=0, Rd=0
-    // Fields: Q=0, U=0, sz=0, Rn=0, Rm=31, Rd=0
-    let encoding: u32 = 0x0EBFD400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Q = 0 (Size variant 0)`
-/// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
-/// Size variant 0
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_q_0_size_variant_0_54272_0ea0d400(
-) {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd special value Q = 0 (Size variant 0)
-    // Fields: Rn=0, U=0, Rd=0, sz=0, Q=0, Rm=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Q = 1 (Size variant 1)`
-/// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
-/// Size variant 1
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_q_1_size_variant_1_54272_4ea0d400(
-) {
-    // Encoding: 0x4EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd special value Q = 1 (Size variant 1)
-    // Fields: Q=1, U=0, Rm=0, Rn=0, sz=0, Rd=0
-    let encoding: u32 = 0x4EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field sz = 0 (Size variant 0)`
-/// Requirement: FieldSpecial { field: "sz", value: 0, meaning: "Size variant 0" }
-/// Size variant 0
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_sz_0_size_variant_0_54272_0ea0d400(
-) {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd special value sz = 0 (Size variant 0)
-    // Fields: Rd=0, U=0, sz=0, Q=0, Rm=0, Rn=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field sz = 1 (Size variant 1)`
-/// Requirement: FieldSpecial { field: "sz", value: 1, meaning: "Size variant 1" }
-/// Size variant 1
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_sz_1_size_variant_1_54272_0ee0d400(
-) {
-    // Encoding: 0x0EE0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd special value sz = 1 (Size variant 1)
-    // Fields: U=0, sz=1, Q=0, Rm=0, Rn=0, Rd=0
-    let encoding: u32 = 0x0EE0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Rn = 31 (Stack pointer (SP) - may require alignment)`
-/// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
-/// Stack pointer (SP) - may require alignment
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_rn_31_stack_pointer_sp_may_require_alignment_54272_0ea0d7e0(
-) {
-    // Encoding: 0x0EA0D7E0
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rn=31, Rd=0, sz=0, Q=0, U=0, Rm=0
-    let encoding: u32 = 0x0EA0D7E0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `field Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)`
-/// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
-/// Zero register (XZR/WZR) - reads as 0, writes discarded
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_54272_0ea0d41f(
-) {
-    // Encoding: 0x0EA0D41F
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: sz=0, Q=0, Rd=31, U=0, Rn=0, Rm=0
-    let encoding: u32 = 0x0EA0D41F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `Binary { op: BitConcat, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "sz" }), rhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "Q" }), rhs: LitBits([true, false]) } }`
-/// Requirement: UndefinedEncoding { condition: "Binary { op: BitConcat, lhs: Var(QualifiedIdentifier { qualifier: Any, name: \"sz\" }), rhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: \"Q\" }), rhs: LitBits([true, false]) } }" }
-/// triggers Undefined
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_invalid_0_d400_0ea0d400() {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd invalid encoding: Binary { op: BitConcat, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "sz" }), rhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "Q" }), rhs: LitBits([true, false]) } }
-    // Fields: sz=0, Q=0, Rd=0, Rm=0, Rn=0, U=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `Unconditional UNDEFINED`
-/// Requirement: UndefinedEncoding { condition: "Unconditional UNDEFINED" }
-/// triggers Undefined
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_invalid_1_d400_0ea0d400() {
-    // Encoding: 0x0EA0D400
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd invalid encoding: Unconditional UNDEFINED
-    // Fields: U=0, sz=0, Rn=0, Rd=0, Q=0, Rm=0
-    let encoding: u32 = 0x0EA0D400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_sisd
@@ -18802,98 +10215,6 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_sisd_zr_rd_7ea0d41f() {
     assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
 }
 
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `SimdFromField("d") write`
-/// Requirement: RegisterWrite { reg_type: Simd128, dest_field: "unknown" }
-/// verify register write to SimdFromField("d")
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_reg_write_0_0ec01400() {
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd register write: SimdFromField("d")
-    // Encoding: 0x0EC01400
-    let mut cpu = create_test_cpu();
-    let encoding: u32 = 0x0EC01400;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `Rn = 31 (SP)`
-/// Requirement: RegisterSpecial { reg: Sp, behavior: "stack pointer with alignment requirements" }
-/// stack pointer (Rn = 31)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_sp_rn_0ec017e0() {
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd with Rn = SP (31)
-    // Encoding: 0x0EC017E0
-    let mut cpu = create_test_cpu();
-    let encoding: u32 = 0x0EC017E0;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd
-/// ASL: `Rd = 31 (ZR)`
-/// Requirement: RegisterSpecial { reg: Zr, behavior: "reads as 0, writes discarded" }
-/// zero register (Rd = 31)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd_zr_rd_0ec0141f() {
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp16_simd with Rd = ZR (31)
-    // Encoding: 0x0EC0141F
-    let mut cpu = create_test_cpu();
-    let encoding: u32 = 0x0EC0141F;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `SimdFromField("d") write`
-/// Requirement: RegisterWrite { reg_type: Simd128, dest_field: "unknown" }
-/// verify register write to SimdFromField("d")
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_reg_write_0_0ea0d400() {
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd register write: SimdFromField("d")
-    // Encoding: 0x0EA0D400
-    let mut cpu = create_test_cpu();
-    let encoding: u32 = 0x0EA0D400;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `Rn = 31 (SP)`
-/// Requirement: RegisterSpecial { reg: Sp, behavior: "stack pointer with alignment requirements" }
-/// stack pointer (Rn = 31)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_sp_rn_0ea0d7e0() {
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd with Rn = SP (31)
-    // Encoding: 0x0EA0D7E0
-    let mut cpu = create_test_cpu();
-    let encoding: u32 = 0x0EA0D7E0;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_sub_fp_simd
-/// ASL: `Rd = 31 (ZR)`
-/// Requirement: RegisterSpecial { reg: Zr, behavior: "reads as 0, writes discarded" }
-/// zero register (Rd = 31)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_zr_rd_0ea0d41f() {
-    // Test aarch64_vector_arithmetic_binary_uniform_sub_fp_simd with Rd = ZR (31)
-    // Encoding: 0x0EA0D41F
-    let mut cpu = create_test_cpu();
-    let encoding: u32 = 0x0EA0D41F;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
-}
-
 // ============================================================================
 // aarch64_vector_arithmetic_binary_uniform_add_fp_complex Tests
 // ============================================================================
@@ -18906,17 +10227,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_sub_fp_simd_zr_rd_0ea0d41f() {
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_q_0_min_e400_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field Q = 0 (Min)
-    // Fields: Q=0, size=0, Rd=0, rot=0, Rm=0, Rn=0
+    // Fields: Q=0, Rm=0, Rd=0, Rn=0, rot=0, size=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -18927,17 +10243,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_q_0_min_e4
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_q_1_max_e400_6e00e400() {
     // Encoding: 0x6E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field Q = 1 (Max)
-    // Fields: Rm=0, Q=1, rot=0, Rn=0, Rd=0, size=0
+    // Fields: Rn=0, rot=0, Q=1, Rm=0, size=0, Rd=0
     let encoding: u32 = 0x6E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -18948,17 +10259,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_q_1_max_e4
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_size_0_min_e400_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field size = 0 (Min)
-    // Fields: Rn=0, rot=0, Rd=0, Rm=0, size=0, Q=0
+    // Fields: size=0, Q=0, Rd=0, rot=0, Rm=0, Rn=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -18966,21 +10272,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_size_0_min
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_size_1_poweroftwo_e400_2e40e400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_size_1_poweroftwo_e400_2e40e400() {
     // Encoding: 0x2E40E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field size = 1 (PowerOfTwo)
-    // Fields: Rm=0, rot=0, Rn=0, Q=0, size=1, Rd=0
+    // Fields: size=1, Rn=0, Q=0, rot=0, Rm=0, Rd=0
     let encoding: u32 = 0x2E40E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -18988,21 +10288,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_size_1_pow
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_size_2_poweroftwo_e400_2e80e400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_size_2_poweroftwo_e400_2e80e400() {
     // Encoding: 0x2E80E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field size = 2 (PowerOfTwo)
-    // Fields: rot=0, size=2, Q=0, Rm=0, Rn=0, Rd=0
+    // Fields: Q=0, size=2, rot=0, Rd=0, Rm=0, Rn=0
     let encoding: u32 = 0x2E80E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19013,17 +10307,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_size_2_pow
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_size_3_max_e400_2ec0e400() {
     // Encoding: 0x2EC0E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field size = 3 (Max)
-    // Fields: rot=0, Rd=0, size=3, Q=0, Rm=0, Rn=0
+    // Fields: rot=0, Rn=0, Q=0, Rd=0, size=3, Rm=0
     let encoding: u32 = 0x2EC0E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19034,17 +10323,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_size_3_max
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rm_0_min_e400_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field Rm = 0 (Min)
-    // Fields: Rd=0, Rm=0, size=0, rot=0, Q=0, Rn=0
+    // Fields: Q=0, size=0, Rm=0, rot=0, Rn=0, Rd=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19052,21 +10336,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rm_0_min_e
 /// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rm_1_poweroftwo_e400_2e01e400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rm_1_poweroftwo_e400_2e01e400() {
     // Encoding: 0x2E01E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field Rm = 1 (PowerOfTwo)
-    // Fields: Rd=0, size=0, Rn=0, Q=0, Rm=1, rot=0
+    // Fields: Q=0, rot=0, Rn=0, Rm=1, size=0, Rd=0
     let encoding: u32 = 0x2E01E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19074,21 +10352,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rm_1_power
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rm_30_poweroftwominusone_e400_2e1ee400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rm_30_poweroftwominusone_e400_2e1ee400() {
     // Encoding: 0x2E1EE400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Q=0, Rm=30, rot=0, Rn=0, size=0, Rd=0
+    // Fields: Q=0, Rd=0, rot=0, Rn=0, size=0, Rm=30
     let encoding: u32 = 0x2E1EE400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19099,17 +10371,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rm_30_powe
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rm_31_max_e400_2e1fe400() {
     // Encoding: 0x2E1FE400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field Rm = 31 (Max)
-    // Fields: rot=0, Q=0, Rm=31, Rn=0, size=0, Rd=0
+    // Fields: size=0, Q=0, Rm=31, rot=0, Rn=0, Rd=0
     let encoding: u32 = 0x2E1FE400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19120,17 +10387,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rm_31_max_
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rot_0_min_e400_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field rot = 0 (Min)
-    // Fields: Rm=0, rot=0, Q=0, Rd=0, size=0, Rn=0
+    // Fields: Rm=0, Rd=0, size=0, Rn=0, Q=0, rot=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19141,17 +10403,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rot_0_min_
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rot_1_max_e400_2e00f400() {
     // Encoding: 0x2E00F400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field rot = 1 (Max)
-    // Fields: Rd=0, Rm=0, Rn=0, Q=0, rot=1, size=0
+    // Fields: Q=0, Rm=0, size=0, rot=1, Rn=0, Rd=0
     let encoding: u32 = 0x2E00F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19162,17 +10419,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rot_1_max_
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rn_0_min_e400_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field Rn = 0 (Min)
-    // Fields: Rn=0, Rd=0, Rm=0, Q=0, size=0, rot=0
+    // Fields: Rn=0, Rd=0, Q=0, rot=0, Rm=0, size=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19180,21 +10432,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rn_0_min_e
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rn_1_poweroftwo_e400_2e00e420(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rn_1_poweroftwo_e400_2e00e420() {
     // Encoding: 0x2E00E420
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field Rn = 1 (PowerOfTwo)
-    // Fields: size=0, Q=0, Rn=1, Rd=0, rot=0, Rm=0
+    // Fields: Rn=1, size=0, Rd=0, Rm=0, rot=0, Q=0
     let encoding: u32 = 0x2E00E420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19202,21 +10448,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rn_1_power
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rn_30_poweroftwominusone_e400_2e00e7c0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rn_30_poweroftwominusone_e400_2e00e7c0() {
     // Encoding: 0x2E00E7C0
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rd=0, size=0, Q=0, rot=0, Rm=0, Rn=30
+    // Fields: rot=0, Q=0, size=0, Rm=0, Rd=0, Rn=30
     let encoding: u32 = 0x2E00E7C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19227,17 +10467,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rn_30_powe
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rn_31_max_e400_2e00e7e0() {
     // Encoding: 0x2E00E7E0
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field Rn = 31 (Max)
-    // Fields: Rd=0, Q=0, rot=0, Rn=31, size=0, Rm=0
+    // Fields: Rd=0, Rm=0, rot=0, Rn=31, Q=0, size=0
     let encoding: u32 = 0x2E00E7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19248,17 +10483,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rn_31_max_
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rd_0_min_e400_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field Rd = 0 (Min)
-    // Fields: Q=0, Rn=0, Rd=0, size=0, rot=0, Rm=0
+    // Fields: size=0, Q=0, Rn=0, Rd=0, Rm=0, rot=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19266,21 +10496,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rd_0_min_e
 /// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rd_1_poweroftwo_e400_2e00e401(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rd_1_poweroftwo_e400_2e00e401() {
     // Encoding: 0x2E00E401
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field Rd = 1 (PowerOfTwo)
-    // Fields: Rn=0, Q=0, rot=0, Rd=1, size=0, Rm=0
+    // Fields: size=0, Q=0, rot=0, Rn=0, Rd=1, Rm=0
     let encoding: u32 = 0x2E00E401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19288,21 +10512,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rd_1_power
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rd_30_poweroftwominusone_e400_2e00e41e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rd_30_poweroftwominusone_e400_2e00e41e() {
     // Encoding: 0x2E00E41E
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: rot=0, Rn=0, Q=0, Rd=30, size=0, Rm=0
+    // Fields: Q=0, Rn=0, Rm=0, rot=0, size=0, Rd=30
     let encoding: u32 = 0x2E00E41E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19313,17 +10531,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rd_30_powe
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rd_31_max_e400_2e00e41f() {
     // Encoding: 0x2E00E41F
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field Rd = 31 (Max)
-    // Fields: Rm=0, Rn=0, Rd=31, Q=0, size=0, rot=0
+    // Fields: rot=0, Rd=31, Rm=0, Rn=0, Q=0, size=0
     let encoding: u32 = 0x2E00E41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19334,206 +10547,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_field_rd_31_max_
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_combo_0_e400_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field combination: Q=0, size=0, Rm=0, rot=0, Rn=0, Rd=0
-    // Fields: rot=0, Rd=0, size=0, Rn=0, Rm=0, Q=0
+    // Fields: Rm=0, rot=0, Rn=0, size=0, Rd=0, Q=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_combo_1_e400_6e00e400() {
-    // Encoding: 0x6E00E400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field combination: Q=1, size=0, Rm=0, rot=0, Rn=0, Rd=0
-    // Fields: Q=1, Rn=0, Rd=0, size=0, rot=0, Rm=0
-    let encoding: u32 = 0x6E00E400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_combo_2_e400_2e00e400() {
-    // Encoding: 0x2E00E400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field combination: Q=0, size=0, Rm=0, rot=0, Rn=0, Rd=0
-    // Fields: Rn=0, Rd=0, Q=0, size=0, rot=0, Rm=0
-    let encoding: u32 = 0x2E00E400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_combo_3_e400_2e40e400() {
-    // Encoding: 0x2E40E400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field combination: Q=0, size=1, Rm=0, rot=0, Rn=0, Rd=0
-    // Fields: Rn=0, size=1, Rd=0, Q=0, Rm=0, rot=0
-    let encoding: u32 = 0x2E40E400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_combo_4_e400_2e80e400() {
-    // Encoding: 0x2E80E400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field combination: Q=0, size=2, Rm=0, rot=0, Rn=0, Rd=0
-    // Fields: rot=0, Rd=0, Rm=0, size=2, Rn=0, Q=0
-    let encoding: u32 = 0x2E80E400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_combo_5_e400_2ec0e400() {
-    // Encoding: 0x2EC0E400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field combination: Q=0, size=3, Rm=0, rot=0, Rn=0, Rd=0
-    // Fields: Rd=0, rot=0, Rn=0, Q=0, Rm=0, size=3
-    let encoding: u32 = 0x2EC0E400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_combo_6_e400_2e00e400() {
-    // Encoding: 0x2E00E400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field combination: Q=0, size=0, Rm=0, rot=0, Rn=0, Rd=0
-    // Fields: Q=0, rot=0, Rm=0, Rd=0, Rn=0, size=0
-    let encoding: u32 = 0x2E00E400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_combo_7_e400_2e01e400() {
-    // Encoding: 0x2E01E400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field combination: Q=0, size=0, Rm=1, rot=0, Rn=0, Rd=0
-    // Fields: Q=0, rot=0, size=0, Rn=0, Rd=0, Rm=1
-    let encoding: u32 = 0x2E01E400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_combo_8_e400_2e1ee400() {
-    // Encoding: 0x2E1EE400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field combination: Q=0, size=0, Rm=30, rot=0, Rn=0, Rd=0
-    // Fields: size=0, Q=0, rot=0, Rn=0, Rd=0, Rm=30
-    let encoding: u32 = 0x2E1EE400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=31 (register index 31 (special))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_combo_9_e400_2e1fe400() {
-    // Encoding: 0x2E1FE400
-    // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex field combination: Q=0, size=0, Rm=31, rot=0, Rn=0, Rd=0
-    // Fields: Rm=31, Rn=0, Q=0, size=0, rot=0, Rd=0
-    let encoding: u32 = 0x2E1FE400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19541,21 +10560,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_combo_9_e400_2e1
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_q_0_size_variant_0_58368_2e00e400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_q_0_size_variant_0_58368_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex special value Q = 0 (Size variant 0)
-    // Fields: Rm=0, rot=0, Q=0, size=0, Rn=0, Rd=0
+    // Fields: size=0, Rn=0, Q=0, Rm=0, rot=0, Rd=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19563,21 +10576,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_q_0_size
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_q_1_size_variant_1_58368_6e00e400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_q_1_size_variant_1_58368_6e00e400() {
     // Encoding: 0x6E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex special value Q = 1 (Size variant 1)
-    // Fields: Rm=0, Q=1, Rn=0, Rd=0, rot=0, size=0
+    // Fields: Rd=0, rot=0, Rn=0, size=0, Rm=0, Q=1
     let encoding: u32 = 0x6E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19585,21 +10592,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_q_1_size
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_size_0_size_variant_0_58368_2e00e400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_size_0_size_variant_0_58368_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex special value size = 0 (Size variant 0)
-    // Fields: Rm=0, size=0, rot=0, Rn=0, Q=0, Rd=0
+    // Fields: rot=0, Rd=0, Rn=0, Rm=0, Q=0, size=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19607,21 +10608,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_size_0_s
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_size_1_size_variant_1_58368_2e40e400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_size_1_size_variant_1_58368_2e40e400() {
     // Encoding: 0x2E40E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex special value size = 1 (Size variant 1)
-    // Fields: Rd=0, size=1, Rm=0, Q=0, rot=0, Rn=0
+    // Fields: Rn=0, Q=0, Rm=0, size=1, rot=0, Rd=0
     let encoding: u32 = 0x2E40E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19629,21 +10624,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_size_1_s
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_size_2_size_variant_2_58368_2e80e400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_size_2_size_variant_2_58368_2e80e400() {
     // Encoding: 0x2E80E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex special value size = 2 (Size variant 2)
-    // Fields: Rm=0, Rn=0, Q=0, Rd=0, rot=0, size=2
+    // Fields: Q=0, size=2, Rn=0, Rm=0, Rd=0, rot=0
     let encoding: u32 = 0x2E80E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19651,21 +10640,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_size_2_s
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_size_3_size_variant_3_58368_2ec0e400(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_size_3_size_variant_3_58368_2ec0e400() {
     // Encoding: 0x2EC0E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex special value size = 3 (Size variant 3)
-    // Fields: Rn=0, Rd=0, size=3, Q=0, rot=0, Rm=0
+    // Fields: Q=0, size=3, rot=0, Rn=0, Rd=0, Rm=0
     let encoding: u32 = 0x2EC0E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19673,21 +10656,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_size_3_s
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_rn_31_stack_pointer_sp_may_require_alignment_58368_2e00e7e0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_rn_31_stack_pointer_sp_may_require_alignment_58368_2e00e7e0() {
     // Encoding: 0x2E00E7E0
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rn=31, Rm=0, Q=0, Rd=0, size=0, rot=0
+    // Fields: size=0, Q=0, Rm=0, rot=0, Rd=0, Rn=31
     let encoding: u32 = 0x2E00E7E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19695,21 +10672,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_rn_31_st
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_58368_2e00e41f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_58368_2e00e41f() {
     // Encoding: 0x2E00E41F
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rd=31, size=0, Rn=0, Q=0, rot=0, Rm=0
+    // Fields: rot=0, Rm=0, Rn=0, Q=0, Rd=31, size=0
     let encoding: u32 = 0x2E00E41F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19720,16 +10691,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_special_rd_31_ze
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_invalid_0_e400_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex invalid encoding: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveFCADDExt" }, args: [] } }
-    // Fields: Q=0, Rn=0, Rm=0, size=0, rot=0, Rd=0
+    // Fields: rot=0, Q=0, Rm=0, Rn=0, Rd=0, size=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19740,16 +10707,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_invalid_0_e400_2
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_invalid_1_e400_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex invalid encoding: Unconditional UNDEFINED
-    // Fields: Rd=0, size=0, Rm=0, Q=0, Rn=0, rot=0
+    // Fields: Q=0, size=0, rot=0, Rn=0, Rd=0, Rm=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19760,16 +10723,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_invalid_1_e400_2
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_invalid_2_e400_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex invalid encoding: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: LitBits([false, false]) }
-    // Fields: Rn=0, Rd=0, size=0, rot=0, Q=0, Rm=0
+    // Fields: size=0, Rm=0, Q=0, rot=0, Rn=0, Rd=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19780,16 +10739,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_invalid_2_e400_2
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_invalid_3_e400_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, Rd=0, Rm=0, Rn=0, Q=0, rot=0
+    // Fields: size=0, rot=0, Rm=0, Q=0, Rn=0, Rd=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19800,16 +10755,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_invalid_3_e400_2
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_invalid_4_e400_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex invalid encoding: Binary { op: Eq, lhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "Q" }), rhs: Binary { op: And, lhs: LitBits([false]), rhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }) } }, rhs: LitBits([true, true]) }
-    // Fields: Rm=0, Rd=0, size=0, rot=0, Rn=0, Q=0
+    // Fields: size=0, rot=0, Rn=0, Rd=0, Rm=0, Q=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19820,16 +10771,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_invalid_4_e400_2
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_invalid_5_e400_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex invalid encoding: Unconditional UNDEFINED
-    // Fields: Q=0, size=0, Rn=0, Rd=0, rot=0, Rm=0
+    // Fields: Rd=0, Q=0, Rn=0, Rm=0, size=0, rot=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19840,16 +10787,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_invalid_5_e400_2
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_invalid_6_e400_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex invalid encoding: Binary { op: Eq, lhs: Binary { op: And, lhs: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveFP16Ext" }, args: [] } }, rhs: Var(QualifiedIdentifier { qualifier: Any, name: "esize" }) }, rhs: LitInt(16) }
-    // Fields: size=0, rot=0, Rn=0, Rd=0, Rm=0, Q=0
+    // Fields: Rd=0, size=0, Rn=0, Rm=0, rot=0, Q=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19860,16 +10803,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_invalid_6_e400_2
 fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_invalid_7_e400_2e00e400() {
     // Encoding: 0x2E00E400
     // Test aarch64_vector_arithmetic_binary_uniform_add_fp_complex invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, Rd=0, rot=0, Q=0, Rn=0, Rm=0
+    // Fields: rot=0, Q=0, Rn=0, size=0, Rd=0, Rm=0
     let encoding: u32 = 0x2E00E400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_fp_complex
@@ -19930,17 +10869,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_fp_complex_zr_rd_2e00e41f()
 fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_q_0_min_bc00_0e20bc00() {
     // Encoding: 0x0E20BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field Q = 0 (Min)
-    // Fields: Q=0, Rn=0, Rd=0, Rm=0, size=0
+    // Fields: Rd=0, Rm=0, Q=0, size=0, Rn=0
     let encoding: u32 = 0x0E20BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -19951,17 +10885,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_q_0_min
 fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_q_1_max_bc00_4e20bc00() {
     // Encoding: 0x4E20BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field Q = 1 (Max)
-    // Fields: Q=1, Rm=0, Rn=0, Rd=0, size=0
+    // Fields: Q=1, Rd=0, Rn=0, Rm=0, size=0
     let encoding: u32 = 0x4E20BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -19969,21 +10898,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_q_1_max
 /// Requirement: FieldBoundary { field: "size", value: 0, boundary: Min }
 /// 8-bit / byte size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_size_0_min_bc00_0e20bc00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_size_0_min_bc00_0e20bc00() {
     // Encoding: 0x0E20BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field size = 0 (Min)
-    // Fields: Rn=0, Q=0, Rd=0, size=0, Rm=0
+    // Fields: Rn=0, Rm=0, Q=0, Rd=0, size=0
     let encoding: u32 = 0x0E20BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -19991,21 +10914,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_size_0_
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_size_1_poweroftwo_bc00_0e60bc00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_size_1_poweroftwo_bc00_0e60bc00() {
     // Encoding: 0x0E60BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field size = 1 (PowerOfTwo)
-    // Fields: Q=0, Rm=0, Rd=0, size=1, Rn=0
+    // Fields: Rn=0, Rm=0, Q=0, Rd=0, size=1
     let encoding: u32 = 0x0E60BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20013,21 +10930,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_size_1_
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_size_2_poweroftwo_bc00_0ea0bc00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_size_2_poweroftwo_bc00_0ea0bc00() {
     // Encoding: 0x0EA0BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field size = 2 (PowerOfTwo)
-    // Fields: Q=0, Rd=0, size=2, Rm=0, Rn=0
+    // Fields: Rn=0, Rm=0, size=2, Q=0, Rd=0
     let encoding: u32 = 0x0EA0BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20035,21 +10946,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_size_2_
 /// Requirement: FieldBoundary { field: "size", value: 3, boundary: Max }
 /// 64-bit / doubleword size
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_size_3_max_bc00_0ee0bc00()
-{
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_size_3_max_bc00_0ee0bc00() {
     // Encoding: 0x0EE0BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field size = 3 (Max)
-    // Fields: Rm=0, Rd=0, Q=0, size=3, Rn=0
+    // Fields: Rn=0, Rm=0, Q=0, size=3, Rd=0
     let encoding: u32 = 0x0EE0BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20060,17 +10965,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_size_3_
 fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rm_0_min_bc00_0e20bc00() {
     // Encoding: 0x0E20BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field Rm = 0 (Min)
-    // Fields: Rd=0, Q=0, size=0, Rm=0, Rn=0
+    // Fields: Rd=0, Rn=0, Q=0, size=0, Rm=0
     let encoding: u32 = 0x0E20BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20078,21 +10978,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rm_0_mi
 /// Requirement: FieldBoundary { field: "Rm", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rm_1_poweroftwo_bc00_0e21bc00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rm_1_poweroftwo_bc00_0e21bc00() {
     // Encoding: 0x0E21BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field Rm = 1 (PowerOfTwo)
-    // Fields: Q=0, Rn=0, Rm=1, Rd=0, size=0
+    // Fields: Rd=0, Q=0, size=0, Rm=1, Rn=0
     let encoding: u32 = 0x0E21BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20100,21 +10994,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rm_1_po
 /// Requirement: FieldBoundary { field: "Rm", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rm_30_poweroftwominusone_bc00_0e3ebc00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rm_30_poweroftwominusone_bc00_0e3ebc00() {
     // Encoding: 0x0E3EBC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rm=30, Rd=0, size=0, Q=0
+    // Fields: Rn=0, Q=0, Rd=0, Rm=30, size=0
     let encoding: u32 = 0x0E3EBC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20125,17 +11013,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rm_30_p
 fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rm_31_max_bc00_0e3fbc00() {
     // Encoding: 0x0E3FBC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field Rm = 31 (Max)
-    // Fields: Q=0, size=0, Rn=0, Rm=31, Rd=0
+    // Fields: Rd=0, Q=0, Rm=31, Rn=0, size=0
     let encoding: u32 = 0x0E3FBC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20146,17 +11029,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rm_31_m
 fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rn_0_min_bc00_0e20bc00() {
     // Encoding: 0x0E20BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field Rn = 0 (Min)
-    // Fields: Rm=0, size=0, Rd=0, Q=0, Rn=0
+    // Fields: size=0, Q=0, Rn=0, Rd=0, Rm=0
     let encoding: u32 = 0x0E20BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20164,21 +11042,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rn_0_mi
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rn_1_poweroftwo_bc00_0e20bc20(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rn_1_poweroftwo_bc00_0e20bc20() {
     // Encoding: 0x0E20BC20
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field Rn = 1 (PowerOfTwo)
-    // Fields: Rm=0, Q=0, size=0, Rd=0, Rn=1
+    // Fields: Rm=0, Q=0, Rn=1, size=0, Rd=0
     let encoding: u32 = 0x0E20BC20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20186,21 +11058,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rn_1_po
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rn_30_poweroftwominusone_bc00_0e20bfc0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rn_30_poweroftwominusone_bc00_0e20bfc0() {
     // Encoding: 0x0E20BFC0
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Q=0, Rd=0, Rm=0, Rn=30, size=0
+    // Fields: Rn=30, Rd=0, size=0, Rm=0, Q=0
     let encoding: u32 = 0x0E20BFC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20211,17 +11077,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rn_30_p
 fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rn_31_max_bc00_0e20bfe0() {
     // Encoding: 0x0E20BFE0
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field Rn = 31 (Max)
-    // Fields: Rm=0, Rd=0, size=0, Q=0, Rn=31
+    // Fields: Rn=31, Rm=0, Rd=0, Q=0, size=0
     let encoding: u32 = 0x0E20BFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20232,17 +11093,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rn_31_m
 fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rd_0_min_bc00_0e20bc00() {
     // Encoding: 0x0E20BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field Rd = 0 (Min)
-    // Fields: size=0, Rm=0, Rd=0, Q=0, Rn=0
+    // Fields: Q=0, size=0, Rn=0, Rd=0, Rm=0
     let encoding: u32 = 0x0E20BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20250,21 +11106,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rd_0_mi
 /// Requirement: FieldBoundary { field: "Rd", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rd_1_poweroftwo_bc00_0e20bc01(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rd_1_poweroftwo_bc00_0e20bc01() {
     // Encoding: 0x0E20BC01
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field Rd = 1 (PowerOfTwo)
-    // Fields: Rn=0, size=0, Q=0, Rm=0, Rd=1
+    // Fields: Rn=0, Rd=1, Rm=0, size=0, Q=0
     let encoding: u32 = 0x0E20BC01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20272,21 +11122,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rd_1_po
 /// Requirement: FieldBoundary { field: "Rd", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rd_30_poweroftwominusone_bc00_0e20bc1e(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rd_30_poweroftwominusone_bc00_0e20bc1e() {
     // Encoding: 0x0E20BC1E
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field Rd = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=0, Rn=0, size=0, Q=0, Rd=30
+    // Fields: Rn=0, Rm=0, size=0, Rd=30, Q=0
     let encoding: u32 = 0x0E20BC1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20297,17 +11141,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rd_30_p
 fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rd_31_max_bc00_0e20bc1f() {
     // Encoding: 0x0E20BC1F
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field Rd = 31 (Max)
-    // Fields: Rm=0, Rd=31, Q=0, size=0, Rn=0
+    // Fields: Rm=0, Q=0, Rd=31, Rn=0, size=0
     let encoding: u32 = 0x0E20BC1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20318,206 +11157,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_field_rd_31_m
 fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_combo_0_bc00_0e20bc00() {
     // Encoding: 0x0E20BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field combination: Q=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, Q=0, size=0, Rn=0, Rd=0
+    // Fields: Rn=0, Q=0, size=0, Rm=0, Rd=0
     let encoding: u32 = 0x0E20BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Q=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_combo_1_bc00_4e20bc00() {
-    // Encoding: 0x4E20BC00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field combination: Q=1, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Q=1, size=0, Rd=0, Rm=0, Rn=0
-    let encoding: u32 = 0x4E20BC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_combo_2_bc00_0e20bc00() {
-    // Encoding: 0x0E20BC00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field combination: Q=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Rm=0, Rd=0, Q=0, Rn=0, size=0
-    let encoding: u32 = 0x0E20BC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_combo_3_bc00_0e60bc00() {
-    // Encoding: 0x0E60BC00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field combination: Q=0, size=1, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, size=1, Rd=0, Rm=0, Rn=0
-    let encoding: u32 = 0x0E60BC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_combo_4_bc00_0ea0bc00() {
-    // Encoding: 0x0EA0BC00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field combination: Q=0, size=2, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, Rn=0, size=2, Rd=0, Rm=0
-    let encoding: u32 = 0x0EA0BC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_combo_5_bc00_0ee0bc00() {
-    // Encoding: 0x0EE0BC00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field combination: Q=0, size=3, Rm=0, Rn=0, Rd=0
-    // Fields: Rn=0, Q=0, Rm=0, Rd=0, size=3
-    let encoding: u32 = 0x0EE0BC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_combo_6_bc00_0e20bc00() {
-    // Encoding: 0x0E20BC00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field combination: Q=0, size=0, Rm=0, Rn=0, Rd=0
-    // Fields: Q=0, Rd=0, Rm=0, size=0, Rn=0
-    let encoding: u32 = 0x0E20BC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_combo_7_bc00_0e21bc00() {
-    // Encoding: 0x0E21BC00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field combination: Q=0, size=0, Rm=1, Rn=0, Rd=0
-    // Fields: Q=0, Rn=0, size=0, Rd=0, Rm=1
-    let encoding: u32 = 0x0E21BC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_combo_8_bc00_0e3ebc00() {
-    // Encoding: 0x0E3EBC00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field combination: Q=0, size=0, Rm=30, Rn=0, Rd=0
-    // Fields: Q=0, Rm=30, Rd=0, Rn=0, size=0
-    let encoding: u32 = 0x0E3EBC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=31 (register index 31 (special))
-#[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_combo_9_bc00_0e3fbc00() {
-    // Encoding: 0x0E3FBC00
-    // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair field combination: Q=0, size=0, Rm=31, Rn=0, Rd=0
-    // Fields: Rd=0, Rn=0, Rm=31, size=0, Q=0
-    let encoding: u32 = 0x0E3FBC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20525,21 +11170,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_combo_9_bc00_
 /// Requirement: FieldSpecial { field: "Q", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_q_0_size_variant_0_48128_0e20bc00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_q_0_size_variant_0_48128_0e20bc00() {
     // Encoding: 0x0E20BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair special value Q = 0 (Size variant 0)
-    // Fields: Rd=0, Rm=0, size=0, Q=0, Rn=0
+    // Fields: Rd=0, Rm=0, size=0, Rn=0, Q=0
     let encoding: u32 = 0x0E20BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20547,21 +11186,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_q_0_s
 /// Requirement: FieldSpecial { field: "Q", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_q_1_size_variant_1_48128_4e20bc00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_q_1_size_variant_1_48128_4e20bc00() {
     // Encoding: 0x4E20BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair special value Q = 1 (Size variant 1)
-    // Fields: Q=1, Rn=0, size=0, Rm=0, Rd=0
+    // Fields: Q=1, Rd=0, size=0, Rm=0, Rn=0
     let encoding: u32 = 0x4E20BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20569,21 +11202,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_q_1_s
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_size_0_size_variant_0_48128_0e20bc00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_size_0_size_variant_0_48128_0e20bc00() {
     // Encoding: 0x0E20BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair special value size = 0 (Size variant 0)
-    // Fields: Q=0, Rd=0, size=0, Rm=0, Rn=0
+    // Fields: size=0, Rm=0, Rn=0, Q=0, Rd=0
     let encoding: u32 = 0x0E20BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20591,21 +11218,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_size_
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_size_1_size_variant_1_48128_0e60bc00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_size_1_size_variant_1_48128_0e60bc00() {
     // Encoding: 0x0E60BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair special value size = 1 (Size variant 1)
-    // Fields: Q=0, Rm=0, Rd=0, size=1, Rn=0
+    // Fields: Q=0, Rn=0, Rm=0, size=1, Rd=0
     let encoding: u32 = 0x0E60BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20613,21 +11234,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_size_
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_size_2_size_variant_2_48128_0ea0bc00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_size_2_size_variant_2_48128_0ea0bc00() {
     // Encoding: 0x0EA0BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair special value size = 2 (Size variant 2)
-    // Fields: size=2, Q=0, Rm=0, Rd=0, Rn=0
+    // Fields: Rm=0, Rd=0, size=2, Rn=0, Q=0
     let encoding: u32 = 0x0EA0BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20635,21 +11250,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_size_
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_size_3_size_variant_3_48128_0ee0bc00(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_size_3_size_variant_3_48128_0ee0bc00() {
     // Encoding: 0x0EE0BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair special value size = 3 (Size variant 3)
-    // Fields: Rm=0, Q=0, size=3, Rn=0, Rd=0
+    // Fields: size=3, Q=0, Rn=0, Rm=0, Rd=0
     let encoding: u32 = 0x0EE0BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20657,21 +11266,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_size_
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_rn_31_stack_pointer_sp_may_require_alignment_48128_0e20bfe0(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_rn_31_stack_pointer_sp_may_require_alignment_48128_0e20bfe0() {
     // Encoding: 0x0E20BFE0
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rd=0, size=0, Q=0, Rm=0, Rn=31
+    // Fields: Rm=0, Q=0, Rd=0, size=0, Rn=31
     let encoding: u32 = 0x0E20BFE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20679,21 +11282,15 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_rn_31
 /// Requirement: FieldSpecial { field: "Rd", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_48128_0e20bc1f(
-) {
+fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_rd_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_48128_0e20bc1f() {
     // Encoding: 0x0E20BC1F
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair special value Rd = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: size=0, Rm=0, Rn=0, Rd=31, Q=0
+    // Fields: size=0, Rm=0, Rn=0, Q=0, Rd=31
     let encoding: u32 = 0x0E20BC1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20704,16 +11301,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_special_rd_31
 fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_invalid_0_bc00_0e20bc00() {
     // Encoding: 0x0E20BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair invalid encoding: Binary { op: BitConcat, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }), rhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "Q" }), rhs: LitBits([true, true, false]) } }
-    // Fields: size=0, Q=0, Rn=0, Rd=0, Rm=0
+    // Fields: Rn=0, Rd=0, size=0, Q=0, Rm=0
     let encoding: u32 = 0x0E20BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20724,16 +11317,12 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_invalid_0_bc0
 fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_invalid_1_bc00_0e20bc00() {
     // Encoding: 0x0E20BC00
     // Test aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, Rm=0, Q=0, Rd=0, Rn=0
+    // Fields: Q=0, Rm=0, Rd=0, size=0, Rn=0
     let encoding: u32 = 0x0E20BC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair
@@ -20781,3 +11370,4 @@ fn test_aarch64_vector_arithmetic_binary_uniform_add_wrapping_pair_zr_rd_0e20bc1
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
     assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
 }
+

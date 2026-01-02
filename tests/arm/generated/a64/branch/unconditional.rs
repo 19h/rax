@@ -20,17 +20,12 @@ use crate::generated::test_helpers::*;
 fn test_aarch64_branch_unconditional_register_field_z_0_min_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register field Z = 0 (Min)
-    // Fields: op=0, Rn=0, Rm=0, M=0, A=0, Z=0
+    // Fields: Rn=0, op=0, A=0, M=0, Rm=0, Z=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -41,17 +36,12 @@ fn test_aarch64_branch_unconditional_register_field_z_0_min_0_d61f0000() {
 fn test_aarch64_branch_unconditional_register_field_z_1_max_0_d71f0000() {
     // Encoding: 0xD71F0000
     // Test aarch64_branch_unconditional_register field Z = 1 (Max)
-    // Fields: op=0, M=0, Rn=0, A=0, Z=1, Rm=0
+    // Fields: op=0, A=0, Z=1, M=0, Rn=0, Rm=0
     let encoding: u32 = 0xD71F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -62,17 +52,12 @@ fn test_aarch64_branch_unconditional_register_field_z_1_max_0_d71f0000() {
 fn test_aarch64_branch_unconditional_register_field_op_0_min_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register field op = 0 (Min)
-    // Fields: M=0, op=0, Rn=0, Rm=0, Z=0, A=0
+    // Fields: Rm=0, M=0, op=0, Rn=0, Z=0, A=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -83,17 +68,12 @@ fn test_aarch64_branch_unconditional_register_field_op_0_min_0_d61f0000() {
 fn test_aarch64_branch_unconditional_register_field_op_1_poweroftwo_0_d63f0000() {
     // Encoding: 0xD63F0000
     // Test aarch64_branch_unconditional_register field op = 1 (PowerOfTwo)
-    // Fields: Rm=0, Z=0, A=0, M=0, op=1, Rn=0
+    // Fields: Rn=0, A=0, Rm=0, op=1, Z=0, M=0
     let encoding: u32 = 0xD63F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -104,17 +84,12 @@ fn test_aarch64_branch_unconditional_register_field_op_1_poweroftwo_0_d63f0000()
 fn test_aarch64_branch_unconditional_register_field_op_3_max_0_d67f0000() {
     // Encoding: 0xD67F0000
     // Test aarch64_branch_unconditional_register field op = 3 (Max)
-    // Fields: Rm=0, Rn=0, op=3, A=0, M=0, Z=0
+    // Fields: Z=0, M=0, op=3, A=0, Rn=0, Rm=0
     let encoding: u32 = 0xD67F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -125,17 +100,12 @@ fn test_aarch64_branch_unconditional_register_field_op_3_max_0_d67f0000() {
 fn test_aarch64_branch_unconditional_register_field_a_0_min_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register field A = 0 (Min)
-    // Fields: Rm=0, Z=0, op=0, M=0, A=0, Rn=0
+    // Fields: Z=0, op=0, A=0, Rn=0, M=0, Rm=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -146,17 +116,12 @@ fn test_aarch64_branch_unconditional_register_field_a_0_min_0_d61f0000() {
 fn test_aarch64_branch_unconditional_register_field_a_1_max_0_d61f0800() {
     // Encoding: 0xD61F0800
     // Test aarch64_branch_unconditional_register field A = 1 (Max)
-    // Fields: Rm=0, A=1, Z=0, op=0, M=0, Rn=0
+    // Fields: Z=0, A=1, M=0, Rm=0, op=0, Rn=0
     let encoding: u32 = 0xD61F0800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -167,17 +132,12 @@ fn test_aarch64_branch_unconditional_register_field_a_1_max_0_d61f0800() {
 fn test_aarch64_branch_unconditional_register_field_m_0_min_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register field M = 0 (Min)
-    // Fields: Rm=0, op=0, A=0, Z=0, M=0, Rn=0
+    // Fields: A=0, Rm=0, Z=0, M=0, op=0, Rn=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -188,17 +148,12 @@ fn test_aarch64_branch_unconditional_register_field_m_0_min_0_d61f0000() {
 fn test_aarch64_branch_unconditional_register_field_m_1_max_0_d61f0400() {
     // Encoding: 0xD61F0400
     // Test aarch64_branch_unconditional_register field M = 1 (Max)
-    // Fields: op=0, M=1, Rn=0, Z=0, A=0, Rm=0
+    // Fields: Z=0, op=0, A=0, Rn=0, Rm=0, M=1
     let encoding: u32 = 0xD61F0400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -209,17 +164,12 @@ fn test_aarch64_branch_unconditional_register_field_m_1_max_0_d61f0400() {
 fn test_aarch64_branch_unconditional_register_field_rn_0_min_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register field Rn = 0 (Min)
-    // Fields: Rn=0, Z=0, Rm=0, A=0, op=0, M=0
+    // Fields: Z=0, M=0, Rn=0, op=0, A=0, Rm=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -230,17 +180,12 @@ fn test_aarch64_branch_unconditional_register_field_rn_0_min_0_d61f0000() {
 fn test_aarch64_branch_unconditional_register_field_rn_1_poweroftwo_0_d61f0020() {
     // Encoding: 0xD61F0020
     // Test aarch64_branch_unconditional_register field Rn = 1 (PowerOfTwo)
-    // Fields: Z=0, op=0, Rn=1, M=0, A=0, Rm=0
+    // Fields: Z=0, M=0, A=0, Rm=0, op=0, Rn=1
     let encoding: u32 = 0xD61F0020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -251,17 +196,12 @@ fn test_aarch64_branch_unconditional_register_field_rn_1_poweroftwo_0_d61f0020()
 fn test_aarch64_branch_unconditional_register_field_rn_30_poweroftwominusone_0_d61f03c0() {
     // Encoding: 0xD61F03C0
     // Test aarch64_branch_unconditional_register field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=0, Rn=30, Z=0, op=0, A=0, M=0
+    // Fields: Z=0, A=0, op=0, M=0, Rn=30, Rm=0
     let encoding: u32 = 0xD61F03C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -272,17 +212,12 @@ fn test_aarch64_branch_unconditional_register_field_rn_30_poweroftwominusone_0_d
 fn test_aarch64_branch_unconditional_register_field_rn_31_max_0_d61f03e0() {
     // Encoding: 0xD61F03E0
     // Test aarch64_branch_unconditional_register field Rn = 31 (Max)
-    // Fields: M=0, Z=0, Rn=31, op=0, A=0, Rm=0
+    // Fields: M=0, Rn=31, Rm=0, Z=0, A=0, op=0
     let encoding: u32 = 0xD61F03E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -293,17 +228,12 @@ fn test_aarch64_branch_unconditional_register_field_rn_31_max_0_d61f03e0() {
 fn test_aarch64_branch_unconditional_register_field_rm_0_min_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register field Rm = 0 (Min)
-    // Fields: Z=0, A=0, op=0, Rn=0, Rm=0, M=0
+    // Fields: Rm=0, op=0, Z=0, A=0, M=0, Rn=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -314,17 +244,12 @@ fn test_aarch64_branch_unconditional_register_field_rm_0_min_0_d61f0000() {
 fn test_aarch64_branch_unconditional_register_field_rm_1_poweroftwo_0_d61f0001() {
     // Encoding: 0xD61F0001
     // Test aarch64_branch_unconditional_register field Rm = 1 (PowerOfTwo)
-    // Fields: M=0, Rn=0, Rm=1, Z=0, op=0, A=0
+    // Fields: M=0, Z=0, A=0, op=0, Rm=1, Rn=0
     let encoding: u32 = 0xD61F0001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -335,17 +260,12 @@ fn test_aarch64_branch_unconditional_register_field_rm_1_poweroftwo_0_d61f0001()
 fn test_aarch64_branch_unconditional_register_field_rm_30_poweroftwominusone_0_d61f001e() {
     // Encoding: 0xD61F001E
     // Test aarch64_branch_unconditional_register field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Z=0, op=0, A=0, M=0, Rn=0, Rm=30
+    // Fields: op=0, Z=0, Rn=0, A=0, Rm=30, M=0
     let encoding: u32 = 0xD61F001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -356,17 +276,12 @@ fn test_aarch64_branch_unconditional_register_field_rm_30_poweroftwominusone_0_d
 fn test_aarch64_branch_unconditional_register_field_rm_31_max_0_d61f001f() {
     // Encoding: 0xD61F001F
     // Test aarch64_branch_unconditional_register field Rm = 31 (Max)
-    // Fields: Z=0, M=0, Rn=0, op=0, A=0, Rm=31
+    // Fields: op=0, Rn=0, Rm=31, A=0, Z=0, M=0
     let encoding: u32 = 0xD61F001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -377,206 +292,12 @@ fn test_aarch64_branch_unconditional_register_field_rm_31_max_0_d61f001f() {
 fn test_aarch64_branch_unconditional_register_combo_0_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register field combination: Z=0, op=0, A=0, M=0, Rn=0, Rm=0
-    // Fields: M=0, Rm=0, Rn=0, op=0, A=0, Z=0
+    // Fields: A=0, M=0, Z=0, op=0, Rn=0, Rm=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_register
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Z=1 (maximum value (1))
-#[test]
-fn test_aarch64_branch_unconditional_register_combo_1_0_d71f0000() {
-    // Encoding: 0xD71F0000
-    // Test aarch64_branch_unconditional_register field combination: Z=1, op=0, A=0, M=0, Rn=0, Rm=0
-    // Fields: Rn=0, Rm=0, op=0, A=0, M=0, Z=1
-    let encoding: u32 = 0xD71F0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_register
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// op=0 (minimum value)
-#[test]
-fn test_aarch64_branch_unconditional_register_combo_2_0_d61f0000() {
-    // Encoding: 0xD61F0000
-    // Test aarch64_branch_unconditional_register field combination: Z=0, op=0, A=0, M=0, Rn=0, Rm=0
-    // Fields: M=0, A=0, Rn=0, op=0, Rm=0, Z=0
-    let encoding: u32 = 0xD61F0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_register
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// op=1 (value 1)
-#[test]
-fn test_aarch64_branch_unconditional_register_combo_3_0_d63f0000() {
-    // Encoding: 0xD63F0000
-    // Test aarch64_branch_unconditional_register field combination: Z=0, op=1, A=0, M=0, Rn=0, Rm=0
-    // Fields: Z=0, M=0, Rm=0, op=1, A=0, Rn=0
-    let encoding: u32 = 0xD63F0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_register
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// op=3 (maximum value (3))
-#[test]
-fn test_aarch64_branch_unconditional_register_combo_4_0_d67f0000() {
-    // Encoding: 0xD67F0000
-    // Test aarch64_branch_unconditional_register field combination: Z=0, op=3, A=0, M=0, Rn=0, Rm=0
-    // Fields: M=0, Z=0, Rn=0, op=3, A=0, Rm=0
-    let encoding: u32 = 0xD67F0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_register
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// A=0 (minimum value)
-#[test]
-fn test_aarch64_branch_unconditional_register_combo_5_0_d61f0000() {
-    // Encoding: 0xD61F0000
-    // Test aarch64_branch_unconditional_register field combination: Z=0, op=0, A=0, M=0, Rn=0, Rm=0
-    // Fields: op=0, Rn=0, Z=0, M=0, Rm=0, A=0
-    let encoding: u32 = 0xD61F0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_register
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// A=1 (maximum value (1))
-#[test]
-fn test_aarch64_branch_unconditional_register_combo_6_0_d61f0800() {
-    // Encoding: 0xD61F0800
-    // Test aarch64_branch_unconditional_register field combination: Z=0, op=0, A=1, M=0, Rn=0, Rm=0
-    // Fields: Rn=0, op=0, Rm=0, Z=0, M=0, A=1
-    let encoding: u32 = 0xD61F0800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_register
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// M=0 (minimum value)
-#[test]
-fn test_aarch64_branch_unconditional_register_combo_7_0_d61f0000() {
-    // Encoding: 0xD61F0000
-    // Test aarch64_branch_unconditional_register field combination: Z=0, op=0, A=0, M=0, Rn=0, Rm=0
-    // Fields: Z=0, A=0, Rm=0, M=0, op=0, Rn=0
-    let encoding: u32 = 0xD61F0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_register
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// M=1 (maximum value (1))
-#[test]
-fn test_aarch64_branch_unconditional_register_combo_8_0_d61f0400() {
-    // Encoding: 0xD61F0400
-    // Test aarch64_branch_unconditional_register field combination: Z=0, op=0, A=0, M=1, Rn=0, Rm=0
-    // Fields: op=0, Z=0, A=0, M=1, Rn=0, Rm=0
-    let encoding: u32 = 0xD61F0400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_register
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_branch_unconditional_register_combo_9_0_d61f0000() {
-    // Encoding: 0xD61F0000
-    // Test aarch64_branch_unconditional_register field combination: Z=0, op=0, A=0, M=0, Rn=0, Rm=0
-    // Fields: A=0, op=0, Rn=0, Rm=0, Z=0, M=0
-    let encoding: u32 = 0xD61F0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -584,21 +305,15 @@ fn test_aarch64_branch_unconditional_register_combo_9_0_d61f0000() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_branch_unconditional_register_special_rn_31_stack_pointer_sp_may_require_alignment_0_d61f03e0(
-) {
+fn test_aarch64_branch_unconditional_register_special_rn_31_stack_pointer_sp_may_require_alignment_0_d61f03e0() {
     // Encoding: 0xD61F03E0
     // Test aarch64_branch_unconditional_register special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rm=0, A=0, Z=0, M=0, Rn=31, op=0
+    // Fields: Rm=0, M=0, A=0, Z=0, op=0, Rn=31
     let encoding: u32 = 0xD61F03E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -609,16 +324,12 @@ fn test_aarch64_branch_unconditional_register_special_rn_31_stack_pointer_sp_may
 fn test_aarch64_branch_unconditional_register_invalid_0_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register invalid encoding: Binary { op: Ne, lhs: Binary { op: And, lhs: Unary { op: Not, operand: Var(QualifiedIdentifier { qualifier: Any, name: "pac" }) }, rhs: Var(QualifiedIdentifier { qualifier: Any, name: "m" }) }, rhs: LitInt(0) }
-    // Fields: Rm=0, Z=0, op=0, A=0, M=0, Rn=0
+    // Fields: op=0, A=0, Rm=0, M=0, Rn=0, Z=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -629,16 +340,12 @@ fn test_aarch64_branch_unconditional_register_invalid_0_0_d61f0000() {
 fn test_aarch64_branch_unconditional_register_invalid_1_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register invalid encoding: Unconditional UNDEFINED
-    // Fields: A=0, Rn=0, Rm=0, op=0, M=0, Z=0
+    // Fields: Z=0, A=0, M=0, op=0, Rn=0, Rm=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -649,16 +356,12 @@ fn test_aarch64_branch_unconditional_register_invalid_1_0_d61f0000() {
 fn test_aarch64_branch_unconditional_register_invalid_2_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register invalid encoding: Binary { op: And, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "pac" }), rhs: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HavePACExt" }, args: [] } } }
-    // Fields: Rn=0, M=0, Rm=0, Z=0, A=0, op=0
+    // Fields: Rm=0, M=0, A=0, Rn=0, op=0, Z=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -669,16 +372,12 @@ fn test_aarch64_branch_unconditional_register_invalid_2_0_d61f0000() {
 fn test_aarch64_branch_unconditional_register_invalid_3_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register invalid encoding: Unconditional UNDEFINED
-    // Fields: Rm=0, op=0, M=0, A=0, Z=0, Rn=0
+    // Fields: A=0, M=0, Rn=0, Rm=0, Z=0, op=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -689,16 +388,12 @@ fn test_aarch64_branch_unconditional_register_invalid_3_0_d61f0000() {
 fn test_aarch64_branch_unconditional_register_invalid_4_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register invalid encoding: Unconditional UNDEFINED
-    // Fields: Rm=0, M=0, op=0, Z=0, A=0, Rn=0
+    // Fields: Z=0, op=0, Rm=0, M=0, Rn=0, A=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -709,16 +404,12 @@ fn test_aarch64_branch_unconditional_register_invalid_4_0_d61f0000() {
 fn test_aarch64_branch_unconditional_register_invalid_5_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register invalid encoding: Binary { op: Ne, lhs: Binary { op: Eq, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "Z" }), rhs: Binary { op: And, lhs: LitBits([false]), rhs: Var(QualifiedIdentifier { qualifier: Any, name: "m" }) } }, rhs: LitInt(31) }
-    // Fields: Z=0, Rm=0, A=0, Rn=0, op=0, M=0
+    // Fields: A=0, Rn=0, Rm=0, op=0, M=0, Z=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -729,16 +420,12 @@ fn test_aarch64_branch_unconditional_register_invalid_5_0_d61f0000() {
 fn test_aarch64_branch_unconditional_register_invalid_6_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register invalid encoding: Unconditional UNDEFINED
-    // Fields: op=0, A=0, Rn=0, Rm=0, Z=0, M=0
+    // Fields: Rn=0, Rm=0, M=0, Z=0, A=0, op=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -749,16 +436,12 @@ fn test_aarch64_branch_unconditional_register_invalid_6_0_d61f0000() {
 fn test_aarch64_branch_unconditional_register_invalid_7_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register invalid encoding: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "n" }), rhs: LitInt(31) }
-    // Fields: op=0, Rm=0, A=0, Rn=0, Z=0, M=0
+    // Fields: op=0, Z=0, M=0, Rn=0, Rm=0, A=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -769,16 +452,76 @@ fn test_aarch64_branch_unconditional_register_invalid_7_0_d61f0000() {
 fn test_aarch64_branch_unconditional_register_invalid_8_0_d61f0000() {
     // Encoding: 0xD61F0000
     // Test aarch64_branch_unconditional_register invalid encoding: Unconditional UNDEFINED
-    // Fields: op=0, Z=0, A=0, Rn=0, Rm=0, M=0
+    // Fields: Rn=0, Rm=0, Z=0, M=0, A=0, op=0
     let encoding: u32 = 0xD61F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+}
+
+/// Provenance: aarch64_branch_unconditional_register
+/// ASL: `TBZ X0, #0, label`
+/// Requirement: RegisterRead { reg_type: Gp64, source_field: "Rt" }
+/// zero value, bit 0 (branch=true)
+#[test]
+fn test_aarch64_branch_unconditional_register_oracle_0_36000000() {
+    // Test TBZ: zero value, bit 0 (oracle)
+    // Encoding: 0x36000000
+    let mut cpu = create_test_cpu();
+    set_x(&mut cpu, 0, 0x0);
+    let encoding: u32 = 0x36000000;
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step().unwrap();
+    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
+}
+
+/// Provenance: aarch64_branch_unconditional_register
+/// ASL: `TBZ X0, #0, label`
+/// Requirement: RegisterRead { reg_type: Gp64, source_field: "Rt" }
+/// bit 0 set (branch=false)
+#[test]
+fn test_aarch64_branch_unconditional_register_oracle_1_36000000() {
+    // Test TBZ: bit 0 set (oracle)
+    // Encoding: 0x36000000
+    let mut cpu = create_test_cpu();
+    set_x(&mut cpu, 0, 0x1);
+    let encoding: u32 = 0x36000000;
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step().unwrap();
+    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
+}
+
+/// Provenance: aarch64_branch_unconditional_register
+/// ASL: `TBZ X0, #63, label`
+/// Requirement: RegisterRead { reg_type: Gp64, source_field: "Rt" }
+/// bit 63 set (branch=false)
+#[test]
+fn test_aarch64_branch_unconditional_register_oracle_2_b6f80000() {
+    // Test TBZ: bit 63 set (oracle)
+    // Encoding: 0xB6F80000
+    let mut cpu = create_test_cpu();
+    set_x(&mut cpu, 0, 0x8000000000000000);
+    let encoding: u32 = 0xB6F80000;
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step().unwrap();
+    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
+}
+
+/// Provenance: aarch64_branch_unconditional_register
+/// ASL: `TBZ X0, #63, label`
+/// Requirement: RegisterRead { reg_type: Gp64, source_field: "Rt" }
+/// zero, testing bit 63 (branch=true)
+#[test]
+fn test_aarch64_branch_unconditional_register_oracle_3_b6f80000() {
+    // Test TBZ: zero, testing bit 63 (oracle)
+    // Encoding: 0xB6F80000
+    let mut cpu = create_test_cpu();
+    set_x(&mut cpu, 0, 0x0);
+    let encoding: u32 = 0xB6F80000;
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step().unwrap();
+    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
 }
 
 /// Provenance: aarch64_branch_unconditional_register
@@ -828,12 +571,7 @@ fn test_aarch64_branch_unconditional_immediate_field_op_0_min_0_14000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -849,12 +587,7 @@ fn test_aarch64_branch_unconditional_immediate_field_op_1_max_0_94000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -870,12 +603,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_0_zero_0_14000000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -886,17 +614,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_0_zero_0_14000000() {
 fn test_aarch64_branch_unconditional_immediate_field_imm26_1_poweroftwo_0_14000001() {
     // Encoding: 0x14000001
     // Test aarch64_branch_unconditional_immediate field imm26 = 1 (PowerOfTwo)
-    // Fields: imm26=1, op=0
+    // Fields: op=0, imm26=1
     let encoding: u32 = 0x14000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -907,17 +630,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_1_poweroftwo_0_140000
 fn test_aarch64_branch_unconditional_immediate_field_imm26_3_poweroftwominusone_0_14000003() {
     // Encoding: 0x14000003
     // Test aarch64_branch_unconditional_immediate field imm26 = 3 (PowerOfTwoMinusOne)
-    // Fields: op=0, imm26=3
+    // Fields: imm26=3, op=0
     let encoding: u32 = 0x14000003;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -933,12 +651,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_4_poweroftwo_0_140000
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -949,17 +662,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_4_poweroftwo_0_140000
 fn test_aarch64_branch_unconditional_immediate_field_imm26_7_poweroftwominusone_0_14000007() {
     // Encoding: 0x14000007
     // Test aarch64_branch_unconditional_immediate field imm26 = 7 (PowerOfTwoMinusOne)
-    // Fields: imm26=7, op=0
+    // Fields: op=0, imm26=7
     let encoding: u32 = 0x14000007;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -970,17 +678,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_7_poweroftwominusone_
 fn test_aarch64_branch_unconditional_immediate_field_imm26_8_poweroftwo_0_14000008() {
     // Encoding: 0x14000008
     // Test aarch64_branch_unconditional_immediate field imm26 = 8 (PowerOfTwo)
-    // Fields: imm26=8, op=0
+    // Fields: op=0, imm26=8
     let encoding: u32 = 0x14000008;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -996,12 +699,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_15_poweroftwominusone
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1012,17 +710,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_15_poweroftwominusone
 fn test_aarch64_branch_unconditional_immediate_field_imm26_16_poweroftwo_0_14000010() {
     // Encoding: 0x14000010
     // Test aarch64_branch_unconditional_immediate field imm26 = 16 (PowerOfTwo)
-    // Fields: op=0, imm26=16
+    // Fields: imm26=16, op=0
     let encoding: u32 = 0x14000010;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1033,17 +726,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_16_poweroftwo_0_14000
 fn test_aarch64_branch_unconditional_immediate_field_imm26_31_poweroftwominusone_0_1400001f() {
     // Encoding: 0x1400001F
     // Test aarch64_branch_unconditional_immediate field imm26 = 31 (PowerOfTwoMinusOne)
-    // Fields: op=0, imm26=31
+    // Fields: imm26=31, op=0
     let encoding: u32 = 0x1400001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1054,17 +742,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_31_poweroftwominusone
 fn test_aarch64_branch_unconditional_immediate_field_imm26_32_poweroftwo_0_14000020() {
     // Encoding: 0x14000020
     // Test aarch64_branch_unconditional_immediate field imm26 = 32 (PowerOfTwo)
-    // Fields: op=0, imm26=32
+    // Fields: imm26=32, op=0
     let encoding: u32 = 0x14000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1075,17 +758,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_32_poweroftwo_0_14000
 fn test_aarch64_branch_unconditional_immediate_field_imm26_63_poweroftwominusone_0_1400003f() {
     // Encoding: 0x1400003F
     // Test aarch64_branch_unconditional_immediate field imm26 = 63 (PowerOfTwoMinusOne)
-    // Fields: imm26=63, op=0
+    // Fields: op=0, imm26=63
     let encoding: u32 = 0x1400003F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1096,17 +774,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_63_poweroftwominusone
 fn test_aarch64_branch_unconditional_immediate_field_imm26_64_poweroftwo_0_14000040() {
     // Encoding: 0x14000040
     // Test aarch64_branch_unconditional_immediate field imm26 = 64 (PowerOfTwo)
-    // Fields: op=0, imm26=64
+    // Fields: imm26=64, op=0
     let encoding: u32 = 0x14000040;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1122,12 +795,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_127_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1143,12 +811,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_128_poweroftwo_0_1400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1164,12 +827,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_255_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1180,17 +838,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_255_poweroftwominuson
 fn test_aarch64_branch_unconditional_immediate_field_imm26_256_poweroftwo_0_14000100() {
     // Encoding: 0x14000100
     // Test aarch64_branch_unconditional_immediate field imm26 = 256 (PowerOfTwo)
-    // Fields: imm26=256, op=0
+    // Fields: op=0, imm26=256
     let encoding: u32 = 0x14000100;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1206,12 +859,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_511_poweroftwominuson
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1227,12 +875,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_512_poweroftwo_0_1400
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1248,12 +891,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_1023_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1264,17 +902,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_1023_poweroftwominuso
 fn test_aarch64_branch_unconditional_immediate_field_imm26_1024_poweroftwo_0_14000400() {
     // Encoding: 0x14000400
     // Test aarch64_branch_unconditional_immediate field imm26 = 1024 (PowerOfTwo)
-    // Fields: op=0, imm26=1024
+    // Fields: imm26=1024, op=0
     let encoding: u32 = 0x14000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1290,12 +923,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_2047_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1311,12 +939,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_2048_poweroftwo_0_140
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1327,17 +950,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_2048_poweroftwo_0_140
 fn test_aarch64_branch_unconditional_immediate_field_imm26_4095_poweroftwominusone_0_14000fff() {
     // Encoding: 0x14000FFF
     // Test aarch64_branch_unconditional_immediate field imm26 = 4095 (PowerOfTwoMinusOne)
-    // Fields: op=0, imm26=4095
+    // Fields: imm26=4095, op=0
     let encoding: u32 = 0x14000FFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1353,12 +971,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_4096_poweroftwo_0_140
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1374,12 +987,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_8191_poweroftwominuso
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1395,12 +1003,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_8192_poweroftwo_0_140
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1416,12 +1019,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_16383_poweroftwominus
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1437,12 +1035,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_16384_poweroftwo_0_14
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1453,17 +1046,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_16384_poweroftwo_0_14
 fn test_aarch64_branch_unconditional_immediate_field_imm26_32767_poweroftwominusone_0_14007fff() {
     // Encoding: 0x14007FFF
     // Test aarch64_branch_unconditional_immediate field imm26 = 32767 (PowerOfTwoMinusOne)
-    // Fields: imm26=32767, op=0
+    // Fields: op=0, imm26=32767
     let encoding: u32 = 0x14007FFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1479,12 +1067,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_32768_poweroftwo_0_14
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1495,17 +1078,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_32768_poweroftwo_0_14
 fn test_aarch64_branch_unconditional_immediate_field_imm26_65535_poweroftwominusone_0_1400ffff() {
     // Encoding: 0x1400FFFF
     // Test aarch64_branch_unconditional_immediate field imm26 = 65535 (PowerOfTwoMinusOne)
-    // Fields: op=0, imm26=65535
+    // Fields: imm26=65535, op=0
     let encoding: u32 = 0x1400FFFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1516,17 +1094,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_65535_poweroftwominus
 fn test_aarch64_branch_unconditional_immediate_field_imm26_65536_poweroftwo_0_14010000() {
     // Encoding: 0x14010000
     // Test aarch64_branch_unconditional_immediate field imm26 = 65536 (PowerOfTwo)
-    // Fields: imm26=65536, op=0
+    // Fields: op=0, imm26=65536
     let encoding: u32 = 0x14010000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1542,12 +1115,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_131071_poweroftwominu
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1558,17 +1126,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_131071_poweroftwominu
 fn test_aarch64_branch_unconditional_immediate_field_imm26_131072_poweroftwo_0_14020000() {
     // Encoding: 0x14020000
     // Test aarch64_branch_unconditional_immediate field imm26 = 131072 (PowerOfTwo)
-    // Fields: imm26=131072, op=0
+    // Fields: op=0, imm26=131072
     let encoding: u32 = 0x14020000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1579,17 +1142,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_131072_poweroftwo_0_1
 fn test_aarch64_branch_unconditional_immediate_field_imm26_262143_poweroftwominusone_0_1403ffff() {
     // Encoding: 0x1403FFFF
     // Test aarch64_branch_unconditional_immediate field imm26 = 262143 (PowerOfTwoMinusOne)
-    // Fields: op=0, imm26=262143
+    // Fields: imm26=262143, op=0
     let encoding: u32 = 0x1403FFFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1605,12 +1163,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_262144_poweroftwo_0_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1621,17 +1174,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_262144_poweroftwo_0_1
 fn test_aarch64_branch_unconditional_immediate_field_imm26_524287_poweroftwominusone_0_1407ffff() {
     // Encoding: 0x1407FFFF
     // Test aarch64_branch_unconditional_immediate field imm26 = 524287 (PowerOfTwoMinusOne)
-    // Fields: imm26=524287, op=0
+    // Fields: op=0, imm26=524287
     let encoding: u32 = 0x1407FFFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1647,12 +1195,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_524288_poweroftwo_0_1
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1668,12 +1211,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_1048575_poweroftwomin
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1684,17 +1222,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_1048575_poweroftwomin
 fn test_aarch64_branch_unconditional_immediate_field_imm26_1048576_poweroftwo_0_14100000() {
     // Encoding: 0x14100000
     // Test aarch64_branch_unconditional_immediate field imm26 = 1048576 (PowerOfTwo)
-    // Fields: imm26=1048576, op=0
+    // Fields: op=0, imm26=1048576
     let encoding: u32 = 0x14100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1705,17 +1238,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_1048576_poweroftwo_0_
 fn test_aarch64_branch_unconditional_immediate_field_imm26_2097151_poweroftwominusone_0_141fffff() {
     // Encoding: 0x141FFFFF
     // Test aarch64_branch_unconditional_immediate field imm26 = 2097151 (PowerOfTwoMinusOne)
-    // Fields: op=0, imm26=2097151
+    // Fields: imm26=2097151, op=0
     let encoding: u32 = 0x141FFFFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1726,17 +1254,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_2097151_poweroftwomin
 fn test_aarch64_branch_unconditional_immediate_field_imm26_2097152_poweroftwo_0_14200000() {
     // Encoding: 0x14200000
     // Test aarch64_branch_unconditional_immediate field imm26 = 2097152 (PowerOfTwo)
-    // Fields: imm26=2097152, op=0
+    // Fields: op=0, imm26=2097152
     let encoding: u32 = 0x14200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1747,17 +1270,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_2097152_poweroftwo_0_
 fn test_aarch64_branch_unconditional_immediate_field_imm26_4194303_poweroftwominusone_0_143fffff() {
     // Encoding: 0x143FFFFF
     // Test aarch64_branch_unconditional_immediate field imm26 = 4194303 (PowerOfTwoMinusOne)
-    // Fields: op=0, imm26=4194303
+    // Fields: imm26=4194303, op=0
     let encoding: u32 = 0x143FFFFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1773,12 +1291,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_4194304_poweroftwo_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1789,17 +1302,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_4194304_poweroftwo_0_
 fn test_aarch64_branch_unconditional_immediate_field_imm26_8388607_poweroftwominusone_0_147fffff() {
     // Encoding: 0x147FFFFF
     // Test aarch64_branch_unconditional_immediate field imm26 = 8388607 (PowerOfTwoMinusOne)
-    // Fields: op=0, imm26=8388607
+    // Fields: imm26=8388607, op=0
     let encoding: u32 = 0x147FFFFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1815,12 +1323,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_8388608_poweroftwo_0_
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1828,21 +1331,15 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_8388608_poweroftwo_0_
 /// Requirement: FieldBoundary { field: "imm26", value: 16777215, boundary: PowerOfTwoMinusOne }
 /// 2^24 - 1 = 16777215
 #[test]
-fn test_aarch64_branch_unconditional_immediate_field_imm26_16777215_poweroftwominusone_0_14ffffff()
-{
+fn test_aarch64_branch_unconditional_immediate_field_imm26_16777215_poweroftwominusone_0_14ffffff() {
     // Encoding: 0x14FFFFFF
     // Test aarch64_branch_unconditional_immediate field imm26 = 16777215 (PowerOfTwoMinusOne)
-    // Fields: op=0, imm26=16777215
+    // Fields: imm26=16777215, op=0
     let encoding: u32 = 0x14FFFFFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1858,12 +1355,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_16777216_poweroftwo_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1871,21 +1363,15 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_16777216_poweroftwo_0
 /// Requirement: FieldBoundary { field: "imm26", value: 33554431, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (33554431)
 #[test]
-fn test_aarch64_branch_unconditional_immediate_field_imm26_33554431_poweroftwominusone_0_15ffffff()
-{
+fn test_aarch64_branch_unconditional_immediate_field_imm26_33554431_poweroftwominusone_0_15ffffff() {
     // Encoding: 0x15FFFFFF
     // Test aarch64_branch_unconditional_immediate field imm26 = 33554431 (PowerOfTwoMinusOne)
-    // Fields: imm26=33554431, op=0
+    // Fields: op=0, imm26=33554431
     let encoding: u32 = 0x15FFFFFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1901,12 +1387,7 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_33554432_poweroftwo_0
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1917,17 +1398,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_33554432_poweroftwo_0
 fn test_aarch64_branch_unconditional_immediate_field_imm26_67108863_max_0_17ffffff() {
     // Encoding: 0x17FFFFFF
     // Test aarch64_branch_unconditional_immediate field imm26 = 67108863 (Max)
-    // Fields: imm26=67108863, op=0
+    // Fields: op=0, imm26=67108863
     let encoding: u32 = 0x17FFFFFF;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -1938,502 +1414,12 @@ fn test_aarch64_branch_unconditional_immediate_field_imm26_67108863_max_0_17ffff
 fn test_aarch64_branch_unconditional_immediate_combo_0_0_14000000() {
     // Encoding: 0x14000000
     // Test aarch64_branch_unconditional_immediate field combination: op=0, imm26=0
-    // Fields: op=0, imm26=0
-    let encoding: u32 = 0x14000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// op=1 (maximum value (1))
-#[test]
-fn test_aarch64_branch_unconditional_immediate_combo_1_0_94000000() {
-    // Encoding: 0x94000000
-    // Test aarch64_branch_unconditional_immediate field combination: op=1, imm26=0
-    // Fields: imm26=0, op=1
-    let encoding: u32 = 0x94000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm26=0 (immediate value 0)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_combo_2_0_14000000() {
-    // Encoding: 0x14000000
-    // Test aarch64_branch_unconditional_immediate field combination: op=0, imm26=0
     // Fields: imm26=0, op=0
     let encoding: u32 = 0x14000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm26=1 (immediate value 1)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_combo_3_0_14000001() {
-    // Encoding: 0x14000001
-    // Test aarch64_branch_unconditional_immediate field combination: op=0, imm26=1
-    // Fields: op=0, imm26=1
-    let encoding: u32 = 0x14000001;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm26=3 (2^2 - 1 = 3)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_combo_4_0_14000003() {
-    // Encoding: 0x14000003
-    // Test aarch64_branch_unconditional_immediate field combination: op=0, imm26=3
-    // Fields: op=0, imm26=3
-    let encoding: u32 = 0x14000003;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm26=4 (power of 2 (2^2 = 4))
-#[test]
-fn test_aarch64_branch_unconditional_immediate_combo_5_0_14000004() {
-    // Encoding: 0x14000004
-    // Test aarch64_branch_unconditional_immediate field combination: op=0, imm26=4
-    // Fields: imm26=4, op=0
-    let encoding: u32 = 0x14000004;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm26=7 (2^3 - 1 = 7)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_combo_6_0_14000007() {
-    // Encoding: 0x14000007
-    // Test aarch64_branch_unconditional_immediate field combination: op=0, imm26=7
-    // Fields: op=0, imm26=7
-    let encoding: u32 = 0x14000007;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm26=8 (power of 2 (2^3 = 8))
-#[test]
-fn test_aarch64_branch_unconditional_immediate_combo_7_0_14000008() {
-    // Encoding: 0x14000008
-    // Test aarch64_branch_unconditional_immediate field combination: op=0, imm26=8
-    // Fields: op=0, imm26=8
-    let encoding: u32 = 0x14000008;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm26=15 (2^4 - 1 = 15)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_combo_8_0_1400000f() {
-    // Encoding: 0x1400000F
-    // Test aarch64_branch_unconditional_immediate field combination: op=0, imm26=15
-    // Fields: op=0, imm26=15
-    let encoding: u32 = 0x1400000F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm26=16 (power of 2 (2^4 = 16))
-#[test]
-fn test_aarch64_branch_unconditional_immediate_combo_9_0_14000010() {
-    // Encoding: 0x14000010
-    // Test aarch64_branch_unconditional_immediate field combination: op=0, imm26=16
-    // Fields: imm26=16, op=0
-    let encoding: u32 = 0x14000010;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp32, dest_field: "Rd" }
-/// zero value (32)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_32_0_5ac00020() {
-    // Test RBIT 32-bit: zero value (oracle)
-    // Encoding: 0x5AC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x0);
-    let encoding: u32 = 0x5AC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_w(&cpu, 0), 0x0, "W0 should be 0x00000000");
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp64, dest_field: "Rd" }
-/// zero value (64)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_64_0_dac00020() {
-    // Test RBIT 64-bit: zero value (oracle)
-    // Encoding: 0xDAC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x0);
-    let encoding: u32 = 0xDAC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0x0, "X0 should be 0x0000000000000000");
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp32, dest_field: "Rd" }
-/// single bit set (LSB) (32)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_32_1_5ac00020() {
-    // Test RBIT 32-bit: single bit set (LSB) (oracle)
-    // Encoding: 0x5AC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1);
-    let encoding: u32 = 0x5AC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_w(&cpu, 0), 0x80000000, "W0 should be 0x80000000");
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp64, dest_field: "Rd" }
-/// single bit set (LSB) (64)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_64_1_dac00020() {
-    // Test RBIT 64-bit: single bit set (LSB) (oracle)
-    // Encoding: 0xDAC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1);
-    let encoding: u32 = 0xDAC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x8000000000000000,
-        "X0 should be 0x8000000000000000"
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp32, dest_field: "Rd" }
-/// single bit set (MSB 64) (32)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_32_2_5ac00020() {
-    // Test RBIT 32-bit: single bit set (MSB 64) (oracle)
-    // Encoding: 0x5AC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x0);
-    let encoding: u32 = 0x5AC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_w(&cpu, 0), 0x0, "W0 should be 0x00000000");
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp64, dest_field: "Rd" }
-/// single bit set (MSB 64) (64)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_64_2_dac00020() {
-    // Test RBIT 64-bit: single bit set (MSB 64) (oracle)
-    // Encoding: 0xDAC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
-    let encoding: u32 = 0xDAC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 0), 0x1, "X0 should be 0x0000000000000001");
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp32, dest_field: "Rd" }
-/// single bit set (MSB 32) (32)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_32_3_5ac00020() {
-    // Test RBIT 32-bit: single bit set (MSB 32) (oracle)
-    // Encoding: 0x5AC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x80000000);
-    let encoding: u32 = 0x5AC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_w(&cpu, 0), 0x1, "W0 should be 0x00000001");
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp64, dest_field: "Rd" }
-/// single bit set (MSB 32) (64)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_64_3_dac00020() {
-    // Test RBIT 64-bit: single bit set (MSB 32) (oracle)
-    // Encoding: 0xDAC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x80000000);
-    let encoding: u32 = 0xDAC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x100000000,
-        "X0 should be 0x0000000100000000"
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp32, dest_field: "Rd" }
-/// all ones (32)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_32_4_5ac00020() {
-    // Test RBIT 32-bit: all ones (oracle)
-    // Encoding: 0x5AC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFF);
-    let encoding: u32 = 0x5AC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_w(&cpu, 0), 0xFFFFFFFF, "W0 should be 0xFFFFFFFF");
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp64, dest_field: "Rd" }
-/// all ones (64)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_64_4_dac00020() {
-    // Test RBIT 64-bit: all ones (oracle)
-    // Encoding: 0xDAC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
-    let encoding: u32 = 0xDAC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xFFFFFFFFFFFFFFFF,
-        "X0 should be 0xFFFFFFFFFFFFFFFF"
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp32, dest_field: "Rd" }
-/// mixed pattern (32)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_32_5_5ac00020() {
-    // Test RBIT 32-bit: mixed pattern (oracle)
-    // Encoding: 0x5AC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x9ABCDEF0);
-    let encoding: u32 = 0x5AC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_w(&cpu, 0), 0xF7B3D59, "W0 should be 0x0F7B3D59");
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp64, dest_field: "Rd" }
-/// mixed pattern (64)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_64_5_dac00020() {
-    // Test RBIT 64-bit: mixed pattern (oracle)
-    // Encoding: 0xDAC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x123456789ABCDEF0);
-    let encoding: u32 = 0xDAC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xF7B3D591E6A2C48,
-        "X0 should be 0x0F7B3D591E6A2C48"
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp32, dest_field: "Rd" }
-/// alternating nibbles (32)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_32_6_5ac00020() {
-    // Test RBIT 32-bit: alternating nibbles (oracle)
-    // Encoding: 0x5AC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xF0F0F0F);
-    let encoding: u32 = 0x5AC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_w(&cpu, 0), 0xF0F0F0F0, "W0 should be 0xF0F0F0F0");
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp64, dest_field: "Rd" }
-/// alternating nibbles (64)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_64_6_dac00020() {
-    // Test RBIT 64-bit: alternating nibbles (oracle)
-    // Encoding: 0xDAC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xF0F0F0F0F0F0F0F);
-    let encoding: u32 = 0xDAC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0xF0F0F0F0F0F0F0F0,
-        "X0 should be 0xF0F0F0F0F0F0F0F0"
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp32, dest_field: "Rd" }
-/// magic values (32)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_32_7_5ac00020() {
-    // Test RBIT 32-bit: magic values (oracle)
-    // Encoding: 0x5AC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xCAFEBABE);
-    let encoding: u32 = 0x5AC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_w(&cpu, 0), 0x7D5D7F53, "W0 should be 0x7D5D7F53");
-}
-
-/// Provenance: aarch64_branch_unconditional_immediate
-/// ASL: `RBIT X0, X1`
-/// Requirement: RegisterWrite { reg_type: Gp64, dest_field: "Rd" }
-/// magic values (64)
-#[test]
-fn test_aarch64_branch_unconditional_immediate_rbit_oracle_64_7_dac00020() {
-    // Test RBIT 64-bit: magic values (oracle)
-    // Encoding: 0xDAC00020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xDEADBEEFCAFEBABE);
-    let encoding: u32 = 0xDAC00020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(
-        get_x(&cpu, 0),
-        0x7D5D7F53F77DB57B,
-        "X0 should be 0x7D5D7F53F77DB57B"
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_immediate
@@ -2463,17 +1449,12 @@ fn test_aarch64_branch_unconditional_immediate_reg_write_0_14000000() {
 fn test_aarch64_branch_unconditional_eret_field_a_0_min_0_d69f0000() {
     // Encoding: 0xD69F0000
     // Test aarch64_branch_unconditional_eret field A = 0 (Min)
-    // Fields: A=0, Rn=0, M=0, op4=0
+    // Fields: op4=0, Rn=0, M=0, A=0
     let encoding: u32 = 0xD69F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2484,17 +1465,12 @@ fn test_aarch64_branch_unconditional_eret_field_a_0_min_0_d69f0000() {
 fn test_aarch64_branch_unconditional_eret_field_a_1_max_0_d69f0800() {
     // Encoding: 0xD69F0800
     // Test aarch64_branch_unconditional_eret field A = 1 (Max)
-    // Fields: op4=0, Rn=0, A=1, M=0
+    // Fields: M=0, Rn=0, A=1, op4=0
     let encoding: u32 = 0xD69F0800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2505,17 +1481,12 @@ fn test_aarch64_branch_unconditional_eret_field_a_1_max_0_d69f0800() {
 fn test_aarch64_branch_unconditional_eret_field_m_0_min_0_d69f0000() {
     // Encoding: 0xD69F0000
     // Test aarch64_branch_unconditional_eret field M = 0 (Min)
-    // Fields: op4=0, A=0, M=0, Rn=0
+    // Fields: A=0, op4=0, Rn=0, M=0
     let encoding: u32 = 0xD69F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2526,17 +1497,12 @@ fn test_aarch64_branch_unconditional_eret_field_m_0_min_0_d69f0000() {
 fn test_aarch64_branch_unconditional_eret_field_m_1_max_0_d69f0400() {
     // Encoding: 0xD69F0400
     // Test aarch64_branch_unconditional_eret field M = 1 (Max)
-    // Fields: A=0, M=1, op4=0, Rn=0
+    // Fields: A=0, op4=0, M=1, Rn=0
     let encoding: u32 = 0xD69F0400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2547,17 +1513,12 @@ fn test_aarch64_branch_unconditional_eret_field_m_1_max_0_d69f0400() {
 fn test_aarch64_branch_unconditional_eret_field_rn_0_min_0_d69f0000() {
     // Encoding: 0xD69F0000
     // Test aarch64_branch_unconditional_eret field Rn = 0 (Min)
-    // Fields: op4=0, M=0, A=0, Rn=0
+    // Fields: A=0, M=0, op4=0, Rn=0
     let encoding: u32 = 0xD69F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2568,17 +1529,12 @@ fn test_aarch64_branch_unconditional_eret_field_rn_0_min_0_d69f0000() {
 fn test_aarch64_branch_unconditional_eret_field_rn_1_poweroftwo_0_d69f0020() {
     // Encoding: 0xD69F0020
     // Test aarch64_branch_unconditional_eret field Rn = 1 (PowerOfTwo)
-    // Fields: A=0, M=0, Rn=1, op4=0
+    // Fields: Rn=1, op4=0, M=0, A=0
     let encoding: u32 = 0xD69F0020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2589,17 +1545,12 @@ fn test_aarch64_branch_unconditional_eret_field_rn_1_poweroftwo_0_d69f0020() {
 fn test_aarch64_branch_unconditional_eret_field_rn_30_poweroftwominusone_0_d69f03c0() {
     // Encoding: 0xD69F03C0
     // Test aarch64_branch_unconditional_eret field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: op4=0, A=0, M=0, Rn=30
+    // Fields: M=0, op4=0, Rn=30, A=0
     let encoding: u32 = 0xD69F03C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2610,17 +1561,12 @@ fn test_aarch64_branch_unconditional_eret_field_rn_30_poweroftwominusone_0_d69f0
 fn test_aarch64_branch_unconditional_eret_field_rn_31_max_0_d69f03e0() {
     // Encoding: 0xD69F03E0
     // Test aarch64_branch_unconditional_eret field Rn = 31 (Max)
-    // Fields: Rn=31, M=0, op4=0, A=0
+    // Fields: op4=0, Rn=31, M=0, A=0
     let encoding: u32 = 0xD69F03E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2631,17 +1577,12 @@ fn test_aarch64_branch_unconditional_eret_field_rn_31_max_0_d69f03e0() {
 fn test_aarch64_branch_unconditional_eret_field_op4_0_min_0_d69f0000() {
     // Encoding: 0xD69F0000
     // Test aarch64_branch_unconditional_eret field op4 = 0 (Min)
-    // Fields: M=0, op4=0, Rn=0, A=0
+    // Fields: Rn=0, op4=0, A=0, M=0
     let encoding: u32 = 0xD69F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2652,17 +1593,12 @@ fn test_aarch64_branch_unconditional_eret_field_op4_0_min_0_d69f0000() {
 fn test_aarch64_branch_unconditional_eret_field_op4_1_poweroftwo_0_d69f0001() {
     // Encoding: 0xD69F0001
     // Test aarch64_branch_unconditional_eret field op4 = 1 (PowerOfTwo)
-    // Fields: Rn=0, op4=1, A=0, M=0
+    // Fields: A=0, op4=1, M=0, Rn=0
     let encoding: u32 = 0xD69F0001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2673,17 +1609,12 @@ fn test_aarch64_branch_unconditional_eret_field_op4_1_poweroftwo_0_d69f0001() {
 fn test_aarch64_branch_unconditional_eret_field_op4_15_poweroftwominusone_0_d69f000f() {
     // Encoding: 0xD69F000F
     // Test aarch64_branch_unconditional_eret field op4 = 15 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, M=0, A=0, op4=15
+    // Fields: Rn=0, op4=15, A=0, M=0
     let encoding: u32 = 0xD69F000F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2694,17 +1625,12 @@ fn test_aarch64_branch_unconditional_eret_field_op4_15_poweroftwominusone_0_d69f
 fn test_aarch64_branch_unconditional_eret_field_op4_31_max_0_d69f001f() {
     // Encoding: 0xD69F001F
     // Test aarch64_branch_unconditional_eret field op4 = 31 (Max)
-    // Fields: A=0, op4=31, M=0, Rn=0
+    // Fields: op4=31, M=0, Rn=0, A=0
     let encoding: u32 = 0xD69F001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2715,206 +1641,12 @@ fn test_aarch64_branch_unconditional_eret_field_op4_31_max_0_d69f001f() {
 fn test_aarch64_branch_unconditional_eret_combo_0_0_d69f0000() {
     // Encoding: 0xD69F0000
     // Test aarch64_branch_unconditional_eret field combination: A=0, M=0, Rn=0, op4=0
-    // Fields: A=0, Rn=0, M=0, op4=0
+    // Fields: Rn=0, op4=0, M=0, A=0
     let encoding: u32 = 0xD69F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_eret
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// A=1 (maximum value (1))
-#[test]
-fn test_aarch64_branch_unconditional_eret_combo_1_0_d69f0800() {
-    // Encoding: 0xD69F0800
-    // Test aarch64_branch_unconditional_eret field combination: A=1, M=0, Rn=0, op4=0
-    // Fields: op4=0, Rn=0, A=1, M=0
-    let encoding: u32 = 0xD69F0800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_eret
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// M=0 (minimum value)
-#[test]
-fn test_aarch64_branch_unconditional_eret_combo_2_0_d69f0000() {
-    // Encoding: 0xD69F0000
-    // Test aarch64_branch_unconditional_eret field combination: A=0, M=0, Rn=0, op4=0
-    // Fields: A=0, op4=0, M=0, Rn=0
-    let encoding: u32 = 0xD69F0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_eret
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// M=1 (maximum value (1))
-#[test]
-fn test_aarch64_branch_unconditional_eret_combo_3_0_d69f0400() {
-    // Encoding: 0xD69F0400
-    // Test aarch64_branch_unconditional_eret field combination: A=0, M=1, Rn=0, op4=0
-    // Fields: A=0, M=1, Rn=0, op4=0
-    let encoding: u32 = 0xD69F0400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_eret
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_branch_unconditional_eret_combo_4_0_d69f0000() {
-    // Encoding: 0xD69F0000
-    // Test aarch64_branch_unconditional_eret field combination: A=0, M=0, Rn=0, op4=0
-    // Fields: A=0, M=0, Rn=0, op4=0
-    let encoding: u32 = 0xD69F0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_eret
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_branch_unconditional_eret_combo_5_0_d69f0020() {
-    // Encoding: 0xD69F0020
-    // Test aarch64_branch_unconditional_eret field combination: A=0, M=0, Rn=1, op4=0
-    // Fields: op4=0, Rn=1, A=0, M=0
-    let encoding: u32 = 0xD69F0020;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_eret
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_branch_unconditional_eret_combo_6_0_d69f03c0() {
-    // Encoding: 0xD69F03C0
-    // Test aarch64_branch_unconditional_eret field combination: A=0, M=0, Rn=30, op4=0
-    // Fields: Rn=30, op4=0, A=0, M=0
-    let encoding: u32 = 0xD69F03C0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_eret
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=31 (register index 31 (SP - stack pointer))
-#[test]
-fn test_aarch64_branch_unconditional_eret_combo_7_0_d69f03e0() {
-    // Encoding: 0xD69F03E0
-    // Test aarch64_branch_unconditional_eret field combination: A=0, M=0, Rn=31, op4=0
-    // Fields: M=0, op4=0, A=0, Rn=31
-    let encoding: u32 = 0xD69F03E0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_eret
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// op4=0 (minimum value)
-#[test]
-fn test_aarch64_branch_unconditional_eret_combo_8_0_d69f0000() {
-    // Encoding: 0xD69F0000
-    // Test aarch64_branch_unconditional_eret field combination: A=0, M=0, Rn=0, op4=0
-    // Fields: Rn=0, A=0, M=0, op4=0
-    let encoding: u32 = 0xD69F0000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_branch_unconditional_eret
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// op4=1 (value 1)
-#[test]
-fn test_aarch64_branch_unconditional_eret_combo_9_0_d69f0001() {
-    // Encoding: 0xD69F0001
-    // Test aarch64_branch_unconditional_eret field combination: A=0, M=0, Rn=0, op4=1
-    // Fields: M=0, Rn=0, A=0, op4=1
-    let encoding: u32 = 0xD69F0001;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2922,21 +1654,15 @@ fn test_aarch64_branch_unconditional_eret_combo_9_0_d69f0001() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_branch_unconditional_eret_special_rn_31_stack_pointer_sp_may_require_alignment_0_d69f03e0(
-) {
+fn test_aarch64_branch_unconditional_eret_special_rn_31_stack_pointer_sp_may_require_alignment_0_d69f03e0() {
     // Encoding: 0xD69F03E0
     // Test aarch64_branch_unconditional_eret special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: A=0, op4=0, M=0, Rn=31
+    // Fields: op4=0, Rn=31, A=0, M=0
     let encoding: u32 = 0xD69F03E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2952,11 +1678,7 @@ fn test_aarch64_branch_unconditional_eret_invalid_0_0_d69f0000() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2967,16 +1689,12 @@ fn test_aarch64_branch_unconditional_eret_invalid_0_0_d69f0000() {
 fn test_aarch64_branch_unconditional_eret_invalid_1_0_d69f0000() {
     // Encoding: 0xD69F0000
     // Test aarch64_branch_unconditional_eret invalid encoding: Unconditional UNDEFINED
-    // Fields: A=0, M=0, Rn=0, op4=0
+    // Fields: Rn=0, op4=0, A=0, M=0
     let encoding: u32 = 0xD69F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -2987,16 +1705,12 @@ fn test_aarch64_branch_unconditional_eret_invalid_1_0_d69f0000() {
 fn test_aarch64_branch_unconditional_eret_invalid_2_0_d69f0000() {
     // Encoding: 0xD69F0000
     // Test aarch64_branch_unconditional_eret invalid encoding: Binary { op: Ne, lhs: Binary { op: And, lhs: Unary { op: Not, operand: Var(QualifiedIdentifier { qualifier: Any, name: "pac" }) }, rhs: Var(QualifiedIdentifier { qualifier: Any, name: "op4" }) }, rhs: LitBits([false, false, false, false, false]) }
-    // Fields: Rn=0, op4=0, A=0, M=0
+    // Fields: op4=0, M=0, A=0, Rn=0
     let encoding: u32 = 0xD69F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -3007,16 +1721,12 @@ fn test_aarch64_branch_unconditional_eret_invalid_2_0_d69f0000() {
 fn test_aarch64_branch_unconditional_eret_invalid_3_0_d69f0000() {
     // Encoding: 0xD69F0000
     // Test aarch64_branch_unconditional_eret invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, M=0, A=0, op4=0
+    // Fields: Rn=0, op4=0, A=0, M=0
     let encoding: u32 = 0xD69F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -3027,16 +1737,12 @@ fn test_aarch64_branch_unconditional_eret_invalid_3_0_d69f0000() {
 fn test_aarch64_branch_unconditional_eret_invalid_4_0_d69f0000() {
     // Encoding: 0xD69F0000
     // Test aarch64_branch_unconditional_eret invalid encoding: Binary { op: And, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "pac" }), rhs: Binary { op: Ne, lhs: Binary { op: Or, lhs: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HavePACExt" }, args: [] } }, rhs: Var(QualifiedIdentifier { qualifier: Any, name: "op4" }) }, rhs: LitBits([true, true, true, true, true]) } }
-    // Fields: Rn=0, A=0, op4=0, M=0
+    // Fields: Rn=0, op4=0, M=0, A=0
     let encoding: u32 = 0xD69F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -3047,16 +1753,12 @@ fn test_aarch64_branch_unconditional_eret_invalid_4_0_d69f0000() {
 fn test_aarch64_branch_unconditional_eret_invalid_5_0_d69f0000() {
     // Encoding: 0xD69F0000
     // Test aarch64_branch_unconditional_eret invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, M=0, op4=0, A=0
+    // Fields: op4=0, M=0, Rn=0, A=0
     let encoding: u32 = 0xD69F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -3067,16 +1769,12 @@ fn test_aarch64_branch_unconditional_eret_invalid_5_0_d69f0000() {
 fn test_aarch64_branch_unconditional_eret_invalid_6_0_d69f0000() {
     // Encoding: 0xD69F0000
     // Test aarch64_branch_unconditional_eret invalid encoding: Binary { op: Ne, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "Rn" }), rhs: LitBits([true, true, true, true, true]) }
-    // Fields: M=0, Rn=0, A=0, op4=0
+    // Fields: Rn=0, M=0, op4=0, A=0
     let encoding: u32 = 0xD69F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -3087,16 +1785,76 @@ fn test_aarch64_branch_unconditional_eret_invalid_6_0_d69f0000() {
 fn test_aarch64_branch_unconditional_eret_invalid_7_0_d69f0000() {
     // Encoding: 0xD69F0000
     // Test aarch64_branch_unconditional_eret invalid encoding: Unconditional UNDEFINED
-    // Fields: op4=0, A=0, M=0, Rn=0
+    // Fields: A=0, op4=0, M=0, Rn=0
     let encoding: u32 = 0xD69F0000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
+}
+
+/// Provenance: aarch64_branch_unconditional_eret
+/// ASL: `TBZ X0, #0, label`
+/// Requirement: RegisterRead { reg_type: Gp64, source_field: "Rt" }
+/// zero value, bit 0 (branch=true)
+#[test]
+fn test_aarch64_branch_unconditional_eret_oracle_0_36000000() {
+    // Test TBZ: zero value, bit 0 (oracle)
+    // Encoding: 0x36000000
+    let mut cpu = create_test_cpu();
+    set_x(&mut cpu, 0, 0x0);
+    let encoding: u32 = 0x36000000;
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step().unwrap();
+    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
+}
+
+/// Provenance: aarch64_branch_unconditional_eret
+/// ASL: `TBZ X0, #0, label`
+/// Requirement: RegisterRead { reg_type: Gp64, source_field: "Rt" }
+/// bit 0 set (branch=false)
+#[test]
+fn test_aarch64_branch_unconditional_eret_oracle_1_36000000() {
+    // Test TBZ: bit 0 set (oracle)
+    // Encoding: 0x36000000
+    let mut cpu = create_test_cpu();
+    set_x(&mut cpu, 0, 0x1);
+    let encoding: u32 = 0x36000000;
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step().unwrap();
+    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
+}
+
+/// Provenance: aarch64_branch_unconditional_eret
+/// ASL: `TBZ X0, #63, label`
+/// Requirement: RegisterRead { reg_type: Gp64, source_field: "Rt" }
+/// bit 63 set (branch=false)
+#[test]
+fn test_aarch64_branch_unconditional_eret_oracle_2_b6f80000() {
+    // Test TBZ: bit 63 set (oracle)
+    // Encoding: 0xB6F80000
+    let mut cpu = create_test_cpu();
+    set_x(&mut cpu, 0, 0x8000000000000000);
+    let encoding: u32 = 0xB6F80000;
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step().unwrap();
+    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
+}
+
+/// Provenance: aarch64_branch_unconditional_eret
+/// ASL: `TBZ X0, #63, label`
+/// Requirement: RegisterRead { reg_type: Gp64, source_field: "Rt" }
+/// zero, testing bit 63 (branch=true)
+#[test]
+fn test_aarch64_branch_unconditional_eret_oracle_3_b6f80000() {
+    // Test TBZ: zero, testing bit 63 (oracle)
+    // Encoding: 0xB6F80000
+    let mut cpu = create_test_cpu();
+    set_x(&mut cpu, 0, 0x0);
+    let encoding: u32 = 0xB6F80000;
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step().unwrap();
+    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
 }
 
 /// Provenance: aarch64_branch_unconditional_eret
@@ -3130,12 +1888,7 @@ fn test_aarch64_branch_unconditional_dret_basic_encoding_d6bf03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_dret
@@ -3150,11 +1903,7 @@ fn test_aarch64_branch_unconditional_dret_invalid_0_3e0_d6bf03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_branch_unconditional_dret
@@ -3169,9 +1918,70 @@ fn test_aarch64_branch_unconditional_dret_invalid_1_3e0_d6bf03e0() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
+
+/// Provenance: aarch64_branch_unconditional_dret
+/// ASL: `TBZ X0, #0, label`
+/// Requirement: RegisterRead { reg_type: Gp64, source_field: "Rt" }
+/// zero value, bit 0 (branch=true)
+#[test]
+fn test_aarch64_branch_unconditional_dret_oracle_0_36000000() {
+    // Test TBZ: zero value, bit 0 (oracle)
+    // Encoding: 0x36000000
+    let mut cpu = create_test_cpu();
+    set_x(&mut cpu, 0, 0x0);
+    let encoding: u32 = 0x36000000;
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step().unwrap();
+    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
+}
+
+/// Provenance: aarch64_branch_unconditional_dret
+/// ASL: `TBZ X0, #0, label`
+/// Requirement: RegisterRead { reg_type: Gp64, source_field: "Rt" }
+/// bit 0 set (branch=false)
+#[test]
+fn test_aarch64_branch_unconditional_dret_oracle_1_36000000() {
+    // Test TBZ: bit 0 set (oracle)
+    // Encoding: 0x36000000
+    let mut cpu = create_test_cpu();
+    set_x(&mut cpu, 0, 0x1);
+    let encoding: u32 = 0x36000000;
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step().unwrap();
+    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
+}
+
+/// Provenance: aarch64_branch_unconditional_dret
+/// ASL: `TBZ X0, #63, label`
+/// Requirement: RegisterRead { reg_type: Gp64, source_field: "Rt" }
+/// bit 63 set (branch=false)
+#[test]
+fn test_aarch64_branch_unconditional_dret_oracle_2_b6f80000() {
+    // Test TBZ: bit 63 set (oracle)
+    // Encoding: 0xB6F80000
+    let mut cpu = create_test_cpu();
+    set_x(&mut cpu, 0, 0x8000000000000000);
+    let encoding: u32 = 0xB6F80000;
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step().unwrap();
+    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
+}
+
+/// Provenance: aarch64_branch_unconditional_dret
+/// ASL: `TBZ X0, #63, label`
+/// Requirement: RegisterRead { reg_type: Gp64, source_field: "Rt" }
+/// zero, testing bit 63 (branch=true)
+#[test]
+fn test_aarch64_branch_unconditional_dret_oracle_3_b6f80000() {
+    // Test TBZ: zero, testing bit 63 (oracle)
+    // Encoding: 0xB6F80000
+    let mut cpu = create_test_cpu();
+    set_x(&mut cpu, 0, 0x0);
+    let encoding: u32 = 0xB6F80000;
+    write_insn(&mut cpu, 0, encoding);
+    let exit = cpu.step().unwrap();
+    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
+}
+

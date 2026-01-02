@@ -20,17 +20,12 @@ use crate::generated::test_helpers::*;
 fn test_aarch64_integer_flags_setf_field_sf_0_min_80d_3a00080d() {
     // Encoding: 0x3A00080D
     // Test aarch64_integer_flags_setf field sf = 0 (Min)
-    // Fields: Rn=0, sz=0, sf=0
+    // Fields: sf=0, Rn=0, sz=0
     let encoding: u32 = 0x3A00080D;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -41,17 +36,12 @@ fn test_aarch64_integer_flags_setf_field_sf_0_min_80d_3a00080d() {
 fn test_aarch64_integer_flags_setf_field_sf_1_max_80d_ba00080d() {
     // Encoding: 0xBA00080D
     // Test aarch64_integer_flags_setf field sf = 1 (Max)
-    // Fields: Rn=0, sz=0, sf=1
+    // Fields: sf=1, sz=0, Rn=0
     let encoding: u32 = 0xBA00080D;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -67,12 +57,7 @@ fn test_aarch64_integer_flags_setf_field_sz_0_min_80d_3a00080d() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -83,17 +68,12 @@ fn test_aarch64_integer_flags_setf_field_sz_0_min_80d_3a00080d() {
 fn test_aarch64_integer_flags_setf_field_sz_1_max_80d_3a00480d() {
     // Encoding: 0x3A00480D
     // Test aarch64_integer_flags_setf field sz = 1 (Max)
-    // Fields: sf=0, sz=1, Rn=0
+    // Fields: sz=1, Rn=0, sf=0
     let encoding: u32 = 0x3A00480D;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -104,17 +84,12 @@ fn test_aarch64_integer_flags_setf_field_sz_1_max_80d_3a00480d() {
 fn test_aarch64_integer_flags_setf_field_rn_0_min_80d_3a00080d() {
     // Encoding: 0x3A00080D
     // Test aarch64_integer_flags_setf field Rn = 0 (Min)
-    // Fields: sf=0, sz=0, Rn=0
+    // Fields: sz=0, Rn=0, sf=0
     let encoding: u32 = 0x3A00080D;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -130,12 +105,7 @@ fn test_aarch64_integer_flags_setf_field_rn_1_poweroftwo_80d_3a00082d() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -151,12 +121,7 @@ fn test_aarch64_integer_flags_setf_field_rn_30_poweroftwominusone_80d_3a000bcd()
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -167,17 +132,12 @@ fn test_aarch64_integer_flags_setf_field_rn_30_poweroftwominusone_80d_3a000bcd()
 fn test_aarch64_integer_flags_setf_field_rn_31_max_80d_3a000bed() {
     // Encoding: 0x3A000BED
     // Test aarch64_integer_flags_setf field Rn = 31 (Max)
-    // Fields: Rn=31, sz=0, sf=0
+    // Fields: sf=0, sz=0, Rn=31
     let encoding: u32 = 0x3A000BED;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -188,164 +148,12 @@ fn test_aarch64_integer_flags_setf_field_rn_31_max_80d_3a000bed() {
 fn test_aarch64_integer_flags_setf_combo_0_80d_3a00080d() {
     // Encoding: 0x3A00080D
     // Test aarch64_integer_flags_setf field combination: sf=0, sz=0, Rn=0
-    // Fields: sz=0, Rn=0, sf=0
-    let encoding: u32 = 0x3A00080D;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_setf
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// sf=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_integer_flags_setf_combo_1_80d_ba00080d() {
-    // Encoding: 0xBA00080D
-    // Test aarch64_integer_flags_setf field combination: sf=1, sz=0, Rn=0
-    // Fields: Rn=0, sf=1, sz=0
-    let encoding: u32 = 0xBA00080D;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_setf
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// sz=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_integer_flags_setf_combo_2_80d_3a00080d() {
-    // Encoding: 0x3A00080D
-    // Test aarch64_integer_flags_setf field combination: sf=0, sz=0, Rn=0
-    // Fields: sz=0, Rn=0, sf=0
-    let encoding: u32 = 0x3A00080D;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_setf
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// sz=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_integer_flags_setf_combo_3_80d_3a00480d() {
-    // Encoding: 0x3A00480D
-    // Test aarch64_integer_flags_setf field combination: sf=0, sz=1, Rn=0
-    // Fields: sf=0, sz=1, Rn=0
-    let encoding: u32 = 0x3A00480D;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_setf
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_integer_flags_setf_combo_4_80d_3a00080d() {
-    // Encoding: 0x3A00080D
-    // Test aarch64_integer_flags_setf field combination: sf=0, sz=0, Rn=0
     // Fields: sf=0, sz=0, Rn=0
     let encoding: u32 = 0x3A00080D;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_setf
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_integer_flags_setf_combo_5_80d_3a00082d() {
-    // Encoding: 0x3A00082D
-    // Test aarch64_integer_flags_setf field combination: sf=0, sz=0, Rn=1
-    // Fields: Rn=1, sf=0, sz=0
-    let encoding: u32 = 0x3A00082D;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_setf
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=30 (register index 30 (LR in some contexts))
-#[test]
-fn test_aarch64_integer_flags_setf_combo_6_80d_3a000bcd() {
-    // Encoding: 0x3A000BCD
-    // Test aarch64_integer_flags_setf field combination: sf=0, sz=0, Rn=30
-    // Fields: Rn=30, sf=0, sz=0
-    let encoding: u32 = 0x3A000BCD;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_setf
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rn=31 (register index 31 (SP - stack pointer))
-#[test]
-fn test_aarch64_integer_flags_setf_combo_7_80d_3a000bed() {
-    // Encoding: 0x3A000BED
-    // Test aarch64_integer_flags_setf field combination: sf=0, sz=0, Rn=31
-    // Fields: Rn=31, sf=0, sz=0
-    let encoding: u32 = 0x3A000BED;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -356,17 +164,12 @@ fn test_aarch64_integer_flags_setf_combo_7_80d_3a000bed() {
 fn test_aarch64_integer_flags_setf_special_sf_0_size_variant_0_2061_3a00080d() {
     // Encoding: 0x3A00080D
     // Test aarch64_integer_flags_setf special value sf = 0 (Size variant 0)
-    // Fields: Rn=0, sf=0, sz=0
+    // Fields: Rn=0, sz=0, sf=0
     let encoding: u32 = 0x3A00080D;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -377,17 +180,12 @@ fn test_aarch64_integer_flags_setf_special_sf_0_size_variant_0_2061_3a00080d() {
 fn test_aarch64_integer_flags_setf_special_sf_1_size_variant_1_2061_ba00080d() {
     // Encoding: 0xBA00080D
     // Test aarch64_integer_flags_setf special value sf = 1 (Size variant 1)
-    // Fields: sf=1, sz=0, Rn=0
+    // Fields: sz=0, sf=1, Rn=0
     let encoding: u32 = 0xBA00080D;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -398,17 +196,12 @@ fn test_aarch64_integer_flags_setf_special_sf_1_size_variant_1_2061_ba00080d() {
 fn test_aarch64_integer_flags_setf_special_sz_0_size_variant_0_2061_3a00080d() {
     // Encoding: 0x3A00080D
     // Test aarch64_integer_flags_setf special value sz = 0 (Size variant 0)
-    // Fields: Rn=0, sf=0, sz=0
+    // Fields: sf=0, sz=0, Rn=0
     let encoding: u32 = 0x3A00080D;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -419,17 +212,12 @@ fn test_aarch64_integer_flags_setf_special_sz_0_size_variant_0_2061_3a00080d() {
 fn test_aarch64_integer_flags_setf_special_sz_1_size_variant_1_2061_3a00480d() {
     // Encoding: 0x3A00480D
     // Test aarch64_integer_flags_setf special value sz = 1 (Size variant 1)
-    // Fields: Rn=0, sf=0, sz=1
+    // Fields: Rn=0, sz=1, sf=0
     let encoding: u32 = 0x3A00480D;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -437,21 +225,15 @@ fn test_aarch64_integer_flags_setf_special_sz_1_size_variant_1_2061_3a00480d() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_flags_setf_special_rn_31_stack_pointer_sp_may_require_alignment_2061_3a000bed(
-) {
+fn test_aarch64_integer_flags_setf_special_rn_31_stack_pointer_sp_may_require_alignment_2061_3a000bed() {
     // Encoding: 0x3A000BED
     // Test aarch64_integer_flags_setf special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rn=31, sz=0, sf=0
+    // Fields: sz=0, Rn=31, sf=0
     let encoding: u32 = 0x3A000BED;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -467,11 +249,7 @@ fn test_aarch64_integer_flags_setf_invalid_0_80d_3a00080d() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -482,16 +260,12 @@ fn test_aarch64_integer_flags_setf_invalid_0_80d_3a00080d() {
 fn test_aarch64_integer_flags_setf_invalid_1_80d_3a00080d() {
     // Encoding: 0x3A00080D
     // Test aarch64_integer_flags_setf invalid encoding: Unconditional UNDEFINED
-    // Fields: sz=0, Rn=0, sf=0
+    // Fields: sf=0, sz=0, Rn=0
     let encoding: u32 = 0x3A00080D;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_setf
@@ -518,8 +292,8 @@ fn test_aarch64_integer_flags_setf_flags_zeroresult_0_3a00082d() {
     // Test aarch64_integer_flags_setf flag computation: ZeroResult
     // Encoding: 0x3A00082D
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x0);
     set_x(&mut cpu, 1, 0x0);
+    set_x(&mut cpu, 2, 0x0);
     let encoding: u32 = 0x3A00082D;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -538,8 +312,8 @@ fn test_aarch64_integer_flags_setf_flags_zeroresult_1_3a00082d() {
     // Test aarch64_integer_flags_setf flag computation: ZeroResult
     // Encoding: 0x3A00082D
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x1);
     let encoding: u32 = 0x3A00082D;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -578,8 +352,8 @@ fn test_aarch64_integer_flags_setf_flags_unsignedoverflow_3_3a00082d() {
     // Test aarch64_integer_flags_setf flag computation: UnsignedOverflow
     // Encoding: 0x3A00082D
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x3A00082D;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -658,8 +432,8 @@ fn test_aarch64_integer_flags_setf_flags_positiveresult_7_3a00082d() {
     // Test aarch64_integer_flags_setf flag computation: PositiveResult
     // Encoding: 0x3A00082D
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x32);
     set_x(&mut cpu, 1, 0x64);
+    set_x(&mut cpu, 2, 0x32);
     let encoding: u32 = 0x3A00082D;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -686,12 +460,7 @@ fn test_aarch64_integer_flags_xaflag_field_crm_0_min_403f_d500403f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_xaflag
@@ -707,12 +476,7 @@ fn test_aarch64_integer_flags_xaflag_field_crm_1_poweroftwo_403f_d500413f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_xaflag
@@ -728,12 +492,7 @@ fn test_aarch64_integer_flags_xaflag_field_crm_7_poweroftwominusone_403f_d500473
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_xaflag
@@ -749,12 +508,7 @@ fn test_aarch64_integer_flags_xaflag_field_crm_15_max_403f_d5004f3f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_xaflag
@@ -770,75 +524,7 @@ fn test_aarch64_integer_flags_xaflag_combo_0_403f_d500403f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_xaflag
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// CRm=1 (value 1)
-#[test]
-fn test_aarch64_integer_flags_xaflag_combo_1_403f_d500413f() {
-    // Encoding: 0xD500413F
-    // Test aarch64_integer_flags_xaflag field combination: CRm=1
-    // Fields: CRm=1
-    let encoding: u32 = 0xD500413F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_xaflag
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// CRm=7 (midpoint (7))
-#[test]
-fn test_aarch64_integer_flags_xaflag_combo_2_403f_d500473f() {
-    // Encoding: 0xD500473F
-    // Test aarch64_integer_flags_xaflag field combination: CRm=7
-    // Fields: CRm=7
-    let encoding: u32 = 0xD500473F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_xaflag
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// CRm=15 (maximum value (15))
-#[test]
-fn test_aarch64_integer_flags_xaflag_combo_3_403f_d5004f3f() {
-    // Encoding: 0xD5004F3F
-    // Test aarch64_integer_flags_xaflag field combination: CRm=15
-    // Fields: CRm=15
-    let encoding: u32 = 0xD5004F3F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_xaflag
@@ -854,11 +540,7 @@ fn test_aarch64_integer_flags_xaflag_invalid_0_403f_d500403f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_xaflag
@@ -874,11 +556,7 @@ fn test_aarch64_integer_flags_xaflag_invalid_1_403f_d500403f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_xaflag
@@ -911,8 +589,8 @@ fn test_aarch64_integer_flags_xaflag_flags_zeroresult_1_d500403f() {
     // Test aarch64_integer_flags_xaflag flag computation: ZeroResult
     // Encoding: 0xD500403F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x1);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0xD500403F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -932,8 +610,8 @@ fn test_aarch64_integer_flags_xaflag_flags_negativeresult_2_d500403f() {
     // Test aarch64_integer_flags_xaflag flag computation: NegativeResult
     // Encoding: 0xD500403F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x0);
     set_x(&mut cpu, 1, 0x8000000000000000);
+    set_x(&mut cpu, 2, 0x0);
     let encoding: u32 = 0xD500403F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -953,8 +631,8 @@ fn test_aarch64_integer_flags_xaflag_flags_unsignedoverflow_3_d500403f() {
     // Test aarch64_integer_flags_xaflag flag computation: UnsignedOverflow
     // Encoding: 0xD500403F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0xD500403F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -974,8 +652,8 @@ fn test_aarch64_integer_flags_xaflag_flags_unsignedoverflow_4_d500403f() {
     // Test aarch64_integer_flags_xaflag flag computation: UnsignedOverflow
     // Encoding: 0xD500403F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x2);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0xD500403F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -995,8 +673,8 @@ fn test_aarch64_integer_flags_xaflag_flags_signedoverflow_5_d500403f() {
     // Test aarch64_integer_flags_xaflag flag computation: SignedOverflow
     // Encoding: 0xD500403F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0xD500403F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1016,8 +694,8 @@ fn test_aarch64_integer_flags_xaflag_flags_signedoverflow_6_d500403f() {
     // Test aarch64_integer_flags_xaflag flag computation: SignedOverflow
     // Encoding: 0xD500403F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0xD500403F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1037,8 +715,8 @@ fn test_aarch64_integer_flags_xaflag_flags_positiveresult_7_d500403f() {
     // Test aarch64_integer_flags_xaflag flag computation: PositiveResult
     // Encoding: 0xD500403F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x64);
     set_x(&mut cpu, 2, 0x32);
+    set_x(&mut cpu, 1, 0x64);
     let encoding: u32 = 0xD500403F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1066,12 +744,7 @@ fn test_aarch64_integer_flags_cfinv_field_crm_0_min_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_cfinv
@@ -1087,12 +760,7 @@ fn test_aarch64_integer_flags_cfinv_field_crm_1_poweroftwo_401f_d500411f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_cfinv
@@ -1108,12 +776,7 @@ fn test_aarch64_integer_flags_cfinv_field_crm_7_poweroftwominusone_401f_d500471f
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_cfinv
@@ -1129,12 +792,7 @@ fn test_aarch64_integer_flags_cfinv_field_crm_15_max_401f_d5004f1f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_cfinv
@@ -1150,75 +808,7 @@ fn test_aarch64_integer_flags_cfinv_combo_0_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_cfinv
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// CRm=1 (value 1)
-#[test]
-fn test_aarch64_integer_flags_cfinv_combo_1_401f_d500411f() {
-    // Encoding: 0xD500411F
-    // Test aarch64_integer_flags_cfinv field combination: CRm=1
-    // Fields: CRm=1
-    let encoding: u32 = 0xD500411F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_cfinv
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// CRm=7 (midpoint (7))
-#[test]
-fn test_aarch64_integer_flags_cfinv_combo_2_401f_d500471f() {
-    // Encoding: 0xD500471F
-    // Test aarch64_integer_flags_cfinv field combination: CRm=7
-    // Fields: CRm=7
-    let encoding: u32 = 0xD500471F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_cfinv
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// CRm=15 (maximum value (15))
-#[test]
-fn test_aarch64_integer_flags_cfinv_combo_3_401f_d5004f1f() {
-    // Encoding: 0xD5004F1F
-    // Test aarch64_integer_flags_cfinv field combination: CRm=15
-    // Fields: CRm=15
-    let encoding: u32 = 0xD5004F1F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_cfinv
@@ -1234,11 +824,7 @@ fn test_aarch64_integer_flags_cfinv_invalid_0_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_cfinv
@@ -1254,11 +840,7 @@ fn test_aarch64_integer_flags_cfinv_invalid_1_401f_d500401f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_cfinv
@@ -1270,8 +852,8 @@ fn test_aarch64_integer_flags_cfinv_flags_zeroresult_0_d500401f() {
     // Test aarch64_integer_flags_cfinv flag computation: ZeroResult
     // Encoding: 0xD500401F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x0);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x0);
     let encoding: u32 = 0xD500401F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1288,8 +870,8 @@ fn test_aarch64_integer_flags_cfinv_flags_zeroresult_1_d500401f() {
     // Test aarch64_integer_flags_cfinv flag computation: ZeroResult
     // Encoding: 0xD500401F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x1);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0xD500401F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1306,8 +888,8 @@ fn test_aarch64_integer_flags_cfinv_flags_negativeresult_2_d500401f() {
     // Test aarch64_integer_flags_cfinv flag computation: NegativeResult
     // Encoding: 0xD500401F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0xD500401F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1324,8 +906,8 @@ fn test_aarch64_integer_flags_cfinv_flags_unsignedoverflow_3_d500401f() {
     // Test aarch64_integer_flags_cfinv flag computation: UnsignedOverflow
     // Encoding: 0xD500401F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0xD500401F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1342,8 +924,8 @@ fn test_aarch64_integer_flags_cfinv_flags_unsignedoverflow_4_d500401f() {
     // Test aarch64_integer_flags_cfinv flag computation: UnsignedOverflow
     // Encoding: 0xD500401F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x2);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0xD500401F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1360,8 +942,8 @@ fn test_aarch64_integer_flags_cfinv_flags_signedoverflow_5_d500401f() {
     // Test aarch64_integer_flags_cfinv flag computation: SignedOverflow
     // Encoding: 0xD500401F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x1);
     set_x(&mut cpu, 1, 0x7FFFFFFFFFFFFFFF);
+    set_x(&mut cpu, 2, 0x1);
     let encoding: u32 = 0xD500401F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1396,8 +978,8 @@ fn test_aarch64_integer_flags_cfinv_flags_positiveresult_7_d500401f() {
     // Test aarch64_integer_flags_cfinv flag computation: PositiveResult
     // Encoding: 0xD500401F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x32);
     set_x(&mut cpu, 1, 0x64);
+    set_x(&mut cpu, 2, 0x32);
     let encoding: u32 = 0xD500401F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1422,12 +1004,7 @@ fn test_aarch64_integer_flags_axflag_field_crm_0_min_405f_d500405f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_axflag
@@ -1443,12 +1020,7 @@ fn test_aarch64_integer_flags_axflag_field_crm_1_poweroftwo_405f_d500415f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_axflag
@@ -1464,12 +1036,7 @@ fn test_aarch64_integer_flags_axflag_field_crm_7_poweroftwominusone_405f_d500475
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_axflag
@@ -1485,12 +1052,7 @@ fn test_aarch64_integer_flags_axflag_field_crm_15_max_405f_d5004f5f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_axflag
@@ -1506,75 +1068,7 @@ fn test_aarch64_integer_flags_axflag_combo_0_405f_d500405f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_axflag
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// CRm=1 (value 1)
-#[test]
-fn test_aarch64_integer_flags_axflag_combo_1_405f_d500415f() {
-    // Encoding: 0xD500415F
-    // Test aarch64_integer_flags_axflag field combination: CRm=1
-    // Fields: CRm=1
-    let encoding: u32 = 0xD500415F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_axflag
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// CRm=7 (midpoint (7))
-#[test]
-fn test_aarch64_integer_flags_axflag_combo_2_405f_d500475f() {
-    // Encoding: 0xD500475F
-    // Test aarch64_integer_flags_axflag field combination: CRm=7
-    // Fields: CRm=7
-    let encoding: u32 = 0xD500475F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_axflag
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// CRm=15 (maximum value (15))
-#[test]
-fn test_aarch64_integer_flags_axflag_combo_3_405f_d5004f5f() {
-    // Encoding: 0xD5004F5F
-    // Test aarch64_integer_flags_axflag field combination: CRm=15
-    // Fields: CRm=15
-    let encoding: u32 = 0xD5004F5F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_axflag
@@ -1590,11 +1084,7 @@ fn test_aarch64_integer_flags_axflag_invalid_0_405f_d500405f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_axflag
@@ -1610,11 +1100,7 @@ fn test_aarch64_integer_flags_axflag_invalid_1_405f_d500405f() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_axflag
@@ -1647,8 +1133,8 @@ fn test_aarch64_integer_flags_axflag_flags_zeroresult_1_d500405f() {
     // Test aarch64_integer_flags_axflag flag computation: ZeroResult
     // Encoding: 0xD500405F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x1);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0xD500405F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1668,8 +1154,8 @@ fn test_aarch64_integer_flags_axflag_flags_negativeresult_2_d500405f() {
     // Test aarch64_integer_flags_axflag flag computation: NegativeResult
     // Encoding: 0xD500405F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0xD500405F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1752,8 +1238,8 @@ fn test_aarch64_integer_flags_axflag_flags_signedoverflow_6_d500405f() {
     // Test aarch64_integer_flags_axflag flag computation: SignedOverflow
     // Encoding: 0xD500405F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x8000000000000000);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0xD500405F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1773,8 +1259,8 @@ fn test_aarch64_integer_flags_axflag_flags_positiveresult_7_d500405f() {
     // Test aarch64_integer_flags_axflag flag computation: PositiveResult
     // Encoding: 0xD500405F
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0x32);
     set_x(&mut cpu, 1, 0x64);
+    set_x(&mut cpu, 2, 0x32);
     let encoding: u32 = 0xD500405F;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -1797,17 +1283,12 @@ fn test_aarch64_integer_flags_axflag_flags_positiveresult_7_d500405f() {
 fn test_aarch64_integer_flags_rmif_field_sf_0_min_400_3a000400() {
     // Encoding: 0x3A000400
     // Test aarch64_integer_flags_rmif field sf = 0 (Min)
-    // Fields: sf=0, Rn=0, mask=0, imm6=0
+    // Fields: mask=0, imm6=0, Rn=0, sf=0
     let encoding: u32 = 0x3A000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -1818,17 +1299,12 @@ fn test_aarch64_integer_flags_rmif_field_sf_0_min_400_3a000400() {
 fn test_aarch64_integer_flags_rmif_field_sf_1_max_400_ba000400() {
     // Encoding: 0xBA000400
     // Test aarch64_integer_flags_rmif field sf = 1 (Max)
-    // Fields: imm6=0, sf=1, mask=0, Rn=0
+    // Fields: Rn=0, sf=1, imm6=0, mask=0
     let encoding: u32 = 0xBA000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -1839,17 +1315,12 @@ fn test_aarch64_integer_flags_rmif_field_sf_1_max_400_ba000400() {
 fn test_aarch64_integer_flags_rmif_field_imm6_0_zero_400_3a000400() {
     // Encoding: 0x3A000400
     // Test aarch64_integer_flags_rmif field imm6 = 0 (Zero)
-    // Fields: sf=0, imm6=0, Rn=0, mask=0
+    // Fields: sf=0, Rn=0, mask=0, imm6=0
     let encoding: u32 = 0x3A000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -1860,17 +1331,12 @@ fn test_aarch64_integer_flags_rmif_field_imm6_0_zero_400_3a000400() {
 fn test_aarch64_integer_flags_rmif_field_imm6_1_poweroftwo_400_3a008400() {
     // Encoding: 0x3A008400
     // Test aarch64_integer_flags_rmif field imm6 = 1 (PowerOfTwo)
-    // Fields: mask=0, sf=0, imm6=1, Rn=0
+    // Fields: Rn=0, sf=0, mask=0, imm6=1
     let encoding: u32 = 0x3A008400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -1881,17 +1347,12 @@ fn test_aarch64_integer_flags_rmif_field_imm6_1_poweroftwo_400_3a008400() {
 fn test_aarch64_integer_flags_rmif_field_imm6_3_poweroftwominusone_400_3a018400() {
     // Encoding: 0x3A018400
     // Test aarch64_integer_flags_rmif field imm6 = 3 (PowerOfTwoMinusOne)
-    // Fields: mask=0, imm6=3, Rn=0, sf=0
+    // Fields: sf=0, Rn=0, mask=0, imm6=3
     let encoding: u32 = 0x3A018400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -1902,17 +1363,12 @@ fn test_aarch64_integer_flags_rmif_field_imm6_3_poweroftwominusone_400_3a018400(
 fn test_aarch64_integer_flags_rmif_field_imm6_4_poweroftwo_400_3a020400() {
     // Encoding: 0x3A020400
     // Test aarch64_integer_flags_rmif field imm6 = 4 (PowerOfTwo)
-    // Fields: imm6=4, sf=0, Rn=0, mask=0
+    // Fields: imm6=4, mask=0, sf=0, Rn=0
     let encoding: u32 = 0x3A020400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -1923,17 +1379,12 @@ fn test_aarch64_integer_flags_rmif_field_imm6_4_poweroftwo_400_3a020400() {
 fn test_aarch64_integer_flags_rmif_field_imm6_7_poweroftwominusone_400_3a038400() {
     // Encoding: 0x3A038400
     // Test aarch64_integer_flags_rmif field imm6 = 7 (PowerOfTwoMinusOne)
-    // Fields: sf=0, mask=0, Rn=0, imm6=7
+    // Fields: imm6=7, Rn=0, mask=0, sf=0
     let encoding: u32 = 0x3A038400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -1944,17 +1395,12 @@ fn test_aarch64_integer_flags_rmif_field_imm6_7_poweroftwominusone_400_3a038400(
 fn test_aarch64_integer_flags_rmif_field_imm6_8_poweroftwo_400_3a040400() {
     // Encoding: 0x3A040400
     // Test aarch64_integer_flags_rmif field imm6 = 8 (PowerOfTwo)
-    // Fields: sf=0, Rn=0, imm6=8, mask=0
+    // Fields: sf=0, mask=0, imm6=8, Rn=0
     let encoding: u32 = 0x3A040400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -1965,17 +1411,12 @@ fn test_aarch64_integer_flags_rmif_field_imm6_8_poweroftwo_400_3a040400() {
 fn test_aarch64_integer_flags_rmif_field_imm6_15_poweroftwominusone_400_3a078400() {
     // Encoding: 0x3A078400
     // Test aarch64_integer_flags_rmif field imm6 = 15 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, mask=0, sf=0, imm6=15
+    // Fields: imm6=15, mask=0, Rn=0, sf=0
     let encoding: u32 = 0x3A078400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -1986,17 +1427,12 @@ fn test_aarch64_integer_flags_rmif_field_imm6_15_poweroftwominusone_400_3a078400
 fn test_aarch64_integer_flags_rmif_field_imm6_16_poweroftwo_400_3a080400() {
     // Encoding: 0x3A080400
     // Test aarch64_integer_flags_rmif field imm6 = 16 (PowerOfTwo)
-    // Fields: sf=0, imm6=16, mask=0, Rn=0
+    // Fields: mask=0, imm6=16, Rn=0, sf=0
     let encoding: u32 = 0x3A080400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2007,17 +1443,12 @@ fn test_aarch64_integer_flags_rmif_field_imm6_16_poweroftwo_400_3a080400() {
 fn test_aarch64_integer_flags_rmif_field_imm6_31_poweroftwominusone_400_3a0f8400() {
     // Encoding: 0x3A0F8400
     // Test aarch64_integer_flags_rmif field imm6 = 31 (PowerOfTwoMinusOne)
-    // Fields: sf=0, imm6=31, mask=0, Rn=0
+    // Fields: imm6=31, sf=0, Rn=0, mask=0
     let encoding: u32 = 0x3A0F8400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2028,17 +1459,12 @@ fn test_aarch64_integer_flags_rmif_field_imm6_31_poweroftwominusone_400_3a0f8400
 fn test_aarch64_integer_flags_rmif_field_imm6_32_poweroftwo_400_3a100400() {
     // Encoding: 0x3A100400
     // Test aarch64_integer_flags_rmif field imm6 = 32 (PowerOfTwo)
-    // Fields: mask=0, Rn=0, sf=0, imm6=32
+    // Fields: imm6=32, mask=0, sf=0, Rn=0
     let encoding: u32 = 0x3A100400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2054,12 +1480,7 @@ fn test_aarch64_integer_flags_rmif_field_imm6_63_max_400_3a1f8400() {
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2070,17 +1491,12 @@ fn test_aarch64_integer_flags_rmif_field_imm6_63_max_400_3a1f8400() {
 fn test_aarch64_integer_flags_rmif_field_rn_0_min_400_3a000400() {
     // Encoding: 0x3A000400
     // Test aarch64_integer_flags_rmif field Rn = 0 (Min)
-    // Fields: imm6=0, mask=0, sf=0, Rn=0
+    // Fields: Rn=0, imm6=0, mask=0, sf=0
     let encoding: u32 = 0x3A000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2091,17 +1507,12 @@ fn test_aarch64_integer_flags_rmif_field_rn_0_min_400_3a000400() {
 fn test_aarch64_integer_flags_rmif_field_rn_1_poweroftwo_400_3a000420() {
     // Encoding: 0x3A000420
     // Test aarch64_integer_flags_rmif field Rn = 1 (PowerOfTwo)
-    // Fields: imm6=0, mask=0, Rn=1, sf=0
+    // Fields: imm6=0, Rn=1, mask=0, sf=0
     let encoding: u32 = 0x3A000420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2112,17 +1523,12 @@ fn test_aarch64_integer_flags_rmif_field_rn_1_poweroftwo_400_3a000420() {
 fn test_aarch64_integer_flags_rmif_field_rn_30_poweroftwominusone_400_3a0007c0() {
     // Encoding: 0x3A0007C0
     // Test aarch64_integer_flags_rmif field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: mask=0, imm6=0, sf=0, Rn=30
+    // Fields: sf=0, Rn=30, mask=0, imm6=0
     let encoding: u32 = 0x3A0007C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2133,17 +1539,12 @@ fn test_aarch64_integer_flags_rmif_field_rn_30_poweroftwominusone_400_3a0007c0()
 fn test_aarch64_integer_flags_rmif_field_rn_31_max_400_3a0007e0() {
     // Encoding: 0x3A0007E0
     // Test aarch64_integer_flags_rmif field Rn = 31 (Max)
-    // Fields: sf=0, imm6=0, mask=0, Rn=31
+    // Fields: mask=0, Rn=31, sf=0, imm6=0
     let encoding: u32 = 0x3A0007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2154,17 +1555,12 @@ fn test_aarch64_integer_flags_rmif_field_rn_31_max_400_3a0007e0() {
 fn test_aarch64_integer_flags_rmif_field_mask_0_min_400_3a000400() {
     // Encoding: 0x3A000400
     // Test aarch64_integer_flags_rmif field mask = 0 (Min)
-    // Fields: imm6=0, sf=0, Rn=0, mask=0
+    // Fields: imm6=0, Rn=0, mask=0, sf=0
     let encoding: u32 = 0x3A000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2175,17 +1571,12 @@ fn test_aarch64_integer_flags_rmif_field_mask_0_min_400_3a000400() {
 fn test_aarch64_integer_flags_rmif_field_mask_1_poweroftwo_400_3a000401() {
     // Encoding: 0x3A000401
     // Test aarch64_integer_flags_rmif field mask = 1 (PowerOfTwo)
-    // Fields: imm6=0, mask=1, sf=0, Rn=0
+    // Fields: sf=0, mask=1, imm6=0, Rn=0
     let encoding: u32 = 0x3A000401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2196,17 +1587,12 @@ fn test_aarch64_integer_flags_rmif_field_mask_1_poweroftwo_400_3a000401() {
 fn test_aarch64_integer_flags_rmif_field_mask_7_poweroftwominusone_400_3a000407() {
     // Encoding: 0x3A000407
     // Test aarch64_integer_flags_rmif field mask = 7 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, sf=0, imm6=0, mask=7
+    // Fields: mask=7, sf=0, imm6=0, Rn=0
     let encoding: u32 = 0x3A000407;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2217,17 +1603,12 @@ fn test_aarch64_integer_flags_rmif_field_mask_7_poweroftwominusone_400_3a000407(
 fn test_aarch64_integer_flags_rmif_field_mask_15_max_400_3a00040f() {
     // Encoding: 0x3A00040F
     // Test aarch64_integer_flags_rmif field mask = 15 (Max)
-    // Fields: imm6=0, Rn=0, mask=15, sf=0
+    // Fields: Rn=0, mask=15, sf=0, imm6=0
     let encoding: u32 = 0x3A00040F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2238,206 +1619,12 @@ fn test_aarch64_integer_flags_rmif_field_mask_15_max_400_3a00040f() {
 fn test_aarch64_integer_flags_rmif_combo_0_400_3a000400() {
     // Encoding: 0x3A000400
     // Test aarch64_integer_flags_rmif field combination: sf=0, imm6=0, Rn=0, mask=0
-    // Fields: Rn=0, mask=0, imm6=0, sf=0
+    // Fields: Rn=0, sf=0, mask=0, imm6=0
     let encoding: u32 = 0x3A000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_rmif
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// sf=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_integer_flags_rmif_combo_1_400_ba000400() {
-    // Encoding: 0xBA000400
-    // Test aarch64_integer_flags_rmif field combination: sf=1, imm6=0, Rn=0, mask=0
-    // Fields: imm6=0, mask=0, sf=1, Rn=0
-    let encoding: u32 = 0xBA000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_rmif
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm6=0 (immediate value 0)
-#[test]
-fn test_aarch64_integer_flags_rmif_combo_2_400_3a000400() {
-    // Encoding: 0x3A000400
-    // Test aarch64_integer_flags_rmif field combination: sf=0, imm6=0, Rn=0, mask=0
-    // Fields: sf=0, Rn=0, imm6=0, mask=0
-    let encoding: u32 = 0x3A000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_rmif
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm6=1 (immediate value 1)
-#[test]
-fn test_aarch64_integer_flags_rmif_combo_3_400_3a008400() {
-    // Encoding: 0x3A008400
-    // Test aarch64_integer_flags_rmif field combination: sf=0, imm6=1, Rn=0, mask=0
-    // Fields: sf=0, imm6=1, mask=0, Rn=0
-    let encoding: u32 = 0x3A008400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_rmif
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm6=3 (2^2 - 1 = 3)
-#[test]
-fn test_aarch64_integer_flags_rmif_combo_4_400_3a018400() {
-    // Encoding: 0x3A018400
-    // Test aarch64_integer_flags_rmif field combination: sf=0, imm6=3, Rn=0, mask=0
-    // Fields: imm6=3, sf=0, Rn=0, mask=0
-    let encoding: u32 = 0x3A018400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_rmif
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm6=4 (power of 2 (2^2 = 4))
-#[test]
-fn test_aarch64_integer_flags_rmif_combo_5_400_3a020400() {
-    // Encoding: 0x3A020400
-    // Test aarch64_integer_flags_rmif field combination: sf=0, imm6=4, Rn=0, mask=0
-    // Fields: mask=0, sf=0, imm6=4, Rn=0
-    let encoding: u32 = 0x3A020400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_rmif
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm6=7 (2^3 - 1 = 7)
-#[test]
-fn test_aarch64_integer_flags_rmif_combo_6_400_3a038400() {
-    // Encoding: 0x3A038400
-    // Test aarch64_integer_flags_rmif field combination: sf=0, imm6=7, Rn=0, mask=0
-    // Fields: imm6=7, mask=0, sf=0, Rn=0
-    let encoding: u32 = 0x3A038400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_rmif
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm6=8 (power of 2 (2^3 = 8))
-#[test]
-fn test_aarch64_integer_flags_rmif_combo_7_400_3a040400() {
-    // Encoding: 0x3A040400
-    // Test aarch64_integer_flags_rmif field combination: sf=0, imm6=8, Rn=0, mask=0
-    // Fields: imm6=8, sf=0, mask=0, Rn=0
-    let encoding: u32 = 0x3A040400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_rmif
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm6=15 (2^4 - 1 = 15)
-#[test]
-fn test_aarch64_integer_flags_rmif_combo_8_400_3a078400() {
-    // Encoding: 0x3A078400
-    // Test aarch64_integer_flags_rmif field combination: sf=0, imm6=15, Rn=0, mask=0
-    // Fields: imm6=15, sf=0, mask=0, Rn=0
-    let encoding: u32 = 0x3A078400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_integer_flags_rmif
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm6=16 (power of 2 (2^4 = 16))
-#[test]
-fn test_aarch64_integer_flags_rmif_combo_9_400_3a080400() {
-    // Encoding: 0x3A080400
-    // Test aarch64_integer_flags_rmif field combination: sf=0, imm6=16, Rn=0, mask=0
-    // Fields: mask=0, Rn=0, sf=0, imm6=16
-    let encoding: u32 = 0x3A080400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2448,17 +1635,12 @@ fn test_aarch64_integer_flags_rmif_combo_9_400_3a080400() {
 fn test_aarch64_integer_flags_rmif_special_sf_0_size_variant_0_1024_3a000400() {
     // Encoding: 0x3A000400
     // Test aarch64_integer_flags_rmif special value sf = 0 (Size variant 0)
-    // Fields: sf=0, imm6=0, Rn=0, mask=0
+    // Fields: mask=0, imm6=0, Rn=0, sf=0
     let encoding: u32 = 0x3A000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2469,17 +1651,12 @@ fn test_aarch64_integer_flags_rmif_special_sf_0_size_variant_0_1024_3a000400() {
 fn test_aarch64_integer_flags_rmif_special_sf_1_size_variant_1_1024_ba000400() {
     // Encoding: 0xBA000400
     // Test aarch64_integer_flags_rmif special value sf = 1 (Size variant 1)
-    // Fields: imm6=0, mask=0, Rn=0, sf=1
+    // Fields: mask=0, imm6=0, sf=1, Rn=0
     let encoding: u32 = 0xBA000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2487,21 +1664,15 @@ fn test_aarch64_integer_flags_rmif_special_sf_1_size_variant_1_1024_ba000400() {
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_integer_flags_rmif_special_rn_31_stack_pointer_sp_may_require_alignment_1024_3a0007e0(
-) {
+fn test_aarch64_integer_flags_rmif_special_rn_31_stack_pointer_sp_may_require_alignment_1024_3a0007e0() {
     // Encoding: 0x3A0007E0
     // Test aarch64_integer_flags_rmif special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: mask=0, Rn=31, sf=0, imm6=0
+    // Fields: Rn=31, mask=0, imm6=0, sf=0
     let encoding: u32 = 0x3A0007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2512,16 +1683,12 @@ fn test_aarch64_integer_flags_rmif_special_rn_31_stack_pointer_sp_may_require_al
 fn test_aarch64_integer_flags_rmif_invalid_0_400_3a000400() {
     // Encoding: 0x3A000400
     // Test aarch64_integer_flags_rmif invalid encoding: Binary { op: Ne, lhs: Binary { op: Or, lhs: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HaveFlagManipulateExt" }, args: [] } }, rhs: Var(QualifiedIdentifier { qualifier: Any, name: "sf" }) }, rhs: LitBits([true]) }
-    // Fields: imm6=0, sf=0, mask=0, Rn=0
+    // Fields: Rn=0, mask=0, imm6=0, sf=0
     let encoding: u32 = 0x3A000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2532,16 +1699,12 @@ fn test_aarch64_integer_flags_rmif_invalid_0_400_3a000400() {
 fn test_aarch64_integer_flags_rmif_invalid_1_400_3a000400() {
     // Encoding: 0x3A000400
     // Test aarch64_integer_flags_rmif invalid encoding: Unconditional UNDEFINED
-    // Fields: mask=0, Rn=0, imm6=0, sf=0
+    // Fields: Rn=0, sf=0, imm6=0, mask=0
     let encoding: u32 = 0x3A000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_integer_flags_rmif
@@ -2568,8 +1731,8 @@ fn test_aarch64_integer_flags_rmif_flags_zeroresult_0_3a000420() {
     // Test aarch64_integer_flags_rmif flag computation: ZeroResult
     // Encoding: 0x3A000420
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x0);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x0);
     let encoding: u32 = 0x3A000420;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -2589,8 +1752,8 @@ fn test_aarch64_integer_flags_rmif_flags_zeroresult_1_3a000420() {
     // Test aarch64_integer_flags_rmif flag computation: ZeroResult
     // Encoding: 0x3A000420
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 1, 0x1);
+    set_x(&mut cpu, 2, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x3A000420;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -2610,8 +1773,8 @@ fn test_aarch64_integer_flags_rmif_flags_negativeresult_2_3a000420() {
     // Test aarch64_integer_flags_rmif flag computation: NegativeResult
     // Encoding: 0x3A000420
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x8000000000000000);
     set_x(&mut cpu, 2, 0x0);
+    set_x(&mut cpu, 1, 0x8000000000000000);
     let encoding: u32 = 0x3A000420;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -2631,8 +1794,8 @@ fn test_aarch64_integer_flags_rmif_flags_unsignedoverflow_3_3a000420() {
     // Test aarch64_integer_flags_rmif flag computation: UnsignedOverflow
     // Encoding: 0x3A000420
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     set_x(&mut cpu, 2, 0x1);
+    set_x(&mut cpu, 1, 0xFFFFFFFFFFFFFFFF);
     let encoding: u32 = 0x3A000420;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -2715,8 +1878,8 @@ fn test_aarch64_integer_flags_rmif_flags_positiveresult_7_3a000420() {
     // Test aarch64_integer_flags_rmif flag computation: PositiveResult
     // Encoding: 0x3A000420
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x64);
     set_x(&mut cpu, 2, 0x32);
+    set_x(&mut cpu, 1, 0x64);
     let encoding: u32 = 0x3A000420;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -2726,3 +1889,4 @@ fn test_aarch64_integer_flags_rmif_flags_positiveresult_7_3a000420() {
     assert_eq!(cpu.get_pstate().c, false, "C should be false");
     assert_eq!(cpu.get_pstate().v, false, "V should be false");
 }
+

@@ -20,17 +20,12 @@ use crate::generated::test_helpers::*;
 fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_size_0_min_0_38000000() {
     // Encoding: 0x38000000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field size = 0 (Min)
-    // Fields: size=0, opc=0, imm9=0, Rn=0, Rt=0
+    // Fields: imm9=0, Rn=0, Rt=0, size=0, opc=0
     let encoding: u32 = 0x38000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -38,21 +33,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_size_1_poweroftwo_0_78000000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_size_1_poweroftwo_0_78000000() {
     // Encoding: 0x78000000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field size = 1 (PowerOfTwo)
-    // Fields: Rt=0, imm9=0, Rn=0, size=1, opc=0
+    // Fields: opc=0, imm9=0, Rt=0, size=1, Rn=0
     let encoding: u32 = 0x78000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -60,21 +49,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_size_2_poweroftwo_0_b8000000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_size_2_poweroftwo_0_b8000000() {
     // Encoding: 0xB8000000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field size = 2 (PowerOfTwo)
-    // Fields: imm9=0, size=2, Rt=0, Rn=0, opc=0
+    // Fields: imm9=0, size=2, opc=0, Rn=0, Rt=0
     let encoding: u32 = 0xB8000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -85,17 +68,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_size_
 fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_size_3_max_0_f8000000() {
     // Encoding: 0xF8000000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field size = 3 (Max)
-    // Fields: Rt=0, opc=0, size=3, imm9=0, Rn=0
+    // Fields: opc=0, Rn=0, Rt=0, imm9=0, size=3
     let encoding: u32 = 0xF8000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -106,17 +84,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_size_
 fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_opc_0_min_0_38000000() {
     // Encoding: 0x38000000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field opc = 0 (Min)
-    // Fields: size=0, opc=0, Rn=0, Rt=0, imm9=0
+    // Fields: opc=0, size=0, imm9=0, Rt=0, Rn=0
     let encoding: u32 = 0x38000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -124,21 +97,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_opc_0
 /// Requirement: FieldBoundary { field: "opc", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_opc_1_poweroftwo_0_38400000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_opc_1_poweroftwo_0_38400000() {
     // Encoding: 0x38400000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field opc = 1 (PowerOfTwo)
-    // Fields: size=0, Rt=0, opc=1, imm9=0, Rn=0
+    // Fields: opc=1, Rt=0, size=0, Rn=0, imm9=0
     let encoding: u32 = 0x38400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -146,21 +113,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_opc_1
 /// Requirement: FieldBoundary { field: "opc", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_opc_2_poweroftwo_0_38800000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_opc_2_poweroftwo_0_38800000() {
     // Encoding: 0x38800000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field opc = 2 (PowerOfTwo)
-    // Fields: size=0, opc=2, Rn=0, imm9=0, Rt=0
+    // Fields: size=0, opc=2, imm9=0, Rt=0, Rn=0
     let encoding: u32 = 0x38800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -171,17 +132,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_opc_2
 fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_opc_3_max_0_38c00000() {
     // Encoding: 0x38C00000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field opc = 3 (Max)
-    // Fields: opc=3, Rt=0, imm9=0, Rn=0, size=0
+    // Fields: Rn=0, opc=3, Rt=0, imm9=0, size=0
     let encoding: u32 = 0x38C00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -189,21 +145,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_opc_3
 /// Requirement: FieldBoundary { field: "imm9", value: 0, boundary: Zero }
 /// immediate value 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_0_zero_0_38000000()
-{
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_0_zero_0_38000000() {
     // Encoding: 0x38000000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 0 (Zero)
-    // Fields: Rt=0, size=0, imm9=0, Rn=0, opc=0
+    // Fields: Rn=0, Rt=0, size=0, imm9=0, opc=0
     let encoding: u32 = 0x38000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -211,21 +161,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 1, boundary: PowerOfTwo }
 /// immediate value 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_1_poweroftwo_0_38001000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_1_poweroftwo_0_38001000() {
     // Encoding: 0x38001000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 1 (PowerOfTwo)
-    // Fields: opc=0, Rn=0, Rt=0, imm9=1, size=0
+    // Fields: opc=0, size=0, Rn=0, imm9=1, Rt=0
     let encoding: u32 = 0x38001000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -233,21 +177,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_3_poweroftwominusone_0_38003000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_3_poweroftwominusone_0_38003000() {
     // Encoding: 0x38003000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: size=0, opc=0, Rt=0, Rn=0, imm9=3
+    // Fields: Rt=0, imm9=3, size=0, opc=0, Rn=0
     let encoding: u32 = 0x38003000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -255,21 +193,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 4, boundary: PowerOfTwo }
 /// power of 2 (2^2 = 4)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_4_poweroftwo_0_38004000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_4_poweroftwo_0_38004000() {
     // Encoding: 0x38004000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 4 (PowerOfTwo)
-    // Fields: Rt=0, Rn=0, size=0, imm9=4, opc=0
+    // Fields: opc=0, Rt=0, size=0, Rn=0, imm9=4
     let encoding: u32 = 0x38004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -277,21 +209,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_7_poweroftwominusone_0_38007000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_7_poweroftwominusone_0_38007000() {
     // Encoding: 0x38007000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: opc=0, size=0, imm9=7, Rn=0, Rt=0
+    // Fields: Rt=0, size=0, imm9=7, opc=0, Rn=0
     let encoding: u32 = 0x38007000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -299,21 +225,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 8, boundary: PowerOfTwo }
 /// power of 2 (2^3 = 8)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_8_poweroftwo_0_38008000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_8_poweroftwo_0_38008000() {
     // Encoding: 0x38008000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 8 (PowerOfTwo)
-    // Fields: opc=0, imm9=8, Rn=0, size=0, Rt=0
+    // Fields: imm9=8, Rn=0, Rt=0, size=0, opc=0
     let encoding: u32 = 0x38008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -321,21 +241,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_15_poweroftwominusone_0_3800f000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_15_poweroftwominusone_0_3800f000() {
     // Encoding: 0x3800F000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, size=0, opc=0, Rt=0, imm9=15
+    // Fields: Rt=0, opc=0, imm9=15, Rn=0, size=0
     let encoding: u32 = 0x3800F000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -343,21 +257,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 16, boundary: PowerOfTwo }
 /// power of 2 (2^4 = 16)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_16_poweroftwo_0_38010000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_16_poweroftwo_0_38010000() {
     // Encoding: 0x38010000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 16 (PowerOfTwo)
-    // Fields: size=0, Rn=0, opc=0, Rt=0, imm9=16
+    // Fields: Rn=0, Rt=0, size=0, imm9=16, opc=0
     let encoding: u32 = 0x38010000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -365,21 +273,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_31_poweroftwominusone_0_3801f000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_31_poweroftwominusone_0_3801f000() {
     // Encoding: 0x3801F000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rt=0, size=0, imm9=31, Rn=0
+    // Fields: opc=0, imm9=31, Rt=0, Rn=0, size=0
     let encoding: u32 = 0x3801F000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -387,21 +289,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 32, boundary: PowerOfTwo }
 /// power of 2 (2^5 = 32)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_32_poweroftwo_0_38020000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_32_poweroftwo_0_38020000() {
     // Encoding: 0x38020000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 32 (PowerOfTwo)
-    // Fields: opc=0, size=0, imm9=32, Rt=0, Rn=0
+    // Fields: imm9=32, Rn=0, opc=0, Rt=0, size=0
     let encoding: u32 = 0x38020000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -409,21 +305,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_63_poweroftwominusone_0_3803f000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_63_poweroftwominusone_0_3803f000() {
     // Encoding: 0x3803F000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: imm9=63, Rt=0, size=0, opc=0, Rn=0
+    // Fields: size=0, Rn=0, opc=0, imm9=63, Rt=0
     let encoding: u32 = 0x3803F000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -431,21 +321,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 64, boundary: PowerOfTwo }
 /// power of 2 (2^6 = 64)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_64_poweroftwo_0_38040000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_64_poweroftwo_0_38040000() {
     // Encoding: 0x38040000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 64 (PowerOfTwo)
-    // Fields: size=0, imm9=64, Rn=0, opc=0, Rt=0
+    // Fields: opc=0, imm9=64, Rt=0, size=0, Rn=0
     let encoding: u32 = 0x38040000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -453,21 +337,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_127_poweroftwominusone_0_3807f000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_127_poweroftwominusone_0_3807f000() {
     // Encoding: 0x3807F000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, opc=0, Rt=0, imm9=127, size=0
+    // Fields: Rn=0, Rt=0, opc=0, imm9=127, size=0
     let encoding: u32 = 0x3807F000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -475,21 +353,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 128, boundary: PowerOfTwo }
 /// power of 2 (2^7 = 128)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_128_poweroftwo_0_38080000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_128_poweroftwo_0_38080000() {
     // Encoding: 0x38080000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 128 (PowerOfTwo)
-    // Fields: opc=0, imm9=128, size=0, Rn=0, Rt=0
+    // Fields: imm9=128, Rn=0, size=0, opc=0, Rt=0
     let encoding: u32 = 0x38080000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -497,21 +369,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 255, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (255)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_255_poweroftwominusone_0_380ff000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_255_poweroftwominusone_0_380ff000() {
     // Encoding: 0x380FF000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: opc=0, imm9=255, size=0, Rn=0, Rt=0
+    // Fields: Rt=0, size=0, opc=0, imm9=255, Rn=0
     let encoding: u32 = 0x380FF000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -519,21 +385,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 256, boundary: PowerOfTwo }
 /// power of 2 (2^8 = 256)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_256_poweroftwo_0_38100000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_256_poweroftwo_0_38100000() {
     // Encoding: 0x38100000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 256 (PowerOfTwo)
-    // Fields: imm9=256, Rt=0, size=0, opc=0, Rn=0
+    // Fields: size=0, opc=0, Rn=0, Rt=0, imm9=256
     let encoding: u32 = 0x38100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -541,21 +401,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 511, boundary: Max }
 /// maximum immediate (511)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_511_max_0_381ff000()
-{
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_511_max_0_381ff000() {
     // Encoding: 0x381FF000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field imm9 = 511 (Max)
-    // Fields: size=0, opc=0, Rn=0, imm9=511, Rt=0
+    // Fields: size=0, opc=0, Rt=0, imm9=511, Rn=0
     let encoding: u32 = 0x381FF000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -566,17 +420,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_imm9_
 fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rn_0_min_0_38000000() {
     // Encoding: 0x38000000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field Rn = 0 (Min)
-    // Fields: Rn=0, Rt=0, size=0, imm9=0, opc=0
+    // Fields: imm9=0, Rn=0, opc=0, Rt=0, size=0
     let encoding: u32 = 0x38000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -584,21 +433,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rn_0_
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rn_1_poweroftwo_0_38000020(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rn_1_poweroftwo_0_38000020() {
     // Encoding: 0x38000020
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field Rn = 1 (PowerOfTwo)
-    // Fields: size=0, opc=0, Rn=1, Rt=0, imm9=0
+    // Fields: opc=0, imm9=0, Rt=0, Rn=1, size=0
     let encoding: u32 = 0x38000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -606,21 +449,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rn_1_
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rn_30_poweroftwominusone_0_380003c0(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rn_30_poweroftwominusone_0_380003c0() {
     // Encoding: 0x380003C0
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: opc=0, size=0, imm9=0, Rt=0, Rn=30
+    // Fields: Rt=0, size=0, imm9=0, opc=0, Rn=30
     let encoding: u32 = 0x380003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -631,17 +468,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rn_30
 fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rn_31_max_0_380003e0() {
     // Encoding: 0x380003E0
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field Rn = 31 (Max)
-    // Fields: imm9=0, Rn=31, opc=0, Rt=0, size=0
+    // Fields: opc=0, Rt=0, size=0, imm9=0, Rn=31
     let encoding: u32 = 0x380003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -652,17 +484,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rn_31
 fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rt_0_min_0_38000000() {
     // Encoding: 0x38000000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field Rt = 0 (Min)
-    // Fields: imm9=0, Rt=0, Rn=0, size=0, opc=0
+    // Fields: opc=0, Rn=0, Rt=0, size=0, imm9=0
     let encoding: u32 = 0x38000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -670,21 +497,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rt_0_
 /// Requirement: FieldBoundary { field: "Rt", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rt_1_poweroftwo_0_38000001(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rt_1_poweroftwo_0_38000001() {
     // Encoding: 0x38000001
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field Rt = 1 (PowerOfTwo)
-    // Fields: Rt=1, imm9=0, size=0, Rn=0, opc=0
+    // Fields: opc=0, imm9=0, size=0, Rn=0, Rt=1
     let encoding: u32 = 0x38000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -692,21 +513,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rt_1_
 /// Requirement: FieldBoundary { field: "Rt", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rt_30_poweroftwominusone_0_3800001e(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rt_30_poweroftwominusone_0_3800001e() {
     // Encoding: 0x3800001E
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rn=0, opc=0, Rt=30, imm9=0
+    // Fields: opc=0, imm9=0, Rn=0, size=0, Rt=30
     let encoding: u32 = 0x3800001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -717,17 +532,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rt_30
 fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rt_31_max_0_3800001f() {
     // Encoding: 0x3800001F
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field Rt = 31 (Max)
-    // Fields: Rn=0, size=0, opc=0, imm9=0, Rt=31
+    // Fields: imm9=0, size=0, Rt=31, opc=0, Rn=0
     let encoding: u32 = 0x3800001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -738,206 +548,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_field_rt_31
 fn test_aarch64_memory_single_general_immediate_signed_offset_normal_combo_0_0_38000000() {
     // Encoding: 0x38000000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: size=0, Rn=0, opc=0, Rt=0, imm9=0
+    // Fields: imm9=0, Rt=0, size=0, opc=0, Rn=0
     let encoding: u32 = 0x38000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_combo_1_0_78000000() {
-    // Encoding: 0x78000000
-    // Test aarch64_memory_single_general_immediate_signed_offset_normal field combination: size=1, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, size=1, opc=0, Rn=0, imm9=0
-    let encoding: u32 = 0x78000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_combo_2_0_b8000000() {
-    // Encoding: 0xB8000000
-    // Test aarch64_memory_single_general_immediate_signed_offset_normal field combination: size=2, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rn=0, Rt=0, size=2, imm9=0, opc=0
-    let encoding: u32 = 0xB8000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_combo_3_0_f8000000() {
-    // Encoding: 0xF8000000
-    // Test aarch64_memory_single_general_immediate_signed_offset_normal field combination: size=3, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: opc=0, imm9=0, size=3, Rn=0, Rt=0
-    let encoding: u32 = 0xF8000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_combo_4_0_38000000() {
-    // Encoding: 0x38000000
-    // Test aarch64_memory_single_general_immediate_signed_offset_normal field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: opc=0, Rn=0, Rt=0, size=0, imm9=0
-    let encoding: u32 = 0x38000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_combo_5_0_38400000() {
-    // Encoding: 0x38400000
-    // Test aarch64_memory_single_general_immediate_signed_offset_normal field combination: size=0, opc=1, imm9=0, Rn=0, Rt=0
-    // Fields: Rn=0, Rt=0, opc=1, size=0, imm9=0
-    let encoding: u32 = 0x38400000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_combo_6_0_38800000() {
-    // Encoding: 0x38800000
-    // Test aarch64_memory_single_general_immediate_signed_offset_normal field combination: size=0, opc=2, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, size=0, Rn=0, imm9=0, opc=2
-    let encoding: u32 = 0x38800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_combo_7_0_38c00000() {
-    // Encoding: 0x38C00000
-    // Test aarch64_memory_single_general_immediate_signed_offset_normal field combination: size=0, opc=3, imm9=0, Rn=0, Rt=0
-    // Fields: size=0, opc=3, Rt=0, imm9=0, Rn=0
-    let encoding: u32 = 0x38C00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=0 (immediate value 0)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_combo_8_0_38000000() {
-    // Encoding: 0x38000000
-    // Test aarch64_memory_single_general_immediate_signed_offset_normal field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, size=0, opc=0, Rn=0, Rt=0
-    let encoding: u32 = 0x38000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_combo_9_0_38001000() {
-    // Encoding: 0x38001000
-    // Test aarch64_memory_single_general_immediate_signed_offset_normal field combination: size=0, opc=0, imm9=1, Rn=0, Rt=0
-    // Fields: size=0, Rt=0, opc=0, imm9=1, Rn=0
-    let encoding: u32 = 0x38001000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -945,21 +561,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_combo_9_0_3
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_size_0_size_variant_0_0_38000000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_size_0_size_variant_0_0_38000000() {
     // Encoding: 0x38000000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal special value size = 0 (Size variant 0)
-    // Fields: opc=0, size=0, imm9=0, Rn=0, Rt=0
+    // Fields: Rn=0, size=0, imm9=0, opc=0, Rt=0
     let encoding: u32 = 0x38000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -967,21 +577,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_size_1_size_variant_1_0_78000000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_size_1_size_variant_1_0_78000000() {
     // Encoding: 0x78000000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal special value size = 1 (Size variant 1)
-    // Fields: size=1, opc=0, Rn=0, imm9=0, Rt=0
+    // Fields: Rt=0, opc=0, Rn=0, size=1, imm9=0
     let encoding: u32 = 0x78000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -989,21 +593,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_size_2_size_variant_2_0_b8000000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_size_2_size_variant_2_0_b8000000() {
     // Encoding: 0xB8000000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal special value size = 2 (Size variant 2)
-    // Fields: opc=0, imm9=0, Rn=0, Rt=0, size=2
+    // Fields: size=2, Rn=0, Rt=0, opc=0, imm9=0
     let encoding: u32 = 0xB8000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -1011,21 +609,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_size_3_size_variant_3_0_f8000000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_size_3_size_variant_3_0_f8000000() {
     // Encoding: 0xF8000000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal special value size = 3 (Size variant 3)
-    // Fields: imm9=0, Rn=0, opc=0, size=3, Rt=0
+    // Fields: opc=0, Rt=0, size=3, Rn=0, imm9=0
     let encoding: u32 = 0xF8000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -1033,21 +625,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_siz
 /// Requirement: FieldSpecial { field: "opc", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_opc_0_size_variant_0_0_38000000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_opc_0_size_variant_0_0_38000000() {
     // Encoding: 0x38000000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal special value opc = 0 (Size variant 0)
-    // Fields: opc=0, imm9=0, Rn=0, Rt=0, size=0
+    // Fields: size=0, Rt=0, imm9=0, Rn=0, opc=0
     let encoding: u32 = 0x38000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -1055,21 +641,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_opc
 /// Requirement: FieldSpecial { field: "opc", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_opc_1_size_variant_1_0_38400000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_opc_1_size_variant_1_0_38400000() {
     // Encoding: 0x38400000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal special value opc = 1 (Size variant 1)
-    // Fields: opc=1, size=0, imm9=0, Rn=0, Rt=0
+    // Fields: Rn=0, imm9=0, size=0, opc=1, Rt=0
     let encoding: u32 = 0x38400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -1077,21 +657,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_opc
 /// Requirement: FieldSpecial { field: "opc", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_opc_2_size_variant_2_0_38800000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_opc_2_size_variant_2_0_38800000() {
     // Encoding: 0x38800000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal special value opc = 2 (Size variant 2)
-    // Fields: size=0, imm9=0, Rt=0, Rn=0, opc=2
+    // Fields: Rn=0, size=0, opc=2, Rt=0, imm9=0
     let encoding: u32 = 0x38800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -1099,21 +673,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_opc
 /// Requirement: FieldSpecial { field: "opc", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_opc_3_size_variant_3_0_38c00000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_opc_3_size_variant_3_0_38c00000() {
     // Encoding: 0x38C00000
     // Test aarch64_memory_single_general_immediate_signed_offset_normal special value opc = 3 (Size variant 3)
-    // Fields: size=0, imm9=0, Rn=0, Rt=0, opc=3
+    // Fields: size=0, Rn=0, Rt=0, imm9=0, opc=3
     let encoding: u32 = 0x38C00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -1121,21 +689,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_opc
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_rn_31_stack_pointer_sp_may_require_alignment_0_380003e0(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_rn_31_stack_pointer_sp_may_require_alignment_0_380003e0() {
     // Encoding: 0x380003E0
     // Test aarch64_memory_single_general_immediate_signed_offset_normal special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: opc=0, size=0, imm9=0, Rn=31, Rt=0
+    // Fields: imm9=0, size=0, Rn=31, Rt=0, opc=0
     let encoding: u32 = 0x380003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -1143,21 +705,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_rn_
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_3800001f(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_normal_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_3800001f() {
     // Encoding: 0x3800001F
     // Test aarch64_memory_single_general_immediate_signed_offset_normal special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: opc=0, size=0, Rt=31, Rn=0, imm9=0
+    // Fields: opc=0, imm9=0, Rt=31, size=0, Rn=0
     let encoding: u32 = 0x3800001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_normal
@@ -1310,17 +866,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_normal_exception_1
 fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_size_0_min_400_38000400() {
     // Encoding: 0x38000400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field size = 0 (Min)
-    // Fields: size=0, opc=0, Rn=0, Rt=0, imm9=0
+    // Fields: size=0, Rt=0, opc=0, Rn=0, imm9=0
     let encoding: u32 = 0x38000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1328,21 +879,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_size_0_min
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_size_1_poweroftwo_400_78000400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_size_1_poweroftwo_400_78000400() {
     // Encoding: 0x78000400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field size = 1 (PowerOfTwo)
-    // Fields: imm9=0, Rn=0, Rt=0, size=1, opc=0
+    // Fields: Rn=0, imm9=0, Rt=0, opc=0, size=1
     let encoding: u32 = 0x78000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1350,21 +895,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_size_1_pow
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_size_2_poweroftwo_400_b8000400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_size_2_poweroftwo_400_b8000400() {
     // Encoding: 0xB8000400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field size = 2 (PowerOfTwo)
-    // Fields: Rn=0, Rt=0, opc=0, size=2, imm9=0
+    // Fields: Rt=0, imm9=0, Rn=0, size=2, opc=0
     let encoding: u32 = 0xB8000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1375,17 +914,12 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_size_2_pow
 fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_size_3_max_400_f8000400() {
     // Encoding: 0xF8000400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field size = 3 (Max)
-    // Fields: Rn=0, imm9=0, opc=0, Rt=0, size=3
+    // Fields: opc=0, imm9=0, size=3, Rt=0, Rn=0
     let encoding: u32 = 0xF8000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1396,17 +930,12 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_size_3_max
 fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_opc_0_min_400_38000400() {
     // Encoding: 0x38000400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field opc = 0 (Min)
-    // Fields: opc=0, Rn=0, imm9=0, Rt=0, size=0
+    // Fields: opc=0, imm9=0, Rn=0, Rt=0, size=0
     let encoding: u32 = 0x38000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1414,21 +943,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_opc_0_min_
 /// Requirement: FieldBoundary { field: "opc", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_opc_1_poweroftwo_400_38400400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_opc_1_poweroftwo_400_38400400() {
     // Encoding: 0x38400400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field opc = 1 (PowerOfTwo)
-    // Fields: Rn=0, size=0, Rt=0, opc=1, imm9=0
+    // Fields: imm9=0, Rn=0, Rt=0, opc=1, size=0
     let encoding: u32 = 0x38400400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1436,21 +959,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_opc_1_powe
 /// Requirement: FieldBoundary { field: "opc", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_opc_2_poweroftwo_400_38800400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_opc_2_poweroftwo_400_38800400() {
     // Encoding: 0x38800400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field opc = 2 (PowerOfTwo)
-    // Fields: Rn=0, Rt=0, opc=2, size=0, imm9=0
+    // Fields: opc=2, size=0, Rt=0, Rn=0, imm9=0
     let encoding: u32 = 0x38800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1461,17 +978,12 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_opc_2_powe
 fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_opc_3_max_400_38c00400() {
     // Encoding: 0x38C00400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field opc = 3 (Max)
-    // Fields: Rn=0, imm9=0, opc=3, size=0, Rt=0
+    // Fields: size=0, imm9=0, opc=3, Rn=0, Rt=0
     let encoding: u32 = 0x38C00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1482,17 +994,12 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_opc_3_max_
 fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_0_zero_400_38000400() {
     // Encoding: 0x38000400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 0 (Zero)
-    // Fields: Rt=0, size=0, opc=0, imm9=0, Rn=0
+    // Fields: size=0, Rn=0, Rt=0, opc=0, imm9=0
     let encoding: u32 = 0x38000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1500,21 +1007,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_0_zer
 /// Requirement: FieldBoundary { field: "imm9", value: 1, boundary: PowerOfTwo }
 /// immediate value 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_1_poweroftwo_400_38001400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_1_poweroftwo_400_38001400() {
     // Encoding: 0x38001400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 1 (PowerOfTwo)
-    // Fields: size=0, Rt=0, Rn=0, opc=0, imm9=1
+    // Fields: imm9=1, Rt=0, Rn=0, size=0, opc=0
     let encoding: u32 = 0x38001400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1522,21 +1023,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_1_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_3_poweroftwominusone_400_38003400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_3_poweroftwominusone_400_38003400() {
     // Encoding: 0x38003400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, imm9=3, Rt=0, size=0, opc=0
+    // Fields: Rn=0, opc=0, Rt=0, imm9=3, size=0
     let encoding: u32 = 0x38003400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1544,21 +1039,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_3_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 4, boundary: PowerOfTwo }
 /// power of 2 (2^2 = 4)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_4_poweroftwo_400_38004400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_4_poweroftwo_400_38004400() {
     // Encoding: 0x38004400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 4 (PowerOfTwo)
-    // Fields: size=0, Rt=0, opc=0, imm9=4, Rn=0
+    // Fields: size=0, imm9=4, Rn=0, opc=0, Rt=0
     let encoding: u32 = 0x38004400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1566,8 +1055,7 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_4_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_7_poweroftwominusone_400_38007400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_7_poweroftwominusone_400_38007400() {
     // Encoding: 0x38007400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 7 (PowerOfTwoMinusOne)
     // Fields: size=0, opc=0, Rt=0, Rn=0, imm9=7
@@ -1575,12 +1063,7 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_7_pow
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1588,21 +1071,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_7_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 8, boundary: PowerOfTwo }
 /// power of 2 (2^3 = 8)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_8_poweroftwo_400_38008400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_8_poweroftwo_400_38008400() {
     // Encoding: 0x38008400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 8 (PowerOfTwo)
-    // Fields: imm9=8, opc=0, Rn=0, size=0, Rt=0
+    // Fields: opc=0, imm9=8, size=0, Rn=0, Rt=0
     let encoding: u32 = 0x38008400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1610,21 +1087,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_8_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_15_poweroftwominusone_400_3800f400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_15_poweroftwominusone_400_3800f400() {
     // Encoding: 0x3800F400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rt=0, imm9=15, Rn=0, opc=0
+    // Fields: Rt=0, size=0, opc=0, Rn=0, imm9=15
     let encoding: u32 = 0x3800F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1632,21 +1103,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_15_po
 /// Requirement: FieldBoundary { field: "imm9", value: 16, boundary: PowerOfTwo }
 /// power of 2 (2^4 = 16)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_16_poweroftwo_400_38010400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_16_poweroftwo_400_38010400() {
     // Encoding: 0x38010400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 16 (PowerOfTwo)
-    // Fields: Rn=0, size=0, opc=0, Rt=0, imm9=16
+    // Fields: size=0, opc=0, Rn=0, Rt=0, imm9=16
     let encoding: u32 = 0x38010400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1654,21 +1119,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_16_po
 /// Requirement: FieldBoundary { field: "imm9", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_31_poweroftwominusone_400_3801f400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_31_poweroftwominusone_400_3801f400() {
     // Encoding: 0x3801F400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: size=0, opc=0, imm9=31, Rn=0, Rt=0
+    // Fields: opc=0, Rt=0, size=0, Rn=0, imm9=31
     let encoding: u32 = 0x3801F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1676,21 +1135,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_31_po
 /// Requirement: FieldBoundary { field: "imm9", value: 32, boundary: PowerOfTwo }
 /// power of 2 (2^5 = 32)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_32_poweroftwo_400_38020400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_32_poweroftwo_400_38020400() {
     // Encoding: 0x38020400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 32 (PowerOfTwo)
-    // Fields: Rt=0, imm9=32, opc=0, size=0, Rn=0
+    // Fields: Rn=0, Rt=0, opc=0, imm9=32, size=0
     let encoding: u32 = 0x38020400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1698,21 +1151,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_32_po
 /// Requirement: FieldBoundary { field: "imm9", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_63_poweroftwominusone_400_3803f400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_63_poweroftwominusone_400_3803f400() {
     // Encoding: 0x3803F400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: imm9=63, Rt=0, opc=0, size=0, Rn=0
+    // Fields: Rt=0, opc=0, imm9=63, size=0, Rn=0
     let encoding: u32 = 0x3803F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1720,21 +1167,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_63_po
 /// Requirement: FieldBoundary { field: "imm9", value: 64, boundary: PowerOfTwo }
 /// power of 2 (2^6 = 64)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_64_poweroftwo_400_38040400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_64_poweroftwo_400_38040400() {
     // Encoding: 0x38040400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 64 (PowerOfTwo)
-    // Fields: size=0, imm9=64, Rt=0, Rn=0, opc=0
+    // Fields: size=0, opc=0, Rn=0, Rt=0, imm9=64
     let encoding: u32 = 0x38040400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1742,21 +1183,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_64_po
 /// Requirement: FieldBoundary { field: "imm9", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_127_poweroftwominusone_400_3807f400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_127_poweroftwominusone_400_3807f400() {
     // Encoding: 0x3807F400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rn=0, Rt=0, imm9=127, size=0
+    // Fields: imm9=127, opc=0, Rn=0, Rt=0, size=0
     let encoding: u32 = 0x3807F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1764,21 +1199,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_127_p
 /// Requirement: FieldBoundary { field: "imm9", value: 128, boundary: PowerOfTwo }
 /// power of 2 (2^7 = 128)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_128_poweroftwo_400_38080400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_128_poweroftwo_400_38080400() {
     // Encoding: 0x38080400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 128 (PowerOfTwo)
-    // Fields: size=0, Rn=0, opc=0, Rt=0, imm9=128
+    // Fields: Rt=0, opc=0, size=0, imm9=128, Rn=0
     let encoding: u32 = 0x38080400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1786,21 +1215,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_128_p
 /// Requirement: FieldBoundary { field: "imm9", value: 255, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (255)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_255_poweroftwominusone_400_380ff400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_255_poweroftwominusone_400_380ff400() {
     // Encoding: 0x380FF400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rn=0, size=0, imm9=255, Rt=0
+    // Fields: imm9=255, size=0, opc=0, Rn=0, Rt=0
     let encoding: u32 = 0x380FF400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1808,21 +1231,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_255_p
 /// Requirement: FieldBoundary { field: "imm9", value: 256, boundary: PowerOfTwo }
 /// power of 2 (2^8 = 256)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_256_poweroftwo_400_38100400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_256_poweroftwo_400_38100400() {
     // Encoding: 0x38100400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 256 (PowerOfTwo)
-    // Fields: Rt=0, imm9=256, Rn=0, size=0, opc=0
+    // Fields: opc=0, size=0, Rt=0, Rn=0, imm9=256
     let encoding: u32 = 0x38100400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1833,17 +1250,12 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_256_p
 fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_511_max_400_381ff400() {
     // Encoding: 0x381FF400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field imm9 = 511 (Max)
-    // Fields: imm9=511, Rn=0, opc=0, size=0, Rt=0
+    // Fields: size=0, opc=0, Rt=0, imm9=511, Rn=0
     let encoding: u32 = 0x381FF400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1854,17 +1266,12 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_imm9_511_m
 fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rn_0_min_400_38000400() {
     // Encoding: 0x38000400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field Rn = 0 (Min)
-    // Fields: Rt=0, size=0, imm9=0, opc=0, Rn=0
+    // Fields: size=0, opc=0, imm9=0, Rn=0, Rt=0
     let encoding: u32 = 0x38000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1872,21 +1279,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rn_0_min_4
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rn_1_poweroftwo_400_38000420()
-{
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rn_1_poweroftwo_400_38000420() {
     // Encoding: 0x38000420
     // Test aarch64_memory_single_general_immediate_signed_post_idx field Rn = 1 (PowerOfTwo)
-    // Fields: imm9=0, Rt=0, size=0, Rn=1, opc=0
+    // Fields: opc=0, size=0, imm9=0, Rn=1, Rt=0
     let encoding: u32 = 0x38000420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1894,21 +1295,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rn_1_power
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rn_30_poweroftwominusone_400_380007c0(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rn_30_poweroftwominusone_400_380007c0() {
     // Encoding: 0x380007C0
     // Test aarch64_memory_single_general_immediate_signed_post_idx field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, opc=0, imm9=0, size=0, Rn=30
+    // Fields: imm9=0, opc=0, Rn=30, Rt=0, size=0
     let encoding: u32 = 0x380007C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1919,17 +1314,12 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rn_30_powe
 fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rn_31_max_400_380007e0() {
     // Encoding: 0x380007E0
     // Test aarch64_memory_single_general_immediate_signed_post_idx field Rn = 31 (Max)
-    // Fields: Rt=0, imm9=0, opc=0, Rn=31, size=0
+    // Fields: Rn=31, size=0, Rt=0, opc=0, imm9=0
     let encoding: u32 = 0x380007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1940,17 +1330,12 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rn_31_max_
 fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rt_0_min_400_38000400() {
     // Encoding: 0x38000400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field Rt = 0 (Min)
-    // Fields: Rn=0, Rt=0, size=0, imm9=0, opc=0
+    // Fields: opc=0, size=0, imm9=0, Rn=0, Rt=0
     let encoding: u32 = 0x38000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1958,21 +1343,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rt_0_min_4
 /// Requirement: FieldBoundary { field: "Rt", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rt_1_poweroftwo_400_38000401()
-{
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rt_1_poweroftwo_400_38000401() {
     // Encoding: 0x38000401
     // Test aarch64_memory_single_general_immediate_signed_post_idx field Rt = 1 (PowerOfTwo)
-    // Fields: Rn=0, imm9=0, Rt=1, size=0, opc=0
+    // Fields: size=0, Rn=0, Rt=1, imm9=0, opc=0
     let encoding: u32 = 0x38000401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -1980,21 +1359,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rt_1_power
 /// Requirement: FieldBoundary { field: "Rt", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rt_30_poweroftwominusone_400_3800041e(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rt_30_poweroftwominusone_400_3800041e() {
     // Encoding: 0x3800041E
     // Test aarch64_memory_single_general_immediate_signed_post_idx field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: opc=0, imm9=0, size=0, Rt=30, Rn=0
+    // Fields: size=0, Rn=0, Rt=30, opc=0, imm9=0
     let encoding: u32 = 0x3800041E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -2005,17 +1378,12 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rt_30_powe
 fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rt_31_max_400_3800041f() {
     // Encoding: 0x3800041F
     // Test aarch64_memory_single_general_immediate_signed_post_idx field Rt = 31 (Max)
-    // Fields: Rn=0, imm9=0, opc=0, size=0, Rt=31
+    // Fields: size=0, imm9=0, opc=0, Rn=0, Rt=31
     let encoding: u32 = 0x3800041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -2026,206 +1394,12 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_field_rt_31_max_
 fn test_aarch64_memory_single_general_immediate_signed_post_idx_combo_0_400_38000400() {
     // Encoding: 0x38000400
     // Test aarch64_memory_single_general_immediate_signed_post_idx field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: opc=0, size=0, Rt=0, imm9=0, Rn=0
+    // Fields: opc=0, size=0, imm9=0, Rn=0, Rt=0
     let encoding: u32 = 0x38000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_combo_1_400_78000400() {
-    // Encoding: 0x78000400
-    // Test aarch64_memory_single_general_immediate_signed_post_idx field combination: size=1, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: size=1, imm9=0, Rt=0, Rn=0, opc=0
-    let encoding: u32 = 0x78000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_combo_2_400_b8000400() {
-    // Encoding: 0xB8000400
-    // Test aarch64_memory_single_general_immediate_signed_post_idx field combination: size=2, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: size=2, imm9=0, opc=0, Rn=0, Rt=0
-    let encoding: u32 = 0xB8000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_combo_3_400_f8000400() {
-    // Encoding: 0xF8000400
-    // Test aarch64_memory_single_general_immediate_signed_post_idx field combination: size=3, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: size=3, imm9=0, opc=0, Rn=0, Rt=0
-    let encoding: u32 = 0xF8000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_combo_4_400_38000400() {
-    // Encoding: 0x38000400
-    // Test aarch64_memory_single_general_immediate_signed_post_idx field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rn=0, opc=0, Rt=0, size=0, imm9=0
-    let encoding: u32 = 0x38000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_combo_5_400_38400400() {
-    // Encoding: 0x38400400
-    // Test aarch64_memory_single_general_immediate_signed_post_idx field combination: size=0, opc=1, imm9=0, Rn=0, Rt=0
-    // Fields: size=0, Rn=0, imm9=0, opc=1, Rt=0
-    let encoding: u32 = 0x38400400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_combo_6_400_38800400() {
-    // Encoding: 0x38800400
-    // Test aarch64_memory_single_general_immediate_signed_post_idx field combination: size=0, opc=2, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, opc=2, imm9=0, size=0, Rn=0
-    let encoding: u32 = 0x38800400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_combo_7_400_38c00400() {
-    // Encoding: 0x38C00400
-    // Test aarch64_memory_single_general_immediate_signed_post_idx field combination: size=0, opc=3, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, opc=3, Rn=0, size=0, imm9=0
-    let encoding: u32 = 0x38C00400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=0 (immediate value 0)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_combo_8_400_38000400() {
-    // Encoding: 0x38000400
-    // Test aarch64_memory_single_general_immediate_signed_post_idx field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rn=0, Rt=0, imm9=0, opc=0, size=0
-    let encoding: u32 = 0x38000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_combo_9_400_38001400() {
-    // Encoding: 0x38001400
-    // Test aarch64_memory_single_general_immediate_signed_post_idx field combination: size=0, opc=0, imm9=1, Rn=0, Rt=0
-    // Fields: opc=0, Rt=0, Rn=0, imm9=1, size=0
-    let encoding: u32 = 0x38001400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -2233,21 +1407,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_combo_9_400_3800
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_size_0_size_variant_0_1024_38000400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_size_0_size_variant_0_1024_38000400() {
     // Encoding: 0x38000400
     // Test aarch64_memory_single_general_immediate_signed_post_idx special value size = 0 (Size variant 0)
-    // Fields: imm9=0, size=0, Rt=0, opc=0, Rn=0
+    // Fields: opc=0, imm9=0, size=0, Rt=0, Rn=0
     let encoding: u32 = 0x38000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -2255,21 +1423,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_size_0_s
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_size_1_size_variant_1_1024_78000400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_size_1_size_variant_1_1024_78000400() {
     // Encoding: 0x78000400
     // Test aarch64_memory_single_general_immediate_signed_post_idx special value size = 1 (Size variant 1)
-    // Fields: Rt=0, imm9=0, Rn=0, size=1, opc=0
+    // Fields: imm9=0, Rn=0, size=1, opc=0, Rt=0
     let encoding: u32 = 0x78000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -2277,8 +1439,7 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_size_1_s
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_size_2_size_variant_2_1024_b8000400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_size_2_size_variant_2_1024_b8000400() {
     // Encoding: 0xB8000400
     // Test aarch64_memory_single_general_immediate_signed_post_idx special value size = 2 (Size variant 2)
     // Fields: Rn=0, Rt=0, imm9=0, opc=0, size=2
@@ -2286,12 +1447,7 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_size_2_s
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -2299,21 +1455,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_size_2_s
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_size_3_size_variant_3_1024_f8000400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_size_3_size_variant_3_1024_f8000400() {
     // Encoding: 0xF8000400
     // Test aarch64_memory_single_general_immediate_signed_post_idx special value size = 3 (Size variant 3)
-    // Fields: Rt=0, size=3, opc=0, imm9=0, Rn=0
+    // Fields: Rt=0, size=3, opc=0, Rn=0, imm9=0
     let encoding: u32 = 0xF8000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -2321,21 +1471,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_size_3_s
 /// Requirement: FieldSpecial { field: "opc", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_opc_0_size_variant_0_1024_38000400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_opc_0_size_variant_0_1024_38000400() {
     // Encoding: 0x38000400
     // Test aarch64_memory_single_general_immediate_signed_post_idx special value opc = 0 (Size variant 0)
-    // Fields: size=0, Rt=0, imm9=0, Rn=0, opc=0
+    // Fields: Rn=0, Rt=0, opc=0, size=0, imm9=0
     let encoding: u32 = 0x38000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -2343,21 +1487,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_opc_0_si
 /// Requirement: FieldSpecial { field: "opc", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_opc_1_size_variant_1_1024_38400400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_opc_1_size_variant_1_1024_38400400() {
     // Encoding: 0x38400400
     // Test aarch64_memory_single_general_immediate_signed_post_idx special value opc = 1 (Size variant 1)
-    // Fields: Rt=0, size=0, opc=1, imm9=0, Rn=0
+    // Fields: size=0, Rt=0, Rn=0, imm9=0, opc=1
     let encoding: u32 = 0x38400400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -2365,21 +1503,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_opc_1_si
 /// Requirement: FieldSpecial { field: "opc", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_opc_2_size_variant_2_1024_38800400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_opc_2_size_variant_2_1024_38800400() {
     // Encoding: 0x38800400
     // Test aarch64_memory_single_general_immediate_signed_post_idx special value opc = 2 (Size variant 2)
-    // Fields: Rt=0, imm9=0, size=0, opc=2, Rn=0
+    // Fields: Rn=0, size=0, opc=2, imm9=0, Rt=0
     let encoding: u32 = 0x38800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -2387,8 +1519,7 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_opc_2_si
 /// Requirement: FieldSpecial { field: "opc", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_opc_3_size_variant_3_1024_38c00400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_opc_3_size_variant_3_1024_38c00400() {
     // Encoding: 0x38C00400
     // Test aarch64_memory_single_general_immediate_signed_post_idx special value opc = 3 (Size variant 3)
     // Fields: Rn=0, Rt=0, size=0, opc=3, imm9=0
@@ -2396,12 +1527,7 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_opc_3_si
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -2409,21 +1535,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_opc_3_si
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_rn_31_stack_pointer_sp_may_require_alignment_1024_380007e0(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_rn_31_stack_pointer_sp_may_require_alignment_1024_380007e0() {
     // Encoding: 0x380007E0
     // Test aarch64_memory_single_general_immediate_signed_post_idx special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: size=0, opc=0, imm9=0, Rn=31, Rt=0
+    // Fields: Rn=31, Rt=0, opc=0, imm9=0, size=0
     let encoding: u32 = 0x380007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -2431,21 +1551,15 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_rn_31_st
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_3800041f(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_3800041f() {
     // Encoding: 0x3800041F
     // Test aarch64_memory_single_general_immediate_signed_post_idx special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: size=0, imm9=0, Rt=31, opc=0, Rn=0
+    // Fields: Rt=31, Rn=0, opc=0, imm9=0, size=0
     let encoding: u32 = 0x3800041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2456,17 +1570,12 @@ fn test_aarch64_memory_single_general_immediate_signed_post_idx_special_rt_31_ze
 fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_size_0_min_c00_38000c00() {
     // Encoding: 0x38000C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field size = 0 (Min)
-    // Fields: size=0, opc=0, imm9=0, Rt=0, Rn=0
+    // Fields: imm9=0, Rn=0, Rt=0, size=0, opc=0
     let encoding: u32 = 0x38000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2474,21 +1583,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_size_0_min_
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_size_1_poweroftwo_c00_78000c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_size_1_poweroftwo_c00_78000c00() {
     // Encoding: 0x78000C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field size = 1 (PowerOfTwo)
-    // Fields: imm9=0, size=1, opc=0, Rt=0, Rn=0
+    // Fields: Rt=0, size=1, imm9=0, opc=0, Rn=0
     let encoding: u32 = 0x78000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2496,21 +1599,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_size_1_powe
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_size_2_poweroftwo_c00_b8000c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_size_2_poweroftwo_c00_b8000c00() {
     // Encoding: 0xB8000C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field size = 2 (PowerOfTwo)
-    // Fields: Rt=0, opc=0, Rn=0, imm9=0, size=2
+    // Fields: opc=0, size=2, Rn=0, imm9=0, Rt=0
     let encoding: u32 = 0xB8000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2521,17 +1618,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_size_2_powe
 fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_size_3_max_c00_f8000c00() {
     // Encoding: 0xF8000C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field size = 3 (Max)
-    // Fields: Rt=0, imm9=0, Rn=0, size=3, opc=0
+    // Fields: imm9=0, opc=0, size=3, Rt=0, Rn=0
     let encoding: u32 = 0xF8000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2542,17 +1634,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_size_3_max_
 fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_opc_0_min_c00_38000c00() {
     // Encoding: 0x38000C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field opc = 0 (Min)
-    // Fields: Rn=0, opc=0, Rt=0, imm9=0, size=0
+    // Fields: opc=0, imm9=0, size=0, Rn=0, Rt=0
     let encoding: u32 = 0x38000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2560,21 +1647,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_opc_0_min_c
 /// Requirement: FieldBoundary { field: "opc", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_opc_1_poweroftwo_c00_38400c00()
-{
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_opc_1_poweroftwo_c00_38400c00() {
     // Encoding: 0x38400C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field opc = 1 (PowerOfTwo)
-    // Fields: opc=1, Rn=0, size=0, imm9=0, Rt=0
+    // Fields: Rt=0, opc=1, imm9=0, size=0, Rn=0
     let encoding: u32 = 0x38400C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2582,21 +1663,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_opc_1_power
 /// Requirement: FieldBoundary { field: "opc", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_opc_2_poweroftwo_c00_38800c00()
-{
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_opc_2_poweroftwo_c00_38800c00() {
     // Encoding: 0x38800C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field opc = 2 (PowerOfTwo)
-    // Fields: size=0, imm9=0, Rn=0, Rt=0, opc=2
+    // Fields: opc=2, imm9=0, Rt=0, Rn=0, size=0
     let encoding: u32 = 0x38800C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2607,17 +1682,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_opc_2_power
 fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_opc_3_max_c00_38c00c00() {
     // Encoding: 0x38C00C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field opc = 3 (Max)
-    // Fields: opc=3, Rn=0, imm9=0, Rt=0, size=0
+    // Fields: size=0, imm9=0, Rn=0, opc=3, Rt=0
     let encoding: u32 = 0x38C00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2628,17 +1698,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_opc_3_max_c
 fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_0_zero_c00_38000c00() {
     // Encoding: 0x38000C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 0 (Zero)
-    // Fields: opc=0, Rt=0, Rn=0, imm9=0, size=0
+    // Fields: opc=0, size=0, imm9=0, Rt=0, Rn=0
     let encoding: u32 = 0x38000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2646,21 +1711,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_0_zero
 /// Requirement: FieldBoundary { field: "imm9", value: 1, boundary: PowerOfTwo }
 /// immediate value 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_1_poweroftwo_c00_38001c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_1_poweroftwo_c00_38001c00() {
     // Encoding: 0x38001C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 1 (PowerOfTwo)
-    // Fields: size=0, Rt=0, Rn=0, imm9=1, opc=0
+    // Fields: imm9=1, Rt=0, opc=0, size=0, Rn=0
     let encoding: u32 = 0x38001C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2668,21 +1727,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_1_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_3_poweroftwominusone_c00_38003c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_3_poweroftwominusone_c00_38003c00() {
     // Encoding: 0x38003C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rt=0, size=0, Rn=0, imm9=3
+    // Fields: Rn=0, size=0, Rt=0, imm9=3, opc=0
     let encoding: u32 = 0x38003C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2690,21 +1743,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_3_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 4, boundary: PowerOfTwo }
 /// power of 2 (2^2 = 4)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_4_poweroftwo_c00_38004c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_4_poweroftwo_c00_38004c00() {
     // Encoding: 0x38004C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 4 (PowerOfTwo)
-    // Fields: imm9=4, size=0, opc=0, Rn=0, Rt=0
+    // Fields: Rt=0, imm9=4, Rn=0, size=0, opc=0
     let encoding: u32 = 0x38004C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2712,21 +1759,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_4_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_7_poweroftwominusone_c00_38007c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_7_poweroftwominusone_c00_38007c00() {
     // Encoding: 0x38007C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rt=0, imm9=7, Rn=0, opc=0
+    // Fields: imm9=7, Rt=0, size=0, Rn=0, opc=0
     let encoding: u32 = 0x38007C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2734,21 +1775,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_7_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 8, boundary: PowerOfTwo }
 /// power of 2 (2^3 = 8)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_8_poweroftwo_c00_38008c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_8_poweroftwo_c00_38008c00() {
     // Encoding: 0x38008C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 8 (PowerOfTwo)
-    // Fields: Rt=0, size=0, opc=0, Rn=0, imm9=8
+    // Fields: Rt=0, opc=0, size=0, imm9=8, Rn=0
     let encoding: u32 = 0x38008C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2756,21 +1791,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_8_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_15_poweroftwominusone_c00_3800fc00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_15_poweroftwominusone_c00_3800fc00() {
     // Encoding: 0x3800FC00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, opc=0, imm9=15, size=0, Rn=0
+    // Fields: size=0, Rt=0, Rn=0, opc=0, imm9=15
     let encoding: u32 = 0x3800FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2778,21 +1807,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_15_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 16, boundary: PowerOfTwo }
 /// power of 2 (2^4 = 16)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_16_poweroftwo_c00_38010c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_16_poweroftwo_c00_38010c00() {
     // Encoding: 0x38010C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 16 (PowerOfTwo)
-    // Fields: imm9=16, size=0, Rn=0, opc=0, Rt=0
+    // Fields: size=0, opc=0, imm9=16, Rt=0, Rn=0
     let encoding: u32 = 0x38010C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2800,21 +1823,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_16_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_31_poweroftwominusone_c00_3801fc00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_31_poweroftwominusone_c00_3801fc00() {
     // Encoding: 0x3801FC00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rt=0, size=0, imm9=31, Rn=0
+    // Fields: imm9=31, Rn=0, opc=0, Rt=0, size=0
     let encoding: u32 = 0x3801FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2822,21 +1839,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_31_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 32, boundary: PowerOfTwo }
 /// power of 2 (2^5 = 32)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_32_poweroftwo_c00_38020c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_32_poweroftwo_c00_38020c00() {
     // Encoding: 0x38020C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 32 (PowerOfTwo)
-    // Fields: opc=0, Rn=0, Rt=0, size=0, imm9=32
+    // Fields: size=0, Rn=0, Rt=0, opc=0, imm9=32
     let encoding: u32 = 0x38020C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2844,21 +1855,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_32_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_63_poweroftwominusone_c00_3803fc00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_63_poweroftwominusone_c00_3803fc00() {
     // Encoding: 0x3803FC00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: imm9=63, Rn=0, size=0, opc=0, Rt=0
+    // Fields: size=0, imm9=63, opc=0, Rt=0, Rn=0
     let encoding: u32 = 0x3803FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2866,21 +1871,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_63_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 64, boundary: PowerOfTwo }
 /// power of 2 (2^6 = 64)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_64_poweroftwo_c00_38040c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_64_poweroftwo_c00_38040c00() {
     // Encoding: 0x38040C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 64 (PowerOfTwo)
-    // Fields: Rt=0, imm9=64, opc=0, Rn=0, size=0
+    // Fields: opc=0, Rt=0, size=0, Rn=0, imm9=64
     let encoding: u32 = 0x38040C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2888,21 +1887,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_64_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_127_poweroftwominusone_c00_3807fc00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_127_poweroftwominusone_c00_3807fc00() {
     // Encoding: 0x3807FC00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: size=0, imm9=127, opc=0, Rn=0, Rt=0
+    // Fields: size=0, Rn=0, opc=0, Rt=0, imm9=127
     let encoding: u32 = 0x3807FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2910,21 +1903,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_127_po
 /// Requirement: FieldBoundary { field: "imm9", value: 128, boundary: PowerOfTwo }
 /// power of 2 (2^7 = 128)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_128_poweroftwo_c00_38080c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_128_poweroftwo_c00_38080c00() {
     // Encoding: 0x38080C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 128 (PowerOfTwo)
-    // Fields: imm9=128, opc=0, Rt=0, size=0, Rn=0
+    // Fields: size=0, imm9=128, Rt=0, opc=0, Rn=0
     let encoding: u32 = 0x38080C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2932,21 +1919,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_128_po
 /// Requirement: FieldBoundary { field: "imm9", value: 255, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (255)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_255_poweroftwominusone_c00_380ffc00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_255_poweroftwominusone_c00_380ffc00() {
     // Encoding: 0x380FFC00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, size=0, imm9=255, opc=0, Rt=0
+    // Fields: Rn=0, size=0, opc=0, imm9=255, Rt=0
     let encoding: u32 = 0x380FFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2954,21 +1935,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_255_po
 /// Requirement: FieldBoundary { field: "imm9", value: 256, boundary: PowerOfTwo }
 /// power of 2 (2^8 = 256)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_256_poweroftwo_c00_38100c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_256_poweroftwo_c00_38100c00() {
     // Encoding: 0x38100C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 256 (PowerOfTwo)
-    // Fields: imm9=256, opc=0, Rn=0, size=0, Rt=0
+    // Fields: size=0, opc=0, Rt=0, imm9=256, Rn=0
     let encoding: u32 = 0x38100C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -2979,17 +1954,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_256_po
 fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_511_max_c00_381ffc00() {
     // Encoding: 0x381FFC00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field imm9 = 511 (Max)
-    // Fields: size=0, Rn=0, opc=0, Rt=0, imm9=511
+    // Fields: size=0, opc=0, imm9=511, Rt=0, Rn=0
     let encoding: u32 = 0x381FFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3000,17 +1970,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_imm9_511_ma
 fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rn_0_min_c00_38000c00() {
     // Encoding: 0x38000C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field Rn = 0 (Min)
-    // Fields: Rt=0, imm9=0, size=0, opc=0, Rn=0
+    // Fields: Rn=0, imm9=0, size=0, opc=0, Rt=0
     let encoding: u32 = 0x38000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3018,21 +1983,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rn_0_min_c0
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rn_1_poweroftwo_c00_38000c20()
-{
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rn_1_poweroftwo_c00_38000c20() {
     // Encoding: 0x38000C20
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field Rn = 1 (PowerOfTwo)
-    // Fields: opc=0, Rn=1, Rt=0, size=0, imm9=0
+    // Fields: imm9=0, opc=0, size=0, Rn=1, Rt=0
     let encoding: u32 = 0x38000C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3040,21 +1999,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rn_1_powero
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rn_30_poweroftwominusone_c00_38000fc0(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rn_30_poweroftwominusone_c00_38000fc0() {
     // Encoding: 0x38000FC0
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, imm9=0, size=0, Rn=30, opc=0
+    // Fields: opc=0, size=0, imm9=0, Rn=30, Rt=0
     let encoding: u32 = 0x38000FC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3065,17 +2018,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rn_30_power
 fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rn_31_max_c00_38000fe0() {
     // Encoding: 0x38000FE0
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field Rn = 31 (Max)
-    // Fields: imm9=0, opc=0, Rn=31, Rt=0, size=0
+    // Fields: Rt=0, opc=0, size=0, imm9=0, Rn=31
     let encoding: u32 = 0x38000FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3086,17 +2034,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rn_31_max_c
 fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rt_0_min_c00_38000c00() {
     // Encoding: 0x38000C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field Rt = 0 (Min)
-    // Fields: opc=0, Rn=0, size=0, imm9=0, Rt=0
+    // Fields: opc=0, Rn=0, Rt=0, imm9=0, size=0
     let encoding: u32 = 0x38000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3104,21 +2047,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rt_0_min_c0
 /// Requirement: FieldBoundary { field: "Rt", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rt_1_poweroftwo_c00_38000c01()
-{
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rt_1_poweroftwo_c00_38000c01() {
     // Encoding: 0x38000C01
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field Rt = 1 (PowerOfTwo)
-    // Fields: size=0, Rt=1, opc=0, imm9=0, Rn=0
+    // Fields: Rt=1, opc=0, imm9=0, size=0, Rn=0
     let encoding: u32 = 0x38000C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3126,21 +2063,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rt_1_powero
 /// Requirement: FieldBoundary { field: "Rt", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rt_30_poweroftwominusone_c00_38000c1e(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rt_30_poweroftwominusone_c00_38000c1e() {
     // Encoding: 0x38000C1E
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rn=0, Rt=30, imm9=0, opc=0
+    // Fields: opc=0, imm9=0, Rt=30, Rn=0, size=0
     let encoding: u32 = 0x38000C1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3151,17 +2082,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rt_30_power
 fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rt_31_max_c00_38000c1f() {
     // Encoding: 0x38000C1F
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field Rt = 31 (Max)
-    // Fields: opc=0, Rn=0, size=0, imm9=0, Rt=31
+    // Fields: size=0, imm9=0, Rn=0, opc=0, Rt=31
     let encoding: u32 = 0x38000C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3172,206 +2098,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_field_rt_31_max_c
 fn test_aarch64_memory_single_general_immediate_signed_pre_idx_combo_0_c00_38000c00() {
     // Encoding: 0x38000C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, size=0, opc=0, Rn=0, Rt=0
+    // Fields: Rn=0, Rt=0, size=0, opc=0, imm9=0
     let encoding: u32 = 0x38000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_combo_1_c00_78000c00() {
-    // Encoding: 0x78000C00
-    // Test aarch64_memory_single_general_immediate_signed_pre_idx field combination: size=1, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, opc=0, Rn=0, size=1, imm9=0
-    let encoding: u32 = 0x78000C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_combo_2_c00_b8000c00() {
-    // Encoding: 0xB8000C00
-    // Test aarch64_memory_single_general_immediate_signed_pre_idx field combination: size=2, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: opc=0, Rn=0, Rt=0, size=2, imm9=0
-    let encoding: u32 = 0xB8000C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_combo_3_c00_f8000c00() {
-    // Encoding: 0xF8000C00
-    // Test aarch64_memory_single_general_immediate_signed_pre_idx field combination: size=3, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: opc=0, Rn=0, Rt=0, size=3, imm9=0
-    let encoding: u32 = 0xF8000C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_combo_4_c00_38000c00() {
-    // Encoding: 0x38000C00
-    // Test aarch64_memory_single_general_immediate_signed_pre_idx field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rn=0, opc=0, imm9=0, Rt=0, size=0
-    let encoding: u32 = 0x38000C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_combo_5_c00_38400c00() {
-    // Encoding: 0x38400C00
-    // Test aarch64_memory_single_general_immediate_signed_pre_idx field combination: size=0, opc=1, imm9=0, Rn=0, Rt=0
-    // Fields: Rn=0, imm9=0, opc=1, size=0, Rt=0
-    let encoding: u32 = 0x38400C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_combo_6_c00_38800c00() {
-    // Encoding: 0x38800C00
-    // Test aarch64_memory_single_general_immediate_signed_pre_idx field combination: size=0, opc=2, imm9=0, Rn=0, Rt=0
-    // Fields: opc=2, size=0, imm9=0, Rt=0, Rn=0
-    let encoding: u32 = 0x38800C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_combo_7_c00_38c00c00() {
-    // Encoding: 0x38C00C00
-    // Test aarch64_memory_single_general_immediate_signed_pre_idx field combination: size=0, opc=3, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, Rn=0, size=0, opc=3, Rt=0
-    let encoding: u32 = 0x38C00C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=0 (immediate value 0)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_combo_8_c00_38000c00() {
-    // Encoding: 0x38000C00
-    // Test aarch64_memory_single_general_immediate_signed_pre_idx field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, opc=0, imm9=0, size=0, Rn=0
-    let encoding: u32 = 0x38000C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_combo_9_c00_38001c00() {
-    // Encoding: 0x38001C00
-    // Test aarch64_memory_single_general_immediate_signed_pre_idx field combination: size=0, opc=0, imm9=1, Rn=0, Rt=0
-    // Fields: Rt=0, opc=0, Rn=0, imm9=1, size=0
-    let encoding: u32 = 0x38001C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3379,21 +2111,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_combo_9_c00_38001
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_size_0_size_variant_0_3072_38000c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_size_0_size_variant_0_3072_38000c00() {
     // Encoding: 0x38000C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx special value size = 0 (Size variant 0)
-    // Fields: Rn=0, imm9=0, opc=0, size=0, Rt=0
+    // Fields: opc=0, imm9=0, Rt=0, size=0, Rn=0
     let encoding: u32 = 0x38000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3401,21 +2127,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_size_0_si
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_size_1_size_variant_1_3072_78000c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_size_1_size_variant_1_3072_78000c00() {
     // Encoding: 0x78000C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx special value size = 1 (Size variant 1)
-    // Fields: Rn=0, size=1, opc=0, imm9=0, Rt=0
+    // Fields: opc=0, size=1, Rt=0, Rn=0, imm9=0
     let encoding: u32 = 0x78000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3423,21 +2143,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_size_1_si
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_size_2_size_variant_2_3072_b8000c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_size_2_size_variant_2_3072_b8000c00() {
     // Encoding: 0xB8000C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx special value size = 2 (Size variant 2)
-    // Fields: size=2, Rt=0, imm9=0, Rn=0, opc=0
+    // Fields: imm9=0, opc=0, Rn=0, Rt=0, size=2
     let encoding: u32 = 0xB8000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3445,21 +2159,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_size_2_si
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_size_3_size_variant_3_3072_f8000c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_size_3_size_variant_3_3072_f8000c00() {
     // Encoding: 0xF8000C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx special value size = 3 (Size variant 3)
-    // Fields: imm9=0, Rt=0, size=3, opc=0, Rn=0
+    // Fields: Rt=0, opc=0, imm9=0, size=3, Rn=0
     let encoding: u32 = 0xF8000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3467,21 +2175,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_size_3_si
 /// Requirement: FieldSpecial { field: "opc", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_opc_0_size_variant_0_3072_38000c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_opc_0_size_variant_0_3072_38000c00() {
     // Encoding: 0x38000C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx special value opc = 0 (Size variant 0)
-    // Fields: Rn=0, imm9=0, Rt=0, opc=0, size=0
+    // Fields: size=0, Rt=0, Rn=0, opc=0, imm9=0
     let encoding: u32 = 0x38000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3489,21 +2191,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_opc_0_siz
 /// Requirement: FieldSpecial { field: "opc", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_opc_1_size_variant_1_3072_38400c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_opc_1_size_variant_1_3072_38400c00() {
     // Encoding: 0x38400C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx special value opc = 1 (Size variant 1)
-    // Fields: imm9=0, Rt=0, size=0, opc=1, Rn=0
+    // Fields: Rn=0, imm9=0, size=0, Rt=0, opc=1
     let encoding: u32 = 0x38400C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3511,21 +2207,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_opc_1_siz
 /// Requirement: FieldSpecial { field: "opc", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_opc_2_size_variant_2_3072_38800c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_opc_2_size_variant_2_3072_38800c00() {
     // Encoding: 0x38800C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx special value opc = 2 (Size variant 2)
-    // Fields: imm9=0, Rt=0, size=0, opc=2, Rn=0
+    // Fields: size=0, Rn=0, Rt=0, opc=2, imm9=0
     let encoding: u32 = 0x38800C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3533,21 +2223,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_opc_2_siz
 /// Requirement: FieldSpecial { field: "opc", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_opc_3_size_variant_3_3072_38c00c00(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_opc_3_size_variant_3_3072_38c00c00() {
     // Encoding: 0x38C00C00
     // Test aarch64_memory_single_general_immediate_signed_pre_idx special value opc = 3 (Size variant 3)
-    // Fields: imm9=0, opc=3, size=0, Rt=0, Rn=0
+    // Fields: Rn=0, Rt=0, size=0, imm9=0, opc=3
     let encoding: u32 = 0x38C00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3555,21 +2239,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_opc_3_siz
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_rn_31_stack_pointer_sp_may_require_alignment_3072_38000fe0(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_rn_31_stack_pointer_sp_may_require_alignment_3072_38000fe0() {
     // Encoding: 0x38000FE0
     // Test aarch64_memory_single_general_immediate_signed_pre_idx special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: size=0, Rn=31, opc=0, imm9=0, Rt=0
+    // Fields: Rt=0, size=0, opc=0, imm9=0, Rn=31
     let encoding: u32 = 0x38000FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pre_idx
@@ -3577,21 +2255,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_rn_31_sta
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_3072_38000c1f(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_3072_38000c1f() {
     // Encoding: 0x38000C1F
     // Test aarch64_memory_single_general_immediate_signed_pre_idx special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: opc=0, Rn=0, Rt=31, size=0, imm9=0
+    // Fields: imm9=0, size=0, opc=0, Rn=0, Rt=31
     let encoding: u32 = 0x38000C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3602,17 +2274,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_special_rt_31_zer
 fn test_aarch64_memory_single_general_immediate_unsigned_field_size_0_min_0_39000000() {
     // Encoding: 0x39000000
     // Test aarch64_memory_single_general_immediate_unsigned field size = 0 (Min)
-    // Fields: Rn=0, imm12=0, size=0, opc=0, Rt=0
+    // Fields: size=0, opc=0, imm12=0, Rt=0, Rn=0
     let encoding: u32 = 0x39000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3623,17 +2290,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_size_0_min_0_3900
 fn test_aarch64_memory_single_general_immediate_unsigned_field_size_1_poweroftwo_0_79000000() {
     // Encoding: 0x79000000
     // Test aarch64_memory_single_general_immediate_unsigned field size = 1 (PowerOfTwo)
-    // Fields: imm12=0, size=1, Rn=0, Rt=0, opc=0
+    // Fields: Rn=0, opc=0, Rt=0, imm12=0, size=1
     let encoding: u32 = 0x79000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3644,17 +2306,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_size_1_poweroftwo
 fn test_aarch64_memory_single_general_immediate_unsigned_field_size_2_poweroftwo_0_b9000000() {
     // Encoding: 0xB9000000
     // Test aarch64_memory_single_general_immediate_unsigned field size = 2 (PowerOfTwo)
-    // Fields: Rt=0, size=2, opc=0, imm12=0, Rn=0
+    // Fields: Rt=0, Rn=0, imm12=0, size=2, opc=0
     let encoding: u32 = 0xB9000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3665,17 +2322,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_size_2_poweroftwo
 fn test_aarch64_memory_single_general_immediate_unsigned_field_size_3_max_0_f9000000() {
     // Encoding: 0xF9000000
     // Test aarch64_memory_single_general_immediate_unsigned field size = 3 (Max)
-    // Fields: size=3, Rn=0, Rt=0, imm12=0, opc=0
+    // Fields: imm12=0, Rn=0, size=3, opc=0, Rt=0
     let encoding: u32 = 0xF9000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3686,17 +2338,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_size_3_max_0_f900
 fn test_aarch64_memory_single_general_immediate_unsigned_field_opc_0_min_0_39000000() {
     // Encoding: 0x39000000
     // Test aarch64_memory_single_general_immediate_unsigned field opc = 0 (Min)
-    // Fields: size=0, opc=0, imm12=0, Rn=0, Rt=0
+    // Fields: opc=0, size=0, Rt=0, Rn=0, imm12=0
     let encoding: u32 = 0x39000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3707,17 +2354,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_opc_0_min_0_39000
 fn test_aarch64_memory_single_general_immediate_unsigned_field_opc_1_poweroftwo_0_39400000() {
     // Encoding: 0x39400000
     // Test aarch64_memory_single_general_immediate_unsigned field opc = 1 (PowerOfTwo)
-    // Fields: imm12=0, opc=1, Rn=0, Rt=0, size=0
+    // Fields: opc=1, Rn=0, Rt=0, imm12=0, size=0
     let encoding: u32 = 0x39400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3728,17 +2370,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_opc_1_poweroftwo_
 fn test_aarch64_memory_single_general_immediate_unsigned_field_opc_2_poweroftwo_0_39800000() {
     // Encoding: 0x39800000
     // Test aarch64_memory_single_general_immediate_unsigned field opc = 2 (PowerOfTwo)
-    // Fields: size=0, Rn=0, Rt=0, imm12=0, opc=2
+    // Fields: imm12=0, opc=2, size=0, Rt=0, Rn=0
     let encoding: u32 = 0x39800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3749,17 +2386,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_opc_2_poweroftwo_
 fn test_aarch64_memory_single_general_immediate_unsigned_field_opc_3_max_0_39c00000() {
     // Encoding: 0x39C00000
     // Test aarch64_memory_single_general_immediate_unsigned field opc = 3 (Max)
-    // Fields: size=0, Rt=0, imm12=0, Rn=0, opc=3
+    // Fields: opc=3, size=0, imm12=0, Rn=0, Rt=0
     let encoding: u32 = 0x39C00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3770,17 +2402,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_opc_3_max_0_39c00
 fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_0_zero_0_39000000() {
     // Encoding: 0x39000000
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 0 (Zero)
-    // Fields: Rt=0, size=0, Rn=0, imm12=0, opc=0
+    // Fields: imm12=0, Rn=0, Rt=0, size=0, opc=0
     let encoding: u32 = 0x39000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3791,17 +2418,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_0_zero_0_39
 fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_1_poweroftwo_0_39000400() {
     // Encoding: 0x39000400
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 1 (PowerOfTwo)
-    // Fields: Rt=0, size=0, imm12=1, opc=0, Rn=0
+    // Fields: imm12=1, size=0, Rt=0, opc=0, Rn=0
     let encoding: u32 = 0x39000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3809,21 +2431,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_1_poweroftw
 /// Requirement: FieldBoundary { field: "imm12", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_3_poweroftwominusone_0_39000c00(
-) {
+fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_3_poweroftwominusone_0_39000c00() {
     // Encoding: 0x39000C00
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 3 (PowerOfTwoMinusOne)
-    // Fields: imm12=3, size=0, Rt=0, opc=0, Rn=0
+    // Fields: Rt=0, size=0, imm12=3, Rn=0, opc=0
     let encoding: u32 = 0x39000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3834,17 +2450,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_3_poweroftw
 fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_4_poweroftwo_0_39001000() {
     // Encoding: 0x39001000
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 4 (PowerOfTwo)
-    // Fields: opc=0, Rn=0, Rt=0, size=0, imm12=4
+    // Fields: Rt=0, size=0, opc=0, Rn=0, imm12=4
     let encoding: u32 = 0x39001000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3852,21 +2463,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_4_poweroftw
 /// Requirement: FieldBoundary { field: "imm12", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_7_poweroftwominusone_0_39001c00(
-) {
+fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_7_poweroftwominusone_0_39001c00() {
     // Encoding: 0x39001C00
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 7 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rt=0, opc=0, imm12=7, Rn=0
+    // Fields: Rn=0, size=0, opc=0, imm12=7, Rt=0
     let encoding: u32 = 0x39001C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3877,17 +2482,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_7_poweroftw
 fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_8_poweroftwo_0_39002000() {
     // Encoding: 0x39002000
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 8 (PowerOfTwo)
-    // Fields: imm12=8, size=0, Rn=0, opc=0, Rt=0
+    // Fields: Rt=0, imm12=8, opc=0, Rn=0, size=0
     let encoding: u32 = 0x39002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3895,21 +2495,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_8_poweroftw
 /// Requirement: FieldBoundary { field: "imm12", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_15_poweroftwominusone_0_39003c00(
-) {
+fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_15_poweroftwominusone_0_39003c00() {
     // Encoding: 0x39003C00
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 15 (PowerOfTwoMinusOne)
-    // Fields: imm12=15, Rt=0, Rn=0, opc=0, size=0
+    // Fields: Rt=0, Rn=0, imm12=15, size=0, opc=0
     let encoding: u32 = 0x39003C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3920,17 +2514,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_15_poweroft
 fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_16_poweroftwo_0_39004000() {
     // Encoding: 0x39004000
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 16 (PowerOfTwo)
-    // Fields: Rt=0, size=0, imm12=16, opc=0, Rn=0
+    // Fields: size=0, imm12=16, Rn=0, opc=0, Rt=0
     let encoding: u32 = 0x39004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3938,21 +2527,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_16_poweroft
 /// Requirement: FieldBoundary { field: "imm12", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_31_poweroftwominusone_0_39007c00(
-) {
+fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_31_poweroftwominusone_0_39007c00() {
     // Encoding: 0x39007C00
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 31 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rt=0, opc=0, size=0, imm12=31
+    // Fields: opc=0, Rn=0, Rt=0, size=0, imm12=31
     let encoding: u32 = 0x39007C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3963,17 +2546,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_31_poweroft
 fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_32_poweroftwo_0_39008000() {
     // Encoding: 0x39008000
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 32 (PowerOfTwo)
-    // Fields: size=0, Rn=0, Rt=0, opc=0, imm12=32
+    // Fields: imm12=32, Rn=0, size=0, opc=0, Rt=0
     let encoding: u32 = 0x39008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -3981,21 +2559,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_32_poweroft
 /// Requirement: FieldBoundary { field: "imm12", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_63_poweroftwominusone_0_3900fc00(
-) {
+fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_63_poweroftwominusone_0_3900fc00() {
     // Encoding: 0x3900FC00
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 63 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, imm12=63, size=0, opc=0, Rt=0
+    // Fields: Rn=0, size=0, Rt=0, imm12=63, opc=0
     let encoding: u32 = 0x3900FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4006,17 +2578,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_63_poweroft
 fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_64_poweroftwo_0_39010000() {
     // Encoding: 0x39010000
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 64 (PowerOfTwo)
-    // Fields: Rt=0, imm12=64, opc=0, size=0, Rn=0
+    // Fields: Rn=0, Rt=0, size=0, imm12=64, opc=0
     let encoding: u32 = 0x39010000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4024,21 +2591,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_64_poweroft
 /// Requirement: FieldBoundary { field: "imm12", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_127_poweroftwominusone_0_3901fc00(
-) {
+fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_127_poweroftwominusone_0_3901fc00() {
     // Encoding: 0x3901FC00
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 127 (PowerOfTwoMinusOne)
-    // Fields: size=0, imm12=127, opc=0, Rn=0, Rt=0
+    // Fields: size=0, imm12=127, Rn=0, Rt=0, opc=0
     let encoding: u32 = 0x3901FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4049,17 +2610,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_127_powerof
 fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_128_poweroftwo_0_39020000() {
     // Encoding: 0x39020000
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 128 (PowerOfTwo)
-    // Fields: size=0, opc=0, imm12=128, Rn=0, Rt=0
+    // Fields: Rt=0, imm12=128, size=0, opc=0, Rn=0
     let encoding: u32 = 0x39020000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4067,21 +2623,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_128_powerof
 /// Requirement: FieldBoundary { field: "imm12", value: 255, boundary: PowerOfTwoMinusOne }
 /// 2^8 - 1 = 255
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_255_poweroftwominusone_0_3903fc00(
-) {
+fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_255_poweroftwominusone_0_3903fc00() {
     // Encoding: 0x3903FC00
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 255 (PowerOfTwoMinusOne)
-    // Fields: imm12=255, Rn=0, opc=0, size=0, Rt=0
+    // Fields: size=0, opc=0, Rt=0, imm12=255, Rn=0
     let encoding: u32 = 0x3903FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4092,17 +2642,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_255_powerof
 fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_256_poweroftwo_0_39040000() {
     // Encoding: 0x39040000
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 256 (PowerOfTwo)
-    // Fields: opc=0, Rn=0, size=0, imm12=256, Rt=0
+    // Fields: opc=0, Rt=0, imm12=256, Rn=0, size=0
     let encoding: u32 = 0x39040000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4110,21 +2655,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_256_powerof
 /// Requirement: FieldBoundary { field: "imm12", value: 511, boundary: PowerOfTwoMinusOne }
 /// 2^9 - 1 = 511
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_511_poweroftwominusone_0_3907fc00(
-) {
+fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_511_poweroftwominusone_0_3907fc00() {
     // Encoding: 0x3907FC00
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 511 (PowerOfTwoMinusOne)
-    // Fields: imm12=511, opc=0, Rt=0, size=0, Rn=0
+    // Fields: size=0, Rt=0, Rn=0, opc=0, imm12=511
     let encoding: u32 = 0x3907FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4135,17 +2674,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_511_powerof
 fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_512_poweroftwo_0_39080000() {
     // Encoding: 0x39080000
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 512 (PowerOfTwo)
-    // Fields: opc=0, Rn=0, Rt=0, imm12=512, size=0
+    // Fields: opc=0, imm12=512, Rt=0, size=0, Rn=0
     let encoding: u32 = 0x39080000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4153,21 +2687,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_512_powerof
 /// Requirement: FieldBoundary { field: "imm12", value: 1023, boundary: PowerOfTwoMinusOne }
 /// 2^10 - 1 = 1023
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_1023_poweroftwominusone_0_390ffc00(
-) {
+fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_1023_poweroftwominusone_0_390ffc00() {
     // Encoding: 0x390FFC00
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 1023 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rn=0, Rt=0, size=0, imm12=1023
+    // Fields: opc=0, imm12=1023, Rn=0, size=0, Rt=0
     let encoding: u32 = 0x390FFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4178,17 +2706,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_1023_powero
 fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_1024_poweroftwo_0_39100000() {
     // Encoding: 0x39100000
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 1024 (PowerOfTwo)
-    // Fields: imm12=1024, Rt=0, Rn=0, size=0, opc=0
+    // Fields: size=0, opc=0, imm12=1024, Rt=0, Rn=0
     let encoding: u32 = 0x39100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4196,21 +2719,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_1024_powero
 /// Requirement: FieldBoundary { field: "imm12", value: 2047, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (2047)
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_2047_poweroftwominusone_0_391ffc00(
-) {
+fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_2047_poweroftwominusone_0_391ffc00() {
     // Encoding: 0x391FFC00
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 2047 (PowerOfTwoMinusOne)
-    // Fields: size=0, imm12=2047, Rn=0, opc=0, Rt=0
+    // Fields: Rt=0, imm12=2047, Rn=0, opc=0, size=0
     let encoding: u32 = 0x391FFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4221,17 +2738,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_2047_powero
 fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_2048_poweroftwo_0_39200000() {
     // Encoding: 0x39200000
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 2048 (PowerOfTwo)
-    // Fields: Rt=0, size=0, opc=0, imm12=2048, Rn=0
+    // Fields: size=0, opc=0, imm12=2048, Rn=0, Rt=0
     let encoding: u32 = 0x39200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4242,17 +2754,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_2048_powero
 fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_4095_max_0_393ffc00() {
     // Encoding: 0x393FFC00
     // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 4095 (Max)
-    // Fields: Rt=0, Rn=0, size=0, opc=0, imm12=4095
+    // Fields: imm12=4095, Rt=0, Rn=0, opc=0, size=0
     let encoding: u32 = 0x393FFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4263,17 +2770,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_4095_max_0_
 fn test_aarch64_memory_single_general_immediate_unsigned_field_rn_0_min_0_39000000() {
     // Encoding: 0x39000000
     // Test aarch64_memory_single_general_immediate_unsigned field Rn = 0 (Min)
-    // Fields: size=0, Rt=0, opc=0, imm12=0, Rn=0
+    // Fields: Rt=0, size=0, opc=0, imm12=0, Rn=0
     let encoding: u32 = 0x39000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4284,17 +2786,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_rn_0_min_0_390000
 fn test_aarch64_memory_single_general_immediate_unsigned_field_rn_1_poweroftwo_0_39000020() {
     // Encoding: 0x39000020
     // Test aarch64_memory_single_general_immediate_unsigned field Rn = 1 (PowerOfTwo)
-    // Fields: imm12=0, opc=0, Rn=1, Rt=0, size=0
+    // Fields: opc=0, imm12=0, Rn=1, size=0, Rt=0
     let encoding: u32 = 0x39000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4302,21 +2799,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_rn_1_poweroftwo_0
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_rn_30_poweroftwominusone_0_390003c0()
-{
+fn test_aarch64_memory_single_general_immediate_unsigned_field_rn_30_poweroftwominusone_0_390003c0() {
     // Encoding: 0x390003C0
     // Test aarch64_memory_single_general_immediate_unsigned field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, Rn=30, opc=0, imm12=0, size=0
+    // Fields: size=0, Rt=0, opc=0, Rn=30, imm12=0
     let encoding: u32 = 0x390003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4327,17 +2818,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_rn_30_poweroftwom
 fn test_aarch64_memory_single_general_immediate_unsigned_field_rn_31_max_0_390003e0() {
     // Encoding: 0x390003E0
     // Test aarch64_memory_single_general_immediate_unsigned field Rn = 31 (Max)
-    // Fields: opc=0, imm12=0, Rn=31, Rt=0, size=0
+    // Fields: imm12=0, size=0, Rn=31, opc=0, Rt=0
     let encoding: u32 = 0x390003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4348,17 +2834,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_rn_31_max_0_39000
 fn test_aarch64_memory_single_general_immediate_unsigned_field_rt_0_min_0_39000000() {
     // Encoding: 0x39000000
     // Test aarch64_memory_single_general_immediate_unsigned field Rt = 0 (Min)
-    // Fields: imm12=0, opc=0, Rt=0, size=0, Rn=0
+    // Fields: size=0, opc=0, imm12=0, Rt=0, Rn=0
     let encoding: u32 = 0x39000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4369,17 +2850,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_rt_0_min_0_390000
 fn test_aarch64_memory_single_general_immediate_unsigned_field_rt_1_poweroftwo_0_39000001() {
     // Encoding: 0x39000001
     // Test aarch64_memory_single_general_immediate_unsigned field Rt = 1 (PowerOfTwo)
-    // Fields: Rt=1, size=0, opc=0, imm12=0, Rn=0
+    // Fields: imm12=0, size=0, opc=0, Rn=0, Rt=1
     let encoding: u32 = 0x39000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4387,21 +2863,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_rt_1_poweroftwo_0
 /// Requirement: FieldBoundary { field: "Rt", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_rt_30_poweroftwominusone_0_3900001e()
-{
+fn test_aarch64_memory_single_general_immediate_unsigned_field_rt_30_poweroftwominusone_0_3900001e() {
     // Encoding: 0x3900001E
     // Test aarch64_memory_single_general_immediate_unsigned field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: imm12=0, Rn=0, Rt=30, size=0, opc=0
+    // Fields: imm12=0, size=0, Rt=30, Rn=0, opc=0
     let encoding: u32 = 0x3900001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4412,17 +2882,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_rt_30_poweroftwom
 fn test_aarch64_memory_single_general_immediate_unsigned_field_rt_31_max_0_3900001f() {
     // Encoding: 0x3900001F
     // Test aarch64_memory_single_general_immediate_unsigned field Rt = 31 (Max)
-    // Fields: opc=0, size=0, imm12=0, Rn=0, Rt=31
+    // Fields: Rn=0, imm12=0, opc=0, Rt=31, size=0
     let encoding: u32 = 0x3900001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4433,206 +2898,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_field_rt_31_max_0_39000
 fn test_aarch64_memory_single_general_immediate_unsigned_combo_0_0_39000000() {
     // Encoding: 0x39000000
     // Test aarch64_memory_single_general_immediate_unsigned field combination: size=0, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: size=0, opc=0, imm12=0, Rn=0, Rt=0
+    // Fields: Rt=0, opc=0, imm12=0, Rn=0, size=0
     let encoding: u32 = 0x39000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_1_0_79000000() {
-    // Encoding: 0x79000000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=1, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: Rn=0, size=1, Rt=0, opc=0, imm12=0
-    let encoding: u32 = 0x79000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_2_0_b9000000() {
-    // Encoding: 0xB9000000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=2, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: Rt=0, size=2, Rn=0, imm12=0, opc=0
-    let encoding: u32 = 0xB9000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_3_0_f9000000() {
-    // Encoding: 0xF9000000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=3, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: imm12=0, Rt=0, size=3, opc=0, Rn=0
-    let encoding: u32 = 0xF9000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_4_0_39000000() {
-    // Encoding: 0x39000000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=0, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: imm12=0, Rt=0, size=0, opc=0, Rn=0
-    let encoding: u32 = 0x39000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_5_0_39400000() {
-    // Encoding: 0x39400000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=0, opc=1, imm12=0, Rn=0, Rt=0
-    // Fields: opc=1, size=0, Rn=0, Rt=0, imm12=0
-    let encoding: u32 = 0x39400000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_6_0_39800000() {
-    // Encoding: 0x39800000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=0, opc=2, imm12=0, Rn=0, Rt=0
-    // Fields: imm12=0, size=0, Rt=0, Rn=0, opc=2
-    let encoding: u32 = 0x39800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_7_0_39c00000() {
-    // Encoding: 0x39C00000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=0, opc=3, imm12=0, Rn=0, Rt=0
-    // Fields: Rt=0, size=0, opc=3, Rn=0, imm12=0
-    let encoding: u32 = 0x39C00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm12=0 (immediate value 0)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_8_0_39000000() {
-    // Encoding: 0x39000000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=0, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: opc=0, Rn=0, imm12=0, Rt=0, size=0
-    let encoding: u32 = 0x39000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm12=1 (immediate value 1)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_9_0_39000400() {
-    // Encoding: 0x39000400
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=0, opc=0, imm12=1, Rn=0, Rt=0
-    // Fields: imm12=1, opc=0, Rt=0, size=0, Rn=0
-    let encoding: u32 = 0x39000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4640,21 +2911,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_combo_9_0_39000400() {
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_size_0_size_variant_0_0_39000000()
-{
+fn test_aarch64_memory_single_general_immediate_unsigned_special_size_0_size_variant_0_0_39000000() {
     // Encoding: 0x39000000
     // Test aarch64_memory_single_general_immediate_unsigned special value size = 0 (Size variant 0)
-    // Fields: Rt=0, imm12=0, size=0, opc=0, Rn=0
+    // Fields: opc=0, imm12=0, size=0, Rn=0, Rt=0
     let encoding: u32 = 0x39000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4662,21 +2927,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_special_size_0_size_var
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_size_1_size_variant_1_0_79000000()
-{
+fn test_aarch64_memory_single_general_immediate_unsigned_special_size_1_size_variant_1_0_79000000() {
     // Encoding: 0x79000000
     // Test aarch64_memory_single_general_immediate_unsigned special value size = 1 (Size variant 1)
-    // Fields: imm12=0, Rt=0, size=1, opc=0, Rn=0
+    // Fields: opc=0, imm12=0, size=1, Rn=0, Rt=0
     let encoding: u32 = 0x79000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4684,21 +2943,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_special_size_1_size_var
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_size_2_size_variant_2_0_b9000000()
-{
+fn test_aarch64_memory_single_general_immediate_unsigned_special_size_2_size_variant_2_0_b9000000() {
     // Encoding: 0xB9000000
     // Test aarch64_memory_single_general_immediate_unsigned special value size = 2 (Size variant 2)
-    // Fields: opc=0, size=2, imm12=0, Rn=0, Rt=0
+    // Fields: size=2, imm12=0, opc=0, Rn=0, Rt=0
     let encoding: u32 = 0xB9000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4706,21 +2959,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_special_size_2_size_var
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_size_3_size_variant_3_0_f9000000()
-{
+fn test_aarch64_memory_single_general_immediate_unsigned_special_size_3_size_variant_3_0_f9000000() {
     // Encoding: 0xF9000000
     // Test aarch64_memory_single_general_immediate_unsigned special value size = 3 (Size variant 3)
-    // Fields: opc=0, size=3, Rn=0, imm12=0, Rt=0
+    // Fields: opc=0, size=3, Rn=0, Rt=0, imm12=0
     let encoding: u32 = 0xF9000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4731,17 +2978,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_special_size_3_size_var
 fn test_aarch64_memory_single_general_immediate_unsigned_special_opc_0_size_variant_0_0_39000000() {
     // Encoding: 0x39000000
     // Test aarch64_memory_single_general_immediate_unsigned special value opc = 0 (Size variant 0)
-    // Fields: Rn=0, opc=0, imm12=0, size=0, Rt=0
+    // Fields: Rt=0, size=0, opc=0, Rn=0, imm12=0
     let encoding: u32 = 0x39000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4752,17 +2994,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_special_opc_0_size_vari
 fn test_aarch64_memory_single_general_immediate_unsigned_special_opc_1_size_variant_1_0_39400000() {
     // Encoding: 0x39400000
     // Test aarch64_memory_single_general_immediate_unsigned special value opc = 1 (Size variant 1)
-    // Fields: Rt=0, Rn=0, imm12=0, size=0, opc=1
+    // Fields: opc=1, Rt=0, size=0, Rn=0, imm12=0
     let encoding: u32 = 0x39400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4773,17 +3010,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_special_opc_1_size_vari
 fn test_aarch64_memory_single_general_immediate_unsigned_special_opc_2_size_variant_2_0_39800000() {
     // Encoding: 0x39800000
     // Test aarch64_memory_single_general_immediate_unsigned special value opc = 2 (Size variant 2)
-    // Fields: Rn=0, Rt=0, opc=2, size=0, imm12=0
+    // Fields: Rt=0, imm12=0, size=0, Rn=0, opc=2
     let encoding: u32 = 0x39800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4794,17 +3026,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_special_opc_2_size_vari
 fn test_aarch64_memory_single_general_immediate_unsigned_special_opc_3_size_variant_3_0_39c00000() {
     // Encoding: 0x39C00000
     // Test aarch64_memory_single_general_immediate_unsigned special value opc = 3 (Size variant 3)
-    // Fields: size=0, Rt=0, Rn=0, imm12=0, opc=3
+    // Fields: Rt=0, size=0, imm12=0, opc=3, Rn=0
     let encoding: u32 = 0x39C00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4812,21 +3039,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_special_opc_3_size_vari
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_rn_31_stack_pointer_sp_may_require_alignment_0_390003e0(
-) {
+fn test_aarch64_memory_single_general_immediate_unsigned_special_rn_31_stack_pointer_sp_may_require_alignment_0_390003e0() {
     // Encoding: 0x390003E0
     // Test aarch64_memory_single_general_immediate_unsigned special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rn=31, Rt=0, opc=0, imm12=0, size=0
+    // Fields: Rt=0, Rn=31, opc=0, imm12=0, size=0
     let encoding: u32 = 0x390003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -4834,21 +3055,15 @@ fn test_aarch64_memory_single_general_immediate_unsigned_special_rn_31_stack_poi
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_3900001f(
-) {
+fn test_aarch64_memory_single_general_immediate_unsigned_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_3900001f() {
     // Encoding: 0x3900001F
     // Test aarch64_memory_single_general_immediate_unsigned special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rn=0, opc=0, Rt=31, size=0, imm12=0
+    // Fields: size=0, imm12=0, Rn=0, opc=0, Rt=31
     let encoding: u32 = 0x3900001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_post_idx
@@ -5089,8 +3304,8 @@ fn test_aarch64_memory_single_general_immediate_signed_pre_idx_store_0_38000c20(
     // Test aarch64_memory_single_general_immediate_signed_pre_idx memory store: 8 bytes
     // Encoding: 0x38000C20
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     set_x(&mut cpu, 1, 0x100000000000);
+    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     let encoding: u32 = 0x38000C20;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -5142,7 +3357,11 @@ fn test_aarch64_memory_single_general_immediate_unsigned_str_oracle_0_39000020()
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 1)
+    {
+        let buf = cpu.read_memory(0x1000, 1).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x0, "Memory at 0x1000 should be 0x0");
+    }
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -5154,13 +3373,17 @@ fn test_aarch64_memory_single_general_immediate_unsigned_str_oracle_1_39000020()
     // Test STRB: byte value (oracle)
     // Encoding: 0x39000020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0xFF);
     set_x(&mut cpu, 1, 0x1000);
+    set_x(&mut cpu, 0, 0xFF);
     let encoding: u32 = 0x39000020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 1)
+    {
+        let buf = cpu.read_memory(0x1000, 1).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0xFF, "Memory at 0x1000 should be 0xFF");
+    }
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -5178,7 +3401,11 @@ fn test_aarch64_memory_single_general_immediate_unsigned_str_oracle_2_39000020()
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 1)
+    {
+        let buf = cpu.read_memory(0x1000, 1).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x34, "Memory at 0x1000 should be 0x34");
+    }
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -5196,7 +3423,11 @@ fn test_aarch64_memory_single_general_immediate_unsigned_str_oracle_3_39000020()
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 1)
+    {
+        let buf = cpu.read_memory(0x1000, 1).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x78, "Memory at 0x1000 should be 0x78");
+    }
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -5214,7 +3445,11 @@ fn test_aarch64_memory_single_general_immediate_unsigned_str_oracle_4_39000020()
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 1)
+    {
+        let buf = cpu.read_memory(0x1000, 1).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0xF0, "Memory at 0x1000 should be 0xF0");
+    }
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_unsigned
@@ -5367,17 +3602,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_exception_1_39000000() 
 fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_size_0_min_0_3c000000() {
     // Encoding: 0x3C000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field size = 0 (Min)
-    // Fields: opc=0, size=0, Rn=0, imm9=0, Rt=0
+    // Fields: size=0, Rt=0, Rn=0, imm9=0, opc=0
     let encoding: u32 = 0x3C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5385,21 +3615,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_size_0
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_size_1_poweroftwo_0_7c000000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_size_1_poweroftwo_0_7c000000() {
     // Encoding: 0x7C000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field size = 1 (PowerOfTwo)
-    // Fields: imm9=0, opc=0, size=1, Rn=0, Rt=0
+    // Fields: imm9=0, Rn=0, Rt=0, size=1, opc=0
     let encoding: u32 = 0x7C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5407,21 +3631,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_size_1
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_size_2_poweroftwo_0_bc000000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_size_2_poweroftwo_0_bc000000() {
     // Encoding: 0xBC000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field size = 2 (PowerOfTwo)
-    // Fields: Rn=0, size=2, imm9=0, opc=0, Rt=0
+    // Fields: opc=0, Rn=0, Rt=0, size=2, imm9=0
     let encoding: u32 = 0xBC000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5432,17 +3650,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_size_2
 fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_size_3_max_0_fc000000() {
     // Encoding: 0xFC000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field size = 3 (Max)
-    // Fields: Rt=0, size=3, imm9=0, opc=0, Rn=0
+    // Fields: Rn=0, Rt=0, imm9=0, size=3, opc=0
     let encoding: u32 = 0xFC000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5453,17 +3666,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_size_3
 fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_opc_0_min_0_3c000000() {
     // Encoding: 0x3C000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field opc = 0 (Min)
-    // Fields: Rn=0, size=0, Rt=0, imm9=0, opc=0
+    // Fields: Rn=0, Rt=0, imm9=0, opc=0, size=0
     let encoding: u32 = 0x3C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5471,21 +3679,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_opc_0_
 /// Requirement: FieldBoundary { field: "opc", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_opc_1_poweroftwo_0_3c400000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_opc_1_poweroftwo_0_3c400000() {
     // Encoding: 0x3C400000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field opc = 1 (PowerOfTwo)
-    // Fields: size=0, Rt=0, opc=1, imm9=0, Rn=0
+    // Fields: Rn=0, size=0, imm9=0, Rt=0, opc=1
     let encoding: u32 = 0x3C400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5493,21 +3695,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_opc_1_
 /// Requirement: FieldBoundary { field: "opc", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_opc_2_poweroftwo_0_3c800000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_opc_2_poweroftwo_0_3c800000() {
     // Encoding: 0x3C800000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field opc = 2 (PowerOfTwo)
-    // Fields: Rn=0, size=0, opc=2, imm9=0, Rt=0
+    // Fields: size=0, opc=2, Rn=0, Rt=0, imm9=0
     let encoding: u32 = 0x3C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5518,17 +3714,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_opc_2_
 fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_opc_3_max_0_3cc00000() {
     // Encoding: 0x3CC00000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field opc = 3 (Max)
-    // Fields: Rn=0, opc=3, size=0, Rt=0, imm9=0
+    // Fields: imm9=0, Rt=0, Rn=0, opc=3, size=0
     let encoding: u32 = 0x3CC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5539,17 +3730,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_opc_3_
 fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_0_zero_0_3c000000() {
     // Encoding: 0x3C000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 0 (Zero)
-    // Fields: size=0, Rn=0, Rt=0, imm9=0, opc=0
+    // Fields: opc=0, size=0, imm9=0, Rn=0, Rt=0
     let encoding: u32 = 0x3C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5557,21 +3743,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_0
 /// Requirement: FieldBoundary { field: "imm9", value: 1, boundary: PowerOfTwo }
 /// immediate value 1
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_1_poweroftwo_0_3c001000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_1_poweroftwo_0_3c001000() {
     // Encoding: 0x3C001000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 1 (PowerOfTwo)
-    // Fields: size=0, imm9=1, Rt=0, opc=0, Rn=0
+    // Fields: imm9=1, Rn=0, Rt=0, opc=0, size=0
     let encoding: u32 = 0x3C001000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5579,21 +3759,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_1
 /// Requirement: FieldBoundary { field: "imm9", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_3_poweroftwominusone_0_3c003000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_3_poweroftwominusone_0_3c003000() {
     // Encoding: 0x3C003000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: imm9=3, opc=0, Rt=0, size=0, Rn=0
+    // Fields: Rt=0, opc=0, imm9=3, size=0, Rn=0
     let encoding: u32 = 0x3C003000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5601,21 +3775,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_3
 /// Requirement: FieldBoundary { field: "imm9", value: 4, boundary: PowerOfTwo }
 /// power of 2 (2^2 = 4)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_4_poweroftwo_0_3c004000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_4_poweroftwo_0_3c004000() {
     // Encoding: 0x3C004000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 4 (PowerOfTwo)
-    // Fields: imm9=4, size=0, opc=0, Rn=0, Rt=0
+    // Fields: size=0, opc=0, imm9=4, Rt=0, Rn=0
     let encoding: u32 = 0x3C004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5623,21 +3791,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_4
 /// Requirement: FieldBoundary { field: "imm9", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_7_poweroftwominusone_0_3c007000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_7_poweroftwominusone_0_3c007000() {
     // Encoding: 0x3C007000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, imm9=7, Rn=0, size=0, opc=0
+    // Fields: Rn=0, imm9=7, Rt=0, size=0, opc=0
     let encoding: u32 = 0x3C007000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5645,21 +3807,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_7
 /// Requirement: FieldBoundary { field: "imm9", value: 8, boundary: PowerOfTwo }
 /// power of 2 (2^3 = 8)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_8_poweroftwo_0_3c008000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_8_poweroftwo_0_3c008000() {
     // Encoding: 0x3C008000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 8 (PowerOfTwo)
-    // Fields: Rt=0, opc=0, size=0, Rn=0, imm9=8
+    // Fields: Rn=0, size=0, Rt=0, imm9=8, opc=0
     let encoding: u32 = 0x3C008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5667,21 +3823,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_8
 /// Requirement: FieldBoundary { field: "imm9", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_15_poweroftwominusone_0_3c00f000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_15_poweroftwominusone_0_3c00f000() {
     // Encoding: 0x3C00F000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, opc=0, size=0, imm9=15, Rt=0
+    // Fields: Rn=0, imm9=15, opc=0, size=0, Rt=0
     let encoding: u32 = 0x3C00F000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5689,21 +3839,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_1
 /// Requirement: FieldBoundary { field: "imm9", value: 16, boundary: PowerOfTwo }
 /// power of 2 (2^4 = 16)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_16_poweroftwo_0_3c010000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_16_poweroftwo_0_3c010000() {
     // Encoding: 0x3C010000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 16 (PowerOfTwo)
-    // Fields: opc=0, imm9=16, size=0, Rn=0, Rt=0
+    // Fields: size=0, imm9=16, opc=0, Rt=0, Rn=0
     let encoding: u32 = 0x3C010000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5711,21 +3855,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_1
 /// Requirement: FieldBoundary { field: "imm9", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_31_poweroftwominusone_0_3c01f000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_31_poweroftwominusone_0_3c01f000() {
     // Encoding: 0x3C01F000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rn=0, opc=0, Rt=0, imm9=31
+    // Fields: imm9=31, size=0, Rn=0, Rt=0, opc=0
     let encoding: u32 = 0x3C01F000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5733,21 +3871,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_3
 /// Requirement: FieldBoundary { field: "imm9", value: 32, boundary: PowerOfTwo }
 /// power of 2 (2^5 = 32)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_32_poweroftwo_0_3c020000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_32_poweroftwo_0_3c020000() {
     // Encoding: 0x3C020000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 32 (PowerOfTwo)
-    // Fields: size=0, Rt=0, imm9=32, opc=0, Rn=0
+    // Fields: size=0, imm9=32, opc=0, Rn=0, Rt=0
     let encoding: u32 = 0x3C020000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5755,21 +3887,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_3
 /// Requirement: FieldBoundary { field: "imm9", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_63_poweroftwominusone_0_3c03f000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_63_poweroftwominusone_0_3c03f000() {
     // Encoding: 0x3C03F000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rn=0, opc=0, imm9=63, Rt=0
+    // Fields: size=0, Rn=0, Rt=0, imm9=63, opc=0
     let encoding: u32 = 0x3C03F000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5777,21 +3903,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_6
 /// Requirement: FieldBoundary { field: "imm9", value: 64, boundary: PowerOfTwo }
 /// power of 2 (2^6 = 64)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_64_poweroftwo_0_3c040000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_64_poweroftwo_0_3c040000() {
     // Encoding: 0x3C040000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 64 (PowerOfTwo)
-    // Fields: size=0, imm9=64, opc=0, Rn=0, Rt=0
+    // Fields: opc=0, imm9=64, Rt=0, Rn=0, size=0
     let encoding: u32 = 0x3C040000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5799,21 +3919,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_6
 /// Requirement: FieldBoundary { field: "imm9", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_127_poweroftwominusone_0_3c07f000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_127_poweroftwominusone_0_3c07f000() {
     // Encoding: 0x3C07F000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rt=0, Rn=0, opc=0, imm9=127
+    // Fields: Rt=0, size=0, opc=0, imm9=127, Rn=0
     let encoding: u32 = 0x3C07F000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5821,21 +3935,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_1
 /// Requirement: FieldBoundary { field: "imm9", value: 128, boundary: PowerOfTwo }
 /// power of 2 (2^7 = 128)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_128_poweroftwo_0_3c080000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_128_poweroftwo_0_3c080000() {
     // Encoding: 0x3C080000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 128 (PowerOfTwo)
-    // Fields: Rt=0, size=0, imm9=128, Rn=0, opc=0
+    // Fields: imm9=128, size=0, opc=0, Rn=0, Rt=0
     let encoding: u32 = 0x3C080000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5843,21 +3951,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_1
 /// Requirement: FieldBoundary { field: "imm9", value: 255, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (255)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_255_poweroftwominusone_0_3c0ff000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_255_poweroftwominusone_0_3c0ff000() {
     // Encoding: 0x3C0FF000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rt=0, size=0, Rn=0, imm9=255
+    // Fields: size=0, imm9=255, opc=0, Rt=0, Rn=0
     let encoding: u32 = 0x3C0FF000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5865,21 +3967,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_2
 /// Requirement: FieldBoundary { field: "imm9", value: 256, boundary: PowerOfTwo }
 /// power of 2 (2^8 = 256)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_256_poweroftwo_0_3c100000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_256_poweroftwo_0_3c100000() {
     // Encoding: 0x3C100000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 256 (PowerOfTwo)
-    // Fields: opc=0, Rt=0, imm9=256, Rn=0, size=0
+    // Fields: imm9=256, opc=0, Rn=0, Rt=0, size=0
     let encoding: u32 = 0x3C100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5887,21 +3983,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_2
 /// Requirement: FieldBoundary { field: "imm9", value: 511, boundary: Max }
 /// maximum immediate (511)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_511_max_0_3c1ff000()
-{
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_511_max_0_3c1ff000() {
     // Encoding: 0x3C1FF000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field imm9 = 511 (Max)
-    // Fields: imm9=511, size=0, opc=0, Rn=0, Rt=0
+    // Fields: size=0, opc=0, Rn=0, imm9=511, Rt=0
     let encoding: u32 = 0x3C1FF000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5912,17 +4002,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_imm9_5
 fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rn_0_min_0_3c000000() {
     // Encoding: 0x3C000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field Rn = 0 (Min)
-    // Fields: size=0, imm9=0, Rn=0, Rt=0, opc=0
+    // Fields: Rn=0, size=0, imm9=0, Rt=0, opc=0
     let encoding: u32 = 0x3C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5930,21 +4015,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rn_0_m
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rn_1_poweroftwo_0_3c000020(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rn_1_poweroftwo_0_3c000020() {
     // Encoding: 0x3C000020
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field Rn = 1 (PowerOfTwo)
-    // Fields: size=0, opc=0, imm9=0, Rt=0, Rn=1
+    // Fields: size=0, opc=0, Rt=0, imm9=0, Rn=1
     let encoding: u32 = 0x3C000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5952,21 +4031,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rn_1_p
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rn_30_poweroftwominusone_0_3c0003c0(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rn_30_poweroftwominusone_0_3c0003c0() {
     // Encoding: 0x3C0003C0
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, opc=0, size=0, imm9=0, Rn=30
+    // Fields: size=0, Rn=30, Rt=0, imm9=0, opc=0
     let encoding: u32 = 0x3C0003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5977,17 +4050,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rn_30_
 fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rn_31_max_0_3c0003e0() {
     // Encoding: 0x3C0003E0
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field Rn = 31 (Max)
-    // Fields: Rt=0, imm9=0, Rn=31, opc=0, size=0
+    // Fields: Rn=31, size=0, opc=0, imm9=0, Rt=0
     let encoding: u32 = 0x3C0003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -5998,17 +4066,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rn_31_
 fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rt_0_min_0_3c000000() {
     // Encoding: 0x3C000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field Rt = 0 (Min)
-    // Fields: Rt=0, size=0, opc=0, imm9=0, Rn=0
+    // Fields: size=0, Rn=0, Rt=0, opc=0, imm9=0
     let encoding: u32 = 0x3C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6016,21 +4079,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rt_0_m
 /// Requirement: FieldBoundary { field: "Rt", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rt_1_poweroftwo_0_3c000001(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rt_1_poweroftwo_0_3c000001() {
     // Encoding: 0x3C000001
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field Rt = 1 (PowerOfTwo)
-    // Fields: Rt=1, imm9=0, size=0, Rn=0, opc=0
+    // Fields: Rt=1, Rn=0, imm9=0, size=0, opc=0
     let encoding: u32 = 0x3C000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6038,21 +4095,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rt_1_p
 /// Requirement: FieldBoundary { field: "Rt", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rt_30_poweroftwominusone_0_3c00001e(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rt_30_poweroftwominusone_0_3c00001e() {
     // Encoding: 0x3C00001E
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, size=0, imm9=0, Rt=30, opc=0
+    // Fields: imm9=0, size=0, opc=0, Rt=30, Rn=0
     let encoding: u32 = 0x3C00001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6063,17 +4114,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rt_30_
 fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rt_31_max_0_3c00001f() {
     // Encoding: 0x3C00001F
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field Rt = 31 (Max)
-    // Fields: size=0, opc=0, imm9=0, Rn=0, Rt=31
+    // Fields: Rn=0, Rt=31, size=0, imm9=0, opc=0
     let encoding: u32 = 0x3C00001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6084,206 +4130,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_field_rt_31_
 fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_combo_0_0_3c000000() {
     // Encoding: 0x3C000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: opc=0, Rn=0, Rt=0, imm9=0, size=0
+    // Fields: imm9=0, Rn=0, size=0, opc=0, Rt=0
     let encoding: u32 = 0x3C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_combo_1_0_7c000000() {
-    // Encoding: 0x7C000000
-    // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field combination: size=1, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, opc=0, Rn=0, Rt=0, size=1
-    let encoding: u32 = 0x7C000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_combo_2_0_bc000000() {
-    // Encoding: 0xBC000000
-    // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field combination: size=2, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: opc=0, Rn=0, imm9=0, size=2, Rt=0
-    let encoding: u32 = 0xBC000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_combo_3_0_fc000000() {
-    // Encoding: 0xFC000000
-    // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field combination: size=3, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, opc=0, Rn=0, imm9=0, size=3
-    let encoding: u32 = 0xFC000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_combo_4_0_3c000000() {
-    // Encoding: 0x3C000000
-    // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: opc=0, imm9=0, size=0, Rn=0, Rt=0
-    let encoding: u32 = 0x3C000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_combo_5_0_3c400000() {
-    // Encoding: 0x3C400000
-    // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field combination: size=0, opc=1, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, size=0, Rt=0, opc=1, Rn=0
-    let encoding: u32 = 0x3C400000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_combo_6_0_3c800000() {
-    // Encoding: 0x3C800000
-    // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field combination: size=0, opc=2, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, Rn=0, size=0, opc=2, Rt=0
-    let encoding: u32 = 0x3C800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_combo_7_0_3cc00000() {
-    // Encoding: 0x3CC00000
-    // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field combination: size=0, opc=3, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, size=0, opc=3, imm9=0, Rn=0
-    let encoding: u32 = 0x3CC00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=0 (immediate value 0)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_combo_8_0_3c000000() {
-    // Encoding: 0x3C000000
-    // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rn=0, size=0, imm9=0, opc=0, Rt=0
-    let encoding: u32 = 0x3C000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_combo_9_0_3c001000() {
-    // Encoding: 0x3C001000
-    // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal field combination: size=0, opc=0, imm9=1, Rn=0, Rt=0
-    // Fields: imm9=1, Rt=0, size=0, Rn=0, opc=0
-    let encoding: u32 = 0x3C001000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6291,21 +4143,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_combo_9_0_3c
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_size_0_size_variant_0_0_3c000000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_size_0_size_variant_0_0_3c000000() {
     // Encoding: 0x3C000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal special value size = 0 (Size variant 0)
-    // Fields: Rn=0, Rt=0, opc=0, size=0, imm9=0
+    // Fields: imm9=0, size=0, opc=0, Rt=0, Rn=0
     let encoding: u32 = 0x3C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6313,21 +4159,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_size
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_size_1_size_variant_1_0_7c000000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_size_1_size_variant_1_0_7c000000() {
     // Encoding: 0x7C000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal special value size = 1 (Size variant 1)
-    // Fields: opc=0, Rt=0, imm9=0, size=1, Rn=0
+    // Fields: imm9=0, size=1, Rt=0, opc=0, Rn=0
     let encoding: u32 = 0x7C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6335,21 +4175,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_size
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_size_2_size_variant_2_0_bc000000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_size_2_size_variant_2_0_bc000000() {
     // Encoding: 0xBC000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal special value size = 2 (Size variant 2)
-    // Fields: size=2, opc=0, imm9=0, Rn=0, Rt=0
+    // Fields: size=2, opc=0, Rn=0, imm9=0, Rt=0
     let encoding: u32 = 0xBC000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6357,21 +4191,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_size
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_size_3_size_variant_3_0_fc000000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_size_3_size_variant_3_0_fc000000() {
     // Encoding: 0xFC000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal special value size = 3 (Size variant 3)
-    // Fields: opc=0, size=3, imm9=0, Rn=0, Rt=0
+    // Fields: imm9=0, opc=0, size=3, Rt=0, Rn=0
     let encoding: u32 = 0xFC000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6379,21 +4207,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_size
 /// Requirement: FieldSpecial { field: "opc", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_opc_0_size_variant_0_0_3c000000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_opc_0_size_variant_0_0_3c000000() {
     // Encoding: 0x3C000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal special value opc = 0 (Size variant 0)
-    // Fields: size=0, opc=0, imm9=0, Rt=0, Rn=0
+    // Fields: size=0, Rn=0, imm9=0, opc=0, Rt=0
     let encoding: u32 = 0x3C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6401,21 +4223,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_opc_
 /// Requirement: FieldSpecial { field: "opc", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_opc_1_size_variant_1_0_3c400000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_opc_1_size_variant_1_0_3c400000() {
     // Encoding: 0x3C400000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal special value opc = 1 (Size variant 1)
-    // Fields: opc=1, imm9=0, size=0, Rt=0, Rn=0
+    // Fields: opc=1, Rn=0, size=0, Rt=0, imm9=0
     let encoding: u32 = 0x3C400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6423,21 +4239,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_opc_
 /// Requirement: FieldSpecial { field: "opc", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_opc_2_size_variant_2_0_3c800000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_opc_2_size_variant_2_0_3c800000() {
     // Encoding: 0x3C800000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal special value opc = 2 (Size variant 2)
-    // Fields: Rt=0, opc=2, imm9=0, size=0, Rn=0
+    // Fields: Rn=0, imm9=0, size=0, Rt=0, opc=2
     let encoding: u32 = 0x3C800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6445,21 +4255,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_opc_
 /// Requirement: FieldSpecial { field: "opc", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_opc_3_size_variant_3_0_3cc00000(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_opc_3_size_variant_3_0_3cc00000() {
     // Encoding: 0x3CC00000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal special value opc = 3 (Size variant 3)
-    // Fields: Rn=0, imm9=0, Rt=0, size=0, opc=3
+    // Fields: Rt=0, size=0, opc=3, imm9=0, Rn=0
     let encoding: u32 = 0x3CC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6467,21 +4271,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_opc_
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_rn_31_stack_pointer_sp_may_require_alignment_0_3c0003e0(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_rn_31_stack_pointer_sp_may_require_alignment_0_3c0003e0() {
     // Encoding: 0x3C0003E0
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: opc=0, Rn=31, imm9=0, Rt=0, size=0
+    // Fields: Rt=0, size=0, Rn=31, imm9=0, opc=0
     let encoding: u32 = 0x3C0003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6489,21 +4287,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_rn_3
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_3c00001f(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_3c00001f() {
     // Encoding: 0x3C00001F
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: size=0, imm9=0, opc=0, Rn=0, Rt=31
+    // Fields: opc=0, size=0, imm9=0, Rn=0, Rt=31
     let encoding: u32 = 0x3C00001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6514,16 +4306,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_special_rt_3
 fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_invalid_0_0_3c000000() {
     // Encoding: 0x3C000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal invalid encoding: Binary { op: Gt, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "scale" }), rhs: LitInt(4) }
-    // Fields: Rt=0, imm9=0, size=0, Rn=0, opc=0
+    // Fields: Rt=0, Rn=0, size=0, opc=0, imm9=0
     let encoding: u32 = 0x3C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6534,16 +4322,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_invalid_0_0_
 fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_invalid_1_0_3c000000() {
     // Encoding: 0x3C000000
     // Test aarch64_memory_single_simdfp_immediate_signed_offset_normal invalid encoding: Unconditional UNDEFINED
-    // Fields: size=0, opc=0, Rn=0, Rt=0, imm9=0
+    // Fields: Rt=0, size=0, Rn=0, opc=0, imm9=0
     let encoding: u32 = 0x3C000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_offset_normal
@@ -6648,21 +4432,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_offset_normal_store_0_3c00
 /// Requirement: FieldBoundary { field: "size", value: 0, boundary: Min }
 /// 8-bit / byte size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_size_0_min_0_19000000()
-{
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_size_0_min_0_19000000() {
     // Encoding: 0x19000000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field size = 0 (Min)
-    // Fields: Rn=0, imm9=0, size=0, Rt=0, opc=0
+    // Fields: Rn=0, Rt=0, opc=0, imm9=0, size=0
     let encoding: u32 = 0x19000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6670,21 +4448,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_size
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_size_1_poweroftwo_0_59000000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_size_1_poweroftwo_0_59000000() {
     // Encoding: 0x59000000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field size = 1 (PowerOfTwo)
-    // Fields: imm9=0, Rt=0, Rn=0, opc=0, size=1
+    // Fields: opc=0, size=1, Rn=0, Rt=0, imm9=0
     let encoding: u32 = 0x59000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6692,21 +4464,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_size
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_size_2_poweroftwo_0_99000000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_size_2_poweroftwo_0_99000000() {
     // Encoding: 0x99000000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field size = 2 (PowerOfTwo)
-    // Fields: size=2, opc=0, Rn=0, Rt=0, imm9=0
+    // Fields: Rt=0, size=2, opc=0, imm9=0, Rn=0
     let encoding: u32 = 0x99000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6714,21 +4480,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_size
 /// Requirement: FieldBoundary { field: "size", value: 3, boundary: Max }
 /// 64-bit / doubleword size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_size_3_max_0_d9000000()
-{
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_size_3_max_0_d9000000() {
     // Encoding: 0xD9000000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field size = 3 (Max)
-    // Fields: Rt=0, opc=0, imm9=0, Rn=0, size=3
+    // Fields: Rn=0, size=3, Rt=0, opc=0, imm9=0
     let encoding: u32 = 0xD9000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6739,17 +4499,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_size
 fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_opc_0_min_0_19000000() {
     // Encoding: 0x19000000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field opc = 0 (Min)
-    // Fields: size=0, opc=0, imm9=0, Rt=0, Rn=0
+    // Fields: size=0, Rt=0, imm9=0, Rn=0, opc=0
     let encoding: u32 = 0x19000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6757,21 +4512,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_opc_
 /// Requirement: FieldBoundary { field: "opc", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_opc_1_poweroftwo_0_19400000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_opc_1_poweroftwo_0_19400000() {
     // Encoding: 0x19400000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field opc = 1 (PowerOfTwo)
-    // Fields: imm9=0, size=0, opc=1, Rn=0, Rt=0
+    // Fields: imm9=0, size=0, Rn=0, opc=1, Rt=0
     let encoding: u32 = 0x19400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6779,21 +4528,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_opc_
 /// Requirement: FieldBoundary { field: "opc", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_opc_2_poweroftwo_0_19800000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_opc_2_poweroftwo_0_19800000() {
     // Encoding: 0x19800000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field opc = 2 (PowerOfTwo)
-    // Fields: Rn=0, size=0, Rt=0, imm9=0, opc=2
+    // Fields: size=0, imm9=0, opc=2, Rn=0, Rt=0
     let encoding: u32 = 0x19800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6804,17 +4547,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_opc_
 fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_opc_3_max_0_19c00000() {
     // Encoding: 0x19C00000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field opc = 3 (Max)
-    // Fields: size=0, opc=3, imm9=0, Rn=0, Rt=0
+    // Fields: Rn=0, opc=3, Rt=0, size=0, imm9=0
     let encoding: u32 = 0x19C00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6822,21 +4560,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_opc_
 /// Requirement: FieldBoundary { field: "imm9", value: 0, boundary: Zero }
 /// immediate value 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_0_zero_0_19000000()
-{
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_0_zero_0_19000000() {
     // Encoding: 0x19000000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 0 (Zero)
-    // Fields: Rt=0, Rn=0, imm9=0, size=0, opc=0
+    // Fields: size=0, opc=0, Rn=0, Rt=0, imm9=0
     let encoding: u32 = 0x19000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6844,21 +4576,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 1, boundary: PowerOfTwo }
 /// immediate value 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_1_poweroftwo_0_19001000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_1_poweroftwo_0_19001000() {
     // Encoding: 0x19001000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 1 (PowerOfTwo)
-    // Fields: imm9=1, Rt=0, opc=0, size=0, Rn=0
+    // Fields: Rt=0, size=0, imm9=1, Rn=0, opc=0
     let encoding: u32 = 0x19001000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6866,21 +4592,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_3_poweroftwominusone_0_19003000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_3_poweroftwominusone_0_19003000() {
     // Encoding: 0x19003000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: imm9=3, Rn=0, opc=0, size=0, Rt=0
+    // Fields: opc=0, Rn=0, imm9=3, Rt=0, size=0
     let encoding: u32 = 0x19003000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6888,21 +4608,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 4, boundary: PowerOfTwo }
 /// power of 2 (2^2 = 4)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_4_poweroftwo_0_19004000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_4_poweroftwo_0_19004000() {
     // Encoding: 0x19004000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 4 (PowerOfTwo)
-    // Fields: opc=0, size=0, Rt=0, Rn=0, imm9=4
+    // Fields: size=0, Rt=0, Rn=0, imm9=4, opc=0
     let encoding: u32 = 0x19004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6910,21 +4624,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_7_poweroftwominusone_0_19007000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_7_poweroftwominusone_0_19007000() {
     // Encoding: 0x19007000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rt=0, imm9=7, size=0, opc=0
+    // Fields: opc=0, Rn=0, Rt=0, size=0, imm9=7
     let encoding: u32 = 0x19007000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6932,21 +4640,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 8, boundary: PowerOfTwo }
 /// power of 2 (2^3 = 8)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_8_poweroftwo_0_19008000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_8_poweroftwo_0_19008000() {
     // Encoding: 0x19008000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 8 (PowerOfTwo)
-    // Fields: opc=0, imm9=8, Rt=0, size=0, Rn=0
+    // Fields: Rt=0, opc=0, size=0, imm9=8, Rn=0
     let encoding: u32 = 0x19008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6954,21 +4656,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_15_poweroftwominusone_0_1900f000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_15_poweroftwominusone_0_1900f000() {
     // Encoding: 0x1900F000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, imm9=15, size=0, opc=0, Rn=0
+    // Fields: imm9=15, Rt=0, opc=0, size=0, Rn=0
     let encoding: u32 = 0x1900F000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6976,21 +4672,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 16, boundary: PowerOfTwo }
 /// power of 2 (2^4 = 16)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_16_poweroftwo_0_19010000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_16_poweroftwo_0_19010000() {
     // Encoding: 0x19010000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 16 (PowerOfTwo)
-    // Fields: Rn=0, size=0, opc=0, Rt=0, imm9=16
+    // Fields: imm9=16, opc=0, Rn=0, Rt=0, size=0
     let encoding: u32 = 0x19010000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -6998,21 +4688,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_31_poweroftwominusone_0_1901f000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_31_poweroftwominusone_0_1901f000() {
     // Encoding: 0x1901F000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rt=0, Rn=0, imm9=31, opc=0
+    // Fields: Rt=0, size=0, opc=0, imm9=31, Rn=0
     let encoding: u32 = 0x1901F000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7020,21 +4704,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 32, boundary: PowerOfTwo }
 /// power of 2 (2^5 = 32)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_32_poweroftwo_0_19020000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_32_poweroftwo_0_19020000() {
     // Encoding: 0x19020000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 32 (PowerOfTwo)
-    // Fields: size=0, opc=0, imm9=32, Rn=0, Rt=0
+    // Fields: Rn=0, imm9=32, opc=0, Rt=0, size=0
     let encoding: u32 = 0x19020000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7042,21 +4720,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_63_poweroftwominusone_0_1903f000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_63_poweroftwominusone_0_1903f000() {
     // Encoding: 0x1903F000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: opc=0, size=0, imm9=63, Rn=0, Rt=0
+    // Fields: Rn=0, imm9=63, opc=0, size=0, Rt=0
     let encoding: u32 = 0x1903F000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7064,21 +4736,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 64, boundary: PowerOfTwo }
 /// power of 2 (2^6 = 64)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_64_poweroftwo_0_19040000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_64_poweroftwo_0_19040000() {
     // Encoding: 0x19040000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 64 (PowerOfTwo)
-    // Fields: Rn=0, Rt=0, size=0, opc=0, imm9=64
+    // Fields: imm9=64, Rt=0, opc=0, size=0, Rn=0
     let encoding: u32 = 0x19040000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7086,21 +4752,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_127_poweroftwominusone_0_1907f000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_127_poweroftwominusone_0_1907f000() {
     // Encoding: 0x1907F000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: opc=0, imm9=127, Rn=0, Rt=0, size=0
+    // Fields: Rt=0, Rn=0, imm9=127, size=0, opc=0
     let encoding: u32 = 0x1907F000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7108,21 +4768,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 128, boundary: PowerOfTwo }
 /// power of 2 (2^7 = 128)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_128_poweroftwo_0_19080000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_128_poweroftwo_0_19080000() {
     // Encoding: 0x19080000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 128 (PowerOfTwo)
-    // Fields: Rt=0, imm9=128, opc=0, Rn=0, size=0
+    // Fields: opc=0, imm9=128, size=0, Rn=0, Rt=0
     let encoding: u32 = 0x19080000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7130,21 +4784,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 255, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (255)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_255_poweroftwominusone_0_190ff000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_255_poweroftwominusone_0_190ff000() {
     // Encoding: 0x190FF000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rn=0, imm9=255, size=0, Rt=0
+    // Fields: opc=0, imm9=255, size=0, Rt=0, Rn=0
     let encoding: u32 = 0x190FF000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7152,21 +4800,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 256, boundary: PowerOfTwo }
 /// power of 2 (2^8 = 256)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_256_poweroftwo_0_19100000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_256_poweroftwo_0_19100000() {
     // Encoding: 0x19100000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 256 (PowerOfTwo)
-    // Fields: size=0, opc=0, Rn=0, Rt=0, imm9=256
+    // Fields: Rn=0, size=0, Rt=0, imm9=256, opc=0
     let encoding: u32 = 0x19100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7174,21 +4816,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 /// Requirement: FieldBoundary { field: "imm9", value: 511, boundary: Max }
 /// maximum immediate (511)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_511_max_0_191ff000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9_511_max_0_191ff000() {
     // Encoding: 0x191FF000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field imm9 = 511 (Max)
-    // Fields: size=0, opc=0, imm9=511, Rn=0, Rt=0
+    // Fields: Rt=0, imm9=511, opc=0, size=0, Rn=0
     let encoding: u32 = 0x191FF000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7199,17 +4835,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_imm9
 fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rn_0_min_0_19000000() {
     // Encoding: 0x19000000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field Rn = 0 (Min)
-    // Fields: Rt=0, Rn=0, opc=0, size=0, imm9=0
+    // Fields: imm9=0, opc=0, Rn=0, Rt=0, size=0
     let encoding: u32 = 0x19000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7217,21 +4848,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rn_0
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rn_1_poweroftwo_0_19000020(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rn_1_poweroftwo_0_19000020() {
     // Encoding: 0x19000020
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field Rn = 1 (PowerOfTwo)
-    // Fields: Rt=0, size=0, Rn=1, imm9=0, opc=0
+    // Fields: imm9=0, Rn=1, size=0, Rt=0, opc=0
     let encoding: u32 = 0x19000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7239,21 +4864,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rn_1
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rn_30_poweroftwominusone_0_190003c0(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rn_30_poweroftwominusone_0_190003c0() {
     // Encoding: 0x190003C0
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, opc=0, imm9=0, Rn=30, size=0
+    // Fields: imm9=0, size=0, Rt=0, opc=0, Rn=30
     let encoding: u32 = 0x190003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7264,17 +4883,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rn_3
 fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rn_31_max_0_190003e0() {
     // Encoding: 0x190003E0
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field Rn = 31 (Max)
-    // Fields: size=0, Rt=0, Rn=31, imm9=0, opc=0
+    // Fields: Rn=31, opc=0, Rt=0, size=0, imm9=0
     let encoding: u32 = 0x190003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7285,17 +4899,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rn_3
 fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rt_0_min_0_19000000() {
     // Encoding: 0x19000000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field Rt = 0 (Min)
-    // Fields: opc=0, imm9=0, Rt=0, size=0, Rn=0
+    // Fields: size=0, opc=0, imm9=0, Rn=0, Rt=0
     let encoding: u32 = 0x19000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7303,21 +4912,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rt_0
 /// Requirement: FieldBoundary { field: "Rt", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rt_1_poweroftwo_0_19000001(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rt_1_poweroftwo_0_19000001() {
     // Encoding: 0x19000001
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field Rt = 1 (PowerOfTwo)
-    // Fields: imm9=0, opc=0, size=0, Rn=0, Rt=1
+    // Fields: size=0, Rn=0, Rt=1, imm9=0, opc=0
     let encoding: u32 = 0x19000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7325,21 +4928,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rt_1
 /// Requirement: FieldBoundary { field: "Rt", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rt_30_poweroftwominusone_0_1900001e(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rt_30_poweroftwominusone_0_1900001e() {
     // Encoding: 0x1900001E
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: opc=0, imm9=0, size=0, Rt=30, Rn=0
+    // Fields: opc=0, size=0, Rn=0, Rt=30, imm9=0
     let encoding: u32 = 0x1900001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7350,17 +4947,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rt_3
 fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rt_31_max_0_1900001f() {
     // Encoding: 0x1900001F
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field Rt = 31 (Max)
-    // Fields: size=0, Rn=0, opc=0, Rt=31, imm9=0
+    // Fields: Rt=31, size=0, opc=0, Rn=0, imm9=0
     let encoding: u32 = 0x1900001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7371,206 +4963,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_field_rt_3
 fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_combo_0_0_19000000() {
     // Encoding: 0x19000000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, imm9=0, Rn=0, size=0, opc=0
+    // Fields: size=0, Rt=0, opc=0, imm9=0, Rn=0
     let encoding: u32 = 0x19000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_combo_1_0_59000000() {
-    // Encoding: 0x59000000
-    // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field combination: size=1, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: size=1, Rt=0, Rn=0, imm9=0, opc=0
-    let encoding: u32 = 0x59000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_combo_2_0_99000000() {
-    // Encoding: 0x99000000
-    // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field combination: size=2, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, size=2, opc=0, imm9=0, Rn=0
-    let encoding: u32 = 0x99000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_combo_3_0_d9000000() {
-    // Encoding: 0xD9000000
-    // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field combination: size=3, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: size=3, opc=0, imm9=0, Rt=0, Rn=0
-    let encoding: u32 = 0xD9000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_combo_4_0_19000000() {
-    // Encoding: 0x19000000
-    // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: size=0, imm9=0, Rt=0, opc=0, Rn=0
-    let encoding: u32 = 0x19000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_combo_5_0_19400000() {
-    // Encoding: 0x19400000
-    // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field combination: size=0, opc=1, imm9=0, Rn=0, Rt=0
-    // Fields: opc=1, Rn=0, Rt=0, size=0, imm9=0
-    let encoding: u32 = 0x19400000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_combo_6_0_19800000() {
-    // Encoding: 0x19800000
-    // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field combination: size=0, opc=2, imm9=0, Rn=0, Rt=0
-    // Fields: size=0, opc=2, imm9=0, Rn=0, Rt=0
-    let encoding: u32 = 0x19800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_combo_7_0_19c00000() {
-    // Encoding: 0x19C00000
-    // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field combination: size=0, opc=3, imm9=0, Rn=0, Rt=0
-    // Fields: Rn=0, imm9=0, size=0, opc=3, Rt=0
-    let encoding: u32 = 0x19C00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=0 (immediate value 0)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_combo_8_0_19000000() {
-    // Encoding: 0x19000000
-    // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: size=0, Rt=0, imm9=0, Rn=0, opc=0
-    let encoding: u32 = 0x19000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_combo_9_0_19001000() {
-    // Encoding: 0x19001000
-    // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl field combination: size=0, opc=0, imm9=1, Rn=0, Rt=0
-    // Fields: Rn=0, size=0, imm9=1, opc=0, Rt=0
-    let encoding: u32 = 0x19001000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7578,21 +4976,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_combo_9_0_
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_size_0_size_variant_0_0_19000000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_size_0_size_variant_0_0_19000000() {
     // Encoding: 0x19000000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl special value size = 0 (Size variant 0)
-    // Fields: opc=0, size=0, Rn=0, Rt=0, imm9=0
+    // Fields: imm9=0, size=0, Rn=0, Rt=0, opc=0
     let encoding: u32 = 0x19000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7600,21 +4992,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_si
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_size_1_size_variant_1_0_59000000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_size_1_size_variant_1_0_59000000() {
     // Encoding: 0x59000000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl special value size = 1 (Size variant 1)
-    // Fields: imm9=0, opc=0, size=1, Rt=0, Rn=0
+    // Fields: size=1, Rn=0, imm9=0, opc=0, Rt=0
     let encoding: u32 = 0x59000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7622,21 +5008,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_si
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_size_2_size_variant_2_0_99000000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_size_2_size_variant_2_0_99000000() {
     // Encoding: 0x99000000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl special value size = 2 (Size variant 2)
-    // Fields: Rt=0, opc=0, size=2, Rn=0, imm9=0
+    // Fields: Rt=0, imm9=0, Rn=0, size=2, opc=0
     let encoding: u32 = 0x99000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7644,21 +5024,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_si
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_size_3_size_variant_3_0_d9000000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_size_3_size_variant_3_0_d9000000() {
     // Encoding: 0xD9000000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl special value size = 3 (Size variant 3)
-    // Fields: Rn=0, Rt=0, imm9=0, opc=0, size=3
+    // Fields: imm9=0, Rn=0, Rt=0, opc=0, size=3
     let encoding: u32 = 0xD9000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7666,21 +5040,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_si
 /// Requirement: FieldSpecial { field: "opc", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_opc_0_size_variant_0_0_19000000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_opc_0_size_variant_0_0_19000000() {
     // Encoding: 0x19000000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl special value opc = 0 (Size variant 0)
-    // Fields: Rn=0, opc=0, imm9=0, Rt=0, size=0
+    // Fields: opc=0, imm9=0, size=0, Rn=0, Rt=0
     let encoding: u32 = 0x19000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7688,21 +5056,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_op
 /// Requirement: FieldSpecial { field: "opc", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_opc_1_size_variant_1_0_19400000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_opc_1_size_variant_1_0_19400000() {
     // Encoding: 0x19400000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl special value opc = 1 (Size variant 1)
-    // Fields: imm9=0, opc=1, Rn=0, size=0, Rt=0
+    // Fields: Rn=0, opc=1, size=0, imm9=0, Rt=0
     let encoding: u32 = 0x19400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7710,21 +5072,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_op
 /// Requirement: FieldSpecial { field: "opc", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_opc_2_size_variant_2_0_19800000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_opc_2_size_variant_2_0_19800000() {
     // Encoding: 0x19800000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl special value opc = 2 (Size variant 2)
-    // Fields: Rn=0, Rt=0, imm9=0, opc=2, size=0
+    // Fields: size=0, imm9=0, Rt=0, opc=2, Rn=0
     let encoding: u32 = 0x19800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7732,21 +5088,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_op
 /// Requirement: FieldSpecial { field: "opc", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_opc_3_size_variant_3_0_19c00000(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_opc_3_size_variant_3_0_19c00000() {
     // Encoding: 0x19C00000
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl special value opc = 3 (Size variant 3)
-    // Fields: opc=3, size=0, imm9=0, Rn=0, Rt=0
+    // Fields: Rn=0, Rt=0, size=0, opc=3, imm9=0
     let encoding: u32 = 0x19C00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7754,21 +5104,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_op
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_rn_31_stack_pointer_sp_may_require_alignment_0_190003e0(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_rn_31_stack_pointer_sp_may_require_alignment_0_190003e0() {
     // Encoding: 0x190003E0
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rn=31, size=0, imm9=0, opc=0, Rt=0
+    // Fields: Rt=0, imm9=0, opc=0, Rn=31, size=0
     let encoding: u32 = 0x190003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7776,21 +5120,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_rn
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1900001f(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_1900001f() {
     // Encoding: 0x1900001F
     // Test aarch64_memory_single_general_immediate_signed_offset_lda_stl special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: opc=0, size=0, imm9=0, Rn=0, Rt=31
+    // Fields: Rt=31, size=0, imm9=0, opc=0, Rn=0
     let encoding: u32 = 0x1900001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7802,13 +5140,17 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_str_oracle
     // Test STRB: zero value (oracle)
     // Encoding: 0x39000020
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1000);
     set_x(&mut cpu, 0, 0x0);
+    set_x(&mut cpu, 1, 0x1000);
     let encoding: u32 = 0x39000020;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 1)
+    {
+        let buf = cpu.read_memory(0x1000, 1).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x0, "Memory at 0x1000 should be 0x0");
+    }
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7826,7 +5168,11 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_str_oracle
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 1)
+    {
+        let buf = cpu.read_memory(0x1000, 1).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0xFF, "Memory at 0x1000 should be 0xFF");
+    }
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7844,7 +5190,11 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_str_oracle
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 1)
+    {
+        let buf = cpu.read_memory(0x1000, 1).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x34, "Memory at 0x1000 should be 0x34");
+    }
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7862,7 +5212,11 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_str_oracle
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 1)
+    {
+        let buf = cpu.read_memory(0x1000, 1).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0x78, "Memory at 0x1000 should be 0x78");
+    }
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -7880,7 +5234,11 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_str_oracle
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 1)
+    {
+        let buf = cpu.read_memory(0x1000, 1).unwrap();
+        let val = u64::from_le_bytes(buf[..8.min(buf.len())].try_into().unwrap_or([0;8]));
+        assert_eq!(val, 0xF0, "Memory at 0x1000 should be 0xF0");
+    }
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_lda_stl
@@ -8033,17 +5391,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_lda_stl_exception_
 fn test_aarch64_memory_single_general_register_field_size_0_min_800_38200800() {
     // Encoding: 0x38200800
     // Test aarch64_memory_single_general_register field size = 0 (Min)
-    // Fields: opc=0, Rt=0, Rm=0, size=0, option=0, S=0, Rn=0
+    // Fields: size=0, S=0, Rt=0, opc=0, Rm=0, option=0, Rn=0
     let encoding: u32 = 0x38200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8054,17 +5407,12 @@ fn test_aarch64_memory_single_general_register_field_size_0_min_800_38200800() {
 fn test_aarch64_memory_single_general_register_field_size_1_poweroftwo_800_78200800() {
     // Encoding: 0x78200800
     // Test aarch64_memory_single_general_register field size = 1 (PowerOfTwo)
-    // Fields: Rn=0, opc=0, S=0, size=1, option=0, Rt=0, Rm=0
+    // Fields: Rn=0, size=1, Rm=0, S=0, opc=0, Rt=0, option=0
     let encoding: u32 = 0x78200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8075,17 +5423,12 @@ fn test_aarch64_memory_single_general_register_field_size_1_poweroftwo_800_78200
 fn test_aarch64_memory_single_general_register_field_size_2_poweroftwo_800_b8200800() {
     // Encoding: 0xB8200800
     // Test aarch64_memory_single_general_register field size = 2 (PowerOfTwo)
-    // Fields: S=0, Rn=0, Rt=0, opc=0, Rm=0, option=0, size=2
+    // Fields: S=0, opc=0, Rn=0, Rm=0, Rt=0, size=2, option=0
     let encoding: u32 = 0xB8200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8096,17 +5439,12 @@ fn test_aarch64_memory_single_general_register_field_size_2_poweroftwo_800_b8200
 fn test_aarch64_memory_single_general_register_field_size_3_max_800_f8200800() {
     // Encoding: 0xF8200800
     // Test aarch64_memory_single_general_register field size = 3 (Max)
-    // Fields: Rm=0, opc=0, option=0, Rn=0, S=0, size=3, Rt=0
+    // Fields: option=0, Rn=0, Rt=0, size=3, Rm=0, S=0, opc=0
     let encoding: u32 = 0xF8200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8117,17 +5455,12 @@ fn test_aarch64_memory_single_general_register_field_size_3_max_800_f8200800() {
 fn test_aarch64_memory_single_general_register_field_opc_0_min_800_38200800() {
     // Encoding: 0x38200800
     // Test aarch64_memory_single_general_register field opc = 0 (Min)
-    // Fields: opc=0, Rm=0, option=0, Rt=0, Rn=0, size=0, S=0
+    // Fields: Rt=0, option=0, Rn=0, Rm=0, size=0, S=0, opc=0
     let encoding: u32 = 0x38200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8138,17 +5471,12 @@ fn test_aarch64_memory_single_general_register_field_opc_0_min_800_38200800() {
 fn test_aarch64_memory_single_general_register_field_opc_1_poweroftwo_800_38600800() {
     // Encoding: 0x38600800
     // Test aarch64_memory_single_general_register field opc = 1 (PowerOfTwo)
-    // Fields: Rt=0, size=0, option=0, Rm=0, Rn=0, S=0, opc=1
+    // Fields: Rm=0, Rn=0, Rt=0, option=0, opc=1, size=0, S=0
     let encoding: u32 = 0x38600800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8159,17 +5487,12 @@ fn test_aarch64_memory_single_general_register_field_opc_1_poweroftwo_800_386008
 fn test_aarch64_memory_single_general_register_field_opc_2_poweroftwo_800_38a00800() {
     // Encoding: 0x38A00800
     // Test aarch64_memory_single_general_register field opc = 2 (PowerOfTwo)
-    // Fields: opc=2, S=0, size=0, Rt=0, Rm=0, option=0, Rn=0
+    // Fields: size=0, opc=2, option=0, S=0, Rn=0, Rt=0, Rm=0
     let encoding: u32 = 0x38A00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8180,17 +5503,12 @@ fn test_aarch64_memory_single_general_register_field_opc_2_poweroftwo_800_38a008
 fn test_aarch64_memory_single_general_register_field_opc_3_max_800_38e00800() {
     // Encoding: 0x38E00800
     // Test aarch64_memory_single_general_register field opc = 3 (Max)
-    // Fields: Rn=0, Rt=0, opc=3, Rm=0, option=0, S=0, size=0
+    // Fields: Rt=0, option=0, S=0, size=0, Rn=0, Rm=0, opc=3
     let encoding: u32 = 0x38E00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8201,17 +5519,12 @@ fn test_aarch64_memory_single_general_register_field_opc_3_max_800_38e00800() {
 fn test_aarch64_memory_single_general_register_field_rm_0_min_800_38200800() {
     // Encoding: 0x38200800
     // Test aarch64_memory_single_general_register field Rm = 0 (Min)
-    // Fields: opc=0, Rm=0, Rt=0, S=0, size=0, Rn=0, option=0
+    // Fields: option=0, Rm=0, Rn=0, Rt=0, size=0, S=0, opc=0
     let encoding: u32 = 0x38200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8222,17 +5535,12 @@ fn test_aarch64_memory_single_general_register_field_rm_0_min_800_38200800() {
 fn test_aarch64_memory_single_general_register_field_rm_1_poweroftwo_800_38210800() {
     // Encoding: 0x38210800
     // Test aarch64_memory_single_general_register field Rm = 1 (PowerOfTwo)
-    // Fields: opc=0, option=0, size=0, Rt=0, Rm=1, Rn=0, S=0
+    // Fields: size=0, S=0, opc=0, Rm=1, Rn=0, Rt=0, option=0
     let encoding: u32 = 0x38210800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8243,17 +5551,12 @@ fn test_aarch64_memory_single_general_register_field_rm_1_poweroftwo_800_3821080
 fn test_aarch64_memory_single_general_register_field_rm_30_poweroftwominusone_800_383e0800() {
     // Encoding: 0x383E0800
     // Test aarch64_memory_single_general_register field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: opc=0, size=0, option=0, Rm=30, Rn=0, S=0, Rt=0
+    // Fields: Rt=0, size=0, opc=0, Rm=30, option=0, S=0, Rn=0
     let encoding: u32 = 0x383E0800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8264,17 +5567,12 @@ fn test_aarch64_memory_single_general_register_field_rm_30_poweroftwominusone_80
 fn test_aarch64_memory_single_general_register_field_rm_31_max_800_383f0800() {
     // Encoding: 0x383F0800
     // Test aarch64_memory_single_general_register field Rm = 31 (Max)
-    // Fields: opc=0, size=0, option=0, Rn=0, S=0, Rm=31, Rt=0
+    // Fields: Rn=0, opc=0, Rt=0, S=0, size=0, Rm=31, option=0
     let encoding: u32 = 0x383F0800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8285,17 +5583,12 @@ fn test_aarch64_memory_single_general_register_field_rm_31_max_800_383f0800() {
 fn test_aarch64_memory_single_general_register_field_option_0_min_800_38200800() {
     // Encoding: 0x38200800
     // Test aarch64_memory_single_general_register field option = 0 (Min)
-    // Fields: opc=0, Rn=0, Rt=0, option=0, size=0, S=0, Rm=0
+    // Fields: Rt=0, size=0, option=0, Rn=0, opc=0, Rm=0, S=0
     let encoding: u32 = 0x38200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8306,17 +5599,12 @@ fn test_aarch64_memory_single_general_register_field_option_0_min_800_38200800()
 fn test_aarch64_memory_single_general_register_field_option_1_poweroftwo_800_38202800() {
     // Encoding: 0x38202800
     // Test aarch64_memory_single_general_register field option = 1 (PowerOfTwo)
-    // Fields: option=1, size=0, Rm=0, Rt=0, opc=0, S=0, Rn=0
+    // Fields: opc=0, size=0, S=0, option=1, Rn=0, Rt=0, Rm=0
     let encoding: u32 = 0x38202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8327,17 +5615,12 @@ fn test_aarch64_memory_single_general_register_field_option_1_poweroftwo_800_382
 fn test_aarch64_memory_single_general_register_field_option_2_poweroftwo_800_38204800() {
     // Encoding: 0x38204800
     // Test aarch64_memory_single_general_register field option = 2 (PowerOfTwo)
-    // Fields: opc=0, Rt=0, Rn=0, S=0, size=0, Rm=0, option=2
+    // Fields: option=2, S=0, opc=0, size=0, Rn=0, Rt=0, Rm=0
     let encoding: u32 = 0x38204800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8348,17 +5631,12 @@ fn test_aarch64_memory_single_general_register_field_option_2_poweroftwo_800_382
 fn test_aarch64_memory_single_general_register_field_option_3_poweroftwo_800_38206800() {
     // Encoding: 0x38206800
     // Test aarch64_memory_single_general_register field option = 3 (PowerOfTwo)
-    // Fields: Rn=0, size=0, S=0, Rt=0, Rm=0, option=3, opc=0
+    // Fields: opc=0, S=0, Rm=0, option=3, size=0, Rn=0, Rt=0
     let encoding: u32 = 0x38206800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8369,17 +5647,12 @@ fn test_aarch64_memory_single_general_register_field_option_3_poweroftwo_800_382
 fn test_aarch64_memory_single_general_register_field_option_4_poweroftwo_800_38208800() {
     // Encoding: 0x38208800
     // Test aarch64_memory_single_general_register field option = 4 (PowerOfTwo)
-    // Fields: Rm=0, size=0, option=4, S=0, Rn=0, opc=0, Rt=0
+    // Fields: size=0, S=0, Rm=0, Rn=0, opc=0, Rt=0, option=4
     let encoding: u32 = 0x38208800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8390,17 +5663,12 @@ fn test_aarch64_memory_single_general_register_field_option_4_poweroftwo_800_382
 fn test_aarch64_memory_single_general_register_field_option_5_poweroftwo_800_3820a800() {
     // Encoding: 0x3820A800
     // Test aarch64_memory_single_general_register field option = 5 (PowerOfTwo)
-    // Fields: Rn=0, Rt=0, Rm=0, opc=0, option=5, size=0, S=0
+    // Fields: size=0, option=5, Rn=0, Rt=0, opc=0, Rm=0, S=0
     let encoding: u32 = 0x3820A800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8411,17 +5679,12 @@ fn test_aarch64_memory_single_general_register_field_option_5_poweroftwo_800_382
 fn test_aarch64_memory_single_general_register_field_option_6_poweroftwo_800_3820c800() {
     // Encoding: 0x3820C800
     // Test aarch64_memory_single_general_register field option = 6 (PowerOfTwo)
-    // Fields: Rn=0, Rt=0, S=0, size=0, opc=0, option=6, Rm=0
+    // Fields: size=0, option=6, Rt=0, opc=0, Rm=0, S=0, Rn=0
     let encoding: u32 = 0x3820C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8432,17 +5695,12 @@ fn test_aarch64_memory_single_general_register_field_option_6_poweroftwo_800_382
 fn test_aarch64_memory_single_general_register_field_option_7_max_800_3820e800() {
     // Encoding: 0x3820E800
     // Test aarch64_memory_single_general_register field option = 7 (Max)
-    // Fields: opc=0, size=0, option=7, S=0, Rt=0, Rn=0, Rm=0
+    // Fields: Rt=0, Rm=0, option=7, size=0, opc=0, S=0, Rn=0
     let encoding: u32 = 0x3820E800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8453,17 +5711,12 @@ fn test_aarch64_memory_single_general_register_field_option_7_max_800_3820e800()
 fn test_aarch64_memory_single_general_register_field_s_0_min_800_38200800() {
     // Encoding: 0x38200800
     // Test aarch64_memory_single_general_register field S = 0 (Min)
-    // Fields: size=0, Rm=0, S=0, opc=0, option=0, Rn=0, Rt=0
+    // Fields: size=0, Rt=0, Rn=0, opc=0, Rm=0, option=0, S=0
     let encoding: u32 = 0x38200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8474,17 +5727,12 @@ fn test_aarch64_memory_single_general_register_field_s_0_min_800_38200800() {
 fn test_aarch64_memory_single_general_register_field_s_1_max_800_38201800() {
     // Encoding: 0x38201800
     // Test aarch64_memory_single_general_register field S = 1 (Max)
-    // Fields: opc=0, Rt=0, option=0, S=1, Rm=0, size=0, Rn=0
+    // Fields: option=0, size=0, Rm=0, opc=0, Rn=0, Rt=0, S=1
     let encoding: u32 = 0x38201800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8495,17 +5743,12 @@ fn test_aarch64_memory_single_general_register_field_s_1_max_800_38201800() {
 fn test_aarch64_memory_single_general_register_field_rn_0_min_800_38200800() {
     // Encoding: 0x38200800
     // Test aarch64_memory_single_general_register field Rn = 0 (Min)
-    // Fields: size=0, opc=0, Rm=0, S=0, Rn=0, Rt=0, option=0
+    // Fields: size=0, option=0, S=0, Rn=0, Rt=0, opc=0, Rm=0
     let encoding: u32 = 0x38200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8516,17 +5759,12 @@ fn test_aarch64_memory_single_general_register_field_rn_0_min_800_38200800() {
 fn test_aarch64_memory_single_general_register_field_rn_1_poweroftwo_800_38200820() {
     // Encoding: 0x38200820
     // Test aarch64_memory_single_general_register field Rn = 1 (PowerOfTwo)
-    // Fields: Rt=0, size=0, Rm=0, S=0, Rn=1, option=0, opc=0
+    // Fields: Rt=0, opc=0, option=0, size=0, Rm=0, S=0, Rn=1
     let encoding: u32 = 0x38200820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8537,17 +5775,12 @@ fn test_aarch64_memory_single_general_register_field_rn_1_poweroftwo_800_3820082
 fn test_aarch64_memory_single_general_register_field_rn_30_poweroftwominusone_800_38200bc0() {
     // Encoding: 0x38200BC0
     // Test aarch64_memory_single_general_register field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=0, option=0, Rn=30, Rt=0, size=0, S=0, opc=0
+    // Fields: Rt=0, Rn=30, option=0, Rm=0, size=0, opc=0, S=0
     let encoding: u32 = 0x38200BC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8558,17 +5791,12 @@ fn test_aarch64_memory_single_general_register_field_rn_30_poweroftwominusone_80
 fn test_aarch64_memory_single_general_register_field_rn_31_max_800_38200be0() {
     // Encoding: 0x38200BE0
     // Test aarch64_memory_single_general_register field Rn = 31 (Max)
-    // Fields: size=0, option=0, Rm=0, S=0, Rn=31, opc=0, Rt=0
+    // Fields: option=0, opc=0, Rm=0, size=0, Rn=31, S=0, Rt=0
     let encoding: u32 = 0x38200BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8579,17 +5807,12 @@ fn test_aarch64_memory_single_general_register_field_rn_31_max_800_38200be0() {
 fn test_aarch64_memory_single_general_register_field_rt_0_min_800_38200800() {
     // Encoding: 0x38200800
     // Test aarch64_memory_single_general_register field Rt = 0 (Min)
-    // Fields: Rt=0, size=0, Rm=0, S=0, opc=0, Rn=0, option=0
+    // Fields: Rn=0, Rm=0, Rt=0, size=0, option=0, S=0, opc=0
     let encoding: u32 = 0x38200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8600,17 +5823,12 @@ fn test_aarch64_memory_single_general_register_field_rt_0_min_800_38200800() {
 fn test_aarch64_memory_single_general_register_field_rt_1_poweroftwo_800_38200801() {
     // Encoding: 0x38200801
     // Test aarch64_memory_single_general_register field Rt = 1 (PowerOfTwo)
-    // Fields: Rn=0, option=0, Rt=1, size=0, opc=0, Rm=0, S=0
+    // Fields: Rt=1, size=0, opc=0, Rm=0, option=0, S=0, Rn=0
     let encoding: u32 = 0x38200801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8621,17 +5839,12 @@ fn test_aarch64_memory_single_general_register_field_rt_1_poweroftwo_800_3820080
 fn test_aarch64_memory_single_general_register_field_rt_30_poweroftwominusone_800_3820081e() {
     // Encoding: 0x3820081E
     // Test aarch64_memory_single_general_register field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: option=0, S=0, size=0, Rn=0, opc=0, Rt=30, Rm=0
+    // Fields: Rt=30, option=0, size=0, Rm=0, opc=0, Rn=0, S=0
     let encoding: u32 = 0x3820081E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8642,17 +5855,12 @@ fn test_aarch64_memory_single_general_register_field_rt_30_poweroftwominusone_80
 fn test_aarch64_memory_single_general_register_field_rt_31_max_800_3820081f() {
     // Encoding: 0x3820081F
     // Test aarch64_memory_single_general_register field Rt = 31 (Max)
-    // Fields: Rm=0, opc=0, S=0, Rn=0, Rt=31, option=0, size=0
+    // Fields: S=0, option=0, Rm=0, size=0, opc=0, Rn=0, Rt=31
     let encoding: u32 = 0x3820081F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8663,206 +5871,12 @@ fn test_aarch64_memory_single_general_register_field_rt_31_max_800_3820081f() {
 fn test_aarch64_memory_single_general_register_combo_0_800_38200800() {
     // Encoding: 0x38200800
     // Test aarch64_memory_single_general_register field combination: size=0, opc=0, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: S=0, size=0, Rm=0, Rn=0, Rt=0, option=0, opc=0
+    // Fields: Rm=0, opc=0, S=0, size=0, Rn=0, option=0, Rt=0
     let encoding: u32 = 0x38200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_register
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_register_combo_1_800_78200800() {
-    // Encoding: 0x78200800
-    // Test aarch64_memory_single_general_register field combination: size=1, opc=0, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: option=0, size=1, Rn=0, S=0, Rt=0, opc=0, Rm=0
-    let encoding: u32 = 0x78200800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_register
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_register_combo_2_800_b8200800() {
-    // Encoding: 0xB8200800
-    // Test aarch64_memory_single_general_register field combination: size=2, opc=0, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: Rt=0, Rm=0, option=0, size=2, S=0, opc=0, Rn=0
-    let encoding: u32 = 0xB8200800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_register
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_register_combo_3_800_f8200800() {
-    // Encoding: 0xF8200800
-    // Test aarch64_memory_single_general_register field combination: size=3, opc=0, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: size=3, option=0, Rm=0, S=0, Rn=0, opc=0, Rt=0
-    let encoding: u32 = 0xF8200800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_register
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_memory_single_general_register_combo_4_800_38200800() {
-    // Encoding: 0x38200800
-    // Test aarch64_memory_single_general_register field combination: size=0, opc=0, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: Rt=0, size=0, Rm=0, opc=0, option=0, S=0, Rn=0
-    let encoding: u32 = 0x38200800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_register
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_register_combo_5_800_38600800() {
-    // Encoding: 0x38600800
-    // Test aarch64_memory_single_general_register field combination: size=0, opc=1, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: opc=1, option=0, S=0, Rn=0, Rt=0, Rm=0, size=0
-    let encoding: u32 = 0x38600800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_register
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_register_combo_6_800_38a00800() {
-    // Encoding: 0x38A00800
-    // Test aarch64_memory_single_general_register field combination: size=0, opc=2, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: Rt=0, option=0, Rm=0, size=0, S=0, opc=2, Rn=0
-    let encoding: u32 = 0x38A00800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_register
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_register_combo_7_800_38e00800() {
-    // Encoding: 0x38E00800
-    // Test aarch64_memory_single_general_register field combination: size=0, opc=3, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: size=0, S=0, option=0, Rn=0, Rm=0, Rt=0, opc=3
-    let encoding: u32 = 0x38E00800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_register
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_memory_single_general_register_combo_8_800_38200800() {
-    // Encoding: 0x38200800
-    // Test aarch64_memory_single_general_register field combination: size=0, opc=0, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: Rn=0, opc=0, option=0, S=0, Rm=0, size=0, Rt=0
-    let encoding: u32 = 0x38200800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_register
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_memory_single_general_register_combo_9_800_38210800() {
-    // Encoding: 0x38210800
-    // Test aarch64_memory_single_general_register field combination: size=0, opc=0, Rm=1, option=0, S=0, Rn=0, Rt=0
-    // Fields: opc=0, S=0, Rt=0, Rn=0, option=0, size=0, Rm=1
-    let encoding: u32 = 0x38210800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8873,17 +5887,12 @@ fn test_aarch64_memory_single_general_register_combo_9_800_38210800() {
 fn test_aarch64_memory_single_general_register_special_size_0_size_variant_0_2048_38200800() {
     // Encoding: 0x38200800
     // Test aarch64_memory_single_general_register special value size = 0 (Size variant 0)
-    // Fields: Rn=0, opc=0, Rm=0, size=0, S=0, option=0, Rt=0
+    // Fields: Rn=0, Rt=0, size=0, option=0, opc=0, Rm=0, S=0
     let encoding: u32 = 0x38200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8894,17 +5903,12 @@ fn test_aarch64_memory_single_general_register_special_size_0_size_variant_0_204
 fn test_aarch64_memory_single_general_register_special_size_1_size_variant_1_2048_78200800() {
     // Encoding: 0x78200800
     // Test aarch64_memory_single_general_register special value size = 1 (Size variant 1)
-    // Fields: Rn=0, Rt=0, size=1, S=0, Rm=0, opc=0, option=0
+    // Fields: Rn=0, S=0, opc=0, Rt=0, size=1, Rm=0, option=0
     let encoding: u32 = 0x78200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8915,17 +5919,12 @@ fn test_aarch64_memory_single_general_register_special_size_1_size_variant_1_204
 fn test_aarch64_memory_single_general_register_special_size_2_size_variant_2_2048_b8200800() {
     // Encoding: 0xB8200800
     // Test aarch64_memory_single_general_register special value size = 2 (Size variant 2)
-    // Fields: Rt=0, Rn=0, option=0, size=2, opc=0, Rm=0, S=0
+    // Fields: option=0, Rm=0, opc=0, Rt=0, S=0, Rn=0, size=2
     let encoding: u32 = 0xB8200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8936,17 +5935,12 @@ fn test_aarch64_memory_single_general_register_special_size_2_size_variant_2_204
 fn test_aarch64_memory_single_general_register_special_size_3_size_variant_3_2048_f8200800() {
     // Encoding: 0xF8200800
     // Test aarch64_memory_single_general_register special value size = 3 (Size variant 3)
-    // Fields: size=3, Rm=0, option=0, Rn=0, Rt=0, opc=0, S=0
+    // Fields: opc=0, option=0, Rm=0, S=0, Rn=0, size=3, Rt=0
     let encoding: u32 = 0xF8200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8957,17 +5951,12 @@ fn test_aarch64_memory_single_general_register_special_size_3_size_variant_3_204
 fn test_aarch64_memory_single_general_register_special_opc_0_size_variant_0_2048_38200800() {
     // Encoding: 0x38200800
     // Test aarch64_memory_single_general_register special value opc = 0 (Size variant 0)
-    // Fields: size=0, option=0, Rm=0, S=0, Rn=0, opc=0, Rt=0
+    // Fields: opc=0, Rn=0, Rm=0, Rt=0, S=0, size=0, option=0
     let encoding: u32 = 0x38200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8978,17 +5967,12 @@ fn test_aarch64_memory_single_general_register_special_opc_0_size_variant_0_2048
 fn test_aarch64_memory_single_general_register_special_opc_1_size_variant_1_2048_38600800() {
     // Encoding: 0x38600800
     // Test aarch64_memory_single_general_register special value opc = 1 (Size variant 1)
-    // Fields: S=0, Rn=0, size=0, Rt=0, Rm=0, opc=1, option=0
+    // Fields: Rt=0, S=0, size=0, opc=1, Rm=0, option=0, Rn=0
     let encoding: u32 = 0x38600800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -8999,17 +5983,12 @@ fn test_aarch64_memory_single_general_register_special_opc_1_size_variant_1_2048
 fn test_aarch64_memory_single_general_register_special_opc_2_size_variant_2_2048_38a00800() {
     // Encoding: 0x38A00800
     // Test aarch64_memory_single_general_register special value opc = 2 (Size variant 2)
-    // Fields: option=0, opc=2, Rm=0, S=0, Rn=0, Rt=0, size=0
+    // Fields: Rm=0, option=0, Rn=0, Rt=0, opc=2, size=0, S=0
     let encoding: u32 = 0x38A00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -9020,17 +5999,12 @@ fn test_aarch64_memory_single_general_register_special_opc_2_size_variant_2_2048
 fn test_aarch64_memory_single_general_register_special_opc_3_size_variant_3_2048_38e00800() {
     // Encoding: 0x38E00800
     // Test aarch64_memory_single_general_register special value opc = 3 (Size variant 3)
-    // Fields: Rn=0, option=0, S=0, size=0, opc=3, Rt=0, Rm=0
+    // Fields: Rm=0, option=0, size=0, Rn=0, opc=3, S=0, Rt=0
     let encoding: u32 = 0x38E00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -9041,17 +6015,12 @@ fn test_aarch64_memory_single_general_register_special_opc_3_size_variant_3_2048
 fn test_aarch64_memory_single_general_register_special_s_0_size_variant_0_2048_38200800() {
     // Encoding: 0x38200800
     // Test aarch64_memory_single_general_register special value S = 0 (Size variant 0)
-    // Fields: option=0, S=0, size=0, Rn=0, Rt=0, opc=0, Rm=0
+    // Fields: S=0, size=0, Rm=0, Rn=0, opc=0, option=0, Rt=0
     let encoding: u32 = 0x38200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -9062,17 +6031,12 @@ fn test_aarch64_memory_single_general_register_special_s_0_size_variant_0_2048_3
 fn test_aarch64_memory_single_general_register_special_s_1_size_variant_1_2048_38201800() {
     // Encoding: 0x38201800
     // Test aarch64_memory_single_general_register special value S = 1 (Size variant 1)
-    // Fields: Rm=0, S=1, option=0, size=0, Rn=0, Rt=0, opc=0
+    // Fields: opc=0, Rm=0, option=0, size=0, Rn=0, Rt=0, S=1
     let encoding: u32 = 0x38201800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -9080,21 +6044,15 @@ fn test_aarch64_memory_single_general_register_special_s_1_size_variant_1_2048_3
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_single_general_register_special_rn_31_stack_pointer_sp_may_require_alignment_2048_38200be0(
-) {
+fn test_aarch64_memory_single_general_register_special_rn_31_stack_pointer_sp_may_require_alignment_2048_38200be0() {
     // Encoding: 0x38200BE0
     // Test aarch64_memory_single_general_register special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: size=0, Rn=31, opc=0, option=0, Rm=0, S=0, Rt=0
+    // Fields: size=0, option=0, Rn=31, opc=0, S=0, Rm=0, Rt=0
     let encoding: u32 = 0x38200BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -9102,21 +6060,15 @@ fn test_aarch64_memory_single_general_register_special_rn_31_stack_pointer_sp_ma
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_single_general_register_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_2048_3820081f(
-) {
+fn test_aarch64_memory_single_general_register_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_2048_3820081f() {
     // Encoding: 0x3820081F
     // Test aarch64_memory_single_general_register special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: size=0, Rm=0, S=0, opc=0, option=0, Rn=0, Rt=31
+    // Fields: Rn=0, Rm=0, size=0, Rt=31, option=0, S=0, opc=0
     let encoding: u32 = 0x3820081F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -9127,16 +6079,12 @@ fn test_aarch64_memory_single_general_register_special_rt_31_zero_register_xzr_w
 fn test_aarch64_memory_single_general_register_invalid_0_800_38200800() {
     // Encoding: 0x38200800
     // Test aarch64_memory_single_general_register invalid encoding: Binary { op: Eq, lhs: Index { base: Var(QualifiedIdentifier { qualifier: Any, name: "option" }), indices: [Single(LitInt(1))] }, rhs: LitBits([false]) }
-    // Fields: Rt=0, option=0, size=0, Rm=0, S=0, Rn=0, opc=0
+    // Fields: Rm=0, S=0, size=0, Rn=0, Rt=0, option=0, opc=0
     let encoding: u32 = 0x38200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -9147,16 +6095,12 @@ fn test_aarch64_memory_single_general_register_invalid_0_800_38200800() {
 fn test_aarch64_memory_single_general_register_invalid_1_800_38200800() {
     // Encoding: 0x38200800
     // Test aarch64_memory_single_general_register invalid encoding: Unconditional UNDEFINED
-    // Fields: option=0, size=0, Rn=0, Rm=0, S=0, opc=0, Rt=0
+    // Fields: Rm=0, opc=0, Rn=0, option=0, Rt=0, size=0, S=0
     let encoding: u32 = 0x38200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_register
@@ -9259,8 +6203,8 @@ fn test_aarch64_memory_single_general_register_store_0_38200820() {
     // Test aarch64_memory_single_general_register memory store: 8 bytes
     // Encoding: 0x38200820
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     set_x(&mut cpu, 1, 0x100000000000);
+    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     let encoding: u32 = 0x38200820;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -9306,21 +6250,15 @@ fn test_aarch64_memory_single_general_register_exception_1_38200800() {
 /// Requirement: FieldBoundary { field: "size", value: 0, boundary: Min }
 /// 8-bit / byte size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_size_0_min_800_38000800()
-{
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_size_0_min_800_38000800() {
     // Encoding: 0x38000800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field size = 0 (Min)
-    // Fields: Rn=0, Rt=0, opc=0, size=0, imm9=0
+    // Fields: imm9=0, size=0, opc=0, Rn=0, Rt=0
     let encoding: u32 = 0x38000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9328,21 +6266,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_size_1_poweroftwo_800_78000800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_size_1_poweroftwo_800_78000800() {
     // Encoding: 0x78000800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field size = 1 (PowerOfTwo)
-    // Fields: Rn=0, size=1, Rt=0, imm9=0, opc=0
+    // Fields: Rn=0, Rt=0, size=1, opc=0, imm9=0
     let encoding: u32 = 0x78000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9350,21 +6282,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_size_2_poweroftwo_800_b8000800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_size_2_poweroftwo_800_b8000800() {
     // Encoding: 0xB8000800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field size = 2 (PowerOfTwo)
-    // Fields: Rn=0, opc=0, size=2, imm9=0, Rt=0
+    // Fields: size=2, Rt=0, opc=0, Rn=0, imm9=0
     let encoding: u32 = 0xB8000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9372,21 +6298,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_size_
 /// Requirement: FieldBoundary { field: "size", value: 3, boundary: Max }
 /// 64-bit / doubleword size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_size_3_max_800_f8000800()
-{
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_size_3_max_800_f8000800() {
     // Encoding: 0xF8000800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field size = 3 (Max)
-    // Fields: Rt=0, size=3, imm9=0, opc=0, Rn=0
+    // Fields: opc=0, Rt=0, imm9=0, Rn=0, size=3
     let encoding: u32 = 0xF8000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9394,21 +6314,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_size_
 /// Requirement: FieldBoundary { field: "opc", value: 0, boundary: Min }
 /// 8-bit / byte size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_opc_0_min_800_38000800()
-{
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_opc_0_min_800_38000800() {
     // Encoding: 0x38000800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field opc = 0 (Min)
-    // Fields: Rn=0, size=0, imm9=0, opc=0, Rt=0
+    // Fields: Rn=0, Rt=0, opc=0, imm9=0, size=0
     let encoding: u32 = 0x38000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9416,21 +6330,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_opc_0
 /// Requirement: FieldBoundary { field: "opc", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_opc_1_poweroftwo_800_38400800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_opc_1_poweroftwo_800_38400800() {
     // Encoding: 0x38400800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field opc = 1 (PowerOfTwo)
-    // Fields: Rn=0, opc=1, Rt=0, imm9=0, size=0
+    // Fields: imm9=0, size=0, opc=1, Rt=0, Rn=0
     let encoding: u32 = 0x38400800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9438,21 +6346,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_opc_1
 /// Requirement: FieldBoundary { field: "opc", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_opc_2_poweroftwo_800_38800800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_opc_2_poweroftwo_800_38800800() {
     // Encoding: 0x38800800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field opc = 2 (PowerOfTwo)
-    // Fields: Rt=0, size=0, opc=2, imm9=0, Rn=0
+    // Fields: opc=2, Rn=0, Rt=0, imm9=0, size=0
     let encoding: u32 = 0x38800800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9460,21 +6362,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_opc_2
 /// Requirement: FieldBoundary { field: "opc", value: 3, boundary: Max }
 /// 64-bit / doubleword size
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_opc_3_max_800_38c00800()
-{
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_opc_3_max_800_38c00800() {
     // Encoding: 0x38C00800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field opc = 3 (Max)
-    // Fields: Rt=0, Rn=0, imm9=0, opc=3, size=0
+    // Fields: Rn=0, imm9=0, opc=3, size=0, Rt=0
     let encoding: u32 = 0x38C00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9482,21 +6378,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_opc_3
 /// Requirement: FieldBoundary { field: "imm9", value: 0, boundary: Zero }
 /// immediate value 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_0_zero_800_38000800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_0_zero_800_38000800() {
     // Encoding: 0x38000800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 0 (Zero)
-    // Fields: size=0, Rn=0, Rt=0, opc=0, imm9=0
+    // Fields: imm9=0, size=0, opc=0, Rn=0, Rt=0
     let encoding: u32 = 0x38000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9504,21 +6394,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 1, boundary: PowerOfTwo }
 /// immediate value 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_1_poweroftwo_800_38001800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_1_poweroftwo_800_38001800() {
     // Encoding: 0x38001800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 1 (PowerOfTwo)
-    // Fields: imm9=1, size=0, Rn=0, Rt=0, opc=0
+    // Fields: Rt=0, size=0, Rn=0, opc=0, imm9=1
     let encoding: u32 = 0x38001800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9526,21 +6410,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_3_poweroftwominusone_800_38003800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_3_poweroftwominusone_800_38003800() {
     // Encoding: 0x38003800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: imm9=3, size=0, opc=0, Rn=0, Rt=0
+    // Fields: Rt=0, opc=0, Rn=0, imm9=3, size=0
     let encoding: u32 = 0x38003800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9548,21 +6426,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 4, boundary: PowerOfTwo }
 /// power of 2 (2^2 = 4)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_4_poweroftwo_800_38004800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_4_poweroftwo_800_38004800() {
     // Encoding: 0x38004800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 4 (PowerOfTwo)
-    // Fields: Rn=0, size=0, opc=0, Rt=0, imm9=4
+    // Fields: size=0, Rn=0, imm9=4, Rt=0, opc=0
     let encoding: u32 = 0x38004800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9570,21 +6442,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_7_poweroftwominusone_800_38007800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_7_poweroftwominusone_800_38007800() {
     // Encoding: 0x38007800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rt=0, Rn=0, size=0, imm9=7
+    // Fields: opc=0, imm9=7, size=0, Rt=0, Rn=0
     let encoding: u32 = 0x38007800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9592,21 +6458,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 8, boundary: PowerOfTwo }
 /// power of 2 (2^3 = 8)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_8_poweroftwo_800_38008800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_8_poweroftwo_800_38008800() {
     // Encoding: 0x38008800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 8 (PowerOfTwo)
-    // Fields: size=0, Rn=0, imm9=8, opc=0, Rt=0
+    // Fields: Rn=0, Rt=0, size=0, opc=0, imm9=8
     let encoding: u32 = 0x38008800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9614,21 +6474,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_15_poweroftwominusone_800_3800f800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_15_poweroftwominusone_800_3800f800() {
     // Encoding: 0x3800F800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: opc=0, size=0, imm9=15, Rn=0, Rt=0
+    // Fields: Rn=0, size=0, imm9=15, opc=0, Rt=0
     let encoding: u32 = 0x3800F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9636,21 +6490,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 16, boundary: PowerOfTwo }
 /// power of 2 (2^4 = 16)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_16_poweroftwo_800_38010800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_16_poweroftwo_800_38010800() {
     // Encoding: 0x38010800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 16 (PowerOfTwo)
-    // Fields: size=0, opc=0, imm9=16, Rn=0, Rt=0
+    // Fields: size=0, Rt=0, imm9=16, Rn=0, opc=0
     let encoding: u32 = 0x38010800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9658,21 +6506,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_31_poweroftwominusone_800_3801f800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_31_poweroftwominusone_800_3801f800() {
     // Encoding: 0x3801F800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: opc=0, size=0, Rt=0, Rn=0, imm9=31
+    // Fields: imm9=31, opc=0, size=0, Rn=0, Rt=0
     let encoding: u32 = 0x3801F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9680,21 +6522,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 32, boundary: PowerOfTwo }
 /// power of 2 (2^5 = 32)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_32_poweroftwo_800_38020800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_32_poweroftwo_800_38020800() {
     // Encoding: 0x38020800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 32 (PowerOfTwo)
-    // Fields: Rn=0, opc=0, size=0, Rt=0, imm9=32
+    // Fields: Rt=0, imm9=32, size=0, opc=0, Rn=0
     let encoding: u32 = 0x38020800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9702,21 +6538,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_63_poweroftwominusone_800_3803f800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_63_poweroftwominusone_800_3803f800() {
     // Encoding: 0x3803F800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, imm9=63, size=0, opc=0, Rt=0
+    // Fields: size=0, Rt=0, opc=0, imm9=63, Rn=0
     let encoding: u32 = 0x3803F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9724,21 +6554,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 64, boundary: PowerOfTwo }
 /// power of 2 (2^6 = 64)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_64_poweroftwo_800_38040800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_64_poweroftwo_800_38040800() {
     // Encoding: 0x38040800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 64 (PowerOfTwo)
-    // Fields: imm9=64, opc=0, size=0, Rn=0, Rt=0
+    // Fields: opc=0, Rn=0, size=0, Rt=0, imm9=64
     let encoding: u32 = 0x38040800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9746,21 +6570,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_127_poweroftwominusone_800_3807f800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_127_poweroftwominusone_800_3807f800() {
     // Encoding: 0x3807F800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, opc=0, Rt=0, imm9=127, size=0
+    // Fields: Rt=0, Rn=0, size=0, imm9=127, opc=0
     let encoding: u32 = 0x3807F800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9768,21 +6586,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 128, boundary: PowerOfTwo }
 /// power of 2 (2^7 = 128)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_128_poweroftwo_800_38080800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_128_poweroftwo_800_38080800() {
     // Encoding: 0x38080800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 128 (PowerOfTwo)
-    // Fields: Rt=0, opc=0, size=0, imm9=128, Rn=0
+    // Fields: Rt=0, size=0, opc=0, Rn=0, imm9=128
     let encoding: u32 = 0x38080800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9790,21 +6602,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 255, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (255)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_255_poweroftwominusone_800_380ff800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_255_poweroftwominusone_800_380ff800() {
     // Encoding: 0x380FF800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: opc=0, imm9=255, Rn=0, Rt=0, size=0
+    // Fields: Rn=0, Rt=0, size=0, opc=0, imm9=255
     let encoding: u32 = 0x380FF800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9812,21 +6618,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 256, boundary: PowerOfTwo }
 /// power of 2 (2^8 = 256)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_256_poweroftwo_800_38100800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_256_poweroftwo_800_38100800() {
     // Encoding: 0x38100800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 256 (PowerOfTwo)
-    // Fields: opc=0, Rt=0, Rn=0, size=0, imm9=256
+    // Fields: size=0, opc=0, Rn=0, imm9=256, Rt=0
     let encoding: u32 = 0x38100800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9834,21 +6634,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 /// Requirement: FieldBoundary { field: "imm9", value: 511, boundary: Max }
 /// maximum immediate (511)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_511_max_800_381ff800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_511_max_800_381ff800() {
     // Encoding: 0x381FF800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field imm9 = 511 (Max)
-    // Fields: imm9=511, Rn=0, opc=0, Rt=0, size=0
+    // Fields: Rt=0, size=0, imm9=511, opc=0, Rn=0
     let encoding: u32 = 0x381FF800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9859,17 +6653,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_imm9_
 fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rn_0_min_800_38000800() {
     // Encoding: 0x38000800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field Rn = 0 (Min)
-    // Fields: size=0, imm9=0, Rt=0, opc=0, Rn=0
+    // Fields: opc=0, size=0, Rt=0, imm9=0, Rn=0
     let encoding: u32 = 0x38000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9877,21 +6666,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rn_0_
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rn_1_poweroftwo_800_38000820(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rn_1_poweroftwo_800_38000820() {
     // Encoding: 0x38000820
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field Rn = 1 (PowerOfTwo)
-    // Fields: opc=0, imm9=0, Rn=1, Rt=0, size=0
+    // Fields: imm9=0, size=0, Rt=0, opc=0, Rn=1
     let encoding: u32 = 0x38000820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9899,21 +6682,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rn_1_
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rn_30_poweroftwominusone_800_38000bc0(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rn_30_poweroftwominusone_800_38000bc0() {
     // Encoding: 0x38000BC0
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, imm9=0, size=0, Rn=30, opc=0
+    // Fields: imm9=0, size=0, opc=0, Rn=30, Rt=0
     let encoding: u32 = 0x38000BC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9921,21 +6698,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rn_30
 /// Requirement: FieldBoundary { field: "Rn", value: 31, boundary: Max }
 /// register index 31 (SP - stack pointer)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rn_31_max_800_38000be0()
-{
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rn_31_max_800_38000be0() {
     // Encoding: 0x38000BE0
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field Rn = 31 (Max)
-    // Fields: opc=0, Rn=31, Rt=0, size=0, imm9=0
+    // Fields: opc=0, Rt=0, size=0, Rn=31, imm9=0
     let encoding: u32 = 0x38000BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9946,17 +6717,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rn_31
 fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rt_0_min_800_38000800() {
     // Encoding: 0x38000800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field Rt = 0 (Min)
-    // Fields: Rn=0, opc=0, imm9=0, size=0, Rt=0
+    // Fields: Rn=0, Rt=0, opc=0, imm9=0, size=0
     let encoding: u32 = 0x38000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9964,21 +6730,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rt_0_
 /// Requirement: FieldBoundary { field: "Rt", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rt_1_poweroftwo_800_38000801(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rt_1_poweroftwo_800_38000801() {
     // Encoding: 0x38000801
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field Rt = 1 (PowerOfTwo)
-    // Fields: Rn=0, imm9=0, size=0, opc=0, Rt=1
+    // Fields: Rt=1, imm9=0, size=0, opc=0, Rn=0
     let encoding: u32 = 0x38000801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -9986,21 +6746,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rt_1_
 /// Requirement: FieldBoundary { field: "Rt", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rt_30_poweroftwominusone_800_3800081e(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rt_30_poweroftwominusone_800_3800081e() {
     // Encoding: 0x3800081E
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, imm9=0, Rn=0, Rt=30, opc=0
+    // Fields: opc=0, imm9=0, Rn=0, size=0, Rt=30
     let encoding: u32 = 0x3800081E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -10008,21 +6762,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rt_30
 /// Requirement: FieldBoundary { field: "Rt", value: 31, boundary: Max }
 /// register index 31 (ZR - zero register)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rt_31_max_800_3800081f()
-{
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rt_31_max_800_3800081f() {
     // Encoding: 0x3800081F
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field Rt = 31 (Max)
-    // Fields: Rt=31, size=0, imm9=0, opc=0, Rn=0
+    // Fields: imm9=0, Rn=0, opc=0, size=0, Rt=31
     let encoding: u32 = 0x3800081F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -10033,206 +6781,12 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_field_rt_31
 fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_combo_0_800_38000800() {
     // Encoding: 0x38000800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: opc=0, imm9=0, Rn=0, size=0, Rt=0
+    // Fields: size=0, Rt=0, opc=0, Rn=0, imm9=0
     let encoding: u32 = 0x38000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_combo_1_800_78000800() {
-    // Encoding: 0x78000800
-    // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field combination: size=1, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rn=0, imm9=0, Rt=0, opc=0, size=1
-    let encoding: u32 = 0x78000800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_combo_2_800_b8000800() {
-    // Encoding: 0xB8000800
-    // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field combination: size=2, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, opc=0, Rn=0, Rt=0, size=2
-    let encoding: u32 = 0xB8000800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_combo_3_800_f8000800() {
-    // Encoding: 0xF8000800
-    // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field combination: size=3, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, Rn=0, size=3, opc=0, imm9=0
-    let encoding: u32 = 0xF8000800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_combo_4_800_38000800() {
-    // Encoding: 0x38000800
-    // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, size=0, opc=0, Rn=0, imm9=0
-    let encoding: u32 = 0x38000800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_combo_5_800_38400800() {
-    // Encoding: 0x38400800
-    // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field combination: size=0, opc=1, imm9=0, Rn=0, Rt=0
-    // Fields: Rn=0, size=0, imm9=0, opc=1, Rt=0
-    let encoding: u32 = 0x38400800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_combo_6_800_38800800() {
-    // Encoding: 0x38800800
-    // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field combination: size=0, opc=2, imm9=0, Rn=0, Rt=0
-    // Fields: size=0, imm9=0, Rt=0, Rn=0, opc=2
-    let encoding: u32 = 0x38800800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_combo_7_800_38c00800() {
-    // Encoding: 0x38C00800
-    // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field combination: size=0, opc=3, imm9=0, Rn=0, Rt=0
-    // Fields: Rn=0, size=0, imm9=0, opc=3, Rt=0
-    let encoding: u32 = 0x38C00800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=0 (immediate value 0)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_combo_8_800_38000800() {
-    // Encoding: 0x38000800
-    // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, Rn=0, size=0, opc=0, Rt=0
-    let encoding: u32 = 0x38000800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_combo_9_800_38001800() {
-    // Encoding: 0x38001800
-    // Test aarch64_memory_single_general_immediate_signed_offset_unpriv field combination: size=0, opc=0, imm9=1, Rn=0, Rt=0
-    // Fields: opc=0, imm9=1, size=0, Rn=0, Rt=0
-    let encoding: u32 = 0x38001800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -10240,21 +6794,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_combo_9_800
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_size_0_size_variant_0_2048_38000800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_size_0_size_variant_0_2048_38000800() {
     // Encoding: 0x38000800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv special value size = 0 (Size variant 0)
-    // Fields: opc=0, imm9=0, Rt=0, size=0, Rn=0
+    // Fields: size=0, opc=0, Rn=0, Rt=0, imm9=0
     let encoding: u32 = 0x38000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -10262,21 +6810,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_size_1_size_variant_1_2048_78000800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_size_1_size_variant_1_2048_78000800() {
     // Encoding: 0x78000800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv special value size = 1 (Size variant 1)
-    // Fields: size=1, imm9=0, Rn=0, Rt=0, opc=0
+    // Fields: size=1, opc=0, Rn=0, Rt=0, imm9=0
     let encoding: u32 = 0x78000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -10284,21 +6826,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_size_2_size_variant_2_2048_b8000800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_size_2_size_variant_2_2048_b8000800() {
     // Encoding: 0xB8000800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv special value size = 2 (Size variant 2)
-    // Fields: imm9=0, Rt=0, opc=0, Rn=0, size=2
+    // Fields: Rt=0, imm9=0, size=2, opc=0, Rn=0
     let encoding: u32 = 0xB8000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -10306,21 +6842,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_siz
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_size_3_size_variant_3_2048_f8000800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_size_3_size_variant_3_2048_f8000800() {
     // Encoding: 0xF8000800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv special value size = 3 (Size variant 3)
-    // Fields: Rn=0, opc=0, imm9=0, size=3, Rt=0
+    // Fields: size=3, Rt=0, imm9=0, Rn=0, opc=0
     let encoding: u32 = 0xF8000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -10328,21 +6858,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_siz
 /// Requirement: FieldSpecial { field: "opc", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_opc_0_size_variant_0_2048_38000800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_opc_0_size_variant_0_2048_38000800() {
     // Encoding: 0x38000800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv special value opc = 0 (Size variant 0)
-    // Fields: opc=0, imm9=0, Rt=0, size=0, Rn=0
+    // Fields: imm9=0, Rt=0, opc=0, size=0, Rn=0
     let encoding: u32 = 0x38000800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -10350,21 +6874,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_opc
 /// Requirement: FieldSpecial { field: "opc", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_opc_1_size_variant_1_2048_38400800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_opc_1_size_variant_1_2048_38400800() {
     // Encoding: 0x38400800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv special value opc = 1 (Size variant 1)
-    // Fields: imm9=0, Rn=0, opc=1, Rt=0, size=0
+    // Fields: Rt=0, size=0, imm9=0, Rn=0, opc=1
     let encoding: u32 = 0x38400800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -10372,21 +6890,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_opc
 /// Requirement: FieldSpecial { field: "opc", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_opc_2_size_variant_2_2048_38800800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_opc_2_size_variant_2_2048_38800800() {
     // Encoding: 0x38800800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv special value opc = 2 (Size variant 2)
-    // Fields: imm9=0, opc=2, size=0, Rn=0, Rt=0
+    // Fields: opc=2, Rn=0, Rt=0, size=0, imm9=0
     let encoding: u32 = 0x38800800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -10394,21 +6906,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_opc
 /// Requirement: FieldSpecial { field: "opc", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_opc_3_size_variant_3_2048_38c00800(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_opc_3_size_variant_3_2048_38c00800() {
     // Encoding: 0x38C00800
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv special value opc = 3 (Size variant 3)
-    // Fields: size=0, opc=3, imm9=0, Rn=0, Rt=0
+    // Fields: Rn=0, opc=3, size=0, imm9=0, Rt=0
     let encoding: u32 = 0x38C00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -10416,21 +6922,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_opc
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_rn_31_stack_pointer_sp_may_require_alignment_2048_38000be0(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_rn_31_stack_pointer_sp_may_require_alignment_2048_38000be0() {
     // Encoding: 0x38000BE0
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: size=0, opc=0, imm9=0, Rn=31, Rt=0
+    // Fields: opc=0, size=0, imm9=0, Rt=0, Rn=31
     let encoding: u32 = 0x38000BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -10438,21 +6938,15 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_rn_
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_2048_3800081f(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_2048_3800081f() {
     // Encoding: 0x3800081F
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rn=0, size=0, opc=0, Rt=31, imm9=0
+    // Fields: Rt=31, imm9=0, size=0, opc=0, Rn=0
     let encoding: u32 = 0x3800081F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_offset_unpriv
@@ -10555,8 +7049,8 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_store_0_380
     // Test aarch64_memory_single_general_immediate_signed_offset_unpriv memory store: 8 bytes
     // Encoding: 0x38000820
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     set_x(&mut cpu, 1, 0x100000000000);
+    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     let encoding: u32 = 0x38000820;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -10597,1491 +7091,6 @@ fn test_aarch64_memory_single_general_immediate_signed_offset_unpriv_exception_1
 // aarch64_memory_single_general_immediate_unsigned Tests
 // ============================================================================
 
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field size 30 +: 2`
-/// Requirement: FieldBoundary { field: "size", value: 0, boundary: Min }
-/// 8-bit / byte size
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_size_0_min_0_39000000() {
-    // Encoding: 0x39000000
-    // Test aarch64_memory_single_general_immediate_unsigned field size = 0 (Min)
-    // Fields: imm12=0, Rt=0, size=0, opc=0, Rn=0
-    let encoding: u32 = 0x39000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field size 30 +: 2`
-/// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
-/// 16-bit / halfword size
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_size_1_poweroftwo_0_79000000() {
-    // Encoding: 0x79000000
-    // Test aarch64_memory_single_general_immediate_unsigned field size = 1 (PowerOfTwo)
-    // Fields: size=1, Rt=0, imm12=0, opc=0, Rn=0
-    let encoding: u32 = 0x79000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field size 30 +: 2`
-/// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
-/// 32-bit / word size
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_size_2_poweroftwo_0_b9000000() {
-    // Encoding: 0xB9000000
-    // Test aarch64_memory_single_general_immediate_unsigned field size = 2 (PowerOfTwo)
-    // Fields: opc=0, imm12=0, Rt=0, Rn=0, size=2
-    let encoding: u32 = 0xB9000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field size 30 +: 2`
-/// Requirement: FieldBoundary { field: "size", value: 3, boundary: Max }
-/// 64-bit / doubleword size
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_size_3_max_0_f9000000() {
-    // Encoding: 0xF9000000
-    // Test aarch64_memory_single_general_immediate_unsigned field size = 3 (Max)
-    // Fields: size=3, opc=0, Rt=0, imm12=0, Rn=0
-    let encoding: u32 = 0xF9000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field opc 22 +: 2`
-/// Requirement: FieldBoundary { field: "opc", value: 0, boundary: Min }
-/// 8-bit / byte size
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_opc_0_min_0_39000000() {
-    // Encoding: 0x39000000
-    // Test aarch64_memory_single_general_immediate_unsigned field opc = 0 (Min)
-    // Fields: imm12=0, opc=0, Rn=0, size=0, Rt=0
-    let encoding: u32 = 0x39000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field opc 22 +: 2`
-/// Requirement: FieldBoundary { field: "opc", value: 1, boundary: PowerOfTwo }
-/// 16-bit / halfword size
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_opc_1_poweroftwo_0_39400000() {
-    // Encoding: 0x39400000
-    // Test aarch64_memory_single_general_immediate_unsigned field opc = 1 (PowerOfTwo)
-    // Fields: Rn=0, imm12=0, Rt=0, opc=1, size=0
-    let encoding: u32 = 0x39400000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field opc 22 +: 2`
-/// Requirement: FieldBoundary { field: "opc", value: 2, boundary: PowerOfTwo }
-/// 32-bit / word size
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_opc_2_poweroftwo_0_39800000() {
-    // Encoding: 0x39800000
-    // Test aarch64_memory_single_general_immediate_unsigned field opc = 2 (PowerOfTwo)
-    // Fields: size=0, opc=2, imm12=0, Rt=0, Rn=0
-    let encoding: u32 = 0x39800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field opc 22 +: 2`
-/// Requirement: FieldBoundary { field: "opc", value: 3, boundary: Max }
-/// 64-bit / doubleword size
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_opc_3_max_0_39c00000() {
-    // Encoding: 0x39C00000
-    // Test aarch64_memory_single_general_immediate_unsigned field opc = 3 (Max)
-    // Fields: Rt=0, Rn=0, size=0, opc=3, imm12=0
-    let encoding: u32 = 0x39C00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 0, boundary: Zero }
-/// immediate value 0
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_0_zero_0_39000000() {
-    // Encoding: 0x39000000
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 0 (Zero)
-    // Fields: Rt=0, opc=0, size=0, Rn=0, imm12=0
-    let encoding: u32 = 0x39000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 1, boundary: PowerOfTwo }
-/// immediate value 1
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_1_poweroftwo_0_39000400() {
-    // Encoding: 0x39000400
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 1 (PowerOfTwo)
-    // Fields: size=0, imm12=1, Rn=0, opc=0, Rt=0
-    let encoding: u32 = 0x39000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 3, boundary: PowerOfTwoMinusOne }
-/// 2^2 - 1 = 3
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_3_poweroftwominusone_0_39000c00(
-) {
-    // Encoding: 0x39000C00
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 3 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rt=0, size=0, opc=0, imm12=3
-    let encoding: u32 = 0x39000C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 4, boundary: PowerOfTwo }
-/// power of 2 (2^2 = 4)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_4_poweroftwo_0_39001000() {
-    // Encoding: 0x39001000
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 4 (PowerOfTwo)
-    // Fields: Rt=0, imm12=4, size=0, Rn=0, opc=0
-    let encoding: u32 = 0x39001000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 7, boundary: PowerOfTwoMinusOne }
-/// 2^3 - 1 = 7
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_7_poweroftwominusone_0_39001c00(
-) {
-    // Encoding: 0x39001C00
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 7 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rt=0, opc=0, Rn=0, imm12=7
-    let encoding: u32 = 0x39001C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 8, boundary: PowerOfTwo }
-/// power of 2 (2^3 = 8)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_8_poweroftwo_0_39002000() {
-    // Encoding: 0x39002000
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 8 (PowerOfTwo)
-    // Fields: Rt=0, Rn=0, size=0, opc=0, imm12=8
-    let encoding: u32 = 0x39002000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 15, boundary: PowerOfTwoMinusOne }
-/// 2^4 - 1 = 15
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_15_poweroftwominusone_0_39003c00(
-) {
-    // Encoding: 0x39003C00
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 15 (PowerOfTwoMinusOne)
-    // Fields: opc=0, imm12=15, size=0, Rt=0, Rn=0
-    let encoding: u32 = 0x39003C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 16, boundary: PowerOfTwo }
-/// power of 2 (2^4 = 16)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_16_poweroftwo_0_39004000() {
-    // Encoding: 0x39004000
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 16 (PowerOfTwo)
-    // Fields: opc=0, size=0, Rt=0, imm12=16, Rn=0
-    let encoding: u32 = 0x39004000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 31, boundary: PowerOfTwoMinusOne }
-/// 2^5 - 1 = 31
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_31_poweroftwominusone_0_39007c00(
-) {
-    // Encoding: 0x39007C00
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 31 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rt=0, imm12=31, size=0, opc=0
-    let encoding: u32 = 0x39007C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 32, boundary: PowerOfTwo }
-/// power of 2 (2^5 = 32)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_32_poweroftwo_0_39008000() {
-    // Encoding: 0x39008000
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 32 (PowerOfTwo)
-    // Fields: Rt=0, opc=0, size=0, imm12=32, Rn=0
-    let encoding: u32 = 0x39008000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 63, boundary: PowerOfTwoMinusOne }
-/// 2^6 - 1 = 63
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_63_poweroftwominusone_0_3900fc00(
-) {
-    // Encoding: 0x3900FC00
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 63 (PowerOfTwoMinusOne)
-    // Fields: imm12=63, Rt=0, size=0, Rn=0, opc=0
-    let encoding: u32 = 0x3900FC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 64, boundary: PowerOfTwo }
-/// power of 2 (2^6 = 64)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_64_poweroftwo_0_39010000() {
-    // Encoding: 0x39010000
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 64 (PowerOfTwo)
-    // Fields: imm12=64, opc=0, Rn=0, Rt=0, size=0
-    let encoding: u32 = 0x39010000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 127, boundary: PowerOfTwoMinusOne }
-/// 2^7 - 1 = 127
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_127_poweroftwominusone_0_3901fc00(
-) {
-    // Encoding: 0x3901FC00
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 127 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, imm12=127, Rt=0, size=0, opc=0
-    let encoding: u32 = 0x3901FC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 128, boundary: PowerOfTwo }
-/// power of 2 (2^7 = 128)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_128_poweroftwo_0_39020000() {
-    // Encoding: 0x39020000
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 128 (PowerOfTwo)
-    // Fields: Rt=0, size=0, opc=0, imm12=128, Rn=0
-    let encoding: u32 = 0x39020000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 255, boundary: PowerOfTwoMinusOne }
-/// 2^8 - 1 = 255
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_255_poweroftwominusone_0_3903fc00(
-) {
-    // Encoding: 0x3903FC00
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 255 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rn=0, Rt=0, imm12=255, size=0
-    let encoding: u32 = 0x3903FC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 256, boundary: PowerOfTwo }
-/// power of 2 (2^8 = 256)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_256_poweroftwo_0_39040000() {
-    // Encoding: 0x39040000
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 256 (PowerOfTwo)
-    // Fields: Rt=0, size=0, opc=0, imm12=256, Rn=0
-    let encoding: u32 = 0x39040000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 511, boundary: PowerOfTwoMinusOne }
-/// 2^9 - 1 = 511
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_511_poweroftwominusone_0_3907fc00(
-) {
-    // Encoding: 0x3907FC00
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 511 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, imm12=511, Rn=0, opc=0, size=0
-    let encoding: u32 = 0x3907FC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 512, boundary: PowerOfTwo }
-/// power of 2 (2^9 = 512)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_512_poweroftwo_0_39080000() {
-    // Encoding: 0x39080000
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 512 (PowerOfTwo)
-    // Fields: Rt=0, Rn=0, size=0, opc=0, imm12=512
-    let encoding: u32 = 0x39080000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 1023, boundary: PowerOfTwoMinusOne }
-/// 2^10 - 1 = 1023
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_1023_poweroftwominusone_0_390ffc00(
-) {
-    // Encoding: 0x390FFC00
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 1023 (PowerOfTwoMinusOne)
-    // Fields: imm12=1023, opc=0, Rn=0, size=0, Rt=0
-    let encoding: u32 = 0x390FFC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 1024, boundary: PowerOfTwo }
-/// power of 2 (2^10 = 1024)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_1024_poweroftwo_0_39100000() {
-    // Encoding: 0x39100000
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 1024 (PowerOfTwo)
-    // Fields: Rt=0, size=0, opc=0, Rn=0, imm12=1024
-    let encoding: u32 = 0x39100000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 2047, boundary: PowerOfTwoMinusOne }
-/// immediate midpoint (2047)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_2047_poweroftwominusone_0_391ffc00(
-) {
-    // Encoding: 0x391FFC00
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 2047 (PowerOfTwoMinusOne)
-    // Fields: imm12=2047, opc=0, Rt=0, size=0, Rn=0
-    let encoding: u32 = 0x391FFC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 2048, boundary: PowerOfTwo }
-/// power of 2 (2^11 = 2048)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_2048_poweroftwo_0_39200000() {
-    // Encoding: 0x39200000
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 2048 (PowerOfTwo)
-    // Fields: size=0, Rt=0, opc=0, Rn=0, imm12=2048
-    let encoding: u32 = 0x39200000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field imm12 10 +: 12`
-/// Requirement: FieldBoundary { field: "imm12", value: 4095, boundary: Max }
-/// maximum immediate (4095)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_imm12_4095_max_0_393ffc00() {
-    // Encoding: 0x393FFC00
-    // Test aarch64_memory_single_general_immediate_unsigned field imm12 = 4095 (Max)
-    // Fields: opc=0, Rt=0, imm12=4095, size=0, Rn=0
-    let encoding: u32 = 0x393FFC00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field Rn 5 +: 5`
-/// Requirement: FieldBoundary { field: "Rn", value: 0, boundary: Min }
-/// register index 0 (first register)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_rn_0_min_0_39000000() {
-    // Encoding: 0x39000000
-    // Test aarch64_memory_single_general_immediate_unsigned field Rn = 0 (Min)
-    // Fields: opc=0, Rn=0, Rt=0, imm12=0, size=0
-    let encoding: u32 = 0x39000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field Rn 5 +: 5`
-/// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
-/// register index 1 (second register)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_rn_1_poweroftwo_0_39000020() {
-    // Encoding: 0x39000020
-    // Test aarch64_memory_single_general_immediate_unsigned field Rn = 1 (PowerOfTwo)
-    // Fields: size=0, Rn=1, Rt=0, opc=0, imm12=0
-    let encoding: u32 = 0x39000020;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field Rn 5 +: 5`
-/// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
-/// register index 30 (LR in some contexts)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_rn_30_poweroftwominusone_0_390003c0()
-{
-    // Encoding: 0x390003C0
-    // Test aarch64_memory_single_general_immediate_unsigned field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rn=30, opc=0, size=0, imm12=0, Rt=0
-    let encoding: u32 = 0x390003C0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field Rn 5 +: 5`
-/// Requirement: FieldBoundary { field: "Rn", value: 31, boundary: Max }
-/// register index 31 (SP - stack pointer)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_rn_31_max_0_390003e0() {
-    // Encoding: 0x390003E0
-    // Test aarch64_memory_single_general_immediate_unsigned field Rn = 31 (Max)
-    // Fields: imm12=0, Rn=31, size=0, Rt=0, opc=0
-    let encoding: u32 = 0x390003E0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field Rt 0 +: 5`
-/// Requirement: FieldBoundary { field: "Rt", value: 0, boundary: Min }
-/// register index 0 (first register)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_rt_0_min_0_39000000() {
-    // Encoding: 0x39000000
-    // Test aarch64_memory_single_general_immediate_unsigned field Rt = 0 (Min)
-    // Fields: imm12=0, size=0, opc=0, Rn=0, Rt=0
-    let encoding: u32 = 0x39000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field Rt 0 +: 5`
-/// Requirement: FieldBoundary { field: "Rt", value: 1, boundary: PowerOfTwo }
-/// register index 1 (second register)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_rt_1_poweroftwo_0_39000001() {
-    // Encoding: 0x39000001
-    // Test aarch64_memory_single_general_immediate_unsigned field Rt = 1 (PowerOfTwo)
-    // Fields: size=0, imm12=0, Rt=1, Rn=0, opc=0
-    let encoding: u32 = 0x39000001;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field Rt 0 +: 5`
-/// Requirement: FieldBoundary { field: "Rt", value: 30, boundary: PowerOfTwoMinusOne }
-/// register index 30 (LR in some contexts)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_rt_30_poweroftwominusone_0_3900001e()
-{
-    // Encoding: 0x3900001E
-    // Test aarch64_memory_single_general_immediate_unsigned field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: Rt=30, imm12=0, size=0, opc=0, Rn=0
-    let encoding: u32 = 0x3900001E;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field Rt 0 +: 5`
-/// Requirement: FieldBoundary { field: "Rt", value: 31, boundary: Max }
-/// register index 31 (ZR - zero register)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_field_rt_31_max_0_3900001f() {
-    // Encoding: 0x3900001F
-    // Test aarch64_memory_single_general_immediate_unsigned field Rt = 31 (Max)
-    // Fields: size=0, imm12=0, opc=0, Rn=0, Rt=31
-    let encoding: u32 = 0x3900001F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 0`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_0_0_39000000() {
-    // Encoding: 0x39000000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=0, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: opc=0, Rt=0, size=0, imm12=0, Rn=0
-    let encoding: u32 = 0x39000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_1_0_79000000() {
-    // Encoding: 0x79000000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=1, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: imm12=0, opc=0, Rn=0, Rt=0, size=1
-    let encoding: u32 = 0x79000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_2_0_b9000000() {
-    // Encoding: 0xB9000000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=2, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: opc=0, imm12=0, Rt=0, Rn=0, size=2
-    let encoding: u32 = 0xB9000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_3_0_f9000000() {
-    // Encoding: 0xF9000000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=3, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: opc=0, size=3, Rn=0, imm12=0, Rt=0
-    let encoding: u32 = 0xF9000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_4_0_39000000() {
-    // Encoding: 0x39000000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=0, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: Rn=0, opc=0, Rt=0, imm12=0, size=0
-    let encoding: u32 = 0x39000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_5_0_39400000() {
-    // Encoding: 0x39400000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=0, opc=1, imm12=0, Rn=0, Rt=0
-    // Fields: size=0, Rn=0, Rt=0, imm12=0, opc=1
-    let encoding: u32 = 0x39400000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_6_0_39800000() {
-    // Encoding: 0x39800000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=0, opc=2, imm12=0, Rn=0, Rt=0
-    // Fields: opc=2, imm12=0, Rn=0, size=0, Rt=0
-    let encoding: u32 = 0x39800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_7_0_39c00000() {
-    // Encoding: 0x39C00000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=0, opc=3, imm12=0, Rn=0, Rt=0
-    // Fields: size=0, opc=3, Rt=0, Rn=0, imm12=0
-    let encoding: u32 = 0x39C00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm12=0 (immediate value 0)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_8_0_39000000() {
-    // Encoding: 0x39000000
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=0, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: size=0, imm12=0, opc=0, Rn=0, Rt=0
-    let encoding: u32 = 0x39000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm12=1 (immediate value 1)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_combo_9_0_39000400() {
-    // Encoding: 0x39000400
-    // Test aarch64_memory_single_general_immediate_unsigned field combination: size=0, opc=0, imm12=1, Rn=0, Rt=0
-    // Fields: size=0, Rn=0, opc=0, Rt=0, imm12=1
-    let encoding: u32 = 0x39000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field size = 0 (Size variant 0)`
-/// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
-/// Size variant 0
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_size_0_size_variant_0_0_39000000()
-{
-    // Encoding: 0x39000000
-    // Test aarch64_memory_single_general_immediate_unsigned special value size = 0 (Size variant 0)
-    // Fields: Rt=0, size=0, opc=0, Rn=0, imm12=0
-    let encoding: u32 = 0x39000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field size = 1 (Size variant 1)`
-/// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
-/// Size variant 1
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_size_1_size_variant_1_0_79000000()
-{
-    // Encoding: 0x79000000
-    // Test aarch64_memory_single_general_immediate_unsigned special value size = 1 (Size variant 1)
-    // Fields: Rn=0, size=1, Rt=0, imm12=0, opc=0
-    let encoding: u32 = 0x79000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field size = 2 (Size variant 2)`
-/// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
-/// Size variant 2
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_size_2_size_variant_2_0_b9000000()
-{
-    // Encoding: 0xB9000000
-    // Test aarch64_memory_single_general_immediate_unsigned special value size = 2 (Size variant 2)
-    // Fields: Rn=0, Rt=0, opc=0, size=2, imm12=0
-    let encoding: u32 = 0xB9000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field size = 3 (Size variant 3)`
-/// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
-/// Size variant 3
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_size_3_size_variant_3_0_f9000000()
-{
-    // Encoding: 0xF9000000
-    // Test aarch64_memory_single_general_immediate_unsigned special value size = 3 (Size variant 3)
-    // Fields: imm12=0, Rt=0, opc=0, Rn=0, size=3
-    let encoding: u32 = 0xF9000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field opc = 0 (Size variant 0)`
-/// Requirement: FieldSpecial { field: "opc", value: 0, meaning: "Size variant 0" }
-/// Size variant 0
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_opc_0_size_variant_0_0_39000000() {
-    // Encoding: 0x39000000
-    // Test aarch64_memory_single_general_immediate_unsigned special value opc = 0 (Size variant 0)
-    // Fields: size=0, opc=0, Rn=0, imm12=0, Rt=0
-    let encoding: u32 = 0x39000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field opc = 1 (Size variant 1)`
-/// Requirement: FieldSpecial { field: "opc", value: 1, meaning: "Size variant 1" }
-/// Size variant 1
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_opc_1_size_variant_1_0_39400000() {
-    // Encoding: 0x39400000
-    // Test aarch64_memory_single_general_immediate_unsigned special value opc = 1 (Size variant 1)
-    // Fields: size=0, Rn=0, Rt=0, opc=1, imm12=0
-    let encoding: u32 = 0x39400000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field opc = 2 (Size variant 2)`
-/// Requirement: FieldSpecial { field: "opc", value: 2, meaning: "Size variant 2" }
-/// Size variant 2
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_opc_2_size_variant_2_0_39800000() {
-    // Encoding: 0x39800000
-    // Test aarch64_memory_single_general_immediate_unsigned special value opc = 2 (Size variant 2)
-    // Fields: size=0, imm12=0, Rn=0, opc=2, Rt=0
-    let encoding: u32 = 0x39800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field opc = 3 (Size variant 3)`
-/// Requirement: FieldSpecial { field: "opc", value: 3, meaning: "Size variant 3" }
-/// Size variant 3
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_opc_3_size_variant_3_0_39c00000() {
-    // Encoding: 0x39C00000
-    // Test aarch64_memory_single_general_immediate_unsigned special value opc = 3 (Size variant 3)
-    // Fields: opc=3, imm12=0, size=0, Rn=0, Rt=0
-    let encoding: u32 = 0x39C00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field Rn = 31 (Stack pointer (SP) - may require alignment)`
-/// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
-/// Stack pointer (SP) - may require alignment
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_rn_31_stack_pointer_sp_may_require_alignment_0_390003e0(
-) {
-    // Encoding: 0x390003E0
-    // Test aarch64_memory_single_general_immediate_unsigned special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: opc=0, Rn=31, Rt=0, size=0, imm12=0
-    let encoding: u32 = 0x390003E0;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `field Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)`
-/// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
-/// Zero register (XZR/WZR) - reads as 0, writes discarded
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_3900001f(
-) {
-    // Encoding: 0x3900001F
-    // Test aarch64_memory_single_general_immediate_unsigned special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rn=0, opc=0, imm12=0, size=0, Rt=31
-    let encoding: u32 = 0x3900001F;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `STRB X0, [X1, #0]`
-/// Requirement: MemoryAccess { op: Store, size_bits: 8, addressing: "immediate" }
-/// zero value
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_str_oracle_0_39000020() {
-    // Test STRB: zero value (oracle)
-    // Encoding: 0x39000020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0x0);
-    set_x(&mut cpu, 1, 0x1000);
-    let encoding: u32 = 0x39000020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 1)
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `STRB X0, [X1, #0]`
-/// Requirement: MemoryAccess { op: Store, size_bits: 8, addressing: "immediate" }
-/// byte value
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_str_oracle_1_39000020() {
-    // Test STRB: byte value (oracle)
-    // Encoding: 0x39000020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1000);
-    set_x(&mut cpu, 0, 0xFF);
-    let encoding: u32 = 0x39000020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 1)
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `STRB X0, [X1, #0]`
-/// Requirement: MemoryAccess { op: Store, size_bits: 8, addressing: "immediate" }
-/// halfword value
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_str_oracle_2_39000020() {
-    // Test STRB: halfword value (oracle)
-    // Encoding: 0x39000020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0x1234);
-    set_x(&mut cpu, 1, 0x1000);
-    let encoding: u32 = 0x39000020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 1)
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `STRB X0, [X1, #0]`
-/// Requirement: MemoryAccess { op: Store, size_bits: 8, addressing: "immediate" }
-/// word value
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_str_oracle_3_39000020() {
-    // Test STRB: word value (oracle)
-    // Encoding: 0x39000020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1000);
-    set_x(&mut cpu, 0, 0x12345678);
-    let encoding: u32 = 0x39000020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 1)
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `STRB X0, [X1, #0]`
-/// Requirement: MemoryAccess { op: Store, size_bits: 8, addressing: "immediate" }
-/// doubleword value
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_str_oracle_4_39000020() {
-    // Test STRB: doubleword value (oracle)
-    // Encoding: 0x39000020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x1000);
-    set_x(&mut cpu, 0, 0x123456789ABCDEF0);
-    let encoding: u32 = 0x39000020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    // TODO: Memory assertion at 0x1000 (size 1)
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `GpFromField("t") write`
-/// Requirement: RegisterWrite { reg_type: Gp64, dest_field: "t" }
-/// verify register write to GpFromField("t")
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_reg_write_0_39000000() {
-    // Test aarch64_memory_single_general_immediate_unsigned register write: GpFromField("t")
-    // Encoding: 0x39000000
-    let mut cpu = create_test_cpu();
-    let encoding: u32 = 0x39000000;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `GpFromField("t") write`
-/// Requirement: RegisterWrite { reg_type: Gp64, dest_field: "t" }
-/// verify register write to GpFromField("t")
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_reg_write_1_39000000() {
-    // Test aarch64_memory_single_general_immediate_unsigned register write: GpFromField("t")
-    // Encoding: 0x39000000
-    let mut cpu = create_test_cpu();
-    let encoding: u32 = 0x39000000;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `Sp write`
-/// Requirement: RegisterWrite { reg_type: Gp64, dest_field: "unknown" }
-/// verify register write to Sp
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_reg_write_2_39000000() {
-    // Test aarch64_memory_single_general_immediate_unsigned register write: Sp
-    // Encoding: 0x39000000
-    let mut cpu = create_test_cpu();
-    let encoding: u32 = 0x39000000;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `GpFromField("n") write`
-/// Requirement: RegisterWrite { reg_type: Gp64, dest_field: "n" }
-/// verify register write to GpFromField("n")
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_reg_write_3_39000000() {
-    // Test aarch64_memory_single_general_immediate_unsigned register write: GpFromField("n")
-    // Encoding: 0x39000000
-    let mut cpu = create_test_cpu();
-    let encoding: u32 = 0x39000000;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `Rn = 31 (SP)`
-/// Requirement: RegisterSpecial { reg: Sp, behavior: "stack pointer with alignment requirements" }
-/// stack pointer (Rn = 31)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_sp_rn_390003e0() {
-    // Test aarch64_memory_single_general_immediate_unsigned with Rn = SP (31)
-    // Encoding: 0x390003E0
-    let mut cpu = create_test_cpu();
-    let encoding: u32 = 0x390003E0;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `Rt = 31 (ZR)`
-/// Requirement: RegisterSpecial { reg: Zr, behavior: "reads as 0, writes discarded" }
-/// zero register (Rt = 31)
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_zr_rt_3900001f() {
-    // Test aarch64_memory_single_general_immediate_unsigned with Rt = ZR (31)
-    // Encoding: 0x3900001F
-    let mut cpu = create_test_cpu();
-    let encoding: u32 = 0x3900001F;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-    assert_eq!(get_x(&cpu, 31), 0, "XZR should always be 0");
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `Mem[address, 8] = data`
-/// Requirement: MemoryAccess { op: Store, size_bits: 64, addressing: "Base { reg: \"address\" }" }
-/// 8-byte store
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_store_0_39000020() {
-    // Test aarch64_memory_single_general_immediate_unsigned memory store: 8 bytes
-    // Encoding: 0x39000020
-    let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 1, 0x100000000000);
-    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
-    let encoding: u32 = 0x39000020;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `Unconditional`
-/// Requirement: UndefinedEncoding { condition: "Unconditional" }
-/// triggers Undefined
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_exception_0_39000000() {
-    // Test aarch64_memory_single_general_immediate_unsigned exception: Undefined
-    // Encoding: 0x39000000
-    let mut cpu = create_test_cpu();
-    let encoding: u32 = 0x39000000;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_unsigned
-/// ASL: `Unconditional`
-/// Requirement: UndefinedEncoding { condition: "Unconditional" }
-/// triggers Undefined
-#[test]
-fn test_aarch64_memory_single_general_immediate_unsigned_exception_1_39000000() {
-    // Test aarch64_memory_single_general_immediate_unsigned exception: Undefined
-    // Encoding: 0x39000000
-    let mut cpu = create_test_cpu();
-    let encoding: u32 = 0x39000000;
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(exit, CpuExit::Continue, "instruction should execute");
-}
-
 // ============================================================================
 // aarch64_memory_single_simdfp_register Tests
 // ============================================================================
@@ -12094,17 +7103,12 @@ fn test_aarch64_memory_single_general_immediate_unsigned_exception_1_39000000() 
 fn test_aarch64_memory_single_simdfp_register_field_size_0_min_800_3c200800() {
     // Encoding: 0x3C200800
     // Test aarch64_memory_single_simdfp_register field size = 0 (Min)
-    // Fields: option=0, size=0, Rm=0, S=0, opc=0, Rn=0, Rt=0
+    // Fields: option=0, S=0, Rn=0, Rm=0, size=0, opc=0, Rt=0
     let encoding: u32 = 0x3C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12115,17 +7119,12 @@ fn test_aarch64_memory_single_simdfp_register_field_size_0_min_800_3c200800() {
 fn test_aarch64_memory_single_simdfp_register_field_size_1_poweroftwo_800_7c200800() {
     // Encoding: 0x7C200800
     // Test aarch64_memory_single_simdfp_register field size = 1 (PowerOfTwo)
-    // Fields: size=1, S=0, Rm=0, option=0, Rn=0, opc=0, Rt=0
+    // Fields: S=0, Rn=0, Rt=0, opc=0, Rm=0, option=0, size=1
     let encoding: u32 = 0x7C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12136,17 +7135,12 @@ fn test_aarch64_memory_single_simdfp_register_field_size_1_poweroftwo_800_7c2008
 fn test_aarch64_memory_single_simdfp_register_field_size_2_poweroftwo_800_bc200800() {
     // Encoding: 0xBC200800
     // Test aarch64_memory_single_simdfp_register field size = 2 (PowerOfTwo)
-    // Fields: opc=0, Rm=0, S=0, option=0, Rn=0, Rt=0, size=2
+    // Fields: option=0, S=0, opc=0, Rn=0, size=2, Rt=0, Rm=0
     let encoding: u32 = 0xBC200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12157,17 +7151,12 @@ fn test_aarch64_memory_single_simdfp_register_field_size_2_poweroftwo_800_bc2008
 fn test_aarch64_memory_single_simdfp_register_field_size_3_max_800_fc200800() {
     // Encoding: 0xFC200800
     // Test aarch64_memory_single_simdfp_register field size = 3 (Max)
-    // Fields: Rn=0, Rt=0, opc=0, size=3, Rm=0, S=0, option=0
+    // Fields: Rn=0, S=0, Rt=0, size=3, option=0, opc=0, Rm=0
     let encoding: u32 = 0xFC200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12178,17 +7167,12 @@ fn test_aarch64_memory_single_simdfp_register_field_size_3_max_800_fc200800() {
 fn test_aarch64_memory_single_simdfp_register_field_opc_0_min_800_3c200800() {
     // Encoding: 0x3C200800
     // Test aarch64_memory_single_simdfp_register field opc = 0 (Min)
-    // Fields: option=0, S=0, Rm=0, Rn=0, Rt=0, opc=0, size=0
+    // Fields: opc=0, Rm=0, Rn=0, S=0, Rt=0, size=0, option=0
     let encoding: u32 = 0x3C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12199,17 +7183,12 @@ fn test_aarch64_memory_single_simdfp_register_field_opc_0_min_800_3c200800() {
 fn test_aarch64_memory_single_simdfp_register_field_opc_1_poweroftwo_800_3c600800() {
     // Encoding: 0x3C600800
     // Test aarch64_memory_single_simdfp_register field opc = 1 (PowerOfTwo)
-    // Fields: Rn=0, Rt=0, Rm=0, opc=1, size=0, option=0, S=0
+    // Fields: Rn=0, Rt=0, S=0, Rm=0, opc=1, size=0, option=0
     let encoding: u32 = 0x3C600800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12220,17 +7199,12 @@ fn test_aarch64_memory_single_simdfp_register_field_opc_1_poweroftwo_800_3c60080
 fn test_aarch64_memory_single_simdfp_register_field_opc_2_poweroftwo_800_3ca00800() {
     // Encoding: 0x3CA00800
     // Test aarch64_memory_single_simdfp_register field opc = 2 (PowerOfTwo)
-    // Fields: S=0, Rn=0, opc=2, Rt=0, size=0, Rm=0, option=0
+    // Fields: Rm=0, option=0, size=0, Rn=0, Rt=0, S=0, opc=2
     let encoding: u32 = 0x3CA00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12241,17 +7215,12 @@ fn test_aarch64_memory_single_simdfp_register_field_opc_2_poweroftwo_800_3ca0080
 fn test_aarch64_memory_single_simdfp_register_field_opc_3_max_800_3ce00800() {
     // Encoding: 0x3CE00800
     // Test aarch64_memory_single_simdfp_register field opc = 3 (Max)
-    // Fields: Rn=0, Rt=0, opc=3, option=0, S=0, Rm=0, size=0
+    // Fields: size=0, S=0, option=0, Rt=0, Rm=0, opc=3, Rn=0
     let encoding: u32 = 0x3CE00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12262,17 +7231,12 @@ fn test_aarch64_memory_single_simdfp_register_field_opc_3_max_800_3ce00800() {
 fn test_aarch64_memory_single_simdfp_register_field_rm_0_min_800_3c200800() {
     // Encoding: 0x3C200800
     // Test aarch64_memory_single_simdfp_register field Rm = 0 (Min)
-    // Fields: size=0, S=0, Rm=0, opc=0, option=0, Rn=0, Rt=0
+    // Fields: opc=0, option=0, Rm=0, Rt=0, Rn=0, size=0, S=0
     let encoding: u32 = 0x3C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12283,17 +7247,12 @@ fn test_aarch64_memory_single_simdfp_register_field_rm_0_min_800_3c200800() {
 fn test_aarch64_memory_single_simdfp_register_field_rm_1_poweroftwo_800_3c210800() {
     // Encoding: 0x3C210800
     // Test aarch64_memory_single_simdfp_register field Rm = 1 (PowerOfTwo)
-    // Fields: size=0, opc=0, Rm=1, S=0, Rt=0, Rn=0, option=0
+    // Fields: Rn=0, opc=0, Rt=0, option=0, size=0, Rm=1, S=0
     let encoding: u32 = 0x3C210800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12304,17 +7263,12 @@ fn test_aarch64_memory_single_simdfp_register_field_rm_1_poweroftwo_800_3c210800
 fn test_aarch64_memory_single_simdfp_register_field_rm_30_poweroftwominusone_800_3c3e0800() {
     // Encoding: 0x3C3E0800
     // Test aarch64_memory_single_simdfp_register field Rm = 30 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, Rm=30, size=0, S=0, opc=0, Rn=0, option=0
+    // Fields: opc=0, S=0, Rt=0, option=0, size=0, Rn=0, Rm=30
     let encoding: u32 = 0x3C3E0800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12325,17 +7279,12 @@ fn test_aarch64_memory_single_simdfp_register_field_rm_30_poweroftwominusone_800
 fn test_aarch64_memory_single_simdfp_register_field_rm_31_max_800_3c3f0800() {
     // Encoding: 0x3C3F0800
     // Test aarch64_memory_single_simdfp_register field Rm = 31 (Max)
-    // Fields: size=0, option=0, Rn=0, Rt=0, Rm=31, S=0, opc=0
+    // Fields: option=0, opc=0, Rm=31, S=0, Rn=0, Rt=0, size=0
     let encoding: u32 = 0x3C3F0800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12346,17 +7295,12 @@ fn test_aarch64_memory_single_simdfp_register_field_rm_31_max_800_3c3f0800() {
 fn test_aarch64_memory_single_simdfp_register_field_option_0_min_800_3c200800() {
     // Encoding: 0x3C200800
     // Test aarch64_memory_single_simdfp_register field option = 0 (Min)
-    // Fields: opc=0, Rm=0, option=0, S=0, size=0, Rn=0, Rt=0
+    // Fields: Rn=0, Rt=0, S=0, size=0, Rm=0, option=0, opc=0
     let encoding: u32 = 0x3C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12367,17 +7311,12 @@ fn test_aarch64_memory_single_simdfp_register_field_option_0_min_800_3c200800() 
 fn test_aarch64_memory_single_simdfp_register_field_option_1_poweroftwo_800_3c202800() {
     // Encoding: 0x3C202800
     // Test aarch64_memory_single_simdfp_register field option = 1 (PowerOfTwo)
-    // Fields: Rm=0, Rn=0, Rt=0, opc=0, size=0, option=1, S=0
+    // Fields: Rt=0, Rm=0, S=0, size=0, Rn=0, opc=0, option=1
     let encoding: u32 = 0x3C202800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12388,17 +7327,12 @@ fn test_aarch64_memory_single_simdfp_register_field_option_1_poweroftwo_800_3c20
 fn test_aarch64_memory_single_simdfp_register_field_option_2_poweroftwo_800_3c204800() {
     // Encoding: 0x3C204800
     // Test aarch64_memory_single_simdfp_register field option = 2 (PowerOfTwo)
-    // Fields: opc=0, size=0, Rm=0, S=0, Rn=0, option=2, Rt=0
+    // Fields: opc=0, S=0, Rn=0, Rt=0, size=0, option=2, Rm=0
     let encoding: u32 = 0x3C204800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12409,17 +7343,12 @@ fn test_aarch64_memory_single_simdfp_register_field_option_2_poweroftwo_800_3c20
 fn test_aarch64_memory_single_simdfp_register_field_option_3_poweroftwo_800_3c206800() {
     // Encoding: 0x3C206800
     // Test aarch64_memory_single_simdfp_register field option = 3 (PowerOfTwo)
-    // Fields: opc=0, size=0, option=3, S=0, Rm=0, Rn=0, Rt=0
+    // Fields: size=0, opc=0, Rm=0, S=0, Rn=0, Rt=0, option=3
     let encoding: u32 = 0x3C206800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12430,17 +7359,12 @@ fn test_aarch64_memory_single_simdfp_register_field_option_3_poweroftwo_800_3c20
 fn test_aarch64_memory_single_simdfp_register_field_option_4_poweroftwo_800_3c208800() {
     // Encoding: 0x3C208800
     // Test aarch64_memory_single_simdfp_register field option = 4 (PowerOfTwo)
-    // Fields: size=0, S=0, option=4, Rn=0, Rm=0, opc=0, Rt=0
+    // Fields: Rt=0, size=0, opc=0, option=4, Rm=0, S=0, Rn=0
     let encoding: u32 = 0x3C208800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12451,17 +7375,12 @@ fn test_aarch64_memory_single_simdfp_register_field_option_4_poweroftwo_800_3c20
 fn test_aarch64_memory_single_simdfp_register_field_option_5_poweroftwo_800_3c20a800() {
     // Encoding: 0x3C20A800
     // Test aarch64_memory_single_simdfp_register field option = 5 (PowerOfTwo)
-    // Fields: S=0, Rn=0, Rt=0, Rm=0, size=0, opc=0, option=5
+    // Fields: Rn=0, Rt=0, option=5, S=0, size=0, opc=0, Rm=0
     let encoding: u32 = 0x3C20A800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12472,17 +7391,12 @@ fn test_aarch64_memory_single_simdfp_register_field_option_5_poweroftwo_800_3c20
 fn test_aarch64_memory_single_simdfp_register_field_option_6_poweroftwo_800_3c20c800() {
     // Encoding: 0x3C20C800
     // Test aarch64_memory_single_simdfp_register field option = 6 (PowerOfTwo)
-    // Fields: size=0, opc=0, option=6, S=0, Rm=0, Rt=0, Rn=0
+    // Fields: size=0, option=6, S=0, Rt=0, Rm=0, Rn=0, opc=0
     let encoding: u32 = 0x3C20C800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12493,17 +7407,12 @@ fn test_aarch64_memory_single_simdfp_register_field_option_6_poweroftwo_800_3c20
 fn test_aarch64_memory_single_simdfp_register_field_option_7_max_800_3c20e800() {
     // Encoding: 0x3C20E800
     // Test aarch64_memory_single_simdfp_register field option = 7 (Max)
-    // Fields: size=0, Rm=0, opc=0, Rt=0, Rn=0, S=0, option=7
+    // Fields: Rm=0, option=7, S=0, Rn=0, size=0, opc=0, Rt=0
     let encoding: u32 = 0x3C20E800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12514,17 +7423,12 @@ fn test_aarch64_memory_single_simdfp_register_field_option_7_max_800_3c20e800() 
 fn test_aarch64_memory_single_simdfp_register_field_s_0_min_800_3c200800() {
     // Encoding: 0x3C200800
     // Test aarch64_memory_single_simdfp_register field S = 0 (Min)
-    // Fields: option=0, S=0, Rt=0, Rm=0, size=0, Rn=0, opc=0
+    // Fields: size=0, opc=0, S=0, Rn=0, option=0, Rm=0, Rt=0
     let encoding: u32 = 0x3C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12535,17 +7439,12 @@ fn test_aarch64_memory_single_simdfp_register_field_s_0_min_800_3c200800() {
 fn test_aarch64_memory_single_simdfp_register_field_s_1_max_800_3c201800() {
     // Encoding: 0x3C201800
     // Test aarch64_memory_single_simdfp_register field S = 1 (Max)
-    // Fields: Rm=0, Rt=0, opc=0, option=0, S=1, Rn=0, size=0
+    // Fields: Rn=0, S=1, Rm=0, Rt=0, option=0, opc=0, size=0
     let encoding: u32 = 0x3C201800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12556,17 +7455,12 @@ fn test_aarch64_memory_single_simdfp_register_field_s_1_max_800_3c201800() {
 fn test_aarch64_memory_single_simdfp_register_field_rn_0_min_800_3c200800() {
     // Encoding: 0x3C200800
     // Test aarch64_memory_single_simdfp_register field Rn = 0 (Min)
-    // Fields: Rn=0, opc=0, option=0, Rt=0, size=0, Rm=0, S=0
+    // Fields: opc=0, S=0, Rn=0, Rt=0, option=0, Rm=0, size=0
     let encoding: u32 = 0x3C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12577,17 +7471,12 @@ fn test_aarch64_memory_single_simdfp_register_field_rn_0_min_800_3c200800() {
 fn test_aarch64_memory_single_simdfp_register_field_rn_1_poweroftwo_800_3c200820() {
     // Encoding: 0x3C200820
     // Test aarch64_memory_single_simdfp_register field Rn = 1 (PowerOfTwo)
-    // Fields: Rm=0, Rt=0, opc=0, size=0, S=0, Rn=1, option=0
+    // Fields: Rn=1, option=0, Rm=0, size=0, S=0, Rt=0, opc=0
     let encoding: u32 = 0x3C200820;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12598,17 +7487,12 @@ fn test_aarch64_memory_single_simdfp_register_field_rn_1_poweroftwo_800_3c200820
 fn test_aarch64_memory_single_simdfp_register_field_rn_30_poweroftwominusone_800_3c200bc0() {
     // Encoding: 0x3C200BC0
     // Test aarch64_memory_single_simdfp_register field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rm=0, size=0, S=0, option=0, Rn=30, Rt=0
+    // Fields: Rn=30, Rt=0, size=0, Rm=0, option=0, S=0, opc=0
     let encoding: u32 = 0x3C200BC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12619,17 +7503,12 @@ fn test_aarch64_memory_single_simdfp_register_field_rn_30_poweroftwominusone_800
 fn test_aarch64_memory_single_simdfp_register_field_rn_31_max_800_3c200be0() {
     // Encoding: 0x3C200BE0
     // Test aarch64_memory_single_simdfp_register field Rn = 31 (Max)
-    // Fields: Rt=0, Rm=0, Rn=31, size=0, opc=0, option=0, S=0
+    // Fields: Rt=0, size=0, option=0, Rn=31, Rm=0, opc=0, S=0
     let encoding: u32 = 0x3C200BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12640,17 +7519,12 @@ fn test_aarch64_memory_single_simdfp_register_field_rn_31_max_800_3c200be0() {
 fn test_aarch64_memory_single_simdfp_register_field_rt_0_min_800_3c200800() {
     // Encoding: 0x3C200800
     // Test aarch64_memory_single_simdfp_register field Rt = 0 (Min)
-    // Fields: size=0, S=0, Rm=0, option=0, Rt=0, Rn=0, opc=0
+    // Fields: option=0, S=0, Rn=0, opc=0, Rt=0, size=0, Rm=0
     let encoding: u32 = 0x3C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12661,17 +7535,12 @@ fn test_aarch64_memory_single_simdfp_register_field_rt_0_min_800_3c200800() {
 fn test_aarch64_memory_single_simdfp_register_field_rt_1_poweroftwo_800_3c200801() {
     // Encoding: 0x3C200801
     // Test aarch64_memory_single_simdfp_register field Rt = 1 (PowerOfTwo)
-    // Fields: Rn=0, option=0, Rt=1, opc=0, size=0, S=0, Rm=0
+    // Fields: option=0, S=0, Rt=1, Rn=0, opc=0, Rm=0, size=0
     let encoding: u32 = 0x3C200801;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12682,17 +7551,12 @@ fn test_aarch64_memory_single_simdfp_register_field_rt_1_poweroftwo_800_3c200801
 fn test_aarch64_memory_single_simdfp_register_field_rt_30_poweroftwominusone_800_3c20081e() {
     // Encoding: 0x3C20081E
     // Test aarch64_memory_single_simdfp_register field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: Rm=0, S=0, Rt=30, option=0, opc=0, size=0, Rn=0
+    // Fields: Rm=0, option=0, S=0, Rn=0, size=0, opc=0, Rt=30
     let encoding: u32 = 0x3C20081E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12703,17 +7567,12 @@ fn test_aarch64_memory_single_simdfp_register_field_rt_30_poweroftwominusone_800
 fn test_aarch64_memory_single_simdfp_register_field_rt_31_max_800_3c20081f() {
     // Encoding: 0x3C20081F
     // Test aarch64_memory_single_simdfp_register field Rt = 31 (Max)
-    // Fields: opc=0, option=0, size=0, Rm=0, S=0, Rt=31, Rn=0
+    // Fields: Rn=0, Rt=31, Rm=0, option=0, S=0, opc=0, size=0
     let encoding: u32 = 0x3C20081F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12724,206 +7583,12 @@ fn test_aarch64_memory_single_simdfp_register_field_rt_31_max_800_3c20081f() {
 fn test_aarch64_memory_single_simdfp_register_combo_0_800_3c200800() {
     // Encoding: 0x3C200800
     // Test aarch64_memory_single_simdfp_register field combination: size=0, opc=0, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: S=0, option=0, Rt=0, Rm=0, size=0, opc=0, Rn=0
+    // Fields: opc=0, Rn=0, S=0, Rt=0, size=0, Rm=0, option=0
     let encoding: u32 = 0x3C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_register
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_register_combo_1_800_7c200800() {
-    // Encoding: 0x7C200800
-    // Test aarch64_memory_single_simdfp_register field combination: size=1, opc=0, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: opc=0, option=0, Rt=0, size=1, Rm=0, S=0, Rn=0
-    let encoding: u32 = 0x7C200800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_register
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_simdfp_register_combo_2_800_bc200800() {
-    // Encoding: 0xBC200800
-    // Test aarch64_memory_single_simdfp_register field combination: size=2, opc=0, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: size=2, Rm=0, opc=0, option=0, Rn=0, S=0, Rt=0
-    let encoding: u32 = 0xBC200800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_register
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_register_combo_3_800_fc200800() {
-    // Encoding: 0xFC200800
-    // Test aarch64_memory_single_simdfp_register field combination: size=3, opc=0, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: Rt=0, option=0, Rm=0, opc=0, size=3, S=0, Rn=0
-    let encoding: u32 = 0xFC200800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_register
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_memory_single_simdfp_register_combo_4_800_3c200800() {
-    // Encoding: 0x3C200800
-    // Test aarch64_memory_single_simdfp_register field combination: size=0, opc=0, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: S=0, Rt=0, Rn=0, option=0, opc=0, Rm=0, size=0
-    let encoding: u32 = 0x3C200800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_register
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_register_combo_5_800_3c600800() {
-    // Encoding: 0x3C600800
-    // Test aarch64_memory_single_simdfp_register field combination: size=0, opc=1, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: Rt=0, Rm=0, opc=1, option=0, S=0, Rn=0, size=0
-    let encoding: u32 = 0x3C600800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_register
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_simdfp_register_combo_6_800_3ca00800() {
-    // Encoding: 0x3CA00800
-    // Test aarch64_memory_single_simdfp_register field combination: size=0, opc=2, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: size=0, Rm=0, Rn=0, Rt=0, S=0, opc=2, option=0
-    let encoding: u32 = 0x3CA00800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_register
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_register_combo_7_800_3ce00800() {
-    // Encoding: 0x3CE00800
-    // Test aarch64_memory_single_simdfp_register field combination: size=0, opc=3, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: Rt=0, Rm=0, opc=3, S=0, option=0, size=0, Rn=0
-    let encoding: u32 = 0x3CE00800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_register
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=0 (register index 0 (first register))
-#[test]
-fn test_aarch64_memory_single_simdfp_register_combo_8_800_3c200800() {
-    // Encoding: 0x3C200800
-    // Test aarch64_memory_single_simdfp_register field combination: size=0, opc=0, Rm=0, option=0, S=0, Rn=0, Rt=0
-    // Fields: size=0, opc=0, Rm=0, S=0, Rn=0, Rt=0, option=0
-    let encoding: u32 = 0x3C200800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_register
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// Rm=1 (register index 1 (second register))
-#[test]
-fn test_aarch64_memory_single_simdfp_register_combo_9_800_3c210800() {
-    // Encoding: 0x3C210800
-    // Test aarch64_memory_single_simdfp_register field combination: size=0, opc=0, Rm=1, option=0, S=0, Rn=0, Rt=0
-    // Fields: Rt=0, Rm=1, option=0, S=0, size=0, Rn=0, opc=0
-    let encoding: u32 = 0x3C210800;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12934,17 +7599,12 @@ fn test_aarch64_memory_single_simdfp_register_combo_9_800_3c210800() {
 fn test_aarch64_memory_single_simdfp_register_special_size_0_size_variant_0_2048_3c200800() {
     // Encoding: 0x3C200800
     // Test aarch64_memory_single_simdfp_register special value size = 0 (Size variant 0)
-    // Fields: Rt=0, opc=0, option=0, Rn=0, S=0, size=0, Rm=0
+    // Fields: Rt=0, size=0, Rm=0, S=0, opc=0, option=0, Rn=0
     let encoding: u32 = 0x3C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12955,17 +7615,12 @@ fn test_aarch64_memory_single_simdfp_register_special_size_0_size_variant_0_2048
 fn test_aarch64_memory_single_simdfp_register_special_size_1_size_variant_1_2048_7c200800() {
     // Encoding: 0x7C200800
     // Test aarch64_memory_single_simdfp_register special value size = 1 (Size variant 1)
-    // Fields: Rn=0, size=1, Rt=0, opc=0, Rm=0, S=0, option=0
+    // Fields: size=1, opc=0, Rn=0, Rm=0, Rt=0, S=0, option=0
     let encoding: u32 = 0x7C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12976,17 +7631,12 @@ fn test_aarch64_memory_single_simdfp_register_special_size_1_size_variant_1_2048
 fn test_aarch64_memory_single_simdfp_register_special_size_2_size_variant_2_2048_bc200800() {
     // Encoding: 0xBC200800
     // Test aarch64_memory_single_simdfp_register special value size = 2 (Size variant 2)
-    // Fields: option=0, size=2, Rn=0, S=0, Rt=0, opc=0, Rm=0
+    // Fields: Rn=0, Rt=0, Rm=0, opc=0, size=2, option=0, S=0
     let encoding: u32 = 0xBC200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -12997,17 +7647,12 @@ fn test_aarch64_memory_single_simdfp_register_special_size_2_size_variant_2_2048
 fn test_aarch64_memory_single_simdfp_register_special_size_3_size_variant_3_2048_fc200800() {
     // Encoding: 0xFC200800
     // Test aarch64_memory_single_simdfp_register special value size = 3 (Size variant 3)
-    // Fields: Rt=0, Rm=0, size=3, opc=0, S=0, option=0, Rn=0
+    // Fields: option=0, Rn=0, Rt=0, S=0, size=3, opc=0, Rm=0
     let encoding: u32 = 0xFC200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -13018,17 +7663,12 @@ fn test_aarch64_memory_single_simdfp_register_special_size_3_size_variant_3_2048
 fn test_aarch64_memory_single_simdfp_register_special_opc_0_size_variant_0_2048_3c200800() {
     // Encoding: 0x3C200800
     // Test aarch64_memory_single_simdfp_register special value opc = 0 (Size variant 0)
-    // Fields: option=0, S=0, opc=0, Rm=0, Rn=0, Rt=0, size=0
+    // Fields: option=0, size=0, S=0, opc=0, Rn=0, Rt=0, Rm=0
     let encoding: u32 = 0x3C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -13039,17 +7679,12 @@ fn test_aarch64_memory_single_simdfp_register_special_opc_0_size_variant_0_2048_
 fn test_aarch64_memory_single_simdfp_register_special_opc_1_size_variant_1_2048_3c600800() {
     // Encoding: 0x3C600800
     // Test aarch64_memory_single_simdfp_register special value opc = 1 (Size variant 1)
-    // Fields: Rm=0, S=0, size=0, Rn=0, opc=1, option=0, Rt=0
+    // Fields: size=0, option=0, Rm=0, Rn=0, opc=1, Rt=0, S=0
     let encoding: u32 = 0x3C600800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -13060,17 +7695,12 @@ fn test_aarch64_memory_single_simdfp_register_special_opc_1_size_variant_1_2048_
 fn test_aarch64_memory_single_simdfp_register_special_opc_2_size_variant_2_2048_3ca00800() {
     // Encoding: 0x3CA00800
     // Test aarch64_memory_single_simdfp_register special value opc = 2 (Size variant 2)
-    // Fields: Rn=0, S=0, Rt=0, option=0, opc=2, size=0, Rm=0
+    // Fields: S=0, Rt=0, opc=2, size=0, Rm=0, option=0, Rn=0
     let encoding: u32 = 0x3CA00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -13081,17 +7711,12 @@ fn test_aarch64_memory_single_simdfp_register_special_opc_2_size_variant_2_2048_
 fn test_aarch64_memory_single_simdfp_register_special_opc_3_size_variant_3_2048_3ce00800() {
     // Encoding: 0x3CE00800
     // Test aarch64_memory_single_simdfp_register special value opc = 3 (Size variant 3)
-    // Fields: Rm=0, size=0, option=0, Rn=0, Rt=0, S=0, opc=3
+    // Fields: Rt=0, S=0, Rm=0, opc=3, size=0, option=0, Rn=0
     let encoding: u32 = 0x3CE00800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -13102,17 +7727,12 @@ fn test_aarch64_memory_single_simdfp_register_special_opc_3_size_variant_3_2048_
 fn test_aarch64_memory_single_simdfp_register_special_s_0_size_variant_0_2048_3c200800() {
     // Encoding: 0x3C200800
     // Test aarch64_memory_single_simdfp_register special value S = 0 (Size variant 0)
-    // Fields: Rn=0, Rt=0, Rm=0, size=0, opc=0, option=0, S=0
+    // Fields: Rm=0, size=0, S=0, Rn=0, Rt=0, option=0, opc=0
     let encoding: u32 = 0x3C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -13123,17 +7743,12 @@ fn test_aarch64_memory_single_simdfp_register_special_s_0_size_variant_0_2048_3c
 fn test_aarch64_memory_single_simdfp_register_special_s_1_size_variant_1_2048_3c201800() {
     // Encoding: 0x3C201800
     // Test aarch64_memory_single_simdfp_register special value S = 1 (Size variant 1)
-    // Fields: opc=0, S=1, size=0, Rn=0, Rt=0, option=0, Rm=0
+    // Fields: S=1, size=0, opc=0, option=0, Rn=0, Rt=0, Rm=0
     let encoding: u32 = 0x3C201800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -13141,21 +7756,15 @@ fn test_aarch64_memory_single_simdfp_register_special_s_1_size_variant_1_2048_3c
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_single_simdfp_register_special_rn_31_stack_pointer_sp_may_require_alignment_2048_3c200be0(
-) {
+fn test_aarch64_memory_single_simdfp_register_special_rn_31_stack_pointer_sp_may_require_alignment_2048_3c200be0() {
     // Encoding: 0x3C200BE0
     // Test aarch64_memory_single_simdfp_register special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: Rt=0, S=0, Rn=31, option=0, size=0, Rm=0, opc=0
+    // Fields: S=0, Rn=31, Rt=0, opc=0, option=0, size=0, Rm=0
     let encoding: u32 = 0x3C200BE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -13163,21 +7772,15 @@ fn test_aarch64_memory_single_simdfp_register_special_rn_31_stack_pointer_sp_may
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_single_simdfp_register_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_2048_3c20081f(
-) {
+fn test_aarch64_memory_single_simdfp_register_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_2048_3c20081f() {
     // Encoding: 0x3C20081F
     // Test aarch64_memory_single_simdfp_register special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rn=0, size=0, Rt=31, opc=0, Rm=0, option=0, S=0
+    // Fields: opc=0, S=0, Rm=0, Rn=0, size=0, Rt=31, option=0
     let encoding: u32 = 0x3C20081F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -13188,16 +7791,12 @@ fn test_aarch64_memory_single_simdfp_register_special_rt_31_zero_register_xzr_wz
 fn test_aarch64_memory_single_simdfp_register_invalid_0_800_3c200800() {
     // Encoding: 0x3C200800
     // Test aarch64_memory_single_simdfp_register invalid encoding: Binary { op: Gt, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "scale" }), rhs: LitInt(4) }
-    // Fields: opc=0, size=0, S=0, Rn=0, Rm=0, option=0, Rt=0
+    // Fields: Rt=0, opc=0, S=0, option=0, size=0, Rm=0, Rn=0
     let encoding: u32 = 0x3C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -13208,16 +7807,12 @@ fn test_aarch64_memory_single_simdfp_register_invalid_0_800_3c200800() {
 fn test_aarch64_memory_single_simdfp_register_invalid_1_800_3c200800() {
     // Encoding: 0x3C200800
     // Test aarch64_memory_single_simdfp_register invalid encoding: Unconditional UNDEFINED
-    // Fields: Rt=0, Rm=0, opc=0, size=0, S=0, option=0, Rn=0
+    // Fields: option=0, Rn=0, Rm=0, S=0, Rt=0, size=0, opc=0
     let encoding: u32 = 0x3C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -13228,16 +7823,12 @@ fn test_aarch64_memory_single_simdfp_register_invalid_1_800_3c200800() {
 fn test_aarch64_memory_single_simdfp_register_invalid_2_800_3c200800() {
     // Encoding: 0x3C200800
     // Test aarch64_memory_single_simdfp_register invalid encoding: Binary { op: Eq, lhs: Index { base: Var(QualifiedIdentifier { qualifier: Any, name: "option" }), indices: [Single(LitInt(1))] }, rhs: LitBits([false]) }
-    // Fields: size=0, Rt=0, S=0, Rn=0, option=0, Rm=0, opc=0
+    // Fields: Rt=0, size=0, option=0, opc=0, S=0, Rm=0, Rn=0
     let encoding: u32 = 0x3C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -13248,16 +7839,12 @@ fn test_aarch64_memory_single_simdfp_register_invalid_2_800_3c200800() {
 fn test_aarch64_memory_single_simdfp_register_invalid_3_800_3c200800() {
     // Encoding: 0x3C200800
     // Test aarch64_memory_single_simdfp_register invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, Rt=0, Rm=0, size=0, option=0, S=0, opc=0
+    // Fields: size=0, opc=0, Rm=0, S=0, option=0, Rt=0, Rn=0
     let encoding: u32 = 0x3C200800;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_register
@@ -13365,17 +7952,12 @@ fn test_aarch64_memory_single_simdfp_register_store_0_3c200820() {
 fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_size_0_min_400_3c000400() {
     // Encoding: 0x3C000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field size = 0 (Min)
-    // Fields: Rn=0, size=0, imm9=0, Rt=0, opc=0
+    // Fields: imm9=0, Rn=0, size=0, Rt=0, opc=0
     let encoding: u32 = 0x3C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13383,21 +7965,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_size_0_min_
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_size_1_poweroftwo_400_7c000400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_size_1_poweroftwo_400_7c000400() {
     // Encoding: 0x7C000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field size = 1 (PowerOfTwo)
-    // Fields: Rn=0, Rt=0, opc=0, size=1, imm9=0
+    // Fields: size=1, imm9=0, Rt=0, Rn=0, opc=0
     let encoding: u32 = 0x7C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13405,21 +7981,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_size_1_powe
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_size_2_poweroftwo_400_bc000400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_size_2_poweroftwo_400_bc000400() {
     // Encoding: 0xBC000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field size = 2 (PowerOfTwo)
-    // Fields: size=2, opc=0, imm9=0, Rn=0, Rt=0
+    // Fields: size=2, imm9=0, Rt=0, opc=0, Rn=0
     let encoding: u32 = 0xBC000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13430,17 +8000,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_size_2_powe
 fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_size_3_max_400_fc000400() {
     // Encoding: 0xFC000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field size = 3 (Max)
-    // Fields: opc=0, imm9=0, size=3, Rn=0, Rt=0
+    // Fields: size=3, Rn=0, Rt=0, opc=0, imm9=0
     let encoding: u32 = 0xFC000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13451,17 +8016,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_size_3_max_
 fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_opc_0_min_400_3c000400() {
     // Encoding: 0x3C000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field opc = 0 (Min)
-    // Fields: size=0, opc=0, Rt=0, Rn=0, imm9=0
+    // Fields: size=0, opc=0, Rn=0, imm9=0, Rt=0
     let encoding: u32 = 0x3C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13469,21 +8029,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_opc_0_min_4
 /// Requirement: FieldBoundary { field: "opc", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_opc_1_poweroftwo_400_3c400400()
-{
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_opc_1_poweroftwo_400_3c400400() {
     // Encoding: 0x3C400400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field opc = 1 (PowerOfTwo)
-    // Fields: Rn=0, opc=1, Rt=0, imm9=0, size=0
+    // Fields: size=0, Rn=0, Rt=0, opc=1, imm9=0
     let encoding: u32 = 0x3C400400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13491,8 +8045,7 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_opc_1_power
 /// Requirement: FieldBoundary { field: "opc", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_opc_2_poweroftwo_400_3c800400()
-{
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_opc_2_poweroftwo_400_3c800400() {
     // Encoding: 0x3C800400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field opc = 2 (PowerOfTwo)
     // Fields: Rt=0, size=0, opc=2, imm9=0, Rn=0
@@ -13500,12 +8053,7 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_opc_2_power
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13516,17 +8064,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_opc_2_power
 fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_opc_3_max_400_3cc00400() {
     // Encoding: 0x3CC00400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field opc = 3 (Max)
-    // Fields: opc=3, imm9=0, Rn=0, Rt=0, size=0
+    // Fields: imm9=0, opc=3, Rt=0, size=0, Rn=0
     let encoding: u32 = 0x3CC00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13537,17 +8080,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_opc_3_max_4
 fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_0_zero_400_3c000400() {
     // Encoding: 0x3C000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 0 (Zero)
-    // Fields: opc=0, size=0, imm9=0, Rt=0, Rn=0
+    // Fields: imm9=0, Rn=0, Rt=0, size=0, opc=0
     let encoding: u32 = 0x3C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13555,21 +8093,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_0_zero
 /// Requirement: FieldBoundary { field: "imm9", value: 1, boundary: PowerOfTwo }
 /// immediate value 1
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_1_poweroftwo_400_3c001400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_1_poweroftwo_400_3c001400() {
     // Encoding: 0x3C001400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 1 (PowerOfTwo)
-    // Fields: Rt=0, size=0, opc=0, imm9=1, Rn=0
+    // Fields: opc=0, imm9=1, size=0, Rn=0, Rt=0
     let encoding: u32 = 0x3C001400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13577,21 +8109,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_1_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_3_poweroftwominusone_400_3c003400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_3_poweroftwominusone_400_3c003400() {
     // Encoding: 0x3C003400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rt=0, size=0, imm9=3, Rn=0
+    // Fields: Rn=0, imm9=3, opc=0, size=0, Rt=0
     let encoding: u32 = 0x3C003400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13599,21 +8125,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_3_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 4, boundary: PowerOfTwo }
 /// power of 2 (2^2 = 4)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_4_poweroftwo_400_3c004400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_4_poweroftwo_400_3c004400() {
     // Encoding: 0x3C004400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 4 (PowerOfTwo)
-    // Fields: Rn=0, Rt=0, size=0, imm9=4, opc=0
+    // Fields: opc=0, Rn=0, size=0, Rt=0, imm9=4
     let encoding: u32 = 0x3C004400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13621,21 +8141,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_4_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_7_poweroftwominusone_400_3c007400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_7_poweroftwominusone_400_3c007400() {
     // Encoding: 0x3C007400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rt=0, Rn=0, size=0, imm9=7
+    // Fields: Rn=0, opc=0, size=0, imm9=7, Rt=0
     let encoding: u32 = 0x3C007400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13643,21 +8157,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_7_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 8, boundary: PowerOfTwo }
 /// power of 2 (2^3 = 8)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_8_poweroftwo_400_3c008400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_8_poweroftwo_400_3c008400() {
     // Encoding: 0x3C008400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 8 (PowerOfTwo)
-    // Fields: Rt=0, opc=0, size=0, imm9=8, Rn=0
+    // Fields: size=0, Rn=0, opc=0, Rt=0, imm9=8
     let encoding: u32 = 0x3C008400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13665,21 +8173,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_8_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_15_poweroftwominusone_400_3c00f400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_15_poweroftwominusone_400_3c00f400() {
     // Encoding: 0x3C00F400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, size=0, Rn=0, opc=0, imm9=15
+    // Fields: opc=0, size=0, Rt=0, imm9=15, Rn=0
     let encoding: u32 = 0x3C00F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13687,21 +8189,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_15_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 16, boundary: PowerOfTwo }
 /// power of 2 (2^4 = 16)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_16_poweroftwo_400_3c010400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_16_poweroftwo_400_3c010400() {
     // Encoding: 0x3C010400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 16 (PowerOfTwo)
-    // Fields: opc=0, Rt=0, Rn=0, imm9=16, size=0
+    // Fields: Rn=0, imm9=16, opc=0, size=0, Rt=0
     let encoding: u32 = 0x3C010400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13709,21 +8205,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_16_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_31_poweroftwominusone_400_3c01f400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_31_poweroftwominusone_400_3c01f400() {
     // Encoding: 0x3C01F400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rn=0, opc=0, imm9=31, Rt=0
+    // Fields: size=0, Rt=0, imm9=31, Rn=0, opc=0
     let encoding: u32 = 0x3C01F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13731,21 +8221,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_31_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 32, boundary: PowerOfTwo }
 /// power of 2 (2^5 = 32)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_32_poweroftwo_400_3c020400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_32_poweroftwo_400_3c020400() {
     // Encoding: 0x3C020400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 32 (PowerOfTwo)
-    // Fields: imm9=32, Rn=0, size=0, opc=0, Rt=0
+    // Fields: imm9=32, size=0, Rt=0, Rn=0, opc=0
     let encoding: u32 = 0x3C020400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13753,21 +8237,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_32_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_63_poweroftwominusone_400_3c03f400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_63_poweroftwominusone_400_3c03f400() {
     // Encoding: 0x3C03F400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rt=0, size=0, Rn=0, imm9=63
+    // Fields: imm9=63, Rn=0, Rt=0, size=0, opc=0
     let encoding: u32 = 0x3C03F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13775,21 +8253,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_63_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 64, boundary: PowerOfTwo }
 /// power of 2 (2^6 = 64)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_64_poweroftwo_400_3c040400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_64_poweroftwo_400_3c040400() {
     // Encoding: 0x3C040400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 64 (PowerOfTwo)
-    // Fields: imm9=64, Rt=0, size=0, opc=0, Rn=0
+    // Fields: size=0, opc=0, Rt=0, Rn=0, imm9=64
     let encoding: u32 = 0x3C040400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13797,21 +8269,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_64_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_127_poweroftwominusone_400_3c07f400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_127_poweroftwominusone_400_3c07f400() {
     // Encoding: 0x3C07F400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: size=0, Rt=0, opc=0, imm9=127, Rn=0
+    // Fields: imm9=127, size=0, opc=0, Rn=0, Rt=0
     let encoding: u32 = 0x3C07F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13819,21 +8285,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_127_po
 /// Requirement: FieldBoundary { field: "imm9", value: 128, boundary: PowerOfTwo }
 /// power of 2 (2^7 = 128)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_128_poweroftwo_400_3c080400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_128_poweroftwo_400_3c080400() {
     // Encoding: 0x3C080400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 128 (PowerOfTwo)
-    // Fields: size=0, opc=0, Rn=0, imm9=128, Rt=0
+    // Fields: imm9=128, Rt=0, Rn=0, size=0, opc=0
     let encoding: u32 = 0x3C080400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13841,21 +8301,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_128_po
 /// Requirement: FieldBoundary { field: "imm9", value: 255, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (255)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_255_poweroftwominusone_400_3c0ff400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_255_poweroftwominusone_400_3c0ff400() {
     // Encoding: 0x3C0FF400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: size=0, opc=0, imm9=255, Rt=0, Rn=0
+    // Fields: Rt=0, imm9=255, size=0, Rn=0, opc=0
     let encoding: u32 = 0x3C0FF400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13863,21 +8317,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_255_po
 /// Requirement: FieldBoundary { field: "imm9", value: 256, boundary: PowerOfTwo }
 /// power of 2 (2^8 = 256)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_256_poweroftwo_400_3c100400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_256_poweroftwo_400_3c100400() {
     // Encoding: 0x3C100400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 256 (PowerOfTwo)
-    // Fields: imm9=256, Rn=0, size=0, Rt=0, opc=0
+    // Fields: opc=0, imm9=256, Rn=0, size=0, Rt=0
     let encoding: u32 = 0x3C100400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13888,17 +8336,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_256_po
 fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_511_max_400_3c1ff400() {
     // Encoding: 0x3C1FF400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field imm9 = 511 (Max)
-    // Fields: Rt=0, imm9=511, opc=0, size=0, Rn=0
+    // Fields: size=0, Rn=0, opc=0, imm9=511, Rt=0
     let encoding: u32 = 0x3C1FF400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13909,17 +8352,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_imm9_511_ma
 fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rn_0_min_400_3c000400() {
     // Encoding: 0x3C000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field Rn = 0 (Min)
-    // Fields: size=0, Rn=0, opc=0, Rt=0, imm9=0
+    // Fields: imm9=0, size=0, Rn=0, Rt=0, opc=0
     let encoding: u32 = 0x3C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13927,21 +8365,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rn_0_min_40
 /// Requirement: FieldBoundary { field: "Rn", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rn_1_poweroftwo_400_3c000420()
-{
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rn_1_poweroftwo_400_3c000420() {
     // Encoding: 0x3C000420
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field Rn = 1 (PowerOfTwo)
-    // Fields: Rn=1, Rt=0, size=0, opc=0, imm9=0
+    // Fields: opc=0, imm9=0, size=0, Rn=1, Rt=0
     let encoding: u32 = 0x3C000420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13949,21 +8381,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rn_1_powero
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rn_30_poweroftwominusone_400_3c0007c0(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rn_30_poweroftwominusone_400_3c0007c0() {
     // Encoding: 0x3C0007C0
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: imm9=0, Rt=0, size=0, opc=0, Rn=30
+    // Fields: opc=0, imm9=0, Rn=30, size=0, Rt=0
     let encoding: u32 = 0x3C0007C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13974,17 +8400,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rn_30_power
 fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rn_31_max_400_3c0007e0() {
     // Encoding: 0x3C0007E0
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field Rn = 31 (Max)
-    // Fields: size=0, imm9=0, Rn=31, Rt=0, opc=0
+    // Fields: Rn=31, Rt=0, size=0, imm9=0, opc=0
     let encoding: u32 = 0x3C0007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -13995,17 +8416,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rn_31_max_4
 fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rt_0_min_400_3c000400() {
     // Encoding: 0x3C000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field Rt = 0 (Min)
-    // Fields: Rt=0, Rn=0, opc=0, size=0, imm9=0
+    // Fields: Rn=0, Rt=0, opc=0, size=0, imm9=0
     let encoding: u32 = 0x3C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14013,21 +8429,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rt_0_min_40
 /// Requirement: FieldBoundary { field: "Rt", value: 1, boundary: PowerOfTwo }
 /// register index 1 (second register)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rt_1_poweroftwo_400_3c000401()
-{
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rt_1_poweroftwo_400_3c000401() {
     // Encoding: 0x3C000401
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field Rt = 1 (PowerOfTwo)
-    // Fields: Rt=1, imm9=0, opc=0, Rn=0, size=0
+    // Fields: imm9=0, opc=0, Rt=1, size=0, Rn=0
     let encoding: u32 = 0x3C000401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14035,21 +8445,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rt_1_powero
 /// Requirement: FieldBoundary { field: "Rt", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rt_30_poweroftwominusone_400_3c00041e(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rt_30_poweroftwominusone_400_3c00041e() {
     // Encoding: 0x3C00041E
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rn=0, Rt=30, size=0, imm9=0
+    // Fields: opc=0, Rt=30, Rn=0, size=0, imm9=0
     let encoding: u32 = 0x3C00041E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14060,17 +8464,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rt_30_power
 fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rt_31_max_400_3c00041f() {
     // Encoding: 0x3C00041F
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field Rt = 31 (Max)
-    // Fields: opc=0, Rn=0, size=0, Rt=31, imm9=0
+    // Fields: Rt=31, Rn=0, opc=0, size=0, imm9=0
     let encoding: u32 = 0x3C00041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14081,206 +8480,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_field_rt_31_max_4
 fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_combo_0_400_3c000400() {
     // Encoding: 0x3C000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, size=0, Rn=0, Rt=0, opc=0
+    // Fields: imm9=0, opc=0, Rn=0, size=0, Rt=0
     let encoding: u32 = 0x3C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_combo_1_400_7c000400() {
-    // Encoding: 0x7C000400
-    // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field combination: size=1, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, opc=0, imm9=0, size=1, Rn=0
-    let encoding: u32 = 0x7C000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_combo_2_400_bc000400() {
-    // Encoding: 0xBC000400
-    // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field combination: size=2, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: opc=0, size=2, imm9=0, Rn=0, Rt=0
-    let encoding: u32 = 0xBC000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_combo_3_400_fc000400() {
-    // Encoding: 0xFC000400
-    // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field combination: size=3, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: size=3, Rt=0, opc=0, imm9=0, Rn=0
-    let encoding: u32 = 0xFC000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_combo_4_400_3c000400() {
-    // Encoding: 0x3C000400
-    // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: size=0, imm9=0, Rt=0, opc=0, Rn=0
-    let encoding: u32 = 0x3C000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_combo_5_400_3c400400() {
-    // Encoding: 0x3C400400
-    // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field combination: size=0, opc=1, imm9=0, Rn=0, Rt=0
-    // Fields: size=0, Rt=0, imm9=0, opc=1, Rn=0
-    let encoding: u32 = 0x3C400400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_combo_6_400_3c800400() {
-    // Encoding: 0x3C800400
-    // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field combination: size=0, opc=2, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, Rn=0, opc=2, Rt=0, size=0
-    let encoding: u32 = 0x3C800400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_combo_7_400_3cc00400() {
-    // Encoding: 0x3CC00400
-    // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field combination: size=0, opc=3, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, Rt=0, size=0, opc=3, Rn=0
-    let encoding: u32 = 0x3CC00400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=0 (immediate value 0)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_combo_8_400_3c000400() {
-    // Encoding: 0x3C000400
-    // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, Rn=0, opc=0, imm9=0, size=0
-    let encoding: u32 = 0x3C000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_combo_9_400_3c001400() {
-    // Encoding: 0x3C001400
-    // Test aarch64_memory_single_simdfp_immediate_signed_post_idx field combination: size=0, opc=0, imm9=1, Rn=0, Rt=0
-    // Fields: opc=0, Rt=0, size=0, imm9=1, Rn=0
-    let encoding: u32 = 0x3C001400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14288,21 +8493,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_combo_9_400_3c001
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_size_0_size_variant_0_1024_3c000400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_size_0_size_variant_0_1024_3c000400() {
     // Encoding: 0x3C000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx special value size = 0 (Size variant 0)
-    // Fields: opc=0, imm9=0, Rt=0, Rn=0, size=0
+    // Fields: opc=0, Rn=0, Rt=0, imm9=0, size=0
     let encoding: u32 = 0x3C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14310,21 +8509,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_size_0_si
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_size_1_size_variant_1_1024_7c000400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_size_1_size_variant_1_1024_7c000400() {
     // Encoding: 0x7C000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx special value size = 1 (Size variant 1)
-    // Fields: opc=0, Rt=0, Rn=0, size=1, imm9=0
+    // Fields: Rt=0, Rn=0, size=1, opc=0, imm9=0
     let encoding: u32 = 0x7C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14332,21 +8525,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_size_1_si
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_size_2_size_variant_2_1024_bc000400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_size_2_size_variant_2_1024_bc000400() {
     // Encoding: 0xBC000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx special value size = 2 (Size variant 2)
-    // Fields: imm9=0, size=2, opc=0, Rt=0, Rn=0
+    // Fields: imm9=0, Rt=0, Rn=0, opc=0, size=2
     let encoding: u32 = 0xBC000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14354,21 +8541,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_size_2_si
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_size_3_size_variant_3_1024_fc000400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_size_3_size_variant_3_1024_fc000400() {
     // Encoding: 0xFC000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx special value size = 3 (Size variant 3)
-    // Fields: size=3, opc=0, Rn=0, Rt=0, imm9=0
+    // Fields: Rt=0, opc=0, Rn=0, imm9=0, size=3
     let encoding: u32 = 0xFC000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14376,21 +8557,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_size_3_si
 /// Requirement: FieldSpecial { field: "opc", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_opc_0_size_variant_0_1024_3c000400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_opc_0_size_variant_0_1024_3c000400() {
     // Encoding: 0x3C000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx special value opc = 0 (Size variant 0)
-    // Fields: size=0, opc=0, imm9=0, Rn=0, Rt=0
+    // Fields: Rn=0, size=0, imm9=0, opc=0, Rt=0
     let encoding: u32 = 0x3C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14398,21 +8573,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_opc_0_siz
 /// Requirement: FieldSpecial { field: "opc", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_opc_1_size_variant_1_1024_3c400400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_opc_1_size_variant_1_1024_3c400400() {
     // Encoding: 0x3C400400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx special value opc = 1 (Size variant 1)
-    // Fields: opc=1, size=0, imm9=0, Rt=0, Rn=0
+    // Fields: size=0, imm9=0, opc=1, Rn=0, Rt=0
     let encoding: u32 = 0x3C400400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14420,21 +8589,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_opc_1_siz
 /// Requirement: FieldSpecial { field: "opc", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_opc_2_size_variant_2_1024_3c800400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_opc_2_size_variant_2_1024_3c800400() {
     // Encoding: 0x3C800400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx special value opc = 2 (Size variant 2)
-    // Fields: size=0, imm9=0, Rn=0, opc=2, Rt=0
+    // Fields: Rn=0, size=0, imm9=0, Rt=0, opc=2
     let encoding: u32 = 0x3C800400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14442,21 +8605,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_opc_2_siz
 /// Requirement: FieldSpecial { field: "opc", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_opc_3_size_variant_3_1024_3cc00400(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_opc_3_size_variant_3_1024_3cc00400() {
     // Encoding: 0x3CC00400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx special value opc = 3 (Size variant 3)
-    // Fields: Rn=0, opc=3, imm9=0, Rt=0, size=0
+    // Fields: size=0, Rt=0, Rn=0, opc=3, imm9=0
     let encoding: u32 = 0x3CC00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14464,21 +8621,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_opc_3_siz
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_rn_31_stack_pointer_sp_may_require_alignment_1024_3c0007e0(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_rn_31_stack_pointer_sp_may_require_alignment_1024_3c0007e0() {
     // Encoding: 0x3C0007E0
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: imm9=0, opc=0, size=0, Rt=0, Rn=31
+    // Fields: imm9=0, size=0, Rn=31, opc=0, Rt=0
     let encoding: u32 = 0x3C0007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14486,21 +8637,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_rn_31_sta
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_3c00041f(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_3c00041f() {
     // Encoding: 0x3C00041F
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rt=31, imm9=0, size=0, Rn=0, opc=0
+    // Fields: imm9=0, opc=0, Rt=31, size=0, Rn=0
     let encoding: u32 = 0x3C00041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14511,16 +8656,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_special_rt_31_zer
 fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_invalid_0_400_3c000400() {
     // Encoding: 0x3C000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx invalid encoding: Binary { op: Gt, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "scale" }), rhs: LitInt(4) }
-    // Fields: size=0, opc=0, imm9=0, Rn=0, Rt=0
+    // Fields: Rn=0, Rt=0, size=0, opc=0, imm9=0
     let encoding: u32 = 0x3C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -14531,16 +8672,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_invalid_0_400_3c0
 fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_invalid_1_400_3c000400() {
     // Encoding: 0x3C000400
     // Test aarch64_memory_single_simdfp_immediate_signed_post_idx invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, opc=0, imm9=0, Rt=0, size=0
+    // Fields: Rn=0, opc=0, size=0, imm9=0, Rt=0
     let encoding: u32 = 0x3C000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14551,17 +8688,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_post_idx_invalid_1_400_3c0
 fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_size_0_min_c00_3c000c00() {
     // Encoding: 0x3C000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field size = 0 (Min)
-    // Fields: size=0, imm9=0, Rn=0, Rt=0, opc=0
+    // Fields: imm9=0, size=0, Rt=0, Rn=0, opc=0
     let encoding: u32 = 0x3C000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14569,21 +8701,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_size_0_min_c
 /// Requirement: FieldBoundary { field: "size", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_size_1_poweroftwo_c00_7c000c00()
-{
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_size_1_poweroftwo_c00_7c000c00() {
     // Encoding: 0x7C000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field size = 1 (PowerOfTwo)
-    // Fields: size=1, imm9=0, opc=0, Rt=0, Rn=0
+    // Fields: imm9=0, opc=0, size=1, Rn=0, Rt=0
     let encoding: u32 = 0x7C000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14591,21 +8717,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_size_1_power
 /// Requirement: FieldBoundary { field: "size", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_size_2_poweroftwo_c00_bc000c00()
-{
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_size_2_poweroftwo_c00_bc000c00() {
     // Encoding: 0xBC000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field size = 2 (PowerOfTwo)
-    // Fields: imm9=0, Rt=0, Rn=0, size=2, opc=0
+    // Fields: imm9=0, size=2, Rt=0, Rn=0, opc=0
     let encoding: u32 = 0xBC000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14616,17 +8736,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_size_2_power
 fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_size_3_max_c00_fc000c00() {
     // Encoding: 0xFC000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field size = 3 (Max)
-    // Fields: size=3, Rn=0, Rt=0, imm9=0, opc=0
+    // Fields: Rt=0, opc=0, imm9=0, Rn=0, size=3
     let encoding: u32 = 0xFC000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14637,17 +8752,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_size_3_max_c
 fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_opc_0_min_c00_3c000c00() {
     // Encoding: 0x3C000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field opc = 0 (Min)
-    // Fields: opc=0, size=0, Rt=0, imm9=0, Rn=0
+    // Fields: Rn=0, Rt=0, size=0, imm9=0, opc=0
     let encoding: u32 = 0x3C000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14655,21 +8765,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_opc_0_min_c0
 /// Requirement: FieldBoundary { field: "opc", value: 1, boundary: PowerOfTwo }
 /// 16-bit / halfword size
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_opc_1_poweroftwo_c00_3c400c00()
-{
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_opc_1_poweroftwo_c00_3c400c00() {
     // Encoding: 0x3C400C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field opc = 1 (PowerOfTwo)
-    // Fields: Rt=0, imm9=0, size=0, opc=1, Rn=0
+    // Fields: size=0, imm9=0, Rt=0, Rn=0, opc=1
     let encoding: u32 = 0x3C400C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14677,21 +8781,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_opc_1_powero
 /// Requirement: FieldBoundary { field: "opc", value: 2, boundary: PowerOfTwo }
 /// 32-bit / word size
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_opc_2_poweroftwo_c00_3c800c00()
-{
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_opc_2_poweroftwo_c00_3c800c00() {
     // Encoding: 0x3C800C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field opc = 2 (PowerOfTwo)
-    // Fields: imm9=0, size=0, opc=2, Rn=0, Rt=0
+    // Fields: size=0, Rn=0, opc=2, imm9=0, Rt=0
     let encoding: u32 = 0x3C800C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14702,17 +8800,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_opc_2_powero
 fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_opc_3_max_c00_3cc00c00() {
     // Encoding: 0x3CC00C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field opc = 3 (Max)
-    // Fields: Rn=0, Rt=0, size=0, opc=3, imm9=0
+    // Fields: Rn=0, size=0, Rt=0, imm9=0, opc=3
     let encoding: u32 = 0x3CC00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14723,17 +8816,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_opc_3_max_c0
 fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_0_zero_c00_3c000c00() {
     // Encoding: 0x3C000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 0 (Zero)
-    // Fields: Rn=0, Rt=0, opc=0, imm9=0, size=0
+    // Fields: opc=0, Rt=0, size=0, imm9=0, Rn=0
     let encoding: u32 = 0x3C000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14741,21 +8829,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_0_zero_
 /// Requirement: FieldBoundary { field: "imm9", value: 1, boundary: PowerOfTwo }
 /// immediate value 1
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_1_poweroftwo_c00_3c001c00()
-{
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_1_poweroftwo_c00_3c001c00() {
     // Encoding: 0x3C001C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 1 (PowerOfTwo)
-    // Fields: size=0, Rn=0, Rt=0, imm9=1, opc=0
+    // Fields: imm9=1, opc=0, Rn=0, Rt=0, size=0
     let encoding: u32 = 0x3C001C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14763,21 +8845,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_1_power
 /// Requirement: FieldBoundary { field: "imm9", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_3_poweroftwominusone_c00_3c003c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_3_poweroftwominusone_c00_3c003c00() {
     // Encoding: 0x3C003C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, size=0, imm9=3, opc=0, Rt=0
+    // Fields: Rt=0, size=0, imm9=3, opc=0, Rn=0
     let encoding: u32 = 0x3C003C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14785,21 +8861,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_3_power
 /// Requirement: FieldBoundary { field: "imm9", value: 4, boundary: PowerOfTwo }
 /// power of 2 (2^2 = 4)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_4_poweroftwo_c00_3c004c00()
-{
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_4_poweroftwo_c00_3c004c00() {
     // Encoding: 0x3C004C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 4 (PowerOfTwo)
-    // Fields: Rn=0, imm9=4, opc=0, size=0, Rt=0
+    // Fields: Rn=0, size=0, Rt=0, imm9=4, opc=0
     let encoding: u32 = 0x3C004C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14807,21 +8877,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_4_power
 /// Requirement: FieldBoundary { field: "imm9", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_7_poweroftwominusone_c00_3c007c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_7_poweroftwominusone_c00_3c007c00() {
     // Encoding: 0x3C007C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rn=0, Rt=0, imm9=7, size=0
+    // Fields: Rn=0, Rt=0, size=0, opc=0, imm9=7
     let encoding: u32 = 0x3C007C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14829,21 +8893,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_7_power
 /// Requirement: FieldBoundary { field: "imm9", value: 8, boundary: PowerOfTwo }
 /// power of 2 (2^3 = 8)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_8_poweroftwo_c00_3c008c00()
-{
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_8_poweroftwo_c00_3c008c00() {
     // Encoding: 0x3C008C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 8 (PowerOfTwo)
-    // Fields: imm9=8, Rt=0, size=0, Rn=0, opc=0
+    // Fields: Rt=0, Rn=0, size=0, imm9=8, opc=0
     let encoding: u32 = 0x3C008C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14851,21 +8909,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_8_power
 /// Requirement: FieldBoundary { field: "imm9", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_15_poweroftwominusone_c00_3c00fc00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_15_poweroftwominusone_c00_3c00fc00() {
     // Encoding: 0x3C00FC00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: imm9=15, size=0, Rn=0, opc=0, Rt=0
+    // Fields: Rn=0, opc=0, Rt=0, imm9=15, size=0
     let encoding: u32 = 0x3C00FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14873,21 +8925,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_15_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 16, boundary: PowerOfTwo }
 /// power of 2 (2^4 = 16)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_16_poweroftwo_c00_3c010c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_16_poweroftwo_c00_3c010c00() {
     // Encoding: 0x3C010C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 16 (PowerOfTwo)
-    // Fields: Rt=0, size=0, Rn=0, imm9=16, opc=0
+    // Fields: Rt=0, size=0, Rn=0, opc=0, imm9=16
     let encoding: u32 = 0x3C010C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14895,21 +8941,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_16_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_31_poweroftwominusone_c00_3c01fc00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_31_poweroftwominusone_c00_3c01fc00() {
     // Encoding: 0x3C01FC00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rt=0, size=0, imm9=31, opc=0
+    // Fields: Rt=0, imm9=31, opc=0, size=0, Rn=0
     let encoding: u32 = 0x3C01FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14917,21 +8957,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_31_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 32, boundary: PowerOfTwo }
 /// power of 2 (2^5 = 32)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_32_poweroftwo_c00_3c020c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_32_poweroftwo_c00_3c020c00() {
     // Encoding: 0x3C020C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 32 (PowerOfTwo)
-    // Fields: Rn=0, opc=0, size=0, imm9=32, Rt=0
+    // Fields: opc=0, Rn=0, imm9=32, Rt=0, size=0
     let encoding: u32 = 0x3C020C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14939,21 +8973,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_32_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_63_poweroftwominusone_c00_3c03fc00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_63_poweroftwominusone_c00_3c03fc00() {
     // Encoding: 0x3C03FC00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, imm9=63, Rn=0, size=0, opc=0
+    // Fields: opc=0, size=0, Rt=0, imm9=63, Rn=0
     let encoding: u32 = 0x3C03FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14961,21 +8989,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_63_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 64, boundary: PowerOfTwo }
 /// power of 2 (2^6 = 64)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_64_poweroftwo_c00_3c040c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_64_poweroftwo_c00_3c040c00() {
     // Encoding: 0x3C040C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 64 (PowerOfTwo)
-    // Fields: imm9=64, Rt=0, Rn=0, size=0, opc=0
+    // Fields: imm9=64, Rt=0, opc=0, Rn=0, size=0
     let encoding: u32 = 0x3C040C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -14983,21 +9005,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_64_powe
 /// Requirement: FieldBoundary { field: "imm9", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_127_poweroftwominusone_c00_3c07fc00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_127_poweroftwominusone_c00_3c07fc00() {
     // Encoding: 0x3C07FC00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: imm9=127, Rn=0, size=0, Rt=0, opc=0
+    // Fields: size=0, Rt=0, Rn=0, imm9=127, opc=0
     let encoding: u32 = 0x3C07FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15005,21 +9021,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_127_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 128, boundary: PowerOfTwo }
 /// power of 2 (2^7 = 128)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_128_poweroftwo_c00_3c080c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_128_poweroftwo_c00_3c080c00() {
     // Encoding: 0x3C080C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 128 (PowerOfTwo)
-    // Fields: opc=0, size=0, Rn=0, imm9=128, Rt=0
+    // Fields: Rt=0, imm9=128, size=0, Rn=0, opc=0
     let encoding: u32 = 0x3C080C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15027,21 +9037,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_128_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 255, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (255)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_255_poweroftwominusone_c00_3c0ffc00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_255_poweroftwominusone_c00_3c0ffc00() {
     // Encoding: 0x3C0FFC00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, size=0, imm9=255, Rn=0, opc=0
+    // Fields: Rt=0, size=0, opc=0, Rn=0, imm9=255
     let encoding: u32 = 0x3C0FFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15049,21 +9053,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_255_pow
 /// Requirement: FieldBoundary { field: "imm9", value: 256, boundary: PowerOfTwo }
 /// power of 2 (2^8 = 256)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_256_poweroftwo_c00_3c100c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_256_poweroftwo_c00_3c100c00() {
     // Encoding: 0x3C100C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 256 (PowerOfTwo)
-    // Fields: size=0, imm9=256, opc=0, Rt=0, Rn=0
+    // Fields: size=0, Rt=0, Rn=0, opc=0, imm9=256
     let encoding: u32 = 0x3C100C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15074,17 +9072,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_256_pow
 fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_511_max_c00_3c1ffc00() {
     // Encoding: 0x3C1FFC00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field imm9 = 511 (Max)
-    // Fields: size=0, imm9=511, Rn=0, Rt=0, opc=0
+    // Fields: Rt=0, opc=0, size=0, imm9=511, Rn=0
     let encoding: u32 = 0x3C1FFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15095,17 +9088,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_imm9_511_max
 fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rn_0_min_c00_3c000c00() {
     // Encoding: 0x3C000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field Rn = 0 (Min)
-    // Fields: imm9=0, opc=0, Rn=0, Rt=0, size=0
+    // Fields: Rt=0, size=0, opc=0, imm9=0, Rn=0
     let encoding: u32 = 0x3C000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15116,17 +9104,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rn_0_min_c00
 fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rn_1_poweroftwo_c00_3c000c20() {
     // Encoding: 0x3C000C20
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field Rn = 1 (PowerOfTwo)
-    // Fields: opc=0, Rt=0, imm9=0, Rn=1, size=0
+    // Fields: Rn=1, Rt=0, imm9=0, opc=0, size=0
     let encoding: u32 = 0x3C000C20;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15134,21 +9117,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rn_1_powerof
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rn_30_poweroftwominusone_c00_3c000fc0(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rn_30_poweroftwominusone_c00_3c000fc0() {
     // Encoding: 0x3C000FC0
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: opc=0, size=0, imm9=0, Rn=30, Rt=0
+    // Fields: size=0, imm9=0, Rn=30, opc=0, Rt=0
     let encoding: u32 = 0x3C000FC0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15159,17 +9136,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rn_30_powero
 fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rn_31_max_c00_3c000fe0() {
     // Encoding: 0x3C000FE0
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field Rn = 31 (Max)
-    // Fields: Rn=31, imm9=0, size=0, opc=0, Rt=0
+    // Fields: opc=0, Rn=31, imm9=0, size=0, Rt=0
     let encoding: u32 = 0x3C000FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15180,17 +9152,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rn_31_max_c0
 fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rt_0_min_c00_3c000c00() {
     // Encoding: 0x3C000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field Rt = 0 (Min)
-    // Fields: opc=0, imm9=0, Rt=0, size=0, Rn=0
+    // Fields: size=0, Rn=0, Rt=0, opc=0, imm9=0
     let encoding: u32 = 0x3C000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15201,17 +9168,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rt_0_min_c00
 fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rt_1_poweroftwo_c00_3c000c01() {
     // Encoding: 0x3C000C01
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field Rt = 1 (PowerOfTwo)
-    // Fields: Rt=1, Rn=0, size=0, imm9=0, opc=0
+    // Fields: opc=0, size=0, Rn=0, imm9=0, Rt=1
     let encoding: u32 = 0x3C000C01;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15219,21 +9181,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rt_1_powerof
 /// Requirement: FieldBoundary { field: "Rt", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rt_30_poweroftwominusone_c00_3c000c1e(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rt_30_poweroftwominusone_c00_3c000c1e() {
     // Encoding: 0x3C000C1E
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rn=0, imm9=0, size=0, Rt=30
+    // Fields: Rt=30, opc=0, imm9=0, size=0, Rn=0
     let encoding: u32 = 0x3C000C1E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15244,17 +9200,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rt_30_powero
 fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rt_31_max_c00_3c000c1f() {
     // Encoding: 0x3C000C1F
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field Rt = 31 (Max)
-    // Fields: imm9=0, size=0, Rn=0, Rt=31, opc=0
+    // Fields: size=0, Rt=31, opc=0, Rn=0, imm9=0
     let encoding: u32 = 0x3C000C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15265,206 +9216,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_field_rt_31_max_c0
 fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_combo_0_c00_3c000c00() {
     // Encoding: 0x3C000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, imm9=0, opc=0, Rn=0, size=0
+    // Fields: imm9=0, size=0, opc=0, Rt=0, Rn=0
     let encoding: u32 = 0x3C000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_combo_1_c00_7c000c00() {
-    // Encoding: 0x7C000C00
-    // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field combination: size=1, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: size=1, Rt=0, opc=0, Rn=0, imm9=0
-    let encoding: u32 = 0x7C000C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_combo_2_c00_bc000c00() {
-    // Encoding: 0xBC000C00
-    // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field combination: size=2, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, size=2, opc=0, Rt=0, Rn=0
-    let encoding: u32 = 0xBC000C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_combo_3_c00_fc000c00() {
-    // Encoding: 0xFC000C00
-    // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field combination: size=3, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: Rn=0, size=3, Rt=0, imm9=0, opc=0
-    let encoding: u32 = 0xFC000C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_combo_4_c00_3c000c00() {
-    // Encoding: 0x3C000C00
-    // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, size=0, Rt=0, Rn=0, opc=0
-    let encoding: u32 = 0x3C000C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_combo_5_c00_3c400c00() {
-    // Encoding: 0x3C400C00
-    // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field combination: size=0, opc=1, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, size=0, opc=1, Rn=0, Rt=0
-    let encoding: u32 = 0x3C400C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_combo_6_c00_3c800c00() {
-    // Encoding: 0x3C800C00
-    // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field combination: size=0, opc=2, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, Rn=0, size=0, Rt=0, opc=2
-    let encoding: u32 = 0x3C800C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_combo_7_c00_3cc00c00() {
-    // Encoding: 0x3CC00C00
-    // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field combination: size=0, opc=3, imm9=0, Rn=0, Rt=0
-    // Fields: Rt=0, imm9=0, Rn=0, size=0, opc=3
-    let encoding: u32 = 0x3CC00C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=0 (immediate value 0)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_combo_8_c00_3c000c00() {
-    // Encoding: 0x3C000C00
-    // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field combination: size=0, opc=0, imm9=0, Rn=0, Rt=0
-    // Fields: imm9=0, opc=0, size=0, Rn=0, Rt=0
-    let encoding: u32 = 0x3C000C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_combo_9_c00_3c001c00() {
-    // Encoding: 0x3C001C00
-    // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx field combination: size=0, opc=0, imm9=1, Rn=0, Rt=0
-    // Fields: size=0, opc=0, imm9=1, Rn=0, Rt=0
-    let encoding: u32 = 0x3C001C00;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15472,21 +9229,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_combo_9_c00_3c001c
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_size_0_size_variant_0_3072_3c000c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_size_0_size_variant_0_3072_3c000c00() {
     // Encoding: 0x3C000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx special value size = 0 (Size variant 0)
-    // Fields: size=0, opc=0, imm9=0, Rn=0, Rt=0
+    // Fields: size=0, Rn=0, imm9=0, opc=0, Rt=0
     let encoding: u32 = 0x3C000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15494,21 +9245,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_size_0_siz
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_size_1_size_variant_1_3072_7c000c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_size_1_size_variant_1_3072_7c000c00() {
     // Encoding: 0x7C000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx special value size = 1 (Size variant 1)
-    // Fields: opc=0, Rn=0, size=1, Rt=0, imm9=0
+    // Fields: Rn=0, opc=0, size=1, Rt=0, imm9=0
     let encoding: u32 = 0x7C000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15516,21 +9261,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_size_1_siz
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_size_2_size_variant_2_3072_bc000c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_size_2_size_variant_2_3072_bc000c00() {
     // Encoding: 0xBC000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx special value size = 2 (Size variant 2)
-    // Fields: size=2, imm9=0, Rn=0, opc=0, Rt=0
+    // Fields: Rt=0, size=2, imm9=0, Rn=0, opc=0
     let encoding: u32 = 0xBC000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15538,21 +9277,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_size_2_siz
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_size_3_size_variant_3_3072_fc000c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_size_3_size_variant_3_3072_fc000c00() {
     // Encoding: 0xFC000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx special value size = 3 (Size variant 3)
-    // Fields: size=3, imm9=0, opc=0, Rn=0, Rt=0
+    // Fields: imm9=0, size=3, opc=0, Rn=0, Rt=0
     let encoding: u32 = 0xFC000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15560,21 +9293,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_size_3_siz
 /// Requirement: FieldSpecial { field: "opc", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_opc_0_size_variant_0_3072_3c000c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_opc_0_size_variant_0_3072_3c000c00() {
     // Encoding: 0x3C000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx special value opc = 0 (Size variant 0)
-    // Fields: Rt=0, opc=0, imm9=0, size=0, Rn=0
+    // Fields: Rt=0, size=0, Rn=0, opc=0, imm9=0
     let encoding: u32 = 0x3C000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15582,8 +9309,7 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_opc_0_size
 /// Requirement: FieldSpecial { field: "opc", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_opc_1_size_variant_1_3072_3c400c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_opc_1_size_variant_1_3072_3c400c00() {
     // Encoding: 0x3C400C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx special value opc = 1 (Size variant 1)
     // Fields: Rn=0, imm9=0, size=0, opc=1, Rt=0
@@ -15591,12 +9317,7 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_opc_1_size
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15604,21 +9325,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_opc_1_size
 /// Requirement: FieldSpecial { field: "opc", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_opc_2_size_variant_2_3072_3c800c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_opc_2_size_variant_2_3072_3c800c00() {
     // Encoding: 0x3C800C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx special value opc = 2 (Size variant 2)
-    // Fields: opc=2, Rt=0, size=0, Rn=0, imm9=0
+    // Fields: size=0, opc=2, imm9=0, Rn=0, Rt=0
     let encoding: u32 = 0x3C800C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15626,21 +9341,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_opc_2_size
 /// Requirement: FieldSpecial { field: "opc", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_opc_3_size_variant_3_3072_3cc00c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_opc_3_size_variant_3_3072_3cc00c00() {
     // Encoding: 0x3CC00C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx special value opc = 3 (Size variant 3)
-    // Fields: Rt=0, size=0, opc=3, imm9=0, Rn=0
+    // Fields: Rn=0, Rt=0, size=0, opc=3, imm9=0
     let encoding: u32 = 0x3CC00C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15648,21 +9357,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_opc_3_size
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_rn_31_stack_pointer_sp_may_require_alignment_3072_3c000fe0(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_rn_31_stack_pointer_sp_may_require_alignment_3072_3c000fe0() {
     // Encoding: 0x3C000FE0
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: size=0, Rn=31, imm9=0, Rt=0, opc=0
+    // Fields: Rn=31, opc=0, Rt=0, size=0, imm9=0
     let encoding: u32 = 0x3C000FE0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15670,21 +9373,15 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_rn_31_stac
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_3072_3c000c1f(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_3072_3c000c1f() {
     // Encoding: 0x3C000C1F
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: opc=0, imm9=0, Rt=31, Rn=0, size=0
+    // Fields: Rt=31, size=0, opc=0, Rn=0, imm9=0
     let encoding: u32 = 0x3C000C1F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15695,16 +9392,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_special_rt_31_zero
 fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_invalid_0_c00_3c000c00() {
     // Encoding: 0x3C000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx invalid encoding: Binary { op: Gt, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "scale" }), rhs: LitInt(4) }
-    // Fields: size=0, imm9=0, Rn=0, Rt=0, opc=0
+    // Fields: Rt=0, imm9=0, opc=0, size=0, Rn=0
     let encoding: u32 = 0x3C000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_pre_idx
@@ -15715,16 +9408,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_invalid_0_c00_3c00
 fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_invalid_1_c00_3c000c00() {
     // Encoding: 0x3C000C00
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx invalid encoding: Unconditional UNDEFINED
-    // Fields: imm9=0, Rn=0, Rt=0, size=0, opc=0
+    // Fields: Rt=0, size=0, imm9=0, opc=0, Rn=0
     let encoding: u32 = 0x3C000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -15735,17 +9424,12 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_invalid_1_c00_3c00
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_size_0_min_0_3d000000() {
     // Encoding: 0x3D000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field size = 0 (Min)
-    // Fields: opc=0, Rn=0, Rt=0, imm12=0, size=0
+    // Fields: size=0, opc=0, Rt=0, imm12=0, Rn=0
     let encoding: u32 = 0x3D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -15756,17 +9440,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_size_0_min_0_3d000
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_size_1_poweroftwo_0_7d000000() {
     // Encoding: 0x7D000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field size = 1 (PowerOfTwo)
-    // Fields: imm12=0, Rn=0, opc=0, size=1, Rt=0
+    // Fields: Rt=0, size=1, opc=0, Rn=0, imm12=0
     let encoding: u32 = 0x7D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -15777,17 +9456,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_size_1_poweroftwo_
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_size_2_poweroftwo_0_bd000000() {
     // Encoding: 0xBD000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field size = 2 (PowerOfTwo)
-    // Fields: Rn=0, Rt=0, size=2, opc=0, imm12=0
+    // Fields: Rn=0, imm12=0, size=2, Rt=0, opc=0
     let encoding: u32 = 0xBD000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -15798,17 +9472,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_size_2_poweroftwo_
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_size_3_max_0_fd000000() {
     // Encoding: 0xFD000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field size = 3 (Max)
-    // Fields: imm12=0, size=3, opc=0, Rn=0, Rt=0
+    // Fields: Rt=0, opc=0, size=3, imm12=0, Rn=0
     let encoding: u32 = 0xFD000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -15819,17 +9488,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_size_3_max_0_fd000
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_opc_0_min_0_3d000000() {
     // Encoding: 0x3D000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field opc = 0 (Min)
-    // Fields: size=0, imm12=0, Rt=0, opc=0, Rn=0
+    // Fields: Rn=0, opc=0, size=0, imm12=0, Rt=0
     let encoding: u32 = 0x3D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -15840,17 +9504,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_opc_0_min_0_3d0000
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_opc_1_poweroftwo_0_3d400000() {
     // Encoding: 0x3D400000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field opc = 1 (PowerOfTwo)
-    // Fields: imm12=0, Rt=0, size=0, opc=1, Rn=0
+    // Fields: size=0, Rt=0, Rn=0, imm12=0, opc=1
     let encoding: u32 = 0x3D400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -15861,17 +9520,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_opc_1_poweroftwo_0
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_opc_2_poweroftwo_0_3d800000() {
     // Encoding: 0x3D800000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field opc = 2 (PowerOfTwo)
-    // Fields: imm12=0, size=0, Rn=0, Rt=0, opc=2
+    // Fields: size=0, Rn=0, Rt=0, opc=2, imm12=0
     let encoding: u32 = 0x3D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -15882,17 +9536,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_opc_2_poweroftwo_0
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_opc_3_max_0_3dc00000() {
     // Encoding: 0x3DC00000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field opc = 3 (Max)
-    // Fields: size=0, Rt=0, imm12=0, Rn=0, opc=3
+    // Fields: opc=3, Rn=0, size=0, Rt=0, imm12=0
     let encoding: u32 = 0x3DC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -15903,17 +9552,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_opc_3_max_0_3dc000
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_0_zero_0_3d000000() {
     // Encoding: 0x3D000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 0 (Zero)
-    // Fields: imm12=0, size=0, opc=0, Rn=0, Rt=0
+    // Fields: imm12=0, size=0, Rn=0, Rt=0, opc=0
     let encoding: u32 = 0x3D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -15924,17 +9568,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_0_zero_0_3d0
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_1_poweroftwo_0_3d000400() {
     // Encoding: 0x3D000400
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 1 (PowerOfTwo)
-    // Fields: size=0, Rn=0, opc=0, Rt=0, imm12=1
+    // Fields: opc=0, size=0, Rn=0, Rt=0, imm12=1
     let encoding: u32 = 0x3D000400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -15942,21 +9581,15 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_1_poweroftwo
 /// Requirement: FieldBoundary { field: "imm12", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_3_poweroftwominusone_0_3d000c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_3_poweroftwominusone_0_3d000c00() {
     // Encoding: 0x3D000C00
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 3 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, opc=0, imm12=3, size=0, Rt=0
+    // Fields: size=0, opc=0, imm12=3, Rn=0, Rt=0
     let encoding: u32 = 0x3D000C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -15967,17 +9600,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_3_poweroftwo
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_4_poweroftwo_0_3d001000() {
     // Encoding: 0x3D001000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 4 (PowerOfTwo)
-    // Fields: opc=0, Rn=0, Rt=0, size=0, imm12=4
+    // Fields: imm12=4, size=0, Rn=0, opc=0, Rt=0
     let encoding: u32 = 0x3D001000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -15985,21 +9613,15 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_4_poweroftwo
 /// Requirement: FieldBoundary { field: "imm12", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_7_poweroftwominusone_0_3d001c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_7_poweroftwominusone_0_3d001c00() {
     // Encoding: 0x3D001C00
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 7 (PowerOfTwoMinusOne)
-    // Fields: opc=0, imm12=7, size=0, Rn=0, Rt=0
+    // Fields: Rn=0, size=0, opc=0, Rt=0, imm12=7
     let encoding: u32 = 0x3D001C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16010,17 +9632,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_7_poweroftwo
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_8_poweroftwo_0_3d002000() {
     // Encoding: 0x3D002000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 8 (PowerOfTwo)
-    // Fields: size=0, Rt=0, opc=0, Rn=0, imm12=8
+    // Fields: opc=0, Rn=0, size=0, imm12=8, Rt=0
     let encoding: u32 = 0x3D002000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16028,21 +9645,15 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_8_poweroftwo
 /// Requirement: FieldBoundary { field: "imm12", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_15_poweroftwominusone_0_3d003c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_15_poweroftwominusone_0_3d003c00() {
     // Encoding: 0x3D003C00
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 15 (PowerOfTwoMinusOne)
-    // Fields: opc=0, Rn=0, imm12=15, Rt=0, size=0
+    // Fields: imm12=15, opc=0, Rn=0, Rt=0, size=0
     let encoding: u32 = 0x3D003C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16053,17 +9664,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_15_poweroftw
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_16_poweroftwo_0_3d004000() {
     // Encoding: 0x3D004000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 16 (PowerOfTwo)
-    // Fields: size=0, Rn=0, Rt=0, imm12=16, opc=0
+    // Fields: opc=0, imm12=16, size=0, Rn=0, Rt=0
     let encoding: u32 = 0x3D004000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16071,21 +9677,15 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_16_poweroftw
 /// Requirement: FieldBoundary { field: "imm12", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_31_poweroftwominusone_0_3d007c00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_31_poweroftwominusone_0_3d007c00() {
     // Encoding: 0x3D007C00
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 31 (PowerOfTwoMinusOne)
-    // Fields: size=0, opc=0, Rn=0, imm12=31, Rt=0
+    // Fields: imm12=31, size=0, Rn=0, Rt=0, opc=0
     let encoding: u32 = 0x3D007C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16096,17 +9696,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_31_poweroftw
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_32_poweroftwo_0_3d008000() {
     // Encoding: 0x3D008000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 32 (PowerOfTwo)
-    // Fields: Rt=0, opc=0, imm12=32, Rn=0, size=0
+    // Fields: Rt=0, size=0, imm12=32, Rn=0, opc=0
     let encoding: u32 = 0x3D008000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16114,21 +9709,15 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_32_poweroftw
 /// Requirement: FieldBoundary { field: "imm12", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_63_poweroftwominusone_0_3d00fc00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_63_poweroftwominusone_0_3d00fc00() {
     // Encoding: 0x3D00FC00
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 63 (PowerOfTwoMinusOne)
-    // Fields: imm12=63, Rn=0, Rt=0, opc=0, size=0
+    // Fields: Rn=0, Rt=0, imm12=63, opc=0, size=0
     let encoding: u32 = 0x3D00FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16139,17 +9728,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_63_poweroftw
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_64_poweroftwo_0_3d010000() {
     // Encoding: 0x3D010000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 64 (PowerOfTwo)
-    // Fields: Rn=0, opc=0, Rt=0, imm12=64, size=0
+    // Fields: size=0, imm12=64, Rt=0, Rn=0, opc=0
     let encoding: u32 = 0x3D010000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16157,21 +9741,15 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_64_poweroftw
 /// Requirement: FieldBoundary { field: "imm12", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_127_poweroftwominusone_0_3d01fc00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_127_poweroftwominusone_0_3d01fc00() {
     // Encoding: 0x3D01FC00
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 127 (PowerOfTwoMinusOne)
-    // Fields: opc=0, size=0, Rn=0, Rt=0, imm12=127
+    // Fields: size=0, opc=0, Rt=0, Rn=0, imm12=127
     let encoding: u32 = 0x3D01FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16182,17 +9760,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_127_poweroft
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_128_poweroftwo_0_3d020000() {
     // Encoding: 0x3D020000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 128 (PowerOfTwo)
-    // Fields: Rn=0, imm12=128, opc=0, size=0, Rt=0
+    // Fields: imm12=128, Rn=0, Rt=0, opc=0, size=0
     let encoding: u32 = 0x3D020000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16200,21 +9773,15 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_128_poweroft
 /// Requirement: FieldBoundary { field: "imm12", value: 255, boundary: PowerOfTwoMinusOne }
 /// 2^8 - 1 = 255
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_255_poweroftwominusone_0_3d03fc00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_255_poweroftwominusone_0_3d03fc00() {
     // Encoding: 0x3D03FC00
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 255 (PowerOfTwoMinusOne)
-    // Fields: size=0, opc=0, imm12=255, Rn=0, Rt=0
+    // Fields: size=0, Rn=0, Rt=0, imm12=255, opc=0
     let encoding: u32 = 0x3D03FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16225,17 +9792,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_255_poweroft
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_256_poweroftwo_0_3d040000() {
     // Encoding: 0x3D040000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 256 (PowerOfTwo)
-    // Fields: Rn=0, opc=0, Rt=0, imm12=256, size=0
+    // Fields: opc=0, size=0, Rn=0, Rt=0, imm12=256
     let encoding: u32 = 0x3D040000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16243,21 +9805,15 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_256_poweroft
 /// Requirement: FieldBoundary { field: "imm12", value: 511, boundary: PowerOfTwoMinusOne }
 /// 2^9 - 1 = 511
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_511_poweroftwominusone_0_3d07fc00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_511_poweroftwominusone_0_3d07fc00() {
     // Encoding: 0x3D07FC00
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 511 (PowerOfTwoMinusOne)
-    // Fields: opc=0, imm12=511, Rn=0, Rt=0, size=0
+    // Fields: opc=0, Rn=0, Rt=0, size=0, imm12=511
     let encoding: u32 = 0x3D07FC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16268,17 +9824,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_511_poweroft
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_512_poweroftwo_0_3d080000() {
     // Encoding: 0x3D080000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 512 (PowerOfTwo)
-    // Fields: opc=0, size=0, Rn=0, Rt=0, imm12=512
+    // Fields: opc=0, Rt=0, Rn=0, imm12=512, size=0
     let encoding: u32 = 0x3D080000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16286,21 +9837,15 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_512_poweroft
 /// Requirement: FieldBoundary { field: "imm12", value: 1023, boundary: PowerOfTwoMinusOne }
 /// 2^10 - 1 = 1023
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_1023_poweroftwominusone_0_3d0ffc00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_1023_poweroftwominusone_0_3d0ffc00() {
     // Encoding: 0x3D0FFC00
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 1023 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, opc=0, Rt=0, imm12=1023, size=0
+    // Fields: Rt=0, imm12=1023, size=0, opc=0, Rn=0
     let encoding: u32 = 0x3D0FFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16311,17 +9856,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_1023_powerof
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_1024_poweroftwo_0_3d100000() {
     // Encoding: 0x3D100000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 1024 (PowerOfTwo)
-    // Fields: Rn=0, Rt=0, opc=0, size=0, imm12=1024
+    // Fields: imm12=1024, Rt=0, size=0, Rn=0, opc=0
     let encoding: u32 = 0x3D100000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16329,21 +9869,15 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_1024_powerof
 /// Requirement: FieldBoundary { field: "imm12", value: 2047, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (2047)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_2047_poweroftwominusone_0_3d1ffc00(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_2047_poweroftwominusone_0_3d1ffc00() {
     // Encoding: 0x3D1FFC00
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 2047 (PowerOfTwoMinusOne)
-    // Fields: opc=0, imm12=2047, Rn=0, Rt=0, size=0
+    // Fields: Rn=0, Rt=0, opc=0, size=0, imm12=2047
     let encoding: u32 = 0x3D1FFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16354,17 +9888,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_2047_powerof
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_2048_poweroftwo_0_3d200000() {
     // Encoding: 0x3D200000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 2048 (PowerOfTwo)
-    // Fields: opc=0, size=0, imm12=2048, Rn=0, Rt=0
+    // Fields: size=0, opc=0, Rn=0, Rt=0, imm12=2048
     let encoding: u32 = 0x3D200000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16375,17 +9904,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_2048_powerof
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_4095_max_0_3d3ffc00() {
     // Encoding: 0x3D3FFC00
     // Test aarch64_memory_single_simdfp_immediate_unsigned field imm12 = 4095 (Max)
-    // Fields: size=0, Rt=0, opc=0, Rn=0, imm12=4095
+    // Fields: imm12=4095, Rn=0, Rt=0, size=0, opc=0
     let encoding: u32 = 0x3D3FFC00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16396,17 +9920,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_imm12_4095_max_0_3
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rn_0_min_0_3d000000() {
     // Encoding: 0x3D000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field Rn = 0 (Min)
-    // Fields: opc=0, Rn=0, size=0, imm12=0, Rt=0
+    // Fields: opc=0, Rt=0, size=0, Rn=0, imm12=0
     let encoding: u32 = 0x3D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16417,17 +9936,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rn_0_min_0_3d00000
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rn_1_poweroftwo_0_3d000020() {
     // Encoding: 0x3D000020
     // Test aarch64_memory_single_simdfp_immediate_unsigned field Rn = 1 (PowerOfTwo)
-    // Fields: size=0, Rt=0, imm12=0, opc=0, Rn=1
+    // Fields: imm12=0, opc=0, size=0, Rt=0, Rn=1
     let encoding: u32 = 0x3D000020;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16435,21 +9949,15 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rn_1_poweroftwo_0_
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rn_30_poweroftwominusone_0_3d0003c0()
-{
+fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rn_30_poweroftwominusone_0_3d0003c0() {
     // Encoding: 0x3D0003C0
     // Test aarch64_memory_single_simdfp_immediate_unsigned field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, opc=0, imm12=0, Rn=30, Rt=0
+    // Fields: imm12=0, Rn=30, size=0, Rt=0, opc=0
     let encoding: u32 = 0x3D0003C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16460,17 +9968,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rn_30_poweroftwomi
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rn_31_max_0_3d0003e0() {
     // Encoding: 0x3D0003E0
     // Test aarch64_memory_single_simdfp_immediate_unsigned field Rn = 31 (Max)
-    // Fields: opc=0, size=0, Rn=31, Rt=0, imm12=0
+    // Fields: imm12=0, Rt=0, Rn=31, opc=0, size=0
     let encoding: u32 = 0x3D0003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16481,17 +9984,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rn_31_max_0_3d0003
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rt_0_min_0_3d000000() {
     // Encoding: 0x3D000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field Rt = 0 (Min)
-    // Fields: size=0, opc=0, Rn=0, Rt=0, imm12=0
+    // Fields: Rn=0, opc=0, Rt=0, imm12=0, size=0
     let encoding: u32 = 0x3D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16502,17 +10000,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rt_0_min_0_3d00000
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rt_1_poweroftwo_0_3d000001() {
     // Encoding: 0x3D000001
     // Test aarch64_memory_single_simdfp_immediate_unsigned field Rt = 1 (PowerOfTwo)
-    // Fields: Rn=0, Rt=1, size=0, opc=0, imm12=0
+    // Fields: Rn=0, opc=0, Rt=1, size=0, imm12=0
     let encoding: u32 = 0x3D000001;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16520,21 +10013,15 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rt_1_poweroftwo_0_
 /// Requirement: FieldBoundary { field: "Rt", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rt_30_poweroftwominusone_0_3d00001e()
-{
+fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rt_30_poweroftwominusone_0_3d00001e() {
     // Encoding: 0x3D00001E
     // Test aarch64_memory_single_simdfp_immediate_unsigned field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: Rt=30, opc=0, imm12=0, Rn=0, size=0
+    // Fields: size=0, Rn=0, imm12=0, Rt=30, opc=0
     let encoding: u32 = 0x3D00001E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16545,17 +10032,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rt_30_poweroftwomi
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rt_31_max_0_3d00001f() {
     // Encoding: 0x3D00001F
     // Test aarch64_memory_single_simdfp_immediate_unsigned field Rt = 31 (Max)
-    // Fields: Rn=0, Rt=31, size=0, opc=0, imm12=0
+    // Fields: opc=0, imm12=0, Rn=0, Rt=31, size=0
     let encoding: u32 = 0x3D00001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16566,206 +10048,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_field_rt_31_max_0_3d0000
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_combo_0_0_3d000000() {
     // Encoding: 0x3D000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned field combination: size=0, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: imm12=0, opc=0, Rn=0, Rt=0, size=0
+    // Fields: size=0, imm12=0, Rn=0, Rt=0, opc=0
     let encoding: u32 = 0x3D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_combo_1_0_7d000000() {
-    // Encoding: 0x7D000000
-    // Test aarch64_memory_single_simdfp_immediate_unsigned field combination: size=1, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: opc=0, Rn=0, size=1, imm12=0, Rt=0
-    let encoding: u32 = 0x7D000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_combo_2_0_bd000000() {
-    // Encoding: 0xBD000000
-    // Test aarch64_memory_single_simdfp_immediate_unsigned field combination: size=2, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: size=2, Rn=0, imm12=0, Rt=0, opc=0
-    let encoding: u32 = 0xBD000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_combo_3_0_fd000000() {
-    // Encoding: 0xFD000000
-    // Test aarch64_memory_single_simdfp_immediate_unsigned field combination: size=3, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: imm12=0, opc=0, Rn=0, size=3, Rt=0
-    let encoding: u32 = 0xFD000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_combo_4_0_3d000000() {
-    // Encoding: 0x3D000000
-    // Test aarch64_memory_single_simdfp_immediate_unsigned field combination: size=0, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: size=0, Rt=0, opc=0, Rn=0, imm12=0
-    let encoding: u32 = 0x3D000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_combo_5_0_3d400000() {
-    // Encoding: 0x3D400000
-    // Test aarch64_memory_single_simdfp_immediate_unsigned field combination: size=0, opc=1, imm12=0, Rn=0, Rt=0
-    // Fields: Rn=0, size=0, imm12=0, opc=1, Rt=0
-    let encoding: u32 = 0x3D400000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_combo_6_0_3d800000() {
-    // Encoding: 0x3D800000
-    // Test aarch64_memory_single_simdfp_immediate_unsigned field combination: size=0, opc=2, imm12=0, Rn=0, Rt=0
-    // Fields: opc=2, size=0, Rt=0, imm12=0, Rn=0
-    let encoding: u32 = 0x3D800000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// opc=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_combo_7_0_3dc00000() {
-    // Encoding: 0x3DC00000
-    // Test aarch64_memory_single_simdfp_immediate_unsigned field combination: size=0, opc=3, imm12=0, Rn=0, Rt=0
-    // Fields: imm12=0, size=0, Rt=0, Rn=0, opc=3
-    let encoding: u32 = 0x3DC00000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm12=0 (immediate value 0)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_combo_8_0_3d000000() {
-    // Encoding: 0x3D000000
-    // Test aarch64_memory_single_simdfp_immediate_unsigned field combination: size=0, opc=0, imm12=0, Rn=0, Rt=0
-    // Fields: size=0, opc=0, Rn=0, Rt=0, imm12=0
-    let encoding: u32 = 0x3D000000;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm12=1 (immediate value 1)
-#[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_combo_9_0_3d000400() {
-    // Encoding: 0x3D000400
-    // Test aarch64_memory_single_simdfp_immediate_unsigned field combination: size=0, opc=0, imm12=1, Rn=0, Rt=0
-    // Fields: Rt=0, Rn=0, size=0, opc=0, imm12=1
-    let encoding: u32 = 0x3D000400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16776,17 +10064,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_combo_9_0_3d000400() {
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_size_0_size_variant_0_0_3d000000() {
     // Encoding: 0x3D000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned special value size = 0 (Size variant 0)
-    // Fields: opc=0, size=0, imm12=0, Rn=0, Rt=0
+    // Fields: imm12=0, opc=0, Rt=0, size=0, Rn=0
     let encoding: u32 = 0x3D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16797,17 +10080,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_size_0_size_vari
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_size_1_size_variant_1_0_7d000000() {
     // Encoding: 0x7D000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned special value size = 1 (Size variant 1)
-    // Fields: imm12=0, opc=0, size=1, Rn=0, Rt=0
+    // Fields: Rt=0, size=1, opc=0, imm12=0, Rn=0
     let encoding: u32 = 0x7D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16818,17 +10096,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_size_1_size_vari
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_size_2_size_variant_2_0_bd000000() {
     // Encoding: 0xBD000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned special value size = 2 (Size variant 2)
-    // Fields: opc=0, imm12=0, Rn=0, size=2, Rt=0
+    // Fields: opc=0, Rt=0, size=2, imm12=0, Rn=0
     let encoding: u32 = 0xBD000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16839,17 +10112,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_size_2_size_vari
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_size_3_size_variant_3_0_fd000000() {
     // Encoding: 0xFD000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned special value size = 3 (Size variant 3)
-    // Fields: Rn=0, size=3, opc=0, Rt=0, imm12=0
+    // Fields: size=3, Rn=0, Rt=0, opc=0, imm12=0
     let encoding: u32 = 0xFD000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16860,17 +10128,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_size_3_size_vari
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_opc_0_size_variant_0_0_3d000000() {
     // Encoding: 0x3D000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned special value opc = 0 (Size variant 0)
-    // Fields: Rn=0, imm12=0, Rt=0, opc=0, size=0
+    // Fields: Rn=0, opc=0, imm12=0, Rt=0, size=0
     let encoding: u32 = 0x3D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16881,17 +10144,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_opc_0_size_varia
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_opc_1_size_variant_1_0_3d400000() {
     // Encoding: 0x3D400000
     // Test aarch64_memory_single_simdfp_immediate_unsigned special value opc = 1 (Size variant 1)
-    // Fields: size=0, imm12=0, Rn=0, Rt=0, opc=1
+    // Fields: size=0, imm12=0, opc=1, Rn=0, Rt=0
     let encoding: u32 = 0x3D400000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16902,17 +10160,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_opc_1_size_varia
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_opc_2_size_variant_2_0_3d800000() {
     // Encoding: 0x3D800000
     // Test aarch64_memory_single_simdfp_immediate_unsigned special value opc = 2 (Size variant 2)
-    // Fields: Rn=0, size=0, opc=2, Rt=0, imm12=0
+    // Fields: Rn=0, opc=2, Rt=0, size=0, imm12=0
     let encoding: u32 = 0x3D800000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16923,17 +10176,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_opc_2_size_varia
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_opc_3_size_variant_3_0_3dc00000() {
     // Encoding: 0x3DC00000
     // Test aarch64_memory_single_simdfp_immediate_unsigned special value opc = 3 (Size variant 3)
-    // Fields: Rt=0, opc=3, Rn=0, imm12=0, size=0
+    // Fields: opc=3, size=0, imm12=0, Rn=0, Rt=0
     let encoding: u32 = 0x3DC00000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16941,21 +10189,15 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_opc_3_size_varia
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_rn_31_stack_pointer_sp_may_require_alignment_0_3d0003e0(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_rn_31_stack_pointer_sp_may_require_alignment_0_3d0003e0() {
     // Encoding: 0x3D0003E0
     // Test aarch64_memory_single_simdfp_immediate_unsigned special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: opc=0, size=0, Rn=31, imm12=0, Rt=0
+    // Fields: opc=0, Rn=31, size=0, imm12=0, Rt=0
     let encoding: u32 = 0x3D0003E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16963,21 +10205,15 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_rn_31_stack_poin
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_3d00001f(
-) {
+fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_0_3d00001f() {
     // Encoding: 0x3D00001F
     // Test aarch64_memory_single_simdfp_immediate_unsigned special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: size=0, imm12=0, Rn=0, opc=0, Rt=31
+    // Fields: Rt=31, size=0, Rn=0, opc=0, imm12=0
     let encoding: u32 = 0x3D00001F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -16988,16 +10224,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_special_rt_31_zero_regis
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_invalid_0_0_3d000000() {
     // Encoding: 0x3D000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned invalid encoding: Binary { op: Gt, lhs: Var(QualifiedIdentifier { qualifier: Any, name: "scale" }), rhs: LitInt(4) }
-    // Fields: Rt=0, size=0, opc=0, Rn=0, imm12=0
+    // Fields: size=0, Rn=0, imm12=0, Rt=0, opc=0
     let encoding: u32 = 0x3D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_unsigned
@@ -17008,16 +10240,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_invalid_0_0_3d000000() {
 fn test_aarch64_memory_single_simdfp_immediate_unsigned_invalid_1_0_3d000000() {
     // Encoding: 0x3D000000
     // Test aarch64_memory_single_simdfp_immediate_unsigned invalid encoding: Unconditional UNDEFINED
-    // Fields: Rn=0, Rt=0, size=0, opc=0, imm12=0
+    // Fields: Rt=0, Rn=0, imm12=0, opc=0, size=0
     let encoding: u32 = 0x3D000000;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_simdfp_immediate_signed_post_idx
@@ -17198,8 +10426,8 @@ fn test_aarch64_memory_single_simdfp_immediate_signed_pre_idx_store_0_3c000c20()
     // Test aarch64_memory_single_simdfp_immediate_signed_pre_idx memory store: 8 bytes
     // Encoding: 0x3C000C20
     let mut cpu = create_test_cpu();
-    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     set_x(&mut cpu, 1, 0x100000000000);
+    set_x(&mut cpu, 0, 0xDEADBEEFCAFEBABE);
     let encoding: u32 = 0x3C000C20;
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
@@ -17311,17 +10539,12 @@ fn test_aarch64_memory_single_simdfp_immediate_unsigned_store_0_3d000020() {
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_size_0_min_400_38200400() {
     // Encoding: 0x38200400
     // Test aarch64_memory_single_general_immediate_signed_pac field size = 0 (Min)
-    // Fields: Rt=0, size=0, S=0, M=0, imm9=0, W=0, Rn=0
+    // Fields: size=0, S=0, imm9=0, M=0, W=0, Rn=0, Rt=0
     let encoding: u32 = 0x38200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17332,17 +10555,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_size_0_min_400_
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_size_1_poweroftwo_400_78200400() {
     // Encoding: 0x78200400
     // Test aarch64_memory_single_general_immediate_signed_pac field size = 1 (PowerOfTwo)
-    // Fields: imm9=0, Rn=0, Rt=0, M=0, S=0, W=0, size=1
+    // Fields: Rt=0, size=1, M=0, S=0, imm9=0, W=0, Rn=0
     let encoding: u32 = 0x78200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17353,17 +10571,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_size_1_poweroft
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_size_2_poweroftwo_400_b8200400() {
     // Encoding: 0xB8200400
     // Test aarch64_memory_single_general_immediate_signed_pac field size = 2 (PowerOfTwo)
-    // Fields: W=0, Rt=0, size=2, Rn=0, S=0, M=0, imm9=0
+    // Fields: size=2, M=0, imm9=0, Rn=0, Rt=0, S=0, W=0
     let encoding: u32 = 0xB8200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17374,17 +10587,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_size_2_poweroft
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_size_3_max_400_f8200400() {
     // Encoding: 0xF8200400
     // Test aarch64_memory_single_general_immediate_signed_pac field size = 3 (Max)
-    // Fields: M=0, S=0, W=0, Rt=0, size=3, imm9=0, Rn=0
+    // Fields: M=0, S=0, W=0, imm9=0, Rn=0, size=3, Rt=0
     let encoding: u32 = 0xF8200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17395,17 +10603,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_size_3_max_400_
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_m_0_min_400_38200400() {
     // Encoding: 0x38200400
     // Test aarch64_memory_single_general_immediate_signed_pac field M = 0 (Min)
-    // Fields: W=0, Rt=0, imm9=0, S=0, Rn=0, M=0, size=0
+    // Fields: S=0, Rt=0, M=0, imm9=0, W=0, Rn=0, size=0
     let encoding: u32 = 0x38200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17416,17 +10619,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_m_0_min_400_382
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_m_1_max_400_38a00400() {
     // Encoding: 0x38A00400
     // Test aarch64_memory_single_general_immediate_signed_pac field M = 1 (Max)
-    // Fields: imm9=0, S=0, M=1, W=0, Rn=0, Rt=0, size=0
+    // Fields: imm9=0, M=1, size=0, S=0, Rn=0, Rt=0, W=0
     let encoding: u32 = 0x38A00400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17437,17 +10635,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_m_1_max_400_38a
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_s_0_min_400_38200400() {
     // Encoding: 0x38200400
     // Test aarch64_memory_single_general_immediate_signed_pac field S = 0 (Min)
-    // Fields: imm9=0, Rn=0, Rt=0, S=0, size=0, W=0, M=0
+    // Fields: M=0, size=0, imm9=0, W=0, Rn=0, S=0, Rt=0
     let encoding: u32 = 0x38200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17458,17 +10651,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_s_0_min_400_382
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_s_1_max_400_38600400() {
     // Encoding: 0x38600400
     // Test aarch64_memory_single_general_immediate_signed_pac field S = 1 (Max)
-    // Fields: Rn=0, Rt=0, size=0, M=0, S=1, imm9=0, W=0
+    // Fields: size=0, S=1, imm9=0, W=0, Rt=0, M=0, Rn=0
     let encoding: u32 = 0x38600400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17479,17 +10667,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_s_1_max_400_386
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_0_zero_400_38200400() {
     // Encoding: 0x38200400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 0 (Zero)
-    // Fields: Rn=0, S=0, Rt=0, imm9=0, M=0, W=0, size=0
+    // Fields: S=0, size=0, M=0, imm9=0, W=0, Rn=0, Rt=0
     let encoding: u32 = 0x38200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17500,17 +10683,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_0_zero_400
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_1_poweroftwo_400_38201400() {
     // Encoding: 0x38201400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 1 (PowerOfTwo)
-    // Fields: W=0, M=0, imm9=1, Rn=0, size=0, Rt=0, S=0
+    // Fields: size=0, S=0, imm9=1, W=0, Rt=0, M=0, Rn=0
     let encoding: u32 = 0x38201400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17518,21 +10696,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_1_poweroft
 /// Requirement: FieldBoundary { field: "imm9", value: 3, boundary: PowerOfTwoMinusOne }
 /// 2^2 - 1 = 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_3_poweroftwominusone_400_38203400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_3_poweroftwominusone_400_38203400() {
     // Encoding: 0x38203400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 3 (PowerOfTwoMinusOne)
-    // Fields: size=0, imm9=3, Rn=0, Rt=0, S=0, W=0, M=0
+    // Fields: M=0, Rt=0, imm9=3, size=0, S=0, W=0, Rn=0
     let encoding: u32 = 0x38203400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17543,17 +10715,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_3_poweroft
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_4_poweroftwo_400_38204400() {
     // Encoding: 0x38204400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 4 (PowerOfTwo)
-    // Fields: M=0, Rn=0, S=0, Rt=0, imm9=4, size=0, W=0
+    // Fields: Rn=0, Rt=0, M=0, W=0, size=0, imm9=4, S=0
     let encoding: u32 = 0x38204400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17561,21 +10728,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_4_poweroft
 /// Requirement: FieldBoundary { field: "imm9", value: 7, boundary: PowerOfTwoMinusOne }
 /// 2^3 - 1 = 7
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_7_poweroftwominusone_400_38207400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_7_poweroftwominusone_400_38207400() {
     // Encoding: 0x38207400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 7 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, size=0, imm9=7, S=0, W=0, Rt=0, M=0
+    // Fields: size=0, Rn=0, Rt=0, imm9=7, M=0, S=0, W=0
     let encoding: u32 = 0x38207400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17586,17 +10747,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_7_poweroft
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_8_poweroftwo_400_38208400() {
     // Encoding: 0x38208400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 8 (PowerOfTwo)
-    // Fields: size=0, M=0, W=0, Rn=0, Rt=0, S=0, imm9=8
+    // Fields: M=0, size=0, S=0, imm9=8, Rn=0, Rt=0, W=0
     let encoding: u32 = 0x38208400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17604,21 +10760,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_8_poweroft
 /// Requirement: FieldBoundary { field: "imm9", value: 15, boundary: PowerOfTwoMinusOne }
 /// 2^4 - 1 = 15
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_15_poweroftwominusone_400_3820f400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_15_poweroftwominusone_400_3820f400() {
     // Encoding: 0x3820F400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 15 (PowerOfTwoMinusOne)
-    // Fields: M=0, imm9=15, Rn=0, Rt=0, size=0, S=0, W=0
+    // Fields: M=0, imm9=15, size=0, W=0, Rn=0, Rt=0, S=0
     let encoding: u32 = 0x3820F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17629,17 +10779,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_15_powerof
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_16_poweroftwo_400_38210400() {
     // Encoding: 0x38210400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 16 (PowerOfTwo)
-    // Fields: size=0, M=0, W=0, Rn=0, S=0, imm9=16, Rt=0
+    // Fields: M=0, imm9=16, size=0, W=0, Rt=0, Rn=0, S=0
     let encoding: u32 = 0x38210400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17647,21 +10792,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_16_powerof
 /// Requirement: FieldBoundary { field: "imm9", value: 31, boundary: PowerOfTwoMinusOne }
 /// 2^5 - 1 = 31
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_31_poweroftwominusone_400_3821f400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_31_poweroftwominusone_400_3821f400() {
     // Encoding: 0x3821F400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 31 (PowerOfTwoMinusOne)
-    // Fields: M=0, Rt=0, size=0, imm9=31, S=0, W=0, Rn=0
+    // Fields: size=0, M=0, S=0, W=0, Rt=0, Rn=0, imm9=31
     let encoding: u32 = 0x3821F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17672,17 +10811,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_31_powerof
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_32_poweroftwo_400_38220400() {
     // Encoding: 0x38220400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 32 (PowerOfTwo)
-    // Fields: size=0, W=0, imm9=32, Rn=0, Rt=0, M=0, S=0
+    // Fields: size=0, W=0, Rn=0, Rt=0, imm9=32, S=0, M=0
     let encoding: u32 = 0x38220400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17690,21 +10824,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_32_powerof
 /// Requirement: FieldBoundary { field: "imm9", value: 63, boundary: PowerOfTwoMinusOne }
 /// 2^6 - 1 = 63
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_63_poweroftwominusone_400_3823f400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_63_poweroftwominusone_400_3823f400() {
     // Encoding: 0x3823F400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 63 (PowerOfTwoMinusOne)
-    // Fields: Rn=0, Rt=0, size=0, W=0, M=0, S=0, imm9=63
+    // Fields: size=0, M=0, W=0, Rn=0, S=0, Rt=0, imm9=63
     let encoding: u32 = 0x3823F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17715,17 +10843,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_63_powerof
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_64_poweroftwo_400_38240400() {
     // Encoding: 0x38240400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 64 (PowerOfTwo)
-    // Fields: size=0, M=0, S=0, imm9=64, W=0, Rn=0, Rt=0
+    // Fields: S=0, W=0, M=0, imm9=64, size=0, Rt=0, Rn=0
     let encoding: u32 = 0x38240400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17733,21 +10856,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_64_powerof
 /// Requirement: FieldBoundary { field: "imm9", value: 127, boundary: PowerOfTwoMinusOne }
 /// 2^7 - 1 = 127
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_127_poweroftwominusone_400_3827f400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_127_poweroftwominusone_400_3827f400() {
     // Encoding: 0x3827F400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 127 (PowerOfTwoMinusOne)
-    // Fields: size=0, S=0, imm9=127, Rn=0, M=0, W=0, Rt=0
+    // Fields: M=0, W=0, imm9=127, Rn=0, size=0, S=0, Rt=0
     let encoding: u32 = 0x3827F400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17755,21 +10872,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_127_powero
 /// Requirement: FieldBoundary { field: "imm9", value: 128, boundary: PowerOfTwo }
 /// power of 2 (2^7 = 128)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_128_poweroftwo_400_38280400()
-{
+fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_128_poweroftwo_400_38280400() {
     // Encoding: 0x38280400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 128 (PowerOfTwo)
-    // Fields: M=0, size=0, S=0, imm9=128, W=0, Rt=0, Rn=0
+    // Fields: size=0, S=0, imm9=128, W=0, Rn=0, Rt=0, M=0
     let encoding: u32 = 0x38280400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17777,21 +10888,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_128_powero
 /// Requirement: FieldBoundary { field: "imm9", value: 255, boundary: PowerOfTwoMinusOne }
 /// immediate midpoint (255)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_255_poweroftwominusone_400_382ff400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_255_poweroftwominusone_400_382ff400() {
     // Encoding: 0x382FF400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 255 (PowerOfTwoMinusOne)
-    // Fields: W=0, Rn=0, Rt=0, M=0, size=0, S=0, imm9=255
+    // Fields: Rn=0, M=0, S=0, imm9=255, W=0, size=0, Rt=0
     let encoding: u32 = 0x382FF400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17799,21 +10904,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_255_powero
 /// Requirement: FieldBoundary { field: "imm9", value: 256, boundary: PowerOfTwo }
 /// power of 2 (2^8 = 256)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_256_poweroftwo_400_38300400()
-{
+fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_256_poweroftwo_400_38300400() {
     // Encoding: 0x38300400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 256 (PowerOfTwo)
-    // Fields: size=0, Rn=0, S=0, Rt=0, W=0, imm9=256, M=0
+    // Fields: size=0, imm9=256, S=0, M=0, W=0, Rn=0, Rt=0
     let encoding: u32 = 0x38300400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17824,17 +10923,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_256_powero
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_511_max_400_383ff400() {
     // Encoding: 0x383FF400
     // Test aarch64_memory_single_general_immediate_signed_pac field imm9 = 511 (Max)
-    // Fields: imm9=511, W=0, Rt=0, size=0, S=0, Rn=0, M=0
+    // Fields: S=0, M=0, imm9=511, Rt=0, size=0, W=0, Rn=0
     let encoding: u32 = 0x383FF400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17845,17 +10939,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_imm9_511_max_40
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_w_0_min_400_38200400() {
     // Encoding: 0x38200400
     // Test aarch64_memory_single_general_immediate_signed_pac field W = 0 (Min)
-    // Fields: imm9=0, Rn=0, size=0, Rt=0, M=0, S=0, W=0
+    // Fields: W=0, size=0, Rt=0, Rn=0, S=0, M=0, imm9=0
     let encoding: u32 = 0x38200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17866,17 +10955,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_w_0_min_400_382
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_w_1_max_400_38200c00() {
     // Encoding: 0x38200C00
     // Test aarch64_memory_single_general_immediate_signed_pac field W = 1 (Max)
-    // Fields: size=0, M=0, W=1, Rt=0, imm9=0, Rn=0, S=0
+    // Fields: W=1, S=0, Rn=0, Rt=0, imm9=0, size=0, M=0
     let encoding: u32 = 0x38200C00;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17887,17 +10971,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_w_1_max_400_382
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_rn_0_min_400_38200400() {
     // Encoding: 0x38200400
     // Test aarch64_memory_single_general_immediate_signed_pac field Rn = 0 (Min)
-    // Fields: Rt=0, S=0, imm9=0, M=0, W=0, size=0, Rn=0
+    // Fields: size=0, S=0, Rt=0, Rn=0, imm9=0, W=0, M=0
     let encoding: u32 = 0x38200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17908,17 +10987,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_rn_0_min_400_38
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_rn_1_poweroftwo_400_38200420() {
     // Encoding: 0x38200420
     // Test aarch64_memory_single_general_immediate_signed_pac field Rn = 1 (PowerOfTwo)
-    // Fields: M=0, Rn=1, W=0, S=0, imm9=0, Rt=0, size=0
+    // Fields: imm9=0, Rt=0, S=0, W=0, Rn=1, size=0, M=0
     let encoding: u32 = 0x38200420;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17926,21 +11000,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_rn_1_poweroftwo
 /// Requirement: FieldBoundary { field: "Rn", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_field_rn_30_poweroftwominusone_400_382007c0(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_field_rn_30_poweroftwominusone_400_382007c0() {
     // Encoding: 0x382007C0
     // Test aarch64_memory_single_general_immediate_signed_pac field Rn = 30 (PowerOfTwoMinusOne)
-    // Fields: Rt=0, W=0, size=0, S=0, Rn=30, M=0, imm9=0
+    // Fields: W=0, S=0, imm9=0, Rn=30, Rt=0, M=0, size=0
     let encoding: u32 = 0x382007C0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17951,17 +11019,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_rn_30_poweroftw
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_rn_31_max_400_382007e0() {
     // Encoding: 0x382007E0
     // Test aarch64_memory_single_general_immediate_signed_pac field Rn = 31 (Max)
-    // Fields: M=0, S=0, imm9=0, W=0, Rn=31, size=0, Rt=0
+    // Fields: imm9=0, W=0, S=0, size=0, M=0, Rn=31, Rt=0
     let encoding: u32 = 0x382007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17972,17 +11035,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_rn_31_max_400_3
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_rt_0_min_400_38200400() {
     // Encoding: 0x38200400
     // Test aarch64_memory_single_general_immediate_signed_pac field Rt = 0 (Min)
-    // Fields: W=0, Rt=0, M=0, size=0, imm9=0, S=0, Rn=0
+    // Fields: size=0, M=0, S=0, W=0, Rn=0, imm9=0, Rt=0
     let encoding: u32 = 0x38200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -17993,17 +11051,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_rt_0_min_400_38
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_rt_1_poweroftwo_400_38200401() {
     // Encoding: 0x38200401
     // Test aarch64_memory_single_general_immediate_signed_pac field Rt = 1 (PowerOfTwo)
-    // Fields: imm9=0, Rt=1, S=0, M=0, W=0, size=0, Rn=0
+    // Fields: Rt=1, S=0, M=0, Rn=0, imm9=0, size=0, W=0
     let encoding: u32 = 0x38200401;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -18011,21 +11064,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_rt_1_poweroftwo
 /// Requirement: FieldBoundary { field: "Rt", value: 30, boundary: PowerOfTwoMinusOne }
 /// register index 30 (LR in some contexts)
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_field_rt_30_poweroftwominusone_400_3820041e(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_field_rt_30_poweroftwominusone_400_3820041e() {
     // Encoding: 0x3820041E
     // Test aarch64_memory_single_general_immediate_signed_pac field Rt = 30 (PowerOfTwoMinusOne)
-    // Fields: size=0, M=0, Rn=0, Rt=30, W=0, imm9=0, S=0
+    // Fields: M=0, size=0, S=0, imm9=0, W=0, Rt=30, Rn=0
     let encoding: u32 = 0x3820041E;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -18036,17 +11083,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_rt_30_poweroftw
 fn test_aarch64_memory_single_general_immediate_signed_pac_field_rt_31_max_400_3820041f() {
     // Encoding: 0x3820041F
     // Test aarch64_memory_single_general_immediate_signed_pac field Rt = 31 (Max)
-    // Fields: M=0, imm9=0, size=0, Rt=31, S=0, W=0, Rn=0
+    // Fields: size=0, Rt=31, imm9=0, S=0, Rn=0, M=0, W=0
     let encoding: u32 = 0x3820041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -18057,206 +11099,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_field_rt_31_max_400_3
 fn test_aarch64_memory_single_general_immediate_signed_pac_combo_0_400_38200400() {
     // Encoding: 0x38200400
     // Test aarch64_memory_single_general_immediate_signed_pac field combination: size=0, M=0, S=0, imm9=0, W=0, Rn=0, Rt=0
-    // Fields: imm9=0, S=0, size=0, M=0, W=0, Rn=0, Rt=0
+    // Fields: S=0, imm9=0, size=0, W=0, Rn=0, Rt=0, M=0
     let encoding: u32 = 0x38200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pac
-/// ASL: `field combination 1`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_combo_1_400_78200400() {
-    // Encoding: 0x78200400
-    // Test aarch64_memory_single_general_immediate_signed_pac field combination: size=1, M=0, S=0, imm9=0, W=0, Rn=0, Rt=0
-    // Fields: Rt=0, size=1, W=0, S=0, Rn=0, M=0, imm9=0
-    let encoding: u32 = 0x78200400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pac
-/// ASL: `field combination 2`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=2 (32-bit / word size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_combo_2_400_b8200400() {
-    // Encoding: 0xB8200400
-    // Test aarch64_memory_single_general_immediate_signed_pac field combination: size=2, M=0, S=0, imm9=0, W=0, Rn=0, Rt=0
-    // Fields: imm9=0, Rt=0, Rn=0, M=0, W=0, size=2, S=0
-    let encoding: u32 = 0xB8200400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pac
-/// ASL: `field combination 3`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// size=3 (64-bit / doubleword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_combo_3_400_f8200400() {
-    // Encoding: 0xF8200400
-    // Test aarch64_memory_single_general_immediate_signed_pac field combination: size=3, M=0, S=0, imm9=0, W=0, Rn=0, Rt=0
-    // Fields: S=0, Rn=0, size=3, W=0, Rt=0, imm9=0, M=0
-    let encoding: u32 = 0xF8200400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pac
-/// ASL: `field combination 4`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// M=0 (minimum value)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_combo_4_400_38200400() {
-    // Encoding: 0x38200400
-    // Test aarch64_memory_single_general_immediate_signed_pac field combination: size=0, M=0, S=0, imm9=0, W=0, Rn=0, Rt=0
-    // Fields: Rn=0, size=0, imm9=0, S=0, Rt=0, M=0, W=0
-    let encoding: u32 = 0x38200400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pac
-/// ASL: `field combination 5`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// M=1 (maximum value (1))
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_combo_5_400_38a00400() {
-    // Encoding: 0x38A00400
-    // Test aarch64_memory_single_general_immediate_signed_pac field combination: size=0, M=1, S=0, imm9=0, W=0, Rn=0, Rt=0
-    // Fields: Rn=0, S=0, imm9=0, size=0, W=0, Rt=0, M=1
-    let encoding: u32 = 0x38A00400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pac
-/// ASL: `field combination 6`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// S=0 (8-bit / byte size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_combo_6_400_38200400() {
-    // Encoding: 0x38200400
-    // Test aarch64_memory_single_general_immediate_signed_pac field combination: size=0, M=0, S=0, imm9=0, W=0, Rn=0, Rt=0
-    // Fields: S=0, size=0, imm9=0, Rn=0, Rt=0, M=0, W=0
-    let encoding: u32 = 0x38200400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pac
-/// ASL: `field combination 7`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// S=1 (16-bit / halfword size)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_combo_7_400_38600400() {
-    // Encoding: 0x38600400
-    // Test aarch64_memory_single_general_immediate_signed_pac field combination: size=0, M=0, S=1, imm9=0, W=0, Rn=0, Rt=0
-    // Fields: size=0, W=0, Rn=0, imm9=0, M=0, Rt=0, S=1
-    let encoding: u32 = 0x38600400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pac
-/// ASL: `field combination 8`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=0 (immediate value 0)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_combo_8_400_38200400() {
-    // Encoding: 0x38200400
-    // Test aarch64_memory_single_general_immediate_signed_pac field combination: size=0, M=0, S=0, imm9=0, W=0, Rn=0, Rt=0
-    // Fields: size=0, S=0, imm9=0, W=0, Rn=0, Rt=0, M=0
-    let encoding: u32 = 0x38200400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
-}
-
-/// Provenance: aarch64_memory_single_general_immediate_signed_pac
-/// ASL: `field combination 9`
-/// Requirement: FieldExtraction { field: "combination", bit_start: 0, bit_width: 32 }
-/// imm9=1 (immediate value 1)
-#[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_combo_9_400_38201400() {
-    // Encoding: 0x38201400
-    // Test aarch64_memory_single_general_immediate_signed_pac field combination: size=0, M=0, S=0, imm9=1, W=0, Rn=0, Rt=0
-    // Fields: W=0, S=0, M=0, Rn=0, Rt=0, imm9=1, size=0
-    let encoding: u32 = 0x38201400;
-    let mut cpu = create_test_cpu();
-    write_insn(&mut cpu, 0, encoding);
-    let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -18264,21 +11112,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_combo_9_400_38201400(
 /// Requirement: FieldSpecial { field: "size", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_special_size_0_size_variant_0_1024_38200400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_special_size_0_size_variant_0_1024_38200400() {
     // Encoding: 0x38200400
     // Test aarch64_memory_single_general_immediate_signed_pac special value size = 0 (Size variant 0)
-    // Fields: W=0, Rn=0, Rt=0, M=0, S=0, imm9=0, size=0
+    // Fields: Rn=0, M=0, S=0, Rt=0, imm9=0, W=0, size=0
     let encoding: u32 = 0x38200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -18286,21 +11128,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_special_size_0_size_v
 /// Requirement: FieldSpecial { field: "size", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_special_size_1_size_variant_1_1024_78200400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_special_size_1_size_variant_1_1024_78200400() {
     // Encoding: 0x78200400
     // Test aarch64_memory_single_general_immediate_signed_pac special value size = 1 (Size variant 1)
-    // Fields: S=0, Rt=0, imm9=0, W=0, Rn=0, M=0, size=1
+    // Fields: Rt=0, W=0, S=0, Rn=0, size=1, M=0, imm9=0
     let encoding: u32 = 0x78200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -18308,21 +11144,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_special_size_1_size_v
 /// Requirement: FieldSpecial { field: "size", value: 2, meaning: "Size variant 2" }
 /// Size variant 2
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_special_size_2_size_variant_2_1024_b8200400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_special_size_2_size_variant_2_1024_b8200400() {
     // Encoding: 0xB8200400
     // Test aarch64_memory_single_general_immediate_signed_pac special value size = 2 (Size variant 2)
-    // Fields: size=2, M=0, imm9=0, W=0, Rn=0, S=0, Rt=0
+    // Fields: Rt=0, size=2, S=0, M=0, imm9=0, W=0, Rn=0
     let encoding: u32 = 0xB8200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -18330,21 +11160,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_special_size_2_size_v
 /// Requirement: FieldSpecial { field: "size", value: 3, meaning: "Size variant 3" }
 /// Size variant 3
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_special_size_3_size_variant_3_1024_f8200400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_special_size_3_size_variant_3_1024_f8200400() {
     // Encoding: 0xF8200400
     // Test aarch64_memory_single_general_immediate_signed_pac special value size = 3 (Size variant 3)
-    // Fields: size=3, imm9=0, Rt=0, M=0, Rn=0, W=0, S=0
+    // Fields: Rt=0, M=0, size=3, S=0, W=0, imm9=0, Rn=0
     let encoding: u32 = 0xF8200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -18352,21 +11176,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_special_size_3_size_v
 /// Requirement: FieldSpecial { field: "S", value: 0, meaning: "Size variant 0" }
 /// Size variant 0
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_special_s_0_size_variant_0_1024_38200400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_special_s_0_size_variant_0_1024_38200400() {
     // Encoding: 0x38200400
     // Test aarch64_memory_single_general_immediate_signed_pac special value S = 0 (Size variant 0)
-    // Fields: M=0, Rt=0, S=0, size=0, imm9=0, W=0, Rn=0
+    // Fields: imm9=0, Rn=0, W=0, M=0, size=0, S=0, Rt=0
     let encoding: u32 = 0x38200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -18374,21 +11192,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_special_s_0_size_vari
 /// Requirement: FieldSpecial { field: "S", value: 1, meaning: "Size variant 1" }
 /// Size variant 1
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_special_s_1_size_variant_1_1024_38600400(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_special_s_1_size_variant_1_1024_38600400() {
     // Encoding: 0x38600400
     // Test aarch64_memory_single_general_immediate_signed_pac special value S = 1 (Size variant 1)
-    // Fields: W=0, Rn=0, Rt=0, S=1, M=0, size=0, imm9=0
+    // Fields: size=0, Rn=0, Rt=0, S=1, imm9=0, W=0, M=0
     let encoding: u32 = 0x38600400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -18396,21 +11208,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_special_s_1_size_vari
 /// Requirement: FieldSpecial { field: "Rn", value: 31, meaning: "Stack pointer (SP) - may require alignment" }
 /// Stack pointer (SP) - may require alignment
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_special_rn_31_stack_pointer_sp_may_require_alignment_1024_382007e0(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_special_rn_31_stack_pointer_sp_may_require_alignment_1024_382007e0() {
     // Encoding: 0x382007E0
     // Test aarch64_memory_single_general_immediate_signed_pac special value Rn = 31 (Stack pointer (SP) - may require alignment)
-    // Fields: W=0, imm9=0, S=0, size=0, Rn=31, M=0, Rt=0
+    // Fields: W=0, Rt=0, Rn=31, M=0, S=0, size=0, imm9=0
     let encoding: u32 = 0x382007E0;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -18418,21 +11224,15 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_special_rn_31_stack_p
 /// Requirement: FieldSpecial { field: "Rt", value: 31, meaning: "Zero register (XZR/WZR) - reads as 0, writes discarded" }
 /// Zero register (XZR/WZR) - reads as 0, writes discarded
 #[test]
-fn test_aarch64_memory_single_general_immediate_signed_pac_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_3820041f(
-) {
+fn test_aarch64_memory_single_general_immediate_signed_pac_special_rt_31_zero_register_xzr_wzr_reads_as_0_writes_discarded_1024_3820041f() {
     // Encoding: 0x3820041F
     // Test aarch64_memory_single_general_immediate_signed_pac special value Rt = 31 (Zero register (XZR/WZR) - reads as 0, writes discarded)
-    // Fields: Rt=31, Rn=0, size=0, imm9=0, W=0, S=0, M=0
+    // Fields: M=0, Rn=0, Rt=31, imm9=0, W=0, size=0, S=0
     let encoding: u32 = 0x3820041F;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step().unwrap();
-    assert_eq!(
-        exit,
-        CpuExit::Continue,
-        "instruction 0x{:08X} should execute successfully",
-        encoding
-    );
+    assert_eq!(exit, CpuExit::Continue, "instruction 0x{:08X} should execute successfully", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -18443,16 +11243,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_special_rt_31_zero_re
 fn test_aarch64_memory_single_general_immediate_signed_pac_invalid_0_400_38200400() {
     // Encoding: 0x38200400
     // Test aarch64_memory_single_general_immediate_signed_pac invalid encoding: Binary { op: Ne, lhs: Binary { op: Or, lhs: Unary { op: Not, operand: Call { name: QualifiedIdentifier { qualifier: Any, name: "HavePACExt" }, args: [] } }, rhs: Var(QualifiedIdentifier { qualifier: Any, name: "size" }) }, rhs: LitBits([true, true]) }
-    // Fields: Rn=0, size=0, M=0, S=0, Rt=0, W=0, imm9=0
+    // Fields: Rt=0, S=0, M=0, size=0, W=0, imm9=0, Rn=0
     let encoding: u32 = 0x38200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -18463,16 +11259,12 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_invalid_0_400_3820040
 fn test_aarch64_memory_single_general_immediate_signed_pac_invalid_1_400_38200400() {
     // Encoding: 0x38200400
     // Test aarch64_memory_single_general_immediate_signed_pac invalid encoding: Unconditional UNDEFINED
-    // Fields: S=0, size=0, imm9=0, W=0, M=0, Rn=0, Rt=0
+    // Fields: W=0, Rn=0, Rt=0, size=0, M=0, imm9=0, S=0
     let encoding: u32 = 0x38200400;
     let mut cpu = create_test_cpu();
     write_insn(&mut cpu, 0, encoding);
     let exit = cpu.step();
-    assert!(
-        exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue),
-        "expected UNDEFINED for encoding 0x{:08X}",
-        encoding
-    );
+    assert!(exit.is_err() || !matches!(exit.unwrap(), CpuExit::Continue), "expected UNDEFINED for encoding 0x{:08X}", encoding);
 }
 
 /// Provenance: aarch64_memory_single_general_immediate_signed_pac
@@ -18565,3 +11357,4 @@ fn test_aarch64_memory_single_general_immediate_signed_pac_exception_0_38200400(
     let exit = cpu.step().unwrap();
     assert_eq!(exit, CpuExit::Continue, "instruction should execute");
 }
+
