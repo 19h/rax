@@ -1,0 +1,641 @@
+//! SMIR execution context.
+//!
+//! This module defines the execution context that holds all state during SMIR execution.
+
+use std::collections::{HashMap, HashSet};
+
+use crate::smir::flags::FlagState;
+use crate::smir::memory::{ExclusiveMonitor, SmirMemory};
+use crate::smir::types::*;
+
+// ============================================================================
+// Exit Reason
+// ============================================================================
+
+/// Reason for execution exit
+#[derive(Clone, Debug)]
+pub enum ExitReason {
+    /// Reached instruction limit
+    InsnLimit,
+    /// Halt instruction
+    Halt,
+    /// System call
+    Syscall { num: u64, args: Vec<u64> },
+    /// Breakpoint hit
+    Breakpoint { addr: GuestAddr },
+    /// Memory fault
+    MemoryFault { addr: GuestAddr, write: bool },
+    /// Undefined instruction
+    Undefined { addr: GuestAddr, opcode: u32 },
+    /// External interrupt
+    Interrupt { vector: u8 },
+    /// Self-modifying code detected
+    SmcDetected { addr: GuestAddr },
+    /// Single step complete
+    SingleStep,
+    /// Function return
+    Return { to: GuestAddr },
+    /// Block not found (needs lifting)
+    BlockNotFound { addr: GuestAddr },
+}
+
+// ============================================================================
+// Debug State
+// ============================================================================
+
+/// Debug state
+#[derive(Clone, Debug, Default)]
+pub struct DebugState {
+    /// Single-step mode
+    pub single_step: bool,
+    /// Breakpoints
+    pub breakpoints: HashSet<GuestAddr>,
+    /// Trace enabled
+    pub trace_enabled: bool,
+}
+
+impl DebugState {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn add_breakpoint(&mut self, addr: GuestAddr) {
+        self.breakpoints.insert(addr);
+    }
+
+    pub fn remove_breakpoint(&mut self, addr: GuestAddr) {
+        self.breakpoints.remove(&addr);
+    }
+
+    pub fn has_breakpoint(&self, addr: GuestAddr) -> bool {
+        self.breakpoints.contains(&addr)
+    }
+}
+
+// ============================================================================
+// Virtual Register File
+// ============================================================================
+
+/// Virtual register file
+#[derive(Clone, Debug, Default)]
+pub struct VRegFile {
+    /// Scalar register values
+    values: HashMap<VirtualId, u64>,
+    /// Vector register values (128-bit)
+    vec_values: HashMap<VirtualId, [u64; 2]>,
+}
+
+impl VRegFile {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn get(&self, id: VirtualId) -> u64 {
+        self.values.get(&id).copied().unwrap_or(0)
+    }
+
+    pub fn set(&mut self, id: VirtualId, value: u64) {
+        self.values.insert(id, value);
+    }
+
+    pub fn get_vec(&self, id: VirtualId) -> [u64; 2] {
+        self.vec_values.get(&id).copied().unwrap_or([0, 0])
+    }
+
+    pub fn set_vec(&mut self, id: VirtualId, value: [u64; 2]) {
+        self.vec_values.insert(id, value);
+    }
+
+    pub fn clear(&mut self) {
+        self.values.clear();
+        self.vec_values.clear();
+    }
+}
+
+// ============================================================================
+// Architecture-Specific Register State
+// ============================================================================
+
+/// Architecture-specific register state
+#[derive(Clone, Debug)]
+pub enum ArchRegState {
+    X86_64(X86RegState),
+    Aarch64(Aarch64RegState),
+    Hexagon(HexagonRegState),
+    RiscV(RiscVRegState),
+}
+
+impl ArchRegState {
+    /// Get the program counter
+    pub fn pc(&self) -> GuestAddr {
+        match self {
+            ArchRegState::X86_64(x86) => x86.rip,
+            ArchRegState::Aarch64(arm) => arm.pc,
+            ArchRegState::Hexagon(hex) => hex.pc as u64,
+            ArchRegState::RiscV(rv) => rv.pc,
+        }
+    }
+
+    /// Set the program counter
+    pub fn set_pc(&mut self, pc: GuestAddr) {
+        match self {
+            ArchRegState::X86_64(x86) => x86.rip = pc,
+            ArchRegState::Aarch64(arm) => arm.pc = pc,
+            ArchRegState::Hexagon(hex) => hex.pc = pc as u32,
+            ArchRegState::RiscV(rv) => rv.pc = pc,
+        }
+    }
+
+    /// Get the stack pointer
+    pub fn sp(&self) -> u64 {
+        match self {
+            ArchRegState::X86_64(x86) => x86.gpr[4], // RSP
+            ArchRegState::Aarch64(arm) => arm.sp,
+            ArchRegState::Hexagon(hex) => hex.sp as u64,
+            ArchRegState::RiscV(rv) => rv.x[2], // x2 = sp
+        }
+    }
+
+    /// Set the stack pointer
+    pub fn set_sp(&mut self, sp: u64) {
+        match self {
+            ArchRegState::X86_64(x86) => x86.gpr[4] = sp,
+            ArchRegState::Aarch64(arm) => arm.sp = sp,
+            ArchRegState::Hexagon(hex) => hex.sp = sp as u32,
+            ArchRegState::RiscV(rv) => rv.x[2] = sp,
+        }
+    }
+}
+
+/// x86_64 register state
+#[derive(Clone, Debug, Default)]
+pub struct X86RegState {
+    /// General purpose registers: RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI, R8-R15
+    pub gpr: [u64; 16],
+    /// Instruction pointer
+    pub rip: u64,
+    /// Flags register
+    pub rflags: u64,
+    /// FS base
+    pub fs_base: u64,
+    /// GS base
+    pub gs_base: u64,
+    /// XMM registers (128-bit each)
+    pub xmm: [[u64; 2]; 32],
+    /// MXCSR (SSE control/status)
+    pub mxcsr: u32,
+}
+
+impl X86RegState {
+    pub fn new() -> Self {
+        let mut state = Self::default();
+        // Initialize RFLAGS with required bits
+        state.rflags = 0x202; // IF=1, reserved bit 1 always set
+                              // Initialize MXCSR with default
+        state.mxcsr = 0x1F80; // Default rounding, all exceptions masked
+        state
+    }
+
+    /// Get GPR by index
+    pub fn get_gpr(&self, idx: u8) -> u64 {
+        self.gpr[idx as usize & 0xF]
+    }
+
+    /// Set GPR by index
+    pub fn set_gpr(&mut self, idx: u8, val: u64) {
+        self.gpr[idx as usize & 0xF] = val;
+    }
+
+    /// Get GPR by name (RAX=0, RCX=1, etc.)
+    pub fn get_gpr_by_reg(&self, reg: X86Reg) -> u64 {
+        match reg {
+            X86Reg::Rax => self.gpr[0],
+            X86Reg::Rcx => self.gpr[1],
+            X86Reg::Rdx => self.gpr[2],
+            X86Reg::Rbx => self.gpr[3],
+            X86Reg::Rsp => self.gpr[4],
+            X86Reg::Rbp => self.gpr[5],
+            X86Reg::Rsi => self.gpr[6],
+            X86Reg::Rdi => self.gpr[7],
+            X86Reg::R8 => self.gpr[8],
+            X86Reg::R9 => self.gpr[9],
+            X86Reg::R10 => self.gpr[10],
+            X86Reg::R11 => self.gpr[11],
+            X86Reg::R12 => self.gpr[12],
+            X86Reg::R13 => self.gpr[13],
+            X86Reg::R14 => self.gpr[14],
+            X86Reg::R15 => self.gpr[15],
+            X86Reg::Rip => self.rip,
+            X86Reg::Rflags => self.rflags,
+            X86Reg::FsBase => self.fs_base,
+            X86Reg::GsBase => self.gs_base,
+            X86Reg::Xmm(n) => self.xmm[n as usize][0],
+            _ => 0,
+        }
+    }
+
+    /// Set GPR by name
+    pub fn set_gpr_by_reg(&mut self, reg: X86Reg, val: u64) {
+        match reg {
+            X86Reg::Rax => self.gpr[0] = val,
+            X86Reg::Rcx => self.gpr[1] = val,
+            X86Reg::Rdx => self.gpr[2] = val,
+            X86Reg::Rbx => self.gpr[3] = val,
+            X86Reg::Rsp => self.gpr[4] = val,
+            X86Reg::Rbp => self.gpr[5] = val,
+            X86Reg::Rsi => self.gpr[6] = val,
+            X86Reg::Rdi => self.gpr[7] = val,
+            X86Reg::R8 => self.gpr[8] = val,
+            X86Reg::R9 => self.gpr[9] = val,
+            X86Reg::R10 => self.gpr[10] = val,
+            X86Reg::R11 => self.gpr[11] = val,
+            X86Reg::R12 => self.gpr[12] = val,
+            X86Reg::R13 => self.gpr[13] = val,
+            X86Reg::R14 => self.gpr[14] = val,
+            X86Reg::R15 => self.gpr[15] = val,
+            X86Reg::Rip => self.rip = val,
+            X86Reg::Rflags => self.rflags = val,
+            X86Reg::FsBase => self.fs_base = val,
+            X86Reg::GsBase => self.gs_base = val,
+            X86Reg::Xmm(n) => self.xmm[n as usize][0] = val,
+            _ => {}
+        }
+    }
+}
+
+/// AArch64 register state
+#[derive(Clone, Debug, Default)]
+pub struct Aarch64RegState {
+    /// General purpose registers X0-X30
+    pub x: [u64; 31],
+    /// Stack pointer
+    pub sp: u64,
+    /// Program counter
+    pub pc: u64,
+    /// NZCV flags
+    pub nzcv: u32,
+    /// FPCR
+    pub fpcr: u32,
+    /// FPSR
+    pub fpsr: u32,
+    /// SIMD registers V0-V31 (128-bit each)
+    pub v: [[u64; 2]; 32],
+}
+
+impl Aarch64RegState {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Get X register (X31 returns 0 as ZR)
+    pub fn get_x(&self, n: u8) -> u64 {
+        if n >= 31 {
+            0 // XZR
+        } else {
+            self.x[n as usize]
+        }
+    }
+
+    /// Set X register (writes to X31 are ignored)
+    pub fn set_x(&mut self, n: u8, val: u64) {
+        if n < 31 {
+            self.x[n as usize] = val;
+        }
+    }
+}
+
+/// Hexagon register state
+#[derive(Clone, Debug, Default)]
+pub struct HexagonRegState {
+    /// General purpose registers R0-R31
+    pub r: [u32; 32],
+    /// Predicate registers P0-P3
+    pub p: [bool; 4],
+    /// Program counter
+    pub pc: u32,
+    /// Global pointer
+    pub gp: u32,
+    /// Link register (R31)
+    pub lr: u32,
+    /// Stack pointer (R29)
+    pub sp: u32,
+    /// Frame pointer (R30)
+    pub fp: u32,
+    /// Loop count registers
+    pub lc: [u32; 2],
+    /// Loop start address registers
+    pub sa: [u32; 2],
+    /// User status register
+    pub usr: u32,
+}
+
+impl HexagonRegState {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn get_r(&self, n: u8) -> u32 {
+        self.r[n as usize & 0x1F]
+    }
+
+    pub fn set_r(&mut self, n: u8, val: u32) {
+        self.r[n as usize & 0x1F] = val;
+    }
+}
+
+/// RISC-V register state
+#[derive(Clone, Debug)]
+pub struct RiscVRegState {
+    /// Integer registers x0-x31 (x0 is hardwired to 0)
+    pub x: [u64; 32],
+    /// Floating-point registers f0-f31
+    pub f: [u64; 32],
+    /// Program counter
+    pub pc: u64,
+    /// Floating-point CSR
+    pub fcsr: u32,
+}
+
+impl Default for RiscVRegState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl RiscVRegState {
+    pub fn new() -> Self {
+        RiscVRegState {
+            x: [0; 32],
+            f: [0; 32],
+            pc: 0,
+            fcsr: 0,
+        }
+    }
+
+    /// Get integer register (x0 always returns 0)
+    pub fn get_x(&self, n: u8) -> u64 {
+        if n == 0 {
+            0
+        } else {
+            self.x[n as usize & 0x1F]
+        }
+    }
+
+    /// Set integer register (writes to x0 are ignored)
+    pub fn set_x(&mut self, n: u8, val: u64) {
+        if n != 0 {
+            self.x[n as usize & 0x1F] = val;
+        }
+    }
+}
+
+// ============================================================================
+// Execution Context
+// ============================================================================
+
+/// Execution context for SMIR
+pub struct SmirContext {
+    /// Source architecture
+    pub source_arch: SourceArch,
+    /// Virtual register file
+    pub vregs: VRegFile,
+    /// Architecture-specific register state
+    pub arch_regs: ArchRegState,
+    /// Flag state
+    pub flags: FlagState,
+    /// Current program counter (guest)
+    pub pc: GuestAddr,
+    /// Instruction count
+    pub insn_count: u64,
+    /// Cycle count (estimated)
+    pub cycle_count: u64,
+    /// Exit reason (when execution stops)
+    pub exit_reason: Option<ExitReason>,
+    /// Debug state
+    pub debug: DebugState,
+    /// Exclusive monitor (for ARM LL/SC)
+    pub exclusive_monitor: ExclusiveMonitor,
+}
+
+impl SmirContext {
+    /// Create a new x86_64 context
+    pub fn new_x86_64() -> Self {
+        SmirContext {
+            source_arch: SourceArch::X86_64,
+            vregs: VRegFile::new(),
+            arch_regs: ArchRegState::X86_64(X86RegState::new()),
+            flags: FlagState::new(),
+            pc: 0,
+            insn_count: 0,
+            cycle_count: 0,
+            exit_reason: None,
+            debug: DebugState::new(),
+            exclusive_monitor: ExclusiveMonitor::new(),
+        }
+    }
+
+    /// Create a new AArch64 context
+    pub fn new_aarch64() -> Self {
+        SmirContext {
+            source_arch: SourceArch::Aarch64,
+            vregs: VRegFile::new(),
+            arch_regs: ArchRegState::Aarch64(Aarch64RegState::new()),
+            flags: FlagState::new(),
+            pc: 0,
+            insn_count: 0,
+            cycle_count: 0,
+            exit_reason: None,
+            debug: DebugState::new(),
+            exclusive_monitor: ExclusiveMonitor::new(),
+        }
+    }
+
+    /// Create a new Hexagon context
+    pub fn new_hexagon() -> Self {
+        SmirContext {
+            source_arch: SourceArch::Hexagon,
+            vregs: VRegFile::new(),
+            arch_regs: ArchRegState::Hexagon(HexagonRegState::new()),
+            flags: FlagState::new(),
+            pc: 0,
+            insn_count: 0,
+            cycle_count: 0,
+            exit_reason: None,
+            debug: DebugState::new(),
+            exclusive_monitor: ExclusiveMonitor::new(),
+        }
+    }
+
+    /// Create a new RISC-V context
+    pub fn new_riscv() -> Self {
+        SmirContext {
+            source_arch: SourceArch::RiscV64,
+            vregs: VRegFile::new(),
+            arch_regs: ArchRegState::RiscV(RiscVRegState::new()),
+            flags: FlagState::new(),
+            pc: 0,
+            insn_count: 0,
+            cycle_count: 0,
+            exit_reason: None,
+            debug: DebugState::new(),
+            exclusive_monitor: ExclusiveMonitor::new(),
+        }
+    }
+
+    /// Read a virtual register
+    pub fn read_vreg(&self, vreg: VReg) -> u64 {
+        match vreg {
+            VReg::Virtual(id) => self.vregs.get(id),
+            VReg::Imm(val) => val as u64,
+            VReg::Arch(reg) => self.read_arch_reg(reg),
+        }
+    }
+
+    /// Write a virtual register
+    pub fn write_vreg(&mut self, vreg: VReg, value: u64) {
+        match vreg {
+            VReg::Virtual(id) => self.vregs.set(id, value),
+            VReg::Imm(_) => {} // Ignore writes to immediates
+            VReg::Arch(reg) => self.write_arch_reg(reg, value),
+        }
+    }
+
+    /// Read an architecture register
+    pub fn read_arch_reg(&self, reg: ArchReg) -> u64 {
+        match (&self.arch_regs, reg) {
+            (ArchRegState::X86_64(x86), ArchReg::X86(r)) => x86.get_gpr_by_reg(r),
+            (ArchRegState::Aarch64(arm), ArchReg::Arm(r)) => match r {
+                ArmReg::X(n) => arm.get_x(n),
+                ArmReg::Sp => arm.sp,
+                ArmReg::Pc => arm.pc,
+                ArmReg::Nzcv => arm.nzcv as u64,
+                ArmReg::V(n) => arm.v[n as usize][0],
+                _ => 0,
+            },
+            (ArchRegState::Hexagon(hex), ArchReg::Hexagon(r)) => match r {
+                HexagonReg::R(n) => hex.get_r(n) as u64,
+                HexagonReg::P(n) => hex.p[n as usize] as u64,
+                HexagonReg::Pc => hex.pc as u64,
+                HexagonReg::Gp => hex.gp as u64,
+                HexagonReg::Lr => hex.lr as u64,
+                HexagonReg::Sp => hex.sp as u64,
+                HexagonReg::Fp => hex.fp as u64,
+                HexagonReg::Lc0 => hex.lc[0] as u64,
+                HexagonReg::Lc1 => hex.lc[1] as u64,
+                HexagonReg::Sa0 => hex.sa[0] as u64,
+                HexagonReg::Sa1 => hex.sa[1] as u64,
+                HexagonReg::Usr => hex.usr as u64,
+            },
+            (ArchRegState::RiscV(rv), ArchReg::RiscV(r)) => match r {
+                RiscVReg::X(n) => rv.get_x(n),
+                RiscVReg::F(n) => rv.f[n as usize],
+                RiscVReg::Pc => rv.pc,
+                _ => 0,
+            },
+            _ => 0, // Architecture mismatch
+        }
+    }
+
+    /// Write an architecture register
+    pub fn write_arch_reg(&mut self, reg: ArchReg, value: u64) {
+        match (&mut self.arch_regs, reg) {
+            (ArchRegState::X86_64(x86), ArchReg::X86(r)) => x86.set_gpr_by_reg(r, value),
+            (ArchRegState::Aarch64(arm), ArchReg::Arm(r)) => match r {
+                ArmReg::X(n) => arm.set_x(n, value),
+                ArmReg::Sp => arm.sp = value,
+                ArmReg::Pc => arm.pc = value,
+                ArmReg::Nzcv => arm.nzcv = value as u32,
+                ArmReg::V(n) => arm.v[n as usize][0] = value,
+                _ => {}
+            },
+            (ArchRegState::Hexagon(hex), ArchReg::Hexagon(r)) => match r {
+                HexagonReg::R(n) => hex.set_r(n, value as u32),
+                HexagonReg::P(n) => hex.p[n as usize] = value != 0,
+                HexagonReg::Pc => hex.pc = value as u32,
+                HexagonReg::Gp => hex.gp = value as u32,
+                HexagonReg::Lr => hex.lr = value as u32,
+                HexagonReg::Sp => hex.sp = value as u32,
+                HexagonReg::Fp => hex.fp = value as u32,
+                HexagonReg::Lc0 => hex.lc[0] = value as u32,
+                HexagonReg::Lc1 => hex.lc[1] = value as u32,
+                HexagonReg::Sa0 => hex.sa[0] = value as u32,
+                HexagonReg::Sa1 => hex.sa[1] = value as u32,
+                HexagonReg::Usr => hex.usr = value as u32,
+            },
+            (ArchRegState::RiscV(rv), ArchReg::RiscV(r)) => match r {
+                RiscVReg::X(n) => rv.set_x(n, value),
+                RiscVReg::F(n) => rv.f[n as usize] = value,
+                RiscVReg::Pc => rv.pc = value,
+                _ => {}
+            },
+            _ => {} // Architecture mismatch
+        }
+    }
+
+    /// Request an exit
+    pub fn request_exit(&mut self, reason: ExitReason) {
+        self.exit_reason = Some(reason);
+    }
+
+    /// Clear the vregs (for new block)
+    pub fn clear_vregs(&mut self) {
+        self.vregs.clear();
+    }
+}
+
+// ============================================================================
+// Tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_x86_context() {
+        let mut ctx = SmirContext::new_x86_64();
+
+        // Write via arch reg
+        ctx.write_arch_reg(ArchReg::X86(X86Reg::Rax), 42);
+        assert_eq!(ctx.read_arch_reg(ArchReg::X86(X86Reg::Rax)), 42);
+
+        // Write via vreg
+        let vreg = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        ctx.write_vreg(vreg, 100);
+        assert_eq!(ctx.read_vreg(vreg), 100);
+
+        // Virtual register
+        let virt = VReg::Virtual(VirtualId(0));
+        ctx.write_vreg(virt, 999);
+        assert_eq!(ctx.read_vreg(virt), 999);
+
+        // Immediate
+        assert_eq!(ctx.read_vreg(VReg::Imm(123)), 123);
+    }
+
+    #[test]
+    fn test_aarch64_context() {
+        let mut ctx = SmirContext::new_aarch64();
+
+        // X0
+        ctx.write_arch_reg(ArchReg::Arm(ArmReg::X(0)), 42);
+        assert_eq!(ctx.read_arch_reg(ArchReg::Arm(ArmReg::X(0))), 42);
+
+        // X31 (ZR) should always read as 0
+        ctx.write_arch_reg(ArchReg::Arm(ArmReg::X(31)), 100);
+        assert_eq!(ctx.read_arch_reg(ArchReg::Arm(ArmReg::X(31))), 0);
+    }
+
+    #[test]
+    fn test_riscv_context() {
+        let mut ctx = SmirContext::new_riscv();
+
+        // x1 (ra)
+        ctx.write_arch_reg(ArchReg::RiscV(RiscVReg::X(1)), 42);
+        assert_eq!(ctx.read_arch_reg(ArchReg::RiscV(RiscVReg::X(1))), 42);
+
+        // x0 should always read as 0
+        ctx.write_arch_reg(ArchReg::RiscV(RiscVReg::X(0)), 100);
+        assert_eq!(ctx.read_arch_reg(ArchReg::RiscV(RiscVReg::X(0))), 0);
+    }
+}
