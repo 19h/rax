@@ -559,7 +559,7 @@ impl Aarch64Lifter {
                         dst: tmp,
                         src: match src2 {
                             SrcOperand::Reg(r) => r,
-                            SrcOperand::Imm(i) => VReg::Imm(i),
+                            SrcOperand::Imm(i) | SrcOperand::Imm64(i) => VReg::Imm(i),
                             SrcOperand::Shifted { reg, .. } => reg,
                             SrcOperand::Extended { reg, .. } => reg,
                         },

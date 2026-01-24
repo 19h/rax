@@ -1713,7 +1713,7 @@ impl SmirInterpreter {
     fn read_src_operand(&self, ctx: &SmirContext, src: &SrcOperand) -> u64 {
         match src {
             SrcOperand::Reg(r) => ctx.read_vreg(*r),
-            SrcOperand::Imm(i) => *i as u64,
+            SrcOperand::Imm(i) | SrcOperand::Imm64(i) => *i as u64,
             SrcOperand::Shifted { reg, shift, amount } => {
                 let val = ctx.read_vreg(*reg);
                 match shift {
