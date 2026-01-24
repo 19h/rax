@@ -318,9 +318,7 @@ impl<'a> X86Emitter<'a> {
                     self.code.emit_i32(imm as i32);
                 } else {
                     // Full 64-bit immediate: MOV r64, imm64
-                    self.emit_rex_w(dst);
-                    self.code.emit_u8(0xB8 + dst.low3());
-                    self.code.emit_u64(imm as u64);
+                    self.emit_mov_ri_imm64(dst, imm);
                 }
             }
             OpWidth::W32 => {
@@ -353,6 +351,13 @@ impl<'a> X86Emitter<'a> {
             }
             OpWidth::W128 => {} // Not applicable
         }
+    }
+
+    /// MOV r64, imm64 (always use imm64 encoding)
+    pub fn emit_mov_ri_imm64(&mut self, dst: PhysReg, imm: i64) {
+        self.emit_rex_w(dst);
+        self.code.emit_u8(0xB8 + dst.low3());
+        self.code.emit_u64(imm as u64);
     }
 
     /// MOV r64, [base + disp]
@@ -1305,6 +1310,14 @@ impl X86_64Lowerer {
                     SrcOperand::Imm(val) => {
                         let mut emitter = X86Emitter::new(&mut self.code);
                         emitter.emit_mov_ri(dst_reg, *val, *width);
+                    }
+                    SrcOperand::Imm64(val) => {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        if *width == OpWidth::W64 {
+                            emitter.emit_mov_ri_imm64(dst_reg, *val);
+                        } else {
+                            emitter.emit_mov_ri(dst_reg, *val, *width);
+                        }
                     }
                     _ => {
                         return Err(LowerError::UnsupportedOp {

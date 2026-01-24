@@ -482,6 +482,9 @@ pub enum SrcOperand {
     /// Immediate value
     Imm(i64),
 
+    /// Immediate value that should preserve 64-bit encoding (x86 MOV imm64)
+    Imm64(i64),
+
     /// Shifted register (ARM)
     Shifted {
         reg: VReg,
@@ -508,9 +511,14 @@ impl SrcOperand {
         SrcOperand::Imm(val)
     }
 
+    /// Create a 64-bit immediate operand
+    pub fn imm64(val: i64) -> Self {
+        SrcOperand::Imm64(val)
+    }
+
     /// Check if this is an immediate
     pub fn is_imm(&self) -> bool {
-        matches!(self, SrcOperand::Imm(_))
+        matches!(self, SrcOperand::Imm(_) | SrcOperand::Imm64(_))
     }
 
     /// Get the register if this is a simple register operand
@@ -524,7 +532,7 @@ impl SrcOperand {
     /// Get the immediate value if this is an immediate
     pub fn as_imm(&self) -> Option<i64> {
         match self {
-            SrcOperand::Imm(v) => Some(*v),
+            SrcOperand::Imm(v) | SrcOperand::Imm64(v) => Some(*v),
             _ => None,
         }
     }
@@ -537,7 +545,7 @@ impl SrcOperand {
             | SrcOperand::Extended { reg: r, .. } => {
                 vec![*r]
             }
-            SrcOperand::Imm(_) => vec![],
+            SrcOperand::Imm(_) | SrcOperand::Imm64(_) => vec![],
         }
     }
 }

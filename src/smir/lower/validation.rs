@@ -12,6 +12,7 @@ mod tests {
     use crate::smir::lift::{ControlFlow, LiftContext, SmirLifter};
     use crate::smir::lower::x86_64::X86_64Lowerer;
     use crate::smir::lower::SmirLowerer;
+    use crate::smir::memory::SmirMemory;
     use crate::smir::types::{BlockId, FunctionId, SourceArch};
 
     /// Format bytes as hex string
@@ -93,7 +94,7 @@ mod tests {
 
                     // Lower it
                     match lowerer.lower_function(&func) {
-                        Ok(lower_result) => {
+                        Ok(_lower_result) => {
                             let lowered = lowerer.finalize().unwrap();
                             println!("  Lowered: {} bytes", lowered.len());
                             println!("  Code: {}", hex_bytes(&lowered));
@@ -471,6 +472,140 @@ mod tests {
         println!("  Lower rate: {:.1}%", lower_rate * 100.0);
     }
 
+    #[test]
+    #[ignore] // Run with: cargo test test_roundtrip_exact_bytes_microkernel -- --ignored --nocapture
+    fn test_roundtrip_exact_bytes_microkernel() {
+        let kernel_path = "microkernel/microkernel.bin";
+        let kernel_bytes = match std::fs::read(kernel_path) {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                println!("Could not read {}: {}", kernel_path, e);
+                return;
+            }
+        };
+
+        let elf = match goblin::elf::Elf::parse(&kernel_bytes) {
+            Ok(elf) => elf,
+            Err(e) => {
+                println!("Could not parse ELF: {}", e);
+                return;
+            }
+        };
+
+        let text_section = elf.section_headers.iter().find(|sh| {
+            elf.shdr_strtab
+                .get_at(sh.sh_name)
+                .map_or(false, |name| name == ".text")
+        });
+
+        let text_section = match text_section {
+            Some(s) => s,
+            None => {
+                println!("No .text section found");
+                return;
+            }
+        };
+
+        let text_offset = text_section.sh_offset as usize;
+        let text_size = text_section.sh_size as usize;
+        let text_addr = text_section.sh_addr;
+        let text_bytes = &kernel_bytes[text_offset..text_offset + text_size];
+
+        let mut lifter = X86_64Lifter::new();
+
+        let mut pc = text_addr;
+        let end_addr = text_addr + text_size as u64;
+        let mut offset = 0usize;
+
+        let mut total = 0usize;
+        let mut exact = 0usize;
+        let mut mismatches: Vec<(u64, Vec<u8>, Vec<u8>)> = Vec::new();
+
+        while pc < end_addr && offset < text_bytes.len() {
+            let mut ctx = LiftContext::new(SourceArch::X86_64);
+            total += 1;
+
+            match lifter.lift_insn(pc, &text_bytes[offset..], &mut ctx) {
+                Ok(result) => {
+                    let insn_bytes = text_bytes[offset..offset + result.bytes_consumed].to_vec();
+
+                    if result.ops.is_empty() {
+                        exact += 1;
+                    } else {
+                        let mut func = SmirFunction::new(FunctionId(0), BlockId(0), pc);
+                        let mut block = SmirBlock::new(BlockId(0), pc);
+                        for op in result.ops {
+                            block.push_op(op);
+                        }
+                        block.set_terminator(Terminator::Return { values: vec![] });
+                        func.add_block(block);
+
+                        let mut lowerer = X86_64Lowerer::new();
+                        if lowerer.lower_function(&func).is_err() {
+                            mismatches.push((pc, insn_bytes, vec![]));
+                            pc += result.bytes_consumed as u64;
+                            offset += result.bytes_consumed;
+                            continue;
+                        }
+
+                        let lowered = match lowerer.finalize() {
+                            Ok(bytes) => bytes,
+                            Err(_) => {
+                                mismatches.push((pc, insn_bytes, vec![]));
+                                pc += result.bytes_consumed as u64;
+                                offset += result.bytes_consumed;
+                                continue;
+                            }
+                        };
+
+                        match strip_prologue_epilogue("microkernel", &lowered) {
+                            Ok((start, end)) => {
+                                let body = lowered[start..end].to_vec();
+                                if body == insn_bytes {
+                                    exact += 1;
+                                } else {
+                                    mismatches.push((pc, insn_bytes, body));
+                                }
+                            }
+                            Err(_) => {
+                                mismatches.push((pc, insn_bytes, vec![]));
+                            }
+                        }
+                    }
+
+                    pc += result.bytes_consumed as u64;
+                    offset += result.bytes_consumed;
+                }
+                Err(_) => {
+                    pc += 1;
+                    offset += 1;
+                }
+            }
+        }
+
+        let rate = if total > 0 {
+            100.0 * exact as f64 / total as f64
+        } else {
+            0.0
+        };
+
+        println!("Exact byte match: {}/{} ({:.1}%)", exact, total, rate);
+        if !mismatches.is_empty() {
+            println!("Mismatches: {}", mismatches.len());
+            for (pc, original, lowered) in mismatches.iter().take(10) {
+                println!(
+                    "  {:#x}: orig={} lowered={}",
+                    pc,
+                    hex_bytes(original),
+                    hex_bytes(lowered)
+                );
+            }
+        }
+
+        // Exact byte matches are expected to be < 100% because the lifter
+        // normalizes some instructions into canonical SMIR forms.
+    }
+
     // ========================================================================
     // Semantic Verification Tests
     // ========================================================================
@@ -489,17 +624,29 @@ mod tests {
     use crate::smir::context::SmirContext;
     use crate::smir::interp::SmirInterpreter;
     use crate::smir::memory::FlatMemory;
-    use crate::smir::types::ArchReg;
+    use crate::smir::types::{ArchReg, X86Reg};
 
-    /// Execute a block and return the value of RAX
-    fn execute_block_get_rax(block: &SmirBlock, initial_rax: u64, initial_rbx: u64) -> u64 {
+    /// Execute a block with initial register and memory state
+    fn execute_block_with_state(
+        block: &SmirBlock,
+        regs: &[(X86Reg, u64)],
+        mem_init: &[(u64, &[u8])],
+    ) -> (u64, FlatMemory) {
         let mut ctx = SmirContext::new_x86_64();
         let mut mem = FlatMemory::new(0x10000);
 
-        // Set initial values
-        ctx.write_arch_reg(ArchReg::X86(crate::smir::types::X86Reg::Rax), initial_rax);
-        ctx.write_arch_reg(ArchReg::X86(crate::smir::types::X86Reg::Rbx), initial_rbx);
-        ctx.write_arch_reg(ArchReg::X86(crate::smir::types::X86Reg::Rcx), 0);
+        // Initialize memory
+        for (addr, data) in mem_init {
+            if *addr as usize + data.len() <= 0x10000 {
+                mem.write(*addr, data).unwrap();
+            }
+        }
+
+        // Set initial registers
+        for (reg, value) in regs {
+            ctx.write_arch_reg(ArchReg::X86(*reg), *value);
+        }
+
         ctx.pc = block.guest_pc;
 
         let mut interp = SmirInterpreter::new();
@@ -507,7 +654,177 @@ mod tests {
 
         let _result = interp.run(&mut ctx, &mut mem);
 
-        ctx.read_arch_reg(ArchReg::X86(crate::smir::types::X86Reg::Rax))
+        (ctx.read_arch_reg(ArchReg::X86(X86Reg::Rax)), mem)
+    }
+
+    fn read_u64(mem: &mut FlatMemory, addr: u64) -> u64 {
+        let mut buf = [0u8; 8];
+        mem.read(addr, &mut buf).unwrap();
+        u64::from_le_bytes(buf)
+    }
+
+    fn lift_bytes_to_block(
+        name: &str,
+        bytes: &[u8],
+        block_id: BlockId,
+        pc_start: u64,
+    ) -> Result<SmirBlock, String> {
+        let mut lifter = X86_64Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::X86_64);
+        let mut block = SmirBlock::new(block_id, pc_start);
+
+        let mut offset = 0;
+        let mut pc = pc_start;
+
+        while offset < bytes.len() {
+            let remaining = &bytes[offset..];
+            if remaining.is_empty() {
+                break;
+            }
+            match lifter.lift_insn(pc, remaining, &mut ctx) {
+                Ok(result) => {
+                    if result.bytes_consumed == 0 {
+                        break;
+                    }
+                    for op in result.ops {
+                        block.push_op(op);
+                    }
+                    pc += result.bytes_consumed as u64;
+                    offset += result.bytes_consumed;
+                    if result.control_flow.ends_block() {
+                        break;
+                    }
+                }
+                Err(crate::smir::lift::LiftError::Incomplete { .. }) => {
+                    break;
+                }
+                Err(e) => {
+                    return Err(format!("{}: lift error: {:?}", name, e));
+                }
+            }
+        }
+
+        block.set_terminator(Terminator::Return { values: vec![] });
+        Ok(block)
+    }
+
+    fn lower_body_bytes(name: &str, bytes: &[u8]) -> Result<Vec<u8>, String> {
+        let block = lift_bytes_to_block(name, bytes, BlockId(0), 0x1000)?;
+        let mut func = SmirFunction::new(FunctionId(0), BlockId(0), 0x1000);
+        func.add_block(block);
+
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer
+            .lower_function(&func)
+            .map_err(|e| format!("{}: lower error: {:?}", name, e))?;
+
+        let lowered_bytes = lowerer
+            .finalize()
+            .map_err(|e| format!("{}: finalize error: {:?}", name, e))?;
+
+        let (start, end) = strip_prologue_epilogue(name, &lowered_bytes)?;
+        Ok(lowered_bytes[start..end].to_vec())
+    }
+
+    fn strip_prologue_epilogue(name: &str, code: &[u8]) -> Result<(usize, usize), String> {
+        if code.len() < 6 {
+            return Err(format!("{}: lowered bytes too short", name));
+        }
+
+        // Prologue: push rbp; mov rbp, rsp
+        if code.len() < 4 || code[0..4] != [0x55, 0x48, 0x89, 0xE5] {
+            return Err(format!("{}: unexpected prologue", name));
+        }
+
+        let mut start = 4;
+
+        // Skip callee-saved pushes
+        loop {
+            if start < code.len() && code[start] == 0x53 {
+                // push rbx
+                start += 1;
+                continue;
+            }
+            if start + 1 < code.len() && code[start..start + 2] == [0x41, 0x54] {
+                // push r12
+                start += 2;
+                continue;
+            }
+            if start + 1 < code.len() && code[start..start + 2] == [0x41, 0x55] {
+                // push r13
+                start += 2;
+                continue;
+            }
+            if start + 1 < code.len() && code[start..start + 2] == [0x41, 0x56] {
+                // push r14
+                start += 2;
+                continue;
+            }
+            if start + 1 < code.len() && code[start..start + 2] == [0x41, 0x57] {
+                // push r15
+                start += 2;
+                continue;
+            }
+            break;
+        }
+
+        // Skip stack allocation
+        if start + 6 < code.len() && code[start..start + 3] == [0x48, 0x81, 0xEC] {
+            start += 7;
+        } else if start + 3 < code.len() && code[start..start + 3] == [0x48, 0x83, 0xEC] {
+            start += 4;
+        }
+
+        let mut end = code.len();
+
+        // Epilogue: pop rbp; ret
+        if end < 2 || code[end - 1] != 0xC3 || code[end - 2] != 0x5D {
+            return Err(format!("{}: unexpected epilogue", name));
+        }
+        end -= 2;
+
+        // Skip callee-saved pops (reverse order)
+        loop {
+            if end >= 1 && code[end - 1] == 0x5B {
+                // pop rbx
+                end -= 1;
+                continue;
+            }
+            if end >= 2 && code[end - 2..end] == [0x41, 0x5C] {
+                // pop r12
+                end -= 2;
+                continue;
+            }
+            if end >= 2 && code[end - 2..end] == [0x41, 0x5D] {
+                // pop r13
+                end -= 2;
+                continue;
+            }
+            if end >= 2 && code[end - 2..end] == [0x41, 0x5E] {
+                // pop r14
+                end -= 2;
+                continue;
+            }
+            if end >= 2 && code[end - 2..end] == [0x41, 0x5F] {
+                // pop r15
+                end -= 2;
+                continue;
+            }
+            break;
+        }
+
+        // Skip stack deallocation
+        if end >= 7 && code[end - 7..end - 4] == [0x48, 0x81, 0xC4] {
+            end -= 7;
+        } else if end >= 4 && code[end - 4..end - 1] == [0x48, 0x83, 0xC4] {
+            end -= 4;
+        }
+
+        if end < start {
+            return Err(format!("{}: malformed prologue/epilogue", name));
+        }
+
+        Ok((start, end))
     }
 
     /// Lift bytes, execute, then lower/relift and execute again, comparing results
@@ -516,6 +833,22 @@ mod tests {
         bytes: &[u8],
         initial_rax: u64,
         initial_rbx: u64,
+    ) -> bool {
+        verify_semantic_equivalence_with_memory(
+            name,
+            bytes,
+            &[(X86Reg::Rax, initial_rax), (X86Reg::Rbx, initial_rbx)],
+            &[],
+            &[],
+        )
+    }
+
+    fn verify_semantic_equivalence_with_memory(
+        name: &str,
+        bytes: &[u8],
+        regs: &[(X86Reg, u64)],
+        mem_init: &[(u64, &[u8])],
+        mem_checks: &[(u64, usize)],
     ) -> bool {
         let mut lifter = X86_64Lifter::new();
         let mut lowerer = X86_64Lowerer::new();
@@ -559,19 +892,16 @@ mod tests {
         block1.set_terminator(Terminator::Return { values: vec![] });
 
         // Step 2: Execute original lifted code
-        let result1 = execute_block_get_rax(&block1, initial_rax, initial_rbx);
+        let (result1, mut mem1) = execute_block_with_state(&block1, regs, mem_init);
 
         // Step 3: Lower the SMIR
         let mut func = SmirFunction::new(FunctionId(0), BlockId(0), 0x1000);
         func.add_block(block1.clone());
 
-        let lower_result = match lowerer.lower_function(&func) {
-            Ok(r) => r,
-            Err(e) => {
-                println!("  [{}] Lower error: {:?}", name, e);
-                return false;
-            }
-        };
+        if let Err(e) = lowerer.lower_function(&func) {
+            println!("  [{}] Lower error: {:?}", name, e);
+            return false;
+        }
 
         let lowered_bytes = match lowerer.finalize() {
             Ok(b) => b,
@@ -618,10 +948,21 @@ mod tests {
         block2.set_terminator(Terminator::Return { values: vec![] });
 
         // Step 5: Execute re-lifted code
-        let result2 = execute_block_get_rax(&block2, initial_rax, initial_rbx);
+        let (result2, mut mem2) = execute_block_with_state(&block2, regs, mem_init);
 
         // Step 6: Compare
-        let matches = result1 == result2;
+        let mut matches = result1 == result2;
+
+        for (addr, size) in mem_checks {
+            let mut buf1 = vec![0u8; *size];
+            let mut buf2 = vec![0u8; *size];
+            mem1.read(*addr, &mut buf1).unwrap();
+            mem2.read(*addr, &mut buf2).unwrap();
+            if buf1 != buf2 {
+                matches = false;
+            }
+        }
+
         if !matches {
             println!(
                 "  [{}] MISMATCH: original={:#x}, round-trip={:#x}",
@@ -789,5 +1130,242 @@ mod tests {
             0,
             32
         ));
+    }
+
+    #[test]
+    fn test_semantic_load_store_direct() {
+        // MOV RAX, [RDI]
+        let load_bytes = vec![0x48, 0x8B, 0x07];
+        let addr = 0x100u64;
+        let value = 0x1122334455667788u64;
+        let value_bytes = value.to_le_bytes();
+
+        let block = lift_bytes_to_block("mov rax,[rdi]", &load_bytes, BlockId(0), 0x1000)
+            .expect("lift load");
+        let (result, mut mem) =
+            execute_block_with_state(&block, &[(X86Reg::Rdi, addr)], &[(addr, &value_bytes)]);
+        assert_eq!(result, value);
+        assert_eq!(read_u64(&mut mem, addr), value);
+
+        assert!(verify_semantic_equivalence_with_memory(
+            "mov rax,[rdi]",
+            &load_bytes,
+            &[(X86Reg::Rdi, addr)],
+            &[(addr, &value_bytes)],
+            &[(addr, 8)],
+        ));
+
+        // MOV [RDI], RAX
+        let store_bytes = vec![0x48, 0x89, 0x07];
+        let store_block = lift_bytes_to_block("mov [rdi],rax", &store_bytes, BlockId(1), 0x1100)
+            .expect("lift store");
+        let (store_result, mut store_mem) = execute_block_with_state(
+            &store_block,
+            &[(X86Reg::Rax, value), (X86Reg::Rdi, addr)],
+            &[],
+        );
+        assert_eq!(store_result, value);
+        assert_eq!(read_u64(&mut store_mem, addr), value);
+
+        assert!(verify_semantic_equivalence_with_memory(
+            "mov [rdi],rax",
+            &store_bytes,
+            &[(X86Reg::Rax, value), (X86Reg::Rdi, addr)],
+            &[],
+            &[(addr, 8)],
+        ));
+    }
+
+    #[test]
+    fn test_semantic_load_store_offset() {
+        // MOV RAX, [RDI+8]
+        let load_bytes = vec![0x48, 0x8B, 0x47, 0x08];
+        let addr = 0x120u64;
+        let value = 0xAABBCCDDEEFF0011u64;
+        let value_bytes = value.to_le_bytes();
+
+        let block = lift_bytes_to_block("mov rax,[rdi+8]", &load_bytes, BlockId(2), 0x1200)
+            .expect("lift load offset");
+        let (result, mut mem) =
+            execute_block_with_state(&block, &[(X86Reg::Rdi, addr - 8)], &[(addr, &value_bytes)]);
+        assert_eq!(result, value);
+        assert_eq!(read_u64(&mut mem, addr), value);
+
+        assert!(verify_semantic_equivalence_with_memory(
+            "mov rax,[rdi+8]",
+            &load_bytes,
+            &[(X86Reg::Rdi, addr - 8)],
+            &[(addr, &value_bytes)],
+            &[(addr, 8)],
+        ));
+    }
+
+    #[test]
+    fn test_semantic_load_store_sib() {
+        // MOV RAX, [RDI + RSI*4 + 16]
+        let load_bytes = vec![0x48, 0x8B, 0x84, 0xB7, 0x10, 0x00, 0x00, 0x00];
+        let base = 0x200u64;
+        let index = 3u64;
+        let addr = base + index * 4 + 16;
+        let value = 0xDEADBEEFCAFEBABEu64;
+        let value_bytes = value.to_le_bytes();
+
+        let block = lift_bytes_to_block("mov rax,[rdi+rsi*4+16]", &load_bytes, BlockId(3), 0x1300)
+            .expect("lift load sib");
+        let (result, mut mem) = execute_block_with_state(
+            &block,
+            &[(X86Reg::Rdi, base), (X86Reg::Rsi, index)],
+            &[(addr, &value_bytes)],
+        );
+        assert_eq!(result, value);
+        assert_eq!(read_u64(&mut mem, addr), value);
+
+        assert!(verify_semantic_equivalence_with_memory(
+            "mov rax,[rdi+rsi*4+16]",
+            &load_bytes,
+            &[(X86Reg::Rdi, base), (X86Reg::Rsi, index)],
+            &[(addr, &value_bytes)],
+            &[(addr, 8)],
+        ));
+    }
+
+    #[test]
+    fn test_semantic_absolute_addressing() {
+        // MOV RAX, [abs32]
+        let load_bytes = vec![0x48, 0x8B, 0x04, 0x25, 0x00, 0x02, 0x00, 0x00];
+        let addr = 0x200u64;
+        let value = 0x0F0E0D0C0B0A0908u64;
+        let value_bytes = value.to_le_bytes();
+
+        let block = lift_bytes_to_block("mov rax,[abs]", &load_bytes, BlockId(4), 0x1400)
+            .expect("lift absolute load");
+        let (result, mut mem) = execute_block_with_state(&block, &[], &[(addr, &value_bytes)]);
+        assert_eq!(result, value);
+        assert_eq!(read_u64(&mut mem, addr), value);
+
+        assert!(verify_semantic_equivalence_with_memory(
+            "mov rax,[abs]",
+            &load_bytes,
+            &[],
+            &[(addr, &value_bytes)],
+            &[(addr, 8)],
+        ));
+
+        // MOV [abs32], RAX
+        let store_bytes = vec![0x48, 0x89, 0x04, 0x25, 0x00, 0x02, 0x00, 0x00];
+        let store_block = lift_bytes_to_block("mov [abs],rax", &store_bytes, BlockId(5), 0x1500)
+            .expect("lift absolute store");
+        let (store_result, mut store_mem) =
+            execute_block_with_state(&store_block, &[(X86Reg::Rax, value)], &[]);
+        assert_eq!(store_result, value);
+        assert_eq!(read_u64(&mut store_mem, addr), value);
+
+        assert!(verify_semantic_equivalence_with_memory(
+            "mov [abs],rax",
+            &store_bytes,
+            &[(X86Reg::Rax, value)],
+            &[],
+            &[(addr, 8)],
+        ));
+    }
+
+    #[test]
+    fn test_semantic_lea() {
+        // LEA RAX, [RDI + RSI*4 + 16]
+        let bytes = vec![0x48, 0x8D, 0x84, 0xB7, 0x10, 0x00, 0x00, 0x00];
+        let base = 0x300u64;
+        let index = 5u64;
+        let expected = base + index * 4 + 16;
+
+        let block = lift_bytes_to_block("lea rax,[rdi+rsi*4+16]", &bytes, BlockId(6), 0x1600)
+            .expect("lift lea");
+        let (result, _mem) =
+            execute_block_with_state(&block, &[(X86Reg::Rdi, base), (X86Reg::Rsi, index)], &[]);
+        assert_eq!(result, expected);
+
+        assert!(verify_semantic_equivalence_with_memory(
+            "lea rax,[rdi+rsi*4+16]",
+            &bytes,
+            &[(X86Reg::Rdi, base), (X86Reg::Rsi, index)],
+            &[],
+            &[],
+        ));
+    }
+
+    #[test]
+    fn test_semantic_cmp_sete() {
+        // CMP RAX, RBX; SETE AL
+        let bytes = vec![0x48, 0x39, 0xD8, 0x0F, 0x94, 0xC0];
+
+        let block =
+            lift_bytes_to_block("cmp+sete", &bytes, BlockId(7), 0x1700).expect("lift cmp+sete");
+        let (result_eq, _mem_eq) =
+            execute_block_with_state(&block, &[(X86Reg::Rax, 123), (X86Reg::Rbx, 123)], &[]);
+        assert_eq!(result_eq, 1);
+        let (result_ne, _mem_ne) =
+            execute_block_with_state(&block, &[(X86Reg::Rax, 123), (X86Reg::Rbx, 456)], &[]);
+        assert_eq!(result_ne, 0);
+
+        assert!(verify_semantic_equivalence(
+            "cmp+sete (equal)",
+            &bytes,
+            123,
+            123
+        ));
+        assert!(verify_semantic_equivalence(
+            "cmp+sete (not equal)",
+            &bytes,
+            123,
+            456
+        ));
+    }
+
+    #[test]
+    fn test_roundtrip_exact_bytes_basic() {
+        let cases: Vec<(&str, Vec<u8>)> = vec![
+            ("mov rax, rcx", vec![0x48, 0x89, 0xC8]),
+            (
+                "mov rax, imm64",
+                vec![0x48, 0xB8, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11],
+            ),
+            ("add rax, rcx", vec![0x48, 0x01, 0xC8]),
+            ("sub rax, rdx", vec![0x48, 0x29, 0xD0]),
+            ("xor rax, rax", vec![0x48, 0x31, 0xC0]),
+            ("and rax, rcx", vec![0x48, 0x21, 0xC8]),
+            ("or rax, rdx", vec![0x48, 0x09, 0xD0]),
+            ("cmp rax, rcx", vec![0x48, 0x39, 0xC8]),
+            ("test rax, rax", vec![0x48, 0x85, 0xC0]),
+            ("shl rax, 4", vec![0x48, 0xC1, 0xE0, 0x04]),
+            ("shr rax, 4", vec![0x48, 0xC1, 0xE8, 0x04]),
+            ("sar rax, 4", vec![0x48, 0xC1, 0xF8, 0x04]),
+            ("sete al", vec![0x0F, 0x94, 0xC0]),
+        ];
+
+        for (name, bytes) in cases {
+            let lowered = lower_body_bytes(name, &bytes).expect("lower body bytes");
+            assert_eq!(lowered, bytes, "{}: bytes mismatch", name);
+        }
+    }
+
+    #[test]
+    fn test_roundtrip_exact_bytes_memory() {
+        let cases: Vec<(&str, Vec<u8>)> = vec![
+            ("mov rax, [rdi]", vec![0x48, 0x8B, 0x07]),
+            ("mov [rdi], rax", vec![0x48, 0x89, 0x07]),
+            ("mov rax, [rdi+8]", vec![0x48, 0x8B, 0x47, 0x08]),
+            (
+                "mov rax, [abs32]",
+                vec![0x48, 0x8B, 0x04, 0x25, 0x00, 0x02, 0x00, 0x00],
+            ),
+            (
+                "mov [abs32], rax",
+                vec![0x48, 0x89, 0x04, 0x25, 0x00, 0x02, 0x00, 0x00],
+            ),
+        ];
+
+        for (name, bytes) in cases {
+            let lowered = lower_body_bytes(name, &bytes).expect("lower body bytes");
+            assert_eq!(lowered, bytes, "{}: bytes mismatch", name);
+        }
     }
 }
