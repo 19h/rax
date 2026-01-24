@@ -55,7 +55,8 @@ impl Default for SystemRegisterBank {
         Self {
             sctlr: 0,
             actlr: 0,
-            cpacr: 0,
+            // CPACR_EL1: Enable FP/SIMD (FPEN=0b11) and SVE (ZEN=0b11) by default
+            cpacr: (0b11 << 20) | (0b11 << 16),
             ttbr0: 0,
             ttbr1: 0,
             tcr: 0,
