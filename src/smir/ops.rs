@@ -1,0 +1,1025 @@
+//! SMIR operation definitions.
+//!
+//! This module defines all IR operations (`OpKind`) with their operands and semantics.
+
+use crate::smir::flags::FlagUpdate;
+use crate::smir::types::*;
+
+// ============================================================================
+// Operation Structure
+// ============================================================================
+
+/// A single SMIR operation
+#[derive(Clone, Debug)]
+pub struct SmirOp {
+    /// Unique operation ID within the block
+    pub id: OpId,
+    /// Guest PC this operation corresponds to
+    pub guest_pc: GuestAddr,
+    /// The operation kind and operands
+    pub kind: OpKind,
+}
+
+impl SmirOp {
+    /// Create a new operation
+    pub fn new(id: OpId, guest_pc: GuestAddr, kind: OpKind) -> Self {
+        SmirOp { id, guest_pc, kind }
+    }
+}
+
+// ============================================================================
+// OpKind Enum
+// ============================================================================
+
+/// All SMIR operation kinds
+#[derive(Clone, Debug)]
+pub enum OpKind {
+    // ========================================================================
+    // INTEGER ARITHMETIC
+    // ========================================================================
+    /// Integer addition: dst = src1 + src2
+    Add {
+        dst: VReg,
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Integer subtraction: dst = src1 - src2
+    Sub {
+        dst: VReg,
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Add with carry: dst = src1 + src2 + CF
+    Adc {
+        dst: VReg,
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Subtract with borrow: dst = src1 - src2 - CF
+    Sbb {
+        dst: VReg,
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Negate: dst = -src (two's complement)
+    Neg {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Compare (subtract without storing): flags = src1 - src2
+    Cmp {
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+    },
+
+    /// Unsigned multiply: (dst_hi, dst_lo) = src1 * src2
+    MulU {
+        dst_lo: VReg,
+        dst_hi: Option<VReg>,
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Signed multiply: (dst_hi, dst_lo) = src1 * src2
+    MulS {
+        dst_lo: VReg,
+        dst_hi: Option<VReg>,
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Multiply-add: dst = acc + (src1 * src2)
+    MulAdd {
+        dst: VReg,
+        acc: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: OpWidth,
+    },
+
+    /// Multiply-sub: dst = acc - (src1 * src2)
+    MulSub {
+        dst: VReg,
+        acc: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: OpWidth,
+    },
+
+    /// Unsigned divide: (quotient, remainder) = src1 / src2
+    DivU {
+        quot: VReg,
+        rem: Option<VReg>,
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+    },
+
+    /// Signed divide: (quotient, remainder) = src1 / src2
+    DivS {
+        quot: VReg,
+        rem: Option<VReg>,
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+    },
+
+    // ========================================================================
+    // BITWISE LOGICAL
+    // ========================================================================
+    /// Bitwise AND: dst = src1 & src2
+    And {
+        dst: VReg,
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Bitwise OR: dst = src1 | src2
+    Or {
+        dst: VReg,
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Bitwise XOR: dst = src1 ^ src2
+    Xor {
+        dst: VReg,
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Bitwise NOT: dst = ~src
+    Not {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    },
+
+    /// Test (AND without storing): flags = src1 & src2
+    Test {
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+    },
+
+    /// AND-NOT: dst = src1 & ~src2 (BMI1/ARM BIC)
+    AndNot {
+        dst: VReg,
+        src1: VReg,
+        src2: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    // ========================================================================
+    // SHIFTS AND ROTATES
+    // ========================================================================
+    /// Logical shift left: dst = src << amount
+    Shl {
+        dst: VReg,
+        src: VReg,
+        amount: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Logical shift right: dst = src >> amount (zero-fill)
+    Shr {
+        dst: VReg,
+        src: VReg,
+        amount: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Arithmetic shift right: dst = src >> amount (sign-fill)
+    Sar {
+        dst: VReg,
+        src: VReg,
+        amount: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Rotate left
+    Rol {
+        dst: VReg,
+        src: VReg,
+        amount: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Rotate right
+    Ror {
+        dst: VReg,
+        src: VReg,
+        amount: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    // ========================================================================
+    // BIT MANIPULATION
+    // ========================================================================
+    /// Bit test: CF = bit(src, index)
+    Bt {
+        src: VReg,
+        index: SrcOperand,
+        width: OpWidth,
+    },
+
+    /// Bit test and set: CF = bit(src, index); bit(dst, index) = 1
+    Bts {
+        dst: VReg,
+        src: VReg,
+        index: SrcOperand,
+        width: OpWidth,
+    },
+
+    /// Bit test and reset: CF = bit(src, index); bit(dst, index) = 0
+    Btr {
+        dst: VReg,
+        src: VReg,
+        index: SrcOperand,
+        width: OpWidth,
+    },
+
+    /// Bit test and complement
+    Btc {
+        dst: VReg,
+        src: VReg,
+        index: SrcOperand,
+        width: OpWidth,
+    },
+
+    /// Bit scan forward (find lowest set bit)
+    Bsf {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Bit scan reverse (find highest set bit)
+    Bsr {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Count leading zeros
+    Clz {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    },
+
+    /// Count trailing zeros
+    Ctz {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    },
+
+    /// Population count
+    Popcnt {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    },
+
+    /// Byte swap (endian conversion)
+    Bswap {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    },
+
+    /// Bit reverse (ARM RBIT)
+    Rbit {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    },
+
+    /// Extract bit field
+    Bfx {
+        dst: VReg,
+        src: VReg,
+        lsb: u8,
+        width_bits: u8,
+        sign_extend: bool,
+        op_width: OpWidth,
+    },
+
+    /// Insert bit field
+    Bfi {
+        dst: VReg,
+        dst_in: VReg,
+        src: VReg,
+        lsb: u8,
+        width_bits: u8,
+        op_width: OpWidth,
+    },
+
+    // ========================================================================
+    // DATA MOVEMENT
+    // ========================================================================
+    /// Register-to-register move
+    Mov {
+        dst: VReg,
+        src: SrcOperand,
+        width: OpWidth,
+    },
+
+    /// Conditional move: dst = cond ? src : dst
+    CMove {
+        dst: VReg,
+        src: VReg,
+        cond: Condition,
+        width: OpWidth,
+    },
+
+    /// Select: dst = cond ? src_true : src_false
+    Select {
+        dst: VReg,
+        cond: VReg,
+        src_true: VReg,
+        src_false: VReg,
+        width: OpWidth,
+    },
+
+    /// Zero-extend
+    ZeroExtend {
+        dst: VReg,
+        src: VReg,
+        from_width: OpWidth,
+        to_width: OpWidth,
+    },
+
+    /// Sign-extend
+    SignExtend {
+        dst: VReg,
+        src: VReg,
+        from_width: OpWidth,
+        to_width: OpWidth,
+    },
+
+    /// Truncate
+    Truncate {
+        dst: VReg,
+        src: VReg,
+        from_width: OpWidth,
+        to_width: OpWidth,
+    },
+
+    /// Load effective address
+    Lea { dst: VReg, addr: Address },
+
+    /// Exchange registers
+    Xchg {
+        reg1: VReg,
+        reg2: VReg,
+        width: OpWidth,
+    },
+
+    // ========================================================================
+    // MEMORY OPERATIONS
+    // ========================================================================
+    /// Load from memory
+    Load {
+        dst: VReg,
+        addr: Address,
+        width: MemWidth,
+        sign: SignExtend,
+    },
+
+    /// Store to memory
+    Store {
+        src: VReg,
+        addr: Address,
+        width: MemWidth,
+    },
+
+    /// Load pair (ARM LDP)
+    LoadPair {
+        dst1: VReg,
+        dst2: VReg,
+        addr: Address,
+        width: MemWidth,
+    },
+
+    /// Store pair (ARM STP)
+    StorePair {
+        src1: VReg,
+        src2: VReg,
+        addr: Address,
+        width: MemWidth,
+    },
+
+    /// Atomic load
+    AtomicLoad {
+        dst: VReg,
+        addr: Address,
+        width: MemWidth,
+        order: MemoryOrder,
+    },
+
+    /// Atomic store
+    AtomicStore {
+        src: VReg,
+        addr: Address,
+        width: MemWidth,
+        order: MemoryOrder,
+    },
+
+    /// Atomic read-modify-write
+    AtomicRmw {
+        dst: VReg,
+        addr: Address,
+        src: VReg,
+        op: AtomicOp,
+        width: MemWidth,
+        order: MemoryOrder,
+    },
+
+    /// Compare-and-swap
+    Cas {
+        dst: VReg,
+        success: VReg,
+        addr: Address,
+        expected: VReg,
+        new_val: VReg,
+        width: MemWidth,
+        order: MemoryOrder,
+    },
+
+    /// Load-exclusive (ARM LDXR)
+    LoadExclusive {
+        dst: VReg,
+        addr: Address,
+        width: MemWidth,
+    },
+
+    /// Store-exclusive (ARM STXR)
+    StoreExclusive {
+        status: VReg,
+        src: VReg,
+        addr: Address,
+        width: MemWidth,
+    },
+
+    /// Clear exclusive monitor
+    ClearExclusive,
+
+    /// Prefetch hint
+    Prefetch { addr: Address, write: bool },
+
+    /// Memory fence
+    Fence { kind: FenceKind },
+
+    // ========================================================================
+    // FLOATING POINT (scalar)
+    // ========================================================================
+    /// FP add
+    FAdd {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        precision: FpPrecision,
+    },
+
+    /// FP subtract
+    FSub {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        precision: FpPrecision,
+    },
+
+    /// FP multiply
+    FMul {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        precision: FpPrecision,
+    },
+
+    /// FP divide
+    FDiv {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        precision: FpPrecision,
+    },
+
+    /// FP fused multiply-add: dst = (src1 * src2) + src3
+    FFma {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        src3: VReg,
+        precision: FpPrecision,
+    },
+
+    /// FP absolute value
+    FAbs {
+        dst: VReg,
+        src: VReg,
+        precision: FpPrecision,
+    },
+
+    /// FP negate
+    FNeg {
+        dst: VReg,
+        src: VReg,
+        precision: FpPrecision,
+    },
+
+    /// FP square root
+    FSqrt {
+        dst: VReg,
+        src: VReg,
+        precision: FpPrecision,
+    },
+
+    /// FP minimum
+    FMin {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        precision: FpPrecision,
+    },
+
+    /// FP maximum
+    FMax {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        precision: FpPrecision,
+    },
+
+    /// FP compare
+    FCmp {
+        src1: VReg,
+        src2: VReg,
+        precision: FpPrecision,
+    },
+
+    /// FP convert precision
+    FConvert {
+        dst: VReg,
+        src: VReg,
+        from: FpPrecision,
+        to: FpPrecision,
+    },
+
+    /// Convert int to float
+    IntToFp {
+        dst: VReg,
+        src: VReg,
+        int_width: OpWidth,
+        fp_precision: FpPrecision,
+        signed: bool,
+    },
+
+    /// Convert float to int
+    FpToInt {
+        dst: VReg,
+        src: VReg,
+        fp_precision: FpPrecision,
+        int_width: OpWidth,
+        signed: bool,
+        round: FpRoundMode,
+    },
+
+    /// Round to integral value
+    FRound {
+        dst: VReg,
+        src: VReg,
+        precision: FpPrecision,
+        mode: FpRoundMode,
+    },
+
+    // ========================================================================
+    // SIMD / VECTOR OPERATIONS
+    // ========================================================================
+    /// Vector add
+    VAdd {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        lanes: u8,
+    },
+
+    /// Vector subtract
+    VSub {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        lanes: u8,
+    },
+
+    /// Vector multiply
+    VMul {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        lanes: u8,
+    },
+
+    /// Vector bitwise AND
+    VAnd {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: VecWidth,
+    },
+
+    /// Vector bitwise OR
+    VOr {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: VecWidth,
+    },
+
+    /// Vector bitwise XOR
+    VXor {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: VecWidth,
+    },
+
+    /// Vector shift
+    VShift {
+        dst: VReg,
+        src: VReg,
+        amount: SrcOperand,
+        shift: ShiftOp,
+        elem: VecElementType,
+        lanes: u8,
+    },
+
+    /// Vector compare
+    VCmp {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        cond: VecCmpCond,
+        elem: VecElementType,
+        lanes: u8,
+    },
+
+    /// Vector move
+    VMov {
+        dst: VReg,
+        src: VReg,
+        width: VecWidth,
+    },
+
+    /// Insert scalar into vector lane
+    VInsertLane {
+        dst: VReg,
+        vec: VReg,
+        scalar: VReg,
+        lane: u8,
+        elem: VecElementType,
+    },
+
+    /// Extract scalar from vector lane
+    VExtractLane {
+        dst: VReg,
+        vec: VReg,
+        lane: u8,
+        elem: VecElementType,
+        sign: SignExtend,
+    },
+
+    /// Vector shuffle/permute
+    VShuffle {
+        dst: VReg,
+        src1: VReg,
+        src2: Option<VReg>,
+        indices: VReg,
+        elem: VecElementType,
+    },
+
+    /// Vector load
+    VLoad {
+        dst: VReg,
+        addr: Address,
+        width: VecWidth,
+    },
+
+    /// Vector store
+    VStore {
+        src: VReg,
+        addr: Address,
+        width: VecWidth,
+    },
+
+    /// Broadcast scalar to all lanes
+    VBroadcast {
+        dst: VReg,
+        scalar: VReg,
+        elem: VecElementType,
+        lanes: u8,
+    },
+
+    // ========================================================================
+    // FLAG OPERATIONS
+    // ========================================================================
+    /// Read flags to register
+    ReadFlags { dst: VReg },
+
+    /// Write register to flags
+    WriteFlags { src: VReg },
+
+    /// Set carry flag
+    SetCF { value: bool },
+
+    /// Complement carry flag
+    CmcCF,
+
+    /// Force flag materialization
+    MaterializeFlags,
+
+    /// Test condition and store result
+    TestCondition { dst: VReg, cond: Condition },
+
+    /// Conditional set: dst = cond ? 1 : 0
+    SetCC {
+        dst: VReg,
+        cond: Condition,
+        width: OpWidth,
+    },
+
+    // ========================================================================
+    // SYSTEM / PRIVILEGED
+    // ========================================================================
+    /// System call
+    Syscall { num: VReg, args: Vec<VReg> },
+
+    /// Software interrupt
+    Swi { imm: u32 },
+
+    /// Read system register
+    ReadSysReg { dst: VReg, reg: u32 },
+
+    /// Write system register
+    WriteSysReg { reg: u32, src: VReg },
+
+    // ========================================================================
+    // META / DEBUG
+    // ========================================================================
+    /// No-op
+    Nop,
+
+    /// Undefined instruction (trap on execution)
+    Undefined { opcode: u32 },
+
+    /// Debug breakpoint
+    Breakpoint,
+}
+
+impl OpKind {
+    /// Get destination register(s) if any
+    pub fn dests(&self) -> Vec<VReg> {
+        match self {
+            OpKind::Add { dst, .. }
+            | OpKind::Sub { dst, .. }
+            | OpKind::Adc { dst, .. }
+            | OpKind::Sbb { dst, .. }
+            | OpKind::Neg { dst, .. }
+            | OpKind::And { dst, .. }
+            | OpKind::Or { dst, .. }
+            | OpKind::Xor { dst, .. }
+            | OpKind::Not { dst, .. }
+            | OpKind::AndNot { dst, .. }
+            | OpKind::Shl { dst, .. }
+            | OpKind::Shr { dst, .. }
+            | OpKind::Sar { dst, .. }
+            | OpKind::Rol { dst, .. }
+            | OpKind::Ror { dst, .. }
+            | OpKind::Bts { dst, .. }
+            | OpKind::Btr { dst, .. }
+            | OpKind::Btc { dst, .. }
+            | OpKind::Bsf { dst, .. }
+            | OpKind::Bsr { dst, .. }
+            | OpKind::Clz { dst, .. }
+            | OpKind::Ctz { dst, .. }
+            | OpKind::Popcnt { dst, .. }
+            | OpKind::Bswap { dst, .. }
+            | OpKind::Rbit { dst, .. }
+            | OpKind::Bfx { dst, .. }
+            | OpKind::Bfi { dst, .. }
+            | OpKind::Mov { dst, .. }
+            | OpKind::CMove { dst, .. }
+            | OpKind::Select { dst, .. }
+            | OpKind::ZeroExtend { dst, .. }
+            | OpKind::SignExtend { dst, .. }
+            | OpKind::Truncate { dst, .. }
+            | OpKind::Lea { dst, .. }
+            | OpKind::Load { dst, .. }
+            | OpKind::AtomicLoad { dst, .. }
+            | OpKind::AtomicRmw { dst, .. }
+            | OpKind::LoadExclusive { dst, .. }
+            | OpKind::FAdd { dst, .. }
+            | OpKind::FSub { dst, .. }
+            | OpKind::FMul { dst, .. }
+            | OpKind::FDiv { dst, .. }
+            | OpKind::FFma { dst, .. }
+            | OpKind::FAbs { dst, .. }
+            | OpKind::FNeg { dst, .. }
+            | OpKind::FSqrt { dst, .. }
+            | OpKind::FMin { dst, .. }
+            | OpKind::FMax { dst, .. }
+            | OpKind::FConvert { dst, .. }
+            | OpKind::IntToFp { dst, .. }
+            | OpKind::FpToInt { dst, .. }
+            | OpKind::FRound { dst, .. }
+            | OpKind::VAdd { dst, .. }
+            | OpKind::VSub { dst, .. }
+            | OpKind::VMul { dst, .. }
+            | OpKind::VAnd { dst, .. }
+            | OpKind::VOr { dst, .. }
+            | OpKind::VXor { dst, .. }
+            | OpKind::VShift { dst, .. }
+            | OpKind::VCmp { dst, .. }
+            | OpKind::VMov { dst, .. }
+            | OpKind::VInsertLane { dst, .. }
+            | OpKind::VExtractLane { dst, .. }
+            | OpKind::VShuffle { dst, .. }
+            | OpKind::VLoad { dst, .. }
+            | OpKind::VBroadcast { dst, .. }
+            | OpKind::ReadFlags { dst, .. }
+            | OpKind::TestCondition { dst, .. }
+            | OpKind::SetCC { dst, .. }
+            | OpKind::ReadSysReg { dst, .. } => vec![*dst],
+
+            OpKind::MulU { dst_lo, dst_hi, .. } | OpKind::MulS { dst_lo, dst_hi, .. } => {
+                let mut v = vec![*dst_lo];
+                if let Some(hi) = dst_hi {
+                    v.push(*hi);
+                }
+                v
+            }
+
+            OpKind::DivU { quot, rem, .. } | OpKind::DivS { quot, rem, .. } => {
+                let mut v = vec![*quot];
+                if let Some(r) = rem {
+                    v.push(*r);
+                }
+                v
+            }
+
+            OpKind::MulAdd { dst, .. } | OpKind::MulSub { dst, .. } => vec![*dst],
+
+            OpKind::LoadPair { dst1, dst2, .. } => vec![*dst1, *dst2],
+
+            OpKind::Cas { dst, success, .. } => vec![*dst, *success],
+
+            OpKind::StoreExclusive { status, .. } => vec![*status],
+
+            OpKind::Xchg { reg1, reg2, .. } => vec![*reg1, *reg2],
+
+            // No destination
+            OpKind::Cmp { .. }
+            | OpKind::Test { .. }
+            | OpKind::Bt { .. }
+            | OpKind::Store { .. }
+            | OpKind::StorePair { .. }
+            | OpKind::AtomicStore { .. }
+            | OpKind::ClearExclusive
+            | OpKind::Prefetch { .. }
+            | OpKind::Fence { .. }
+            | OpKind::FCmp { .. }
+            | OpKind::VStore { .. }
+            | OpKind::WriteFlags { .. }
+            | OpKind::SetCF { .. }
+            | OpKind::CmcCF
+            | OpKind::MaterializeFlags
+            | OpKind::Syscall { .. }
+            | OpKind::Swi { .. }
+            | OpKind::WriteSysReg { .. }
+            | OpKind::Nop
+            | OpKind::Undefined { .. }
+            | OpKind::Breakpoint => vec![],
+        }
+    }
+
+    /// Check if this operation has side effects
+    pub fn has_side_effects(&self) -> bool {
+        matches!(
+            self,
+            OpKind::Store { .. }
+                | OpKind::StorePair { .. }
+                | OpKind::AtomicStore { .. }
+                | OpKind::AtomicRmw { .. }
+                | OpKind::Cas { .. }
+                | OpKind::StoreExclusive { .. }
+                | OpKind::ClearExclusive
+                | OpKind::Fence { .. }
+                | OpKind::VStore { .. }
+                | OpKind::WriteFlags { .. }
+                | OpKind::SetCF { .. }
+                | OpKind::CmcCF
+                | OpKind::MaterializeFlags
+                | OpKind::Syscall { .. }
+                | OpKind::Swi { .. }
+                | OpKind::WriteSysReg { .. }
+                | OpKind::Breakpoint
+        )
+    }
+
+    /// Check if this operation reads memory
+    pub fn reads_memory(&self) -> bool {
+        matches!(
+            self,
+            OpKind::Load { .. }
+                | OpKind::LoadPair { .. }
+                | OpKind::AtomicLoad { .. }
+                | OpKind::AtomicRmw { .. }
+                | OpKind::Cas { .. }
+                | OpKind::LoadExclusive { .. }
+                | OpKind::VLoad { .. }
+        )
+    }
+
+    /// Check if this operation writes memory
+    pub fn writes_memory(&self) -> bool {
+        matches!(
+            self,
+            OpKind::Store { .. }
+                | OpKind::StorePair { .. }
+                | OpKind::AtomicStore { .. }
+                | OpKind::AtomicRmw { .. }
+                | OpKind::Cas { .. }
+                | OpKind::StoreExclusive { .. }
+                | OpKind::VStore { .. }
+        )
+    }
+}
+
+// ============================================================================
+// Tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_op_dests() {
+        let op = OpKind::Add {
+            dst: VReg::virt(0),
+            src1: VReg::virt(1),
+            src2: SrcOperand::imm(5),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        };
+        assert_eq!(op.dests(), vec![VReg::virt(0)]);
+
+        let op = OpKind::Store {
+            src: VReg::virt(0),
+            addr: Address::Absolute(0x1000),
+            width: MemWidth::B8,
+        };
+        assert!(op.dests().is_empty());
+        assert!(op.has_side_effects());
+        assert!(op.writes_memory());
+    }
+}
