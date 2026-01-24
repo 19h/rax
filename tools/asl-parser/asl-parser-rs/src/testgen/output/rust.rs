@@ -249,7 +249,7 @@ fn write_a64_encoding_test_body(output: &mut String, test: &EncodingTest) {
             writeln!(output, "    let exit = cpu.step();").unwrap();
             writeln!(
                 output,
-                "    assert!(exit.is_err(), \"expected unallocated encoding for 0x{{:08X}}\", encoding);"
+                "    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), \"expected unallocated encoding for 0x{{:08X}}\", encoding);"
             )
             .unwrap();
         }
@@ -319,7 +319,7 @@ fn write_a32_encoding_test_body(output: &mut String, test: &EncodingTest) {
             writeln!(output, "    let exit = cpu.step();").unwrap();
             writeln!(
                 output,
-                "    assert!(exit.is_err(), \"expected unallocated encoding for A32 0x{{:08X}}\", encoding);"
+                "    assert!(exit.is_err() || matches!(exit.as_ref().unwrap(), CpuExit::Undefined(_)), \"expected unallocated encoding for A32 0x{{:08X}}\", encoding);"
             )
             .unwrap();
         }

@@ -141,11 +141,11 @@ enum Command {
         max_tests: usize,
 
         /// Include negative tests (UNDEFINED encodings)
-        #[arg(long, default_value = "true")]
+        #[arg(long, default_value_t = true, action = clap::ArgAction::Set)]
         include_negative: bool,
 
         /// Include execution tests (register/flag effects)
-        #[arg(long, default_value = "true")]
+        #[arg(long, default_value_t = true, action = clap::ArgAction::Set)]
         include_execution: bool,
 
         /// Filter to specific instruction name (regex pattern)

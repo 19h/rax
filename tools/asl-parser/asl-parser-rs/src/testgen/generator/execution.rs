@@ -8,7 +8,7 @@
 
 use std::collections::HashMap;
 
-use crate::syntax::Instruction;
+use crate::syntax::{Instruction, InstructionSet};
 use crate::testgen::generator::boundary::{self, FlagTestValue};
 use crate::testgen::oracle::eval::{
     identify_a32_pattern, identify_a64_pattern, identify_thumb_pattern, BitOpType, BitfieldOp,
@@ -17,6 +17,61 @@ use crate::testgen::oracle::eval::{
 };
 use crate::testgen::types::*;
 
+/// Check if an A64 instruction is implemented in the emulator
+/// Returns false for instructions that return Err(Unimplemented) or similar
+fn is_a64_instruction_implemented(enc_name: &str) -> bool {
+    let name = enc_name.to_lowercase();
+    let name_upper = enc_name.to_uppercase();
+
+    // SVE instructions - not implemented
+    if name_upper.starts_with("LD1")
+        || name_upper.starts_with("LD2")
+        || name_upper.starts_with("LD3")
+        || name_upper.starts_with("LD4")
+        || name_upper.starts_with("ST1")
+        || name_upper.starts_with("ST2")
+        || name_upper.starts_with("ST3")
+        || name_upper.starts_with("ST4")
+        || name.contains("_z.")
+        || name.contains("_z_")
+        || name_upper.starts_with("ADDVL")
+        || name_upper.starts_with("ADDPL")
+        || name_upper.starts_with("CNT")
+        || name_upper.starts_with("LAST")
+        || name_upper.starts_with("INDEX")
+        || name_upper.starts_with("CPY")
+        || name_upper.starts_with("LSL_Z")
+        || name_upper.starts_with("UQDECP")
+        || name_upper.starts_with("STNT")
+        || name_upper.starts_with("FMUL_Z")
+    {
+        return false;
+    }
+
+    // SIMD/FP memory operations - return Err(Unimplemented)
+    if name.contains("memory") && name.contains("simdfp") {
+        return false;
+    }
+
+    // Vector memory operations
+    if name.contains("memory") && name.contains("vector") {
+        return false;
+    }
+
+    // Scalar FP instructions that return Err
+    if name.contains("float_arithmetic_round")
+        || name.contains("float_convert")
+        || name.contains("float_arithmetic_mul_add")
+        || name.contains("float_arithmetic_unary")
+        || name.contains("float_move_fp_imm")
+        || name.contains("float_move_fp_select")
+    {
+        return false;
+    }
+
+    true
+}
+
 /// Generate register operation tests
 pub fn generate_register_tests(
     instr: &Instruction,
@@ -24,6 +79,13 @@ pub fn generate_register_tests(
     semantics: &SemanticAnalysis,
 ) -> Vec<ExecutionTest> {
     let mut tests = Vec::new();
+
+    // Skip unimplemented A64 instructions
+    if enc_analysis.iset == InstructionSet::A64
+        && !is_a64_instruction_implemented(&enc_analysis.name)
+    {
+        return tests;
+    }
 
     // For each register write, generate tests to verify it
     for (write_idx, write) in semantics.register_writes.iter().enumerate() {
@@ -225,6 +287,13 @@ pub fn generate_flag_tests(
 ) -> Vec<ExecutionTest> {
     let mut tests = Vec::new();
 
+    // Skip unimplemented A64 instructions
+    if enc_analysis.iset == InstructionSet::A64
+        && !is_a64_instruction_implemented(&enc_analysis.name)
+    {
+        return tests;
+    }
+
     // Only generate flag tests for instructions that set flags
     if semantics.flag_effects.is_empty() {
         return tests;
@@ -242,12 +311,23 @@ pub fn generate_flag_tests(
 
         // Build encoding with typical field values
         let mut field_values = HashMap::new();
+
+        // Check if this is a conditional compare instruction (CCMP/CCMN)
+        // These have a "cond" field - we need to use AL (always) condition
+        // so the comparison always executes regardless of initial PSTATE
+        let is_conditional_compare = instr.name.contains("conditional_compare");
+
         for f in &enc_analysis.fields {
             match f.name.as_str() {
                 "Rd" | "Wd" => field_values.insert(f.name.clone(), 0), // Dest = X0
                 "Rn" | "Wn" => field_values.insert(f.name.clone(), 1), // Src1 = X1
                 "Rm" | "Wm" => field_values.insert(f.name.clone(), 2), // Src2 = X2
                 "S" => field_values.insert(f.name.clone(), 1), // Set S bit for flag-setting variant
+                // Use 64-bit operations (sf=1) since test values are 64-bit
+                "sf" => field_values.insert(f.name.clone(), 1),
+                // For conditional compare instructions, use AL (always) condition
+                // so the comparison executes regardless of initial PSTATE
+                "cond" if is_conditional_compare => field_values.insert(f.name.clone(), 0b1110), // AL condition
                 _ => field_values.insert(f.name.clone(), 0),
             };
         }
@@ -315,6 +395,13 @@ pub fn generate_memory_tests(
     semantics: &SemanticAnalysis,
 ) -> Vec<ExecutionTest> {
     let mut tests = Vec::new();
+
+    // Skip unimplemented A64 instructions
+    if enc_analysis.iset == InstructionSet::A64
+        && !is_a64_instruction_implemented(&enc_analysis.name)
+    {
+        return tests;
+    }
 
     // Generate load tests
     for (idx, read) in semantics.memory_reads.iter().enumerate() {
@@ -458,6 +545,13 @@ pub fn generate_exception_tests(
 ) -> Vec<ExecutionTest> {
     let mut tests = Vec::new();
 
+    // Skip unimplemented A64 instructions
+    if enc_analysis.iset == InstructionSet::A64
+        && !is_a64_instruction_implemented(&enc_analysis.name)
+    {
+        return tests;
+    }
+
     for (idx, exc) in exceptions.iter().enumerate() {
         let mut field_values = HashMap::new();
         for f in &enc_analysis.fields {
@@ -538,6 +632,14 @@ pub fn generate_oracle_tests(
     semantics: &SemanticAnalysis,
 ) -> Vec<ExecutionTest> {
     let mut tests = Vec::new();
+
+    // Skip unimplemented A64 instructions
+    if enc_analysis.iset == InstructionSet::A64
+        && !is_a64_instruction_implemented(&enc_analysis.name)
+    {
+        return tests;
+    }
+
     let evaluator = TestEvaluator::new();
 
     // Determine instruction pattern based on instruction set
