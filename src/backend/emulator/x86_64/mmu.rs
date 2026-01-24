@@ -94,8 +94,14 @@ impl InlineLapic {
     fn timer_divisor(&self) -> u32 {
         let bits = (self.timer_divide_config & 0x3) | ((self.timer_divide_config >> 1) & 0x4);
         match bits {
-            0b000 => 2, 0b001 => 4, 0b010 => 8, 0b011 => 16,
-            0b100 => 32, 0b101 => 64, 0b110 => 128, 0b111 => 1,
+            0b000 => 2,
+            0b001 => 4,
+            0b010 => 8,
+            0b011 => 16,
+            0b100 => 32,
+            0b101 => 64,
+            0b110 => 128,
+            0b111 => 1,
             _ => 1,
         }
     }
@@ -110,15 +116,27 @@ impl InlineLapic {
             LAPIC_SVR => self.svr,
             o if o >= LAPIC_ISR_BASE && o < LAPIC_ISR_BASE + 0x80 => {
                 let idx = ((o - LAPIC_ISR_BASE) / 0x10) as usize;
-                if idx < 8 { self.isr[idx] } else { 0 }
+                if idx < 8 {
+                    self.isr[idx]
+                } else {
+                    0
+                }
             }
             o if o >= LAPIC_TMR_BASE && o < LAPIC_TMR_BASE + 0x80 => {
                 let idx = ((o - LAPIC_TMR_BASE) / 0x10) as usize;
-                if idx < 8 { self.tmr[idx] } else { 0 }
+                if idx < 8 {
+                    self.tmr[idx]
+                } else {
+                    0
+                }
             }
             o if o >= LAPIC_IRR_BASE && o < LAPIC_IRR_BASE + 0x80 => {
                 let idx = ((o - LAPIC_IRR_BASE) / 0x10) as usize;
-                if idx < 8 { self.irr[idx] } else { 0 }
+                if idx < 8 {
+                    self.irr[idx]
+                } else {
+                    0
+                }
             }
             LAPIC_ESR => self.esr,
             LAPIC_ICR_LOW => self.icr as u32,
@@ -212,7 +230,10 @@ impl InlineLapic {
             LAPIC_TIMER_ICR => {
                 eprintln!(
                     "[LAPIC] TIMER_ICR write: count={:#x}, lvt_timer={:#x}, divisor={}, masked={}",
-                    value, self.lvt_timer, self.timer_divisor(), (self.lvt_timer & LVT_MASK) != 0
+                    value,
+                    self.lvt_timer,
+                    self.timer_divisor(),
+                    (self.lvt_timer & LVT_MASK) != 0
                 );
                 self.timer_initial_count = value;
                 if value > 0 {
@@ -318,7 +339,7 @@ mod flags {
 
 /// Control register bits.
 mod cr0 {
-    pub const PE: u64 = 1 << 0;  // Protected Mode Enable
+    pub const PE: u64 = 1 << 0; // Protected Mode Enable
     pub const PG: u64 = 1 << 31; // Paging Enable
 }
 
@@ -334,7 +355,7 @@ mod cr4 {
 }
 
 mod efer {
-    pub const LME: u64 = 1 << 8;  // Long Mode Enable
+    pub const LME: u64 = 1 << 8; // Long Mode Enable
     pub const LMA: u64 = 1 << 10; // Long Mode Active
 }
 
@@ -637,40 +658,64 @@ impl Mmu {
         // Read PML4 entry
         let pml4e = self.read_pte(pml4_base + pml4_index * 8)?;
         if pml4e & flags::PRESENT == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | write_bit,
+            });
         }
         // Check reserved bits (must be zero) - error code 0x9 = RSVD | P
         if pml4e & PTE_RSVD_MASK != 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x9 });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | write_bit | 0x9,
+            });
         }
         // Check U/S permission: if user mode, page must have USER bit set
         if is_user && pml4e & flags::USER == 0 {
             // User mode accessing supervisor page = protection violation
-            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x1 });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | write_bit | 0x1,
+            });
         }
         // Check write permission at PML4 level
         if is_write && pml4e & flags::WRITABLE == 0 {
             // error_code bit 1 = write access, bit 0 = present
-            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x3 });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | 0x3,
+            });
         }
 
         // Read PDPT entry
         let pdpt_base = pml4e & 0x000F_FFFF_FFFF_F000;
         let pdpte = self.read_pte(pdpt_base + pdpt_index * 8)?;
         if pdpte & flags::PRESENT == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | write_bit,
+            });
         }
         // Check reserved bits
         if pdpte & PTE_RSVD_MASK != 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x9 });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | write_bit | 0x9,
+            });
         }
         // Check U/S permission
         if is_user && pdpte & flags::USER == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x1 });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | write_bit | 0x1,
+            });
         }
         // Check write permission at PDPT level
         if is_write && pdpte & flags::WRITABLE == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x3 });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | 0x3,
+            });
         }
 
         // Check for 1GB huge page
@@ -679,7 +724,10 @@ impl Mmu {
             // Additional reserved mask: (0x40000000 - 1) & 0x000FFFFFFFFFF000 & ~0x1000 = 0x3FFFE000
             let huge_rsvd = 0x3FFFE000u64;
             if pdpte & (PTE_RSVD_MASK | huge_rsvd) != 0 {
-                return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x9 });
+                return Err(Error::PageFault {
+                    vaddr,
+                    error_code: user_bit | write_bit | 0x9,
+                });
             }
             let page_base = pdpte & 0x000F_FFFF_C000_0000;
             // Cache in TLB
@@ -696,19 +744,31 @@ impl Mmu {
         let pd_base = pdpte & 0x000F_FFFF_FFFF_F000;
         let pde = self.read_pte(pd_base + pd_index * 8)?;
         if pde & flags::PRESENT == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | write_bit,
+            });
         }
         // Check reserved bits
         if pde & PTE_RSVD_MASK != 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x9 });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | write_bit | 0x9,
+            });
         }
         // Check U/S permission
         if is_user && pde & flags::USER == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x1 });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | write_bit | 0x1,
+            });
         }
         // Check write permission at PD level
         if is_write && pde & flags::WRITABLE == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x3 });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | 0x3,
+            });
         }
 
         // Check for 2MB huge page
@@ -717,7 +777,10 @@ impl Mmu {
             // Additional reserved mask: (0x200000 - 1) & 0x000FFFFFFFFFF000 & ~0x1000 = 0x1FE000
             let huge_rsvd = 0x1FE000u64;
             if pde & (PTE_RSVD_MASK | huge_rsvd) != 0 {
-                return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x9 });
+                return Err(Error::PageFault {
+                    vaddr,
+                    error_code: user_bit | write_bit | 0x9,
+                });
             }
             let page_base = pde & 0x000F_FFFF_FFE0_0000;
             let paddr = page_base | (vaddr & 0x1F_FFFF);
@@ -737,19 +800,31 @@ impl Mmu {
         let pt_addr = pt_base + pt_index * 8;
         let pte = self.read_pte(pt_addr)?;
         if pte & flags::PRESENT == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | write_bit,
+            });
         }
         // Check reserved bits
         if pte & PTE_RSVD_MASK != 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x9 });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | write_bit | 0x9,
+            });
         }
         // Check U/S permission
         if is_user && pte & flags::USER == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | write_bit | 0x1 });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | write_bit | 0x1,
+            });
         }
         // Check write permission at PT level
         if is_write && pte & flags::WRITABLE == 0 {
-            return Err(Error::PageFault { vaddr, error_code: user_bit | 0x3 });
+            return Err(Error::PageFault {
+                vaddr,
+                error_code: user_bit | 0x3,
+            });
         }
 
         let page_base = pte & 0x000F_FFFF_FFFF_F000;
@@ -887,7 +962,12 @@ impl Mmu {
     /// Used for exception/interrupt delivery where the CPU always accesses
     /// kernel data structures (IDT, TSS, etc.) as supervisor, regardless of CPL.
     #[inline]
-    pub fn read_supervisor(&mut self, vaddr: u64, buf: &mut [u8], sregs: &SystemRegisters) -> Result<()> {
+    pub fn read_supervisor(
+        &mut self,
+        vaddr: u64,
+        buf: &mut [u8],
+        sregs: &SystemRegisters,
+    ) -> Result<()> {
         // Create a temporary sregs with CPL=0 (supervisor)
         let mut supervisor_sregs = sregs.clone();
         supervisor_sregs.cs.selector &= !0x3; // Clear CPL bits to 0
@@ -904,14 +984,24 @@ impl Mmu {
     /// Write bytes to guest memory with supervisor privilege.
     /// Used for exception/interrupt delivery.
     #[inline]
-    pub fn write_supervisor(&mut self, vaddr: u64, buf: &[u8], sregs: &SystemRegisters) -> Result<()> {
+    pub fn write_supervisor(
+        &mut self,
+        vaddr: u64,
+        buf: &[u8],
+        sregs: &SystemRegisters,
+    ) -> Result<()> {
         let mut supervisor_sregs = sregs.clone();
         supervisor_sregs.cs.selector &= !0x3;
         self.write(vaddr, buf, &supervisor_sregs)
     }
 
     /// Write a u64 to guest memory with supervisor privilege.
-    pub fn write_u64_supervisor(&mut self, vaddr: u64, value: u64, sregs: &SystemRegisters) -> Result<()> {
+    pub fn write_u64_supervisor(
+        &mut self,
+        vaddr: u64,
+        value: u64,
+        sregs: &SystemRegisters,
+    ) -> Result<()> {
         self.write_supervisor(vaddr, &value.to_le_bytes(), sregs)
     }
 
@@ -1096,5 +1186,4 @@ impl Mmu {
             self.write(vaddr, &value.to_le_bytes(), sregs)
         }
     }
-
 }

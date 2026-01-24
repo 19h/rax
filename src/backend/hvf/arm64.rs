@@ -289,9 +289,8 @@ impl HvfArm64Vcpu {
     /// Try to inject pending interrupts
     fn try_inject_interrupts(&mut self) -> Result<()> {
         if self.pending_irq {
-            let ret = unsafe {
-                hv_vcpu_set_pending_interrupt(self.vcpu, HV_INTERRUPT_TYPE_IRQ, true)
-            };
+            let ret =
+                unsafe { hv_vcpu_set_pending_interrupt(self.vcpu, HV_INTERRUPT_TYPE_IRQ, true) };
             if ret == HV_SUCCESS {
                 self.pending_irq = false;
                 self.halted = false;
@@ -299,9 +298,8 @@ impl HvfArm64Vcpu {
         }
 
         if self.pending_fiq {
-            let ret = unsafe {
-                hv_vcpu_set_pending_interrupt(self.vcpu, HV_INTERRUPT_TYPE_FIQ, true)
-            };
+            let ret =
+                unsafe { hv_vcpu_set_pending_interrupt(self.vcpu, HV_INTERRUPT_TYPE_FIQ, true) };
             if ret == HV_SUCCESS {
                 self.pending_fiq = false;
                 self.halted = false;
@@ -579,8 +577,8 @@ impl VCpu for HvfArm64Vcpu {
     fn can_inject_interrupt(&self) -> bool {
         // Check PSTATE.I/F (interrupt masks)
         let pstate = self.read_gpr(HV_REG_CPSR).unwrap_or(0);
-        let irq_masked = (pstate & (1 << 7)) != 0;  // PSTATE.I
-        let fiq_masked = (pstate & (1 << 6)) != 0;  // PSTATE.F
+        let irq_masked = (pstate & (1 << 7)) != 0; // PSTATE.I
+        let fiq_masked = (pstate & (1 << 6)) != 0; // PSTATE.F
 
         !irq_masked || !fiq_masked
     }

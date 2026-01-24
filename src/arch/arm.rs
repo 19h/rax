@@ -59,13 +59,11 @@ impl Aarch64Arch {
     }
 
     fn load_elf(mem: &GuestMemoryMmap, buf: &[u8]) -> Result<ArmBootInfo> {
-        let elf = Elf::parse(buf)
-            .map_err(|e| Error::KernelLoad(format!("ELF parse error: {e}")))?;
+        let elf =
+            Elf::parse(buf).map_err(|e| Error::KernelLoad(format!("ELF parse error: {e}")))?;
 
         if !elf.is_64 {
-            return Err(Error::KernelLoad(
-                "AArch64 ELF must be 64-bit".to_string(),
-            ));
+            return Err(Error::KernelLoad("AArch64 ELF must be 64-bit".to_string()));
         }
 
         // Check for ARM64 machine type
@@ -165,7 +163,9 @@ impl Arch for Aarch64Arch {
     #[cfg(all(feature = "kvm", target_os = "linux"))]
     fn init_vm(&self, _vm: &crate::backend::kvm::KvmVm, _boot: &BootInfo) -> Result<()> {
         // TODO: Initialize KVM for ARM
-        Err(Error::InvalidConfig("KVM for AArch64 not yet implemented".to_string()))
+        Err(Error::InvalidConfig(
+            "KVM for AArch64 not yet implemented".to_string(),
+        ))
     }
 
     fn initial_cpu_state(&self, mem: &GuestMemoryMmap, boot: &BootInfo) -> Result<CpuState> {
@@ -249,7 +249,9 @@ impl Arch for Armv7aArch {
 
     #[cfg(all(feature = "kvm", target_os = "linux"))]
     fn init_vm(&self, _vm: &crate::backend::kvm::KvmVm, _boot: &BootInfo) -> Result<()> {
-        Err(Error::InvalidConfig("KVM for ARMv7-A not supported".to_string()))
+        Err(Error::InvalidConfig(
+            "KVM for ARMv7-A not supported".to_string(),
+        ))
     }
 
     fn initial_cpu_state(&self, mem: &GuestMemoryMmap, boot: &BootInfo) -> Result<CpuState> {
@@ -311,7 +313,9 @@ impl Arch for Armv8a32Arch {
 
     #[cfg(all(feature = "kvm", target_os = "linux"))]
     fn init_vm(&self, _vm: &crate::backend::kvm::KvmVm, _boot: &BootInfo) -> Result<()> {
-        Err(Error::InvalidConfig("KVM for ARMv8-A AArch32 not supported".to_string()))
+        Err(Error::InvalidConfig(
+            "KVM for ARMv8-A AArch32 not supported".to_string(),
+        ))
     }
 
     fn initial_cpu_state(&self, mem: &GuestMemoryMmap, boot: &BootInfo) -> Result<CpuState> {
@@ -381,7 +385,9 @@ impl Arch for CortexMArch {
 
     #[cfg(all(feature = "kvm", target_os = "linux"))]
     fn init_vm(&self, _vm: &crate::backend::kvm::KvmVm, _boot: &BootInfo) -> Result<()> {
-        Err(Error::InvalidConfig("KVM for Cortex-M not supported".to_string()))
+        Err(Error::InvalidConfig(
+            "KVM for Cortex-M not supported".to_string(),
+        ))
     }
 
     fn initial_cpu_state(&self, _mem: &GuestMemoryMmap, boot: &BootInfo) -> Result<CpuState> {
@@ -437,7 +443,9 @@ impl Arch for CortexRArch {
 
     #[cfg(all(feature = "kvm", target_os = "linux"))]
     fn init_vm(&self, _vm: &crate::backend::kvm::KvmVm, _boot: &BootInfo) -> Result<()> {
-        Err(Error::InvalidConfig("KVM for Cortex-R not supported".to_string()))
+        Err(Error::InvalidConfig(
+            "KVM for Cortex-R not supported".to_string(),
+        ))
     }
 
     fn initial_cpu_state(&self, mem: &GuestMemoryMmap, boot: &BootInfo) -> Result<CpuState> {

@@ -127,24 +127,24 @@ pub fn sha1msg1(src1_lo: u64, src1_hi: u64, src2_lo: u64, src2_hi: u64) -> (u64,
 /// DEST[127:96] := W16; DEST[95:64] := W17; DEST[63:32] := W18; DEST[31:0] := W19
 pub fn sha1msg2(src1_lo: u64, src1_hi: u64, src2_lo: u64, _src2_hi: u64) -> (u64, u64) {
     // Extract words from SRC2 (W13, W14, W15)
-    let w13 = src2_lo as u32;          // SRC2[95:64] - but in little-endian storage
-    let w14 = (src2_lo >> 32) as u32;  // SRC2[63:32]
-    let w15 = _src2_hi as u32;         // SRC2[31:0] - Wait, let me reconsider
+    let w13 = src2_lo as u32; // SRC2[95:64] - but in little-endian storage
+    let w14 = (src2_lo >> 32) as u32; // SRC2[63:32]
+    let w15 = _src2_hi as u32; // SRC2[31:0] - Wait, let me reconsider
 
     // Actually, the spec notation uses [127:96] as the high dword
     // In little-endian XMM storage: xmm[0] = bits 63:0, xmm[1] = bits 127:64
     // So [127:96] is (xmm[1] >> 32), [95:64] is xmm[1] & 0xFFFFFFFF
     // [63:32] is (xmm[0] >> 32), [31:0] is xmm[0] & 0xFFFFFFFF
 
-    let w13 = _src2_hi as u32;         // SRC2[95:64]
-    let w14 = (src2_lo >> 32) as u32;  // SRC2[63:32]
-    let w15 = src2_lo as u32;          // SRC2[31:0]
+    let w13 = _src2_hi as u32; // SRC2[95:64]
+    let w14 = (src2_lo >> 32) as u32; // SRC2[63:32]
+    let w15 = src2_lo as u32; // SRC2[31:0]
 
     // Extract words from SRC1
-    let s0 = (src1_hi >> 32) as u32;   // SRC1[127:96]
-    let s1 = src1_hi as u32;           // SRC1[95:64]
-    let s2 = (src1_lo >> 32) as u32;   // SRC1[63:32]
-    let s3 = src1_lo as u32;           // SRC1[31:0]
+    let s0 = (src1_hi >> 32) as u32; // SRC1[127:96]
+    let s1 = src1_hi as u32; // SRC1[95:64]
+    let s2 = (src1_lo >> 32) as u32; // SRC1[63:32]
+    let s3 = src1_lo as u32; // SRC1[31:0]
 
     // Compute W16-W19
     let w16 = rol32(s0 ^ w13, 1);
@@ -194,13 +194,7 @@ pub fn sha1nexte(src1_lo: u64, src1_hi: u64, src2_lo: u64, src2_hi: u64) -> (u64
 /// 1: f1 (Parity), K1
 /// 2: f2 (Maj), K2
 /// 3: f3 (Parity), K3
-pub fn sha1rnds4(
-    src1_lo: u64,
-    src1_hi: u64,
-    src2_lo: u64,
-    src2_hi: u64,
-    imm8: u8,
-) -> (u64, u64) {
+pub fn sha1rnds4(src1_lo: u64, src1_hi: u64, src2_lo: u64, src2_hi: u64, imm8: u8) -> (u64, u64) {
     // Select function and constant based on imm8[1:0]
     let func_select = imm8 & 0x03;
     let k = match func_select {
@@ -213,15 +207,15 @@ pub fn sha1rnds4(
 
     // Extract initial state A, B, C, D from SRC1
     let mut a = (src1_hi >> 32) as u32; // SRC1[127:96]
-    let mut b = src1_hi as u32;         // SRC1[95:64]
+    let mut b = src1_hi as u32; // SRC1[95:64]
     let mut c = (src1_lo >> 32) as u32; // SRC1[63:32]
-    let mut d = src1_lo as u32;         // SRC1[31:0]
+    let mut d = src1_lo as u32; // SRC1[31:0]
 
     // Extract W0E, W1, W2, W3 from SRC2
-    let w0e = (src2_hi >> 32) as u32;   // SRC2[127:96] - includes E for first round
-    let w1 = src2_hi as u32;            // SRC2[95:64]
-    let w2 = (src2_lo >> 32) as u32;    // SRC2[63:32]
-    let w3 = src2_lo as u32;            // SRC2[31:0]
+    let w0e = (src2_hi >> 32) as u32; // SRC2[127:96] - includes E for first round
+    let w1 = src2_hi as u32; // SRC2[95:64]
+    let w2 = (src2_lo >> 32) as u32; // SRC2[63:32]
+    let w3 = src2_lo as u32; // SRC2[31:0]
 
     let w = [w0e, w1, w2, w3];
 
@@ -276,11 +270,11 @@ pub fn sha1rnds4(
 /// DEST[31:0] := W0 + σ0(W1)
 pub fn sha256msg1(src1_lo: u64, src1_hi: u64, src2_lo: u64, _src2_hi: u64) -> (u64, u64) {
     // Extract W0-W3 from SRC1 and W4 from SRC2
-    let w0 = src1_lo as u32;           // SRC1[31:0]
-    let w1 = (src1_lo >> 32) as u32;   // SRC1[63:32]
-    let w2 = src1_hi as u32;           // SRC1[95:64]
-    let w3 = (src1_hi >> 32) as u32;   // SRC1[127:96]
-    let w4 = src2_lo as u32;           // SRC2[31:0]
+    let w0 = src1_lo as u32; // SRC1[31:0]
+    let w1 = (src1_lo >> 32) as u32; // SRC1[63:32]
+    let w2 = src1_hi as u32; // SRC1[95:64]
+    let w3 = (src1_hi >> 32) as u32; // SRC1[127:96]
+    let w4 = src2_lo as u32; // SRC2[31:0]
 
     // Compute results
     let r0 = w0.wrapping_add(sha256_sigma0(w1)); // DEST[31:0]
@@ -306,14 +300,14 @@ pub fn sha256msg1(src1_lo: u64, src1_hi: u64, src2_lo: u64, _src2_hi: u64) -> (u
 /// DEST[127:96] := W19; DEST[95:64] := W18; DEST[63:32] := W17; DEST[31:0] := W16
 pub fn sha256msg2(src1_lo: u64, src1_hi: u64, _src2_lo: u64, src2_hi: u64) -> (u64, u64) {
     // Extract W14, W15 from SRC2
-    let w14 = src2_hi as u32;          // SRC2[95:64]
-    let w15 = (src2_hi >> 32) as u32;  // SRC2[127:96]
+    let w14 = src2_hi as u32; // SRC2[95:64]
+    let w15 = (src2_hi >> 32) as u32; // SRC2[127:96]
 
     // Extract intermediate values from SRC1
-    let s0 = src1_lo as u32;           // SRC1[31:0]
-    let s1 = (src1_lo >> 32) as u32;   // SRC1[63:32]
-    let s2 = src1_hi as u32;           // SRC1[95:64]
-    let s3 = (src1_hi >> 32) as u32;   // SRC1[127:96]
+    let s0 = src1_lo as u32; // SRC1[31:0]
+    let s1 = (src1_lo >> 32) as u32; // SRC1[63:32]
+    let s2 = src1_hi as u32; // SRC1[95:64]
+    let s3 = (src1_hi >> 32) as u32; // SRC1[127:96]
 
     // Compute W16-W19
     let w16 = s0.wrapping_add(sha256_sigma1(w14));
@@ -357,19 +351,19 @@ pub fn sha256rnds2(
 ) -> (u64, u64) {
     // Extract initial state from SRC2 (A, B, E, F)
     let mut a = (src2_hi >> 32) as u32; // SRC2[127:96]
-    let mut b = src2_hi as u32;         // SRC2[95:64]
+    let mut b = src2_hi as u32; // SRC2[95:64]
     let mut e = (src2_lo >> 32) as u32; // SRC2[63:32]
-    let mut f = src2_lo as u32;         // SRC2[31:0]
+    let mut f = src2_lo as u32; // SRC2[31:0]
 
     // Extract initial state from SRC1 (C, D, G, H)
     let mut c = (src1_hi >> 32) as u32; // SRC1[127:96]
-    let mut d = src1_hi as u32;         // SRC1[95:64]
+    let mut d = src1_hi as u32; // SRC1[95:64]
     let mut g = (src1_lo >> 32) as u32; // SRC1[63:32]
-    let mut h = src1_lo as u32;         // SRC1[31:0]
+    let mut h = src1_lo as u32; // SRC1[31:0]
 
     // Extract WK0, WK1 from XMM0
-    let wk0 = xmm0_lo as u32;          // XMM0[31:0]
-    let wk1 = (xmm0_lo >> 32) as u32;  // XMM0[63:32]
+    let wk0 = xmm0_lo as u32; // XMM0[31:0]
+    let wk1 = (xmm0_lo >> 32) as u32; // XMM0[63:32]
 
     let wk = [wk0, wk1];
 
@@ -380,10 +374,7 @@ pub fn sha256rnds2(
         let sigma0 = sha256_big_sigma0(a);
         let sigma1 = sha256_big_sigma1(e);
 
-        let t1 = h
-            .wrapping_add(sigma1)
-            .wrapping_add(ch)
-            .wrapping_add(wk[i]);
+        let t1 = h.wrapping_add(sigma1).wrapping_add(ch).wrapping_add(wk[i]);
         let t2 = sigma0.wrapping_add(maj);
 
         h = g;

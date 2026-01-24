@@ -19,15 +19,8 @@ impl HexagonArch {
         HexagonArch
     }
 
-    fn load_raw(
-        mem: &GuestMemoryMmap,
-        config: &VmConfig,
-        buf: &[u8],
-    ) -> Result<HexagonBootInfo> {
-        let load_addr = config
-            .hexagon_load_addr
-            .map(|addr| addr.raw())
-            .unwrap_or(0);
+    fn load_raw(mem: &GuestMemoryMmap, config: &VmConfig, buf: &[u8]) -> Result<HexagonBootInfo> {
+        let load_addr = config.hexagon_load_addr.map(|addr| addr.raw()).unwrap_or(0);
         let entry = config
             .hexagon_entry
             .map(|addr| addr.raw())
@@ -42,18 +35,12 @@ impl HexagonArch {
         })
     }
 
-    fn load_elf(
-        mem: &GuestMemoryMmap,
-        config: &VmConfig,
-        buf: &[u8],
-    ) -> Result<HexagonBootInfo> {
-        let elf = Elf::parse(buf)
-            .map_err(|e| Error::KernelLoad(format!("ELF parse error: {e}")))?;
+    fn load_elf(mem: &GuestMemoryMmap, config: &VmConfig, buf: &[u8]) -> Result<HexagonBootInfo> {
+        let elf =
+            Elf::parse(buf).map_err(|e| Error::KernelLoad(format!("ELF parse error: {e}")))?;
 
         if elf.is_64 {
-            return Err(Error::KernelLoad(
-                "Hexagon ELF must be 32-bit".to_string(),
-            ));
+            return Err(Error::KernelLoad("Hexagon ELF must be 32-bit".to_string()));
         }
 
         let elf_little = elf.little_endian;

@@ -120,12 +120,9 @@ impl CpuidConfig {
             // Extended feature flags
             0x07 => match subleaf {
                 0 => (
-                    0,
-                    // EBX: BMI1, AVX2, BMI2, ERMS, INVPCID, etc.
-                    0x029C6FBB,
-                    // ECX: PKU
-                    0x00000000,
-                    // EDX
+                    0, // EBX: BMI1, AVX2, BMI2, ERMS, INVPCID, etc.
+                    0x029C6FBB, // ECX: PKU
+                    0x00000000, // EDX
                     0x00000000,
                 ),
                 _ => (0, 0, 0, 0),

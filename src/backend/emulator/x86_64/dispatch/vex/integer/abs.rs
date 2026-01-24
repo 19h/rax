@@ -35,7 +35,10 @@ impl X86_64Vcpu {
             let (src_hi2, src_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             self.regs.ymm_high[xmm_dst][0] = self.pabs_64(src_hi2, elem_bits);
             self.regs.ymm_high[xmm_dst][1] = self.pabs_64(src_hi3, elem_bits);

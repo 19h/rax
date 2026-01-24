@@ -183,7 +183,10 @@ pub fn print_summary(profiler: &Profiler) {
         "║ {:<10} {:<25} {:>10} {:>8} {:>8} {:>8} ║",
         "Opcode", "Mnemonic", "Count", "Mean", "StdDev", "P99"
     );
-    eprintln!("║ {:─<10} {:─<25} {:─>10} {:─>8} {:─>8} {:─>8} ║", "", "", "", "", "", "");
+    eprintln!(
+        "║ {:─<10} {:─<25} {:─>10} {:─>8} {:─>8} {:─>8} ║",
+        "", "", "", "", "", ""
+    );
 
     for (idx, stats) in top.iter().take(15) {
         if let Some(key) = OpcodeKey::from_index(*idx) {
@@ -337,7 +340,12 @@ fn compute_memory_totals(profiler: &Profiler) -> (u64, u64, u64, u64) {
         total_bytes_written += stats.bytes_written;
     }
 
-    (total_reads, total_writes, total_bytes_read, total_bytes_written)
+    (
+        total_reads,
+        total_writes,
+        total_bytes_read,
+        total_bytes_written,
+    )
 }
 
 fn compute_category_breakdown(profiler: &Profiler) -> CategoryBreakdown {

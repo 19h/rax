@@ -115,7 +115,11 @@ pub fn shrd_cl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 /// Execute SHLD: shift dst left, filling in from src
 fn execute_shld(vcpu: &mut X86_64Vcpu, dst: u64, src: u64, count: u8, size: u8) -> u64 {
     let bits = (size * 8) as u32;
-    let mask = if bits == 64 { !0u64 } else { (1u64 << bits) - 1 };
+    let mask = if bits == 64 {
+        !0u64
+    } else {
+        (1u64 << bits) - 1
+    };
     let count_mask = if bits == 64 { 0x3F } else { 0x1F };
     let count = (count as u32) & count_mask;
 
@@ -164,7 +168,11 @@ fn execute_shld(vcpu: &mut X86_64Vcpu, dst: u64, src: u64, count: u8, size: u8) 
 /// Execute SHRD: shift dst right, filling in from src
 fn execute_shrd(vcpu: &mut X86_64Vcpu, dst: u64, src: u64, count: u8, size: u8) -> u64 {
     let bits = (size * 8) as u32;
-    let mask = if bits == 64 { !0u64 } else { (1u64 << bits) - 1 };
+    let mask = if bits == 64 {
+        !0u64
+    } else {
+        (1u64 << bits) - 1
+    };
     let count_mask = if bits == 64 { 0x3F } else { 0x1F };
     let count = (count as u32) & count_mask;
 

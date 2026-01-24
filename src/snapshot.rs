@@ -127,14 +127,16 @@ impl Snapshot {
         let mut writer = BufWriter::new(file);
 
         // Write magic number
-        writer.write_all(&SNAPSHOT_MAGIC)
+        writer
+            .write_all(&SNAPSHOT_MAGIC)
             .map_err(|e| Error::Emulator(format!("Failed to write snapshot magic: {}", e)))?;
 
         // Serialize snapshot with bincode
         bincode::serialize_into(&mut writer, self)
             .map_err(|e| Error::Emulator(format!("Failed to serialize snapshot: {}", e)))?;
 
-        writer.flush()
+        writer
+            .flush()
             .map_err(|e| Error::Emulator(format!("Failed to flush snapshot: {}", e)))?;
 
         Ok(())
@@ -148,11 +150,14 @@ impl Snapshot {
 
         // Verify magic number
         let mut magic = [0u8; 8];
-        reader.read_exact(&mut magic)
+        reader
+            .read_exact(&mut magic)
             .map_err(|e| Error::Emulator(format!("Failed to read snapshot magic: {}", e)))?;
 
         if magic != SNAPSHOT_MAGIC {
-            return Err(Error::Emulator("Invalid snapshot file (bad magic)".to_string()));
+            return Err(Error::Emulator(
+                "Invalid snapshot file (bad magic)".to_string(),
+            ));
         }
 
         // Deserialize snapshot
@@ -178,7 +183,8 @@ impl Snapshot {
         if decompressed.len() != self.memory_size as usize {
             return Err(Error::Emulator(format!(
                 "Memory size mismatch: expected {} bytes, got {}",
-                self.memory_size, decompressed.len()
+                self.memory_size,
+                decompressed.len()
             )));
         }
 

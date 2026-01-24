@@ -251,7 +251,8 @@ impl X86_64Vcpu {
                 let src1_lo = self.regs.xmm[xmm_dst][0];
                 let src1_hi = self.regs.xmm[xmm_dst][1];
                 let xmm0_lo = self.regs.xmm[0][0]; // Implicit XMM0 operand
-                let (result_lo, result_hi) = sha::sha256rnds2(src1_lo, src1_hi, src2_lo, src2_hi, xmm0_lo);
+                let (result_lo, result_hi) =
+                    sha::sha256rnds2(src1_lo, src1_hi, src2_lo, src2_hi, xmm0_lo);
                 self.regs.xmm[xmm_dst][0] = result_lo;
                 self.regs.xmm[xmm_dst][1] = result_hi;
                 self.regs.rip += ctx.cursor as u64;

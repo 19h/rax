@@ -34,17 +34,29 @@ pub fn cwd_cdq_cqo(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
     match ctx.op_size {
         2 => {
             // CWD: AX -> DX:AX
-            let sign = if (vcpu.regs.rax as i16) < 0 { 0xFFFF } else { 0 };
+            let sign = if (vcpu.regs.rax as i16) < 0 {
+                0xFFFF
+            } else {
+                0
+            };
             vcpu.regs.rdx = (vcpu.regs.rdx & !0xFFFF) | sign;
         }
         4 => {
             // CDQ: EAX -> EDX:EAX
-            let sign = if (vcpu.regs.rax as i32) < 0 { 0xFFFFFFFF } else { 0 };
+            let sign = if (vcpu.regs.rax as i32) < 0 {
+                0xFFFFFFFF
+            } else {
+                0
+            };
             vcpu.regs.rdx = sign;
         }
         8 => {
             // CQO: RAX -> RDX:RAX
-            let sign = if (vcpu.regs.rax as i64) < 0 { u64::MAX } else { 0 };
+            let sign = if (vcpu.regs.rax as i64) < 0 {
+                u64::MAX
+            } else {
+                0
+            };
             vcpu.regs.rdx = sign;
         }
         _ => {}

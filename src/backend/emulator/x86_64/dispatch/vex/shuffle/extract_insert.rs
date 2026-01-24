@@ -60,7 +60,10 @@ impl X86_64Vcpu {
             (self.regs.xmm[xmm_src][0], self.regs.xmm[xmm_src][1])
         } else {
             // Extract high 128 bits
-            (self.regs.ymm_high[xmm_src][0], self.regs.ymm_high[xmm_src][1])
+            (
+                self.regs.ymm_high[xmm_src][0],
+                self.regs.ymm_high[xmm_src][1],
+            )
         };
 
         if is_memory {
@@ -92,7 +95,10 @@ impl X86_64Vcpu {
 
         // Get all 4 source lanes (2 from src1, 2 from src2)
         let src1_lo = (self.regs.xmm[xmm_src1][0], self.regs.xmm[xmm_src1][1]);
-        let src1_hi = (self.regs.ymm_high[xmm_src1][0], self.regs.ymm_high[xmm_src1][1]);
+        let src1_hi = (
+            self.regs.ymm_high[xmm_src1][0],
+            self.regs.ymm_high[xmm_src1][1],
+        );
         let (src2_lo, src2_hi) = if is_memory {
             (
                 (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?),
@@ -101,7 +107,10 @@ impl X86_64Vcpu {
         } else {
             (
                 (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]),
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1]),
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                ),
             )
         };
 
@@ -141,5 +150,4 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 }

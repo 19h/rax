@@ -153,7 +153,13 @@ pub fn mov_rm_sreg(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
     if is_memory {
         vcpu.mmu.write_u16(addr, value, &vcpu.sregs)?;
     } else {
-        let reg_size = if op_size == 8 { 8 } else if op_size == 4 { 4 } else { 2 };
+        let reg_size = if op_size == 8 {
+            8
+        } else if op_size == 4 {
+            4
+        } else {
+            2
+        };
         vcpu.set_reg(rm, value as u64, reg_size);
     }
     vcpu.regs.rip += ctx.cursor as u64;
@@ -185,8 +191,8 @@ pub fn mov_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
         // XABORT - abort transaction with status
         ctx.consume_u8()?; // consume ModRM
         let _status = ctx.consume_u8()?; // status code
-        // TSX not supported - XABORT has no effect outside transaction
-        // In a real transaction, this would jump to fallback
+                                         // TSX not supported - XABORT has no effect outside transaction
+                                         // In a real transaction, this would jump to fallback
         vcpu.regs.rip += ctx.cursor as u64;
         return Ok(None);
     }
@@ -240,7 +246,10 @@ pub fn mov_rm_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
     // Tolerate MOV r64, imm64 encoded with C7 /0 when the upper dword is sign-extension.
     if op_size == 8 && (modrm >> 6) == 3 && ctx.cursor + 4 <= ctx.bytes_len {
         let sign = if (imm as i64) < 0 { 0xFF } else { 0x00 };
-        if ctx.bytes[ctx.cursor..ctx.cursor + 4].iter().all(|b| *b == sign) {
+        if ctx.bytes[ctx.cursor..ctx.cursor + 4]
+            .iter()
+            .all(|b| *b == sign)
+        {
             ctx.cursor += 4;
         }
     }

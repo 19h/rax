@@ -15,7 +15,9 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, _, _) = self.decode_modrm(ctx)?;
         if is_memory {
-            return Err(Error::Emulator("VMOVMSK* requires XMM/YMM source".to_string()));
+            return Err(Error::Emulator(
+                "VMOVMSK* requires XMM/YMM source".to_string(),
+            ));
         }
 
         let xmm_src = rm as usize;
@@ -70,7 +72,9 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator("VPMOVMSKB requires VEX.vvvv=1111b".to_string()));
+            return Err(Error::Emulator(
+                "VPMOVMSKB requires VEX.vvvv=1111b".to_string(),
+            ));
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_src = rm as usize;
@@ -125,7 +129,9 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         if !is_memory {
-            return Err(Error::Emulator("VPMASKMOV requires memory operand".to_string()));
+            return Err(Error::Emulator(
+                "VPMASKMOV requires memory operand".to_string(),
+            ));
         }
         let mask_reg = vvvv as usize;
         let elem_size = if vex_w == 0 { 4 } else { 8 };
@@ -293,7 +299,9 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         if !is_memory {
-            return Err(Error::Emulator("VMASKMOV requires memory operand".to_string()));
+            return Err(Error::Emulator(
+                "VMASKMOV requires memory operand".to_string(),
+            ));
         }
         let mask_reg = vvvv as usize;
         let is_ps = opcode == 0x2C || opcode == 0x2E;
@@ -583,7 +591,9 @@ impl X86_64Vcpu {
         let (_, _, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         if !is_memory {
-            return Err(Error::Emulator("VLDMXCSR/VSTMXCSR require memory operand".to_string()));
+            return Err(Error::Emulator(
+                "VLDMXCSR/VSTMXCSR require memory operand".to_string(),
+            ));
         }
 
         match reg_op {
@@ -646,7 +656,10 @@ impl X86_64Vcpu {
                 let (src2_hi2, src2_hi3) = if is_memory {
                     (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                 } else {
-                    (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                    (
+                        self.regs.ymm_high[rm as usize][0],
+                        self.regs.ymm_high[rm as usize][1],
+                    )
                 };
                 let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
                 let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -670,7 +683,10 @@ impl X86_64Vcpu {
                 let (src2_hi2, src2_hi3) = if is_memory {
                     (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                 } else {
-                    (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                    (
+                        self.regs.ymm_high[rm as usize][0],
+                        self.regs.ymm_high[rm as usize][1],
+                    )
                 };
                 let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
                 let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -731,7 +747,10 @@ impl X86_64Vcpu {
                 let (src2_hi2, src2_hi3) = if is_memory {
                     (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                 } else {
-                    (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                    (
+                        self.regs.ymm_high[rm as usize][0],
+                        self.regs.ymm_high[rm as usize][1],
+                    )
                 };
                 let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
                 let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -755,7 +774,10 @@ impl X86_64Vcpu {
                 let (src2_hi2, src2_hi3) = if is_memory {
                     (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                 } else {
-                    (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                    (
+                        self.regs.ymm_high[rm as usize][0],
+                        self.regs.ymm_high[rm as usize][1],
+                    )
                 };
                 let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
                 let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -814,7 +836,10 @@ impl X86_64Vcpu {
                 let (src2_hi2, src2_hi3) = if is_memory {
                     (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                 } else {
-                    (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                    (
+                        self.regs.ymm_high[rm as usize][0],
+                        self.regs.ymm_high[rm as usize][1],
+                    )
                 };
                 let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
                 let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -837,7 +862,10 @@ impl X86_64Vcpu {
                 let (src2_hi2, src2_hi3) = if is_memory {
                     (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                 } else {
-                    (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                    (
+                        self.regs.ymm_high[rm as usize][0],
+                        self.regs.ymm_high[rm as usize][1],
+                    )
                 };
                 let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
                 let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -881,10 +909,42 @@ impl X86_64Vcpu {
                 let src1_lo = self.regs.xmm[xmm_src1][0];
                 let src1_hi = self.regs.xmm[xmm_src1][1];
 
-                let r0 = if self.cmp_predicate_f32(f32::from_bits(src1_lo as u32), f32::from_bits(src2_lo as u32), imm8) { 0xFFFFFFFFu32 } else { 0 };
-                let r1 = if self.cmp_predicate_f32(f32::from_bits((src1_lo >> 32) as u32), f32::from_bits((src2_lo >> 32) as u32), imm8) { 0xFFFFFFFFu32 } else { 0 };
-                let r2 = if self.cmp_predicate_f32(f32::from_bits(src1_hi as u32), f32::from_bits(src2_hi as u32), imm8) { 0xFFFFFFFFu32 } else { 0 };
-                let r3 = if self.cmp_predicate_f32(f32::from_bits((src1_hi >> 32) as u32), f32::from_bits((src2_hi >> 32) as u32), imm8) { 0xFFFFFFFFu32 } else { 0 };
+                let r0 = if self.cmp_predicate_f32(
+                    f32::from_bits(src1_lo as u32),
+                    f32::from_bits(src2_lo as u32),
+                    imm8,
+                ) {
+                    0xFFFFFFFFu32
+                } else {
+                    0
+                };
+                let r1 = if self.cmp_predicate_f32(
+                    f32::from_bits((src1_lo >> 32) as u32),
+                    f32::from_bits((src2_lo >> 32) as u32),
+                    imm8,
+                ) {
+                    0xFFFFFFFFu32
+                } else {
+                    0
+                };
+                let r2 = if self.cmp_predicate_f32(
+                    f32::from_bits(src1_hi as u32),
+                    f32::from_bits(src2_hi as u32),
+                    imm8,
+                ) {
+                    0xFFFFFFFFu32
+                } else {
+                    0
+                };
+                let r3 = if self.cmp_predicate_f32(
+                    f32::from_bits((src1_hi >> 32) as u32),
+                    f32::from_bits((src2_hi >> 32) as u32),
+                    imm8,
+                ) {
+                    0xFFFFFFFFu32
+                } else {
+                    0
+                };
                 self.regs.xmm[xmm_dst][0] = r0 as u64 | ((r1 as u64) << 32);
                 self.regs.xmm[xmm_dst][1] = r2 as u64 | ((r3 as u64) << 32);
 
@@ -892,14 +952,49 @@ impl X86_64Vcpu {
                     let (src2_hi2, src2_hi3) = if is_memory {
                         (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                     } else {
-                        (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                        (
+                            self.regs.ymm_high[rm as usize][0],
+                            self.regs.ymm_high[rm as usize][1],
+                        )
                     };
                     let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
                     let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
-                    let r4 = if self.cmp_predicate_f32(f32::from_bits(src1_hi2 as u32), f32::from_bits(src2_hi2 as u32), imm8) { 0xFFFFFFFFu32 } else { 0 };
-                    let r5 = if self.cmp_predicate_f32(f32::from_bits((src1_hi2 >> 32) as u32), f32::from_bits((src2_hi2 >> 32) as u32), imm8) { 0xFFFFFFFFu32 } else { 0 };
-                    let r6 = if self.cmp_predicate_f32(f32::from_bits(src1_hi3 as u32), f32::from_bits(src2_hi3 as u32), imm8) { 0xFFFFFFFFu32 } else { 0 };
-                    let r7 = if self.cmp_predicate_f32(f32::from_bits((src1_hi3 >> 32) as u32), f32::from_bits((src2_hi3 >> 32) as u32), imm8) { 0xFFFFFFFFu32 } else { 0 };
+                    let r4 = if self.cmp_predicate_f32(
+                        f32::from_bits(src1_hi2 as u32),
+                        f32::from_bits(src2_hi2 as u32),
+                        imm8,
+                    ) {
+                        0xFFFFFFFFu32
+                    } else {
+                        0
+                    };
+                    let r5 = if self.cmp_predicate_f32(
+                        f32::from_bits((src1_hi2 >> 32) as u32),
+                        f32::from_bits((src2_hi2 >> 32) as u32),
+                        imm8,
+                    ) {
+                        0xFFFFFFFFu32
+                    } else {
+                        0
+                    };
+                    let r6 = if self.cmp_predicate_f32(
+                        f32::from_bits(src1_hi3 as u32),
+                        f32::from_bits(src2_hi3 as u32),
+                        imm8,
+                    ) {
+                        0xFFFFFFFFu32
+                    } else {
+                        0
+                    };
+                    let r7 = if self.cmp_predicate_f32(
+                        f32::from_bits((src1_hi3 >> 32) as u32),
+                        f32::from_bits((src2_hi3 >> 32) as u32),
+                        imm8,
+                    ) {
+                        0xFFFFFFFFu32
+                    } else {
+                        0
+                    };
                     self.regs.ymm_high[xmm_dst][0] = r4 as u64 | ((r5 as u64) << 32);
                     self.regs.ymm_high[xmm_dst][1] = r6 as u64 | ((r7 as u64) << 32);
                 } else {
@@ -917,8 +1012,24 @@ impl X86_64Vcpu {
                 let src1_lo = self.regs.xmm[xmm_src1][0];
                 let src1_hi = self.regs.xmm[xmm_src1][1];
 
-                let r0 = if self.cmp_predicate_f64(f64::from_bits(src1_lo), f64::from_bits(src2_lo), imm8) { !0u64 } else { 0 };
-                let r1 = if self.cmp_predicate_f64(f64::from_bits(src1_hi), f64::from_bits(src2_hi), imm8) { !0u64 } else { 0 };
+                let r0 = if self.cmp_predicate_f64(
+                    f64::from_bits(src1_lo),
+                    f64::from_bits(src2_lo),
+                    imm8,
+                ) {
+                    !0u64
+                } else {
+                    0
+                };
+                let r1 = if self.cmp_predicate_f64(
+                    f64::from_bits(src1_hi),
+                    f64::from_bits(src2_hi),
+                    imm8,
+                ) {
+                    !0u64
+                } else {
+                    0
+                };
                 self.regs.xmm[xmm_dst][0] = r0;
                 self.regs.xmm[xmm_dst][1] = r1;
 
@@ -926,12 +1037,31 @@ impl X86_64Vcpu {
                     let (src2_hi2, src2_hi3) = if is_memory {
                         (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                     } else {
-                        (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                        (
+                            self.regs.ymm_high[rm as usize][0],
+                            self.regs.ymm_high[rm as usize][1],
+                        )
                     };
                     let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
                     let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
-                    let r2 = if self.cmp_predicate_f64(f64::from_bits(src1_hi2), f64::from_bits(src2_hi2), imm8) { !0u64 } else { 0 };
-                    let r3 = if self.cmp_predicate_f64(f64::from_bits(src1_hi3), f64::from_bits(src2_hi3), imm8) { !0u64 } else { 0 };
+                    let r2 = if self.cmp_predicate_f64(
+                        f64::from_bits(src1_hi2),
+                        f64::from_bits(src2_hi2),
+                        imm8,
+                    ) {
+                        !0u64
+                    } else {
+                        0
+                    };
+                    let r3 = if self.cmp_predicate_f64(
+                        f64::from_bits(src1_hi3),
+                        f64::from_bits(src2_hi3),
+                        imm8,
+                    ) {
+                        !0u64
+                    } else {
+                        0
+                    };
                     self.regs.ymm_high[xmm_dst][0] = r2;
                     self.regs.ymm_high[xmm_dst][1] = r3;
                 } else {
@@ -947,8 +1077,13 @@ impl X86_64Vcpu {
                     f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
                 };
                 let src1 = f32::from_bits(self.regs.xmm[xmm_src1][0] as u32);
-                let result = if self.cmp_predicate_f32(src1, src2, imm8) { 0xFFFFFFFFu32 } else { 0 };
-                self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_src1][0] & !0xFFFFFFFF) | result as u64;
+                let result = if self.cmp_predicate_f32(src1, src2, imm8) {
+                    0xFFFFFFFFu32
+                } else {
+                    0
+                };
+                self.regs.xmm[xmm_dst][0] =
+                    (self.regs.xmm[xmm_src1][0] & !0xFFFFFFFF) | result as u64;
                 self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src1][1];
                 self.regs.ymm_high[xmm_dst][0] = 0;
                 self.regs.ymm_high[xmm_dst][1] = 0;
@@ -961,7 +1096,11 @@ impl X86_64Vcpu {
                     f64::from_bits(self.regs.xmm[rm as usize][0])
                 };
                 let src1 = f64::from_bits(self.regs.xmm[xmm_src1][0]);
-                let result = if self.cmp_predicate_f64(src1, src2, imm8) { !0u64 } else { 0 };
+                let result = if self.cmp_predicate_f64(src1, src2, imm8) {
+                    !0u64
+                } else {
+                    0
+                };
                 self.regs.xmm[xmm_dst][0] = result;
                 self.regs.xmm[xmm_dst][1] = self.regs.xmm[xmm_src1][1];
                 self.regs.ymm_high[xmm_dst][0] = 0;
@@ -1021,7 +1160,9 @@ impl X86_64Vcpu {
         let (reg, _, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         if !is_memory {
-            return Err(Error::Emulator("KMOV store requires memory destination".to_string()));
+            return Err(Error::Emulator(
+                "KMOV store requires memory destination".to_string(),
+            ));
         }
 
         let k_src = reg as usize;
@@ -1047,7 +1188,9 @@ impl X86_64Vcpu {
         let mode = (modrm >> 6) & 0x03;
 
         if mode != 3 {
-            return Err(Error::Emulator("KMOV from GPR requires register source".to_string()));
+            return Err(Error::Emulator(
+                "KMOV from GPR requires register source".to_string(),
+            ));
         }
 
         // Get the GPR value
@@ -1081,7 +1224,9 @@ impl X86_64Vcpu {
         let mode = (modrm >> 6) & 0x03;
 
         if mode != 3 {
-            return Err(Error::Emulator("KMOV to GPR requires register source".to_string()));
+            return Err(Error::Emulator(
+                "KMOV to GPR requires register source".to_string(),
+            ));
         }
 
         let value = self.regs.k[k_src];
@@ -1121,7 +1266,9 @@ impl X86_64Vcpu {
         let mode = (modrm >> 6) & 0x03;
 
         if mode != 3 {
-            return Err(Error::Emulator("Mask logical op requires register operands".to_string()));
+            return Err(Error::Emulator(
+                "Mask logical op requires register operands".to_string(),
+            ));
         }
 
         let k_src1 = vvvv as usize;
@@ -1162,7 +1309,9 @@ impl X86_64Vcpu {
         let mode = (modrm >> 6) & 0x03;
 
         if mode != 3 {
-            return Err(Error::Emulator("Mask unary op requires register operands".to_string()));
+            return Err(Error::Emulator(
+                "Mask unary op requires register operands".to_string(),
+            ));
         }
 
         let src = self.regs.k[k_src];

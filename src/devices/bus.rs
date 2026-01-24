@@ -34,7 +34,9 @@ pub struct IoBus {
 
 impl IoBus {
     pub fn new() -> Self {
-        IoBus { devices: Vec::new() }
+        IoBus {
+            devices: Vec::new(),
+        }
     }
 
     pub fn register(&mut self, range: IoRange, dev: Box<dyn IoDevice>) -> Result<()> {
@@ -188,13 +190,19 @@ mod mmio_tests {
     fn mmio_register_rejects_overlap() {
         let mut bus = MmioBus::new();
         bus.register(
-            MmioRange { base: 0x1000, len: 0x10 },
+            MmioRange {
+                base: 0x1000,
+                len: 0x10,
+            },
             Box::new(DummyMmio { last: 0 }),
         )
         .unwrap();
         let err = bus
             .register(
-                MmioRange { base: 0x1008, len: 0x10 },
+                MmioRange {
+                    base: 0x1008,
+                    len: 0x10,
+                },
                 Box::new(DummyMmio { last: 0 }),
             )
             .unwrap_err();
@@ -208,7 +216,10 @@ mod mmio_tests {
     fn mmio_read_write_dispatches() {
         let mut bus = MmioBus::new();
         bus.register(
-            MmioRange { base: 0x2000, len: 1 },
+            MmioRange {
+                base: 0x2000,
+                len: 1,
+            },
             Box::new(DummyMmio { last: 0 }),
         )
         .unwrap();
@@ -241,13 +252,19 @@ mod tests {
     fn register_rejects_overlap() {
         let mut bus = IoBus::new();
         bus.register(
-            IoRange { base: 0x3f8, len: 8 },
+            IoRange {
+                base: 0x3f8,
+                len: 8,
+            },
             Box::new(DummyDevice { last: 0 }),
         )
         .unwrap();
         let err = bus
             .register(
-                IoRange { base: 0x3fc, len: 8 },
+                IoRange {
+                    base: 0x3fc,
+                    len: 8,
+                },
                 Box::new(DummyDevice { last: 0 }),
             )
             .unwrap_err();

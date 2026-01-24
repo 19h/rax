@@ -105,7 +105,14 @@ fn fma_calc_f64(kind: FmaKind, lane: usize, a: f64, b: f64, c: f64) -> f64 {
     }
 }
 
-fn fma_f32_pair(kind: FmaKind, order: FmaOrder, lane_base: usize, src1: u64, src2: u64, src3: u64) -> u64 {
+fn fma_f32_pair(
+    kind: FmaKind,
+    order: FmaOrder,
+    lane_base: usize,
+    src1: u64,
+    src2: u64,
+    src3: u64,
+) -> u64 {
     let s1_0 = f32::from_bits(src1 as u32);
     let s1_1 = f32::from_bits((src1 >> 32) as u32);
     let s2_0 = f32::from_bits(src2 as u32);
@@ -120,7 +127,14 @@ fn fma_f32_pair(kind: FmaKind, order: FmaOrder, lane_base: usize, src1: u64, src
     r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32)
 }
 
-fn fma_f64_lane(kind: FmaKind, order: FmaOrder, lane: usize, src1: u64, src2: u64, src3: u64) -> u64 {
+fn fma_f64_lane(
+    kind: FmaKind,
+    order: FmaOrder,
+    lane: usize,
+    src1: u64,
+    src2: u64,
+    src3: u64,
+) -> u64 {
     let s1 = f64::from_bits(src1);
     let s2 = f64::from_bits(src2);
     let s3 = f64::from_bits(src3);
@@ -137,8 +151,9 @@ impl X86_64Vcpu {
         vvvv: u8,
         opcode: u8,
     ) -> Result<Option<VcpuExit>> {
-        let (kind, order, is_scalar) = decode_fma(opcode)
-            .ok_or_else(|| Error::Emulator(format!("unimplemented VEX FMA opcode {:#x}", opcode)))?;
+        let (kind, order, is_scalar) = decode_fma(opcode).ok_or_else(|| {
+            Error::Emulator(format!("unimplemented VEX FMA opcode {:#x}", opcode))
+        })?;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
         let xmm_src2 = vvvv as usize;
@@ -196,10 +211,15 @@ impl X86_64Vcpu {
                     let (src3_hi2, src3_hi3) = if is_memory {
                         (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                     } else {
-                        (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                        (
+                            self.regs.ymm_high[rm as usize][0],
+                            self.regs.ymm_high[rm as usize][1],
+                        )
                     };
-                    self.regs.ymm_high[xmm_dst][0] = fma_f64_lane(kind, order, 2, src1_hi2, src2_hi2, src3_hi2);
-                    self.regs.ymm_high[xmm_dst][1] = fma_f64_lane(kind, order, 3, src1_hi3, src2_hi3, src3_hi3);
+                    self.regs.ymm_high[xmm_dst][0] =
+                        fma_f64_lane(kind, order, 2, src1_hi2, src2_hi2, src3_hi2);
+                    self.regs.ymm_high[xmm_dst][1] =
+                        fma_f64_lane(kind, order, 3, src1_hi3, src2_hi3, src3_hi3);
                 } else {
                     self.regs.ymm_high[xmm_dst][0] = 0;
                     self.regs.ymm_high[xmm_dst][1] = 0;
@@ -216,10 +236,15 @@ impl X86_64Vcpu {
                     let (src3_hi2, src3_hi3) = if is_memory {
                         (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                     } else {
-                        (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                        (
+                            self.regs.ymm_high[rm as usize][0],
+                            self.regs.ymm_high[rm as usize][1],
+                        )
                     };
-                    self.regs.ymm_high[xmm_dst][0] = fma_f32_pair(kind, order, 4, src1_hi2, src2_hi2, src3_hi2);
-                    self.regs.ymm_high[xmm_dst][1] = fma_f32_pair(kind, order, 6, src1_hi3, src2_hi3, src3_hi3);
+                    self.regs.ymm_high[xmm_dst][0] =
+                        fma_f32_pair(kind, order, 4, src1_hi2, src2_hi2, src3_hi2);
+                    self.regs.ymm_high[xmm_dst][1] =
+                        fma_f32_pair(kind, order, 6, src1_hi3, src2_hi3, src3_hi3);
                 } else {
                     self.regs.ymm_high[xmm_dst][0] = 0;
                     self.regs.ymm_high[xmm_dst][1] = 0;

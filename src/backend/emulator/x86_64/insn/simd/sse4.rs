@@ -85,10 +85,8 @@ pub fn blendvps(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     let d2 = dst_hi & 0xFFFFFFFF;
     let d3 = dst_hi >> 32;
 
-    vcpu.regs.xmm[xmm_dst][0] =
-        (if m0 { s0 } else { d0 }) | ((if m1 { s1 } else { d1 }) << 32);
-    vcpu.regs.xmm[xmm_dst][1] =
-        (if m2 { s2 } else { d2 }) | ((if m3 { s3 } else { d3 }) << 32);
+    vcpu.regs.xmm[xmm_dst][0] = (if m0 { s0 } else { d0 }) | ((if m1 { s1 } else { d1 }) << 32);
+    vcpu.regs.xmm[xmm_dst][1] = (if m2 { s2 } else { d2 }) | ((if m3 { s3 } else { d3 }) << 32);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -140,8 +138,12 @@ pub fn ptest(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     let andn_result = (src_lo & !dst_lo) | (src_hi & !dst_hi);
 
     // Clear AF, OF, PF, SF and set ZF, CF appropriately
-    vcpu.regs.rflags &=
-        !(flags::bits::AF | flags::bits::OF | flags::bits::PF | flags::bits::SF | flags::bits::ZF | flags::bits::CF);
+    vcpu.regs.rflags &= !(flags::bits::AF
+        | flags::bits::OF
+        | flags::bits::PF
+        | flags::bits::SF
+        | flags::bits::ZF
+        | flags::bits::CF);
     if and_result == 0 {
         vcpu.regs.rflags |= flags::bits::ZF;
     }

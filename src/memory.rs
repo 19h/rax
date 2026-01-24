@@ -124,7 +124,11 @@ impl GuestMemoryWrapper {
                 userspace_addr: host_addr,
                 flags: 0,
             };
-            debug!(slot, guest_addr = format!("{:#x}", region_start), "calling set_user_memory_region");
+            debug!(
+                slot,
+                guest_addr = format!("{:#x}", region_start),
+                "calling set_user_memory_region"
+            );
             unsafe { vm_fd.set_user_memory_region(mem_region)? };
             debug!(slot, "set_user_memory_region succeeded");
 
@@ -162,7 +166,8 @@ impl GuestMemoryWrapper {
     pub fn write_all(&self, data: &[u8]) -> Result<()> {
         use vm_memory::Bytes;
         let size = data.len().min(self.reported_size as usize);
-        self.mem.write_slice(&data[..size], GuestAddress(0))
+        self.mem
+            .write_slice(&data[..size], GuestAddress(0))
             .map_err(|e| crate::error::Error::Emulator(format!("Failed to write memory: {}", e)))
     }
 }

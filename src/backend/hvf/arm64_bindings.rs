@@ -13,11 +13,9 @@ use std::ffi::c_void;
 
 // Re-use common types from the x86 bindings
 pub use super::bindings::{
-    hv_return_t, hv_gpaddr_t, hv_uvaddr_t, hv_memory_flags_t,
-    HV_SUCCESS, HV_ERROR, HV_BUSY, HV_BAD_ARGUMENT, HV_NO_RESOURCES,
-    HV_NO_DEVICE, HV_DENIED, HV_UNSUPPORTED,
-    HV_MEMORY_READ, HV_MEMORY_WRITE, HV_MEMORY_EXEC,
-    hv_error_string,
+    hv_error_string, hv_gpaddr_t, hv_memory_flags_t, hv_return_t, hv_uvaddr_t, HV_BAD_ARGUMENT,
+    HV_BUSY, HV_DENIED, HV_ERROR, HV_MEMORY_EXEC, HV_MEMORY_READ, HV_MEMORY_WRITE, HV_NO_DEVICE,
+    HV_NO_RESOURCES, HV_SUCCESS, HV_UNSUPPORTED,
 };
 
 /// ARM64 vCPU handle type
@@ -65,8 +63,8 @@ pub const HV_REG_X25: hv_reg_t = 25;
 pub const HV_REG_X26: hv_reg_t = 26;
 pub const HV_REG_X27: hv_reg_t = 27;
 pub const HV_REG_X28: hv_reg_t = 28;
-pub const HV_REG_X29: hv_reg_t = 29;  // Frame pointer (FP)
-pub const HV_REG_X30: hv_reg_t = 30;  // Link register (LR)
+pub const HV_REG_X29: hv_reg_t = 29; // Frame pointer (FP)
+pub const HV_REG_X30: hv_reg_t = 30; // Link register (LR)
 pub const HV_REG_PC: hv_reg_t = 31;
 pub const HV_REG_FPCR: hv_reg_t = 32;
 pub const HV_REG_FPSR: hv_reg_t = 33;
@@ -227,9 +225,9 @@ impl hv_vcpu_exit_exception {
     /// Extract instruction length (IL) from syndrome
     pub fn instruction_length(&self) -> u32 {
         if (self.syndrome >> 25) & 1 != 0 {
-            4  // 32-bit instruction
+            4 // 32-bit instruction
         } else {
-            2  // 16-bit instruction (Thumb)
+            2 // 16-bit instruction (Thumb)
         }
     }
 

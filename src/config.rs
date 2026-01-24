@@ -14,7 +14,8 @@ const DEFAULT_VCPUS: u8 = 1;
 /// - tsc=reliable: Don't recalibrate TSC (we provide stable instruction-based TSC)
 /// - nohz=off: Disable tickless mode (simplifies timer handling)
 /// - clocksource=tsc: Use TSC as clock source (we emulate it based on instruction count)
-const DEFAULT_CMDLINE: &str = "console=ttyS0 earlyprintk=serial,ttyS0,115200 nokaslr tsc=reliable nohz=off clocksource=tsc";
+const DEFAULT_CMDLINE: &str =
+    "console=ttyS0 earlyprintk=serial,ttyS0,115200 nokaslr tsc=reliable nohz=off clocksource=tsc";
 
 #[derive(Clone, Copy, Debug, Deserialize, ValueEnum, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -260,10 +261,7 @@ impl Aarch32Isa {
     pub fn has_neon(&self) -> bool {
         matches!(
             self,
-            Aarch32Isa::V7A
-                | Aarch32Isa::V7AVirt
-                | Aarch32Isa::V7ALpae
-                | Aarch32Isa::V8A32
+            Aarch32Isa::V7A | Aarch32Isa::V7AVirt | Aarch32Isa::V7ALpae | Aarch32Isa::V8A32
         )
     }
 
@@ -876,9 +874,7 @@ impl VmConfig {
 
     pub fn validate(&self) -> Result<()> {
         if self.vcpus == 0 {
-            return Err(Error::InvalidConfig(
-                "vcpus must be at least 1".to_string(),
-            ));
+            return Err(Error::InvalidConfig("vcpus must be at least 1".to_string()));
         }
         let min_mem_bytes = MIN_MEM_MIB << 20;
         if self.memory.bytes() < min_mem_bytes {
@@ -990,7 +986,10 @@ mod tests {
         assert_eq!(MemorySize::from_str("1K").unwrap().bytes(), 1024);
         assert_eq!(MemorySize::from_str("1KiB").unwrap().bytes(), 1024);
         assert_eq!(MemorySize::from_str("2M").unwrap().bytes(), 2 * 1024 * 1024);
-        assert_eq!(MemorySize::from_str("3g").unwrap().bytes(), 3 * 1024 * 1024 * 1024);
+        assert_eq!(
+            MemorySize::from_str("3g").unwrap().bytes(),
+            3 * 1024 * 1024 * 1024
+        );
     }
 
     #[test]

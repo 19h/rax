@@ -908,7 +908,8 @@ impl X86_64Vcpu {
                 };
                 let src1_lo = self.regs.xmm[xmm_dst][0];
                 let src1_hi = self.regs.xmm[xmm_dst][1];
-                let (result_lo, result_hi) = sha::sha1rnds4(src1_lo, src1_hi, src2_lo, src2_hi, imm8);
+                let (result_lo, result_hi) =
+                    sha::sha1rnds4(src1_lo, src1_hi, src2_lo, src2_hi, imm8);
                 self.regs.xmm[xmm_dst][0] = result_lo;
                 self.regs.xmm[xmm_dst][1] = result_hi;
                 self.regs.rip += ctx.cursor as u64;
@@ -1111,14 +1112,24 @@ impl X86_64Vcpu {
 
         // Apply polarity
         // Use u32 for the mask to avoid overflow when num_elements = 16
-        let mask = if num_elements == 16 { 0xFFFFu16 } else { ((1u16 << num_elements) - 1) };
+        let mask = if num_elements == 16 {
+            0xFFFFu16
+        } else {
+            ((1u16 << num_elements) - 1)
+        };
         let int_res2 = match polarity {
-            0 => int_res1,                                                    // Positive
-            1 => !int_res1 & mask,                                            // Negative
-            2 => int_res1,                                                    // Masked positive
+            0 => int_res1,         // Positive
+            1 => !int_res1 & mask, // Negative
+            2 => int_res1,         // Masked positive
             3 => {
                 // Masked negative: XOR with valid mask
-                let valid_mask = if valid2 == 16 { 0xFFFFu16 } else if valid2 == 0 { 0 } else { (1u16 << valid2) - 1 };
+                let valid_mask = if valid2 == 16 {
+                    0xFFFFu16
+                } else if valid2 == 0 {
+                    0
+                } else {
+                    (1u16 << valid2) - 1
+                };
                 (int_res1 ^ valid_mask) & mask
             }
             _ => int_res1,

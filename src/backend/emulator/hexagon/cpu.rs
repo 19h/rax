@@ -256,7 +256,12 @@ impl HexagonVcpu {
         new_r[reg as usize].unwrap_or(self.regs.r[reg as usize])
     }
 
-    fn set_branch(&self, branch: &mut Option<BranchTarget>, target: u32, is_call: bool) -> Result<()> {
+    fn set_branch(
+        &self,
+        branch: &mut Option<BranchTarget>,
+        target: u32,
+        is_call: bool,
+    ) -> Result<()> {
         if branch.is_some() {
             return Err(Error::Emulator("multiple branches in packet".to_string()));
         }
@@ -274,9 +279,7 @@ impl HexagonVcpu {
     ) -> Result<Option<VcpuExit>> {
         match insn {
             DecodedInsn::ImmExt { .. } => {
-                return Err(Error::Emulator(
-                    "unexpected immext in execute".to_string(),
-                ));
+                return Err(Error::Emulator("unexpected immext in execute".to_string()));
             }
             DecodedInsn::Add { dst, src1, src2 } => {
                 let val = self.regs.r[src1 as usize].wrapping_add(self.regs.r[src2 as usize]);
@@ -287,8 +290,7 @@ impl HexagonVcpu {
                 new_r[dst as usize] = Some(val);
             }
             DecodedInsn::And { dst, src1, src2 } => {
-                new_r[dst as usize] =
-                    Some(self.regs.r[src1 as usize] & self.regs.r[src2 as usize]);
+                new_r[dst as usize] = Some(self.regs.r[src1 as usize] & self.regs.r[src2 as usize]);
             }
             DecodedInsn::AndImm { dst, src, imm } => {
                 new_r[dst as usize] = Some(self.regs.r[src as usize] & imm);
@@ -297,12 +299,10 @@ impl HexagonVcpu {
                 new_r[dst as usize] = Some(self.regs.r[src as usize] | imm);
             }
             DecodedInsn::Or { dst, src1, src2 } => {
-                new_r[dst as usize] =
-                    Some(self.regs.r[src1 as usize] | self.regs.r[src2 as usize]);
+                new_r[dst as usize] = Some(self.regs.r[src1 as usize] | self.regs.r[src2 as usize]);
             }
             DecodedInsn::Xor { dst, src1, src2 } => {
-                new_r[dst as usize] =
-                    Some(self.regs.r[src1 as usize] ^ self.regs.r[src2 as usize]);
+                new_r[dst as usize] = Some(self.regs.r[src1 as usize] ^ self.regs.r[src2 as usize]);
             }
             DecodedInsn::AddImm { dst, src, imm } => {
                 let val = self.regs.r[src as usize].wrapping_add(imm as u32);
@@ -1037,13 +1037,8 @@ impl HexagonVcpu {
 
         loop {
             if let Some(sub) = pending_subinsn.take() {
-                if let Some(exit) = self.execute_insn(
-                    sub.insn,
-                    packet_pc,
-                    &mut new_r,
-                    &mut new_p,
-                    &mut branch,
-                )?
+                if let Some(exit) =
+                    self.execute_insn(sub.insn, packet_pc, &mut new_r, &mut new_p, &mut branch)?
                 {
                     if matches!(exit, VcpuExit::Shutdown) {
                         self.finish_packet(
@@ -1109,13 +1104,9 @@ impl HexagonVcpu {
                 self.ensure_isa_supports(word, &slot1.insn, slot1.opcode)?;
                 self.ensure_isa_supports(word, &slot0.insn, slot0.opcode)?;
 
-                if let Some(exit) = self.execute_insn(
-                    slot1.insn,
-                    packet_pc,
-                    &mut new_r,
-                    &mut new_p,
-                    &mut branch,
-                )? {
+                if let Some(exit) =
+                    self.execute_insn(slot1.insn, packet_pc, &mut new_r, &mut new_p, &mut branch)?
+                {
                     if matches!(exit, VcpuExit::Shutdown) {
                         self.finish_packet(
                             pc.wrapping_add(4),
@@ -1148,13 +1139,9 @@ impl HexagonVcpu {
                     return Ok(Some(exit));
                 }
 
-                if let Some(exit) = self.execute_insn(
-                    slot0.insn,
-                    packet_pc,
-                    &mut new_r,
-                    &mut new_p,
-                    &mut branch,
-                )? {
+                if let Some(exit) =
+                    self.execute_insn(slot0.insn, packet_pc, &mut new_r, &mut new_p, &mut branch)?
+                {
                     if matches!(exit, VcpuExit::Shutdown) {
                         self.finish_packet(
                             pc.wrapping_add(4),
@@ -1331,9 +1318,7 @@ impl VCpu for HexagonVcpu {
                     }
                 }
                 4 if data.len() >= 4 => match self.endian {
-                    Endianness::Little => {
-                        u32::from_le_bytes([data[0], data[1], data[2], data[3]])
-                    }
+                    Endianness::Little => u32::from_le_bytes([data[0], data[1], data[2], data[3]]),
                     Endianness::Big => u32::from_be_bytes([data[0], data[1], data[2], data[3]]),
                 },
                 _ => return,

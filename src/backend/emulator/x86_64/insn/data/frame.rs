@@ -66,23 +66,23 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
         }
 
         // Decode P0: R X B R' 0 m m m
-        let r = (p0 & 0x80) != 0;      // R bit (inverted)
-        let x = (p0 & 0x40) != 0;      // X bit (inverted)
-        let b = (p0 & 0x20) != 0;      // B bit (inverted)
+        let r = (p0 & 0x80) != 0; // R bit (inverted)
+        let x = (p0 & 0x40) != 0; // X bit (inverted)
+        let b = (p0 & 0x20) != 0; // B bit (inverted)
         let r_prime = (p0 & 0x10) != 0; // R' bit (inverted)
-        let mm = p0 & 0x07;            // mm field (opcode map)
+        let mm = p0 & 0x07; // mm field (opcode map)
 
         // Decode P1: W v v v v 1 p p
-        let w = (p1 & 0x80) != 0;      // W bit
-        let vvvv = (p1 >> 3) & 0x0F;   // vvvv field (inverted)
-        let pp = p1 & 0x03;            // pp field (implied prefix)
+        let w = (p1 & 0x80) != 0; // W bit
+        let vvvv = (p1 >> 3) & 0x0F; // vvvv field (inverted)
+        let pp = p1 & 0x03; // pp field (implied prefix)
 
         // Decode P2: z L' L b V' a a a
-        let z = (p2 & 0x80) != 0;      // z bit (zeroing)
-        let ll = (p2 >> 5) & 0x03;     // L'L field
+        let z = (p2 & 0x80) != 0; // z bit (zeroing)
+        let ll = (p2 >> 5) & 0x03; // L'L field
         let broadcast = (p2 & 0x10) != 0; // b bit
         let v_prime = (p2 & 0x08) != 0; // V' bit (inverted)
-        let aaa = p2 & 0x07;           // aaa field (opmask)
+        let aaa = p2 & 0x07; // aaa field (opmask)
 
         // Store EVEX prefix in context
         ctx.evex = Some(EvexPrefix {

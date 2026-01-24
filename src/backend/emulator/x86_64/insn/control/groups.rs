@@ -70,7 +70,10 @@ pub fn group4(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         }
         _ => {
             // 0xFE /2-7 are undefined - inject #UD exception
-            eprintln!("[#UD] 0xFE /{} at RIP={:#x} (undefined opcode)", op, vcpu.regs.rip);
+            eprintln!(
+                "[#UD] 0xFE /{} at RIP={:#x} (undefined opcode)",
+                op, vcpu.regs.rip
+            );
             vcpu.inject_exception(6, None)?; // #UD = vector 6
             return Ok(None);
         }
@@ -243,11 +246,19 @@ pub fn group5(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             let in_long_mode = (vcpu.sregs.efer & 0x400) != 0;
             let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
             let op_size = if in_64bit_mode {
-                if ctx.operand_size_override { 2 } else { 8 }
+                if ctx.operand_size_override {
+                    2
+                } else {
+                    8
+                }
             } else {
                 let default_16bit = !vcpu.sregs.cs.db;
                 let is_16bit = default_16bit ^ ctx.operand_size_override;
-                if is_16bit { 2 } else { 4 }
+                if is_16bit {
+                    2
+                } else {
+                    4
+                }
             };
 
             let val = if modrm >> 6 == 3 {

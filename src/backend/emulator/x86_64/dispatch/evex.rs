@@ -30,7 +30,10 @@ impl X86_64Vcpu {
 
         // Record precise opcode key for profiling
         #[cfg(feature = "profiling")]
-        crate::profiling::set_current_opcode_key(crate::profiling::OpcodeKey::Evex { map: mm, opcode });
+        crate::profiling::set_current_opcode_key(crate::profiling::OpcodeKey::Evex {
+            map: mm,
+            opcode,
+        });
 
         match mm {
             1 => self.execute_evex_0f(ctx, opcode),
@@ -45,32 +48,20 @@ impl X86_64Vcpu {
     }
 
     /// EVEX 0F opcode map (mm=1)
-    fn execute_evex_0f(
-        &mut self,
-        ctx: &mut InsnContext,
-        opcode: u8,
-    ) -> Result<Option<VcpuExit>> {
-        let evex = ctx.evex.ok_or_else(|| {
-            Error::Emulator("EVEX context missing".to_string())
-        })?;
+    fn execute_evex_0f(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+        let evex = ctx
+            .evex
+            .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
 
         match opcode {
             // VMOVUPS/VMOVAPS load (0x10/0x28)
-            0x10 | 0x28 if evex.pp == 0 => {
-                self.execute_evex_mov_load(ctx, opcode == 0x28)
-            }
+            0x10 | 0x28 if evex.pp == 0 => self.execute_evex_mov_load(ctx, opcode == 0x28),
             // VMOVUPD/VMOVAPD load (0x10/0x28 with 66 prefix)
-            0x10 | 0x28 if evex.pp == 1 => {
-                self.execute_evex_mov_load(ctx, opcode == 0x28)
-            }
+            0x10 | 0x28 if evex.pp == 1 => self.execute_evex_mov_load(ctx, opcode == 0x28),
             // VMOVUPS/VMOVAPS store (0x11/0x29)
-            0x11 | 0x29 if evex.pp == 0 => {
-                self.execute_evex_mov_store(ctx, opcode == 0x29)
-            }
+            0x11 | 0x29 if evex.pp == 0 => self.execute_evex_mov_store(ctx, opcode == 0x29),
             // VMOVUPD/VMOVAPD store (0x11/0x29 with 66 prefix)
-            0x11 | 0x29 if evex.pp == 1 => {
-                self.execute_evex_mov_store(ctx, opcode == 0x29)
-            }
+            0x11 | 0x29 if evex.pp == 1 => self.execute_evex_mov_store(ctx, opcode == 0x29),
             // VADDPS/VADDPD (0x58)
             0x58 => self.execute_evex_fp_arith(ctx, |a, b| a + b),
             // VMULPS/VMULPD (0x59)
@@ -103,9 +94,9 @@ impl X86_64Vcpu {
 
         // Vector length from L'L
         let vl = match evex.ll {
-            0 => 16,  // 128-bit (XMM)
-            1 => 32,  // 256-bit (YMM)
-            2 => 64,  // 512-bit (ZMM)
+            0 => 16, // 128-bit (XMM)
+            1 => 32, // 256-bit (YMM)
+            2 => 64, // 512-bit (ZMM)
             _ => 64,
         };
 
@@ -113,7 +104,8 @@ impl X86_64Vcpu {
             // Check alignment for VMOVAPS/VMOVAPD
             if aligned && (addr % vl as u64) != 0 {
                 return Err(Error::Emulator(format!(
-                    "VMOVAPS: unaligned memory access at {:#x}", addr
+                    "VMOVAPS: unaligned memory access at {:#x}",
+                    addr
                 )));
             }
             // Load from memory to ZMM register
@@ -153,9 +145,9 @@ impl X86_64Vcpu {
 
         // Vector length from L'L
         let vl = match evex.ll {
-            0 => 16,  // 128-bit (XMM)
-            1 => 32,  // 256-bit (YMM)
-            2 => 64,  // 512-bit (ZMM)
+            0 => 16, // 128-bit (XMM)
+            1 => 32, // 256-bit (YMM)
+            2 => 64, // 512-bit (ZMM)
             _ => 64,
         };
 
@@ -163,7 +155,8 @@ impl X86_64Vcpu {
             // Check alignment for VMOVAPS/VMOVAPD
             if aligned && (addr % vl as u64) != 0 {
                 return Err(Error::Emulator(format!(
-                    "VMOVAPS: unaligned memory access at {:#x}", addr
+                    "VMOVAPS: unaligned memory access at {:#x}",
+                    addr
                 )));
             }
             // Store ZMM register to memory
@@ -188,11 +181,7 @@ impl X86_64Vcpu {
     }
 
     /// EVEX floating-point arithmetic (VADDPS/PD, VMULPS/PD, VSUBPS/PD, VDIVPS/PD)
-    fn execute_evex_fp_arith<F>(
-        &mut self,
-        ctx: &mut InsnContext,
-        op: F,
-    ) -> Result<Option<VcpuExit>>
+    fn execute_evex_fp_arith<F>(&mut self, ctx: &mut InsnContext, op: F) -> Result<Option<VcpuExit>>
     where
         F: Fn(f32, f32) -> f32,
     {
@@ -208,9 +197,9 @@ impl X86_64Vcpu {
 
         // Vector length from L'L
         let vl = match evex.ll {
-            0 => 16,  // 128-bit
-            1 => 32,  // 256-bit
-            2 => 64,  // 512-bit
+            0 => 16, // 128-bit
+            1 => 32, // 256-bit
+            2 => 64, // 512-bit
             _ => 64,
         };
 
@@ -231,11 +220,21 @@ impl X86_64Vcpu {
         // Perform operation
         let mut result = [0u8; 64];
         for i in 0..num_elems {
-            let a = f32::from_le_bytes([src1[i*4], src1[i*4+1], src1[i*4+2], src1[i*4+3]]);
-            let b = f32::from_le_bytes([src2[i*4], src2[i*4+1], src2[i*4+2], src2[i*4+3]]);
+            let a = f32::from_le_bytes([
+                src1[i * 4],
+                src1[i * 4 + 1],
+                src1[i * 4 + 2],
+                src1[i * 4 + 3],
+            ]);
+            let b = f32::from_le_bytes([
+                src2[i * 4],
+                src2[i * 4 + 1],
+                src2[i * 4 + 2],
+                src2[i * 4 + 3],
+            ]);
             let r = op(a, b);
             let bytes = r.to_le_bytes();
-            result[i*4..i*4+4].copy_from_slice(&bytes);
+            result[i * 4..i * 4 + 4].copy_from_slice(&bytes);
         }
 
         // Store result
@@ -255,10 +254,7 @@ impl X86_64Vcpu {
     }
 
     /// EVEX bitwise XOR (VXORPS, VXORPD)
-    fn execute_evex_bitwise_xor(
-        &mut self,
-        ctx: &mut InsnContext,
-    ) -> Result<Option<VcpuExit>> {
+    fn execute_evex_bitwise_xor(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
@@ -271,9 +267,9 @@ impl X86_64Vcpu {
 
         // Vector length from L'L
         let vl = match evex.ll {
-            0 => 16,  // 128-bit
-            1 => 32,  // 256-bit
-            2 => 64,  // 512-bit
+            0 => 16, // 128-bit
+            1 => 32, // 256-bit
+            2 => 64, // 512-bit
             _ => 64,
         };
 
@@ -426,7 +422,7 @@ impl X86_64Vcpu {
             let idx = zmm - 16;
             for i in 0..(vl / 8) {
                 let start = i * 8;
-                data[start..start+8].copy_from_slice(&self.regs.zmm_ext[idx][i].to_le_bytes());
+                data[start..start + 8].copy_from_slice(&self.regs.zmm_ext[idx][i].to_le_bytes());
             }
         }
         data
@@ -437,46 +433,64 @@ impl X86_64Vcpu {
         for i in 0..(vl / 8) {
             let val = self.read_mem(addr + (i * 8) as u64, 8)?;
             let start = i * 8;
-            data[start..start+8].copy_from_slice(&val.to_le_bytes());
+            data[start..start + 8].copy_from_slice(&val.to_le_bytes());
         }
         Ok(data)
     }
 
     fn set_zmm_data(&mut self, zmm: usize, data: &[u8], vl: usize) {
         if zmm < 16 {
-            self.regs.xmm[zmm][0] = u64::from_le_bytes([data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]]);
-            self.regs.xmm[zmm][1] = u64::from_le_bytes([data[8], data[9], data[10], data[11], data[12], data[13], data[14], data[15]]);
+            self.regs.xmm[zmm][0] = u64::from_le_bytes([
+                data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7],
+            ]);
+            self.regs.xmm[zmm][1] = u64::from_le_bytes([
+                data[8], data[9], data[10], data[11], data[12], data[13], data[14], data[15],
+            ]);
             if vl > 16 {
-                self.regs.ymm_high[zmm][0] = u64::from_le_bytes([data[16], data[17], data[18], data[19], data[20], data[21], data[22], data[23]]);
-                self.regs.ymm_high[zmm][1] = u64::from_le_bytes([data[24], data[25], data[26], data[27], data[28], data[29], data[30], data[31]]);
+                self.regs.ymm_high[zmm][0] = u64::from_le_bytes([
+                    data[16], data[17], data[18], data[19], data[20], data[21], data[22], data[23],
+                ]);
+                self.regs.ymm_high[zmm][1] = u64::from_le_bytes([
+                    data[24], data[25], data[26], data[27], data[28], data[29], data[30], data[31],
+                ]);
             }
             if vl > 32 {
-                self.regs.zmm_high[zmm][0] = u64::from_le_bytes([data[32], data[33], data[34], data[35], data[36], data[37], data[38], data[39]]);
-                self.regs.zmm_high[zmm][1] = u64::from_le_bytes([data[40], data[41], data[42], data[43], data[44], data[45], data[46], data[47]]);
-                self.regs.zmm_high[zmm][2] = u64::from_le_bytes([data[48], data[49], data[50], data[51], data[52], data[53], data[54], data[55]]);
-                self.regs.zmm_high[zmm][3] = u64::from_le_bytes([data[56], data[57], data[58], data[59], data[60], data[61], data[62], data[63]]);
+                self.regs.zmm_high[zmm][0] = u64::from_le_bytes([
+                    data[32], data[33], data[34], data[35], data[36], data[37], data[38], data[39],
+                ]);
+                self.regs.zmm_high[zmm][1] = u64::from_le_bytes([
+                    data[40], data[41], data[42], data[43], data[44], data[45], data[46], data[47],
+                ]);
+                self.regs.zmm_high[zmm][2] = u64::from_le_bytes([
+                    data[48], data[49], data[50], data[51], data[52], data[53], data[54], data[55],
+                ]);
+                self.regs.zmm_high[zmm][3] = u64::from_le_bytes([
+                    data[56], data[57], data[58], data[59], data[60], data[61], data[62], data[63],
+                ]);
             }
         } else {
             let idx = zmm - 16;
             for i in 0..(vl / 8) {
                 let start = i * 8;
                 self.regs.zmm_ext[idx][i] = u64::from_le_bytes([
-                    data[start], data[start+1], data[start+2], data[start+3],
-                    data[start+4], data[start+5], data[start+6], data[start+7]
+                    data[start],
+                    data[start + 1],
+                    data[start + 2],
+                    data[start + 3],
+                    data[start + 4],
+                    data[start + 5],
+                    data[start + 6],
+                    data[start + 7],
                 ]);
             }
         }
     }
 
     /// EVEX 0F38 opcode map (mm=2)
-    fn execute_evex_0f38(
-        &mut self,
-        ctx: &mut InsnContext,
-        opcode: u8,
-    ) -> Result<Option<VcpuExit>> {
-        let evex = ctx.evex.ok_or_else(|| {
-            Error::Emulator("EVEX context missing".to_string())
-        })?;
+    fn execute_evex_0f38(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+        let evex = ctx
+            .evex
+            .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
 
         match opcode {
             // VPMULLD/VPMULLQ (0x40)
@@ -530,11 +544,7 @@ impl X86_64Vcpu {
     }
 
     /// EVEX 0F3A opcode map (mm=3)
-    fn execute_evex_0f3a(
-        &mut self,
-        ctx: &mut InsnContext,
-        opcode: u8,
-    ) -> Result<Option<VcpuExit>> {
+    fn execute_evex_0f3a(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
         Err(Error::Emulator(format!(
             "Unimplemented EVEX.0F3A opcode {:#04x} at RIP={:#x}",
             opcode, self.regs.rip
@@ -542,14 +552,10 @@ impl X86_64Vcpu {
     }
 
     /// EVEX MAP5 opcode map (mm=5) - AVX-512 FP16 instructions
-    fn execute_evex_map5(
-        &mut self,
-        ctx: &mut InsnContext,
-        opcode: u8,
-    ) -> Result<Option<VcpuExit>> {
-        let evex = ctx.evex.ok_or_else(|| {
-            Error::Emulator("EVEX context missing".to_string())
-        })?;
+    fn execute_evex_map5(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+        let evex = ctx
+            .evex
+            .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
 
         // MAP5 instructions are FP16 (half-precision) arithmetic
         // pp=0 (NP), W=0 for packed FP16
@@ -590,9 +596,9 @@ impl X86_64Vcpu {
 
         // Vector length from L'L
         let vl = match evex.ll {
-            0 => 16,  // 128-bit (8 FP16 values)
-            1 => 32,  // 256-bit (16 FP16 values)
-            2 => 64,  // 512-bit (32 FP16 values)
+            0 => 16, // 128-bit (8 FP16 values)
+            1 => 32, // 256-bit (16 FP16 values)
+            2 => 64, // 512-bit (32 FP16 values)
             _ => 64,
         };
 
@@ -614,14 +620,14 @@ impl X86_64Vcpu {
         let mut result = [0u8; 64];
         for i in 0..num_elems {
             // Convert FP16 to f32, perform operation, convert back to FP16
-            let a_fp16 = u16::from_le_bytes([src1[i*2], src1[i*2+1]]);
-            let b_fp16 = u16::from_le_bytes([src2[i*2], src2[i*2+1]]);
+            let a_fp16 = u16::from_le_bytes([src1[i * 2], src1[i * 2 + 1]]);
+            let b_fp16 = u16::from_le_bytes([src2[i * 2], src2[i * 2 + 1]]);
             let a = fp16_to_f32(a_fp16);
             let b = fp16_to_f32(b_fp16);
             let r = op(a, b);
             let r_fp16 = f32_to_fp16(r);
             let bytes = r_fp16.to_le_bytes();
-            result[i*2..i*2+2].copy_from_slice(&bytes);
+            result[i * 2..i * 2 + 2].copy_from_slice(&bytes);
         }
 
         // Store result

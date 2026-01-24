@@ -9,7 +9,7 @@ use super::super::super::super::flags;
 use super::super::super::super::insn;
 
 impl X86_64Vcpu {
-   #[inline(always)]
+    #[inline(always)]
     pub(in crate::backend::emulator::x86_64) fn execute_0f01(
         &mut self,
         ctx: &mut InsnContext,
@@ -23,26 +23,26 @@ impl X86_64Vcpu {
                 0xC1 => {
                     // VMCALL (0x0F 0x01 0xC1) - VMX hypercall
                     ctx.consume_u8()?; // consume modrm
-                    // In a real hypervisor, this would cause a VM exit.
-                    // When running without VMX, this should generate #UD.
-                    // For our emulator, treat as NOP - kernel uses this for
-                    // paravirtualized hints in delay loops.
+                                       // In a real hypervisor, this would cause a VM exit.
+                                       // When running without VMX, this should generate #UD.
+                                       // For our emulator, treat as NOP - kernel uses this for
+                                       // paravirtualized hints in delay loops.
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xC8 => {
                     // MONITOR (0x0F 0x01 0xC8) - Set up address range monitoring
                     ctx.consume_u8()?; // consume modrm
-                    // MONITOR sets up an address range for monitoring using RAX/EAX
-                    // For emulation, treat as NOP - no actual hardware monitoring
+                                       // MONITOR sets up an address range for monitoring using RAX/EAX
+                                       // For emulation, treat as NOP - no actual hardware monitoring
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xC9 => {
                     // MWAIT (0x0F 0x01 0xC9) - Monitor wait
                     ctx.consume_u8()?; // consume modrm
-                    // MWAIT hints processor to enter optimized state while waiting
-                    // For emulation, treat as NOP - no power management
+                                       // MWAIT hints processor to enter optimized state while waiting
+                                       // For emulation, treat as NOP - no power management
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
@@ -69,7 +69,7 @@ impl X86_64Vcpu {
                 0xD4 => {
                     // VMFUNC (0x0F 0x01 0xD4) - VMX function
                     ctx.consume_u8()?; // consume modrm
-                    // Treat as NOP in emulator
+                                       // Treat as NOP in emulator
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
@@ -83,7 +83,7 @@ impl X86_64Vcpu {
                 0xD9 => {
                     // VMMCALL (0x0F 0x01 0xD9) - AMD SVM hypercall
                     ctx.consume_u8()?; // consume modrm
-                    // Treat as NOP like VMCALL
+                                       // Treat as NOP like VMCALL
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
@@ -91,7 +91,7 @@ impl X86_64Vcpu {
                     // XTEST (0x0F 0x01 0xD6) - Test if in transactional execution
                     ctx.consume_u8()?; // consume modrm
                                        // TSX not supported, ZF=1 (not in transaction)
-                    // Clear lazy flags before setting ZF directly
+                                       // Clear lazy flags before setting ZF directly
                     self.clear_lazy_flags();
                     self.regs.rflags |= flags::bits::ZF;
                     self.regs.rip += ctx.cursor as u64;
@@ -100,7 +100,7 @@ impl X86_64Vcpu {
                 0xCA => {
                     // CLAC (0x0F 0x01 0xCA) - Clear AC flag
                     ctx.consume_u8()?; // consume modrm
-                    // Note: AC is not a lazy flag, but clear for consistency
+                                       // Note: AC is not a lazy flag, but clear for consistency
                     self.clear_lazy_flags();
                     self.regs.rflags &= !flags::bits::AC;
                     self.regs.rip += ctx.cursor as u64;
@@ -109,7 +109,7 @@ impl X86_64Vcpu {
                 0xCB => {
                     // STAC (0x0F 0x01 0xCB) - Set AC flag
                     ctx.consume_u8()?; // consume modrm
-                    // Note: AC is not a lazy flag, but clear for consistency
+                                       // Note: AC is not a lazy flag, but clear for consistency
                     self.clear_lazy_flags();
                     self.regs.rflags |= flags::bits::AC;
                     self.regs.rip += ctx.cursor as u64;
@@ -118,14 +118,14 @@ impl X86_64Vcpu {
                 0xE8 => {
                     // SERIALIZE (0x0F 0x01 0xE8) - Serialize instruction execution
                     ctx.consume_u8()?; // consume modrm
-                    // Serializing instruction - no architectural state changes in emulation.
+                                       // Serializing instruction - no architectural state changes in emulation.
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xEA if ctx.rep_prefix == Some(0xF3) => {
                     // SAVEPREVSSP (F3 0F 01 EA) - Save previous shadow stack pointer
                     ctx.consume_u8()?; // consume modrm
-                    // CET shadow stack instruction - treat as NOP in emulation
+                                       // CET shadow stack instruction - treat as NOP in emulation
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
@@ -144,7 +144,9 @@ impl X86_64Vcpu {
                     // WRPKRU (0x0F 0x01 0xEF) - Write EAX into PKRU
                     ctx.consume_u8()?; // consume modrm
                     if (self.regs.rcx as u32) != 0 || (self.regs.rdx as u32) != 0 {
-                        return Err(Error::Emulator("WRPKRU requires ECX=0 and EDX=0".to_string()));
+                        return Err(Error::Emulator(
+                            "WRPKRU requires ECX=0 and EDX=0".to_string(),
+                        ));
                     }
                     self.pkru = self.regs.rax as u32;
                     self.regs.rip += ctx.cursor as u64;
@@ -153,7 +155,7 @@ impl X86_64Vcpu {
                 0xF8 => {
                     // SWAPGS (0x0F 0x01 0xF8) - Swap GS base with IA32_KERNEL_GS_BASE
                     ctx.consume_u8()?; // consume modrm
-                    // Exchange GS.base with IA32_KERNEL_GS_BASE MSR (0xC0000102)
+                                       // Exchange GS.base with IA32_KERNEL_GS_BASE MSR (0xC0000102)
                     let gs_base = self.sregs.gs.base;
                     let kernel_gs_base = self.kernel_gs_base;
                     self.sregs.gs.base = kernel_gs_base;
@@ -322,8 +324,7 @@ impl X86_64Vcpu {
                     // XMM0-XMM15 at offset 160
                     for i in 0..16 {
                         self.regs.xmm[i][0] = self.read_mem64(addr + 160 + (i as u64) * 16)?;
-                        self.regs.xmm[i][1] =
-                            self.read_mem64(addr + 160 + (i as u64) * 16 + 8)?;
+                        self.regs.xmm[i][1] = self.read_mem64(addr + 160 + (i as u64) * 16 + 8)?;
                     }
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
@@ -349,7 +350,7 @@ impl X86_64Vcpu {
                     let xcr0 = 0x03u64; // x87 + SSE
                     self.write_mem(addr + 512, xcr0, 8)?; // XSTATE_BV in header
                     self.write_mem(addr + 520, 0u64, 8)?; // XCOMP_BV
-                                                           // Zero rest of legacy region
+                                                          // Zero rest of legacy region
                     for i in 0..64 {
                         self.write_mem(addr + i * 8, 0u64, 8)?;
                     }

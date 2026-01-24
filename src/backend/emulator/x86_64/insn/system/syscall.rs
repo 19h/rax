@@ -50,7 +50,9 @@ pub fn syscall(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 
     let in_long_mode = (vcpu.sregs.efer & EFER_LMA) != 0 && vcpu.sregs.cs.l;
     if !in_long_mode || (vcpu.sregs.efer & EFER_SCE) == 0 {
-        return Err(Error::Emulator("SYSCALL requires EFER.LMA and EFER.SCE".to_string()));
+        return Err(Error::Emulator(
+            "SYSCALL requires EFER.LMA and EFER.SCE".to_string(),
+        ));
     }
 
     let _count = SYSCALL_COUNT.fetch_add(1, Ordering::Relaxed);
@@ -59,8 +61,10 @@ pub fn syscall(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
     let syscall_nr = vcpu.regs.rax;
     if syscall_nr == 56 || syscall_nr == 57 || syscall_nr == 58 || syscall_nr == 435 {
         // 56=clone, 57=fork, 58=vfork, 435=clone3
-        eprintln!("[FORK/CLONE] syscall={} (clone=56,fork=57,vfork=58,clone3=435) RIP={:#x}", 
-                  syscall_nr, vcpu.regs.rip);
+        eprintln!(
+            "[FORK/CLONE] syscall={} (clone=56,fork=57,vfork=58,clone3=435) RIP={:#x}",
+            syscall_nr, vcpu.regs.rip
+        );
     }
 
     let next_rip = vcpu.regs.rip + ctx.cursor as u64;
@@ -85,7 +89,9 @@ pub fn sysret(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
 
     let in_long_mode = (vcpu.sregs.efer & EFER_LMA) != 0 && vcpu.sregs.cs.l;
     if !in_long_mode || (vcpu.sregs.efer & EFER_SCE) == 0 {
-        return Err(Error::Emulator("SYSRET requires EFER.LMA and EFER.SCE".to_string()));
+        return Err(Error::Emulator(
+            "SYSRET requires EFER.LMA and EFER.SCE".to_string(),
+        ));
     }
 
     let cpl = (vcpu.sregs.cs.selector & 0x3) as u8;

@@ -138,12 +138,7 @@ pub fn regs_to_hvf(vcpu: hv_vcpuid_t, regs: &Registers) -> Result<()> {
 /// Bit 14: D/B
 /// Bit 15: G (granularity)
 /// Bit 16: Unusable
-fn segment_from_vmcs(
-    selector: u64,
-    base: u64,
-    limit: u64,
-    access_rights: u64,
-) -> Segment {
+fn segment_from_vmcs(selector: u64, base: u64, limit: u64, access_rights: u64) -> Segment {
     Segment {
         base,
         limit: limit as u32,
@@ -292,8 +287,8 @@ pub fn sregs_from_hvf(vcpu: hv_vcpuid_t) -> Result<SystemRegisters> {
         cr4,
         cr8: 0, // CR8 (TPR) - not directly accessible via basic VMCS
         efer,
-        star: 0,   // These MSRs require MSR load/store areas
-        lstar: 0,  // which we'll handle separately
+        star: 0,  // These MSRs require MSR load/store areas
+        lstar: 0, // which we'll handle separately
         cstar: 0,
         fmask: 0,
         sysenter_cs,
@@ -426,10 +421,10 @@ pub fn sregs_to_hvf(vcpu: hv_vcpuid_t, sregs: &SystemRegisters) -> Result<()> {
 
 /// Parse VMX exit qualification for I/O exits.
 pub struct IoExitQualification {
-    pub size: u8,      // 1, 2, or 4 bytes
+    pub size: u8, // 1, 2, or 4 bytes
     pub direction: IoDirection,
-    pub string: bool,  // String I/O (INS/OUTS)
-    pub rep: bool,     // REP prefix
+    pub string: bool, // String I/O (INS/OUTS)
+    pub rep: bool,    // REP prefix
     pub port: u16,
 }
 

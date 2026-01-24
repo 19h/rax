@@ -61,7 +61,7 @@ pub struct SetupHeader {
     pub root_dev: u16,
     pub boot_flag: u16,
     pub jump: u16,
-    pub header: u32,       // "HdrS" magic
+    pub header: u32, // "HdrS" magic
     pub version: u16,
     pub realmode_swtch: u32,
     pub start_sys_seg: u16,
@@ -99,13 +99,13 @@ pub struct SetupHeader {
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct BootParams {
-    pub screen_info: ScreenInfo,             // Offset 0x000, size 0x40
-    pub _pad1: [u8; 0x1e8 - 0x40],            // Padding from 0x40 to 0x1e8
-    pub e820_entries: u8,                    // Offset 0x1e8
-    pub _pad2: [u8; 0x1f1 - 0x1e9],           // Padding from 0x1e9 to 0x1f1
-    pub hdr: SetupHeader,                    // Offset 0x1f1
+    pub screen_info: ScreenInfo,    // Offset 0x000, size 0x40
+    pub _pad1: [u8; 0x1e8 - 0x40],  // Padding from 0x40 to 0x1e8
+    pub e820_entries: u8,           // Offset 0x1e8
+    pub _pad2: [u8; 0x1f1 - 0x1e9], // Padding from 0x1e9 to 0x1f1
+    pub hdr: SetupHeader,           // Offset 0x1f1
     pub _pad3: [u8; 0x2d0 - (0x1f1 + core::mem::size_of::<SetupHeader>())],
-    pub e820_table: [BootE820Entry; 128],    // Offset 0x2d0
+    pub e820_table: [BootE820Entry; 128], // Offset 0x2d0
 }
 
 impl Default for BootParams {
@@ -182,7 +182,11 @@ pub fn load_bzimage_from_bytes(
     }
 
     // Parse setup header
-    let setup_sects = if data[0x1f1] == 0 { 4 } else { data[0x1f1] as usize };
+    let setup_sects = if data[0x1f1] == 0 {
+        4
+    } else {
+        data[0x1f1] as usize
+    };
     let setup_size = (setup_sects + 1) * 512;
 
     if data.len() < setup_size {

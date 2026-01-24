@@ -23,7 +23,9 @@ impl X86_64Vcpu {
         let is_ss = vex_pp == 2;
         let is_sd = vex_pp == 3;
         if !is_ss && !is_sd {
-            return Err(Error::Emulator("VMOVSS/VMOVSD require F3/F2 prefix".to_string()));
+            return Err(Error::Emulator(
+                "VMOVSS/VMOVSD require F3/F2 prefix".to_string(),
+            ));
         }
 
         match opcode {
@@ -31,7 +33,9 @@ impl X86_64Vcpu {
                 // Load or reg/reg merge
                 if is_memory {
                     if vvvv != 0 {
-                        return Err(Error::Emulator("VMOVSS/VMOVSD load requires VEX.vvvv=1111b".to_string()));
+                        return Err(Error::Emulator(
+                            "VMOVSS/VMOVSD load requires VEX.vvvv=1111b".to_string(),
+                        ));
                     }
                     if is_ss {
                         let val = self.read_mem(addr, 4)? as u32;
@@ -49,7 +53,8 @@ impl X86_64Vcpu {
                         let src1_lo = self.regs.xmm[xmm_src1][0];
                         let src1_hi = self.regs.xmm[xmm_src1][1];
                         let src2_lo = self.regs.xmm[xmm_src2][0];
-                        self.regs.xmm[xmm_dst][0] = (src1_lo & !0xFFFF_FFFF) | (src2_lo & 0xFFFF_FFFF);
+                        self.regs.xmm[xmm_dst][0] =
+                            (src1_lo & !0xFFFF_FFFF) | (src2_lo & 0xFFFF_FFFF);
                         self.regs.xmm[xmm_dst][1] = src1_hi;
                     } else {
                         self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src2][0];
@@ -62,7 +67,9 @@ impl X86_64Vcpu {
             0x11 => {
                 if is_memory {
                     if vvvv != 0 {
-                        return Err(Error::Emulator("VMOVSS/VMOVSD store requires VEX.vvvv=1111b".to_string()));
+                        return Err(Error::Emulator(
+                            "VMOVSS/VMOVSD store requires VEX.vvvv=1111b".to_string(),
+                        ));
                     }
                     let xmm_src = reg as usize;
                     if is_ss {
@@ -80,7 +87,8 @@ impl X86_64Vcpu {
                         let src1_lo = self.regs.xmm[xmm_src1][0];
                         let src1_hi = self.regs.xmm[xmm_src1][1];
                         let src2_lo = self.regs.xmm[xmm_src2][0];
-                        self.regs.xmm[xmm_dst][0] = (src1_lo & !0xFFFF_FFFF) | (src2_lo & 0xFFFF_FFFF);
+                        self.regs.xmm[xmm_dst][0] =
+                            (src1_lo & !0xFFFF_FFFF) | (src2_lo & 0xFFFF_FFFF);
                         self.regs.xmm[xmm_dst][1] = src1_hi;
                     } else {
                         self.regs.xmm[xmm_dst][0] = self.regs.xmm[xmm_src2][0];
@@ -105,7 +113,9 @@ impl X86_64Vcpu {
         opcode: u8,
     ) -> Result<Option<VcpuExit>> {
         if vex_l != 0 {
-            return Err(Error::Emulator("VMOVLPS/VMOVHPS require VEX.L=0".to_string()));
+            return Err(Error::Emulator(
+                "VMOVLPS/VMOVHPS require VEX.L=0".to_string(),
+            ));
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
@@ -157,11 +167,15 @@ impl X86_64Vcpu {
         opcode: u8,
     ) -> Result<Option<VcpuExit>> {
         if vex_l != 0 {
-            return Err(Error::Emulator("VMOVLPD/VMOVHPD require VEX.L=0".to_string()));
+            return Err(Error::Emulator(
+                "VMOVLPD/VMOVHPD require VEX.L=0".to_string(),
+            ));
         }
         let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         if !is_memory {
-            return Err(Error::Emulator("VMOVLPD/VMOVHPD require memory operand".to_string()));
+            return Err(Error::Emulator(
+                "VMOVLPD/VMOVHPD require memory operand".to_string(),
+            ));
         }
         let xmm_dst = reg as usize;
         let xmm_src1 = vvvv as usize;
@@ -194,7 +208,9 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator("VMOVSLDUP requires VEX.vvvv=1111b".to_string()));
+            return Err(Error::Emulator(
+                "VMOVSLDUP requires VEX.vvvv=1111b".to_string(),
+            ));
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
@@ -252,7 +268,9 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator("VMOVSHDUP requires VEX.vvvv=1111b".to_string()));
+            return Err(Error::Emulator(
+                "VMOVSHDUP requires VEX.vvvv=1111b".to_string(),
+            ));
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
@@ -310,7 +328,9 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator("VMOVDDUP requires VEX.vvvv=1111b".to_string()));
+            return Err(Error::Emulator(
+                "VMOVDDUP requires VEX.vvvv=1111b".to_string(),
+            ));
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
@@ -359,11 +379,15 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator("VMOVNT* store requires VEX.vvvv=1111b".to_string()));
+            return Err(Error::Emulator(
+                "VMOVNT* store requires VEX.vvvv=1111b".to_string(),
+            ));
         }
         let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         if !is_memory {
-            return Err(Error::Emulator("VMOVNT* requires memory destination".to_string()));
+            return Err(Error::Emulator(
+                "VMOVNT* requires memory destination".to_string(),
+            ));
         }
         let xmm_src = reg as usize;
         let qwords = if vex_l == 1 { 4 } else { 2 };
@@ -386,11 +410,15 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator("VMOVNTDQA requires VEX.vvvv=1111b".to_string()));
+            return Err(Error::Emulator(
+                "VMOVNTDQA requires VEX.vvvv=1111b".to_string(),
+            ));
         }
         let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         if !is_memory {
-            return Err(Error::Emulator("VMOVNTDQA requires memory operand".to_string()));
+            return Err(Error::Emulator(
+                "VMOVNTDQA requires memory operand".to_string(),
+            ));
         }
         let xmm_dst = reg as usize;
         self.regs.xmm[xmm_dst][0] = self.read_mem(addr, 8)?;

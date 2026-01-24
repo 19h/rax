@@ -25,8 +25,10 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
             // Write 10 bytes: 2-byte limit + 8-byte base
-            vcpu.mmu.write_u16(addr, vcpu.sregs.gdt.limit, &vcpu.sregs)?;
-            vcpu.mmu.write_u64(addr + 2, vcpu.sregs.gdt.base, &vcpu.sregs)?;
+            vcpu.mmu
+                .write_u16(addr, vcpu.sregs.gdt.limit, &vcpu.sregs)?;
+            vcpu.mmu
+                .write_u64(addr + 2, vcpu.sregs.gdt.base, &vcpu.sregs)?;
             vcpu.regs.rip += ctx.cursor as u64;
         }
         // SIDT m16&64 - Store Interrupt Descriptor Table
@@ -40,8 +42,10 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
             // Write 10 bytes: 2-byte limit + 8-byte base
-            vcpu.mmu.write_u16(addr, vcpu.sregs.idt.limit, &vcpu.sregs)?;
-            vcpu.mmu.write_u64(addr + 2, vcpu.sregs.idt.base, &vcpu.sregs)?;
+            vcpu.mmu
+                .write_u16(addr, vcpu.sregs.idt.limit, &vcpu.sregs)?;
+            vcpu.mmu
+                .write_u64(addr + 2, vcpu.sregs.idt.base, &vcpu.sregs)?;
             vcpu.regs.rip += ctx.cursor as u64;
         }
         // LGDT m16&64
@@ -172,7 +176,10 @@ pub fn mov_r_dr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
         4 | 5 => {
             // DR4 and DR5 are reserved; they alias DR6 and DR7 when CR4.DE=0
             if vcpu.sregs.cr4 & (1 << 3) != 0 {
-                return Err(Error::Emulator(format!("MOV r, DR{}: #UD when CR4.DE=1", dr)));
+                return Err(Error::Emulator(format!(
+                    "MOV r, DR{}: #UD when CR4.DE=1",
+                    dr
+                )));
             }
             if dr == 4 {
                 vcpu.sregs.dr6
@@ -203,7 +210,10 @@ pub fn mov_dr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
         4 | 5 => {
             // DR4 and DR5 are reserved; they alias DR6 and DR7 when CR4.DE=0
             if vcpu.sregs.cr4 & (1 << 3) != 0 {
-                return Err(Error::Emulator(format!("MOV DR{}, r: #UD when CR4.DE=1", dr)));
+                return Err(Error::Emulator(format!(
+                    "MOV DR{}, r: #UD when CR4.DE=1",
+                    dr
+                )));
             }
             if dr == 4 {
                 vcpu.sregs.dr6 = value;
@@ -225,7 +235,7 @@ pub fn mov_cr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     let cr = (modrm >> 3) & 0x07;
     let rm = (modrm & 0x07) | ctx.rex_b();
     let value = vcpu.get_reg(rm, 8);
-    
+
     match cr {
         0 => {
             // Validate CR0 value - PG=1 requires PE=1 (x86 architectural requirement)
@@ -241,7 +251,7 @@ pub fn mov_cr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
                 vcpu.regs.rip += ctx.cursor as u64;
                 return Ok(None);
             }
-            
+
             // Update CR0
             vcpu.sregs.cr0 = value;
             // CR0 changes can affect paging (PG, WP bits), flush TLB

@@ -133,77 +133,86 @@ impl X86_64Vcpu {
             let (src_hi2, src_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[xmm_src][0], self.regs.ymm_high[xmm_src][1])
+                (
+                    self.regs.ymm_high[xmm_src][0],
+                    self.regs.ymm_high[xmm_src][1],
+                )
             };
 
             match opcode {
-                0x71 => {
-                    match reg_op {
-                        2 => {
-                            let shift = imm8 as u32;
-                            self.regs.ymm_high[xmm_dst][0] = self.shift_words_right(src_hi2, shift, false);
-                            self.regs.ymm_high[xmm_dst][1] = self.shift_words_right(src_hi3, shift, false);
-                        }
-                        4 => {
-                            let shift = imm8 as u32;
-                            self.regs.ymm_high[xmm_dst][0] = self.shift_words_right(src_hi2, shift, true);
-                            self.regs.ymm_high[xmm_dst][1] = self.shift_words_right(src_hi3, shift, true);
-                        }
-                        6 => {
-                            let shift = imm8 as u32;
-                            self.regs.ymm_high[xmm_dst][0] = self.shift_words_left(src_hi2, shift);
-                            self.regs.ymm_high[xmm_dst][1] = self.shift_words_left(src_hi3, shift);
-                        }
-                        _ => {}
+                0x71 => match reg_op {
+                    2 => {
+                        let shift = imm8 as u32;
+                        self.regs.ymm_high[xmm_dst][0] =
+                            self.shift_words_right(src_hi2, shift, false);
+                        self.regs.ymm_high[xmm_dst][1] =
+                            self.shift_words_right(src_hi3, shift, false);
                     }
-                }
-                0x72 => {
-                    match reg_op {
-                        2 => {
-                            let shift = imm8 as u32;
-                            self.regs.ymm_high[xmm_dst][0] = self.shift_dwords_right(src_hi2, shift, false);
-                            self.regs.ymm_high[xmm_dst][1] = self.shift_dwords_right(src_hi3, shift, false);
-                        }
-                        4 => {
-                            let shift = imm8 as u32;
-                            self.regs.ymm_high[xmm_dst][0] = self.shift_dwords_right(src_hi2, shift, true);
-                            self.regs.ymm_high[xmm_dst][1] = self.shift_dwords_right(src_hi3, shift, true);
-                        }
-                        6 => {
-                            let shift = imm8 as u32;
-                            self.regs.ymm_high[xmm_dst][0] = self.shift_dwords_left(src_hi2, shift);
-                            self.regs.ymm_high[xmm_dst][1] = self.shift_dwords_left(src_hi3, shift);
-                        }
-                        _ => {}
+                    4 => {
+                        let shift = imm8 as u32;
+                        self.regs.ymm_high[xmm_dst][0] =
+                            self.shift_words_right(src_hi2, shift, true);
+                        self.regs.ymm_high[xmm_dst][1] =
+                            self.shift_words_right(src_hi3, shift, true);
                     }
-                }
-                0x73 => {
-                    match reg_op {
-                        2 => {
-                            let shift = imm8 as u32;
-                            self.regs.ymm_high[xmm_dst][0] = if shift >= 64 { 0 } else { src_hi2 >> shift };
-                            self.regs.ymm_high[xmm_dst][1] = if shift >= 64 { 0 } else { src_hi3 >> shift };
-                        }
-                        3 => {
-                            let shift = (imm8 as usize).min(16);
-                            let (new_lo, new_hi) = self.byte_shift_right_128(src_hi2, src_hi3, shift);
-                            self.regs.ymm_high[xmm_dst][0] = new_lo;
-                            self.regs.ymm_high[xmm_dst][1] = new_hi;
-                        }
-                        6 => {
-                            let shift = imm8 as u32;
-                            self.regs.ymm_high[xmm_dst][0] = if shift >= 64 { 0 } else { src_hi2 << shift };
-                            self.regs.ymm_high[xmm_dst][1] = if shift >= 64 { 0 } else { src_hi3 << shift };
-                        }
-                        7 => {
-                            let shift = (imm8 as usize).min(16);
-                            let (new_lo, new_hi) = self.byte_shift_left_128(src_hi2, src_hi3, shift);
-                            self.regs.ymm_high[xmm_dst][0] = new_lo;
-                            self.regs.ymm_high[xmm_dst][1] = new_hi;
-                        }
-                        _ => {}
+                    6 => {
+                        let shift = imm8 as u32;
+                        self.regs.ymm_high[xmm_dst][0] = self.shift_words_left(src_hi2, shift);
+                        self.regs.ymm_high[xmm_dst][1] = self.shift_words_left(src_hi3, shift);
                     }
-                }
+                    _ => {}
+                },
+                0x72 => match reg_op {
+                    2 => {
+                        let shift = imm8 as u32;
+                        self.regs.ymm_high[xmm_dst][0] =
+                            self.shift_dwords_right(src_hi2, shift, false);
+                        self.regs.ymm_high[xmm_dst][1] =
+                            self.shift_dwords_right(src_hi3, shift, false);
+                    }
+                    4 => {
+                        let shift = imm8 as u32;
+                        self.regs.ymm_high[xmm_dst][0] =
+                            self.shift_dwords_right(src_hi2, shift, true);
+                        self.regs.ymm_high[xmm_dst][1] =
+                            self.shift_dwords_right(src_hi3, shift, true);
+                    }
+                    6 => {
+                        let shift = imm8 as u32;
+                        self.regs.ymm_high[xmm_dst][0] = self.shift_dwords_left(src_hi2, shift);
+                        self.regs.ymm_high[xmm_dst][1] = self.shift_dwords_left(src_hi3, shift);
+                    }
+                    _ => {}
+                },
+                0x73 => match reg_op {
+                    2 => {
+                        let shift = imm8 as u32;
+                        self.regs.ymm_high[xmm_dst][0] =
+                            if shift >= 64 { 0 } else { src_hi2 >> shift };
+                        self.regs.ymm_high[xmm_dst][1] =
+                            if shift >= 64 { 0 } else { src_hi3 >> shift };
+                    }
+                    3 => {
+                        let shift = (imm8 as usize).min(16);
+                        let (new_lo, new_hi) = self.byte_shift_right_128(src_hi2, src_hi3, shift);
+                        self.regs.ymm_high[xmm_dst][0] = new_lo;
+                        self.regs.ymm_high[xmm_dst][1] = new_hi;
+                    }
+                    6 => {
+                        let shift = imm8 as u32;
+                        self.regs.ymm_high[xmm_dst][0] =
+                            if shift >= 64 { 0 } else { src_hi2 << shift };
+                        self.regs.ymm_high[xmm_dst][1] =
+                            if shift >= 64 { 0 } else { src_hi3 << shift };
+                    }
+                    7 => {
+                        let shift = (imm8 as usize).min(16);
+                        let (new_lo, new_hi) = self.byte_shift_left_128(src_hi2, src_hi3, shift);
+                        self.regs.ymm_high[xmm_dst][0] = new_lo;
+                        self.regs.ymm_high[xmm_dst][1] = new_hi;
+                    }
+                    _ => {}
+                },
                 _ => {}
             }
         } else {
@@ -233,9 +242,21 @@ impl X86_64Vcpu {
         if shift >= 16 {
             return if arith {
                 let sign0 = if (val as i16) < 0 { 0xFFFFu64 } else { 0 };
-                let sign1 = if ((val >> 16) as i16) < 0 { 0xFFFFu64 } else { 0 };
-                let sign2 = if ((val >> 32) as i16) < 0 { 0xFFFFu64 } else { 0 };
-                let sign3 = if ((val >> 48) as i16) < 0 { 0xFFFFu64 } else { 0 };
+                let sign1 = if ((val >> 16) as i16) < 0 {
+                    0xFFFFu64
+                } else {
+                    0
+                };
+                let sign2 = if ((val >> 32) as i16) < 0 {
+                    0xFFFFu64
+                } else {
+                    0
+                };
+                let sign3 = if ((val >> 48) as i16) < 0 {
+                    0xFFFFu64
+                } else {
+                    0
+                };
                 sign0 | (sign1 << 16) | (sign2 << 32) | (sign3 << 48)
             } else {
                 0
@@ -271,7 +292,11 @@ impl X86_64Vcpu {
         if shift >= 32 {
             return if arith {
                 let sign0 = if (val as i32) < 0 { 0xFFFFFFFFu64 } else { 0 };
-                let sign1 = if ((val >> 32) as i32) < 0 { 0xFFFFFFFFu64 } else { 0 };
+                let sign1 = if ((val >> 32) as i32) < 0 {
+                    0xFFFFFFFFu64
+                } else {
+                    0
+                };
                 sign0 | (sign1 << 32)
             } else {
                 0
@@ -491,18 +516,24 @@ impl X86_64Vcpu {
             match opcode {
                 0x45 => {
                     // VPSRLVD: variable right logical shift dwords
-                    self.regs.xmm[xmm_dst][0] = self.variable_shift_dwords(src_lo, count_lo, false, false);
-                    self.regs.xmm[xmm_dst][1] = self.variable_shift_dwords(src_hi, count_hi, false, false);
+                    self.regs.xmm[xmm_dst][0] =
+                        self.variable_shift_dwords(src_lo, count_lo, false, false);
+                    self.regs.xmm[xmm_dst][1] =
+                        self.variable_shift_dwords(src_hi, count_hi, false, false);
                 }
                 0x46 => {
                     // VPSRAVD: variable right arithmetic shift dwords
-                    self.regs.xmm[xmm_dst][0] = self.variable_shift_dwords(src_lo, count_lo, false, true);
-                    self.regs.xmm[xmm_dst][1] = self.variable_shift_dwords(src_hi, count_hi, false, true);
+                    self.regs.xmm[xmm_dst][0] =
+                        self.variable_shift_dwords(src_lo, count_lo, false, true);
+                    self.regs.xmm[xmm_dst][1] =
+                        self.variable_shift_dwords(src_hi, count_hi, false, true);
                 }
                 0x47 => {
                     // VPSLLVD: variable left shift dwords
-                    self.regs.xmm[xmm_dst][0] = self.variable_shift_dwords(src_lo, count_lo, true, false);
-                    self.regs.xmm[xmm_dst][1] = self.variable_shift_dwords(src_hi, count_hi, true, false);
+                    self.regs.xmm[xmm_dst][0] =
+                        self.variable_shift_dwords(src_lo, count_lo, true, false);
+                    self.regs.xmm[xmm_dst][1] =
+                        self.variable_shift_dwords(src_hi, count_hi, true, false);
                 }
                 _ => unreachable!(),
             }
@@ -532,7 +563,10 @@ impl X86_64Vcpu {
             let (count_hi2, count_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src_hi2 = self.regs.ymm_high[xmm_src][0];
             let src_hi3 = self.regs.ymm_high[xmm_src][1];
@@ -540,28 +574,38 @@ impl X86_64Vcpu {
             if vex_w == 0 {
                 match opcode {
                     0x45 => {
-                        self.regs.ymm_high[xmm_dst][0] = self.variable_shift_dwords(src_hi2, count_hi2, false, false);
-                        self.regs.ymm_high[xmm_dst][1] = self.variable_shift_dwords(src_hi3, count_hi3, false, false);
+                        self.regs.ymm_high[xmm_dst][0] =
+                            self.variable_shift_dwords(src_hi2, count_hi2, false, false);
+                        self.regs.ymm_high[xmm_dst][1] =
+                            self.variable_shift_dwords(src_hi3, count_hi3, false, false);
                     }
                     0x46 => {
-                        self.regs.ymm_high[xmm_dst][0] = self.variable_shift_dwords(src_hi2, count_hi2, false, true);
-                        self.regs.ymm_high[xmm_dst][1] = self.variable_shift_dwords(src_hi3, count_hi3, false, true);
+                        self.regs.ymm_high[xmm_dst][0] =
+                            self.variable_shift_dwords(src_hi2, count_hi2, false, true);
+                        self.regs.ymm_high[xmm_dst][1] =
+                            self.variable_shift_dwords(src_hi3, count_hi3, false, true);
                     }
                     0x47 => {
-                        self.regs.ymm_high[xmm_dst][0] = self.variable_shift_dwords(src_hi2, count_hi2, true, false);
-                        self.regs.ymm_high[xmm_dst][1] = self.variable_shift_dwords(src_hi3, count_hi3, true, false);
+                        self.regs.ymm_high[xmm_dst][0] =
+                            self.variable_shift_dwords(src_hi2, count_hi2, true, false);
+                        self.regs.ymm_high[xmm_dst][1] =
+                            self.variable_shift_dwords(src_hi3, count_hi3, true, false);
                     }
                     _ => {}
                 }
             } else {
                 match opcode {
                     0x45 => {
-                        self.regs.ymm_high[xmm_dst][0] = self.variable_shift_qword(src_hi2, count_hi2, false);
-                        self.regs.ymm_high[xmm_dst][1] = self.variable_shift_qword(src_hi3, count_hi3, false);
+                        self.regs.ymm_high[xmm_dst][0] =
+                            self.variable_shift_qword(src_hi2, count_hi2, false);
+                        self.regs.ymm_high[xmm_dst][1] =
+                            self.variable_shift_qword(src_hi3, count_hi3, false);
                     }
                     0x47 => {
-                        self.regs.ymm_high[xmm_dst][0] = self.variable_shift_qword(src_hi2, count_hi2, true);
-                        self.regs.ymm_high[xmm_dst][1] = self.variable_shift_qword(src_hi3, count_hi3, true);
+                        self.regs.ymm_high[xmm_dst][0] =
+                            self.variable_shift_qword(src_hi2, count_hi2, true);
+                        self.regs.ymm_high[xmm_dst][1] =
+                            self.variable_shift_qword(src_hi3, count_hi3, true);
                     }
                     _ => {}
                 }
@@ -586,27 +630,51 @@ impl X86_64Vcpu {
         let c1 = ((counts >> 32) as u32).min(32);
 
         let r0 = if left {
-            if c0 >= 32 { 0 } else { d0 << c0 }
+            if c0 >= 32 {
+                0
+            } else {
+                d0 << c0
+            }
         } else if arith {
             if c0 >= 32 {
-                if (d0 as i32) < 0 { 0xFFFFFFFF } else { 0 }
+                if (d0 as i32) < 0 {
+                    0xFFFFFFFF
+                } else {
+                    0
+                }
             } else {
                 ((d0 as i32) >> c0) as u32
             }
         } else {
-            if c0 >= 32 { 0 } else { d0 >> c0 }
+            if c0 >= 32 {
+                0
+            } else {
+                d0 >> c0
+            }
         };
 
         let r1 = if left {
-            if c1 >= 32 { 0 } else { d1 << c1 }
+            if c1 >= 32 {
+                0
+            } else {
+                d1 << c1
+            }
         } else if arith {
             if c1 >= 32 {
-                if (d1 as i32) < 0 { 0xFFFFFFFF } else { 0 }
+                if (d1 as i32) < 0 {
+                    0xFFFFFFFF
+                } else {
+                    0
+                }
             } else {
                 ((d1 as i32) >> c1) as u32
             }
         } else {
-            if c1 >= 32 { 0 } else { d1 >> c1 }
+            if c1 >= 32 {
+                0
+            } else {
+                d1 >> c1
+            }
         };
 
         (r0 as u64) | ((r1 as u64) << 32)
@@ -616,9 +684,17 @@ impl X86_64Vcpu {
     fn variable_shift_qword(&self, val: u64, count: u64, left: bool) -> u64 {
         let c = count.min(64) as u32;
         if left {
-            if c >= 64 { 0 } else { val << c }
+            if c >= 64 {
+                0
+            } else {
+                val << c
+            }
         } else {
-            if c >= 64 { 0 } else { val >> c }
+            if c >= 64 {
+                0
+            } else {
+                val >> c
+            }
         }
     }
 }

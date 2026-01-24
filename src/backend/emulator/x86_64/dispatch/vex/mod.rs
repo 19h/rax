@@ -8,7 +8,10 @@ use super::super::insn;
 
 impl X86_64Vcpu {
     /// Execute 2-byte VEX-encoded instructions (0xC5 prefix)
-    pub(in crate::backend::emulator::x86_64) fn execute_vex2(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_vex2(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         // VEX 2-byte prefix: 0xC5 [R vvvv L pp]
         // Implied: m-mmmm = 1 (0F escape), X = 1, B = 1, W = 0
         let vex1 = ctx.consume_u8()?;
@@ -34,7 +37,10 @@ impl X86_64Vcpu {
     }
 
     /// Execute 3-byte VEX-encoded instructions (0xC4 prefix)
-    pub(in crate::backend::emulator::x86_64) fn execute_vex3(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_vex3(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         // VEX 3-byte prefix (0xC4)
         let vex1 = ctx.consume_u8()?;
         let vex2 = ctx.consume_u8()?;
@@ -80,7 +86,10 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         // Record precise opcode key for profiling
         #[cfg(feature = "profiling")]
-        crate::profiling::set_current_opcode_key(crate::profiling::OpcodeKey::Vex { map: m_mmmm, opcode });
+        crate::profiling::set_current_opcode_key(crate::profiling::OpcodeKey::Vex {
+            map: m_mmmm,
+            opcode,
+        });
 
         // Note: We allow VEX.L=1 (256-bit YMM) operations as we have implementations
         // for the common AVX instructions. The individual handlers support L=1.
@@ -200,19 +209,33 @@ impl X86_64Vcpu {
                 if mask_bits > 0 {
                     match opcode {
                         // KAND* - bitwise AND
-                        0x41 => return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a & b),
+                        0x41 => {
+                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a & b)
+                        }
                         // KANDN* - bitwise AND NOT
-                        0x42 => return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| !a & b),
+                        0x42 => {
+                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| !a & b)
+                        }
                         // KNOT* - bitwise NOT (unary, vvvv should be 1111)
                         0x44 => return self.execute_kmask_unaryop(ctx, mask_bits, |a| !a),
                         // KOR* - bitwise OR
-                        0x45 => return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a | b),
+                        0x45 => {
+                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a | b)
+                        }
                         // KXNOR* - bitwise XNOR
-                        0x46 => return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| !(a ^ b)),
+                        0x46 => {
+                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| !(a ^ b))
+                        }
                         // KXOR* - bitwise XOR
-                        0x47 => return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a ^ b),
+                        0x47 => {
+                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a ^ b)
+                        }
                         // KADD* - add (wrapping)
-                        0x4A => return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| a.wrapping_add(b)),
+                        0x4A => {
+                            return self.execute_kmask_binop(ctx, vvvv, mask_bits, |a, b| {
+                                a.wrapping_add(b)
+                            })
+                        }
                         _ => {}
                     }
                 }
@@ -862,12 +885,9 @@ impl X86_64Vcpu {
                     return self.execute_vex_gather(ctx, vex_l, vex_w, vvvv, opcode);
                 }
                 // FMA instructions
-                0x96 | 0x97 |
-                0x98 | 0x99 | 0x9A | 0x9B | 0x9C | 0x9D | 0x9E | 0x9F |
-                0xA6 | 0xA7 |
-                0xA8 | 0xA9 | 0xAA | 0xAB | 0xAC | 0xAD | 0xAE | 0xAF |
-                0xB6 | 0xB7 |
-                0xB8 | 0xB9 | 0xBA | 0xBB | 0xBC | 0xBD | 0xBE | 0xBF => {
+                0x96 | 0x97 | 0x98 | 0x99 | 0x9A | 0x9B | 0x9C | 0x9D | 0x9E | 0x9F | 0xA6
+                | 0xA7 | 0xA8 | 0xA9 | 0xAA | 0xAB | 0xAC | 0xAD | 0xAE | 0xAF | 0xB6 | 0xB7
+                | 0xB8 | 0xB9 | 0xBA | 0xBB | 0xBC | 0xBD | 0xBE | 0xBF => {
                     return self.execute_vex_fma(ctx, vex_l, vex_w, vvvv, opcode);
                 }
                 _ => {}
@@ -883,13 +903,13 @@ impl X86_64Vcpu {
 
 // Sub-modules
 mod arith;
-mod logical;
+mod compare;
 mod convert;
 mod fma;
-mod r#move;
-mod shuffle;
-mod shift;
-mod integer;
-mod misc;
 mod gather;
-mod compare;
+mod integer;
+mod logical;
+mod misc;
+mod r#move;
+mod shift;
+mod shuffle;

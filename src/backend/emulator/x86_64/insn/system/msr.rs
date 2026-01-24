@@ -11,31 +11,33 @@ pub fn wrmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     let value = ((vcpu.regs.rdx & 0xFFFF_FFFF) << 32) | (vcpu.regs.rax & 0xFFFF_FFFF);
 
     match ecx {
-        0xC0000080 => vcpu.sregs.efer = value,       // EFER
-        0xC0000081 => vcpu.sregs.star = value,       // STAR
-        0xC0000082 => vcpu.sregs.lstar = value,      // LSTAR
-        0xC0000083 => vcpu.sregs.cstar = value,      // CSTAR
-        0xC0000084 => vcpu.sregs.fmask = value,      // FMASK
-        0x174 => vcpu.sregs.sysenter_cs = value,     // IA32_SYSENTER_CS
-        0x175 => vcpu.sregs.sysenter_esp = value,    // IA32_SYSENTER_ESP
-        0x176 => vcpu.sregs.sysenter_eip = value,    // IA32_SYSENTER_EIP
-        0xC0000100 => vcpu.sregs.fs.base = value,  // FS.base (TLS)
+        0xC0000080 => vcpu.sregs.efer = value,    // EFER
+        0xC0000081 => vcpu.sregs.star = value,    // STAR
+        0xC0000082 => vcpu.sregs.lstar = value,   // LSTAR
+        0xC0000083 => vcpu.sregs.cstar = value,   // CSTAR
+        0xC0000084 => vcpu.sregs.fmask = value,   // FMASK
+        0x174 => vcpu.sregs.sysenter_cs = value,  // IA32_SYSENTER_CS
+        0x175 => vcpu.sregs.sysenter_esp = value, // IA32_SYSENTER_ESP
+        0x176 => vcpu.sregs.sysenter_eip = value, // IA32_SYSENTER_EIP
+        0xC0000100 => vcpu.sregs.fs.base = value, // FS.base (TLS)
         0xC0000101 => {
-            vcpu.sregs.gs.base = value;  // GS.base (per-CPU data)
-            // WORKAROUND: When gs.base is set to a non-zero value, update the per-CPU
-            // CR0 shadow with the current CR0 value. This fixes the case where CR0 was
-            // written before per-CPU was set up, and the shadow was copied with garbage.
+            vcpu.sregs.gs.base = value; // GS.base (per-CPU data)
+                                        // WORKAROUND: When gs.base is set to a non-zero value, update the per-CPU
+                                        // CR0 shadow with the current CR0 value. This fixes the case where CR0 was
+                                        // written before per-CPU was set up, and the shadow was copied with garbage.
             if value != 0 {
                 let percpu_offset = 0xffffffff836ee018u64;
                 let instance_addr = value.wrapping_add(percpu_offset);
                 // Flush TLB to ensure clean state
                 vcpu.mmu.flush_tlb();
                 // Write current CR0 to per-CPU shadow (ignore errors)
-                let _ = vcpu.mmu.write_u64(instance_addr, vcpu.sregs.cr0, &vcpu.sregs);
+                let _ = vcpu
+                    .mmu
+                    .write_u64(instance_addr, vcpu.sregs.cr0, &vcpu.sregs);
             }
         }
-        0xC0000102 => vcpu.kernel_gs_base = value,     // KernelGSbase
-        _ => {}                                       // Ignore unknown MSRs
+        0xC0000102 => vcpu.kernel_gs_base = value, // KernelGSbase
+        _ => {}                                    // Ignore unknown MSRs
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -61,18 +63,18 @@ pub fn rdmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             // Bits 12-35: APIC base physical address (default 0xFEE00000)
             (1u64 << 8) | (1u64 << 11) | 0xFEE00000u64
         }
-        0xC0000080 => vcpu.sregs.efer,        // EFER
-        0xC0000081 => vcpu.sregs.star,        // STAR
-        0xC0000082 => vcpu.sregs.lstar,       // LSTAR
-        0xC0000083 => vcpu.sregs.cstar,       // CSTAR
-        0xC0000084 => vcpu.sregs.fmask,       // FMASK
-        0x174 => vcpu.sregs.sysenter_cs,      // IA32_SYSENTER_CS
-        0x175 => vcpu.sregs.sysenter_esp,     // IA32_SYSENTER_ESP
-        0x176 => vcpu.sregs.sysenter_eip,     // IA32_SYSENTER_EIP
-        0xC0000100 => vcpu.sregs.fs.base,     // FS.base
-        0xC0000101 => vcpu.sregs.gs.base,     // GS.base
-        0xC0000102 => vcpu.kernel_gs_base,    // KernelGSbase
-        _ => 0,                               // Return 0 for unknown MSRs
+        0xC0000080 => vcpu.sregs.efer,     // EFER
+        0xC0000081 => vcpu.sregs.star,     // STAR
+        0xC0000082 => vcpu.sregs.lstar,    // LSTAR
+        0xC0000083 => vcpu.sregs.cstar,    // CSTAR
+        0xC0000084 => vcpu.sregs.fmask,    // FMASK
+        0x174 => vcpu.sregs.sysenter_cs,   // IA32_SYSENTER_CS
+        0x175 => vcpu.sregs.sysenter_esp,  // IA32_SYSENTER_ESP
+        0x176 => vcpu.sregs.sysenter_eip,  // IA32_SYSENTER_EIP
+        0xC0000100 => vcpu.sregs.fs.base,  // FS.base
+        0xC0000101 => vcpu.sregs.gs.base,  // GS.base
+        0xC0000102 => vcpu.kernel_gs_base, // KernelGSbase
+        _ => 0,                            // Return 0 for unknown MSRs
     };
 
     vcpu.regs.rax = (value & 0xFFFF_FFFF) as u64;

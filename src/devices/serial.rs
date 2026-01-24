@@ -12,77 +12,77 @@ use crate::devices::bus::{IoDevice, MmioDevice};
 use std::sync::{Arc, Mutex};
 
 // Register offsets
-const DATA_REG: u16 = 0;  // RBR (read) / THR (write) / DLL (DLAB=1)
-const IER_REG: u16 = 1;   // IER / DLM (DLAB=1)
-const IIR_REG: u16 = 2;   // IIR (read) / FCR (write)
-const LCR_REG: u16 = 3;   // Line Control Register
-const MCR_REG: u16 = 4;   // Modem Control Register
-const LSR_REG: u16 = 5;   // Line Status Register (read) / PSD (write, DLAB=1)
-const MSR_REG: u16 = 6;   // Modem Status Register
-const SCR_REG: u16 = 7;   // Scratch Register
+const DATA_REG: u16 = 0; // RBR (read) / THR (write) / DLL (DLAB=1)
+const IER_REG: u16 = 1; // IER / DLM (DLAB=1)
+const IIR_REG: u16 = 2; // IIR (read) / FCR (write)
+const LCR_REG: u16 = 3; // Line Control Register
+const MCR_REG: u16 = 4; // Modem Control Register
+const LSR_REG: u16 = 5; // Line Status Register (read) / PSD (write, DLAB=1)
+const MSR_REG: u16 = 6; // Modem Status Register
+const SCR_REG: u16 = 7; // Scratch Register
 
 // IER bits (Interrupt Enable Register)
-const IER_RDA: u8 = 0x01;   // Received Data Available interrupt
-const IER_THRE: u8 = 0x02;  // Transmitter Holding Register Empty interrupt
-const IER_RLS: u8 = 0x04;   // Receiver Line Status interrupt
-const IER_MS: u8 = 0x08;    // Modem Status interrupt
-const IER_MASK: u8 = 0x0F;  // Valid IER bits (bits 4-7 always 0 per spec)
+const IER_RDA: u8 = 0x01; // Received Data Available interrupt
+const IER_THRE: u8 = 0x02; // Transmitter Holding Register Empty interrupt
+const IER_RLS: u8 = 0x04; // Receiver Line Status interrupt
+const IER_MS: u8 = 0x08; // Modem Status interrupt
+const IER_MASK: u8 = 0x0F; // Valid IER bits (bits 4-7 always 0 per spec)
 
 // IIR bits (Interrupt Identification Register)
-const IIR_NO_INT: u8 = 0x01;      // No interrupt pending (bit 0 = 1)
-const IIR_ID_MASK: u8 = 0x0E;     // Interrupt ID bits (3:1)
+const IIR_NO_INT: u8 = 0x01; // No interrupt pending (bit 0 = 1)
+const IIR_ID_MASK: u8 = 0x0E; // Interrupt ID bits (3:1)
 const IIR_FIFO_ENABLED: u8 = 0xC0; // Bits 7:6 = 11 when FIFOs enabled
 
 // IIR interrupt identification codes (bits 3:1)
-const IIR_RLS: u8 = 0x06;   // Receiver Line Status (priority 1 - highest)
-const IIR_RDA: u8 = 0x04;   // Received Data Available (priority 2)
-const IIR_CTI: u8 = 0x0C;   // Character Timeout Indication (priority 2)
-const IIR_THRE: u8 = 0x02;  // THR Empty (priority 3)
-const IIR_MS: u8 = 0x00;    // Modem Status (priority 4 - lowest)
+const IIR_RLS: u8 = 0x06; // Receiver Line Status (priority 1 - highest)
+const IIR_RDA: u8 = 0x04; // Received Data Available (priority 2)
+const IIR_CTI: u8 = 0x0C; // Character Timeout Indication (priority 2)
+const IIR_THRE: u8 = 0x02; // THR Empty (priority 3)
+const IIR_MS: u8 = 0x00; // Modem Status (priority 4 - lowest)
 
 // FCR bits (FIFO Control Register)
-const FCR_FIFO_ENABLE: u8 = 0x01;   // Enable FIFOs
-const FCR_RX_RESET: u8 = 0x02;      // Reset RX FIFO
-const FCR_TX_RESET: u8 = 0x04;      // Reset TX FIFO
-const FCR_DMA_MODE: u8 = 0x08;      // DMA mode select
-const FCR_TRIGGER_MASK: u8 = 0xC0;  // RX FIFO trigger level
+const FCR_FIFO_ENABLE: u8 = 0x01; // Enable FIFOs
+const FCR_RX_RESET: u8 = 0x02; // Reset RX FIFO
+const FCR_TX_RESET: u8 = 0x04; // Reset TX FIFO
+const FCR_DMA_MODE: u8 = 0x08; // DMA mode select
+const FCR_TRIGGER_MASK: u8 = 0xC0; // RX FIFO trigger level
 
 // LCR bits (Line Control Register)
-const LCR_WLS_MASK: u8 = 0x03;  // Word length select
-const LCR_STB: u8 = 0x04;       // Stop bits (0=1, 1=1.5/2)
-const LCR_PEN: u8 = 0x08;       // Parity enable
-const LCR_EPS: u8 = 0x10;       // Even parity select
-const LCR_STICK: u8 = 0x20;     // Stick parity
-const LCR_BREAK: u8 = 0x40;     // Break control
-const LCR_DLAB: u8 = 0x80;      // Divisor Latch Access Bit
+const LCR_WLS_MASK: u8 = 0x03; // Word length select
+const LCR_STB: u8 = 0x04; // Stop bits (0=1, 1=1.5/2)
+const LCR_PEN: u8 = 0x08; // Parity enable
+const LCR_EPS: u8 = 0x10; // Even parity select
+const LCR_STICK: u8 = 0x20; // Stick parity
+const LCR_BREAK: u8 = 0x40; // Break control
+const LCR_DLAB: u8 = 0x80; // Divisor Latch Access Bit
 
 // MCR bits (Modem Control Register)
-const MCR_DTR: u8 = 0x01;       // Data Terminal Ready
-const MCR_RTS: u8 = 0x02;       // Request To Send
-const MCR_OUT1: u8 = 0x04;      // General purpose output 1
-const MCR_OUT2: u8 = 0x08;      // General purpose output 2 / Global interrupt enable
-const MCR_LOOP: u8 = 0x10;      // Loopback mode
-const MCR_MASK: u8 = 0x1F;      // Valid MCR bits (bits 5-7 always 0)
+const MCR_DTR: u8 = 0x01; // Data Terminal Ready
+const MCR_RTS: u8 = 0x02; // Request To Send
+const MCR_OUT1: u8 = 0x04; // General purpose output 1
+const MCR_OUT2: u8 = 0x08; // General purpose output 2 / Global interrupt enable
+const MCR_LOOP: u8 = 0x10; // Loopback mode
+const MCR_MASK: u8 = 0x1F; // Valid MCR bits (bits 5-7 always 0)
 
 // LSR bits (Line Status Register)
-const LSR_DR: u8 = 0x01;        // Data Ready
-const LSR_OE: u8 = 0x02;        // Overrun Error
-const LSR_PE: u8 = 0x04;        // Parity Error
-const LSR_FE: u8 = 0x08;        // Framing Error
-const LSR_BI: u8 = 0x10;        // Break Interrupt
-const LSR_THRE: u8 = 0x20;      // Transmitter Holding Register Empty
-const LSR_TEMT: u8 = 0x40;      // Transmitter Empty
-const LSR_FIFO_ERR: u8 = 0x80;  // Error in RX FIFO
+const LSR_DR: u8 = 0x01; // Data Ready
+const LSR_OE: u8 = 0x02; // Overrun Error
+const LSR_PE: u8 = 0x04; // Parity Error
+const LSR_FE: u8 = 0x08; // Framing Error
+const LSR_BI: u8 = 0x10; // Break Interrupt
+const LSR_THRE: u8 = 0x20; // Transmitter Holding Register Empty
+const LSR_TEMT: u8 = 0x40; // Transmitter Empty
+const LSR_FIFO_ERR: u8 = 0x80; // Error in RX FIFO
 
 // MSR bits (Modem Status Register)
-const MSR_DCTS: u8 = 0x01;      // Delta CTS
-const MSR_DDSR: u8 = 0x02;      // Delta DSR
-const MSR_TERI: u8 = 0x04;      // Trailing Edge RI
-const MSR_DDCD: u8 = 0x08;      // Delta DCD
-const MSR_CTS: u8 = 0x10;       // Clear To Send
-const MSR_DSR: u8 = 0x20;       // Data Set Ready
-const MSR_RI: u8 = 0x40;        // Ring Indicator
-const MSR_DCD: u8 = 0x80;       // Data Carrier Detect
+const MSR_DCTS: u8 = 0x01; // Delta CTS
+const MSR_DDSR: u8 = 0x02; // Delta DSR
+const MSR_TERI: u8 = 0x04; // Trailing Edge RI
+const MSR_DDCD: u8 = 0x08; // Delta DCD
+const MSR_CTS: u8 = 0x10; // Clear To Send
+const MSR_DSR: u8 = 0x20; // Data Set Ready
+const MSR_RI: u8 = 0x40; // Ring Indicator
+const MSR_DCD: u8 = 0x80; // Data Carrier Detect
 
 // FIFO size
 const FIFO_SIZE: usize = 16;
@@ -131,15 +131,15 @@ pub struct Serial16550 {
     base_mmio: Option<u64>,
 
     // Registers
-    ier: u8,      // Interrupt Enable Register
-    lcr: u8,      // Line Control Register
-    mcr: u8,      // Modem Control Register
-    scr: u8,      // Scratch Register
-    fcr: u8,      // FIFO Control Register (write-only, but we track state)
+    ier: u8, // Interrupt Enable Register
+    lcr: u8, // Line Control Register
+    mcr: u8, // Modem Control Register
+    scr: u8, // Scratch Register
+    fcr: u8, // FIFO Control Register (write-only, but we track state)
 
     // Divisor latch
-    dll: u8,      // Divisor Latch Low
-    dlm: u8,      // Divisor Latch High
+    dll: u8, // Divisor Latch Low
+    dlm: u8, // Divisor Latch High
 
     // FIFO state
     fifo_enabled: bool,
@@ -151,13 +151,13 @@ pub struct Serial16550 {
     overrun_error: bool,
 
     // Modem status
-    msr: u8,           // Current modem status (bits 7:4)
-    msr_delta: u8,     // Delta bits (bits 3:0), cleared on MSR read
+    msr: u8,       // Current modem status (bits 7:4)
+    msr_delta: u8, // Delta bits (bits 3:0), cleared on MSR read
 
     // Interrupt state
-    thre_interrupt: bool,    // THRE interrupt pending
-    timeout_counter: u32,    // Character timeout counter
-    timeout_active: bool,    // Timeout condition active
+    thre_interrupt: bool, // THRE interrupt pending
+    timeout_counter: u32, // Character timeout counter
+    timeout_active: bool, // Timeout condition active
 
     // Input handling
     input_buffer: VecDeque<u8>,
@@ -247,7 +247,7 @@ impl Serial16550 {
                         None
                     }
                     [0x1b, b'[', b'6', b'n'] => None, // Complete CPQ - suppress
-                    _ => Some(buf), // Not a CPQ, output buffered bytes
+                    _ => Some(buf),                   // Not a CPQ, output buffered bytes
                 }
             }
         }
@@ -344,7 +344,13 @@ impl Serial16550 {
         self.receive_byte_with_errors(data, false, false, false);
     }
 
-    fn receive_byte_with_errors(&mut self, data: u8, parity_error: bool, framing_error: bool, break_indicator: bool) {
+    fn receive_byte_with_errors(
+        &mut self,
+        data: u8,
+        parity_error: bool,
+        framing_error: bool,
+        break_indicator: bool,
+    ) {
         if self.fifo_enabled {
             if self.rx_fifo.len() >= FIFO_SIZE {
                 // Overrun - new data overwrites shift register (per spec, FIFO data preserved)
@@ -701,9 +707,9 @@ impl Serial16550 {
                     if int_id == IIR_THRE {
                         self.thre_interrupt = false;
                     }
-                    int_id  // Bit 0 = 0 (interrupt pending)
+                    int_id // Bit 0 = 0 (interrupt pending)
                 } else {
-                    IIR_NO_INT  // Bit 0 = 1 (no interrupt pending)
+                    IIR_NO_INT // Bit 0 = 1 (no interrupt pending)
                 };
 
                 // Bits 7:6 indicate FIFO status
@@ -904,8 +910,8 @@ mod tests {
             serial.inject_input(&[i]);
         }
         let lsr = IoDevice::read(&mut serial, LSR);
-        assert_eq!(lsr & LSR_OE, 0);  // No overrun yet
-        // 17th byte causes overrun
+        assert_eq!(lsr & LSR_OE, 0); // No overrun yet
+                                     // 17th byte causes overrun
         serial.inject_input(b"X");
         let lsr2 = IoDevice::read(&mut serial, LSR);
         assert_eq!(lsr2 & LSR_OE, LSR_OE);
@@ -968,7 +974,7 @@ mod tests {
     #[test]
     fn serial_iir_thre_interrupt() {
         let mut serial = Serial16550::new(BASE);
-        IoDevice::write(&mut serial, MCR, MCR_OUT2);  // Enable global interrupts
+        IoDevice::write(&mut serial, MCR, MCR_OUT2); // Enable global interrupts
         IoDevice::write(&mut serial, IER, IER_THRE);
         IoDevice::write(&mut serial, THR, 0x41);
         let iir = IoDevice::read(&mut serial, IIR);
@@ -991,8 +997,8 @@ mod tests {
         let mut serial = Serial16550::new(BASE);
         IoDevice::write(&mut serial, MCR, MCR_OUT2);
         IoDevice::write(&mut serial, IER, IER_RDA | IER_THRE);
-        IoDevice::write(&mut serial, THR, 0x41);  // Trigger THRE
-        serial.inject_input(b"X");  // Trigger RDA
+        IoDevice::write(&mut serial, THR, 0x41); // Trigger THRE
+        serial.inject_input(b"X"); // Trigger RDA
         let iir = IoDevice::read(&mut serial, IIR);
         // RDA has higher priority
         assert_eq!(iir & IIR_ID_MASK, IIR_RDA);
@@ -1048,8 +1054,8 @@ mod tests {
         // Set CTS via loopback (RTS -> CTS)
         IoDevice::write(&mut serial, MCR, MCR_LOOP | MCR_RTS);
         let msr = IoDevice::read(&mut serial, MSR);
-        assert_eq!(msr & MSR_DCTS, MSR_DCTS);  // Delta CTS set
-        // Delta cleared on read
+        assert_eq!(msr & MSR_DCTS, MSR_DCTS); // Delta CTS set
+                                              // Delta cleared on read
         let msr2 = IoDevice::read(&mut serial, MSR);
         assert_eq!(msr2 & MSR_DCTS, 0);
     }

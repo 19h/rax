@@ -108,7 +108,6 @@ pub enum hv_x86_reg_t {
 
     // XCR0 (extended control register)
     HV_X86_XCR0 = 42,
-
     // FPU registers will be handled via FXSAVE/FXRSTOR
 }
 
@@ -381,18 +380,18 @@ pub const INTR_INFO_DELIVER_ERR_CODE: u32 = 1 << 11;
 pub const INTR_INFO_VALID: u32 = 1 << 31;
 
 // EFER bits
-pub const EFER_SCE: u64 = 1 << 0;  // System Call Extensions
-pub const EFER_LME: u64 = 1 << 8;  // Long Mode Enable
+pub const EFER_SCE: u64 = 1 << 0; // System Call Extensions
+pub const EFER_LME: u64 = 1 << 8; // Long Mode Enable
 pub const EFER_LMA: u64 = 1 << 10; // Long Mode Active
 pub const EFER_NXE: u64 = 1 << 11; // No-Execute Enable
 
 // CR0 bits
-pub const CR0_PE: u64 = 1 << 0;  // Protection Enable
-pub const CR0_MP: u64 = 1 << 1;  // Monitor Coprocessor
-pub const CR0_EM: u64 = 1 << 2;  // Emulation
-pub const CR0_TS: u64 = 1 << 3;  // Task Switched
-pub const CR0_ET: u64 = 1 << 4;  // Extension Type
-pub const CR0_NE: u64 = 1 << 5;  // Numeric Error
+pub const CR0_PE: u64 = 1 << 0; // Protection Enable
+pub const CR0_MP: u64 = 1 << 1; // Monitor Coprocessor
+pub const CR0_EM: u64 = 1 << 2; // Emulation
+pub const CR0_TS: u64 = 1 << 3; // Task Switched
+pub const CR0_ET: u64 = 1 << 4; // Extension Type
+pub const CR0_NE: u64 = 1 << 5; // Numeric Error
 pub const CR0_WP: u64 = 1 << 16; // Write Protect
 pub const CR0_AM: u64 = 1 << 18; // Alignment Mask
 pub const CR0_NW: u64 = 1 << 29; // Not Write-through
@@ -400,45 +399,45 @@ pub const CR0_CD: u64 = 1 << 30; // Cache Disable
 pub const CR0_PG: u64 = 1 << 31; // Paging
 
 // CR4 bits
-pub const CR4_VME: u64 = 1 << 0;        // Virtual-8086 Mode Extensions
-pub const CR4_PVI: u64 = 1 << 1;        // Protected-Mode Virtual Interrupts
-pub const CR4_TSD: u64 = 1 << 2;        // Time Stamp Disable
-pub const CR4_DE: u64 = 1 << 3;         // Debugging Extensions
-pub const CR4_PSE: u64 = 1 << 4;        // Page Size Extensions
-pub const CR4_PAE: u64 = 1 << 5;        // Physical Address Extension
-pub const CR4_MCE: u64 = 1 << 6;        // Machine-Check Enable
-pub const CR4_PGE: u64 = 1 << 7;        // Page Global Enable
-pub const CR4_PCE: u64 = 1 << 8;        // Performance-Monitoring Counter Enable
-pub const CR4_OSFXSR: u64 = 1 << 9;     // OS FXSAVE/FXRSTOR Support
+pub const CR4_VME: u64 = 1 << 0; // Virtual-8086 Mode Extensions
+pub const CR4_PVI: u64 = 1 << 1; // Protected-Mode Virtual Interrupts
+pub const CR4_TSD: u64 = 1 << 2; // Time Stamp Disable
+pub const CR4_DE: u64 = 1 << 3; // Debugging Extensions
+pub const CR4_PSE: u64 = 1 << 4; // Page Size Extensions
+pub const CR4_PAE: u64 = 1 << 5; // Physical Address Extension
+pub const CR4_MCE: u64 = 1 << 6; // Machine-Check Enable
+pub const CR4_PGE: u64 = 1 << 7; // Page Global Enable
+pub const CR4_PCE: u64 = 1 << 8; // Performance-Monitoring Counter Enable
+pub const CR4_OSFXSR: u64 = 1 << 9; // OS FXSAVE/FXRSTOR Support
 pub const CR4_OSXMMEXCPT: u64 = 1 << 10; // OS Unmasked Exception Support
-pub const CR4_UMIP: u64 = 1 << 11;      // User-Mode Instruction Prevention
-pub const CR4_VMXE: u64 = 1 << 13;      // VMX Enable
-pub const CR4_SMXE: u64 = 1 << 14;      // SMX Enable
-pub const CR4_FSGSBASE: u64 = 1 << 16;  // FSGSBASE Enable
-pub const CR4_PCIDE: u64 = 1 << 17;     // PCID Enable
-pub const CR4_OSXSAVE: u64 = 1 << 18;   // XSAVE and Processor Extended States Enable
-pub const CR4_SMEP: u64 = 1 << 20;      // SMEP Enable
-pub const CR4_SMAP: u64 = 1 << 21;      // SMAP Enable
-pub const CR4_PKE: u64 = 1 << 22;       // Protection Key Enable
+pub const CR4_UMIP: u64 = 1 << 11; // User-Mode Instruction Prevention
+pub const CR4_VMXE: u64 = 1 << 13; // VMX Enable
+pub const CR4_SMXE: u64 = 1 << 14; // SMX Enable
+pub const CR4_FSGSBASE: u64 = 1 << 16; // FSGSBASE Enable
+pub const CR4_PCIDE: u64 = 1 << 17; // PCID Enable
+pub const CR4_OSXSAVE: u64 = 1 << 18; // XSAVE and Processor Extended States Enable
+pub const CR4_SMEP: u64 = 1 << 20; // SMEP Enable
+pub const CR4_SMAP: u64 = 1 << 21; // SMAP Enable
+pub const CR4_PKE: u64 = 1 << 22; // Protection Key Enable
 
 // RFLAGS bits
-pub const RFLAGS_CF: u64 = 1 << 0;   // Carry Flag
-pub const RFLAGS_PF: u64 = 1 << 2;   // Parity Flag
-pub const RFLAGS_AF: u64 = 1 << 4;   // Auxiliary Carry Flag
-pub const RFLAGS_ZF: u64 = 1 << 6;   // Zero Flag
-pub const RFLAGS_SF: u64 = 1 << 7;   // Sign Flag
-pub const RFLAGS_TF: u64 = 1 << 8;   // Trap Flag
-pub const RFLAGS_IF: u64 = 1 << 9;   // Interrupt Enable Flag
-pub const RFLAGS_DF: u64 = 1 << 10;  // Direction Flag
-pub const RFLAGS_OF: u64 = 1 << 11;  // Overflow Flag
+pub const RFLAGS_CF: u64 = 1 << 0; // Carry Flag
+pub const RFLAGS_PF: u64 = 1 << 2; // Parity Flag
+pub const RFLAGS_AF: u64 = 1 << 4; // Auxiliary Carry Flag
+pub const RFLAGS_ZF: u64 = 1 << 6; // Zero Flag
+pub const RFLAGS_SF: u64 = 1 << 7; // Sign Flag
+pub const RFLAGS_TF: u64 = 1 << 8; // Trap Flag
+pub const RFLAGS_IF: u64 = 1 << 9; // Interrupt Enable Flag
+pub const RFLAGS_DF: u64 = 1 << 10; // Direction Flag
+pub const RFLAGS_OF: u64 = 1 << 11; // Overflow Flag
 pub const RFLAGS_IOPL_MASK: u64 = 3 << 12; // I/O Privilege Level
-pub const RFLAGS_NT: u64 = 1 << 14;  // Nested Task
-pub const RFLAGS_RF: u64 = 1 << 16;  // Resume Flag
-pub const RFLAGS_VM: u64 = 1 << 17;  // Virtual-8086 Mode
-pub const RFLAGS_AC: u64 = 1 << 18;  // Alignment Check
+pub const RFLAGS_NT: u64 = 1 << 14; // Nested Task
+pub const RFLAGS_RF: u64 = 1 << 16; // Resume Flag
+pub const RFLAGS_VM: u64 = 1 << 17; // Virtual-8086 Mode
+pub const RFLAGS_AC: u64 = 1 << 18; // Alignment Check
 pub const RFLAGS_VIF: u64 = 1 << 19; // Virtual Interrupt Flag
 pub const RFLAGS_VIP: u64 = 1 << 20; // Virtual Interrupt Pending
-pub const RFLAGS_ID: u64 = 1 << 21;  // ID Flag
+pub const RFLAGS_ID: u64 = 1 << 21; // ID Flag
 pub const RFLAGS_RESERVED_1: u64 = 1 << 1; // Always 1
 
 // External function declarations from Hypervisor.framework

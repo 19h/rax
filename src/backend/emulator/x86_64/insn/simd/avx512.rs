@@ -272,9 +272,9 @@ fn store_mem_bytes(
 /// Multiplies packed signed qword integers and stores the low 64 bits
 /// of each 128-bit result.
 pub fn vpmullq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let evex = ctx.evex.ok_or_else(|| {
-        Error::Emulator("VPMULLQ requires EVEX prefix".to_string())
-    })?;
+    let evex = ctx
+        .evex
+        .ok_or_else(|| Error::Emulator("VPMULLQ requires EVEX prefix".to_string()))?;
 
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
 
@@ -360,9 +360,9 @@ pub fn vpmullq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 /// VPMULLD (EVEX) - Multiply Packed Signed Dword Integers and Store Low Result
 /// EVEX.128/256/512.66.0F38.W0 40 /r
 pub fn vpmulld_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let evex = ctx.evex.ok_or_else(|| {
-        Error::Emulator("VPMULLD requires EVEX prefix".to_string())
-    })?;
+    let evex = ctx
+        .evex
+        .ok_or_else(|| Error::Emulator("VPMULLD requires EVEX prefix".to_string()))?;
 
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
 
@@ -458,9 +458,9 @@ pub fn vcompress_evex(
     elem_size: usize,
     name: &str,
 ) -> Result<Option<VcpuExit>> {
-    let evex = ctx.evex.ok_or_else(|| {
-        Error::Emulator(format!("{} requires EVEX prefix", name))
-    })?;
+    let evex = ctx
+        .evex
+        .ok_or_else(|| Error::Emulator(format!("{} requires EVEX prefix", name)))?;
 
     if evex.vvvv != 0xF {
         return Err(Error::Emulator(format!(
@@ -523,9 +523,9 @@ pub fn vexpand_evex(
     elem_size: usize,
     name: &str,
 ) -> Result<Option<VcpuExit>> {
-    let evex = ctx.evex.ok_or_else(|| {
-        Error::Emulator(format!("{} requires EVEX prefix", name))
-    })?;
+    let evex = ctx
+        .evex
+        .ok_or_else(|| Error::Emulator(format!("{} requires EVEX prefix", name)))?;
 
     if evex.vvvv != 0xF {
         return Err(Error::Emulator(format!(

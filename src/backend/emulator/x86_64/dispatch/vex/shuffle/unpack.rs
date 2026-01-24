@@ -45,7 +45,10 @@ impl X86_64Vcpu {
                 let (src2_hi2, src2_hi3) = if is_memory {
                     (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                 } else {
-                    (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                    (
+                        self.regs.ymm_high[rm as usize][0],
+                        self.regs.ymm_high[rm as usize][1],
+                    )
                 };
                 let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
                 let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -85,7 +88,10 @@ impl X86_64Vcpu {
                 let (src2_hi2, src2_hi3) = if is_memory {
                     (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                 } else {
-                    (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                    (
+                        self.regs.ymm_high[rm as usize][0],
+                        self.regs.ymm_high[rm as usize][1],
+                    )
                 };
                 let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
                 let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -225,7 +231,10 @@ impl X86_64Vcpu {
             let (src2_hi2, src2_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -353,9 +362,13 @@ impl X86_64Vcpu {
     // Helper: pack words to bytes with signed saturation
     fn pack_sswb(&self, lo: u64, hi: u64) -> u64 {
         let saturate = |v: i16| -> u8 {
-            if v < -128 { 0x80u8 }
-            else if v > 127 { 0x7Fu8 }
-            else { v as i8 as u8 }
+            if v < -128 {
+                0x80u8
+            } else if v > 127 {
+                0x7Fu8
+            } else {
+                v as i8 as u8
+            }
         };
         let b0 = saturate(lo as i16) as u64;
         let b1 = saturate((lo >> 16) as i16) as u64;
@@ -371,9 +384,13 @@ impl X86_64Vcpu {
     // Helper: pack words to unsigned bytes with saturation
     fn pack_uswb(&self, lo: u64, hi: u64) -> u64 {
         let saturate = |v: i16| -> u8 {
-            if v < 0 { 0u8 }
-            else if v > 255 { 0xFFu8 }
-            else { v as u8 }
+            if v < 0 {
+                0u8
+            } else if v > 255 {
+                0xFFu8
+            } else {
+                v as u8
+            }
         };
         let b0 = saturate(lo as i16) as u64;
         let b1 = saturate((lo >> 16) as i16) as u64;
@@ -389,9 +406,13 @@ impl X86_64Vcpu {
     // Helper: pack dwords to words with signed saturation
     fn pack_ssdw(&self, lo: u64, hi: u64) -> u64 {
         let saturate = |v: i32| -> u16 {
-            if v < -32768 { 0x8000u16 }
-            else if v > 32767 { 0x7FFFu16 }
-            else { v as i16 as u16 }
+            if v < -32768 {
+                0x8000u16
+            } else if v > 32767 {
+                0x7FFFu16
+            } else {
+                v as i16 as u16
+            }
         };
         let w0 = saturate(lo as i32) as u64;
         let w1 = saturate((lo >> 32) as i32) as u64;
@@ -399,5 +420,4 @@ impl X86_64Vcpu {
         let w3 = saturate((hi >> 32) as i32) as u64;
         w0 | (w1 << 16) | (w2 << 32) | (w3 << 48)
     }
-
 }

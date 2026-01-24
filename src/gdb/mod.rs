@@ -172,7 +172,7 @@ impl GdbServer {
 
                 // Handle the packet
                 match self.handle_packet(&packet, &mut stream) {
-                    Ok(true) => {} // Continue
+                    Ok(true) => {}              // Continue
                     Ok(false) => return Ok(()), // Detach/kill
                     Err(e) => {
                         error!(error = %e, "Error handling packet");
@@ -215,7 +215,11 @@ impl GdbServer {
 }
 
 /// Spawn the GDB server in a background thread.
-pub fn spawn_server(port: u16, channels: GdbChannels, wait: bool) -> std::io::Result<JoinHandle<()>> {
+pub fn spawn_server(
+    port: u16,
+    channels: GdbChannels,
+    wait: bool,
+) -> std::io::Result<JoinHandle<()>> {
     let server = GdbServer::new(port, channels, wait)?;
 
     if wait {

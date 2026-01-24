@@ -8,12 +8,13 @@ pub mod error;
 #[cfg(feature = "debug")]
 pub mod gdb;
 pub mod memory;
+#[cfg(feature = "profiling")]
+pub mod profiling;
+pub mod smir;
 pub mod snapshot;
 pub mod timing;
 #[cfg(feature = "trace")]
 pub mod trace;
-#[cfg(feature = "profiling")]
-pub mod profiling;
 pub mod vmm;
 
 pub use crate::error::{Error, Result};

@@ -32,7 +32,10 @@ impl X86_64Vcpu {
             let (ctrl_hi2, ctrl_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src_hi2 = self.regs.ymm_high[xmm_src][0];
             let src_hi3 = self.regs.ymm_high[xmm_src][1];
@@ -59,7 +62,10 @@ impl X86_64Vcpu {
         let r1 = floats[((ctrl_lo >> 32) & 3) as usize];
         let r2 = floats[(ctrl_hi & 3) as usize];
         let r3 = floats[((ctrl_hi >> 32) & 3) as usize];
-        ((r0 as u64) | ((r1 as u64) << 32), (r2 as u64) | ((r3 as u64) << 32))
+        (
+            (r0 as u64) | ((r1 as u64) << 32),
+            (r2 as u64) | ((r3 as u64) << 32),
+        )
     }
 
     pub(in crate::backend::emulator::x86_64) fn execute_vex_permilps_imm(
@@ -69,7 +75,9 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator("VPERMILPS imm requires VEX.vvvv=1111b".to_string()));
+            return Err(Error::Emulator(
+                "VPERMILPS imm requires VEX.vvvv=1111b".to_string(),
+            ));
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let imm8 = ctx.consume_u8()?;
@@ -88,7 +96,10 @@ impl X86_64Vcpu {
             let (src_hi2, src_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let (dst_hi2, dst_hi3) = self.permilps_imm_128(src_hi2, src_hi3, imm8);
             self.regs.ymm_high[xmm_dst][0] = dst_hi2;
@@ -113,7 +124,10 @@ impl X86_64Vcpu {
         let r1 = floats[((imm8 >> 2) & 0x3) as usize];
         let r2 = floats[((imm8 >> 4) & 0x3) as usize];
         let r3 = floats[((imm8 >> 6) & 0x3) as usize];
-        ((r0 as u64) | ((r1 as u64) << 32), (r2 as u64) | ((r3 as u64) << 32))
+        (
+            (r0 as u64) | ((r1 as u64) << 32),
+            (r2 as u64) | ((r3 as u64) << 32),
+        )
     }
 
     pub(in crate::backend::emulator::x86_64) fn execute_vex_permilpd_reg(
@@ -135,8 +149,16 @@ impl X86_64Vcpu {
         let src_hi = self.regs.xmm[xmm_src][1];
 
         // Select based on bit 1 of each control qword
-        let dst_lo = if (ctrl_lo >> 1) & 1 == 0 { src_lo } else { src_hi };
-        let dst_hi = if (ctrl_hi >> 1) & 1 == 0 { src_lo } else { src_hi };
+        let dst_lo = if (ctrl_lo >> 1) & 1 == 0 {
+            src_lo
+        } else {
+            src_hi
+        };
+        let dst_hi = if (ctrl_hi >> 1) & 1 == 0 {
+            src_lo
+        } else {
+            src_hi
+        };
         self.regs.xmm[xmm_dst][0] = dst_lo;
         self.regs.xmm[xmm_dst][1] = dst_hi;
 
@@ -144,12 +166,23 @@ impl X86_64Vcpu {
             let (ctrl_hi2, ctrl_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src_hi2 = self.regs.ymm_high[xmm_src][0];
             let src_hi3 = self.regs.ymm_high[xmm_src][1];
-            let dst_hi2 = if (ctrl_hi2 >> 1) & 1 == 0 { src_hi2 } else { src_hi3 };
-            let dst_hi3 = if (ctrl_hi3 >> 1) & 1 == 0 { src_hi2 } else { src_hi3 };
+            let dst_hi2 = if (ctrl_hi2 >> 1) & 1 == 0 {
+                src_hi2
+            } else {
+                src_hi3
+            };
+            let dst_hi3 = if (ctrl_hi3 >> 1) & 1 == 0 {
+                src_hi2
+            } else {
+                src_hi3
+            };
             self.regs.ymm_high[xmm_dst][0] = dst_hi2;
             self.regs.ymm_high[xmm_dst][1] = dst_hi3;
         } else {
@@ -168,7 +201,9 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator("VPERMILPD imm requires VEX.vvvv=1111b".to_string()));
+            return Err(Error::Emulator(
+                "VPERMILPD imm requires VEX.vvvv=1111b".to_string(),
+            ));
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let imm8 = ctx.consume_u8()?;
@@ -190,7 +225,10 @@ impl X86_64Vcpu {
             let (src_hi2, src_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let bit2 = (imm8 & 0x4) != 0;
             let bit3 = (imm8 & 0x8) != 0;
@@ -276,10 +314,14 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator("VPERMQ/VPERMPD requires VEX.vvvv=1111b".to_string()));
+            return Err(Error::Emulator(
+                "VPERMQ/VPERMPD requires VEX.vvvv=1111b".to_string(),
+            ));
         }
         if vex_l == 0 {
-            return Err(Error::Emulator("VPERMQ/VPERMPD requires VEX.L=1".to_string()));
+            return Err(Error::Emulator(
+                "VPERMQ/VPERMPD requires VEX.L=1".to_string(),
+            ));
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let imm8 = ctx.consume_u8()?;
@@ -357,5 +399,4 @@ impl X86_64Vcpu {
         }
         Ok(out)
     }
-
 }

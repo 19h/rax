@@ -9,7 +9,9 @@ use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 pub fn cldemote(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let (_reg, _rm, is_memory, _addr, _) = vcpu.decode_modrm(ctx)?;
     if !is_memory {
-        return Err(Error::Emulator("CLDEMOTE requires memory operand".to_string()));
+        return Err(Error::Emulator(
+            "CLDEMOTE requires memory operand".to_string(),
+        ));
     }
 
     vcpu.regs.rip += ctx.cursor as u64;

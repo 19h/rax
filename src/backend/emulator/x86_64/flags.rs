@@ -2,13 +2,13 @@
 
 /// RFLAGS bit positions.
 pub mod bits {
-    pub const CF: u64 = 1 << 0;  // Carry Flag
-    pub const PF: u64 = 1 << 2;  // Parity Flag
-    pub const AF: u64 = 1 << 4;  // Auxiliary Carry Flag
-    pub const ZF: u64 = 1 << 6;  // Zero Flag
-    pub const SF: u64 = 1 << 7;  // Sign Flag
-    pub const TF: u64 = 1 << 8;  // Trap Flag
-    pub const IF: u64 = 1 << 9;  // Interrupt Enable Flag
+    pub const CF: u64 = 1 << 0; // Carry Flag
+    pub const PF: u64 = 1 << 2; // Parity Flag
+    pub const AF: u64 = 1 << 4; // Auxiliary Carry Flag
+    pub const ZF: u64 = 1 << 6; // Zero Flag
+    pub const SF: u64 = 1 << 7; // Sign Flag
+    pub const TF: u64 = 1 << 8; // Trap Flag
+    pub const IF: u64 = 1 << 9; // Interrupt Enable Flag
     pub const DF: u64 = 1 << 10; // Direction Flag
     pub const OF: u64 = 1 << 11; // Overflow Flag
     pub const IOPL_MASK: u64 = 0x3000; // I/O Privilege Level
@@ -94,12 +94,24 @@ pub fn update_flags_add(rflags: &mut u64, a: u64, b: u64, result: u64, size: u8)
 
     // Clear and set flags
     *rflags &= !(bits::CF | bits::ZF | bits::SF | bits::PF | bits::OF | bits::AF);
-    if cf { *rflags |= bits::CF; }
-    if zf { *rflags |= bits::ZF; }
-    if sf { *rflags |= bits::SF; }
-    if pf { *rflags |= bits::PF; }
-    if of { *rflags |= bits::OF; }
-    if af { *rflags |= bits::AF; }
+    if cf {
+        *rflags |= bits::CF;
+    }
+    if zf {
+        *rflags |= bits::ZF;
+    }
+    if sf {
+        *rflags |= bits::SF;
+    }
+    if pf {
+        *rflags |= bits::PF;
+    }
+    if of {
+        *rflags |= bits::OF;
+    }
+    if af {
+        *rflags |= bits::AF;
+    }
 }
 
 /// Update flags after a subtraction operation.
@@ -144,12 +156,24 @@ pub fn update_flags_sub(rflags: &mut u64, a: u64, b: u64, result: u64, size: u8)
 
     // Clear and set flags
     *rflags &= !(bits::CF | bits::ZF | bits::SF | bits::PF | bits::OF | bits::AF);
-    if cf { *rflags |= bits::CF; }
-    if zf { *rflags |= bits::ZF; }
-    if sf { *rflags |= bits::SF; }
-    if pf { *rflags |= bits::PF; }
-    if of { *rflags |= bits::OF; }
-    if af { *rflags |= bits::AF; }
+    if cf {
+        *rflags |= bits::CF;
+    }
+    if zf {
+        *rflags |= bits::ZF;
+    }
+    if sf {
+        *rflags |= bits::SF;
+    }
+    if pf {
+        *rflags |= bits::PF;
+    }
+    if of {
+        *rflags |= bits::OF;
+    }
+    if af {
+        *rflags |= bits::AF;
+    }
 }
 
 /// Update flags after a logical operation (AND, OR, XOR).
@@ -161,17 +185,27 @@ pub fn update_flags_logic(rflags: &mut u64, result: u64, size: u8) {
     let pf = compute_pf(result);
 
     *rflags &= !(bits::CF | bits::ZF | bits::SF | bits::PF | bits::OF);
-    if zf { *rflags |= bits::ZF; }
-    if sf { *rflags |= bits::SF; }
-    if pf { *rflags |= bits::PF; }
+    if zf {
+        *rflags |= bits::ZF;
+    }
+    if sf {
+        *rflags |= bits::SF;
+    }
+    if pf {
+        *rflags |= bits::PF;
+    }
 }
 
 /// Set CF and OF flags (used by MUL/IMUL).
 #[inline]
 pub fn set_cf_of(rflags: &mut u64, cf: bool, of: bool) {
     *rflags &= !(bits::CF | bits::OF);
-    if cf { *rflags |= bits::CF; }
-    if of { *rflags |= bits::OF; }
+    if cf {
+        *rflags |= bits::CF;
+    }
+    if of {
+        *rflags |= bits::OF;
+    }
 }
 
 /// Update flags after ADC (add with carry) operation.
@@ -221,12 +255,24 @@ pub fn update_flags_adc(rflags: &mut u64, a: u64, b: u64, cf_in: bool, result: u
 
     // Clear and set flags
     *rflags &= !(bits::CF | bits::ZF | bits::SF | bits::PF | bits::OF | bits::AF);
-    if cf { *rflags |= bits::CF; }
-    if zf { *rflags |= bits::ZF; }
-    if sf { *rflags |= bits::SF; }
-    if pf { *rflags |= bits::PF; }
-    if of { *rflags |= bits::OF; }
-    if af { *rflags |= bits::AF; }
+    if cf {
+        *rflags |= bits::CF;
+    }
+    if zf {
+        *rflags |= bits::ZF;
+    }
+    if sf {
+        *rflags |= bits::SF;
+    }
+    if pf {
+        *rflags |= bits::PF;
+    }
+    if of {
+        *rflags |= bits::OF;
+    }
+    if af {
+        *rflags |= bits::AF;
+    }
 }
 
 /// Update only SF, ZF, and PF flags (used by BCD instructions like DAA, DAS, AAM, AAD).
@@ -237,9 +283,15 @@ pub fn update_szp(rflags: &mut u64, result: u64, size: u8) {
     let pf = compute_pf(result);
 
     *rflags &= !(bits::ZF | bits::SF | bits::PF);
-    if zf { *rflags |= bits::ZF; }
-    if sf { *rflags |= bits::SF; }
-    if pf { *rflags |= bits::PF; }
+    if zf {
+        *rflags |= bits::ZF;
+    }
+    if sf {
+        *rflags |= bits::SF;
+    }
+    if pf {
+        *rflags |= bits::PF;
+    }
 }
 
 /// Update flags after SBB (subtract with borrow) operation.
@@ -285,10 +337,22 @@ pub fn update_flags_sbb(rflags: &mut u64, a: u64, b: u64, cf_in: bool, result: u
 
     // Clear and set flags
     *rflags &= !(bits::CF | bits::ZF | bits::SF | bits::PF | bits::OF | bits::AF);
-    if cf { *rflags |= bits::CF; }
-    if zf { *rflags |= bits::ZF; }
-    if sf { *rflags |= bits::SF; }
-    if pf { *rflags |= bits::PF; }
-    if of { *rflags |= bits::OF; }
-    if af { *rflags |= bits::AF; }
+    if cf {
+        *rflags |= bits::CF;
+    }
+    if zf {
+        *rflags |= bits::ZF;
+    }
+    if sf {
+        *rflags |= bits::SF;
+    }
+    if pf {
+        *rflags |= bits::PF;
+    }
+    if of {
+        *rflags |= bits::OF;
+    }
+    if af {
+        *rflags |= bits::AF;
+    }
 }

@@ -16,10 +16,22 @@ pub static CURRENT_RIP: AtomicU64 = AtomicU64::new(0);
 
 /// Circular buffer of last 16 RIPs for debugging crashes
 pub static RIP_HISTORY: [AtomicU64; 16] = [
-    AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0),
-    AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0),
-    AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0),
-    AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0),
+    AtomicU64::new(0),
+    AtomicU64::new(0),
+    AtomicU64::new(0),
+    AtomicU64::new(0),
+    AtomicU64::new(0),
+    AtomicU64::new(0),
+    AtomicU64::new(0),
+    AtomicU64::new(0),
+    AtomicU64::new(0),
+    AtomicU64::new(0),
+    AtomicU64::new(0),
+    AtomicU64::new(0),
+    AtomicU64::new(0),
+    AtomicU64::new(0),
+    AtomicU64::new(0),
+    AtomicU64::new(0),
 ];
 pub static RIP_IDX: AtomicUsize = AtomicUsize::new(0);
 
@@ -156,8 +168,8 @@ pub(super) enum LazyFlagOp {
 pub(super) struct LazyFlags {
     pub op: LazyFlagOp,
     pub result: u64,
-    pub src: u64,      // First operand (a)
-    pub dst: u64,      // Second operand (b) - only used for Add/Sub
+    pub src: u64, // First operand (a)
+    pub dst: u64, // Second operand (b) - only used for Add/Sub
     pub size: u8,
 }
 
@@ -543,12 +555,23 @@ impl X86_64Vcpu {
         } else {
             flags::bits::CF
         };
-        self.regs.rflags &= !(cf_mask | flags::bits::ZF | flags::bits::SF | flags::bits::PF | flags::bits::OF | flags::bits::AF);
+        self.regs.rflags &= !(cf_mask
+            | flags::bits::ZF
+            | flags::bits::SF
+            | flags::bits::PF
+            | flags::bits::OF
+            | flags::bits::AF);
 
         // Set common flags
-        if zf { self.regs.rflags |= flags::bits::ZF; }
-        if sf { self.regs.rflags |= flags::bits::SF; }
-        if pf { self.regs.rflags |= flags::bits::PF; }
+        if zf {
+            self.regs.rflags |= flags::bits::ZF;
+        }
+        if sf {
+            self.regs.rflags |= flags::bits::SF;
+        }
+        if pf {
+            self.regs.rflags |= flags::bits::PF;
+        }
 
         // Operation-specific flags
         match lf.op {
@@ -556,17 +579,29 @@ impl X86_64Vcpu {
                 let cf = result_m < a_m;
                 let of = ((a_m ^ result_m) & (b_m ^ result_m) & sign_bit) != 0;
                 let af = ((a_m ^ b_m ^ result_m) & 0x10) != 0;
-                if lf.op == LazyFlagOp::Add && cf { self.regs.rflags |= flags::bits::CF; }
-                if of { self.regs.rflags |= flags::bits::OF; }
-                if af { self.regs.rflags |= flags::bits::AF; }
+                if lf.op == LazyFlagOp::Add && cf {
+                    self.regs.rflags |= flags::bits::CF;
+                }
+                if of {
+                    self.regs.rflags |= flags::bits::OF;
+                }
+                if af {
+                    self.regs.rflags |= flags::bits::AF;
+                }
             }
             LazyFlagOp::Sub | LazyFlagOp::Dec => {
                 let cf = a_m < b_m;
                 let of = ((a_m ^ b_m) & (a_m ^ result_m) & sign_bit) != 0;
                 let af = ((a_m ^ b_m ^ result_m) & 0x10) != 0;
-                if lf.op == LazyFlagOp::Sub && cf { self.regs.rflags |= flags::bits::CF; }
-                if of { self.regs.rflags |= flags::bits::OF; }
-                if af { self.regs.rflags |= flags::bits::AF; }
+                if lf.op == LazyFlagOp::Sub && cf {
+                    self.regs.rflags |= flags::bits::CF;
+                }
+                if of {
+                    self.regs.rflags |= flags::bits::OF;
+                }
+                if af {
+                    self.regs.rflags |= flags::bits::AF;
+                }
             }
             LazyFlagOp::Logic => {
                 // CF=0, OF=0 already cleared above; AF is undefined
@@ -575,7 +610,10 @@ impl X86_64Vcpu {
         }
 
         // Mark flags as materialized
-        self.lazy_flags.set(LazyFlags { op: LazyFlagOp::None, ..lf });
+        self.lazy_flags.set(LazyFlags {
+            op: LazyFlagOp::None,
+            ..lf
+        });
     }
 
     /// Compute what rflags would be if lazy flags were materialized (without modifying self).
@@ -620,12 +658,24 @@ impl X86_64Vcpu {
         } else {
             flags::bits::CF
         };
-        let mut rflags = self.regs.rflags & !(cf_mask | flags::bits::ZF | flags::bits::SF | flags::bits::PF | flags::bits::OF | flags::bits::AF);
+        let mut rflags = self.regs.rflags
+            & !(cf_mask
+                | flags::bits::ZF
+                | flags::bits::SF
+                | flags::bits::PF
+                | flags::bits::OF
+                | flags::bits::AF);
 
         // Set common flags
-        if zf { rflags |= flags::bits::ZF; }
-        if sf { rflags |= flags::bits::SF; }
-        if pf { rflags |= flags::bits::PF; }
+        if zf {
+            rflags |= flags::bits::ZF;
+        }
+        if sf {
+            rflags |= flags::bits::SF;
+        }
+        if pf {
+            rflags |= flags::bits::PF;
+        }
 
         // Operation-specific flags
         match lf.op {
@@ -633,17 +683,29 @@ impl X86_64Vcpu {
                 let cf = result_m < a_m;
                 let of = ((a_m ^ result_m) & (b_m ^ result_m) & sign_bit) != 0;
                 let af = ((a_m ^ b_m ^ result_m) & 0x10) != 0;
-                if lf.op == LazyFlagOp::Add && cf { rflags |= flags::bits::CF; }
-                if of { rflags |= flags::bits::OF; }
-                if af { rflags |= flags::bits::AF; }
+                if lf.op == LazyFlagOp::Add && cf {
+                    rflags |= flags::bits::CF;
+                }
+                if of {
+                    rflags |= flags::bits::OF;
+                }
+                if af {
+                    rflags |= flags::bits::AF;
+                }
             }
             LazyFlagOp::Sub | LazyFlagOp::Dec => {
                 let cf = a_m < b_m;
                 let of = ((a_m ^ b_m) & (a_m ^ result_m) & sign_bit) != 0;
                 let af = ((a_m ^ b_m ^ result_m) & 0x10) != 0;
-                if lf.op == LazyFlagOp::Sub && cf { rflags |= flags::bits::CF; }
-                if of { rflags |= flags::bits::OF; }
-                if af { rflags |= flags::bits::AF; }
+                if lf.op == LazyFlagOp::Sub && cf {
+                    rflags |= flags::bits::CF;
+                }
+                if of {
+                    rflags |= flags::bits::OF;
+                }
+                if af {
+                    rflags |= flags::bits::AF;
+                }
             }
             LazyFlagOp::Logic => {
                 // CF=0, OF=0 already cleared above; AF is undefined
@@ -718,7 +780,10 @@ impl X86_64Vcpu {
     #[inline(always)]
     pub(super) fn clear_lazy_flags(&mut self) {
         let lf = self.lazy_flags.get();
-        self.lazy_flags.set(LazyFlags { op: LazyFlagOp::None, ..lf });
+        self.lazy_flags.set(LazyFlags {
+            op: LazyFlagOp::None,
+            ..lf
+        });
     }
 
     /// Fetch instruction bytes from RIP into a stack buffer.
@@ -735,7 +800,10 @@ impl X86_64Vcpu {
             Ok(()) => return Ok((buf, MAX_INSN_LEN)),
             Err(Error::PageFault { vaddr, error_code }) => {
                 // Instruction fetch page fault - add instruction fetch bit to error code
-                return Err(Error::PageFault { vaddr, error_code: error_code | 0x10 });
+                return Err(Error::PageFault {
+                    vaddr,
+                    error_code: error_code | 0x10,
+                });
             }
             Err(e) => last_err = Some(e), // Try smaller amounts
         }
@@ -744,15 +812,20 @@ impl X86_64Vcpu {
             match self.mmu.read(rip, &mut buf[..len], &self.sregs) {
                 Ok(()) => return Ok((buf, len)),
                 Err(Error::PageFault { vaddr, error_code }) => {
-                    return Err(Error::PageFault { vaddr, error_code: error_code | 0x10 });
+                    return Err(Error::PageFault {
+                        vaddr,
+                        error_code: error_code | 0x10,
+                    });
                 }
                 Err(e) => last_err = Some(e),
             }
         }
         // Debug: print the actual error
         if let Some(e) = &last_err {
-            eprintln!("[FETCH FAIL] RIP={:#x} CR3={:#x} CR0={:#x} EFER={:#x} error: {:?}",
-                rip, self.sregs.cr3, self.sregs.cr0, self.sregs.efer, e);
+            eprintln!(
+                "[FETCH FAIL] RIP={:#x} CR3={:#x} CR0={:#x} EFER={:#x} error: {:?}",
+                rip, self.sregs.cr3, self.sregs.cr0, self.sregs.efer, e
+            );
         }
         Err(Error::Emulator(format!(
             "failed to fetch instruction at RIP={:#x}",
@@ -794,19 +867,25 @@ impl X86_64Vcpu {
             let func_offset = 24u64;
             if let Ok(func_ptr) = self.mmu.read_u64(rip + func_offset, &self.sregs) {
                 // Check if this looks like a valid kernel text address
-                let is_kernel_func = func_ptr >= 0xffffffff81000000 && func_ptr < 0xffffffff84000000;
+                let is_kernel_func =
+                    func_ptr >= 0xffffffff81000000 && func_ptr < 0xffffffff84000000;
                 if is_kernel_func {
-                    eprintln!("[RECOVERY] RIP in heap {:#x}, redirecting to func at offset {}: {:#x}",
-                              rip, func_offset, func_ptr);
+                    eprintln!(
+                        "[RECOVERY] RIP in heap {:#x}, redirecting to func at offset {}: {:#x}",
+                        rip, func_offset, func_ptr
+                    );
                     self.regs.rip = func_ptr;
                     self.in_bad_rip_handling = false;
-                    return self.step();  // Retry with corrected RIP
+                    return self.step(); // Retry with corrected RIP
                 }
             }
 
             // If recovery failed, log the error
             eprintln!("[ERROR] RIP in heap: {:#x}", rip);
-            eprintln!("  RSP={:#x} RAX={:#x} RBX={:#x}", self.regs.rsp, self.regs.rax, self.regs.rbx);
+            eprintln!(
+                "  RSP={:#x} RAX={:#x} RBX={:#x}",
+                self.regs.rsp, self.regs.rax, self.regs.rbx
+            );
             for i in 0..8 {
                 if let Ok(v) = self.mmu.read_u64(self.regs.rsp + i * 8, &self.sregs) {
                     eprintln!("  RSP+{:#04x}: {:#018x}", i * 8, v);
@@ -818,14 +897,16 @@ impl X86_64Vcpu {
         // WORKAROUND: Track recently patched addresses from text_poke_memcpy.
         // Store them in a static set to know which addresses we patched.
         use std::collections::HashSet;
-        use std::sync::Mutex;
         use std::sync::LazyLock;
-        static PATCHED_ADDRS: LazyLock<Mutex<HashSet<u64>>> = LazyLock::new(|| Mutex::new(HashSet::new()));
+        use std::sync::Mutex;
+        static PATCHED_ADDRS: LazyLock<Mutex<HashSet<u64>>> =
+            LazyLock::new(|| Mutex::new(HashSet::new()));
 
         // WORKAROUND: Handle memcmp when called for text_poke verification.
         // After we patch an address, the kernel verifies by calling memcmp.
         // Return 0 (equal) for addresses we recently patched.
-        if rip == 0xffffffff82242010 {  // memcmp
+        if rip == 0xffffffff82242010 {
+            // memcmp
             let s1 = self.regs.rdi;
             let s2 = self.regs.rsi;
             let count = self.regs.rdx;
@@ -857,7 +938,8 @@ impl X86_64Vcpu {
         // WORKAROUND: Handle text_poke_memcpy when destination is in poke area.
         // The kernel uses a special memory mapping for self-modification that our
         // emulator doesn't fully support. Detect and handle it here.
-        if rip == 0xffffffff812a79d0 {  // text_poke_memcpy
+        if rip == 0xffffffff812a79d0 {
+            // text_poke_memcpy
             let dest = self.regs.rdi;
             let src = self.regs.rsi;
             // At function entry, count is in RDX (mov rcx, rdx copies it to rcx later)
@@ -876,7 +958,10 @@ impl X86_64Vcpu {
                 use super::mmu::AccessType;
 
                 // Try translating kernel_addr
-                let kernel_phys = self.mmu.translate(kernel_addr, AccessType::Read, &self.sregs).ok();
+                let kernel_phys = self
+                    .mmu
+                    .translate(kernel_addr, AccessType::Read, &self.sregs)
+                    .ok();
 
                 // Only log first few patches
                 let should_log = n < 5;
@@ -888,8 +973,13 @@ impl X86_64Vcpu {
                             src_preview[i] = b;
                         }
                     }
-                    eprintln!("[text_poke_memcpy #{}] kernel_addr={:#x} count={} src={:02x?}",
-                              n, kernel_addr, count, &src_preview[..(count as usize).min(16)]);
+                    eprintln!(
+                        "[text_poke_memcpy #{}] kernel_addr={:#x} count={} src={:02x?}",
+                        n,
+                        kernel_addr,
+                        count,
+                        &src_preview[..(count as usize).min(16)]
+                    );
                 }
 
                 // Use the kernel_addr physical address
@@ -903,8 +993,12 @@ impl X86_64Vcpu {
                     // The original code works correctly for single-CPU non-SMP operation.
                     if count == 2 {
                         if should_log {
-                            eprintln!("[SKIP 2-BYTE #{}] kernel_addr={:#x} src={:02x?}",
-                                      n, kernel_addr, &src_preview[..2]);
+                            eprintln!(
+                                "[SKIP 2-BYTE #{}] kernel_addr={:#x} src={:02x?}",
+                                n,
+                                kernel_addr,
+                                &src_preview[..2]
+                            );
                         }
                         {
                             let mut addrs = PATCHED_ADDRS.lock().unwrap();
@@ -959,7 +1053,7 @@ impl X86_64Vcpu {
                             }
                         }
 
-                        self.regs.rax = dest;  // memcpy returns destination
+                        self.regs.rax = dest; // memcpy returns destination
                         if let Ok(ret_addr) = self.mmu.read_u64(self.regs.rsp, &self.sregs) {
                             self.regs.rip = ret_addr;
                             self.regs.rsp += 8;
@@ -967,7 +1061,10 @@ impl X86_64Vcpu {
                         }
                     }
                 } else if should_log {
-                    eprintln!("[text_poke_memcpy #{} WORKAROUND] Failed to translate kernel_addr={:#x}", n, kernel_addr);
+                    eprintln!(
+                        "[text_poke_memcpy #{} WORKAROUND] Failed to translate kernel_addr={:#x}",
+                        n, kernel_addr
+                    );
                 }
             }
         }
@@ -981,8 +1078,14 @@ impl X86_64Vcpu {
 
             // Only bypass during early boot (first few failures)
             if count < 100 {
-                eprintln!("[__stack_chk_fail #{} BYPASSED - early boot workaround]", count);
-                eprintln!("  GS.base={:#x} RSP={:#x} CR3={:#x}", self.sregs.gs.base, self.regs.rsp, self.sregs.cr3);
+                eprintln!(
+                    "[__stack_chk_fail #{} BYPASSED - early boot workaround]",
+                    count
+                );
+                eprintln!(
+                    "  GS.base={:#x} RSP={:#x} CR3={:#x}",
+                    self.sregs.gs.base, self.regs.rsp, self.sregs.cr3
+                );
 
                 // Print stack contents for debugging
                 eprintln!("  Stack dump:");
@@ -1104,7 +1207,11 @@ impl X86_64Vcpu {
         } else {
             let default_16bit = !self.sregs.cs.db;
             let is_16bit = default_16bit ^ ctx.operand_size_override;
-            if is_16bit { 2 } else { 4 }
+            if is_16bit {
+                2
+            } else {
+                4
+            }
         };
 
         // Save cursor before consuming opcode (for cache)
@@ -1162,7 +1269,9 @@ impl X86_64Vcpu {
             let insn_len = ctx.cursor.min(15);
             let mut insn_hex = String::with_capacity(insn_len * 3);
             for i in 0..insn_len {
-                if i > 0 { insn_hex.push(' '); }
+                if i > 0 {
+                    insn_hex.push(' ');
+                }
                 insn_hex.push_str(&format!("{:02x}", ctx.bytes[i]));
             }
 
@@ -1174,35 +1283,51 @@ impl X86_64Vcpu {
                 changes.push_str(&format!("rax = 0x{:x}", self.regs.rax));
             }
             if self.regs.rcx != pre_regs.rcx {
-                if !changes.is_empty() { changes.push_str(", "); }
+                if !changes.is_empty() {
+                    changes.push_str(", ");
+                }
                 changes.push_str(&format!("rcx = 0x{:x}", self.regs.rcx));
             }
             if self.regs.rdx != pre_regs.rdx {
-                if !changes.is_empty() { changes.push_str(", "); }
+                if !changes.is_empty() {
+                    changes.push_str(", ");
+                }
                 changes.push_str(&format!("rdx = 0x{:x}", self.regs.rdx));
             }
             if self.regs.rbx != pre_regs.rbx {
-                if !changes.is_empty() { changes.push_str(", "); }
+                if !changes.is_empty() {
+                    changes.push_str(", ");
+                }
                 changes.push_str(&format!("rbx = 0x{:x}", self.regs.rbx));
             }
             if self.regs.rsp != pre_regs.rsp {
-                if !changes.is_empty() { changes.push_str(", "); }
+                if !changes.is_empty() {
+                    changes.push_str(", ");
+                }
                 changes.push_str(&format!("rsp = 0x{:x}", self.regs.rsp));
             }
             if self.regs.rbp != pre_regs.rbp {
-                if !changes.is_empty() { changes.push_str(", "); }
+                if !changes.is_empty() {
+                    changes.push_str(", ");
+                }
                 changes.push_str(&format!("rbp = 0x{:x}", self.regs.rbp));
             }
             if self.regs.rsi != pre_regs.rsi {
-                if !changes.is_empty() { changes.push_str(", "); }
+                if !changes.is_empty() {
+                    changes.push_str(", ");
+                }
                 changes.push_str(&format!("rsi = 0x{:x}", self.regs.rsi));
             }
             if self.regs.rdi != pre_regs.rdi {
-                if !changes.is_empty() { changes.push_str(", "); }
+                if !changes.is_empty() {
+                    changes.push_str(", ");
+                }
                 changes.push_str(&format!("rdi = 0x{:x}", self.regs.rdi));
             }
             if self.regs.rflags != pre_regs.rflags {
-                if !changes.is_empty() { changes.push_str(", "); }
+                if !changes.is_empty() {
+                    changes.push_str(", ");
+                }
                 changes.push_str(&format!("rflags = 0x{:x}", self.regs.rflags));
             }
 
@@ -1342,7 +1467,6 @@ impl X86_64Vcpu {
             8 => *reg_ref = value,
             _ => {}
         }
-
     }
 
     // Memory access helpers
@@ -1353,7 +1477,10 @@ impl X86_64Vcpu {
             2 => Ok(self.mmu.read_u16(addr, &self.sregs)? as u64),
             4 => Ok(self.mmu.read_u32(addr, &self.sregs)? as u64),
             8 => Ok(self.mmu.read_u64(addr, &self.sregs)?),
-            _ => Err(Error::Emulator(format!("invalid memory access size: {}", size))),
+            _ => Err(Error::Emulator(format!(
+                "invalid memory access size: {}",
+                size
+            ))),
         }
     }
 
@@ -1384,8 +1511,10 @@ impl X86_64Vcpu {
 
         // Debug: catch when truncated blake2s address is written to memory
         if size == 4 && value >= 0x83b49000 && value <= 0x83b4a000 {
-            eprintln!("[MEM WRITE TRUNC] addr={:#x} value={:#x} size={} RIP={:#x}",
-                      addr, value, size, self.regs.rip);
+            eprintln!(
+                "[MEM WRITE TRUNC] addr={:#x} value={:#x} size={} RIP={:#x}",
+                addr, value, size, self.regs.rip
+            );
         }
 
         match size {
@@ -1393,7 +1522,10 @@ impl X86_64Vcpu {
             2 => self.mmu.write_u16(addr, value as u16, &self.sregs),
             4 => self.mmu.write_u32(addr, value as u32, &self.sregs),
             8 => self.mmu.write_u64(addr, value, &self.sregs),
-            _ => Err(Error::Emulator(format!("invalid memory access size: {}", size))),
+            _ => Err(Error::Emulator(format!(
+                "invalid memory access size: {}",
+                size
+            ))),
         }
     }
 
@@ -1586,21 +1718,21 @@ impl X86_64Vcpu {
         let pf = self.regs.rflags & flags::bits::PF != 0;
 
         match cc {
-            0x0 => of,              // O
-            0x1 => !of,             // NO
-            0x2 => cf,              // B/NAE/C
-            0x3 => !cf,             // NB/AE/NC
-            0x4 => zf,              // E/Z
-            0x5 => !zf,             // NE/NZ
-            0x6 => cf || zf,        // BE/NA
-            0x7 => !cf && !zf,      // NBE/A
-            0x8 => sf,              // S
-            0x9 => !sf,             // NS
-            0xA => pf,              // P/PE
-            0xB => !pf,             // NP/PO
-            0xC => sf != of,        // L/NGE
-            0xD => sf == of,        // NL/GE
-            0xE => zf || (sf != of), // LE/NG
+            0x0 => of,                // O
+            0x1 => !of,               // NO
+            0x2 => cf,                // B/NAE/C
+            0x3 => !cf,               // NB/AE/NC
+            0x4 => zf,                // E/Z
+            0x5 => !zf,               // NE/NZ
+            0x6 => cf || zf,          // BE/NA
+            0x7 => !cf && !zf,        // NBE/A
+            0x8 => sf,                // S
+            0x9 => !sf,               // NS
+            0xA => pf,                // P/PE
+            0xB => !pf,               // NP/PO
+            0xC => sf != of,          // L/NGE
+            0xD => sf == of,          // NL/GE
+            0xE => zf || (sf != of),  // LE/NG
             0xF => !zf && (sf == of), // NLE/G
             _ => false,
         }
@@ -1629,14 +1761,16 @@ impl X86_64Vcpu {
         // Read the 16-byte IDT entry (using supervisor access - exception delivery
         // always uses supervisor privilege regardless of current CPL)
         let mut idt_entry = [0u8; 16];
-        self.mmu.read_supervisor(idt_entry_addr, &mut idt_entry, &self.sregs)?;
+        self.mmu
+            .read_supervisor(idt_entry_addr, &mut idt_entry, &self.sregs)?;
 
         let offset_low = u16::from_le_bytes([idt_entry[0], idt_entry[1]]) as u64;
         let selector = u16::from_le_bytes([idt_entry[2], idt_entry[3]]);
         let ist = idt_entry[4] & 0x07;
         let type_attr = idt_entry[5];
         let offset_mid = u16::from_le_bytes([idt_entry[6], idt_entry[7]]) as u64;
-        let offset_high = u32::from_le_bytes([idt_entry[8], idt_entry[9], idt_entry[10], idt_entry[11]]) as u64;
+        let offset_high =
+            u32::from_le_bytes([idt_entry[8], idt_entry[9], idt_entry[10], idt_entry[11]]) as u64;
 
         // Check if entry is present
         if type_attr & 0x80 == 0 {
@@ -1687,7 +1821,9 @@ impl X86_64Vcpu {
             // RSP0 is at offset 0x04, RSP1 at 0x0C, RSP2 at 0x14 in 64-bit TSS
             let tss_base = self.sregs.tr.base;
             let rsp_offset = 0x04 + (target_cpl as u64) * 8;
-            let new_rsp = self.mmu.read_u64_supervisor(tss_base + rsp_offset, &self.sregs)?;
+            let new_rsp = self
+                .mmu
+                .read_u64_supervisor(tss_base + rsp_offset, &self.sregs)?;
             if new_rsp != 0 {
                 self.regs.rsp = new_rsp;
                 self.set_sreg(2, 0); // SS = 0 for inter-privilege switches
@@ -1712,7 +1848,12 @@ impl X86_64Vcpu {
         if gate_type == 0x0E {
             let old_if = (self.regs.rflags & flags::bits::IF) != 0;
             self.regs.rflags &= !flags::bits::IF;
-            log_if_transition(handler_addr, old_if, false, &format!("INT_GATE(vec={})", vector));
+            log_if_transition(
+                handler_addr,
+                old_if,
+                false,
+                &format!("INT_GATE(vec={})", vector),
+            );
         }
 
         // Jump to the handler
@@ -1785,7 +1926,9 @@ impl VCpu for X86_64Vcpu {
                     // Inject the page fault exception into the guest
                     match self.inject_page_fault(vaddr, error_code) {
                         Ok(()) => continue,
-                        Err(Error::PageFault { vaddr: _df_vaddr, .. }) => {
+                        Err(Error::PageFault {
+                            vaddr: _df_vaddr, ..
+                        }) => {
                             // Page fault during page fault delivery = double fault
                             // Try to inject #DF (vector 8)
                             match self.inject_exception(8, Some(0)) {
@@ -1812,7 +1955,6 @@ impl VCpu for X86_64Vcpu {
             }
         }
     }
-
 
     fn get_state(&self) -> Result<CpuState> {
         // Compute materialized rflags without modifying self
@@ -1924,7 +2066,8 @@ impl VCpu for X86_64Vcpu {
 
     fn instruction_count(&self) -> u64 {
         // Access the global instruction counter
-        static TOTAL_INSN_READER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        static TOTAL_INSN_READER: std::sync::atomic::AtomicU64 =
+            std::sync::atomic::AtomicU64::new(0);
         // Note: This reads from a separate static; we need to use the same one as run()
         // For now, we'll get the count from run()'s TOTAL_INSN via a global accessor
         get_total_instruction_count()

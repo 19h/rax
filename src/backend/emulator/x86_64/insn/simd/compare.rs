@@ -13,38 +13,38 @@ use super::super::super::flags;
 /// Float comparison predicate for f32 (bits 4:0 for AVX, 2:0 for SSE)
 pub fn cmp_predicate_f32(a: f32, b: f32, pred: u8) -> bool {
     match pred & 0x1F {
-        0x00 => a == b,                             // EQ_OQ
-        0x01 => a < b,                              // LT_OS
-        0x02 => a <= b,                             // LE_OS
-        0x03 => a.is_nan() || b.is_nan(),           // UNORD_Q
-        0x04 => a != b || a.is_nan() || b.is_nan(), // NEQ_UQ
-        0x05 => !(a < b),                           // NLT_US
-        0x06 => !(a <= b),                          // NLE_US
-        0x07 => !a.is_nan() && !b.is_nan(),         // ORD_Q
-        0x08 => a == b || a.is_nan() || b.is_nan(), // EQ_UQ
-        0x09 => !(a >= b),                          // NGE_US
-        0x0A => !(a > b),                           // NGT_US
-        0x0B => false,                              // FALSE_OQ
-        0x0C => a != b,                             // NEQ_OQ
-        0x0D => a >= b,                             // GE_OS
-        0x0E => a > b,                              // GT_OS
-        0x0F => true,                               // TRUE_UQ
-        0x10 => a == b,                             // EQ_OS
-        0x11 => a < b || a.is_nan() || b.is_nan(),  // LT_OQ
-        0x12 => a <= b || a.is_nan() || b.is_nan(), // LE_OQ
-        0x13 => a.is_nan() || b.is_nan(),           // UNORD_S
-        0x14 => a != b,                             // NEQ_US
-        0x15 => !(a < b) || a.is_nan() || b.is_nan(), // NLT_UQ
+        0x00 => a == b,                                // EQ_OQ
+        0x01 => a < b,                                 // LT_OS
+        0x02 => a <= b,                                // LE_OS
+        0x03 => a.is_nan() || b.is_nan(),              // UNORD_Q
+        0x04 => a != b || a.is_nan() || b.is_nan(),    // NEQ_UQ
+        0x05 => !(a < b),                              // NLT_US
+        0x06 => !(a <= b),                             // NLE_US
+        0x07 => !a.is_nan() && !b.is_nan(),            // ORD_Q
+        0x08 => a == b || a.is_nan() || b.is_nan(),    // EQ_UQ
+        0x09 => !(a >= b),                             // NGE_US
+        0x0A => !(a > b),                              // NGT_US
+        0x0B => false,                                 // FALSE_OQ
+        0x0C => a != b,                                // NEQ_OQ
+        0x0D => a >= b,                                // GE_OS
+        0x0E => a > b,                                 // GT_OS
+        0x0F => true,                                  // TRUE_UQ
+        0x10 => a == b,                                // EQ_OS
+        0x11 => a < b || a.is_nan() || b.is_nan(),     // LT_OQ
+        0x12 => a <= b || a.is_nan() || b.is_nan(),    // LE_OQ
+        0x13 => a.is_nan() || b.is_nan(),              // UNORD_S
+        0x14 => a != b,                                // NEQ_US
+        0x15 => !(a < b) || a.is_nan() || b.is_nan(),  // NLT_UQ
         0x16 => !(a <= b) || a.is_nan() || b.is_nan(), // NLE_UQ
-        0x17 => !a.is_nan() && !b.is_nan(),         // ORD_S
-        0x18 => a == b,                             // EQ_US
+        0x17 => !a.is_nan() && !b.is_nan(),            // ORD_S
+        0x18 => a == b,                                // EQ_US
         0x19 => !(a >= b) || a.is_nan() || b.is_nan(), // NGE_UQ
-        0x1A => !(a > b) || a.is_nan() || b.is_nan(), // NGT_UQ
-        0x1B => false,                              // FALSE_OS
-        0x1C => a != b || a.is_nan() || b.is_nan(), // NEQ_OS
-        0x1D => a >= b || a.is_nan() || b.is_nan(), // GE_OQ
-        0x1E => a > b || a.is_nan() || b.is_nan(),  // GT_OQ
-        0x1F => true,                               // TRUE_US
+        0x1A => !(a > b) || a.is_nan() || b.is_nan(),  // NGT_UQ
+        0x1B => false,                                 // FALSE_OS
+        0x1C => a != b || a.is_nan() || b.is_nan(),    // NEQ_OS
+        0x1D => a >= b || a.is_nan() || b.is_nan(),    // GE_OQ
+        0x1E => a > b || a.is_nan() || b.is_nan(),     // GT_OQ
+        0x1F => true,                                  // TRUE_US
         _ => false,
     }
 }
@@ -111,8 +111,7 @@ pub fn cmpps(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         } else {
             0u32
         };
-        vcpu.regs.xmm[xmm_dst][0] =
-            (vcpu.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | result as u64;
+        vcpu.regs.xmm[xmm_dst][0] = (vcpu.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | result as u64;
     } else if ctx.rep_prefix == Some(0xF2) {
         // CMPSD - scalar double
         let src = if is_memory {

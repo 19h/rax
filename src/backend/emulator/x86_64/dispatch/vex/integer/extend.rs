@@ -19,12 +19,48 @@ impl X86_64Vcpu {
         let src = if is_memory {
             // Read appropriate bytes based on operation
             let bytes_needed = match opcode {
-                0x20 => if vex_l == 0 { 8 } else { 16 },  // BW
-                0x21 => if vex_l == 0 { 4 } else { 8 },   // BD
-                0x22 => if vex_l == 0 { 2 } else { 4 },   // BQ
-                0x23 => if vex_l == 0 { 8 } else { 16 },  // WD
-                0x24 => if vex_l == 0 { 4 } else { 8 },   // WQ
-                0x25 => if vex_l == 0 { 8 } else { 16 },  // DQ
+                0x20 => {
+                    if vex_l == 0 {
+                        8
+                    } else {
+                        16
+                    }
+                } // BW
+                0x21 => {
+                    if vex_l == 0 {
+                        4
+                    } else {
+                        8
+                    }
+                } // BD
+                0x22 => {
+                    if vex_l == 0 {
+                        2
+                    } else {
+                        4
+                    }
+                } // BQ
+                0x23 => {
+                    if vex_l == 0 {
+                        8
+                    } else {
+                        16
+                    }
+                } // WD
+                0x24 => {
+                    if vex_l == 0 {
+                        4
+                    } else {
+                        8
+                    }
+                } // WQ
+                0x25 => {
+                    if vex_l == 0 {
+                        8
+                    } else {
+                        16
+                    }
+                } // DQ
                 _ => 16,
             };
             let mut data = [0u8; 16];
@@ -36,8 +72,12 @@ impl X86_64Vcpu {
             let lo = self.regs.xmm[rm as usize][0];
             let hi = self.regs.xmm[rm as usize][1];
             let mut data = [0u8; 16];
-            for i in 0..8 { data[i] = ((lo >> (i * 8)) & 0xFF) as u8; }
-            for i in 0..8 { data[i + 8] = ((hi >> (i * 8)) & 0xFF) as u8; }
+            for i in 0..8 {
+                data[i] = ((lo >> (i * 8)) & 0xFF) as u8;
+            }
+            for i in 0..8 {
+                data[i + 8] = ((hi >> (i * 8)) & 0xFF) as u8;
+            }
             data
         };
 
@@ -45,23 +85,43 @@ impl X86_64Vcpu {
             0x20 => {
                 // PMOVSXBW: bytes to words
                 let mut dst = [0u16; 16];
-                for i in 0..8 { dst[i] = src[i] as i8 as i16 as u16; }
-                self.regs.xmm[xmm_dst][0] = (dst[0] as u64) | ((dst[1] as u64) << 16) | ((dst[2] as u64) << 32) | ((dst[3] as u64) << 48);
-                self.regs.xmm[xmm_dst][1] = (dst[4] as u64) | ((dst[5] as u64) << 16) | ((dst[6] as u64) << 32) | ((dst[7] as u64) << 48);
+                for i in 0..8 {
+                    dst[i] = src[i] as i8 as i16 as u16;
+                }
+                self.regs.xmm[xmm_dst][0] = (dst[0] as u64)
+                    | ((dst[1] as u64) << 16)
+                    | ((dst[2] as u64) << 32)
+                    | ((dst[3] as u64) << 48);
+                self.regs.xmm[xmm_dst][1] = (dst[4] as u64)
+                    | ((dst[5] as u64) << 16)
+                    | ((dst[6] as u64) << 32)
+                    | ((dst[7] as u64) << 48);
                 if vex_l == 1 {
-                    for i in 0..8 { dst[i + 8] = src[i + 8] as i8 as i16 as u16; }
-                    self.regs.ymm_high[xmm_dst][0] = (dst[8] as u64) | ((dst[9] as u64) << 16) | ((dst[10] as u64) << 32) | ((dst[11] as u64) << 48);
-                    self.regs.ymm_high[xmm_dst][1] = (dst[12] as u64) | ((dst[13] as u64) << 16) | ((dst[14] as u64) << 32) | ((dst[15] as u64) << 48);
+                    for i in 0..8 {
+                        dst[i + 8] = src[i + 8] as i8 as i16 as u16;
+                    }
+                    self.regs.ymm_high[xmm_dst][0] = (dst[8] as u64)
+                        | ((dst[9] as u64) << 16)
+                        | ((dst[10] as u64) << 32)
+                        | ((dst[11] as u64) << 48);
+                    self.regs.ymm_high[xmm_dst][1] = (dst[12] as u64)
+                        | ((dst[13] as u64) << 16)
+                        | ((dst[14] as u64) << 32)
+                        | ((dst[15] as u64) << 48);
                 }
             }
             0x21 => {
                 // PMOVSXBD: bytes to dwords
                 let mut dst = [0u32; 8];
-                for i in 0..4 { dst[i] = src[i] as i8 as i32 as u32; }
+                for i in 0..4 {
+                    dst[i] = src[i] as i8 as i32 as u32;
+                }
                 self.regs.xmm[xmm_dst][0] = (dst[0] as u64) | ((dst[1] as u64) << 32);
                 self.regs.xmm[xmm_dst][1] = (dst[2] as u64) | ((dst[3] as u64) << 32);
                 if vex_l == 1 {
-                    for i in 0..4 { dst[i + 4] = src[i + 4] as i8 as i32 as u32; }
+                    for i in 0..4 {
+                        dst[i + 4] = src[i + 4] as i8 as i32 as u32;
+                    }
                     self.regs.ymm_high[xmm_dst][0] = (dst[4] as u64) | ((dst[5] as u64) << 32);
                     self.regs.ymm_high[xmm_dst][1] = (dst[6] as u64) | ((dst[7] as u64) << 32);
                 }
@@ -83,14 +143,14 @@ impl X86_64Vcpu {
                 // PMOVSXWD: words to dwords
                 let mut dst = [0u32; 8];
                 for i in 0..4 {
-                    let w = (src[i*2] as u16) | ((src[i*2+1] as u16) << 8);
+                    let w = (src[i * 2] as u16) | ((src[i * 2 + 1] as u16) << 8);
                     dst[i] = w as i16 as i32 as u32;
                 }
                 self.regs.xmm[xmm_dst][0] = (dst[0] as u64) | ((dst[1] as u64) << 32);
                 self.regs.xmm[xmm_dst][1] = (dst[2] as u64) | ((dst[3] as u64) << 32);
                 if vex_l == 1 {
                     for i in 0..4 {
-                        let w = (src[8 + i*2] as u16) | ((src[8 + i*2+1] as u16) << 8);
+                        let w = (src[8 + i * 2] as u16) | ((src[8 + i * 2 + 1] as u16) << 8);
                         dst[i + 4] = w as i16 as i32 as u32;
                     }
                     self.regs.ymm_high[xmm_dst][0] = (dst[4] as u64) | ((dst[5] as u64) << 32);
@@ -112,13 +172,25 @@ impl X86_64Vcpu {
             }
             0x25 => {
                 // PMOVSXDQ: dwords to qwords
-                let d0 = (src[0] as u32) | ((src[1] as u32) << 8) | ((src[2] as u32) << 16) | ((src[3] as u32) << 24);
-                let d1 = (src[4] as u32) | ((src[5] as u32) << 8) | ((src[6] as u32) << 16) | ((src[7] as u32) << 24);
+                let d0 = (src[0] as u32)
+                    | ((src[1] as u32) << 8)
+                    | ((src[2] as u32) << 16)
+                    | ((src[3] as u32) << 24);
+                let d1 = (src[4] as u32)
+                    | ((src[5] as u32) << 8)
+                    | ((src[6] as u32) << 16)
+                    | ((src[7] as u32) << 24);
                 self.regs.xmm[xmm_dst][0] = d0 as i32 as i64 as u64;
                 self.regs.xmm[xmm_dst][1] = d1 as i32 as i64 as u64;
                 if vex_l == 1 {
-                    let d2 = (src[8] as u32) | ((src[9] as u32) << 8) | ((src[10] as u32) << 16) | ((src[11] as u32) << 24);
-                    let d3 = (src[12] as u32) | ((src[13] as u32) << 8) | ((src[14] as u32) << 16) | ((src[15] as u32) << 24);
+                    let d2 = (src[8] as u32)
+                        | ((src[9] as u32) << 8)
+                        | ((src[10] as u32) << 16)
+                        | ((src[11] as u32) << 24);
+                    let d3 = (src[12] as u32)
+                        | ((src[13] as u32) << 8)
+                        | ((src[14] as u32) << 16)
+                        | ((src[15] as u32) << 24);
                     self.regs.ymm_high[xmm_dst][0] = d2 as i32 as i64 as u64;
                     self.regs.ymm_high[xmm_dst][1] = d3 as i32 as i64 as u64;
                 }
@@ -146,12 +218,48 @@ impl X86_64Vcpu {
 
         let src = if is_memory {
             let bytes_needed = match opcode {
-                0x30 => if vex_l == 0 { 8 } else { 16 },
-                0x31 => if vex_l == 0 { 4 } else { 8 },
-                0x32 => if vex_l == 0 { 2 } else { 4 },
-                0x33 => if vex_l == 0 { 8 } else { 16 },
-                0x34 => if vex_l == 0 { 4 } else { 8 },
-                0x35 => if vex_l == 0 { 8 } else { 16 },
+                0x30 => {
+                    if vex_l == 0 {
+                        8
+                    } else {
+                        16
+                    }
+                }
+                0x31 => {
+                    if vex_l == 0 {
+                        4
+                    } else {
+                        8
+                    }
+                }
+                0x32 => {
+                    if vex_l == 0 {
+                        2
+                    } else {
+                        4
+                    }
+                }
+                0x33 => {
+                    if vex_l == 0 {
+                        8
+                    } else {
+                        16
+                    }
+                }
+                0x34 => {
+                    if vex_l == 0 {
+                        4
+                    } else {
+                        8
+                    }
+                }
+                0x35 => {
+                    if vex_l == 0 {
+                        8
+                    } else {
+                        16
+                    }
+                }
                 _ => 16,
             };
             let mut data = [0u8; 16];
@@ -163,8 +271,12 @@ impl X86_64Vcpu {
             let lo = self.regs.xmm[rm as usize][0];
             let hi = self.regs.xmm[rm as usize][1];
             let mut data = [0u8; 16];
-            for i in 0..8 { data[i] = ((lo >> (i * 8)) & 0xFF) as u8; }
-            for i in 0..8 { data[i + 8] = ((hi >> (i * 8)) & 0xFF) as u8; }
+            for i in 0..8 {
+                data[i] = ((lo >> (i * 8)) & 0xFF) as u8;
+            }
+            for i in 0..8 {
+                data[i + 8] = ((hi >> (i * 8)) & 0xFF) as u8;
+            }
             data
         };
 
@@ -172,23 +284,43 @@ impl X86_64Vcpu {
             0x30 => {
                 // PMOVZXBW
                 let mut dst = [0u16; 16];
-                for i in 0..8 { dst[i] = src[i] as u16; }
-                self.regs.xmm[xmm_dst][0] = (dst[0] as u64) | ((dst[1] as u64) << 16) | ((dst[2] as u64) << 32) | ((dst[3] as u64) << 48);
-                self.regs.xmm[xmm_dst][1] = (dst[4] as u64) | ((dst[5] as u64) << 16) | ((dst[6] as u64) << 32) | ((dst[7] as u64) << 48);
+                for i in 0..8 {
+                    dst[i] = src[i] as u16;
+                }
+                self.regs.xmm[xmm_dst][0] = (dst[0] as u64)
+                    | ((dst[1] as u64) << 16)
+                    | ((dst[2] as u64) << 32)
+                    | ((dst[3] as u64) << 48);
+                self.regs.xmm[xmm_dst][1] = (dst[4] as u64)
+                    | ((dst[5] as u64) << 16)
+                    | ((dst[6] as u64) << 32)
+                    | ((dst[7] as u64) << 48);
                 if vex_l == 1 {
-                    for i in 0..8 { dst[i + 8] = src[i + 8] as u16; }
-                    self.regs.ymm_high[xmm_dst][0] = (dst[8] as u64) | ((dst[9] as u64) << 16) | ((dst[10] as u64) << 32) | ((dst[11] as u64) << 48);
-                    self.regs.ymm_high[xmm_dst][1] = (dst[12] as u64) | ((dst[13] as u64) << 16) | ((dst[14] as u64) << 32) | ((dst[15] as u64) << 48);
+                    for i in 0..8 {
+                        dst[i + 8] = src[i + 8] as u16;
+                    }
+                    self.regs.ymm_high[xmm_dst][0] = (dst[8] as u64)
+                        | ((dst[9] as u64) << 16)
+                        | ((dst[10] as u64) << 32)
+                        | ((dst[11] as u64) << 48);
+                    self.regs.ymm_high[xmm_dst][1] = (dst[12] as u64)
+                        | ((dst[13] as u64) << 16)
+                        | ((dst[14] as u64) << 32)
+                        | ((dst[15] as u64) << 48);
                 }
             }
             0x31 => {
                 // PMOVZXBD
                 let mut dst = [0u32; 8];
-                for i in 0..4 { dst[i] = src[i] as u32; }
+                for i in 0..4 {
+                    dst[i] = src[i] as u32;
+                }
                 self.regs.xmm[xmm_dst][0] = (dst[0] as u64) | ((dst[1] as u64) << 32);
                 self.regs.xmm[xmm_dst][1] = (dst[2] as u64) | ((dst[3] as u64) << 32);
                 if vex_l == 1 {
-                    for i in 0..4 { dst[i + 4] = src[i + 4] as u32; }
+                    for i in 0..4 {
+                        dst[i + 4] = src[i + 4] as u32;
+                    }
                     self.regs.ymm_high[xmm_dst][0] = (dst[4] as u64) | ((dst[5] as u64) << 32);
                     self.regs.ymm_high[xmm_dst][1] = (dst[6] as u64) | ((dst[7] as u64) << 32);
                 }
@@ -206,14 +338,14 @@ impl X86_64Vcpu {
                 // PMOVZXWD
                 let mut dst = [0u32; 8];
                 for i in 0..4 {
-                    let w = (src[i*2] as u16) | ((src[i*2+1] as u16) << 8);
+                    let w = (src[i * 2] as u16) | ((src[i * 2 + 1] as u16) << 8);
                     dst[i] = w as u32;
                 }
                 self.regs.xmm[xmm_dst][0] = (dst[0] as u64) | ((dst[1] as u64) << 32);
                 self.regs.xmm[xmm_dst][1] = (dst[2] as u64) | ((dst[3] as u64) << 32);
                 if vex_l == 1 {
                     for i in 0..4 {
-                        let w = (src[8 + i*2] as u16) | ((src[8 + i*2+1] as u16) << 8);
+                        let w = (src[8 + i * 2] as u16) | ((src[8 + i * 2 + 1] as u16) << 8);
                         dst[i + 4] = w as u32;
                     }
                     self.regs.ymm_high[xmm_dst][0] = (dst[4] as u64) | ((dst[5] as u64) << 32);
@@ -235,13 +367,25 @@ impl X86_64Vcpu {
             }
             0x35 => {
                 // PMOVZXDQ
-                let d0 = (src[0] as u32) | ((src[1] as u32) << 8) | ((src[2] as u32) << 16) | ((src[3] as u32) << 24);
-                let d1 = (src[4] as u32) | ((src[5] as u32) << 8) | ((src[6] as u32) << 16) | ((src[7] as u32) << 24);
+                let d0 = (src[0] as u32)
+                    | ((src[1] as u32) << 8)
+                    | ((src[2] as u32) << 16)
+                    | ((src[3] as u32) << 24);
+                let d1 = (src[4] as u32)
+                    | ((src[5] as u32) << 8)
+                    | ((src[6] as u32) << 16)
+                    | ((src[7] as u32) << 24);
                 self.regs.xmm[xmm_dst][0] = d0 as u64;
                 self.regs.xmm[xmm_dst][1] = d1 as u64;
                 if vex_l == 1 {
-                    let d2 = (src[8] as u32) | ((src[9] as u32) << 8) | ((src[10] as u32) << 16) | ((src[11] as u32) << 24);
-                    let d3 = (src[12] as u32) | ((src[13] as u32) << 8) | ((src[14] as u32) << 16) | ((src[15] as u32) << 24);
+                    let d2 = (src[8] as u32)
+                        | ((src[9] as u32) << 8)
+                        | ((src[10] as u32) << 16)
+                        | ((src[11] as u32) << 24);
+                    let d3 = (src[12] as u32)
+                        | ((src[13] as u32) << 8)
+                        | ((src[14] as u32) << 16)
+                        | ((src[15] as u32) << 24);
                     self.regs.ymm_high[xmm_dst][0] = d2 as u64;
                     self.regs.ymm_high[xmm_dst][1] = d3 as u64;
                 }
@@ -257,5 +401,4 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 }

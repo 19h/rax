@@ -78,7 +78,13 @@ pub fn cmpxchg_rm8_r8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Op
 
     // Compare AL with destination
     let cmp_result = al.wrapping_sub(dst);
-    flags::update_flags_sub(&mut vcpu.regs.rflags, al as u64, dst as u64, cmp_result as u64, 1);
+    flags::update_flags_sub(
+        &mut vcpu.regs.rflags,
+        al as u64,
+        dst as u64,
+        cmp_result as u64,
+        1,
+    );
     vcpu.clear_lazy_flags();
 
     if al == dst {

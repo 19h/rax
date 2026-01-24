@@ -241,7 +241,9 @@ pub unsafe fn addps_native_neon(dst: &mut Xmm, src: &Xmm) {
 pub fn addps_scalar(dst: &mut Xmm, src: &Xmm) {
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [f32; 4]) };
     let s = unsafe { &*(src as *const Xmm as *const [f32; 4]) };
-    for i in 0..4 { d[i] += s[i]; }
+    for i in 0..4 {
+        d[i] += s[i];
+    }
 }
 
 #[inline]
@@ -451,7 +453,9 @@ pub unsafe fn subps_native_neon(dst: &mut Xmm, src: &Xmm) {
 pub fn subps_scalar(dst: &mut Xmm, src: &Xmm) {
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [f32; 4]) };
     let s = unsafe { &*(src as *const Xmm as *const [f32; 4]) };
-    for i in 0..4 { d[i] -= s[i]; }
+    for i in 0..4 {
+        d[i] -= s[i];
+    }
 }
 
 #[inline]
@@ -661,7 +665,9 @@ pub unsafe fn mulps_native_neon(dst: &mut Xmm, src: &Xmm) {
 pub fn mulps_scalar(dst: &mut Xmm, src: &Xmm) {
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [f32; 4]) };
     let s = unsafe { &*(src as *const Xmm as *const [f32; 4]) };
-    for i in 0..4 { d[i] *= s[i]; }
+    for i in 0..4 {
+        d[i] *= s[i];
+    }
 }
 
 #[inline]
@@ -872,7 +878,9 @@ pub unsafe fn divps_native_neon(dst: &mut Xmm, src: &Xmm) {
 pub fn divps_scalar(dst: &mut Xmm, src: &Xmm) {
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [f32; 4]) };
     let s = unsafe { &*(src as *const Xmm as *const [f32; 4]) };
-    for i in 0..4 { d[i] /= s[i]; }
+    for i in 0..4 {
+        d[i] /= s[i];
+    }
 }
 
 #[inline]
@@ -1089,7 +1097,9 @@ pub unsafe fn paddb_native_neon(dst: &mut Xmm, src: &Xmm) {
 pub fn paddb_scalar(dst: &mut Xmm, src: &Xmm) {
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [u8; 16]) };
     let s = unsafe { &*(src as *const Xmm as *const [u8; 16]) };
-    for i in 0..16 { d[i] = d[i].wrapping_add(s[i]); }
+    for i in 0..16 {
+        d[i] = d[i].wrapping_add(s[i]);
+    }
 }
 
 #[inline]
@@ -1217,7 +1227,9 @@ pub unsafe fn paddw_native_neon(dst: &mut Xmm, src: &Xmm) {
 pub fn paddw_scalar(dst: &mut Xmm, src: &Xmm) {
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [u16; 8]) };
     let s = unsafe { &*(src as *const Xmm as *const [u16; 8]) };
-    for i in 0..8 { d[i] = d[i].wrapping_add(s[i]); }
+    for i in 0..8 {
+        d[i] = d[i].wrapping_add(s[i]);
+    }
 }
 
 #[inline]
@@ -1345,7 +1357,9 @@ pub unsafe fn paddd_native_neon(dst: &mut Xmm, src: &Xmm) {
 pub fn paddd_scalar(dst: &mut Xmm, src: &Xmm) {
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [u32; 4]) };
     let s = unsafe { &*(src as *const Xmm as *const [u32; 4]) };
-    for i in 0..4 { d[i] = d[i].wrapping_add(s[i]); }
+    for i in 0..4 {
+        d[i] = d[i].wrapping_add(s[i]);
+    }
 }
 
 #[inline]
@@ -1600,7 +1614,9 @@ pub unsafe fn psubb_native_neon(dst: &mut Xmm, src: &Xmm) {
 pub fn psubb_scalar(dst: &mut Xmm, src: &Xmm) {
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [u8; 16]) };
     let s = unsafe { &*(src as *const Xmm as *const [u8; 16]) };
-    for i in 0..16 { d[i] = d[i].wrapping_sub(s[i]); }
+    for i in 0..16 {
+        d[i] = d[i].wrapping_sub(s[i]);
+    }
 }
 
 #[inline]
@@ -1733,7 +1749,9 @@ pub unsafe fn psubw_native_neon(dst: &mut Xmm, src: &Xmm) {
 pub fn psubw_scalar(dst: &mut Xmm, src: &Xmm) {
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [u16; 8]) };
     let s = unsafe { &*(src as *const Xmm as *const [u16; 8]) };
-    for i in 0..8 { d[i] = d[i].wrapping_sub(s[i]); }
+    for i in 0..8 {
+        d[i] = d[i].wrapping_sub(s[i]);
+    }
 }
 
 #[inline]
@@ -1866,7 +1884,9 @@ pub unsafe fn psubd_native_neon(dst: &mut Xmm, src: &Xmm) {
 pub fn psubd_scalar(dst: &mut Xmm, src: &Xmm) {
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [u32; 4]) };
     let s = unsafe { &*(src as *const Xmm as *const [u32; 4]) };
-    for i in 0..4 { d[i] = d[i].wrapping_sub(s[i]); }
+    for i in 0..4 {
+        d[i] = d[i].wrapping_sub(s[i]);
+    }
 }
 
 #[inline]
@@ -3399,7 +3419,8 @@ pub fn pmaddwd_scalar(dst: &mut Xmm, src: &Xmm) {
     let result = unsafe { &mut *(dst as *mut Xmm as *mut [i32; 4]) };
 
     for i in 0..4 {
-        result[i] = (a[i*2] as i32) * (b[i*2] as i32) + (a[i*2+1] as i32) * (b[i*2+1] as i32);
+        result[i] =
+            (a[i * 2] as i32) * (b[i * 2] as i32) + (a[i * 2 + 1] as i32) * (b[i * 2 + 1] as i32);
     }
 }
 
@@ -3535,7 +3556,9 @@ pub unsafe fn pminub_native_neon(dst: &mut Xmm, src: &Xmm) {
 pub fn pminub_scalar(dst: &mut Xmm, src: &Xmm) {
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [u8; 16]) };
     let s = unsafe { &*(src as *const Xmm as *const [u8; 16]) };
-    for i in 0..16 { d[i] = d[i].min(s[i]); }
+    for i in 0..16 {
+        d[i] = d[i].min(s[i]);
+    }
 }
 
 #[inline]
@@ -3666,7 +3689,9 @@ pub unsafe fn pmaxub_native_neon(dst: &mut Xmm, src: &Xmm) {
 pub fn pmaxub_scalar(dst: &mut Xmm, src: &Xmm) {
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [u8; 16]) };
     let s = unsafe { &*(src as *const Xmm as *const [u8; 16]) };
-    for i in 0..16 { d[i] = d[i].max(s[i]); }
+    for i in 0..16 {
+        d[i] = d[i].max(s[i]);
+    }
 }
 
 #[inline]
@@ -3790,7 +3815,9 @@ pub fn psllw_scalar(dst: &mut Xmm, count: u8) {
         return;
     }
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [u16; 8]) };
-    for i in 0..8 { d[i] <<= count; }
+    for i in 0..8 {
+        d[i] <<= count;
+    }
 }
 
 #[inline]
@@ -3878,7 +3905,9 @@ pub fn pslld_scalar(dst: &mut Xmm, count: u8) {
         return;
     }
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [u32; 4]) };
-    for i in 0..4 { d[i] <<= count; }
+    for i in 0..4 {
+        d[i] <<= count;
+    }
 }
 
 #[inline]
@@ -4060,7 +4089,9 @@ pub fn psrlw_scalar(dst: &mut Xmm, count: u8) {
         return;
     }
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [u16; 8]) };
-    for i in 0..8 { d[i] >>= count; }
+    for i in 0..8 {
+        d[i] >>= count;
+    }
 }
 
 #[inline]
@@ -4153,7 +4184,9 @@ pub fn psrld_scalar(dst: &mut Xmm, count: u8) {
         return;
     }
     let d = unsafe { &mut *(dst as *mut Xmm as *mut [u32; 4]) };
-    for i in 0..4 { d[i] >>= count; }
+    for i in 0..4 {
+        d[i] >>= count;
+    }
 }
 
 #[inline]
@@ -4363,11 +4396,17 @@ mod tests {
             // AVX native (YMM - tests the 256-bit version)
             if caps.avx {
                 let src_ymm: Ymm = [src, make_f32_xmm(9.0, 10.0, 11.0, 12.0)];
-                let mut scalar_ymm: Ymm = [make_f32_xmm(1.0, 2.0, 3.0, 4.0), make_f32_xmm(1.0, 2.0, 3.0, 4.0)];
+                let mut scalar_ymm: Ymm = [
+                    make_f32_xmm(1.0, 2.0, 3.0, 4.0),
+                    make_f32_xmm(1.0, 2.0, 3.0, 4.0),
+                ];
                 addps_scalar(&mut scalar_ymm[0], &src_ymm[0]);
                 addps_scalar(&mut scalar_ymm[1], &src_ymm[1]);
 
-                let mut avx_dst: Ymm = [make_f32_xmm(1.0, 2.0, 3.0, 4.0), make_f32_xmm(1.0, 2.0, 3.0, 4.0)];
+                let mut avx_dst: Ymm = [
+                    make_f32_xmm(1.0, 2.0, 3.0, 4.0),
+                    make_f32_xmm(1.0, 2.0, 3.0, 4.0),
+                ];
                 unsafe { addps_native_avx(&mut avx_dst, &src_ymm) };
                 assert!(ymm_eq(&avx_dst, &scalar_ymm), "AVX YMM ADDPS mismatch");
                 println!("  ADDPS AVX YMM: PASS");
@@ -4377,23 +4416,38 @@ mod tests {
         // Dispatch function
         let mut dispatch_dst = make_f32_xmm(1.0, 2.0, 3.0, 4.0);
         addps_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "ADDPS dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "ADDPS dispatch mismatch"
+        );
         println!("  ADDPS dispatch: PASS");
     }
 
     #[test]
     fn test_addps_ymm_dispatch() {
-        let src: Ymm = [make_f32_xmm(1.0, 2.0, 3.0, 4.0), make_f32_xmm(5.0, 6.0, 7.0, 8.0)];
+        let src: Ymm = [
+            make_f32_xmm(1.0, 2.0, 3.0, 4.0),
+            make_f32_xmm(5.0, 6.0, 7.0, 8.0),
+        ];
 
         // Scalar reference
-        let mut scalar_dst: Ymm = [make_f32_xmm(10.0, 20.0, 30.0, 40.0), make_f32_xmm(50.0, 60.0, 70.0, 80.0)];
+        let mut scalar_dst: Ymm = [
+            make_f32_xmm(10.0, 20.0, 30.0, 40.0),
+            make_f32_xmm(50.0, 60.0, 70.0, 80.0),
+        ];
         addps_scalar(&mut scalar_dst[0], &src[0]);
         addps_scalar(&mut scalar_dst[1], &src[1]);
 
         // Dispatch
-        let mut dispatch_dst: Ymm = [make_f32_xmm(10.0, 20.0, 30.0, 40.0), make_f32_xmm(50.0, 60.0, 70.0, 80.0)];
+        let mut dispatch_dst: Ymm = [
+            make_f32_xmm(10.0, 20.0, 30.0, 40.0),
+            make_f32_xmm(50.0, 60.0, 70.0, 80.0),
+        ];
         addps_ymm(&mut dispatch_dst, &src);
-        assert!(ymm_eq(&dispatch_dst, &scalar_dst), "ADDPS YMM dispatch mismatch");
+        assert!(
+            ymm_eq(&dispatch_dst, &scalar_dst),
+            "ADDPS YMM dispatch mismatch"
+        );
         println!("  ADDPS YMM dispatch: PASS");
     }
 
@@ -4423,11 +4477,17 @@ mod tests {
 
             if caps.avx {
                 let src_ymm: Ymm = [src, make_f32_xmm(5.0, 6.0, 7.0, 8.0)];
-                let mut scalar_ymm: Ymm = [make_f32_xmm(10.0, 20.0, 30.0, 40.0), make_f32_xmm(50.0, 60.0, 70.0, 80.0)];
+                let mut scalar_ymm: Ymm = [
+                    make_f32_xmm(10.0, 20.0, 30.0, 40.0),
+                    make_f32_xmm(50.0, 60.0, 70.0, 80.0),
+                ];
                 subps_scalar(&mut scalar_ymm[0], &src_ymm[0]);
                 subps_scalar(&mut scalar_ymm[1], &src_ymm[1]);
 
-                let mut avx_dst: Ymm = [make_f32_xmm(10.0, 20.0, 30.0, 40.0), make_f32_xmm(50.0, 60.0, 70.0, 80.0)];
+                let mut avx_dst: Ymm = [
+                    make_f32_xmm(10.0, 20.0, 30.0, 40.0),
+                    make_f32_xmm(50.0, 60.0, 70.0, 80.0),
+                ];
                 unsafe { subps_native_avx(&mut avx_dst, &src_ymm) };
                 assert!(ymm_eq(&avx_dst, &scalar_ymm), "AVX YMM SUBPS mismatch");
                 println!("  SUBPS AVX YMM: PASS");
@@ -4436,7 +4496,10 @@ mod tests {
 
         let mut dispatch_dst = make_f32_xmm(10.0, 20.0, 30.0, 40.0);
         subps_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "SUBPS dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "SUBPS dispatch mismatch"
+        );
         println!("  SUBPS dispatch: PASS");
     }
 
@@ -4466,11 +4529,17 @@ mod tests {
 
             if caps.avx {
                 let src_ymm: Ymm = [src, make_f32_xmm(2.0, 2.0, 2.0, 2.0)];
-                let mut scalar_ymm: Ymm = [make_f32_xmm(1.0, 2.0, 3.0, 4.0), make_f32_xmm(5.0, 6.0, 7.0, 8.0)];
+                let mut scalar_ymm: Ymm = [
+                    make_f32_xmm(1.0, 2.0, 3.0, 4.0),
+                    make_f32_xmm(5.0, 6.0, 7.0, 8.0),
+                ];
                 mulps_scalar(&mut scalar_ymm[0], &src_ymm[0]);
                 mulps_scalar(&mut scalar_ymm[1], &src_ymm[1]);
 
-                let mut avx_dst: Ymm = [make_f32_xmm(1.0, 2.0, 3.0, 4.0), make_f32_xmm(5.0, 6.0, 7.0, 8.0)];
+                let mut avx_dst: Ymm = [
+                    make_f32_xmm(1.0, 2.0, 3.0, 4.0),
+                    make_f32_xmm(5.0, 6.0, 7.0, 8.0),
+                ];
                 unsafe { mulps_native_avx(&mut avx_dst, &src_ymm) };
                 assert!(ymm_eq(&avx_dst, &scalar_ymm), "AVX YMM MULPS mismatch");
                 println!("  MULPS AVX YMM: PASS");
@@ -4479,7 +4548,10 @@ mod tests {
 
         let mut dispatch_dst = make_f32_xmm(1.0, 2.0, 3.0, 4.0);
         mulps_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "MULPS dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "MULPS dispatch mismatch"
+        );
         println!("  MULPS dispatch: PASS");
     }
 
@@ -4509,11 +4581,17 @@ mod tests {
 
             if caps.avx {
                 let src_ymm: Ymm = [src, make_f32_xmm(2.0, 5.0, 10.0, 4.0)];
-                let mut scalar_ymm: Ymm = [make_f32_xmm(10.0, 20.0, 30.0, 40.0), make_f32_xmm(20.0, 25.0, 30.0, 40.0)];
+                let mut scalar_ymm: Ymm = [
+                    make_f32_xmm(10.0, 20.0, 30.0, 40.0),
+                    make_f32_xmm(20.0, 25.0, 30.0, 40.0),
+                ];
                 divps_scalar(&mut scalar_ymm[0], &src_ymm[0]);
                 divps_scalar(&mut scalar_ymm[1], &src_ymm[1]);
 
-                let mut avx_dst: Ymm = [make_f32_xmm(10.0, 20.0, 30.0, 40.0), make_f32_xmm(20.0, 25.0, 30.0, 40.0)];
+                let mut avx_dst: Ymm = [
+                    make_f32_xmm(10.0, 20.0, 30.0, 40.0),
+                    make_f32_xmm(20.0, 25.0, 30.0, 40.0),
+                ];
                 unsafe { divps_native_avx(&mut avx_dst, &src_ymm) };
                 assert!(ymm_eq(&avx_dst, &scalar_ymm), "AVX YMM DIVPS mismatch");
                 println!("  DIVPS AVX YMM: PASS");
@@ -4522,7 +4600,10 @@ mod tests {
 
         let mut dispatch_dst = make_f32_xmm(10.0, 20.0, 30.0, 40.0);
         divps_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "DIVPS dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "DIVPS dispatch mismatch"
+        );
         println!("  DIVPS dispatch: PASS");
     }
 
@@ -4553,7 +4634,10 @@ mod tests {
 
         let mut dispatch_dst = make_f64_xmm(1.0, 2.0);
         addpd_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "ADDPD dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "ADDPD dispatch mismatch"
+        );
         println!("  ADDPD dispatch: PASS");
     }
 
@@ -4584,7 +4668,10 @@ mod tests {
 
         let mut dispatch_dst = make_f64_xmm(10.0, 20.0);
         subpd_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "SUBPD dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "SUBPD dispatch mismatch"
+        );
         println!("  SUBPD dispatch: PASS");
     }
 
@@ -4615,7 +4702,10 @@ mod tests {
 
         let mut dispatch_dst = make_f64_xmm(5.0, 10.0);
         mulpd_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "MULPD dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "MULPD dispatch mismatch"
+        );
         println!("  MULPD dispatch: PASS");
     }
 
@@ -4646,7 +4736,10 @@ mod tests {
 
         let mut dispatch_dst = make_f64_xmm(10.0, 25.0);
         divpd_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "DIVPD dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "DIVPD dispatch mismatch"
+        );
         println!("  DIVPD dispatch: PASS");
     }
 
@@ -4674,15 +4767,21 @@ mod tests {
 
             if caps.avx2 {
                 // Test YMM variant
-                let src_ymm: Ymm = [[0x0101010101010101, 0x0101010101010101],
-                                    [0x0202020202020202, 0x0202020202020202]];
-                let mut scalar_ymm: Ymm = [[0x0102030405060708, 0x090A0B0C0D0E0F10],
-                                           [0x1112131415161718, 0x191A1B1C1D1E1F20]];
+                let src_ymm: Ymm = [
+                    [0x0101010101010101, 0x0101010101010101],
+                    [0x0202020202020202, 0x0202020202020202],
+                ];
+                let mut scalar_ymm: Ymm = [
+                    [0x0102030405060708, 0x090A0B0C0D0E0F10],
+                    [0x1112131415161718, 0x191A1B1C1D1E1F20],
+                ];
                 paddb_scalar(&mut scalar_ymm[0], &src_ymm[0]);
                 paddb_scalar(&mut scalar_ymm[1], &src_ymm[1]);
 
-                let mut avx2_ymm: Ymm = [[0x0102030405060708, 0x090A0B0C0D0E0F10],
-                                         [0x1112131415161718, 0x191A1B1C1D1E1F20]];
+                let mut avx2_ymm: Ymm = [
+                    [0x0102030405060708, 0x090A0B0C0D0E0F10],
+                    [0x1112131415161718, 0x191A1B1C1D1E1F20],
+                ];
                 unsafe { paddb_native_avx2(&mut avx2_ymm, &src_ymm) };
                 assert!(ymm_eq(&avx2_ymm, &scalar_ymm), "AVX2 PADDB YMM mismatch");
                 println!("  PADDB AVX2 YMM: PASS");
@@ -4691,7 +4790,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0102030405060708, 0x090A0B0C0D0E0F10];
         paddb_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PADDB dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PADDB dispatch mismatch"
+        );
         println!("  PADDB dispatch: PASS");
     }
 
@@ -4720,7 +4822,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0102030405060708, 0x090A0B0C0D0E0F10];
         paddw_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PADDW dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PADDW dispatch mismatch"
+        );
         println!("  PADDW dispatch: PASS");
     }
 
@@ -4749,7 +4854,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0000001000000020, 0x0000003000000040];
         paddd_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PADDD dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PADDD dispatch mismatch"
+        );
         println!("  PADDD dispatch: PASS");
     }
 
@@ -4779,7 +4887,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [100, 200];
         paddq_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PADDQ dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PADDQ dispatch mismatch"
+        );
         println!("  PADDQ dispatch: PASS");
     }
 
@@ -4808,7 +4919,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0203040506070809, 0x0A0B0C0D0E0F1011];
         psubb_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PSUBB dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PSUBB dispatch mismatch"
+        );
         println!("  PSUBB dispatch: PASS");
     }
 
@@ -4930,7 +5044,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0xF0F0F0F0F0F0F0F0, 0x0F0F0F0F0F0F0F0F];
         pandn_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PANDN dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PANDN dispatch mismatch"
+        );
         println!("  PANDN dispatch: PASS");
     }
 
@@ -4959,7 +5076,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0102030401020304, 0x0506070805060708];
         pcmpeqb_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PCMPEQB dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PCMPEQB dispatch mismatch"
+        );
         println!("  PCMPEQB dispatch: PASS");
     }
 
@@ -4988,7 +5108,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0000000100000003, 0x0000000300000004];
         pcmpeqd_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PCMPEQD dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PCMPEQD dispatch mismatch"
+        );
         println!("  PCMPEQD dispatch: PASS");
     }
 
@@ -5017,15 +5140,21 @@ mod tests {
 
             if caps.avx2 {
                 // YMM variant
-                let mask_ymm: Ymm = [[0x0001020380808080, 0x0F0E0D0C0B0A0908],
-                                     [0x0302010003020100, 0x0706050407060504]];
-                let mut scalar_ymm: Ymm = [[0x0706050403020100, 0x0F0E0D0C0B0A0908],
-                                           [0x1716151413121110, 0x1F1E1D1C1B1A1918]];
+                let mask_ymm: Ymm = [
+                    [0x0001020380808080, 0x0F0E0D0C0B0A0908],
+                    [0x0302010003020100, 0x0706050407060504],
+                ];
+                let mut scalar_ymm: Ymm = [
+                    [0x0706050403020100, 0x0F0E0D0C0B0A0908],
+                    [0x1716151413121110, 0x1F1E1D1C1B1A1918],
+                ];
                 pshufb_scalar(&mut scalar_ymm[0], &mask_ymm[0]);
                 pshufb_scalar(&mut scalar_ymm[1], &mask_ymm[1]);
 
-                let mut avx2_ymm: Ymm = [[0x0706050403020100, 0x0F0E0D0C0B0A0908],
-                                         [0x1716151413121110, 0x1F1E1D1C1B1A1918]];
+                let mut avx2_ymm: Ymm = [
+                    [0x0706050403020100, 0x0F0E0D0C0B0A0908],
+                    [0x1716151413121110, 0x1F1E1D1C1B1A1918],
+                ];
                 unsafe { pshufb_native_avx2(&mut avx2_ymm, &mask_ymm) };
                 assert!(ymm_eq(&avx2_ymm, &scalar_ymm), "AVX2 PSHUFB YMM mismatch");
                 println!("  PSHUFB AVX2 YMM: PASS");
@@ -5034,7 +5163,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0706050403020100, 0x0F0E0D0C0B0A0908];
         pshufb_xmm(&mut dispatch_dst, &mask);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PSHUFB dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PSHUFB dispatch mismatch"
+        );
         println!("  PSHUFB dispatch: PASS");
     }
 
@@ -5063,7 +5195,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0004000300020001, 0x0008000700060005];
         pmullw_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PMULLW dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PMULLW dispatch mismatch"
+        );
         println!("  PMULLW dispatch: PASS");
     }
 
@@ -5093,7 +5228,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0000000500000004, 0x0000000300000002];
         pmulld_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PMULLD dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PMULLD dispatch mismatch"
+        );
         println!("  PMULLD dispatch: PASS");
     }
 
@@ -5125,7 +5263,10 @@ mod tests {
 
         let mut dispatch_dst = base;
         pmaddwd_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PMADDWD dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PMADDWD dispatch mismatch"
+        );
         println!("  PMADDWD dispatch: PASS");
     }
 
@@ -5154,7 +5295,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0102030405060708, 0x090A0B0C0D0E0F10];
         pminub_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PMINUB dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PMINUB dispatch mismatch"
+        );
         println!("  PMINUB dispatch: PASS");
     }
 
@@ -5183,7 +5327,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0102030405060708, 0x090A0B0C0D0E0F10];
         pmaxub_xmm(&mut dispatch_dst, &src);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PMAXUB dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PMAXUB dispatch mismatch"
+        );
         println!("  PMAXUB dispatch: PASS");
     }
 
@@ -5211,7 +5358,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0001000200030004, 0x0005000600070008];
         psllw_xmm(&mut dispatch_dst, 4);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PSLLW dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PSLLW dispatch mismatch"
+        );
         println!("  PSLLW dispatch: PASS");
 
         // Test shift >= 16 clears
@@ -5244,7 +5394,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0000000100000002, 0x0000000300000004];
         pslld_xmm(&mut dispatch_dst, 8);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PSLLD dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PSLLD dispatch mismatch"
+        );
         println!("  PSLLD dispatch: PASS");
     }
 
@@ -5272,7 +5425,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0000000000000001, 0x0000000000000002];
         psllq_xmm(&mut dispatch_dst, 32);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PSLLQ dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PSLLQ dispatch mismatch"
+        );
         println!("  PSLLQ dispatch: PASS");
     }
 
@@ -5300,7 +5456,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0010002000300040, 0x0050006000700080];
         psrlw_xmm(&mut dispatch_dst, 4);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PSRLW dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PSRLW dispatch mismatch"
+        );
         println!("  PSRLW dispatch: PASS");
     }
 
@@ -5328,7 +5487,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0000010000000200, 0x0000030000000400];
         psrld_xmm(&mut dispatch_dst, 8);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PSRLD dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PSRLD dispatch mismatch"
+        );
         println!("  PSRLD dispatch: PASS");
     }
 
@@ -5356,7 +5518,10 @@ mod tests {
 
         let mut dispatch_dst: Xmm = [0x0000000100000000, 0x0000000200000000];
         psrlq_xmm(&mut dispatch_dst, 32);
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "PSRLQ dispatch mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "PSRLQ dispatch mismatch"
+        );
         println!("  PSRLQ dispatch: PASS");
     }
 
@@ -5448,7 +5613,11 @@ mod tests {
         let mut dst2: Xmm = [0, 0];
         let src2: Xmm = [0x0101010101010101, 0x0101010101010101];
         psubb_xmm(&mut dst2, &src2);
-        assert_eq!(dst2, [0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF], "PSUBB underflow wrap");
+        assert_eq!(
+            dst2,
+            [0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF],
+            "PSUBB underflow wrap"
+        );
 
         println!("  Integer overflow (byte): PASS");
     }
@@ -5464,7 +5633,11 @@ mod tests {
         // PSUBW: 0x0000 - 0x0001 = 0xFFFF (wrap)
         let mut dst2: Xmm = [0, 0];
         psubw_xmm(&mut dst2, &src);
-        assert_eq!(dst2, [0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF], "PSUBW underflow wrap");
+        assert_eq!(
+            dst2,
+            [0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF],
+            "PSUBW underflow wrap"
+        );
 
         println!("  Integer overflow (word): PASS");
     }
@@ -5541,7 +5714,10 @@ mod tests {
         let mut dispatch_dst = make_f32_xmm(10.0, 20.0, 30.0, 40.0);
         addps_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar ADDPS mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar ADDPS mismatch"
+        );
         println!("  NEON vs scalar ADDPS: PASS");
     }
 
@@ -5555,7 +5731,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0xF0F0F0F0F0F0F0F0, 0xF0F0F0F0F0F0F0F0];
         paddb_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PADDB mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PADDB mismatch"
+        );
         println!("  NEON vs scalar PADDB: PASS");
     }
 
@@ -5569,7 +5748,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0xFFFF0000FFFF0000, 0x0000FFFF0000FFFF];
         pand_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PAND mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PAND mismatch"
+        );
         println!("  NEON vs scalar PAND: PASS");
     }
 
@@ -5584,7 +5766,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x0102000005060008, 0x0900000C0D000F00];
         pcmpeqb_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PCMPEQB mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PCMPEQB mismatch"
+        );
         println!("  NEON vs scalar PCMPEQB: PASS");
     }
 
@@ -5596,7 +5781,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x0001000200030004, 0x0005000600070008];
         psllw_xmm(&mut dispatch_dst, 4);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PSLLW mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PSLLW mismatch"
+        );
         println!("  NEON vs scalar PSLLW: PASS");
     }
 
@@ -5608,7 +5796,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x0010002000300040, 0x0050006000700080];
         psrlw_xmm(&mut dispatch_dst, 4);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PSRLW mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PSRLW mismatch"
+        );
         println!("  NEON vs scalar PSRLW: PASS");
     }
 
@@ -5622,7 +5813,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x4040404040404040, 0x8080808080808080];
         pminub_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PMINUB mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PMINUB mismatch"
+        );
         println!("  NEON vs scalar PMINUB: PASS");
     }
 
@@ -5639,7 +5833,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x0003000300030003, 0x0003000300030003];
         pmaddwd_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PMADDWD mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PMADDWD mismatch"
+        );
         println!("  NEON vs scalar PMADDWD: PASS");
     }
 
@@ -5653,7 +5850,10 @@ mod tests {
         let mut dispatch_dst = make_f64_xmm(10.0, 20.0);
         addpd_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar ADDPD mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar ADDPD mismatch"
+        );
         println!("  NEON vs scalar ADDPD: PASS");
     }
 
@@ -5667,7 +5867,10 @@ mod tests {
         let mut dispatch_dst = make_f32_xmm(10.0, 20.0, 30.0, 40.0);
         subps_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar SUBPS mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar SUBPS mismatch"
+        );
         println!("  NEON vs scalar SUBPS: PASS");
     }
 
@@ -5681,7 +5884,10 @@ mod tests {
         let mut dispatch_dst = make_f64_xmm(10.0, 20.0);
         subpd_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar SUBPD mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar SUBPD mismatch"
+        );
         println!("  NEON vs scalar SUBPD: PASS");
     }
 
@@ -5695,7 +5901,10 @@ mod tests {
         let mut dispatch_dst = make_f32_xmm(1.5, 2.5, 3.5, 4.5);
         mulps_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar MULPS mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar MULPS mismatch"
+        );
         println!("  NEON vs scalar MULPS: PASS");
     }
 
@@ -5709,7 +5918,10 @@ mod tests {
         let mut dispatch_dst = make_f64_xmm(1.5, 2.5);
         mulpd_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar MULPD mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar MULPD mismatch"
+        );
         println!("  NEON vs scalar MULPD: PASS");
     }
 
@@ -5723,7 +5935,10 @@ mod tests {
         let mut dispatch_dst = make_f32_xmm(10.0, 20.0, 30.0, 40.0);
         divps_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar DIVPS mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar DIVPS mismatch"
+        );
         println!("  NEON vs scalar DIVPS: PASS");
     }
 
@@ -5737,7 +5952,10 @@ mod tests {
         let mut dispatch_dst = make_f64_xmm(10.0, 20.0);
         divpd_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar DIVPD mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar DIVPD mismatch"
+        );
         println!("  NEON vs scalar DIVPD: PASS");
     }
 
@@ -5751,7 +5969,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x1000200030004000, 0x5000600070008000];
         paddw_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PADDW mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PADDW mismatch"
+        );
         println!("  NEON vs scalar PADDW: PASS");
     }
 
@@ -5765,7 +5986,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x1000000020000000, 0x3000000040000000];
         paddd_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PADDD mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PADDD mismatch"
+        );
         println!("  NEON vs scalar PADDD: PASS");
     }
 
@@ -5779,7 +6003,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x1000000000000000, 0x2000000000000000];
         paddq_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PADDQ mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PADDQ mismatch"
+        );
         println!("  NEON vs scalar PADDQ: PASS");
     }
 
@@ -5793,7 +6020,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0xF0F0F0F0F0F0F0F0, 0xF0F0F0F0F0F0F0F0];
         psubb_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PSUBB mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PSUBB mismatch"
+        );
         println!("  NEON vs scalar PSUBB: PASS");
     }
 
@@ -5807,7 +6037,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x1000200030004000, 0x5000600070008000];
         psubw_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PSUBW mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PSUBW mismatch"
+        );
         println!("  NEON vs scalar PSUBW: PASS");
     }
 
@@ -5821,7 +6054,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x1000000020000000, 0x3000000040000000];
         psubd_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PSUBD mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PSUBD mismatch"
+        );
         println!("  NEON vs scalar PSUBD: PASS");
     }
 
@@ -5835,7 +6071,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x1000000000000000, 0x2000000000000000];
         psubq_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PSUBQ mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PSUBQ mismatch"
+        );
         println!("  NEON vs scalar PSUBQ: PASS");
     }
 
@@ -5849,7 +6088,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x0F0F0F0F0F0F0F0F, 0xF0F0F0F0F0F0F0F0];
         por_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar POR mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar POR mismatch"
+        );
         println!("  NEON vs scalar POR: PASS");
     }
 
@@ -5863,7 +6105,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0xAAAAAAAAAAAAAAAA, 0x5555555555555555];
         pxor_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PXOR mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PXOR mismatch"
+        );
         println!("  NEON vs scalar PXOR: PASS");
     }
 
@@ -5877,7 +6122,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0xF0F0F0F0F0F0F0F0, 0x0F0F0F0F0F0F0F0F];
         pandn_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PANDN mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PANDN mismatch"
+        );
         println!("  NEON vs scalar PANDN: PASS");
     }
 
@@ -5892,7 +6140,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x0000000100000099, 0x0000009900000004];
         pcmpeqd_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PCMPEQD mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PCMPEQD mismatch"
+        );
         println!("  NEON vs scalar PCMPEQD: PASS");
     }
 
@@ -5907,7 +6158,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x0F0E0D0C0B0A0908, 0x0706050403020100];
         pshufb_xmm(&mut dispatch_dst, &mask);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PSHUFB mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PSHUFB mismatch"
+        );
         println!("  NEON vs scalar PSHUFB: PASS");
     }
 
@@ -5921,7 +6175,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x0010002000300040, 0x0050006000700080];
         pmullw_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PMULLW mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PMULLW mismatch"
+        );
         println!("  NEON vs scalar PMULLW: PASS");
     }
 
@@ -5935,7 +6192,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x0000001000000020, 0x0000003000000040];
         pmulld_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PMULLD mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PMULLD mismatch"
+        );
         println!("  NEON vs scalar PMULLD: PASS");
     }
 
@@ -5949,7 +6209,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x8090A0B0C0D0E0F0, 0x0010203040506070];
         pmaxub_xmm(&mut dispatch_dst, &src);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PMAXUB mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PMAXUB mismatch"
+        );
         println!("  NEON vs scalar PMAXUB: PASS");
     }
 
@@ -5961,7 +6224,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x0000000100000002, 0x0000000300000004];
         pslld_xmm(&mut dispatch_dst, 4);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PSLLD mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PSLLD mismatch"
+        );
         println!("  NEON vs scalar PSLLD: PASS");
     }
 
@@ -5973,7 +6239,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x0000000000000001, 0x0000000000000002];
         psllq_xmm(&mut dispatch_dst, 8);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PSLLQ mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PSLLQ mismatch"
+        );
         println!("  NEON vs scalar PSLLQ: PASS");
     }
 
@@ -5985,7 +6254,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x1000000020000000, 0x3000000040000000];
         psrld_xmm(&mut dispatch_dst, 4);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PSRLD mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PSRLD mismatch"
+        );
         println!("  NEON vs scalar PSRLD: PASS");
     }
 
@@ -5997,7 +6269,10 @@ mod tests {
         let mut dispatch_dst: Xmm = [0x1000000000000000, 0x2000000000000000];
         psrlq_xmm(&mut dispatch_dst, 8);
 
-        assert!(xmm_eq(&dispatch_dst, &scalar_dst), "NEON/dispatch vs scalar PSRLQ mismatch");
+        assert!(
+            xmm_eq(&dispatch_dst, &scalar_dst),
+            "NEON/dispatch vs scalar PSRLQ mismatch"
+        );
         println!("  NEON vs scalar PSRLQ: PASS");
     }
 
@@ -6132,22 +6407,13 @@ mod tests {
 
     #[test]
     fn test_ymm_addpd_correctness() {
-        let src: Ymm = [
-            make_f64_xmm(1.0, 2.0),
-            make_f64_xmm(3.0, 4.0),
-        ];
+        let src: Ymm = [make_f64_xmm(1.0, 2.0), make_f64_xmm(3.0, 4.0)];
 
-        let mut expected: Ymm = [
-            make_f64_xmm(10.0, 20.0),
-            make_f64_xmm(30.0, 40.0),
-        ];
+        let mut expected: Ymm = [make_f64_xmm(10.0, 20.0), make_f64_xmm(30.0, 40.0)];
         addpd_scalar(&mut expected[0], &src[0]);
         addpd_scalar(&mut expected[1], &src[1]);
 
-        let mut result: Ymm = [
-            make_f64_xmm(10.0, 20.0),
-            make_f64_xmm(30.0, 40.0),
-        ];
+        let mut result: Ymm = [make_f64_xmm(10.0, 20.0), make_f64_xmm(30.0, 40.0)];
         addps_ymm(&mut result, &src); // Bit-pattern test (works for f64 too)
 
         println!("  YMM ADDPD correctness: PASS");
@@ -6680,11 +6946,21 @@ mod tests {
 
         let mut tested_variants = Vec::new();
         tested_variants.push("scalar");
-        if caps.sse2 { tested_variants.push("SSE2"); }
-        if caps.ssse3 { tested_variants.push("SSSE3"); }
-        if caps.sse4_1 { tested_variants.push("SSE4.1"); }
-        if caps.avx { tested_variants.push("AVX"); }
-        if caps.avx2 { tested_variants.push("AVX2"); }
+        if caps.sse2 {
+            tested_variants.push("SSE2");
+        }
+        if caps.ssse3 {
+            tested_variants.push("SSSE3");
+        }
+        if caps.sse4_1 {
+            tested_variants.push("SSE4.1");
+        }
+        if caps.avx {
+            tested_variants.push("AVX");
+        }
+        if caps.avx2 {
+            tested_variants.push("AVX2");
+        }
 
         println!("\nTested variants: {}", tested_variants.join(", "));
         println!("=================================\n");
