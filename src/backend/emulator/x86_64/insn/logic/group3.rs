@@ -318,7 +318,8 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
 
             match op_size {
                 2 => {
-                    let dividend = ((vcpu.regs.rdx as u16 as u32) << 16) | (vcpu.regs.rax as u16 as u32);
+                    let dividend =
+                        ((vcpu.regs.rdx as u16 as u32) << 16) | (vcpu.regs.rax as u16 as u32);
                     let divisor = divisor as u16 as u32;
                     let quotient = dividend / divisor;
                     let remainder = dividend % divisor;
@@ -331,7 +332,8 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     vcpu.set_reg(2, remainder as u64, 2);
                 }
                 4 => {
-                    let dividend = ((vcpu.regs.rdx as u32 as u64) << 32) | (vcpu.regs.rax as u32 as u64);
+                    let dividend =
+                        ((vcpu.regs.rdx as u32 as u64) << 32) | (vcpu.regs.rax as u32 as u64);
                     let divisor = divisor as u32 as u64;
                     let quotient = dividend / divisor;
                     let remainder = dividend % divisor;
@@ -377,7 +379,8 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
 
             match op_size {
                 2 => {
-                    let dividend = (((vcpu.regs.rdx as u16 as u32) << 16) | (vcpu.regs.rax as u16 as u32)) as i32;
+                    let dividend = (((vcpu.regs.rdx as u16 as u32) << 16)
+                        | (vcpu.regs.rax as u16 as u32)) as i32;
                     let divisor = divisor as i16 as i32;
                     let quotient = dividend / divisor;
                     let remainder = dividend % divisor;
@@ -390,7 +393,8 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     vcpu.set_reg(2, remainder as u16 as u64, 2);
                 }
                 4 => {
-                    let dividend = (((vcpu.regs.rdx as u32 as u64) << 32) | (vcpu.regs.rax as u32 as u64)) as i64;
+                    let dividend = (((vcpu.regs.rdx as u32 as u64) << 32)
+                        | (vcpu.regs.rax as u32 as u64)) as i64;
                     let divisor = divisor as i32 as i64;
                     let quotient = dividend / divisor;
                     let remainder = dividend % divisor;
@@ -403,7 +407,8 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     vcpu.set_reg(2, remainder as u32 as u64, 4);
                 }
                 8 => {
-                    let dividend = (((vcpu.regs.rdx as u128) << 64) | (vcpu.regs.rax as u128)) as i128;
+                    let dividend =
+                        (((vcpu.regs.rdx as u128) << 64) | (vcpu.regs.rax as u128)) as i128;
                     let divisor = divisor as i64 as i128;
                     let quotient = dividend / divisor;
                     let remainder = dividend % divisor;

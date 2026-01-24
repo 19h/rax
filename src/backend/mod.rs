@@ -80,26 +80,19 @@ pub fn create(config: &VmConfig) -> Result<Box<dyn Backend>> {
         }
         // Apple Silicon - HVF for ARM64 guests only
         #[cfg(all(feature = "hvf", target_os = "macos", target_arch = "aarch64"))]
-        BackendKind::Hvf => {
-            match config.arch {
-                ArchKind::Aarch64 => {
-                    Ok(Box::new(hvf::arm64::HvfArm64Backend::new()?))
-                }
-                ArchKind::X86_64 => {
-                    Err(Error::InvalidConfig(
-                        "HVF backend cannot run x86_64 guests on Apple Silicon. \
+        BackendKind::Hvf => match config.arch {
+            ArchKind::Aarch64 => Ok(Box::new(hvf::arm64::HvfArm64Backend::new()?)),
+            ArchKind::X86_64 => Err(Error::InvalidConfig(
+                "HVF backend cannot run x86_64 guests on Apple Silicon. \
                          Apple's Hypervisor.framework only supports ARM64 guests on ARM64 hosts. \
-                         Use --backend emulator for x86_64 emulation on Apple Silicon.".to_string(),
-                    ))
-                }
-                _ => {
-                    Err(Error::InvalidConfig(format!(
-                        "HVF backend on Apple Silicon only supports aarch64 guests, not {:?}",
-                        config.arch
-                    )))
-                }
-            }
-        }
+                         Use --backend emulator for x86_64 emulation on Apple Silicon."
+                    .to_string(),
+            )),
+            _ => Err(Error::InvalidConfig(format!(
+                "HVF backend on Apple Silicon only supports aarch64 guests, not {:?}",
+                config.arch
+            ))),
+        },
         #[cfg(not(all(feature = "hvf", target_os = "macos")))]
         BackendKind::Hvf => Err(Error::InvalidConfig(
             "HVF backend not available (requires macOS with --features hvf)".to_string(),

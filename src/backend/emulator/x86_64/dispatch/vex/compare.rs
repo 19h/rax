@@ -35,7 +35,7 @@ impl X86_64Vcpu {
 
         // Clear lazy flags before setting flags directly
         self.clear_lazy_flags();
-        
+
         let clear_mask = flags::bits::ZF
             | flags::bits::PF
             | flags::bits::CF
@@ -187,9 +187,13 @@ impl X86_64Vcpu {
 
         // Clear lazy flags before setting flags directly
         self.clear_lazy_flags();
-        
-        self.regs.rflags &=
-            !(flags::bits::AF | flags::bits::OF | flags::bits::PF | flags::bits::SF | flags::bits::ZF | flags::bits::CF);
+
+        self.regs.rflags &= !(flags::bits::AF
+            | flags::bits::OF
+            | flags::bits::PF
+            | flags::bits::SF
+            | flags::bits::ZF
+            | flags::bits::CF);
         if and == 0 {
             self.regs.rflags |= flags::bits::ZF;
         }

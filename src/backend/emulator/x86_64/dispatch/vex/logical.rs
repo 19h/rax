@@ -21,10 +21,10 @@ impl X86_64Vcpu {
 
         // Logical ops are the same for PS and PD (bitwise on 128/256 bits)
         let op: fn(u64, u64) -> u64 = match opcode {
-            0x54 => |a, b| a & b,      // AND
-            0x55 => |a, b| (!a) & b,   // ANDN
-            0x56 => |a, b| a | b,      // OR
-            0x57 => |a, b| a ^ b,      // XOR
+            0x54 => |a, b| a & b,    // AND
+            0x55 => |a, b| (!a) & b, // ANDN
+            0x56 => |a, b| a | b,    // OR
+            0x57 => |a, b| a ^ b,    // XOR
             _ => unreachable!(),
         };
 
@@ -43,7 +43,10 @@ impl X86_64Vcpu {
             let (src2_hi2, src2_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];

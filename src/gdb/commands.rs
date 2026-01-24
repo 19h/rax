@@ -402,8 +402,13 @@ pub fn handle_command(
                     // Get action char (before any ':thread' suffix)
                     let action_char = part.chars().next().unwrap_or(' ');
                     match action_char {
-                        's' | 'S' => { do_step = true; break; }
-                        'c' | 'C' => { do_continue = true; }
+                        's' | 'S' => {
+                            do_step = true;
+                            break;
+                        }
+                        'c' | 'C' => {
+                            do_continue = true;
+                        }
                         't' => { /* stop/halt - ignore for now */ }
                         _ => {}
                     }
@@ -456,8 +461,14 @@ fn handle_query<W: Write>(args: &str, stream: &mut W) -> std::io::Result<()> {
         // Parse offset and length from "target.xml:offset,length"
         let params = &args["Xfer:features:read:target.xml:".len()..];
         let parts: Vec<&str> = params.split(',').collect();
-        let offset = parts.get(0).and_then(|s| usize::from_str_radix(s, 16).ok()).unwrap_or(0);
-        let _len = parts.get(1).and_then(|s| usize::from_str_radix(s, 16).ok()).unwrap_or(4096);
+        let offset = parts
+            .get(0)
+            .and_then(|s| usize::from_str_radix(s, 16).ok())
+            .unwrap_or(0);
+        let _len = parts
+            .get(1)
+            .and_then(|s| usize::from_str_radix(s, 16).ok())
+            .unwrap_or(4096);
 
         let xml = TARGET_XML;
         if offset >= xml.len() {

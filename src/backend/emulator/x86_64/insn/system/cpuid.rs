@@ -43,9 +43,9 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                                   | (1 << 24)  // FXSR - REQUIRED
                                   | (1 << 25)  // SSE - REQUIRED
                                   | (1 << 26); // SSE2 - REQUIRED
-            // ECX: SSE3(0), SSSE3(9), SSE4.1(19), SSE4.2(20), POPCNT(23)
-            // Note: TSC_DEADLINE (bit 24) NOT advertised - LAPIC only supports oneshot/periodic modes
-            // Note: AVX/XSAVE NOT advertised - we don't implement XSAVE instruction properly
+                                               // ECX: SSE3(0), SSSE3(9), SSE4.1(19), SSE4.2(20), POPCNT(23)
+                                               // Note: TSC_DEADLINE (bit 24) NOT advertised - LAPIC only supports oneshot/periodic modes
+                                               // Note: AVX/XSAVE NOT advertised - we don't implement XSAVE instruction properly
             let features_ecx: u32 = (1 << 0)   // SSE3
                                   | (1 << 9)   // SSSE3
                                   | (1 << 19)  // SSE4.1

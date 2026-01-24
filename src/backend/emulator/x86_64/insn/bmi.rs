@@ -16,12 +16,12 @@ use super::super::flags;
 
 /// ANDN - Logical AND NOT (VEX.LZ.0F38 F2 /r)
 /// dest = src1 AND (NOT src2)
-pub fn andn(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    vvvv: u8,
-) -> Result<Option<VcpuExit>> {
-    let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+pub fn andn(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, vvvv: u8) -> Result<Option<VcpuExit>> {
+    let mask = if ctx.op_size == 8 {
+        !0u64
+    } else {
+        0xFFFF_FFFFu64
+    };
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let src1 = vcpu.get_reg(vvvv, ctx.op_size) & mask;
     let src2 = if is_memory {
@@ -38,8 +38,7 @@ pub fn andn(
         (result >> 31) & 1
     };
     let zf = if result == 0 { 1 } else { 0 };
-    vcpu.regs.rflags &=
-        !(flags::bits::SF | flags::bits::ZF | flags::bits::OF | flags::bits::CF);
+    vcpu.regs.rflags &= !(flags::bits::SF | flags::bits::ZF | flags::bits::OF | flags::bits::CF);
     if sf != 0 {
         vcpu.regs.rflags |= flags::bits::SF;
     }
@@ -56,7 +55,11 @@ pub fn blsi_blsmsk_blsr(
     ctx: &mut InsnContext,
     vvvv: u8,
 ) -> Result<Option<VcpuExit>> {
-    let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+    let mask = if ctx.op_size == 8 {
+        !0u64
+    } else {
+        0xFFFF_FFFFu64
+    };
     let modrm = ctx.peek_u8()?;
     let reg_op = (modrm >> 3) & 0x07;
     let (_, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
@@ -119,8 +122,7 @@ pub fn blsi_blsmsk_blsr(
             }
         } // BLSR: CF = (src == 0)
     };
-    vcpu.regs.rflags &=
-        !(flags::bits::SF | flags::bits::ZF | flags::bits::OF | flags::bits::CF);
+    vcpu.regs.rflags &= !(flags::bits::SF | flags::bits::ZF | flags::bits::OF | flags::bits::CF);
     if sf != 0 {
         vcpu.regs.rflags |= flags::bits::SF;
     }
@@ -135,12 +137,12 @@ pub fn blsi_blsmsk_blsr(
 }
 
 /// BEXTR - Bit Field Extract (VEX.LZ.0F38 F7 /r)
-pub fn bextr(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    vvvv: u8,
-) -> Result<Option<VcpuExit>> {
-    let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+pub fn bextr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, vvvv: u8) -> Result<Option<VcpuExit>> {
+    let mask = if ctx.op_size == 8 {
+        !0u64
+    } else {
+        0xFFFF_FFFFu64
+    };
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let src = if is_memory {
         vcpu.read_mem(addr, ctx.op_size)? & mask
@@ -176,12 +178,12 @@ pub fn bextr(
 // =============================================================================
 
 /// BZHI - Zero High Bits Starting with Specified Bit Position (VEX.LZ.0F38 F5 /r)
-pub fn bzhi(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    vvvv: u8,
-) -> Result<Option<VcpuExit>> {
-    let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+pub fn bzhi(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, vvvv: u8) -> Result<Option<VcpuExit>> {
+    let mask = if ctx.op_size == 8 {
+        !0u64
+    } else {
+        0xFFFF_FFFFu64
+    };
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let src = if is_memory {
         vcpu.read_mem(addr, ctx.op_size)? & mask
@@ -204,8 +206,7 @@ pub fn bzhi(
     };
     let zf = if result == 0 { 1 } else { 0 };
     let cf = if index >= bits { 1 } else { 0 };
-    vcpu.regs.rflags &=
-        !(flags::bits::SF | flags::bits::ZF | flags::bits::OF | flags::bits::CF);
+    vcpu.regs.rflags &= !(flags::bits::SF | flags::bits::ZF | flags::bits::OF | flags::bits::CF);
     if sf != 0 {
         vcpu.regs.rflags |= flags::bits::SF;
     }
@@ -220,12 +221,12 @@ pub fn bzhi(
 }
 
 /// MULX - Unsigned Multiply Without Affecting Flags (VEX.LZ.F2.0F38 F6 /r)
-pub fn mulx(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    vvvv: u8,
-) -> Result<Option<VcpuExit>> {
-    let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+pub fn mulx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, vvvv: u8) -> Result<Option<VcpuExit>> {
+    let mask = if ctx.op_size == 8 {
+        !0u64
+    } else {
+        0xFFFF_FFFFu64
+    };
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let src1 = if ctx.op_size == 8 {
         vcpu.regs.rdx
@@ -252,12 +253,12 @@ pub fn mulx(
 }
 
 /// PDEP - Parallel Bits Deposit (VEX.LZ.F2.0F38 F5 /r)
-pub fn pdep(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    vvvv: u8,
-) -> Result<Option<VcpuExit>> {
-    let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+pub fn pdep(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, vvvv: u8) -> Result<Option<VcpuExit>> {
+    let mask = if ctx.op_size == 8 {
+        !0u64
+    } else {
+        0xFFFF_FFFFu64
+    };
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let src = vcpu.get_reg(vvvv, ctx.op_size) & mask;
     let selector = if is_memory {
@@ -281,12 +282,12 @@ pub fn pdep(
 }
 
 /// PEXT - Parallel Bits Extract (VEX.LZ.F3.0F38 F5 /r)
-pub fn pext(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    vvvv: u8,
-) -> Result<Option<VcpuExit>> {
-    let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+pub fn pext(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, vvvv: u8) -> Result<Option<VcpuExit>> {
+    let mask = if ctx.op_size == 8 {
+        !0u64
+    } else {
+        0xFFFF_FFFFu64
+    };
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let src = vcpu.get_reg(vvvv, ctx.op_size) & mask;
     let selector = if is_memory {
@@ -311,7 +312,11 @@ pub fn pext(
 
 /// RORX - Rotate Right Logical Without Affecting Flags (VEX.LZ.F2.0F3A F0 /r ib)
 pub fn rorx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+    let mask = if ctx.op_size == 8 {
+        !0u64
+    } else {
+        0xFFFF_FFFFu64
+    };
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let src = if is_memory {
         vcpu.read_mem(addr, ctx.op_size)?
@@ -334,12 +339,12 @@ pub fn rorx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
 }
 
 /// SARX - Shift Arithmetic Right Without Affecting Flags (VEX.LZ.F3.0F38 F7 /r)
-pub fn sarx(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    vvvv: u8,
-) -> Result<Option<VcpuExit>> {
-    let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+pub fn sarx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, vvvv: u8) -> Result<Option<VcpuExit>> {
+    let mask = if ctx.op_size == 8 {
+        !0u64
+    } else {
+        0xFFFF_FFFFu64
+    };
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let src = if is_memory {
         vcpu.read_mem(addr, ctx.op_size)? & mask
@@ -359,12 +364,12 @@ pub fn sarx(
 }
 
 /// SHRX - Shift Logical Right Without Affecting Flags (VEX.LZ.F2.0F38 F7 /r)
-pub fn shrx(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    vvvv: u8,
-) -> Result<Option<VcpuExit>> {
-    let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+pub fn shrx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, vvvv: u8) -> Result<Option<VcpuExit>> {
+    let mask = if ctx.op_size == 8 {
+        !0u64
+    } else {
+        0xFFFF_FFFFu64
+    };
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let src = if is_memory {
         vcpu.read_mem(addr, ctx.op_size)? & mask
@@ -380,12 +385,12 @@ pub fn shrx(
 }
 
 /// SHLX - Shift Logical Left Without Affecting Flags (VEX.LZ.66.0F38 F7 /r)
-pub fn shlx(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    vvvv: u8,
-) -> Result<Option<VcpuExit>> {
-    let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+pub fn shlx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, vvvv: u8) -> Result<Option<VcpuExit>> {
+    let mask = if ctx.op_size == 8 {
+        !0u64
+    } else {
+        0xFFFF_FFFFu64
+    };
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let src = if is_memory {
         vcpu.read_mem(addr, ctx.op_size)? & mask
@@ -411,7 +416,11 @@ pub fn tbm_01_group(
     ctx: &mut InsnContext,
     vvvv: u8,
 ) -> Result<Option<VcpuExit>> {
-    let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+    let mask = if ctx.op_size == 8 {
+        !0u64
+    } else {
+        0xFFFF_FFFFu64
+    };
     let modrm = ctx.peek_u8()?;
     let reg_op = (modrm >> 3) & 0x07;
     let (_, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
@@ -424,12 +433,12 @@ pub fn tbm_01_group(
     let add1 = src.wrapping_add(1);
     let sub1 = src.wrapping_sub(1);
     let result = match reg_op {
-        1 => src & add1,   // BLCFILL: src & (src + 1)
-        2 => src | sub1,   // BLSFILL: src | (src - 1)
-        3 => src | add1,   // BLCS: src | (src + 1)
-        4 => inv & sub1,   // TZMSK: ~src & (src - 1)
-        6 => inv | sub1,   // BLSIC: ~src | (src - 1)
-        7 => inv | add1,   // T1MSKC: ~src | (src + 1)
+        1 => src & add1, // BLCFILL: src & (src + 1)
+        2 => src | sub1, // BLSFILL: src | (src - 1)
+        3 => src | add1, // BLCS: src | (src + 1)
+        4 => inv & sub1, // TZMSK: ~src & (src - 1)
+        6 => inv | sub1, // BLSIC: ~src | (src - 1)
+        7 => inv | add1, // T1MSKC: ~src | (src + 1)
         _ => {
             return Err(Error::Emulator(format!(
                 "unimplemented VEX.0F38.01 /{}",
@@ -448,7 +457,11 @@ pub fn tbm_blci(
     ctx: &mut InsnContext,
     vvvv: u8,
 ) -> Result<Option<VcpuExit>> {
-    let mask = if ctx.op_size == 8 { !0u64 } else { 0xFFFF_FFFFu64 };
+    let mask = if ctx.op_size == 8 {
+        !0u64
+    } else {
+        0xFFFF_FFFFu64
+    };
     let modrm = ctx.peek_u8()?;
     let reg_op = (modrm >> 3) & 0x07;
     if reg_op != 6 {

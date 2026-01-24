@@ -11,12 +11,20 @@ fn pushf_popf_op_size(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
 
     if in_64bit_mode {
         // In 64-bit mode: 8 bytes default, 2 bytes with 66h prefix
-        if ctx.operand_size_override { 2 } else { 8 }
+        if ctx.operand_size_override {
+            2
+        } else {
+            8
+        }
     } else {
         // In 32-bit/16-bit mode: depends on D/B flag and prefix
         let default_16bit = !vcpu.sregs.cs.db;
         let is_16bit = default_16bit ^ ctx.operand_size_override;
-        if is_16bit { 2 } else { 4 }
+        if is_16bit {
+            2
+        } else {
+            4
+        }
     }
 }
 

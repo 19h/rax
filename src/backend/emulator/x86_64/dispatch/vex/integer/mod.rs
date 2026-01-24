@@ -1,10 +1,10 @@
 //! VEX integer SIMD instruction implementations.
 
-mod compare;
+mod abs;
 mod arith;
+mod compare;
+mod extend;
 mod horizontal;
 mod minmax;
-mod extend;
 mod multiply;
 mod pack_blend;
-mod abs;

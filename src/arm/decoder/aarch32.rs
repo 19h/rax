@@ -347,9 +347,8 @@ impl Aarch32Decoder {
         let rm = (raw & 0xF) as u8;
 
         Ok(
-            DecodedInsn::new(Mnemonic::BX, ExecutionState::Aarch32, raw, 4).with_operand(
-                Operand::Reg(Register::raw(rm, false, false)),
-            ),
+            DecodedInsn::new(Mnemonic::BX, ExecutionState::Aarch32, raw, 4)
+                .with_operand(Operand::Reg(Register::raw(rm, false, false))),
         )
     }
 
@@ -357,9 +356,8 @@ impl Aarch32Decoder {
         let rm = (raw & 0xF) as u8;
 
         Ok(
-            DecodedInsn::new(Mnemonic::BLX, ExecutionState::Aarch32, raw, 4).with_operand(
-                Operand::Reg(Register::raw(rm, false, false)),
-            ),
+            DecodedInsn::new(Mnemonic::BLX, ExecutionState::Aarch32, raw, 4)
+                .with_operand(Operand::Reg(Register::raw(rm, false, false))),
         )
     }
 

@@ -33,12 +33,12 @@ enum AccessMode {
 
 #[derive(Clone, Copy, Debug)]
 enum OperatingMode {
-    InterruptOnTerminalCount,  // Mode 0
+    InterruptOnTerminalCount,     // Mode 0
     HardwareRetriggerableOneShot, // Mode 1
-    RateGenerator,             // Mode 2
-    SquareWaveGenerator,       // Mode 3
-    SoftwareTriggeredStrobe,   // Mode 4
-    HardwareTriggeredStrobe,   // Mode 5
+    RateGenerator,                // Mode 2
+    SquareWaveGenerator,          // Mode 3
+    SoftwareTriggeredStrobe,      // Mode 4
+    HardwareTriggeredStrobe,      // Mode 5
 }
 
 #[derive(Clone)]
@@ -118,7 +118,11 @@ impl Pit {
         // Update channel 0 (system timer)
         let ch0 = &mut self.channels[0];
         if ch0.gate {
-            let reload = if ch0.reload_value == 0 { 0x10000u32 } else { ch0.reload_value as u32 };
+            let reload = if ch0.reload_value == 0 {
+                0x10000u32
+            } else {
+                ch0.reload_value as u32
+            };
 
             match ch0.operating_mode {
                 OperatingMode::RateGenerator | OperatingMode::SquareWaveGenerator => {
@@ -162,7 +166,11 @@ impl Pit {
             return ch.count;
         }
 
-        let reload = if ch.reload_value == 0 { 0x10000u32 } else { ch.reload_value as u32 };
+        let reload = if ch.reload_value == 0 {
+            0x10000u32
+        } else {
+            ch.reload_value as u32
+        };
 
         match ch.operating_mode {
             OperatingMode::RateGenerator | OperatingMode::SquareWaveGenerator => {
@@ -394,15 +402,24 @@ mod tests {
 
         // Program channel 0: 0b00110110 = channel 0, lobyte/hibyte, mode 3
         pit.write(0x43, 0x36);
-        assert!(matches!(pit.channels[0].operating_mode, OperatingMode::SquareWaveGenerator));
+        assert!(matches!(
+            pit.channels[0].operating_mode,
+            OperatingMode::SquareWaveGenerator
+        ));
 
         // Program channel 1: 0b01110100 = channel 1, lobyte/hibyte, mode 2
         pit.write(0x43, 0x74);
-        assert!(matches!(pit.channels[1].operating_mode, OperatingMode::RateGenerator));
+        assert!(matches!(
+            pit.channels[1].operating_mode,
+            OperatingMode::RateGenerator
+        ));
 
         // Program channel 2: 0b10110000 = channel 2, lobyte/hibyte, mode 0
         pit.write(0x43, 0xB0);
-        assert!(matches!(pit.channels[2].operating_mode, OperatingMode::InterruptOnTerminalCount));
+        assert!(matches!(
+            pit.channels[2].operating_mode,
+            OperatingMode::InterruptOnTerminalCount
+        ));
     }
 
     #[test]
@@ -428,35 +445,59 @@ mod tests {
 
         // Mode 0: 0b00110000
         pit.write(0x43, 0x30);
-        assert!(matches!(pit.channels[0].operating_mode, OperatingMode::InterruptOnTerminalCount));
+        assert!(matches!(
+            pit.channels[0].operating_mode,
+            OperatingMode::InterruptOnTerminalCount
+        ));
 
         // Mode 1: 0b00110010
         pit.write(0x43, 0x32);
-        assert!(matches!(pit.channels[0].operating_mode, OperatingMode::HardwareRetriggerableOneShot));
+        assert!(matches!(
+            pit.channels[0].operating_mode,
+            OperatingMode::HardwareRetriggerableOneShot
+        ));
 
         // Mode 2: 0b00110100
         pit.write(0x43, 0x34);
-        assert!(matches!(pit.channels[0].operating_mode, OperatingMode::RateGenerator));
+        assert!(matches!(
+            pit.channels[0].operating_mode,
+            OperatingMode::RateGenerator
+        ));
 
         // Mode 3: 0b00110110
         pit.write(0x43, 0x36);
-        assert!(matches!(pit.channels[0].operating_mode, OperatingMode::SquareWaveGenerator));
+        assert!(matches!(
+            pit.channels[0].operating_mode,
+            OperatingMode::SquareWaveGenerator
+        ));
 
         // Mode 4: 0b00111000
         pit.write(0x43, 0x38);
-        assert!(matches!(pit.channels[0].operating_mode, OperatingMode::SoftwareTriggeredStrobe));
+        assert!(matches!(
+            pit.channels[0].operating_mode,
+            OperatingMode::SoftwareTriggeredStrobe
+        ));
 
         // Mode 5: 0b00111010
         pit.write(0x43, 0x3A);
-        assert!(matches!(pit.channels[0].operating_mode, OperatingMode::HardwareTriggeredStrobe));
+        assert!(matches!(
+            pit.channels[0].operating_mode,
+            OperatingMode::HardwareTriggeredStrobe
+        ));
 
         // Mode 6 maps to Mode 2: 0b00111100
         pit.write(0x43, 0x3C);
-        assert!(matches!(pit.channels[0].operating_mode, OperatingMode::RateGenerator));
+        assert!(matches!(
+            pit.channels[0].operating_mode,
+            OperatingMode::RateGenerator
+        ));
 
         // Mode 7 maps to Mode 3: 0b00111110
         pit.write(0x43, 0x3E);
-        assert!(matches!(pit.channels[0].operating_mode, OperatingMode::SquareWaveGenerator));
+        assert!(matches!(
+            pit.channels[0].operating_mode,
+            OperatingMode::SquareWaveGenerator
+        ));
     }
 
     // ========== Counter Latch Command ==========
@@ -691,7 +732,10 @@ mod tests {
         pit.write(0x40, 0x2E); // High byte
 
         assert_eq!(pit.channels[0].reload_value, 0x2E9C);
-        assert!(matches!(pit.channels[0].operating_mode, OperatingMode::SquareWaveGenerator));
+        assert!(matches!(
+            pit.channels[0].operating_mode,
+            OperatingMode::SquareWaveGenerator
+        ));
     }
 
     #[test]
@@ -729,9 +773,18 @@ mod tests {
         pit.write(0x42, 0x33);
 
         // Verify each channel has its own settings
-        assert!(matches!(pit.channels[0].operating_mode, OperatingMode::InterruptOnTerminalCount));
-        assert!(matches!(pit.channels[1].operating_mode, OperatingMode::SquareWaveGenerator));
-        assert!(matches!(pit.channels[2].operating_mode, OperatingMode::RateGenerator));
+        assert!(matches!(
+            pit.channels[0].operating_mode,
+            OperatingMode::InterruptOnTerminalCount
+        ));
+        assert!(matches!(
+            pit.channels[1].operating_mode,
+            OperatingMode::SquareWaveGenerator
+        ));
+        assert!(matches!(
+            pit.channels[2].operating_mode,
+            OperatingMode::RateGenerator
+        ));
 
         assert_eq!(pit.channels[0].reload_value, 0x1111);
         assert_eq!(pit.channels[1].reload_value, 0x2222);

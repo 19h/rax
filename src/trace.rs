@@ -29,7 +29,11 @@ pub fn is_enabled() -> bool {
 #[inline]
 pub fn write_insn(rip: u64, disasm: &str, reg_changes: &str) {
     if let Some(ref mut writer) = *TRACE_WRITER.lock().unwrap() {
-        let _ = writeln!(writer, "INS 0x{:016x}   {:<50} | {}", rip, disasm, reg_changes);
+        let _ = writeln!(
+            writer,
+            "INS 0x{:016x}   {:<50} | {}",
+            rip, disasm, reg_changes
+        );
     }
 }
 
@@ -38,11 +42,21 @@ pub fn write_insn(rip: u64, disasm: &str, reg_changes: &str) {
 pub fn write_read(addr: u64, size: usize, value: u64) {
     if let Some(ref mut writer) = *TRACE_WRITER.lock().unwrap() {
         match size {
-            1 => { let _ = writeln!(writer, "Read 0x{:02x} = *(UINT8*)0x{:x}", value, addr); }
-            2 => { let _ = writeln!(writer, "Read 0x{:04x} = *(UINT16*)0x{:x}", value, addr); }
-            4 => { let _ = writeln!(writer, "Read 0x{:08x} = *(UINT32*)0x{:x}", value, addr); }
-            8 => { let _ = writeln!(writer, "Read 0x{:016x} = *(UINT64*)0x{:x}", value, addr); }
-            _ => { let _ = writeln!(writer, "Read 0x{:x} = *({} bytes)0x{:x}", value, size, addr); }
+            1 => {
+                let _ = writeln!(writer, "Read 0x{:02x} = *(UINT8*)0x{:x}", value, addr);
+            }
+            2 => {
+                let _ = writeln!(writer, "Read 0x{:04x} = *(UINT16*)0x{:x}", value, addr);
+            }
+            4 => {
+                let _ = writeln!(writer, "Read 0x{:08x} = *(UINT32*)0x{:x}", value, addr);
+            }
+            8 => {
+                let _ = writeln!(writer, "Read 0x{:016x} = *(UINT64*)0x{:x}", value, addr);
+            }
+            _ => {
+                let _ = writeln!(writer, "Read 0x{:x} = *({} bytes)0x{:x}", value, size, addr);
+            }
         }
     }
 }
@@ -52,11 +66,25 @@ pub fn write_read(addr: u64, size: usize, value: u64) {
 pub fn write_write(addr: u64, size: usize, value: u64) {
     if let Some(ref mut writer) = *TRACE_WRITER.lock().unwrap() {
         match size {
-            1 => { let _ = writeln!(writer, "Write *(UINT8*)0x{:x} = 0x{:02x}", addr, value); }
-            2 => { let _ = writeln!(writer, "Write *(UINT16*)0x{:x} = 0x{:04x}", addr, value); }
-            4 => { let _ = writeln!(writer, "Write *(UINT32*)0x{:x} = 0x{:08x}", addr, value); }
-            8 => { let _ = writeln!(writer, "Write *(UINT64*)0x{:x} = 0x{:016x}", addr, value); }
-            _ => { let _ = writeln!(writer, "Write *({} bytes)0x{:x} = 0x{:x}", size, addr, value); }
+            1 => {
+                let _ = writeln!(writer, "Write *(UINT8*)0x{:x} = 0x{:02x}", addr, value);
+            }
+            2 => {
+                let _ = writeln!(writer, "Write *(UINT16*)0x{:x} = 0x{:04x}", addr, value);
+            }
+            4 => {
+                let _ = writeln!(writer, "Write *(UINT32*)0x{:x} = 0x{:08x}", addr, value);
+            }
+            8 => {
+                let _ = writeln!(writer, "Write *(UINT64*)0x{:x} = 0x{:016x}", addr, value);
+            }
+            _ => {
+                let _ = writeln!(
+                    writer,
+                    "Write *({} bytes)0x{:x} = 0x{:x}",
+                    size, addr, value
+                );
+            }
         }
     }
 }

@@ -105,7 +105,10 @@ impl Pic8259 {
         let vector = self.vector_offset + irq;
         tracing::debug!(
             "PIC ack_irq: irq={}, vector={:#x}, auto_eoi={}, isr={:#x}",
-            irq, vector, self.auto_eoi, self.isr
+            irq,
+            vector,
+            self.auto_eoi,
+            self.isr
         );
         vector
     }
@@ -234,7 +237,7 @@ impl DualPic {
         // The kernel will unmask specific IRQs as it initializes drivers.
         // This matches real hardware behavior and prevents spurious interrupts.
         let master = Pic8259::new(0x20); // imr = 0xFF by default
-        let slave = Pic8259::new(0x28);  // imr = 0xFF by default
+        let slave = Pic8259::new(0x28); // imr = 0xFF by default
         DualPic { master, slave }
     }
 
@@ -275,8 +278,14 @@ impl DualPic {
 
     /// Get debug info about the PIC state
     pub fn debug_info(&self) -> (u8, u8, u8, u8, u8, u8) {
-        (self.master.irr, self.master.imr, self.master.isr,
-         self.slave.irr, self.slave.imr, self.slave.isr)
+        (
+            self.master.irr,
+            self.master.imr,
+            self.master.isr,
+            self.slave.irr,
+            self.slave.imr,
+            self.slave.isr,
+        )
     }
 }
 

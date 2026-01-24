@@ -22,9 +22,15 @@ pub fn set_fpu_compare_flags(vcpu: &mut X86_64Vcpu, a: f64, b: f64) {
     };
 
     vcpu.fpu.status_word &= !0x4500; // Clear C3, C2, C0
-    if c3 { vcpu.fpu.status_word |= 0x4000; }
-    if c2 { vcpu.fpu.status_word |= 0x0400; }
-    if c0 { vcpu.fpu.status_word |= 0x0100; }
+    if c3 {
+        vcpu.fpu.status_word |= 0x4000;
+    }
+    if c2 {
+        vcpu.fpu.status_word |= 0x0400;
+    }
+    if c0 {
+        vcpu.fpu.status_word |= 0x0100;
+    }
 }
 
 /// Set RFLAGS for FCOMI/FUCOMI instructions
@@ -45,9 +51,15 @@ pub fn set_fcomi_flags(vcpu: &mut X86_64Vcpu, a: f64, b: f64) {
     };
 
     vcpu.regs.rflags &= !0x8D5; // Clear OF, SF, ZF, AF, PF, CF
-    if zf { vcpu.regs.rflags |= 0x40; }
-    if pf { vcpu.regs.rflags |= 0x04; }
-    if cf { vcpu.regs.rflags |= 0x01; }
+    if zf {
+        vcpu.regs.rflags |= 0x40;
+    }
+    if pf {
+        vcpu.regs.rflags |= 0x04;
+    }
+    if cf {
+        vcpu.regs.rflags |= 0x01;
+    }
 }
 
 /// FXAM - examine ST(0)
@@ -70,10 +82,18 @@ pub fn fxam(vcpu: &mut X86_64Vcpu) {
     };
 
     vcpu.fpu.status_word &= !0x4700;
-    if c3 { vcpu.fpu.status_word |= 0x4000; }
-    if c2 { vcpu.fpu.status_word |= 0x0400; }
-    if c1 { vcpu.fpu.status_word |= 0x0200; }
-    if c0 { vcpu.fpu.status_word |= 0x0100; }
+    if c3 {
+        vcpu.fpu.status_word |= 0x4000;
+    }
+    if c2 {
+        vcpu.fpu.status_word |= 0x0400;
+    }
+    if c1 {
+        vcpu.fpu.status_word |= 0x0200;
+    }
+    if c0 {
+        vcpu.fpu.status_word |= 0x0100;
+    }
 }
 
 /// FPU rounding based on control word
@@ -81,9 +101,9 @@ pub fn fpu_round(cw: u16, val: f64) -> f64 {
     let rc = (cw >> 10) & 3;
     match rc {
         0 => round_nearest_even(val), // Round to nearest, ties to even
-        1 => val.floor(), // Round down (toward -infinity)
-        2 => val.ceil(),  // Round up (toward +infinity)
-        3 => val.trunc(), // Truncate (toward zero)
+        1 => val.floor(),             // Round down (toward -infinity)
+        2 => val.ceil(),              // Round up (toward +infinity)
+        3 => val.trunc(),             // Truncate (toward zero)
         _ => unreachable!(),
     }
 }
@@ -129,8 +149,7 @@ pub fn decode_f64(val: f64) -> (f64, i32, bool) {
 pub fn f80_to_f64(bytes: &[u8]) -> f64 {
     // Simple conversion - just extract the value
     let mantissa = u64::from_le_bytes([
-        bytes[0], bytes[1], bytes[2], bytes[3],
-        bytes[4], bytes[5], bytes[6], bytes[7],
+        bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
     ]);
     let exp_sign = u16::from_le_bytes([bytes[8], bytes[9]]);
     let sign = (exp_sign >> 15) != 0;
@@ -141,7 +160,11 @@ pub fn f80_to_f64(bytes: &[u8]) -> f64 {
     }
     if exponent == 0x7FFF {
         if mantissa & 0x7FFF_FFFF_FFFF_FFFF == 0 {
-            return if sign { f64::NEG_INFINITY } else { f64::INFINITY };
+            return if sign {
+                f64::NEG_INFINITY
+            } else {
+                f64::INFINITY
+            };
         } else {
             return f64::NAN;
         }
@@ -157,7 +180,8 @@ pub fn f80_to_f64(bytes: &[u8]) -> f64 {
         return if sign { -val } else { val };
     }
 
-    let bits = ((sign as u64) << 63) | ((f64_exp as u64) << 52) | (f64_mantissa & 0x000F_FFFF_FFFF_FFFF);
+    let bits =
+        ((sign as u64) << 63) | ((f64_exp as u64) << 52) | (f64_mantissa & 0x000F_FFFF_FFFF_FFFF);
     f64::from_bits(bits)
 }
 
@@ -214,7 +238,11 @@ pub fn bcd_to_f64(bytes: &[u8]) -> f64 {
         val += hi * multiplier;
         multiplier *= 10;
     }
-    if sign { -(val as f64) } else { val as f64 }
+    if sign {
+        -(val as f64)
+    } else {
+        val as f64
+    }
 }
 
 /// Convert f64 to BCD
@@ -265,7 +293,7 @@ pub fn fnstenv(vcpu: &mut X86_64Vcpu, addr: u64) -> Result<()> {
     vcpu.write_mem16(addr + 8, 0)?; // FCS (code segment)
     vcpu.write_mem16(addr + 10, vcpu.fpu.data_ptr as u16)?;
     vcpu.write_mem16(addr + 12, 0)?; // FDS (data segment)
-    // Remaining 14 bytes are reserved/unused
+                                     // Remaining 14 bytes are reserved/unused
     for i in 0..7 {
         vcpu.write_mem16(addr + 14 + i * 2, 0)?;
     }

@@ -37,8 +37,14 @@ impl X86_64Vcpu {
         let broadcast = match elem_size {
             1 => {
                 let b = val as u8;
-                let q = (b as u64) | ((b as u64) << 8) | ((b as u64) << 16) | ((b as u64) << 24)
-                      | ((b as u64) << 32) | ((b as u64) << 40) | ((b as u64) << 48) | ((b as u64) << 56);
+                let q = (b as u64)
+                    | ((b as u64) << 8)
+                    | ((b as u64) << 16)
+                    | ((b as u64) << 24)
+                    | ((b as u64) << 32)
+                    | ((b as u64) << 40)
+                    | ((b as u64) << 48)
+                    | ((b as u64) << 56);
                 (q, q)
             }
             2 => {
@@ -76,7 +82,9 @@ impl X86_64Vcpu {
         vex_l: u8,
     ) -> Result<Option<VcpuExit>> {
         if vex_l == 0 {
-            return Err(Error::Emulator("VBROADCASTI128 requires VEX.L=1".to_string()));
+            return Err(Error::Emulator(
+                "VBROADCASTI128 requires VEX.L=1".to_string(),
+            ));
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
@@ -104,7 +112,9 @@ impl X86_64Vcpu {
         opcode: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator("VBROADCASTSS/SD require VEX.vvvv=1111b".to_string()));
+            return Err(Error::Emulator(
+                "VBROADCASTSS/SD require VEX.vvvv=1111b".to_string(),
+            ));
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;

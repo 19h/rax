@@ -1,6 +1,6 @@
-use std::sync::Arc;
 #[cfg(feature = "debug")]
 use std::sync::mpsc::TryRecvError;
+use std::sync::Arc;
 #[cfg(feature = "debug")]
 use std::thread::JoinHandle;
 
@@ -8,10 +8,11 @@ use tracing::{debug, info};
 use vm_memory::Bytes;
 
 use crate::arch::{self, Arch, BootInfo};
-#[cfg(all(feature = "kvm", target_os = "linux"))]
-use crate::backend::kvm::KvmVm;
+use crate::backend::emulator::x86_64::get_total_instruction_count;
 #[cfg(all(feature = "hvf", target_os = "macos", target_arch = "x86_64"))]
 use crate::backend::hvf::HvfVm;
+#[cfg(all(feature = "kvm", target_os = "linux"))]
+use crate::backend::kvm::KvmVm;
 use crate::backend::{self, Vm};
 #[cfg(any(
     all(feature = "kvm", target_os = "linux"),
@@ -19,18 +20,19 @@ use crate::backend::{self, Vm};
 ))]
 use crate::config::BackendKind;
 use crate::config::VmConfig;
-use crate::backend::emulator::x86_64::get_total_instruction_count;
 use crate::cpu::{CpuState, VCpu, VcpuExit};
-use crate::snapshot::{EmulatorState, Snapshot, SnapshotConfig};
-#[cfg(feature = "debug")]
-use crate::gdb::{self, GdbCommand, GdbResponse, VmmGdbChannels};
 use crate::devices::bus::{IoBus, IoDevice, IoRange, MmioBus, MmioRange};
-use crate::devices::lapic::{LapicDevice, LocalApic, IpiRequest, IpiTarget, LAPIC_BASE, LAPIC_SIZE};
+use crate::devices::lapic::{
+    IpiRequest, IpiTarget, LapicDevice, LocalApic, LAPIC_BASE, LAPIC_SIZE,
+};
 use crate::devices::pic::{DualPic, MasterPicDevice, SlavePicDevice};
 use crate::devices::pit::Pit;
 use crate::devices::serial::{Serial16550, SerialMmioDevice};
 use crate::error::{Error, Result};
+#[cfg(feature = "debug")]
+use crate::gdb::{self, GdbCommand, GdbResponse, VmmGdbChannels};
 use crate::memory::GuestMemoryWrapper;
+use crate::snapshot::{EmulatorState, Snapshot, SnapshotConfig};
 
 const SERIAL_BASE: u16 = 0x3f8;
 
@@ -117,7 +119,7 @@ impl Vmm {
         #[cfg(not(feature = "trace"))]
         if config.trace.is_some() {
             return Err(Error::InvalidConfig(
-                "--trace requires building with --features trace".to_string()
+                "--trace requires building with --features trace".to_string(),
             ));
         }
 
@@ -293,7 +295,8 @@ impl Vmm {
                 Some(SnapshotConfig {
                     interval: config.snapshot_interval,
                     at_instructions: config.snapshot_at.clone(),
-                    output_dir: config.snapshot_dir
+                    output_dir: config
+                        .snapshot_dir
                         .as_ref()
                         .map(|p| p.to_string_lossy().to_string())
                         .unwrap_or_else(|| ".".to_string()),
@@ -408,14 +411,17 @@ impl Vmm {
                     // Handle IPI requests (for multi-CPU, but log for now)
                     if let Some(ipi) = lapic.take_pending_ipi() {
                         match ipi {
-                            IpiRequest::Fixed { vector, ref target } |
-                            IpiRequest::LowestPriority { vector, ref target } => {
+                            IpiRequest::Fixed { vector, ref target }
+                            | IpiRequest::LowestPriority { vector, ref target } => {
                                 // For single-CPU, only AllIncludingSelf matters
                                 // (self-targeting is already handled via IRR)
                                 match target {
                                     IpiTarget::AllIncludingSelf => {
                                         // Already delivered to self via IRR
-                                        debug!("IPI Fixed vector {:#x} to all (self already in IRR)", vector);
+                                        debug!(
+                                            "IPI Fixed vector {:#x} to all (self already in IRR)",
+                                            vector
+                                        );
                                     }
                                     IpiTarget::AllExcludingSelf => {
                                         // No other CPUs in single-CPU mode
@@ -618,7 +624,6 @@ impl Vmm {
 
                     let is_serial = port >= SERIAL_BASE && port < SERIAL_BASE + 8;
                     if is_serial {
-
                         if let Ok(mut serial) = self.serial.lock() {
                             for (i, byte) in data.iter().enumerate() {
                                 IoDevice::write(&mut *serial, port + i as u16, *byte);
@@ -672,8 +677,13 @@ impl Vmm {
                             debug!(addr = format!("{:#x}", bp_addr), "Software breakpoint hit");
                             // Restore original byte so we can re-execute the instruction
                             let mem = self.guest_mem.memory();
-                            let _ = mem.write_slice(&[*orig_byte], vm_memory::GuestAddress(bp_addr));
-                            debug!(addr = format!("{:#x}", bp_addr), orig = format!("{:#x}", orig_byte), "Restored original byte");
+                            let _ =
+                                mem.write_slice(&[*orig_byte], vm_memory::GuestAddress(bp_addr));
+                            debug!(
+                                addr = format!("{:#x}", bp_addr),
+                                orig = format!("{:#x}", orig_byte),
+                                "Restored original byte"
+                            );
                             // Invalidate decode cache so the CPU re-reads the instruction
                             vcpu.invalidate_code_cache(bp_addr);
 
@@ -684,12 +694,16 @@ impl Vmm {
                         } else {
                             // Natural INT3 in the code (not our breakpoint)
                             // Don't back up RIP - leave it past the INT3 so continue works
-                            debug!(addr = format!("{:#x}", bp_addr), "Natural INT3 instruction hit");
+                            debug!(
+                                addr = format!("{:#x}", bp_addr),
+                                "Natural INT3 instruction hit"
+                            );
                         }
 
                         // Notify GDB
                         if let Some(ref channels) = self.gdb_channels {
-                            let _ = channels.resp_tx.send(GdbResponse::StopReply(5)); // SIGTRAP
+                            let _ = channels.resp_tx.send(GdbResponse::StopReply(5));
+                            // SIGTRAP
                         }
                         self.gdb_stopped = true;
                         self.gdb_single_step = false;
@@ -702,7 +716,8 @@ impl Vmm {
                 VcpuExit::GdbBreakpoint { addr } => {
                     debug!(addr = format!("{:#x}", addr), "GDB breakpoint hit");
                     if let Some(ref channels) = self.gdb_channels {
-                        let _ = channels.resp_tx.send(GdbResponse::StopReply(5)); // SIGTRAP
+                        let _ = channels.resp_tx.send(GdbResponse::StopReply(5));
+                        // SIGTRAP
                     }
                     self.gdb_stopped = true;
                     self.gdb_single_step = false;
@@ -721,15 +736,14 @@ impl Vmm {
                     }
 
                     if let Some(ref channels) = self.gdb_channels {
-                        let _ = channels.resp_tx.send(GdbResponse::StopReply(5)); // SIGTRAP
+                        let _ = channels.resp_tx.send(GdbResponse::StopReply(5));
+                        // SIGTRAP
                     }
                     self.gdb_stopped = true;
                     self.gdb_single_step = false;
                     continue;
                 }
-                exit => {
-                    return Err(Error::KernelLoad(format!("unhandled exit: {exit:?}")))
-                }
+                exit => return Err(Error::KernelLoad(format!("unhandled exit: {exit:?}"))),
             }
         }
 
@@ -754,7 +768,9 @@ impl Vmm {
 
     /// Take a snapshot of the current VM state
     pub fn take_snapshot(&self, insn_count: u64) -> Result<Snapshot> {
-        let vcpu = self.vcpus.get(0)
+        let vcpu = self
+            .vcpus
+            .get(0)
             .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
 
         let cpu_state = vcpu.get_state()?;
@@ -769,17 +785,20 @@ impl Vmm {
         let should_snapshot = if let Some(ref config) = self.snapshot_config {
             // Debug: print instruction count periodically
             if insn_count % 1_000_000_000 == 0 {
-                eprintln!("[SNAPSHOT] insn_count={} interval={} at={:?}", 
-                    insn_count, config.interval, config.at_instructions);
+                eprintln!(
+                    "[SNAPSHOT] insn_count={} interval={} at={:?}",
+                    insn_count, config.interval, config.at_instructions
+                );
             }
             // Check interval-based snapshotting
             if config.interval > 0 && insn_count >= self.last_snapshot_insn + config.interval {
                 true
             } else {
                 // Check if we passed any specific instruction counts
-                config.at_instructions.iter().any(|&at| {
-                    at > self.last_snapshot_insn && at <= insn_count
-                })
+                config
+                    .at_instructions
+                    .iter()
+                    .any(|&at| at > self.last_snapshot_insn && at <= insn_count)
             }
         } else {
             false
@@ -787,7 +806,9 @@ impl Vmm {
 
         if should_snapshot {
             let snapshot = self.take_snapshot(insn_count)?;
-            let filename = self.snapshot_config.as_ref()
+            let filename = self
+                .snapshot_config
+                .as_ref()
                 .map(|c| c.filename(insn_count))
                 .unwrap_or_else(|| format!("snapshot_{:012}.snap", insn_count));
 
@@ -808,7 +829,9 @@ impl Vmm {
     /// Restore VM state from a snapshot
     pub fn restore_snapshot(&mut self, snapshot: &Snapshot) -> Result<()> {
         // Restore CPU state
-        let vcpu = self.vcpus.get_mut(0)
+        let vcpu = self
+            .vcpus
+            .get_mut(0)
             .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
         vcpu.set_state(&snapshot.cpu_state)?;
         vcpu.set_emulator_state(&snapshot.emulator_state)?;
@@ -830,8 +853,8 @@ impl Vmm {
     /// Returns Some(true) to break the run loop, Some(false) to continue, None for commands that resume execution.
     #[cfg(feature = "debug")]
     fn handle_gdb_command(&mut self, cmd: GdbCommand) -> Result<Option<bool>> {
-        use crate::gdb::registers::{pack_registers, unpack_registers};
         use crate::gdb::protocol::encode_hex;
+        use crate::gdb::registers::{pack_registers, unpack_registers};
 
         let channels = match &self.gdb_channels {
             Some(ch) => ch,
@@ -867,7 +890,9 @@ impl Vmm {
                 let _ = channels.resp_tx.send(GdbResponse::StopReply(2)); // SIGINT
             }
             GdbCommand::ReadRegisters => {
-                let vcpu = self.vcpus.get(0)
+                let vcpu = self
+                    .vcpus
+                    .get(0)
                     .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
                 match vcpu.get_state()? {
                     CpuState::X86_64(state) => {
@@ -880,7 +905,9 @@ impl Vmm {
                 }
             }
             GdbCommand::WriteRegisters(data) => {
-                let vcpu = self.vcpus.get_mut(0)
+                let vcpu = self
+                    .vcpus
+                    .get_mut(0)
                     .ok_or_else(|| Error::InvalidConfig("no vcpu available".to_string()))?;
                 match vcpu.get_state()? {
                     CpuState::X86_64(mut state) => {
@@ -900,7 +927,10 @@ impl Vmm {
             GdbCommand::ReadMemory { addr, len } => {
                 let mem = self.guest_mem.memory();
                 let mut data = vec![0u8; len];
-                if mem.read_slice(&mut data, vm_memory::GuestAddress(addr)).is_ok() {
+                if mem
+                    .read_slice(&mut data, vm_memory::GuestAddress(addr))
+                    .is_ok()
+                {
                     let hex = encode_hex(&data);
                     let _ = channels.resp_tx.send(GdbResponse::Memory(hex));
                 } else {
@@ -909,7 +939,10 @@ impl Vmm {
             }
             GdbCommand::WriteMemory { addr, data } => {
                 let mem = self.guest_mem.memory();
-                if mem.write_slice(&data, vm_memory::GuestAddress(addr)).is_ok() {
+                if mem
+                    .write_slice(&data, vm_memory::GuestAddress(addr))
+                    .is_ok()
+                {
                     let _ = channels.resp_tx.send(GdbResponse::Ok);
                 } else {
                     let _ = channels.resp_tx.send(GdbResponse::Error(1));
@@ -919,11 +952,21 @@ impl Vmm {
                 // Read original byte and patch with INT3 (0xCC)
                 let mem = self.guest_mem.memory();
                 let mut orig = [0u8; 1];
-                if mem.read_slice(&mut orig, vm_memory::GuestAddress(addr)).is_ok() {
-                    if mem.write_slice(&[0xCC], vm_memory::GuestAddress(addr)).is_ok() {
+                if mem
+                    .read_slice(&mut orig, vm_memory::GuestAddress(addr))
+                    .is_ok()
+                {
+                    if mem
+                        .write_slice(&[0xCC], vm_memory::GuestAddress(addr))
+                        .is_ok()
+                    {
                         // Store original byte for later restoration
                         self.gdb_breakpoints.insert(addr, orig[0]);
-                        debug!(addr = format!("{:#x}", addr), orig = format!("{:#x}", orig[0]), "Set breakpoint");
+                        debug!(
+                            addr = format!("{:#x}", addr),
+                            orig = format!("{:#x}", orig[0]),
+                            "Set breakpoint"
+                        );
                         // Invalidate decode cache so CPU re-reads the instruction
                         if let Some(vcpu) = self.vcpus.get_mut(0) {
                             vcpu.invalidate_code_cache(addr);
@@ -940,8 +983,15 @@ impl Vmm {
                 // Restore original byte from tracking map
                 let mem = self.guest_mem.memory();
                 if let Some(orig) = self.gdb_breakpoints.remove(&addr) {
-                    if mem.write_slice(&[orig], vm_memory::GuestAddress(addr)).is_ok() {
-                        debug!(addr = format!("{:#x}", addr), orig = format!("{:#x}", orig), "Removed breakpoint");
+                    if mem
+                        .write_slice(&[orig], vm_memory::GuestAddress(addr))
+                        .is_ok()
+                    {
+                        debug!(
+                            addr = format!("{:#x}", addr),
+                            orig = format!("{:#x}", orig),
+                            "Removed breakpoint"
+                        );
                         // Invalidate decode cache so CPU re-reads the instruction
                         if let Some(vcpu) = self.vcpus.get_mut(0) {
                             vcpu.invalidate_code_cache(addr);

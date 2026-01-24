@@ -37,12 +37,20 @@ impl X86_64Vcpu {
         let mut dst_hi = 0u64;
         for i in 0..8 {
             let idx = ((mask_lo >> (i * 8)) & 0xFF) as u8;
-            let val = if idx & 0x80 != 0 { 0 } else { src[(idx & 0x0F) as usize] };
+            let val = if idx & 0x80 != 0 {
+                0
+            } else {
+                src[(idx & 0x0F) as usize]
+            };
             dst_lo |= (val as u64) << (i * 8);
         }
         for i in 0..8 {
             let idx = ((mask_hi >> (i * 8)) & 0xFF) as u8;
-            let val = if idx & 0x80 != 0 { 0 } else { src[(idx & 0x0F) as usize] };
+            let val = if idx & 0x80 != 0 {
+                0
+            } else {
+                src[(idx & 0x0F) as usize]
+            };
             dst_hi |= (val as u64) << (i * 8);
         }
 
@@ -53,7 +61,10 @@ impl X86_64Vcpu {
             let (mask_hi2, mask_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -68,12 +79,20 @@ impl X86_64Vcpu {
             let mut dst_hi3 = 0u64;
             for i in 0..8 {
                 let idx = ((mask_hi2 >> (i * 8)) & 0xFF) as u8;
-                let val = if idx & 0x80 != 0 { 0 } else { src2[(idx & 0x0F) as usize] };
+                let val = if idx & 0x80 != 0 {
+                    0
+                } else {
+                    src2[(idx & 0x0F) as usize]
+                };
                 dst_hi2 |= (val as u64) << (i * 8);
             }
             for i in 0..8 {
                 let idx = ((mask_hi3 >> (i * 8)) & 0xFF) as u8;
-                let val = if idx & 0x80 != 0 { 0 } else { src2[(idx & 0x0F) as usize] };
+                let val = if idx & 0x80 != 0 {
+                    0
+                } else {
+                    src2[(idx & 0x0F) as usize]
+                };
                 dst_hi3 |= (val as u64) << (i * 8);
             }
 
@@ -108,7 +127,8 @@ impl X86_64Vcpu {
         let src1_lo = self.regs.xmm[xmm_src1][0];
         let src1_hi = self.regs.xmm[xmm_src1][1];
 
-        let (dst_lo, dst_hi) = self.hadd_128(src1_lo, src1_hi, src2_lo, src2_hi, elem_bits, saturate);
+        let (dst_lo, dst_hi) =
+            self.hadd_128(src1_lo, src1_hi, src2_lo, src2_hi, elem_bits, saturate);
         self.regs.xmm[xmm_dst][0] = dst_lo;
         self.regs.xmm[xmm_dst][1] = dst_hi;
 
@@ -116,12 +136,16 @@ impl X86_64Vcpu {
             let (src2_hi2, src2_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
 
-            let (dst_hi2, dst_hi3) = self.hadd_128(src1_hi2, src1_hi3, src2_hi2, src2_hi3, elem_bits, saturate);
+            let (dst_hi2, dst_hi3) =
+                self.hadd_128(src1_hi2, src1_hi3, src2_hi2, src2_hi3, elem_bits, saturate);
             self.regs.ymm_high[xmm_dst][0] = dst_hi2;
             self.regs.ymm_high[xmm_dst][1] = dst_hi3;
         } else {
@@ -134,30 +158,70 @@ impl X86_64Vcpu {
     }
 
     // Helper: horizontal add for 128-bit lane
-    fn hadd_128(&self, a_lo: u64, a_hi: u64, b_lo: u64, b_hi: u64, elem_bits: u32, saturate: bool) -> (u64, u64) {
+    fn hadd_128(
+        &self,
+        a_lo: u64,
+        a_hi: u64,
+        b_lo: u64,
+        b_hi: u64,
+        elem_bits: u32,
+        saturate: bool,
+    ) -> (u64, u64) {
         if elem_bits == 16 {
             // Words
-            let a = [a_lo as u16, (a_lo >> 16) as u16, (a_lo >> 32) as u16, (a_lo >> 48) as u16,
-                     a_hi as u16, (a_hi >> 16) as u16, (a_hi >> 32) as u16, (a_hi >> 48) as u16];
-            let b = [b_lo as u16, (b_lo >> 16) as u16, (b_lo >> 32) as u16, (b_lo >> 48) as u16,
-                     b_hi as u16, (b_hi >> 16) as u16, (b_hi >> 32) as u16, (b_hi >> 48) as u16];
+            let a = [
+                a_lo as u16,
+                (a_lo >> 16) as u16,
+                (a_lo >> 32) as u16,
+                (a_lo >> 48) as u16,
+                a_hi as u16,
+                (a_hi >> 16) as u16,
+                (a_hi >> 32) as u16,
+                (a_hi >> 48) as u16,
+            ];
+            let b = [
+                b_lo as u16,
+                (b_lo >> 16) as u16,
+                (b_lo >> 32) as u16,
+                (b_lo >> 48) as u16,
+                b_hi as u16,
+                (b_hi >> 16) as u16,
+                (b_hi >> 32) as u16,
+                (b_hi >> 48) as u16,
+            ];
             let mut r = [0u16; 8];
             for i in 0..4 {
                 if saturate {
-                    r[i] = (a[i*2] as i16).saturating_add(a[i*2+1] as i16) as u16;
-                    r[i+4] = (b[i*2] as i16).saturating_add(b[i*2+1] as i16) as u16;
+                    r[i] = (a[i * 2] as i16).saturating_add(a[i * 2 + 1] as i16) as u16;
+                    r[i + 4] = (b[i * 2] as i16).saturating_add(b[i * 2 + 1] as i16) as u16;
                 } else {
-                    r[i] = (a[i*2] as i16).wrapping_add(a[i*2+1] as i16) as u16;
-                    r[i+4] = (b[i*2] as i16).wrapping_add(b[i*2+1] as i16) as u16;
+                    r[i] = (a[i * 2] as i16).wrapping_add(a[i * 2 + 1] as i16) as u16;
+                    r[i + 4] = (b[i * 2] as i16).wrapping_add(b[i * 2 + 1] as i16) as u16;
                 }
             }
-            let lo = (r[0] as u64) | ((r[1] as u64) << 16) | ((r[2] as u64) << 32) | ((r[3] as u64) << 48);
-            let hi = (r[4] as u64) | ((r[5] as u64) << 16) | ((r[6] as u64) << 32) | ((r[7] as u64) << 48);
+            let lo = (r[0] as u64)
+                | ((r[1] as u64) << 16)
+                | ((r[2] as u64) << 32)
+                | ((r[3] as u64) << 48);
+            let hi = (r[4] as u64)
+                | ((r[5] as u64) << 16)
+                | ((r[6] as u64) << 32)
+                | ((r[7] as u64) << 48);
             (lo, hi)
         } else {
             // Dwords
-            let a = [a_lo as u32, (a_lo >> 32) as u32, a_hi as u32, (a_hi >> 32) as u32];
-            let b = [b_lo as u32, (b_lo >> 32) as u32, b_hi as u32, (b_hi >> 32) as u32];
+            let a = [
+                a_lo as u32,
+                (a_lo >> 32) as u32,
+                a_hi as u32,
+                (a_hi >> 32) as u32,
+            ];
+            let b = [
+                b_lo as u32,
+                (b_lo >> 32) as u32,
+                b_hi as u32,
+                (b_hi >> 32) as u32,
+            ];
             let r0 = (a[0] as i32).wrapping_add(a[1] as i32) as u32;
             let r1 = (a[2] as i32).wrapping_add(a[3] as i32) as u32;
             let r2 = (b[0] as i32).wrapping_add(b[1] as i32) as u32;
@@ -188,7 +252,8 @@ impl X86_64Vcpu {
         let src1_lo = self.regs.xmm[xmm_src1][0];
         let src1_hi = self.regs.xmm[xmm_src1][1];
 
-        let (dst_lo, dst_hi) = self.hsub_128(src1_lo, src1_hi, src2_lo, src2_hi, elem_bits, saturate);
+        let (dst_lo, dst_hi) =
+            self.hsub_128(src1_lo, src1_hi, src2_lo, src2_hi, elem_bits, saturate);
         self.regs.xmm[xmm_dst][0] = dst_lo;
         self.regs.xmm[xmm_dst][1] = dst_hi;
 
@@ -196,12 +261,16 @@ impl X86_64Vcpu {
             let (src2_hi2, src2_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
 
-            let (dst_hi2, dst_hi3) = self.hsub_128(src1_hi2, src1_hi3, src2_hi2, src2_hi3, elem_bits, saturate);
+            let (dst_hi2, dst_hi3) =
+                self.hsub_128(src1_hi2, src1_hi3, src2_hi2, src2_hi3, elem_bits, saturate);
             self.regs.ymm_high[xmm_dst][0] = dst_hi2;
             self.regs.ymm_high[xmm_dst][1] = dst_hi3;
         } else {
@@ -214,28 +283,68 @@ impl X86_64Vcpu {
     }
 
     // Helper: horizontal subtract for 128-bit lane
-    fn hsub_128(&self, a_lo: u64, a_hi: u64, b_lo: u64, b_hi: u64, elem_bits: u32, saturate: bool) -> (u64, u64) {
+    fn hsub_128(
+        &self,
+        a_lo: u64,
+        a_hi: u64,
+        b_lo: u64,
+        b_hi: u64,
+        elem_bits: u32,
+        saturate: bool,
+    ) -> (u64, u64) {
         if elem_bits == 16 {
-            let a = [a_lo as u16, (a_lo >> 16) as u16, (a_lo >> 32) as u16, (a_lo >> 48) as u16,
-                     a_hi as u16, (a_hi >> 16) as u16, (a_hi >> 32) as u16, (a_hi >> 48) as u16];
-            let b = [b_lo as u16, (b_lo >> 16) as u16, (b_lo >> 32) as u16, (b_lo >> 48) as u16,
-                     b_hi as u16, (b_hi >> 16) as u16, (b_hi >> 32) as u16, (b_hi >> 48) as u16];
+            let a = [
+                a_lo as u16,
+                (a_lo >> 16) as u16,
+                (a_lo >> 32) as u16,
+                (a_lo >> 48) as u16,
+                a_hi as u16,
+                (a_hi >> 16) as u16,
+                (a_hi >> 32) as u16,
+                (a_hi >> 48) as u16,
+            ];
+            let b = [
+                b_lo as u16,
+                (b_lo >> 16) as u16,
+                (b_lo >> 32) as u16,
+                (b_lo >> 48) as u16,
+                b_hi as u16,
+                (b_hi >> 16) as u16,
+                (b_hi >> 32) as u16,
+                (b_hi >> 48) as u16,
+            ];
             let mut r = [0u16; 8];
             for i in 0..4 {
                 if saturate {
-                    r[i] = (a[i*2] as i16).saturating_sub(a[i*2+1] as i16) as u16;
-                    r[i+4] = (b[i*2] as i16).saturating_sub(b[i*2+1] as i16) as u16;
+                    r[i] = (a[i * 2] as i16).saturating_sub(a[i * 2 + 1] as i16) as u16;
+                    r[i + 4] = (b[i * 2] as i16).saturating_sub(b[i * 2 + 1] as i16) as u16;
                 } else {
-                    r[i] = (a[i*2] as i16).wrapping_sub(a[i*2+1] as i16) as u16;
-                    r[i+4] = (b[i*2] as i16).wrapping_sub(b[i*2+1] as i16) as u16;
+                    r[i] = (a[i * 2] as i16).wrapping_sub(a[i * 2 + 1] as i16) as u16;
+                    r[i + 4] = (b[i * 2] as i16).wrapping_sub(b[i * 2 + 1] as i16) as u16;
                 }
             }
-            let lo = (r[0] as u64) | ((r[1] as u64) << 16) | ((r[2] as u64) << 32) | ((r[3] as u64) << 48);
-            let hi = (r[4] as u64) | ((r[5] as u64) << 16) | ((r[6] as u64) << 32) | ((r[7] as u64) << 48);
+            let lo = (r[0] as u64)
+                | ((r[1] as u64) << 16)
+                | ((r[2] as u64) << 32)
+                | ((r[3] as u64) << 48);
+            let hi = (r[4] as u64)
+                | ((r[5] as u64) << 16)
+                | ((r[6] as u64) << 32)
+                | ((r[7] as u64) << 48);
             (lo, hi)
         } else {
-            let a = [a_lo as u32, (a_lo >> 32) as u32, a_hi as u32, (a_hi >> 32) as u32];
-            let b = [b_lo as u32, (b_lo >> 32) as u32, b_hi as u32, (b_hi >> 32) as u32];
+            let a = [
+                a_lo as u32,
+                (a_lo >> 32) as u32,
+                a_hi as u32,
+                (a_hi >> 32) as u32,
+            ];
+            let b = [
+                b_lo as u32,
+                (b_lo >> 32) as u32,
+                b_hi as u32,
+                (b_hi >> 32) as u32,
+            ];
             let r0 = (a[0] as i32).wrapping_sub(a[1] as i32) as u32;
             let r1 = (a[2] as i32).wrapping_sub(a[3] as i32) as u32;
             let r2 = (b[0] as i32).wrapping_sub(b[1] as i32) as u32;
@@ -271,7 +380,10 @@ impl X86_64Vcpu {
             let (src2_hi2, src2_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -333,7 +445,10 @@ impl X86_64Vcpu {
             let (src2_hi2, src2_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -395,7 +510,10 @@ impl X86_64Vcpu {
             let (src2_hi2, src2_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -429,7 +547,9 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator("VPHMINPOSUW requires VEX.vvvv=1111b".to_string()));
+            return Err(Error::Emulator(
+                "VPHMINPOSUW requires VEX.vvvv=1111b".to_string(),
+            ));
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
@@ -465,7 +585,9 @@ impl X86_64Vcpu {
         self.regs.ymm_high[xmm_dst][1] = 0;
 
         if vex_l == 1 {
-            return Err(Error::Emulator("VPHMINPOSUW does not support VEX.256".to_string()));
+            return Err(Error::Emulator(
+                "VPHMINPOSUW does not support VEX.256".to_string(),
+            ));
         }
 
         self.regs.rip += ctx.cursor as u64;
@@ -487,29 +609,53 @@ impl X86_64Vcpu {
             (
                 self.read_mem(addr, 8)?,
                 self.read_mem(addr + 8, 8)?,
-                if vex_l == 1 { self.read_mem(addr + 16, 8)? } else { 0 },
-                if vex_l == 1 { self.read_mem(addr + 24, 8)? } else { 0 },
+                if vex_l == 1 {
+                    self.read_mem(addr + 16, 8)?
+                } else {
+                    0
+                },
+                if vex_l == 1 {
+                    self.read_mem(addr + 24, 8)?
+                } else {
+                    0
+                },
             )
         } else {
             (
                 self.regs.xmm[rm as usize][0],
                 self.regs.xmm[rm as usize][1],
-                if vex_l == 1 { self.regs.ymm_high[rm as usize][0] } else { 0 },
-                if vex_l == 1 { self.regs.ymm_high[rm as usize][1] } else { 0 },
+                if vex_l == 1 {
+                    self.regs.ymm_high[rm as usize][0]
+                } else {
+                    0
+                },
+                if vex_l == 1 {
+                    self.regs.ymm_high[rm as usize][1]
+                } else {
+                    0
+                },
             )
         };
 
         let src1_lo = self.regs.xmm[xmm_src1][0];
         let src1_hi = self.regs.xmm[xmm_src1][1];
 
-        let (dst_lo, dst_hi) = self.mpsadbw_lane(src1_lo, src1_hi, src2_lo, src2_hi, imm8 & 0x07, imm8 & 0x03);
+        let (dst_lo, dst_hi) =
+            self.mpsadbw_lane(src1_lo, src1_hi, src2_lo, src2_hi, imm8 & 0x07, imm8 & 0x03);
         self.regs.xmm[xmm_dst][0] = dst_lo;
         self.regs.xmm[xmm_dst][1] = dst_hi;
 
         if vex_l == 1 {
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
-            let (dst_hi2, dst_hi3) = self.mpsadbw_lane(src1_hi2, src1_hi3, src2_hi2, src2_hi3, imm8 & 0x07, (imm8 >> 3) & 0x03);
+            let (dst_hi2, dst_hi3) = self.mpsadbw_lane(
+                src1_hi2,
+                src1_hi3,
+                src2_hi2,
+                src2_hi3,
+                imm8 & 0x07,
+                (imm8 >> 3) & 0x03,
+            );
             self.regs.ymm_high[xmm_dst][0] = dst_hi2;
             self.regs.ymm_high[xmm_dst][1] = dst_hi3;
         } else {
@@ -561,5 +707,4 @@ impl X86_64Vcpu {
         }
         (lo, hi)
     }
-
 }

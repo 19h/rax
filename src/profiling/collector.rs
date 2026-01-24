@@ -69,8 +69,9 @@ impl Profiler {
     /// Create a new profiler with the given configuration.
     fn new(config: ProfilingConfig) -> Self {
         // Use a Vec and convert to boxed array to avoid stack overflow
-        let stats_vec: Vec<OpcodeStats> =
-            (0..OpcodeKey::MAX_INDEX).map(|_| OpcodeStats::default()).collect();
+        let stats_vec: Vec<OpcodeStats> = (0..OpcodeKey::MAX_INDEX)
+            .map(|_| OpcodeStats::default())
+            .collect();
         let stats: Box<[OpcodeStats; OpcodeKey::MAX_INDEX]> = stats_vec
             .into_boxed_slice()
             .try_into()

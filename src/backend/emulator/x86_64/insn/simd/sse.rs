@@ -254,7 +254,11 @@ pub fn prefetchw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
 // =============================================================================
 
 /// PSUB* packed integer subtract (SSE2, 66 0F xx)
-pub fn psub_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+pub fn psub_packed(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    opcode: u8,
+) -> Result<Option<VcpuExit>> {
     if !ctx.operand_size_override {
         return psub_packed_mmx(vcpu, ctx, opcode);
     }
@@ -278,10 +282,22 @@ pub fn psub_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, opcode: u8) -> 
             let dst_lo = vcpu.regs.xmm[xmm_dst][0];
             let dst_hi = vcpu.regs.xmm[xmm_dst][1];
             let (res_lo, res_hi) = match opcode {
-                0xD8 => (sub_u8_saturate(dst_lo, src[0]), sub_u8_saturate(dst_hi, src[1])), // PSUBUSB
-                0xD9 => (sub_u16_saturate(dst_lo, src[0]), sub_u16_saturate(dst_hi, src[1])), // PSUBUSW
-                0xE8 => (sub_i8_saturate(dst_lo, src[0]), sub_i8_saturate(dst_hi, src[1])), // PSUBSB
-                0xE9 => (sub_i16_saturate(dst_lo, src[0]), sub_i16_saturate(dst_hi, src[1])), // PSUBSW
+                0xD8 => (
+                    sub_u8_saturate(dst_lo, src[0]),
+                    sub_u8_saturate(dst_hi, src[1]),
+                ), // PSUBUSB
+                0xD9 => (
+                    sub_u16_saturate(dst_lo, src[0]),
+                    sub_u16_saturate(dst_hi, src[1]),
+                ), // PSUBUSW
+                0xE8 => (
+                    sub_i8_saturate(dst_lo, src[0]),
+                    sub_i8_saturate(dst_hi, src[1]),
+                ), // PSUBSB
+                0xE9 => (
+                    sub_i16_saturate(dst_lo, src[0]),
+                    sub_i16_saturate(dst_hi, src[1]),
+                ), // PSUBSW
                 _ => unreachable!(),
             };
             vcpu.regs.xmm[xmm_dst][0] = res_lo;
@@ -299,7 +315,11 @@ pub fn psub_packed(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, opcode: u8) -> 
     Ok(None)
 }
 
-fn psub_packed_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+fn psub_packed_mmx(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    opcode: u8,
+) -> Result<Option<VcpuExit>> {
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let mm_dst = (reg & 0x7) as usize;
     let src = if is_memory {
@@ -310,7 +330,7 @@ fn psub_packed_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, opcode: u8) -> 
     let dst = vcpu.regs.mm[mm_dst];
 
     let result = match opcode {
-        0xD8 => sub_u8_saturate(dst, src), // PSUBUSB
+        0xD8 => sub_u8_saturate(dst, src),  // PSUBUSB
         0xD9 => sub_u16_saturate(dst, src), // PSUBUSW
         0xE8 => sub_i8_saturate(dst, src),  // PSUBSB
         0xE9 => sub_i16_saturate(dst, src), // PSUBSW
@@ -1174,7 +1194,9 @@ fn cmp_gt_dwords(a: u64, b: u64) -> u64 {
 pub fn movntq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     if !is_memory {
-        return Err(Error::Emulator("MOVNTQ requires memory destination".to_string()));
+        return Err(Error::Emulator(
+            "MOVNTQ requires memory destination".to_string(),
+        ));
     }
     let mm_src = (reg & 0x7) as usize;
     vcpu.write_mem(addr, vcpu.regs.mm[mm_src], 8)?;
@@ -2109,7 +2131,6 @@ fn packuswb_mmx(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
-
 
 // =============================================================================
 // MOVQ2DQ/MOVDQ2Q - MMX/XMM conversion (F3/F2 0F D6)

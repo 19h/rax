@@ -186,7 +186,7 @@ impl LocalApic {
             tpr: 0,
             ldr: 0,
             dfr: 0xFFFFFFFF, // Flat model
-            svr: 0x1FF, // APIC enabled (bit 8), spurious vector 0xFF
+            svr: 0x1FF,      // APIC enabled (bit 8), spurious vector 0xFF
             isr: [0; 8],
             tmr: [0; 8],
             irr: [0; 8],
@@ -368,7 +368,9 @@ impl LocalApic {
             DEST_SHORTHAND_ALL_EXCLUDING_SELF => IpiTarget::AllExcludingSelf,
             DEST_SHORTHAND_NONE => {
                 if dest_mode_logical {
-                    IpiTarget::Logical { destination: dest_field }
+                    IpiTarget::Logical {
+                        destination: dest_field,
+                    }
                 } else {
                     IpiTarget::Physical(dest_field)
                 }
@@ -426,7 +428,9 @@ impl LocalApic {
                 // INIT resets target CPU to wait-for-SIPI state
                 // Level de-assert (level=0) is used for INIT synchronization, ignore it
                 if level_assert {
-                    self.pending_ipi = Some(IpiRequest::Init { target: target.clone() });
+                    self.pending_ipi = Some(IpiRequest::Init {
+                        target: target.clone(),
+                    });
                     tracing::debug!("LAPIC: INIT IPI requested");
                 } else {
                     tracing::debug!("LAPIC: INIT level de-assert (ignored)");
@@ -435,7 +439,11 @@ impl LocalApic {
             DELIVERY_MODE_SIPI => {
                 // Start-up IPI - vector specifies start address (vector * 0x1000)
                 self.pending_ipi = Some(IpiRequest::Sipi { vector, target });
-                tracing::debug!("LAPIC: SIPI vector={:#x} (start addr={:#x})", vector, (vector as u32) * 0x1000);
+                tracing::debug!(
+                    "LAPIC: SIPI vector={:#x} (start addr={:#x})",
+                    vector,
+                    (vector as u32) * 0x1000
+                );
             }
             _ => {
                 tracing::warn!("LAPIC: Unknown delivery mode {}", delivery_mode);
@@ -773,7 +781,10 @@ mod tests {
 
         // Check virtual wire mode defaults
         assert!(lapic.is_enabled(), "APIC should be enabled by default");
-        assert_eq!(lapic.svr, 0x1FF, "SVR should have APIC enabled with vector 0xFF");
+        assert_eq!(
+            lapic.svr, 0x1FF,
+            "SVR should have APIC enabled with vector 0xFF"
+        );
         assert_eq!(lapic.lvt_lint0, 0x700, "LINT0 should be ExtInt mode");
         assert_eq!(lapic.lvt_lint1, 0x400, "LINT1 should be NMI mode");
 
@@ -789,7 +800,12 @@ mod tests {
         for id in [0, 1, 7, 15, 255] {
             let lapic = LocalApic::new(id);
             assert_eq!(lapic.apic_id(), id as u8, "APIC ID mismatch for id={}", id);
-            assert_eq!(lapic.id, (id as u32) << 24, "ID register mismatch for id={}", id);
+            assert_eq!(
+                lapic.id,
+                (id as u32) << 24,
+                "ID register mismatch for id={}",
+                id
+            );
         }
     }
 
@@ -1080,7 +1096,10 @@ mod tests {
         let current = lapic.read_register(LAPIC_TIMER_CCR);
 
         // Current count should have decreased (or stayed same if too fast)
-        assert!(current <= initial, "Timer count should decrease or stay same");
+        assert!(
+            current <= initial,
+            "Timer count should decrease or stay same"
+        );
     }
 
     #[test]
@@ -1157,7 +1176,10 @@ mod tests {
         thread::sleep(Duration::from_millis(10));
 
         let vector = lapic.tick();
-        assert_eq!(vector, None, "Disabled APIC should not generate timer interrupt");
+        assert_eq!(
+            vector, None,
+            "Disabled APIC should not generate timer interrupt"
+        );
     }
 
     // ============================================================================
@@ -1212,8 +1234,14 @@ mod tests {
         assert!(lapic.isr[0x40 / 32] & (1 << (0x40 % 32)) == 0);
 
         lapic.ack_interrupt(0x40);
-        assert!(lapic.irr[0x40 / 32] & (1 << (0x40 % 32)) == 0, "IRR bit should be cleared");
-        assert!(lapic.isr[0x40 / 32] & (1 << (0x40 % 32)) != 0, "ISR bit should be set");
+        assert!(
+            lapic.irr[0x40 / 32] & (1 << (0x40 % 32)) == 0,
+            "IRR bit should be cleared"
+        );
+        assert!(
+            lapic.isr[0x40 / 32] & (1 << (0x40 % 32)) != 0,
+            "ISR bit should be set"
+        );
     }
 
     #[test]
@@ -1418,7 +1446,10 @@ mod tests {
         lapic.write_register(LAPIC_ICR_LOW, 0x000001A0); // delivery=1 (lowest priority), vector=0xA0
 
         let ipi = lapic.take_pending_ipi().unwrap();
-        assert!(matches!(ipi, IpiRequest::LowestPriority { vector: 0xA0, .. }));
+        assert!(matches!(
+            ipi,
+            IpiRequest::LowestPriority { vector: 0xA0, .. }
+        ));
     }
 
     #[test]
@@ -2291,9 +2322,18 @@ mod tests {
 
         // Access many registers in "random" order
         let offsets = [
-            LAPIC_ID, LAPIC_TPR, LAPIC_SVR, LAPIC_LVT_TIMER,
-            LAPIC_TIMER_ICR, LAPIC_TIMER_DCR, LAPIC_EOI, LAPIC_ICR_LOW,
-            LAPIC_ICR_HIGH, LAPIC_ESR, LAPIC_LDR, LAPIC_DFR,
+            LAPIC_ID,
+            LAPIC_TPR,
+            LAPIC_SVR,
+            LAPIC_LVT_TIMER,
+            LAPIC_TIMER_ICR,
+            LAPIC_TIMER_DCR,
+            LAPIC_EOI,
+            LAPIC_ICR_LOW,
+            LAPIC_ICR_HIGH,
+            LAPIC_ESR,
+            LAPIC_LDR,
+            LAPIC_DFR,
         ];
 
         for round in 0..100 {

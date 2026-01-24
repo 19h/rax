@@ -15,9 +15,9 @@ pub mod rosetta;
 
 // ARM64 HVF backend (Apple Silicon only)
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-mod arm64_bindings;
-#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 pub mod arm64;
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+mod arm64_bindings;
 
 // Re-export ARM64 backend types on Apple Silicon
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
@@ -270,10 +270,7 @@ impl HvfVcpu {
         vmcs_write(self.vcpu_id, VMCS_CTRL_CPU_BASED2, proc2_based)?;
 
         // VM-entry controls: load EFER, IA-32e guest mode
-        let entry_ctls = self.cap2ctrl(
-            entry_cap,
-            VMENTRY_LOAD_IA32_EFER | VMENTRY_GUEST_IA32E,
-        );
+        let entry_ctls = self.cap2ctrl(entry_cap, VMENTRY_LOAD_IA32_EFER | VMENTRY_GUEST_IA32E);
         vmcs_write(self.vcpu_id, VMCS_CTRL_VMENTRY_CONTROLS, entry_ctls)?;
 
         // Exception bitmap: trap no exceptions initially
@@ -295,7 +292,7 @@ impl HvfVcpu {
     /// Convert capability to control value.
     /// The capability encodes allowed 0->1 and 1->0 transitions.
     fn cap2ctrl(&self, cap: u64, ctrl: u64) -> u64 {
-        let allowed_0 = cap & 0xFFFFFFFF;         // Bits that may be 0
+        let allowed_0 = cap & 0xFFFFFFFF; // Bits that may be 0
         let allowed_1 = (cap >> 32) & 0xFFFFFFFF; // Bits that may be 1
         (ctrl | allowed_0) & allowed_1
     }
@@ -323,7 +320,7 @@ impl HvfVcpu {
     /// Handle RDMSR exit.
     fn handle_rdmsr(&self) -> Result<Option<VcpuExit>> {
         let ecx = read_register(self.vcpu_id, hv_x86_reg_t::HV_X86_RCX)? as u32;
-        
+
         // Handle common MSRs
         let value = match ecx {
             0x1B => 0xFEE00000 | 0x800, // IA32_APIC_BASE - LAPIC at default address, enabled
@@ -346,19 +343,28 @@ impl HvfVcpu {
             0xC0000102 => 0, // IA32_KERNEL_GS_BASE
             0x174 => {
                 // IA32_SYSENTER_CS
-                vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_GUEST_IA32_SYSENTER_CS)?
+                vmcs_read(
+                    self.vcpu_id,
+                    hv_vmx_vmcs_field_t::VMCS_GUEST_IA32_SYSENTER_CS,
+                )?
             }
             0x175 => {
                 // IA32_SYSENTER_ESP
-                vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_GUEST_IA32_SYSENTER_ESP)?
+                vmcs_read(
+                    self.vcpu_id,
+                    hv_vmx_vmcs_field_t::VMCS_GUEST_IA32_SYSENTER_ESP,
+                )?
             }
             0x176 => {
                 // IA32_SYSENTER_EIP
-                vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_GUEST_IA32_SYSENTER_EIP)?
+                vmcs_read(
+                    self.vcpu_id,
+                    hv_vmx_vmcs_field_t::VMCS_GUEST_IA32_SYSENTER_EIP,
+                )?
             }
             0x1A0 => rosetta::MsrDefaults::default().misc_enable, // IA32_MISC_ENABLE
             0x277 => rosetta::MsrDefaults::default().pat,         // IA32_PAT
-            0x10 => 0,  // IA32_TIME_STAMP_COUNTER - return 0, will be handled by TSC offsetting
+            0x10 => 0, // IA32_TIME_STAMP_COUNTER - return 0, will be handled by TSC offsetting
             0x6E0 => 0, // IA32_TSC_DEADLINE
             _ => {
                 debug!(msr = format!("{:#x}", ecx), "Unhandled RDMSR");
@@ -390,7 +396,11 @@ impl HvfVcpu {
             }
             0xC0000080 => {
                 // IA32_EFER
-                vmcs_write(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_GUEST_IA32_EFER, value)?;
+                vmcs_write(
+                    self.vcpu_id,
+                    hv_vmx_vmcs_field_t::VMCS_GUEST_IA32_EFER,
+                    value,
+                )?;
             }
             0xC0000081 => {
                 // IA32_STAR - store somewhere or handle syscall
@@ -422,15 +432,27 @@ impl HvfVcpu {
             }
             0x174 => {
                 // IA32_SYSENTER_CS
-                vmcs_write(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_GUEST_IA32_SYSENTER_CS, value)?;
+                vmcs_write(
+                    self.vcpu_id,
+                    hv_vmx_vmcs_field_t::VMCS_GUEST_IA32_SYSENTER_CS,
+                    value,
+                )?;
             }
             0x175 => {
                 // IA32_SYSENTER_ESP
-                vmcs_write(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_GUEST_IA32_SYSENTER_ESP, value)?;
+                vmcs_write(
+                    self.vcpu_id,
+                    hv_vmx_vmcs_field_t::VMCS_GUEST_IA32_SYSENTER_ESP,
+                    value,
+                )?;
             }
             0x176 => {
                 // IA32_SYSENTER_EIP
-                vmcs_write(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_GUEST_IA32_SYSENTER_EIP, value)?;
+                vmcs_write(
+                    self.vcpu_id,
+                    hv_vmx_vmcs_field_t::VMCS_GUEST_IA32_SYSENTER_EIP,
+                    value,
+                )?;
             }
             0x6E0 => {
                 // IA32_TSC_DEADLINE
@@ -527,8 +549,10 @@ impl VCpu for HvfVcpu {
             VMX_EXIT_REASON_IO => {
                 let qual = vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_EXIT_QUALIFICATION)?;
                 let io = IoExitQualification::from_qualification(qual);
-                let insn_len =
-                    vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_EXIT_INSTRUCTION_LENGTH)?;
+                let insn_len = vmcs_read(
+                    self.vcpu_id,
+                    hv_vmx_vmcs_field_t::VMCS_EXIT_INSTRUCTION_LENGTH,
+                )?;
 
                 match io.direction {
                     IoDirection::In => {
@@ -561,8 +585,10 @@ impl VCpu for HvfVcpu {
 
             VMX_EXIT_REASON_EPT_VIOLATION => {
                 let qual = vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_EXIT_QUALIFICATION)?;
-                let gpa =
-                    vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_GUEST_PHYSICAL_ADDRESS)?;
+                let gpa = vmcs_read(
+                    self.vcpu_id,
+                    hv_vmx_vmcs_field_t::VMCS_GUEST_PHYSICAL_ADDRESS,
+                )?;
                 let ept = EptViolationQualification::from_qualification(qual);
 
                 if ept.write {
@@ -629,8 +655,10 @@ impl VCpu for HvfVcpu {
             VMX_EXIT_REASON_CR_ACCESS => {
                 // Handle CR access (usually CR0/CR3/CR4 writes)
                 let qual = vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_EXIT_QUALIFICATION)?;
-                let insn_len =
-                    vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_EXIT_INSTRUCTION_LENGTH)?;
+                let insn_len = vmcs_read(
+                    self.vcpu_id,
+                    hv_vmx_vmcs_field_t::VMCS_EXIT_INSTRUCTION_LENGTH,
+                )?;
 
                 // For now, just advance RIP and continue
                 // TODO: Proper CR access handling
@@ -640,8 +668,10 @@ impl VCpu for HvfVcpu {
 
             VMX_EXIT_REASON_XSETBV => {
                 // Handle XSETBV (extended control register write)
-                let insn_len =
-                    vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_EXIT_INSTRUCTION_LENGTH)?;
+                let insn_len = vmcs_read(
+                    self.vcpu_id,
+                    hv_vmx_vmcs_field_t::VMCS_EXIT_INSTRUCTION_LENGTH,
+                )?;
                 self.advance_rip(insn_len)?;
                 self.run()
             }
@@ -684,15 +714,12 @@ impl VCpu for HvfVcpu {
             let value = match size {
                 1 => data.first().copied().unwrap_or(0) as u64,
                 2 => {
-                    let bytes: [u8; 2] = data[..2.min(data.len())]
-                        .try_into()
-                        .unwrap_or([0, 0]);
+                    let bytes: [u8; 2] = data[..2.min(data.len())].try_into().unwrap_or([0, 0]);
                     u16::from_le_bytes(bytes) as u64
                 }
                 4 => {
-                    let bytes: [u8; 4] = data[..4.min(data.len())]
-                        .try_into()
-                        .unwrap_or([0, 0, 0, 0]);
+                    let bytes: [u8; 4] =
+                        data[..4.min(data.len())].try_into().unwrap_or([0, 0, 0, 0]);
                     u32::from_le_bytes(bytes) as u64
                 }
                 _ => 0,

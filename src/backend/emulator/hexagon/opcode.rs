@@ -59,7 +59,10 @@ pub fn opcode_name(opcode: Opcode) -> &'static str {
 
 pub fn decode_word(word: u32) -> Option<DecodedOp> {
     let iclass = (word >> 28) as usize;
-    for enc in ENCODINGS_BY_ICLASS[iclass].iter().chain(ENCODINGS_MISC.iter()) {
+    for enc in ENCODINGS_BY_ICLASS[iclass]
+        .iter()
+        .chain(ENCODINGS_MISC.iter())
+    {
         if (word & enc.mask) == enc.value {
             return Some(DecodedOp {
                 opcode: enc.opcode,

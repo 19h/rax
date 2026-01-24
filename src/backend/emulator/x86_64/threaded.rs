@@ -8,7 +8,7 @@
 use crate::cpu::VcpuExit;
 use crate::error::Result;
 
-use super::cpu::{InsnContext, X86_64Vcpu, MAX_INSN_LEN, DECODE_CACHE_MASK};
+use super::cpu::{InsnContext, X86_64Vcpu, DECODE_CACHE_MASK, MAX_INSN_LEN};
 use super::decoder::Decoder;
 
 /// Batch size for threaded execution before checking for exits
@@ -105,7 +105,11 @@ impl X86_64Vcpu {
         } else {
             let default_16bit = !self.sregs.cs.db;
             let is_16bit = default_16bit ^ ctx.operand_size_override;
-            if is_16bit { 2 } else { 4 }
+            if is_16bit {
+                2
+            } else {
+                4
+            }
         };
 
         let opcode_cursor = ctx.cursor;
@@ -130,11 +134,7 @@ impl X86_64Vcpu {
     /// Threaded dispatch - delegates to standard execute for now.
     /// TODO: Re-enable inlined handlers after fixing mode-aware issues.
     #[inline(always)]
-    fn dispatch_threaded(
-        &mut self,
-        opcode: u8,
-        ctx: &mut InsnContext,
-    ) -> Result<Option<VcpuExit>> {
+    fn dispatch_threaded(&mut self, opcode: u8, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         // For now, just use the standard execute to isolate issues
         self.execute(opcode, ctx)
     }
@@ -145,7 +145,11 @@ impl X86_64Vcpu {
 
     /// MOV r, imm (0xB8-0xBF)
     #[inline(always)]
-    fn threaded_mov_r_imm(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+    fn threaded_mov_r_imm(
+        &mut self,
+        ctx: &mut InsnContext,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
         let reg = (opcode - 0xB8) | ctx.rex_b();
         let imm = ctx.consume_imm(ctx.op_size)?;
         self.set_reg(reg, imm, ctx.op_size);
@@ -383,7 +387,11 @@ impl X86_64Vcpu {
     #[inline(always)]
     fn threaded_jmp_rel8(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let rel = ctx.consume_u8()? as i8 as i64;
-        self.regs.rip = self.regs.rip.wrapping_add(ctx.cursor as u64).wrapping_add(rel as u64);
+        self.regs.rip = self
+            .regs
+            .rip
+            .wrapping_add(ctx.cursor as u64)
+            .wrapping_add(rel as u64);
         Ok(None)
     }
 
@@ -391,7 +399,11 @@ impl X86_64Vcpu {
     #[inline(always)]
     fn threaded_jmp_rel32(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let rel = ctx.consume_u32()? as i32 as i64;
-        self.regs.rip = self.regs.rip.wrapping_add(ctx.cursor as u64).wrapping_add(rel as u64);
+        self.regs.rip = self
+            .regs
+            .rip
+            .wrapping_add(ctx.cursor as u64)
+            .wrapping_add(rel as u64);
         Ok(None)
     }
 

@@ -81,7 +81,9 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             let _type_attr = desc_bytes[5];
             let limit_high = (desc_bytes[6] & 0x0F) as u32;
             let base_high_byte = desc_bytes[7] as u64;
-            let base_upper = u32::from_le_bytes([desc_bytes[8], desc_bytes[9], desc_bytes[10], desc_bytes[11]]) as u64;
+            let base_upper =
+                u32::from_le_bytes([desc_bytes[8], desc_bytes[9], desc_bytes[10], desc_bytes[11]])
+                    as u64;
 
             let limit = limit_low | (limit_high << 16);
             let base = base_low | (base_mid << 16) | (base_high_byte << 24) | (base_upper << 32);

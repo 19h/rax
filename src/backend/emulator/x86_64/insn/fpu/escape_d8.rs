@@ -18,36 +18,44 @@ pub fn escape_d8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
         let addr = vcpu.decode_fpu_modrm_addr(ctx, modrm)?;
         let val = vcpu.read_f32(addr)?;
         match reg {
-            0 => { // FADD m32
+            0 => {
+                // FADD m32
                 let st0 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, st0 + val as f64);
             }
-            1 => { // FMUL m32
+            1 => {
+                // FMUL m32
                 let st0 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, st0 * val as f64);
             }
-            2 => { // FCOM m32
+            2 => {
+                // FCOM m32
                 let st0 = vcpu.fpu.get_st(0);
                 set_fpu_compare_flags(vcpu, st0, val as f64);
             }
-            3 => { // FCOMP m32
+            3 => {
+                // FCOMP m32
                 let st0 = vcpu.fpu.get_st(0);
                 set_fpu_compare_flags(vcpu, st0, val as f64);
                 vcpu.fpu.pop();
             }
-            4 => { // FSUB m32
+            4 => {
+                // FSUB m32
                 let st0 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, st0 - val as f64);
             }
-            5 => { // FSUBR m32
+            5 => {
+                // FSUBR m32
                 let st0 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, val as f64 - st0);
             }
-            6 => { // FDIV m32
+            6 => {
+                // FDIV m32
                 let st0 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, st0 / val as f64);
             }
-            7 => { // FDIVR m32
+            7 => {
+                // FDIVR m32
                 let st0 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, val as f64 / st0);
             }
@@ -58,10 +66,11 @@ pub fn escape_d8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
         let sti = vcpu.fpu.get_st(rm);
         let st0 = vcpu.fpu.get_st(0);
         match reg {
-            0 => vcpu.fpu.set_st(0, st0 + sti), // FADD ST(0), ST(i)
-            1 => vcpu.fpu.set_st(0, st0 * sti), // FMUL ST(0), ST(i)
+            0 => vcpu.fpu.set_st(0, st0 + sti),         // FADD ST(0), ST(i)
+            1 => vcpu.fpu.set_st(0, st0 * sti),         // FMUL ST(0), ST(i)
             2 => set_fpu_compare_flags(vcpu, st0, sti), // FCOM ST(i)
-            3 => { // FCOMP ST(i)
+            3 => {
+                // FCOMP ST(i)
                 set_fpu_compare_flags(vcpu, st0, sti);
                 vcpu.fpu.pop();
             }

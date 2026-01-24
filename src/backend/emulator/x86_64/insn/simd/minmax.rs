@@ -47,11 +47,9 @@ pub fn sse_min(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
         };
         let (dst_lo, dst_hi) = (vcpu.regs.xmm[xmm_dst][0], vcpu.regs.xmm[xmm_dst][1]);
         let r0 = f32::from_bits(dst_lo as u32).min(f32::from_bits(src_lo as u32));
-        let r1 =
-            f32::from_bits((dst_lo >> 32) as u32).min(f32::from_bits((src_lo >> 32) as u32));
+        let r1 = f32::from_bits((dst_lo >> 32) as u32).min(f32::from_bits((src_lo >> 32) as u32));
         let r2 = f32::from_bits(dst_hi as u32).min(f32::from_bits(src_hi as u32));
-        let r3 =
-            f32::from_bits((dst_hi >> 32) as u32).min(f32::from_bits((src_hi >> 32) as u32));
+        let r3 = f32::from_bits((dst_hi >> 32) as u32).min(f32::from_bits((src_hi >> 32) as u32));
         vcpu.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
         vcpu.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
     }
@@ -101,11 +99,9 @@ pub fn sse_max(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
         };
         let (dst_lo, dst_hi) = (vcpu.regs.xmm[xmm_dst][0], vcpu.regs.xmm[xmm_dst][1]);
         let r0 = f32::from_bits(dst_lo as u32).max(f32::from_bits(src_lo as u32));
-        let r1 =
-            f32::from_bits((dst_lo >> 32) as u32).max(f32::from_bits((src_lo >> 32) as u32));
+        let r1 = f32::from_bits((dst_lo >> 32) as u32).max(f32::from_bits((src_lo >> 32) as u32));
         let r2 = f32::from_bits(dst_hi as u32).max(f32::from_bits(src_hi as u32));
-        let r3 =
-            f32::from_bits((dst_hi >> 32) as u32).max(f32::from_bits((src_hi >> 32) as u32));
+        let r3 = f32::from_bits((dst_hi >> 32) as u32).max(f32::from_bits((src_hi >> 32) as u32));
         vcpu.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
         vcpu.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
     }

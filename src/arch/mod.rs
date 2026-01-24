@@ -1,8 +1,8 @@
 //! Architecture abstraction layer.
 
-pub mod x86_64;
-pub mod hexagon;
 pub mod arm;
+pub mod hexagon;
+pub mod x86_64;
 
 use vm_memory::{GuestAddress, GuestMemoryMmap};
 

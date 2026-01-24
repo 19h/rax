@@ -57,7 +57,10 @@ impl X86_64Vcpu {
                 let (src2_hi2, src2_hi3) = if is_memory {
                     (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                 } else {
-                    (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                    (
+                        self.regs.ymm_high[rm as usize][0],
+                        self.regs.ymm_high[rm as usize][1],
+                    )
                 };
                 let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
                 let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -107,13 +110,24 @@ impl X86_64Vcpu {
                 let (src2_hi2, src2_hi3) = if is_memory {
                     (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                 } else {
-                    (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                    (
+                        self.regs.ymm_high[rm as usize][0],
+                        self.regs.ymm_high[rm as usize][1],
+                    )
                 };
                 let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
                 let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
 
-                let d2 = if (imm8 & 0x04) == 0 { src1_hi2 } else { src1_hi3 };
-                let d3 = if (imm8 & 0x08) == 0 { src2_hi2 } else { src2_hi3 };
+                let d2 = if (imm8 & 0x04) == 0 {
+                    src1_hi2
+                } else {
+                    src1_hi3
+                };
+                let d3 = if (imm8 & 0x08) == 0 {
+                    src2_hi2
+                } else {
+                    src2_hi3
+                };
 
                 self.regs.ymm_high[xmm_dst][0] = d2;
                 self.regs.ymm_high[xmm_dst][1] = d3;
@@ -163,7 +177,10 @@ impl X86_64Vcpu {
                     let (src2_lo, src2_hi) = if is_memory {
                         (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                     } else {
-                        (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                        (
+                            self.regs.ymm_high[rm as usize][0],
+                            self.regs.ymm_high[rm as usize][1],
+                        )
                     };
                     let dwords2: [u32; 4] = [
                         src2_lo as u32,
@@ -194,20 +211,27 @@ impl X86_64Vcpu {
                 let w1 = (src_hi >> (((imm8 >> 2) & 3) * 16)) as u16;
                 let w2 = (src_hi >> (((imm8 >> 4) & 3) * 16)) as u16;
                 let w3 = (src_hi >> (((imm8 >> 6) & 3) * 16)) as u16;
-                self.regs.xmm[xmm_dst][1] = (w0 as u64) | ((w1 as u64) << 16) | ((w2 as u64) << 32) | ((w3 as u64) << 48);
+                self.regs.xmm[xmm_dst][1] =
+                    (w0 as u64) | ((w1 as u64) << 16) | ((w2 as u64) << 32) | ((w3 as u64) << 48);
 
                 if vex_l == 1 {
                     let (src2_lo, src2_hi) = if is_memory {
                         (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                     } else {
-                        (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                        (
+                            self.regs.ymm_high[rm as usize][0],
+                            self.regs.ymm_high[rm as usize][1],
+                        )
                     };
                     self.regs.ymm_high[xmm_dst][0] = src2_lo;
                     let w4 = (src2_hi >> (((imm8 >> 0) & 3) * 16)) as u16;
                     let w5 = (src2_hi >> (((imm8 >> 2) & 3) * 16)) as u16;
                     let w6 = (src2_hi >> (((imm8 >> 4) & 3) * 16)) as u16;
                     let w7 = (src2_hi >> (((imm8 >> 6) & 3) * 16)) as u16;
-                    self.regs.ymm_high[xmm_dst][1] = (w4 as u64) | ((w5 as u64) << 16) | ((w6 as u64) << 32) | ((w7 as u64) << 48);
+                    self.regs.ymm_high[xmm_dst][1] = (w4 as u64)
+                        | ((w5 as u64) << 16)
+                        | ((w6 as u64) << 32)
+                        | ((w7 as u64) << 48);
                 } else {
                     self.regs.ymm_high[xmm_dst][0] = 0;
                     self.regs.ymm_high[xmm_dst][1] = 0;
@@ -224,20 +248,27 @@ impl X86_64Vcpu {
                 let w1 = (src_lo >> (((imm8 >> 2) & 3) * 16)) as u16;
                 let w2 = (src_lo >> (((imm8 >> 4) & 3) * 16)) as u16;
                 let w3 = (src_lo >> (((imm8 >> 6) & 3) * 16)) as u16;
-                self.regs.xmm[xmm_dst][0] = (w0 as u64) | ((w1 as u64) << 16) | ((w2 as u64) << 32) | ((w3 as u64) << 48);
+                self.regs.xmm[xmm_dst][0] =
+                    (w0 as u64) | ((w1 as u64) << 16) | ((w2 as u64) << 32) | ((w3 as u64) << 48);
                 self.regs.xmm[xmm_dst][1] = src_hi;
 
                 if vex_l == 1 {
                     let (src2_lo, src2_hi) = if is_memory {
                         (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
                     } else {
-                        (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                        (
+                            self.regs.ymm_high[rm as usize][0],
+                            self.regs.ymm_high[rm as usize][1],
+                        )
                     };
                     let w4 = (src2_lo >> (((imm8 >> 0) & 3) * 16)) as u16;
                     let w5 = (src2_lo >> (((imm8 >> 2) & 3) * 16)) as u16;
                     let w6 = (src2_lo >> (((imm8 >> 4) & 3) * 16)) as u16;
                     let w7 = (src2_lo >> (((imm8 >> 6) & 3) * 16)) as u16;
-                    self.regs.ymm_high[xmm_dst][0] = (w4 as u64) | ((w5 as u64) << 16) | ((w6 as u64) << 32) | ((w7 as u64) << 48);
+                    self.regs.ymm_high[xmm_dst][0] = (w4 as u64)
+                        | ((w5 as u64) << 16)
+                        | ((w6 as u64) << 32)
+                        | ((w7 as u64) << 48);
                     self.regs.ymm_high[xmm_dst][1] = src2_hi;
                 } else {
                     self.regs.ymm_high[xmm_dst][0] = 0;
@@ -245,11 +276,13 @@ impl X86_64Vcpu {
                 }
             }
             _ => {
-                return Err(Error::Emulator(format!("unimplemented VEX shuffle pp={}", vex_pp)));
+                return Err(Error::Emulator(format!(
+                    "unimplemented VEX shuffle pp={}",
+                    vex_pp
+                )));
             }
         }
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 }

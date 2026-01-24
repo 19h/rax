@@ -17,11 +17,7 @@ pub fn insw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
     ins_common(vcpu, ctx, size)
 }
 
-fn ins_common(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    size: u8,
-) -> Result<Option<VcpuExit>> {
+fn ins_common(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, size: u8) -> Result<Option<VcpuExit>> {
     let port = vcpu.regs.rdx as u16;
     let df = (vcpu.regs.rflags & flags::bits::DF) != 0;
     let rep = matches!(ctx.rep_prefix, Some(0xF3) | Some(0xF2));
@@ -58,7 +54,11 @@ fn addr_size_bytes(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
     } else {
         let default_16bit = !vcpu.sregs.cs.db;
         let is_16bit = default_16bit ^ ctx.address_size_override;
-        if is_16bit { 2 } else { 4 }
+        if is_16bit {
+            2
+        } else {
+            4
+        }
     }
 }
 
@@ -135,11 +135,7 @@ pub fn outsb(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     outs_common(vcpu, ctx, 1)
 }
 
-fn outs_common(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    size: u8,
-) -> Result<Option<VcpuExit>> {
+fn outs_common(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, size: u8) -> Result<Option<VcpuExit>> {
     let port = vcpu.regs.rdx as u16;
     let df = (vcpu.regs.rflags & flags::bits::DF) != 0;
     let rep = matches!(ctx.rep_prefix, Some(0xF3) | Some(0xF2));

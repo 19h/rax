@@ -50,7 +50,10 @@ impl X86_64Vcpu {
             let (src2_hi2, src2_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -122,7 +125,10 @@ impl X86_64Vcpu {
             let (src2_hi2, src2_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -213,7 +219,10 @@ impl X86_64Vcpu {
             let (src2_hi2, src2_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -246,19 +255,38 @@ impl X86_64Vcpu {
         let src1_lo = self.regs.xmm[xmm_src1][0];
         let src1_hi = self.regs.xmm[xmm_src1][1];
 
-        self.regs.xmm[xmm_dst][0] = if (src1_lo as i64) > (src2_lo as i64) { !0u64 } else { 0 };
-        self.regs.xmm[xmm_dst][1] = if (src1_hi as i64) > (src2_hi as i64) { !0u64 } else { 0 };
+        self.regs.xmm[xmm_dst][0] = if (src1_lo as i64) > (src2_lo as i64) {
+            !0u64
+        } else {
+            0
+        };
+        self.regs.xmm[xmm_dst][1] = if (src1_hi as i64) > (src2_hi as i64) {
+            !0u64
+        } else {
+            0
+        };
 
         if vex_l == 1 {
             let (src2_hi2, src2_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
-            self.regs.ymm_high[xmm_dst][0] = if (src1_hi2 as i64) > (src2_hi2 as i64) { !0u64 } else { 0 };
-            self.regs.ymm_high[xmm_dst][1] = if (src1_hi3 as i64) > (src2_hi3 as i64) { !0u64 } else { 0 };
+            self.regs.ymm_high[xmm_dst][0] = if (src1_hi2 as i64) > (src2_hi2 as i64) {
+                !0u64
+            } else {
+                0
+            };
+            self.regs.ymm_high[xmm_dst][1] = if (src1_hi3 as i64) > (src2_hi3 as i64) {
+                !0u64
+            } else {
+                0
+            };
         } else {
             self.regs.ymm_high[xmm_dst][0] = 0;
             self.regs.ymm_high[xmm_dst][1] = 0;
@@ -275,7 +303,9 @@ impl X86_64Vcpu {
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
         if vvvv != 0 {
-            return Err(Error::Emulator("VPTEST requires VEX.vvvv=1111b".to_string()));
+            return Err(Error::Emulator(
+                "VPTEST requires VEX.vvvv=1111b".to_string(),
+            ));
         }
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_src1 = reg as usize;
@@ -295,7 +325,10 @@ impl X86_64Vcpu {
             let (src2_hi2, src2_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
@@ -305,7 +338,7 @@ impl X86_64Vcpu {
 
         // Clear lazy flags before setting flags directly
         self.clear_lazy_flags();
-        
+
         // Clear AF, OF, PF, SF and set ZF/CF as defined by PTEST/VPTEST.
         self.regs.rflags &= !(flags::bits::AF
             | flags::bits::OF
@@ -360,5 +393,4 @@ impl X86_64Vcpu {
         let r1 = if a1 > b1 { 0xFFFF_FFFFu64 } else { 0 };
         r0 | (r1 << 32)
     }
-
 }

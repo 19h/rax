@@ -18,10 +18,11 @@ pub fn escape_dc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
         let val = vcpu.read_f64(addr)?;
         let st0 = vcpu.fpu.get_st(0);
         match reg {
-            0 => vcpu.fpu.set_st(0, st0 + val), // FADD m64
-            1 => vcpu.fpu.set_st(0, st0 * val), // FMUL m64
+            0 => vcpu.fpu.set_st(0, st0 + val),         // FADD m64
+            1 => vcpu.fpu.set_st(0, st0 * val),         // FMUL m64
             2 => set_fpu_compare_flags(vcpu, st0, val), // FCOM m64
-            3 => { // FCOMP m64
+            3 => {
+                // FCOMP m64
                 set_fpu_compare_flags(vcpu, st0, val);
                 vcpu.fpu.pop();
             }
@@ -39,7 +40,8 @@ pub fn escape_dc(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
             0xC0..=0xC7 => vcpu.fpu.set_st(rm, sti + st0), // FADD ST(i), ST(0)
             0xC8..=0xCF => vcpu.fpu.set_st(rm, sti * st0), // FMUL ST(i), ST(0)
             0xD0..=0xD7 => set_fpu_compare_flags(vcpu, st0, sti), // FCOM ST(i)
-            0xD8..=0xDF => { // FCOMP ST(i)
+            0xD8..=0xDF => {
+                // FCOMP ST(i)
                 set_fpu_compare_flags(vcpu, st0, sti);
                 vcpu.fpu.pop();
             }

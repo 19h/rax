@@ -2,8 +2,8 @@
 //!
 //! This module provides a software-based x86_64 CPU emulator for cross-platform support.
 
-pub mod x86_64;
 pub mod hexagon;
+pub mod x86_64;
 
 use std::any::Any;
 use std::sync::Arc;
@@ -76,7 +76,10 @@ impl Vm for EmulatorVm {
                 self.hexagon_isa,
                 self.hexagon_endian,
             ))),
-            _ => Err(Error::Emulator(format!("Unsupported architecture: {:?}", self.arch))),
+            _ => Err(Error::Emulator(format!(
+                "Unsupported architecture: {:?}",
+                self.arch
+            ))),
         }
     }
 

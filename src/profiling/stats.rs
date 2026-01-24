@@ -267,9 +267,7 @@ impl OpcodeStats {
         let threshold = self.mean + 3.0 * self.stddev();
         let threshold_bucket = Self::latency_to_bucket(threshold as u64);
         // Sum all buckets above the threshold bucket
-        self.latency_buckets[threshold_bucket..]
-            .iter()
-            .sum::<u64>()
+        self.latency_buckets[threshold_bucket..].iter().sum::<u64>()
     }
 
     /// Estimate a percentile from the histogram.
@@ -360,11 +358,7 @@ impl InstructionReport {
             mnemonic: mnemonic.to_string(),
             count: stats.count,
             total_time_ns: stats.total_nanos,
-            min_latency_ns: if stats.count > 0 {
-                stats.min_nanos
-            } else {
-                0
-            },
+            min_latency_ns: if stats.count > 0 { stats.min_nanos } else { 0 },
             max_latency_ns: stats.max_nanos,
             mean_latency_ns: stats.mean_nanos(),
             median_latency_ns: stats.median(),

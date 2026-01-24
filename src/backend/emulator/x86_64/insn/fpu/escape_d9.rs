@@ -16,29 +16,36 @@ pub fn escape_d9(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     if is_memory {
         let addr = vcpu.decode_fpu_modrm_addr(ctx, modrm)?;
         match reg {
-            0 => { // FLD m32
+            0 => {
+                // FLD m32
                 let val = vcpu.read_f32(addr)?;
                 vcpu.fpu.push(val as f64);
             }
-            2 => { // FST m32
+            2 => {
+                // FST m32
                 let val = vcpu.fpu.get_st(0) as f32;
                 vcpu.write_f32(addr, val)?;
             }
-            3 => { // FSTP m32
+            3 => {
+                // FSTP m32
                 let val = vcpu.fpu.pop() as f32;
                 vcpu.write_f32(addr, val)?;
             }
-            4 => { // FLDENV m14/28byte
+            4 => {
+                // FLDENV m14/28byte
                 fldenv(vcpu, addr)?;
             }
-            5 => { // FLDCW m16
+            5 => {
+                // FLDCW m16
                 let cw = vcpu.read_mem16(addr)?;
                 vcpu.fpu.control_word = cw;
             }
-            6 => { // FNSTENV m14/28byte
+            6 => {
+                // FNSTENV m14/28byte
                 fnstenv(vcpu, addr)?;
             }
-            7 => { // FNSTCW m16
+            7 => {
+                // FNSTCW m16
                 vcpu.write_mem16(addr, vcpu.fpu.control_word)?;
             }
             _ => {
@@ -51,40 +58,49 @@ pub fn escape_d9(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
     } else {
         // Register or special opcodes
         match modrm {
-            0xC0..=0xC7 => { // FLD ST(i)
+            0xC0..=0xC7 => {
+                // FLD ST(i)
                 let val = vcpu.fpu.get_st(rm);
                 vcpu.fpu.push(val);
             }
-            0xC8..=0xCF => { // FXCH ST(i)
+            0xC8..=0xCF => {
+                // FXCH ST(i)
                 let st0 = vcpu.fpu.get_st(0);
                 let sti = vcpu.fpu.get_st(rm);
                 vcpu.fpu.set_st(0, sti);
                 vcpu.fpu.set_st(rm, st0);
             }
             0xD0 => {} // FNOP
-            0xE0 => { // FCHS
+            0xE0 => {
+                // FCHS
                 let st0 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, -st0);
             }
-            0xE1 => { // FABS
+            0xE1 => {
+                // FABS
                 let st0 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, st0.abs());
             }
-            0xE4 => { // FTST
+            0xE4 => {
+                // FTST
                 let st0 = vcpu.fpu.get_st(0);
                 set_fpu_compare_flags(vcpu, st0, 0.0);
             }
-            0xE5 => { // FXAM
+            0xE5 => {
+                // FXAM
                 fxam(vcpu);
             }
-            0xE8 => vcpu.fpu.push(1.0), // FLD1
+            0xE8 => vcpu.fpu.push(1.0),                       // FLD1
             0xE9 => vcpu.fpu.push(std::f64::consts::LOG2_10), // FLDL2T
-            0xEA => vcpu.fpu.push(std::f64::consts::LOG2_E), // FLDL2E
-            0xEB => vcpu.fpu.push(std::f64::consts::PI), // FLDPI
-            0xEC => vcpu.fpu.push(std::f64::consts::LN_2 / std::f64::consts::LN_10), // FLDLG2
-            0xED => vcpu.fpu.push(std::f64::consts::LN_2), // FLDLN2
-            0xEE => vcpu.fpu.push(0.0), // FLDZ
-            0xF0 => { // F2XM1
+            0xEA => vcpu.fpu.push(std::f64::consts::LOG2_E),  // FLDL2E
+            0xEB => vcpu.fpu.push(std::f64::consts::PI),      // FLDPI
+            0xEC => vcpu
+                .fpu
+                .push(std::f64::consts::LN_2 / std::f64::consts::LN_10), // FLDLG2
+            0xED => vcpu.fpu.push(std::f64::consts::LN_2),    // FLDLN2
+            0xEE => vcpu.fpu.push(0.0),                       // FLDZ
+            0xF0 => {
+                // F2XM1
                 let st0 = vcpu.fpu.get_st(0);
                 let mut result = (2.0_f64).powf(st0) - 1.0;
                 if st0 == 0.0 {
@@ -92,22 +108,26 @@ pub fn escape_d9(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                 }
                 vcpu.fpu.set_st(0, result);
             }
-            0xF1 => { // FYL2X
+            0xF1 => {
+                // FYL2X
                 let st0 = vcpu.fpu.pop();
                 let st1 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, st1 * st0.log2());
             }
-            0xF2 => { // FPTAN
+            0xF2 => {
+                // FPTAN
                 let st0 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, st0.tan());
                 vcpu.fpu.push(1.0);
             }
-            0xF3 => { // FPATAN
+            0xF3 => {
+                // FPATAN
                 let st0 = vcpu.fpu.pop();
                 let st1 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, st1.atan2(st0));
             }
-            0xF4 => { // FXTRACT
+            0xF4 => {
+                // FXTRACT
                 let st0 = vcpu.fpu.get_st(0);
                 let (significand, exponent) = if st0 == 0.0 {
                     (st0, f64::NEG_INFINITY)
@@ -128,29 +148,22 @@ pub fn escape_d9(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                             let msb_index = 63 - mant_bits.leading_zeros() as i32;
                             let shift = 52 - msb_index;
                             let norm_mant = mant_bits << shift;
-                            let significand =
-                                (norm_mant as f64) / (1u64 << 52) as f64;
+                            let significand = (norm_mant as f64) / (1u64 << 52) as f64;
                             let exponent = (1 - 1023 - shift) as f64;
-                            (
-                                if sign { -significand } else { significand },
-                                exponent,
-                            )
+                            (if sign { -significand } else { significand }, exponent)
                         }
                     } else {
-                        let significand =
-                            1.0 + (mant_bits as f64) / (1u64 << 52) as f64;
+                        let significand = 1.0 + (mant_bits as f64) / (1u64 << 52) as f64;
                         let exponent = (exp_bits - 1023) as f64;
-                        (
-                            if sign { -significand } else { significand },
-                            exponent,
-                        )
+                        (if sign { -significand } else { significand }, exponent)
                     }
                 };
 
                 vcpu.fpu.set_st(0, exponent);
                 vcpu.fpu.push(significand);
             }
-            0xF5 => { // FPREM1
+            0xF5 => {
+                // FPREM1
                 let st0 = vcpu.fpu.get_st(0);
                 let st1 = vcpu.fpu.get_st(1);
                 let (remainder, q_bits) = if st0 == 0.0 {
@@ -175,15 +188,20 @@ pub fn escape_d9(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     vcpu.fpu.status_word |= 0x0100; // C0 (Q2)
                 }
             }
-            0xF6 => { // FDECSTP
+            0xF6 => {
+                // FDECSTP
                 vcpu.fpu.top = vcpu.fpu.top.wrapping_sub(1) & 7;
-                vcpu.fpu.status_word = (vcpu.fpu.status_word & !0x3800) | ((vcpu.fpu.top as u16) << 11);
+                vcpu.fpu.status_word =
+                    (vcpu.fpu.status_word & !0x3800) | ((vcpu.fpu.top as u16) << 11);
             }
-            0xF7 => { // FINCSTP
+            0xF7 => {
+                // FINCSTP
                 vcpu.fpu.top = vcpu.fpu.top.wrapping_add(1) & 7;
-                vcpu.fpu.status_word = (vcpu.fpu.status_word & !0x3800) | ((vcpu.fpu.top as u16) << 11);
+                vcpu.fpu.status_word =
+                    (vcpu.fpu.status_word & !0x3800) | ((vcpu.fpu.top as u16) << 11);
             }
-            0xF8 => { // FPREM
+            0xF8 => {
+                // FPREM
                 let st0 = vcpu.fpu.get_st(0);
                 let st1 = vcpu.fpu.get_st(1);
                 let (remainder, q_bits) = if st0 == 0.0 {
@@ -208,35 +226,42 @@ pub fn escape_d9(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     vcpu.fpu.status_word |= 0x0100; // C0 (Q2)
                 }
             }
-            0xF9 => { // FYL2XP1
+            0xF9 => {
+                // FYL2XP1
                 let st0 = vcpu.fpu.pop();
                 let st1 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, st1 * (1.0 + st0).log2());
             }
-            0xFA => { // FSQRT
+            0xFA => {
+                // FSQRT
                 let st0 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, st0.sqrt());
             }
-            0xFB => { // FSINCOS
+            0xFB => {
+                // FSINCOS
                 let st0 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, st0.sin());
                 vcpu.fpu.push(st0.cos());
             }
-            0xFC => { // FRNDINT
+            0xFC => {
+                // FRNDINT
                 let st0 = vcpu.fpu.get_st(0);
                 let rounded = fpu_round(vcpu.fpu.control_word, st0);
                 vcpu.fpu.set_st(0, rounded);
             }
-            0xFD => { // FSCALE
+            0xFD => {
+                // FSCALE
                 let st0 = vcpu.fpu.get_st(0);
                 let st1 = vcpu.fpu.get_st(1);
                 vcpu.fpu.set_st(0, st0 * (2.0_f64).powf(st1.trunc()));
             }
-            0xFE => { // FSIN
+            0xFE => {
+                // FSIN
                 let st0 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, st0.sin());
             }
-            0xFF => { // FCOS
+            0xFF => {
+                // FCOS
                 let st0 = vcpu.fpu.get_st(0);
                 vcpu.fpu.set_st(0, st0.cos());
             }

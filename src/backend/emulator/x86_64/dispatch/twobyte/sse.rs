@@ -9,7 +9,10 @@ use super::super::super::flags;
 use super::super::super::insn;
 
 impl X86_64Vcpu {
-    pub(in crate::backend::emulator::x86_64) fn execute_sse_add(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_sse_add(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
 
@@ -43,10 +46,7 @@ impl X86_64Vcpu {
                 [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
 
-            let mut dst: simd_native::Xmm = [
-                self.regs.xmm[xmm_dst][0],
-                self.regs.xmm[xmm_dst][1],
-            ];
+            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
 
             simd_native::addpd_xmm(&mut dst, &src);
 
@@ -63,10 +63,7 @@ impl X86_64Vcpu {
                 [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
 
-            let mut dst: simd_native::Xmm = [
-                self.regs.xmm[xmm_dst][0],
-                self.regs.xmm[xmm_dst][1],
-            ];
+            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
 
             // Native SSE if available, scalar fallback otherwise
             simd_native::addps_xmm(&mut dst, &src);
@@ -79,7 +76,10 @@ impl X86_64Vcpu {
     }
 
     /// SSE packed single/double subtract (0x5C)
-    pub(in crate::backend::emulator::x86_64) fn execute_sse_sub(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_sse_sub(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
 
@@ -110,10 +110,7 @@ impl X86_64Vcpu {
                 [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
 
-            let mut dst: simd_native::Xmm = [
-                self.regs.xmm[xmm_dst][0],
-                self.regs.xmm[xmm_dst][1],
-            ];
+            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
 
             simd_native::subpd_xmm(&mut dst, &src);
 
@@ -129,10 +126,7 @@ impl X86_64Vcpu {
                 [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
 
-            let mut dst: simd_native::Xmm = [
-                self.regs.xmm[xmm_dst][0],
-                self.regs.xmm[xmm_dst][1],
-            ];
+            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
 
             simd_native::subps_xmm(&mut dst, &src);
 
@@ -144,7 +138,10 @@ impl X86_64Vcpu {
     }
 
     /// SSE packed single/double multiply (0x59)
-    pub(in crate::backend::emulator::x86_64) fn execute_sse_mul(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_sse_mul(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
 
@@ -175,10 +172,7 @@ impl X86_64Vcpu {
                 [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
 
-            let mut dst: simd_native::Xmm = [
-                self.regs.xmm[xmm_dst][0],
-                self.regs.xmm[xmm_dst][1],
-            ];
+            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
 
             simd_native::mulpd_xmm(&mut dst, &src);
 
@@ -194,10 +188,7 @@ impl X86_64Vcpu {
                 [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
 
-            let mut dst: simd_native::Xmm = [
-                self.regs.xmm[xmm_dst][0],
-                self.regs.xmm[xmm_dst][1],
-            ];
+            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
 
             simd_native::mulps_xmm(&mut dst, &src);
 
@@ -209,7 +200,10 @@ impl X86_64Vcpu {
     }
 
     /// SSE packed single/double divide (0x5E)
-    pub(in crate::backend::emulator::x86_64) fn execute_sse_div(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_sse_div(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
 
@@ -240,10 +234,7 @@ impl X86_64Vcpu {
                 [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
 
-            let mut dst: simd_native::Xmm = [
-                self.regs.xmm[xmm_dst][0],
-                self.regs.xmm[xmm_dst][1],
-            ];
+            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
 
             simd_native::divpd_xmm(&mut dst, &src);
 
@@ -259,10 +250,7 @@ impl X86_64Vcpu {
                 [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
             };
 
-            let mut dst: simd_native::Xmm = [
-                self.regs.xmm[xmm_dst][0],
-                self.regs.xmm[xmm_dst][1],
-            ];
+            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
 
             simd_native::divps_xmm(&mut dst, &src);
 
@@ -274,7 +262,10 @@ impl X86_64Vcpu {
     }
 
     /// SSE packed single/double sqrt (0x51)
-    pub(in crate::backend::emulator::x86_64) fn execute_sse_sqrt(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_sse_sqrt(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
 
@@ -319,7 +310,10 @@ impl X86_64Vcpu {
     }
 
     /// SSE reciprocal square root (0x52)
-    pub(in crate::backend::emulator::x86_64) fn execute_sse_rsqrt(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_sse_rsqrt(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
 
@@ -330,8 +324,7 @@ impl X86_64Vcpu {
                 f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
             };
             let result = (1.0f32 / src.sqrt()).to_bits() as u64;
-            self.regs.xmm[xmm_dst][0] =
-                (self.regs.xmm[xmm_dst][0] & !0xFFFF_FFFF) | result;
+            self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_dst][0] & !0xFFFF_FFFF) | result;
         } else {
             let (src_lo, src_hi) = if is_memory {
                 (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
@@ -347,7 +340,10 @@ impl X86_64Vcpu {
     }
 
     /// SSE reciprocal (0x53)
-    pub(in crate::backend::emulator::x86_64) fn execute_sse_rcp(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_sse_rcp(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
 
@@ -358,8 +354,7 @@ impl X86_64Vcpu {
                 f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
             };
             let result = (1.0f32 / src).to_bits() as u64;
-            self.regs.xmm[xmm_dst][0] =
-                (self.regs.xmm[xmm_dst][0] & !0xFFFF_FFFF) | result;
+            self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_dst][0] & !0xFFFF_FFFF) | result;
         } else {
             let (src_lo, src_hi) = if is_memory {
                 (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
@@ -375,7 +370,10 @@ impl X86_64Vcpu {
     }
 
     /// SSE packed single/double min (0x5D)
-    pub(in crate::backend::emulator::x86_64) fn execute_sse_min(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_sse_min(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
 
@@ -402,10 +400,12 @@ impl X86_64Vcpu {
             } else {
                 (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
             };
-            self.regs.xmm[xmm_dst][0] =
-                f64::from_bits(self.regs.xmm[xmm_dst][0]).min(f64::from_bits(src_lo)).to_bits();
-            self.regs.xmm[xmm_dst][1] =
-                f64::from_bits(self.regs.xmm[xmm_dst][1]).min(f64::from_bits(src_hi)).to_bits();
+            self.regs.xmm[xmm_dst][0] = f64::from_bits(self.regs.xmm[xmm_dst][0])
+                .min(f64::from_bits(src_lo))
+                .to_bits();
+            self.regs.xmm[xmm_dst][1] = f64::from_bits(self.regs.xmm[xmm_dst][1])
+                .min(f64::from_bits(src_hi))
+                .to_bits();
         } else {
             let (src_lo, src_hi) = if is_memory {
                 (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
@@ -414,9 +414,11 @@ impl X86_64Vcpu {
             };
             let (dst_lo, dst_hi) = (self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]);
             let r0 = f32::from_bits(dst_lo as u32).min(f32::from_bits(src_lo as u32));
-            let r1 = f32::from_bits((dst_lo >> 32) as u32).min(f32::from_bits((src_lo >> 32) as u32));
+            let r1 =
+                f32::from_bits((dst_lo >> 32) as u32).min(f32::from_bits((src_lo >> 32) as u32));
             let r2 = f32::from_bits(dst_hi as u32).min(f32::from_bits(src_hi as u32));
-            let r3 = f32::from_bits((dst_hi >> 32) as u32).min(f32::from_bits((src_hi >> 32) as u32));
+            let r3 =
+                f32::from_bits((dst_hi >> 32) as u32).min(f32::from_bits((src_hi >> 32) as u32));
             self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
             self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
         }
@@ -425,7 +427,10 @@ impl X86_64Vcpu {
     }
 
     /// SSE packed single/double max (0x5F)
-    pub(in crate::backend::emulator::x86_64) fn execute_sse_max(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_sse_max(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
 
@@ -452,10 +457,12 @@ impl X86_64Vcpu {
             } else {
                 (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
             };
-            self.regs.xmm[xmm_dst][0] =
-                f64::from_bits(self.regs.xmm[xmm_dst][0]).max(f64::from_bits(src_lo)).to_bits();
-            self.regs.xmm[xmm_dst][1] =
-                f64::from_bits(self.regs.xmm[xmm_dst][1]).max(f64::from_bits(src_hi)).to_bits();
+            self.regs.xmm[xmm_dst][0] = f64::from_bits(self.regs.xmm[xmm_dst][0])
+                .max(f64::from_bits(src_lo))
+                .to_bits();
+            self.regs.xmm[xmm_dst][1] = f64::from_bits(self.regs.xmm[xmm_dst][1])
+                .max(f64::from_bits(src_hi))
+                .to_bits();
         } else {
             let (src_lo, src_hi) = if is_memory {
                 (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
@@ -464,9 +471,11 @@ impl X86_64Vcpu {
             };
             let (dst_lo, dst_hi) = (self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]);
             let r0 = f32::from_bits(dst_lo as u32).max(f32::from_bits(src_lo as u32));
-            let r1 = f32::from_bits((dst_lo >> 32) as u32).max(f32::from_bits((src_lo >> 32) as u32));
+            let r1 =
+                f32::from_bits((dst_lo >> 32) as u32).max(f32::from_bits((src_lo >> 32) as u32));
             let r2 = f32::from_bits(dst_hi as u32).max(f32::from_bits(src_hi as u32));
-            let r3 = f32::from_bits((dst_hi >> 32) as u32).max(f32::from_bits((src_hi >> 32) as u32));
+            let r3 =
+                f32::from_bits((dst_hi >> 32) as u32).max(f32::from_bits((src_hi >> 32) as u32));
             self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
             self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
         }
@@ -475,7 +484,10 @@ impl X86_64Vcpu {
     }
 
     /// SSE UNPCKLPS/UNPCKLPD (0x14) - unpack and interleave low
-    pub(in crate::backend::emulator::x86_64) fn execute_sse_unpcklps(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_sse_unpcklps(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
         let (src_lo, _src_hi) = if is_memory {
@@ -505,7 +517,10 @@ impl X86_64Vcpu {
     }
 
     /// SSE UNPCKHPS/UNPCKHPD (0x15) - unpack and interleave high
-    pub(in crate::backend::emulator::x86_64) fn execute_sse_unpckhps(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_sse_unpckhps(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let xmm_dst = reg as usize;
         let (_src_lo, src_hi) = if is_memory {
@@ -643,7 +658,10 @@ impl X86_64Vcpu {
     }
 
     /// SSE2/MMX PINSRW (0x0F 0xC4)
-    pub(in crate::backend::emulator::x86_64) fn execute_pinsrw(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_pinsrw(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let imm8 = ctx.consume_u8()?;
         let word = if is_memory {
@@ -679,10 +697,15 @@ impl X86_64Vcpu {
     }
 
     /// SSE2/MMX PEXTRW (0x0F 0xC5)
-    pub(in crate::backend::emulator::x86_64) fn execute_pextrw(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_pextrw(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, _addr, _) = self.decode_modrm(ctx)?;
         if is_memory {
-            return Err(Error::Emulator("PEXTRW does not support memory source".to_string()));
+            return Err(Error::Emulator(
+                "PEXTRW does not support memory source".to_string(),
+            ));
         }
         let imm8 = ctx.consume_u8()?;
 
@@ -707,7 +730,10 @@ impl X86_64Vcpu {
     }
 
     /// SSE PSHUFD/PSHUFHW/PSHUFLW (0x0F 0x70)
-    pub(in crate::backend::emulator::x86_64) fn execute_pshufd(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_pshufd(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let imm8 = ctx.consume_u8()?;
         let xmm_dst = reg as usize;
@@ -790,7 +816,10 @@ impl X86_64Vcpu {
     }
 
     /// SSE CMPPS/CMPPD/CMPSS/CMPSD (0x0F 0xC2)
-    pub(in crate::backend::emulator::x86_64) fn execute_cmpps(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(in crate::backend::emulator::x86_64) fn execute_cmpps(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let imm8 = ctx.consume_u8()?;
         let xmm_dst = reg as usize;
@@ -808,8 +837,7 @@ impl X86_64Vcpu {
             } else {
                 0u32
             };
-            self.regs.xmm[xmm_dst][0] =
-                (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | result as u64;
+            self.regs.xmm[xmm_dst][0] = (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | result as u64;
         } else if ctx.rep_prefix == Some(0xF2) {
             // CMPSD - scalar double
             let src = if is_memory {
@@ -904,45 +932,55 @@ impl X86_64Vcpu {
     }
 
     /// Helper for float comparison predicates (bits 2:0 for SSE, 4:0 for AVX)
-    pub(in crate::backend::emulator::x86_64) fn cmp_predicate_f32(&self, a: f32, b: f32, pred: u8) -> bool {
+    pub(in crate::backend::emulator::x86_64) fn cmp_predicate_f32(
+        &self,
+        a: f32,
+        b: f32,
+        pred: u8,
+    ) -> bool {
         match pred & 0x1F {
-            0x00 => a == b,                   // EQ_OQ
-            0x01 => a < b,                    // LT_OS
-            0x02 => a <= b,                   // LE_OS
-            0x03 => a.is_nan() || b.is_nan(), // UNORD_Q
-            0x04 => a != b || a.is_nan() || b.is_nan(), // NEQ_UQ
-            0x05 => !(a < b),                 // NLT_US
-            0x06 => !(a <= b),                // NLE_US
-            0x07 => !a.is_nan() && !b.is_nan(), // ORD_Q
-            0x08 => a == b || a.is_nan() || b.is_nan(), // EQ_UQ
-            0x09 => !(a >= b),                // NGE_US
-            0x0A => !(a > b),                 // NGT_US
-            0x0B => false,                    // FALSE_OQ
-            0x0C => a != b,                   // NEQ_OQ
-            0x0D => a >= b,                   // GE_OS
-            0x0E => a > b,                    // GT_OS
-            0x0F => true,                     // TRUE_UQ
-            0x10 => a == b,                   // EQ_OS
-            0x11 => a < b || a.is_nan() || b.is_nan(), // LT_OQ
-            0x12 => a <= b || a.is_nan() || b.is_nan(), // LE_OQ
-            0x13 => a.is_nan() || b.is_nan(), // UNORD_S
-            0x14 => a != b,                   // NEQ_US
-            0x15 => !(a < b) || a.is_nan() || b.is_nan(), // NLT_UQ
+            0x00 => a == b,                                // EQ_OQ
+            0x01 => a < b,                                 // LT_OS
+            0x02 => a <= b,                                // LE_OS
+            0x03 => a.is_nan() || b.is_nan(),              // UNORD_Q
+            0x04 => a != b || a.is_nan() || b.is_nan(),    // NEQ_UQ
+            0x05 => !(a < b),                              // NLT_US
+            0x06 => !(a <= b),                             // NLE_US
+            0x07 => !a.is_nan() && !b.is_nan(),            // ORD_Q
+            0x08 => a == b || a.is_nan() || b.is_nan(),    // EQ_UQ
+            0x09 => !(a >= b),                             // NGE_US
+            0x0A => !(a > b),                              // NGT_US
+            0x0B => false,                                 // FALSE_OQ
+            0x0C => a != b,                                // NEQ_OQ
+            0x0D => a >= b,                                // GE_OS
+            0x0E => a > b,                                 // GT_OS
+            0x0F => true,                                  // TRUE_UQ
+            0x10 => a == b,                                // EQ_OS
+            0x11 => a < b || a.is_nan() || b.is_nan(),     // LT_OQ
+            0x12 => a <= b || a.is_nan() || b.is_nan(),    // LE_OQ
+            0x13 => a.is_nan() || b.is_nan(),              // UNORD_S
+            0x14 => a != b,                                // NEQ_US
+            0x15 => !(a < b) || a.is_nan() || b.is_nan(),  // NLT_UQ
             0x16 => !(a <= b) || a.is_nan() || b.is_nan(), // NLE_UQ
-            0x17 => !a.is_nan() && !b.is_nan(), // ORD_S
-            0x18 => a == b,                   // EQ_US
+            0x17 => !a.is_nan() && !b.is_nan(),            // ORD_S
+            0x18 => a == b,                                // EQ_US
             0x19 => !(a >= b) || a.is_nan() || b.is_nan(), // NGE_UQ
-            0x1A => !(a > b) || a.is_nan() || b.is_nan(), // NGT_UQ
-            0x1B => false,                    // FALSE_OS
-            0x1C => a != b || a.is_nan() || b.is_nan(), // NEQ_OS
-            0x1D => a >= b || a.is_nan() || b.is_nan(), // GE_OQ
-            0x1E => a > b || a.is_nan() || b.is_nan(), // GT_OQ
-            0x1F => true,                     // TRUE_US
+            0x1A => !(a > b) || a.is_nan() || b.is_nan(),  // NGT_UQ
+            0x1B => false,                                 // FALSE_OS
+            0x1C => a != b || a.is_nan() || b.is_nan(),    // NEQ_OS
+            0x1D => a >= b || a.is_nan() || b.is_nan(),    // GE_OQ
+            0x1E => a > b || a.is_nan() || b.is_nan(),     // GT_OQ
+            0x1F => true,                                  // TRUE_US
             _ => false,
         }
     }
 
-    pub(in crate::backend::emulator::x86_64) fn cmp_predicate_f64(&self, a: f64, b: f64, pred: u8) -> bool {
+    pub(in crate::backend::emulator::x86_64) fn cmp_predicate_f64(
+        &self,
+        a: f64,
+        b: f64,
+        pred: u8,
+    ) -> bool {
         match pred & 0x1F {
             0x00 => a == b,
             0x01 => a < b,
@@ -987,7 +1025,9 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let (reg, _rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         if !is_memory {
-            return Err(Error::Emulator("MOVNTPS/MOVNTPD requires memory destination".to_string()));
+            return Err(Error::Emulator(
+                "MOVNTPS/MOVNTPD requires memory destination".to_string(),
+            ));
         }
         let xmm_src = reg as usize;
         // Non-temporal hint is ignored in emulator - just store normally
@@ -1067,7 +1107,9 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let (reg, rm, is_memory, _addr, _) = self.decode_modrm(ctx)?;
         if is_memory {
-            return Err(Error::Emulator("MOVMSKPS/MOVMSKPD requires register source".to_string()));
+            return Err(Error::Emulator(
+                "MOVMSKPS/MOVMSKPD requires register source".to_string(),
+            ));
         }
         let xmm_src = rm as usize;
 
@@ -1843,8 +1885,7 @@ impl X86_64Vcpu {
 
             if mem_val == cmp_val {
                 // Equal - set ZF, store ECX:EBX to memory
-                let store_val =
-                    ((self.regs.rcx & 0xFFFFFFFF) << 32) | (self.regs.rbx & 0xFFFFFFFF);
+                let store_val = ((self.regs.rcx & 0xFFFFFFFF) << 32) | (self.regs.rbx & 0xFFFFFFFF);
                 self.write_mem(addr, store_val, 8)?;
                 self.regs.rflags |= flags::bits::ZF;
             } else {

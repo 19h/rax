@@ -33,11 +33,15 @@ impl X86_64Vcpu {
             let (src2_hi2, src2_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
-            let (dst_hi2, dst_hi3) = self.palignr_lane(src1_hi2, src1_hi3, src2_hi2, src2_hi3, imm8);
+            let (dst_hi2, dst_hi3) =
+                self.palignr_lane(src1_hi2, src1_hi3, src2_hi2, src2_hi3, imm8);
             self.regs.ymm_high[xmm_dst][0] = dst_hi2;
             self.regs.ymm_high[xmm_dst][1] = dst_hi3;
         } else {

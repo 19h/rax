@@ -18,10 +18,11 @@ pub fn escape_da(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
         let val = vcpu.read_mem32(addr)? as i32 as f64;
         let st0 = vcpu.fpu.get_st(0);
         match reg {
-            0 => vcpu.fpu.set_st(0, st0 + val), // FIADD m32int
-            1 => vcpu.fpu.set_st(0, st0 * val), // FIMUL m32int
+            0 => vcpu.fpu.set_st(0, st0 + val),         // FIADD m32int
+            1 => vcpu.fpu.set_st(0, st0 * val),         // FIMUL m32int
             2 => set_fpu_compare_flags(vcpu, st0, val), // FICOM m32int
-            3 => { // FICOMP m32int
+            3 => {
+                // FICOMP m32int
                 set_fpu_compare_flags(vcpu, st0, val);
                 vcpu.fpu.pop();
             }
@@ -42,11 +43,11 @@ pub fn escape_da(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
         let pf = rflags & 4 != 0;
 
         match reg {
-            0 if cf => vcpu.fpu.set_st(0, sti), // FCMOVB
-            1 if zf => vcpu.fpu.set_st(0, sti), // FCMOVE
+            0 if cf => vcpu.fpu.set_st(0, sti),       // FCMOVB
+            1 if zf => vcpu.fpu.set_st(0, sti),       // FCMOVE
             2 if cf || zf => vcpu.fpu.set_st(0, sti), // FCMOVBE
-            3 if pf => vcpu.fpu.set_st(0, sti), // FCMOVU
-            _ => {} // condition not met
+            3 if pf => vcpu.fpu.set_st(0, sti),       // FCMOVU
+            _ => {}                                   // condition not met
         }
     }
 

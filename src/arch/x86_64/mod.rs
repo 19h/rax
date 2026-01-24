@@ -117,12 +117,12 @@ const BOOT_STACK_ADDR: u64 = 0x8ff0;
 
 // Page table addresses for identity mapping and kernel space
 const PML4_ADDR: u64 = 0x9000;
-const PDPTE_ADDR: u64 = 0xa000;      // PDPTE for PML4[0] - identity map first 1GB
-const PDE_ADDR: u64 = 0xb000;        // PDE for PDPTE[0] - 512 x 2MB pages = 1GB
-// Additional page tables for kernel virtual address space
-const PDPTE_KERNEL_ADDR: u64 = 0xc000;  // PDPTE for PML4[511] - kernel text
-const PDE_KERNEL_ADDR: u64 = 0xd000;    // PDE for PDPTE_KERNEL[510/511]
-const PDPTE_DIRECT_ADDR: u64 = 0xe000;  // PDPTE for PML4[273] - direct map
+const PDPTE_ADDR: u64 = 0xa000; // PDPTE for PML4[0] - identity map first 1GB
+const PDE_ADDR: u64 = 0xb000; // PDE for PDPTE[0] - 512 x 2MB pages = 1GB
+                              // Additional page tables for kernel virtual address space
+const PDPTE_KERNEL_ADDR: u64 = 0xc000; // PDPTE for PML4[511] - kernel text
+const PDE_KERNEL_ADDR: u64 = 0xd000; // PDE for PDPTE_KERNEL[510/511]
+const PDPTE_DIRECT_ADDR: u64 = 0xe000; // PDPTE for PML4[273] - direct map
 
 const BOOT_CS: u16 = 0x10;
 const BOOT_DS: u16 = 0x18;
@@ -151,8 +151,8 @@ impl X86_64Arch {
     }
 
     fn build_cmdline(cmdline: &str) -> Result<Cmdline> {
-        let mut cmdline_builder =
-            Cmdline::new(4096).map_err(|e| Error::InvalidConfig(format!("invalid cmdline: {e}")))?;
+        let mut cmdline_builder = Cmdline::new(4096)
+            .map_err(|e| Error::InvalidConfig(format!("invalid cmdline: {e}")))?;
         cmdline_builder
             .insert_str(cmdline)
             .map_err(|e| Error::InvalidConfig(format!("invalid cmdline: {e}")))?;
@@ -161,7 +161,10 @@ impl X86_64Arch {
 
     /// Load kernel image - just load the binary at KERNEL_LOAD_ADDR
     /// The kernel handles its own decompression if needed
-    fn load_kernel_image(mem: &GuestMemoryMmap, kernel: &VmConfig) -> Result<(KernelLoaderResult, bool, Option<u64>)> {
+    fn load_kernel_image(
+        mem: &GuestMemoryMmap,
+        kernel: &VmConfig,
+    ) -> Result<(KernelLoaderResult, bool, Option<u64>)> {
         info!(path = %kernel.kernel.display(), "loading kernel image");
 
         // Read the entire kernel file
@@ -175,8 +178,8 @@ impl X86_64Arch {
         );
 
         // Check for bzImage format by looking for "HdrS" magic at offset 0x202
-        let is_bzimage = kernel_data.len() > 0x206
-            && kernel_data[0x202..0x206] == [0x48, 0x64, 0x72, 0x53]; // "HdrS"
+        let is_bzimage =
+            kernel_data.len() > 0x206 && kernel_data[0x202..0x206] == [0x48, 0x64, 0x72, 0x53]; // "HdrS"
 
         if is_bzimage {
             info!("detected bzImage kernel format");
@@ -187,10 +190,11 @@ impl X86_64Arch {
             // - highmem_start_address: start of high memory (should be 0 for full access)
             let result = BzImage::load(
                 mem,
-                Some(GuestAddress(KERNEL_LOAD_ADDR)),  // kernel_offset
+                Some(GuestAddress(KERNEL_LOAD_ADDR)), // kernel_offset
                 &mut kernel_file,
-                Some(GuestAddress(0)),  // highmem_start_address
-            ).map_err(|e| Error::KernelLoad(format!("failed to load bzImage: {}", e)))?;
+                Some(GuestAddress(0)), // highmem_start_address
+            )
+            .map_err(|e| Error::KernelLoad(format!("failed to load bzImage: {}", e)))?;
 
             info!(
                 kernel_load = format!("{:#x}", result.kernel_load.raw_value()),
@@ -552,11 +556,11 @@ impl X86_64Arch {
         let code64_entry = gdt_entry_64bit(0x9a);
 
         let gdt = [
-            0u64,         // 0x00: null
-            0u64,         // 0x08: null
-            code64_entry, // 0x10: 64-bit code segment
+            0u64,            // 0x00: null
+            0u64,            // 0x08: null
+            code64_entry,    // 0x10: 64-bit code segment
             gdt_entry(0x92), // 0x18: data segment
-            tss_low,      // 0x20: TSS descriptor
+            tss_low,         // 0x20: TSS descriptor
         ];
         debug!(
             gdt_entries = format!("{:#018x?}", gdt),
@@ -666,11 +670,11 @@ impl Arch for X86_64Arch {
             let mut params = boot_params::default();
 
             // Configure VGA text mode console (80x25, mode 3)
-            params.screen_info.orig_video_mode = 3;      // Standard VGA text mode
-            params.screen_info.orig_video_cols = 80;     // 80 columns
-            params.screen_info.orig_video_lines = 25;    // 25 rows
-            params.screen_info.orig_video_isVGA = 1;     // VGA detected
-            params.screen_info.orig_video_points = 16;   // 16 scanlines per char
+            params.screen_info.orig_video_mode = 3; // Standard VGA text mode
+            params.screen_info.orig_video_cols = 80; // 80 columns
+            params.screen_info.orig_video_lines = 25; // 25 rows
+            params.screen_info.orig_video_isVGA = 1; // VGA detected
+            params.screen_info.orig_video_points = 16; // 16 scanlines per char
 
             params.hdr.type_of_loader = 0xff;
             params.hdr.loadflags = 0x1 | 0x40; // LOADED_HIGH + KEEP_SEGMENTS
@@ -725,11 +729,11 @@ impl Arch for X86_64Arch {
             let mut params = boot_params::default();
 
             // Configure VGA text mode console (80x25, mode 3)
-            params.screen_info.orig_video_mode = 3;      // Standard VGA text mode
-            params.screen_info.orig_video_cols = 80;     // 80 columns
-            params.screen_info.orig_video_lines = 25;    // 25 rows
-            params.screen_info.orig_video_isVGA = 1;     // VGA detected
-            params.screen_info.orig_video_points = 16;   // 16 scanlines per char
+            params.screen_info.orig_video_mode = 3; // Standard VGA text mode
+            params.screen_info.orig_video_cols = 80; // 80 columns
+            params.screen_info.orig_video_lines = 25; // 25 rows
+            params.screen_info.orig_video_isVGA = 1; // VGA detected
+            params.screen_info.orig_video_points = 16; // 16 scanlines per char
 
             params.hdr = setup_header;
             params.hdr.type_of_loader = 0xff;
@@ -829,25 +833,31 @@ impl Arch for X86_64Arch {
 
     #[cfg(all(feature = "kvm", target_os = "linux"))]
     fn init_vm(&self, vm: &KvmVm, boot: &BootInfo) -> Result<()> {
-        let boot = boot.as_x86_64().ok_or_else(|| {
-            Error::InvalidConfig("expected x86_64 boot info".to_string())
-        })?;
+        let boot = boot
+            .as_x86_64()
+            .ok_or_else(|| Error::InvalidConfig("expected x86_64 boot info".to_string()))?;
         debug!("creating IRQ chip");
         vm.create_irq_chip()?;
         debug!("creating PIT2");
         vm.create_pit2()?;
-        debug!(tss_addr = format!("{:#x}", boot.tss_addr), "setting TSS address");
+        debug!(
+            tss_addr = format!("{:#x}", boot.tss_addr),
+            "setting TSS address"
+        );
         vm.set_tss_address(boot.tss_addr)?;
-        debug!(identity_map_addr = format!("{:#x}", boot.identity_map_addr), "setting identity map address");
+        debug!(
+            identity_map_addr = format!("{:#x}", boot.identity_map_addr),
+            "setting identity map address"
+        );
         vm.set_identity_map_address(boot.identity_map_addr)?;
         debug!("init_vm complete");
         Ok(())
     }
 
     fn initial_cpu_state(&self, mem: &GuestMemoryMmap, boot: &BootInfo) -> Result<CpuState> {
-        let boot = boot.as_x86_64().ok_or_else(|| {
-            Error::InvalidConfig("expected x86_64 boot info".to_string())
-        })?;
+        let boot = boot
+            .as_x86_64()
+            .ok_or_else(|| Error::InvalidConfig("expected x86_64 boot info".to_string()))?;
         // Setup page tables and GDT in guest memory
         Self::setup_page_tables(mem)?;
         Self::write_gdt(mem)?;
@@ -913,8 +923,7 @@ mod tests {
     fn build_e820_layout() {
         let entries = X86_64Arch::build_e820(512 * 1024 * 1024, 0x1fffc000);
         assert!(entries.len() >= 3);
-        let first_type =
-            unsafe { std::ptr::read_unaligned(std::ptr::addr_of!(entries[0].type_)) };
+        let first_type = unsafe { std::ptr::read_unaligned(std::ptr::addr_of!(entries[0].type_)) };
         assert_eq!(first_type, E820_RAM);
     }
 }

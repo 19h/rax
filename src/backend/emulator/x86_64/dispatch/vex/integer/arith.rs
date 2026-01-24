@@ -35,12 +35,16 @@ impl X86_64Vcpu {
             let (src2_hi2, src2_hi3) = if is_memory {
                 (self.read_mem(addr + 16, 8)?, self.read_mem(addr + 24, 8)?)
             } else {
-                (self.regs.ymm_high[rm as usize][0], self.regs.ymm_high[rm as usize][1])
+                (
+                    self.regs.ymm_high[rm as usize][0],
+                    self.regs.ymm_high[rm as usize][1],
+                )
             };
             let src1_hi2 = self.regs.ymm_high[xmm_src1][0];
             let src1_hi3 = self.regs.ymm_high[xmm_src1][1];
 
-            let (dst_hi2, dst_hi3) = self.packed_int_op(src1_hi2, src1_hi3, src2_hi2, src2_hi3, opcode);
+            let (dst_hi2, dst_hi3) =
+                self.packed_int_op(src1_hi2, src1_hi3, src2_hi2, src2_hi3, opcode);
             self.regs.ymm_high[xmm_dst][0] = dst_hi2;
             self.regs.ymm_high[xmm_dst][1] = dst_hi3;
         } else {
@@ -58,7 +62,10 @@ impl X86_64Vcpu {
             // PADDQ: add packed qwords
             0xD4 => (a_lo.wrapping_add(b_lo), a_hi.wrapping_add(b_hi)),
             // PMULLW: multiply packed words, low result
-            0xD5 => (self.mul_words_low(a_lo, b_lo), self.mul_words_low(a_hi, b_hi)),
+            0xD5 => (
+                self.mul_words_low(a_lo, b_lo),
+                self.mul_words_low(a_hi, b_hi),
+            ),
             // PSUBUSB: subtract packed unsigned bytes with saturation
             0xD8 => (self.sub_usb(a_lo, b_lo), self.sub_usb(a_hi, b_hi)),
             // PSUBUSW: subtract packed unsigned words with saturation
@@ -80,9 +87,15 @@ impl X86_64Vcpu {
             // PAVGW: average packed unsigned words
             0xE3 => (self.avg_uw(a_lo, b_lo), self.avg_uw(a_hi, b_hi)),
             // PMULHUW: multiply packed unsigned words, high result
-            0xE4 => (self.mul_words_high_unsigned(a_lo, b_lo), self.mul_words_high_unsigned(a_hi, b_hi)),
+            0xE4 => (
+                self.mul_words_high_unsigned(a_lo, b_lo),
+                self.mul_words_high_unsigned(a_hi, b_hi),
+            ),
             // PMULHW: multiply packed signed words, high result
-            0xE5 => (self.mul_words_high_signed(a_lo, b_lo), self.mul_words_high_signed(a_hi, b_hi)),
+            0xE5 => (
+                self.mul_words_high_signed(a_lo, b_lo),
+                self.mul_words_high_signed(a_hi, b_hi),
+            ),
             // PSUBSB: subtract packed signed bytes with saturation
             0xE8 => (self.sub_sb(a_lo, b_lo), self.sub_sb(a_hi, b_hi)),
             // PSUBSW: subtract packed signed words with saturation
@@ -414,5 +427,4 @@ impl X86_64Vcpu {
         let hi = ((a >> 32) as u32).wrapping_sub((b >> 32) as u32);
         (lo as u64) | ((hi as u64) << 32)
     }
-
 }

@@ -104,7 +104,12 @@ pub fn popcnt(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
     vcpu.set_reg(reg, count, op_size);
 
     // POPCNT clears OF, SF, AF, CF, PF and sets ZF if result is zero
-    vcpu.regs.rflags &= !(flags::bits::OF | flags::bits::SF | flags::bits::AF | flags::bits::CF | flags::bits::PF | flags::bits::ZF);
+    vcpu.regs.rflags &= !(flags::bits::OF
+        | flags::bits::SF
+        | flags::bits::AF
+        | flags::bits::CF
+        | flags::bits::PF
+        | flags::bits::ZF);
     if count == 0 {
         vcpu.regs.rflags |= flags::bits::ZF;
     }

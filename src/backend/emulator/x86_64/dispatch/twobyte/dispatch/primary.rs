@@ -62,7 +62,10 @@ impl X86_64Vcpu {
                 // This allows the kernel to continue past BUG_ON checks that are overly strict
                 if is_kernel_text && skip_count < 10 {
                     UD2_SKIP_COUNT.fetch_add(1, Ordering::Relaxed);
-                    eprintln!("[UD2 #{} SKIPPED - early boot BUG workaround] RIP={:#x}", count, rip);
+                    eprintln!(
+                        "[UD2 #{} SKIPPED - early boot BUG workaround] RIP={:#x}",
+                        count, rip
+                    );
                     // Skip the 2-byte ud2 instruction (0F 0B)
                     self.regs.rip += ctx.cursor as u64;
                     return Ok(None);

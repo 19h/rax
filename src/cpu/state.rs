@@ -246,25 +246,25 @@ impl Aarch64Registers {
     pub const PSTATE_V: u64 = 1 << 28; // Overflow
 
     // PSTATE interrupt masks
-    pub const PSTATE_D: u64 = 1 << 9;  // Debug mask
-    pub const PSTATE_A: u64 = 1 << 8;  // SError mask
-    pub const PSTATE_I: u64 = 1 << 7;  // IRQ mask
-    pub const PSTATE_F: u64 = 1 << 6;  // FIQ mask
+    pub const PSTATE_D: u64 = 1 << 9; // Debug mask
+    pub const PSTATE_A: u64 = 1 << 8; // SError mask
+    pub const PSTATE_I: u64 = 1 << 7; // IRQ mask
+    pub const PSTATE_F: u64 = 1 << 6; // FIQ mask
 
     // PSTATE execution state
-    pub const PSTATE_SS: u64 = 1 << 21;    // Software step
-    pub const PSTATE_IL: u64 = 1 << 20;    // Illegal execution state
-    pub const PSTATE_nRW: u64 = 1 << 4;    // Execution state (0=AArch64, 1=AArch32)
+    pub const PSTATE_SS: u64 = 1 << 21; // Software step
+    pub const PSTATE_IL: u64 = 1 << 20; // Illegal execution state
+    pub const PSTATE_nRW: u64 = 1 << 4; // Execution state (0=AArch64, 1=AArch32)
     pub const PSTATE_EL_MASK: u64 = 0x3 << 2; // Exception level
-    pub const PSTATE_SP: u64 = 1 << 0;     // Stack pointer select
+    pub const PSTATE_SP: u64 = 1 << 0; // Stack pointer select
 
     // Security/Speculation
-    pub const PSTATE_PAN: u64 = 1 << 22;   // Privileged Access Never
-    pub const PSTATE_UAO: u64 = 1 << 23;   // User Access Override
-    pub const PSTATE_DIT: u64 = 1 << 24;   // Data Independent Timing
-    pub const PSTATE_TCO: u64 = 1 << 25;   // Tag Check Override
+    pub const PSTATE_PAN: u64 = 1 << 22; // Privileged Access Never
+    pub const PSTATE_UAO: u64 = 1 << 23; // User Access Override
+    pub const PSTATE_DIT: u64 = 1 << 24; // Data Independent Timing
+    pub const PSTATE_TCO: u64 = 1 << 25; // Tag Check Override
     pub const PSTATE_BTYPE_MASK: u64 = 0x3 << 10; // Branch Type (for BTI)
-    pub const PSTATE_SSBS: u64 = 1 << 12;  // Speculative Store Bypass Safe
+    pub const PSTATE_SSBS: u64 = 1 << 12; // Speculative Store Bypass Safe
 
     /// Get the link register (X30/LR)
     pub fn lr(&self) -> u64 {
@@ -319,10 +319,18 @@ impl Aarch64Registers {
     /// Set condition flags
     pub fn set_flags(&mut self, n: bool, z: bool, c: bool, v: bool) {
         self.pstate &= !(Self::PSTATE_N | Self::PSTATE_Z | Self::PSTATE_C | Self::PSTATE_V);
-        if n { self.pstate |= Self::PSTATE_N; }
-        if z { self.pstate |= Self::PSTATE_Z; }
-        if c { self.pstate |= Self::PSTATE_C; }
-        if v { self.pstate |= Self::PSTATE_V; }
+        if n {
+            self.pstate |= Self::PSTATE_N;
+        }
+        if z {
+            self.pstate |= Self::PSTATE_Z;
+        }
+        if c {
+            self.pstate |= Self::PSTATE_C;
+        }
+        if v {
+            self.pstate |= Self::PSTATE_V;
+        }
     }
 }
 
@@ -435,11 +443,11 @@ impl Aarch32Registers {
     pub const CPSR_GE_MASK: u32 = 0xF << 16;
 
     // Execution state and interrupts
-    pub const CPSR_E: u32 = 1 << 9;  // Endianness (0=LE, 1=BE)
-    pub const CPSR_A: u32 = 1 << 8;  // Async abort mask
-    pub const CPSR_I: u32 = 1 << 7;  // IRQ mask
-    pub const CPSR_F: u32 = 1 << 6;  // FIQ mask
-    pub const CPSR_T: u32 = 1 << 5;  // Thumb state
+    pub const CPSR_E: u32 = 1 << 9; // Endianness (0=LE, 1=BE)
+    pub const CPSR_A: u32 = 1 << 8; // Async abort mask
+    pub const CPSR_I: u32 = 1 << 7; // IRQ mask
+    pub const CPSR_F: u32 = 1 << 6; // FIQ mask
+    pub const CPSR_T: u32 = 1 << 5; // Thumb state
 
     // Processor modes
     pub const MODE_USR: u8 = 0b10000; // User
@@ -499,10 +507,18 @@ impl Aarch32Registers {
     /// Set condition flags
     pub fn set_flags(&mut self, n: bool, z: bool, c: bool, v: bool) {
         self.cpsr &= !(Self::CPSR_N | Self::CPSR_Z | Self::CPSR_C | Self::CPSR_V);
-        if n { self.cpsr |= Self::CPSR_N; }
-        if z { self.cpsr |= Self::CPSR_Z; }
-        if c { self.cpsr |= Self::CPSR_C; }
-        if v { self.cpsr |= Self::CPSR_V; }
+        if n {
+            self.cpsr |= Self::CPSR_N;
+        }
+        if z {
+            self.cpsr |= Self::CPSR_Z;
+        }
+        if c {
+            self.cpsr |= Self::CPSR_C;
+        }
+        if v {
+            self.cpsr |= Self::CPSR_V;
+        }
     }
 
     /// Get GE flags for SIMD byte operations
@@ -638,9 +654,9 @@ impl CortexMRegisters {
     pub const XPSR_EXCEPTION_MASK: u32 = 0x1FF;
 
     // CONTROL register bits
-    pub const CONTROL_NPRIV: u32 = 1 << 0;   // Thread mode privilege (0=privileged, 1=unprivileged)
-    pub const CONTROL_SPSEL: u32 = 1 << 1;   // Stack pointer select (0=MSP, 1=PSP)
-    pub const CONTROL_FPCA: u32 = 1 << 2;    // FP context active (M4F+)
+    pub const CONTROL_NPRIV: u32 = 1 << 0; // Thread mode privilege (0=privileged, 1=unprivileged)
+    pub const CONTROL_SPSEL: u32 = 1 << 1; // Stack pointer select (0=MSP, 1=PSP)
+    pub const CONTROL_FPCA: u32 = 1 << 2; // FP context active (M4F+)
 
     // Special EXC_RETURN values
     pub const EXC_RETURN_HANDLER_MSP: u32 = 0xFFFFFFF1;
@@ -717,10 +733,18 @@ impl CortexMRegisters {
     /// Set condition flags
     pub fn set_flags(&mut self, n: bool, z: bool, c: bool, v: bool) {
         self.xpsr &= !(Self::XPSR_N | Self::XPSR_Z | Self::XPSR_C | Self::XPSR_V);
-        if n { self.xpsr |= Self::XPSR_N; }
-        if z { self.xpsr |= Self::XPSR_Z; }
-        if c { self.xpsr |= Self::XPSR_C; }
-        if v { self.xpsr |= Self::XPSR_V; }
+        if n {
+            self.xpsr |= Self::XPSR_N;
+        }
+        if z {
+            self.xpsr |= Self::XPSR_Z;
+        }
+        if c {
+            self.xpsr |= Self::XPSR_C;
+        }
+        if v {
+            self.xpsr |= Self::XPSR_V;
+        }
     }
 
     /// Check if using PSP

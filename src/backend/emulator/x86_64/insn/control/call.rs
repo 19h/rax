@@ -39,10 +39,7 @@ fn pop_by_size(vcpu: &mut X86_64Vcpu, size: u8) -> Result<u64> {
         2 => Ok(vcpu.pop16()? as u64),
         4 => Ok(vcpu.pop32()? as u64),
         8 => vcpu.pop64(),
-        _ => Err(Error::Emulator(format!(
-            "invalid stack pop size: {}",
-            size
-        ))),
+        _ => Err(Error::Emulator(format!("invalid stack pop size: {}", size))),
     }
 }
 

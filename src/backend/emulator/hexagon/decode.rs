@@ -64,26 +64,100 @@ pub enum CombineOperand {
 
 #[derive(Clone, Copy, Debug)]
 pub enum DecodedInsn {
-    ImmExt { value: u32 },
-    Add { dst: u8, src1: u8, src2: u8 },
-    Sub { dst: u8, src1: u8, src2: u8 },
-    And { dst: u8, src1: u8, src2: u8 },
-    AndImm { dst: u8, src: u8, imm: u32 },
-    OrImm { dst: u8, src: u8, imm: u32 },
-    Or { dst: u8, src1: u8, src2: u8 },
-    Xor { dst: u8, src1: u8, src2: u8 },
-    AddImm { dst: u8, src: u8, imm: i32 },
-    SubImmRev { dst: u8, src: u8, imm: i32 },
-    Mov { dst: u8, src: u8 },
-    MovImm { dst: u8, imm: i32 },
-    Abs { dst: u8, src: u8, sat: bool },
-    NegSat { dst: u8, src: u8 },
-    Max { dst: u8, src1: u8, src2: u8 },
-    Maxu { dst: u8, src1: u8, src2: u8 },
-    Min { dst: u8, src1: u8, src2: u8 },
-    Minu { dst: u8, src1: u8, src2: u8 },
-    ClearCond { dst: u8, pred: PredCond },
-    Extend { dst: u8, src: u8, kind: ExtendKind },
+    ImmExt {
+        value: u32,
+    },
+    Add {
+        dst: u8,
+        src1: u8,
+        src2: u8,
+    },
+    Sub {
+        dst: u8,
+        src1: u8,
+        src2: u8,
+    },
+    And {
+        dst: u8,
+        src1: u8,
+        src2: u8,
+    },
+    AndImm {
+        dst: u8,
+        src: u8,
+        imm: u32,
+    },
+    OrImm {
+        dst: u8,
+        src: u8,
+        imm: u32,
+    },
+    Or {
+        dst: u8,
+        src1: u8,
+        src2: u8,
+    },
+    Xor {
+        dst: u8,
+        src1: u8,
+        src2: u8,
+    },
+    AddImm {
+        dst: u8,
+        src: u8,
+        imm: i32,
+    },
+    SubImmRev {
+        dst: u8,
+        src: u8,
+        imm: i32,
+    },
+    Mov {
+        dst: u8,
+        src: u8,
+    },
+    MovImm {
+        dst: u8,
+        imm: i32,
+    },
+    Abs {
+        dst: u8,
+        src: u8,
+        sat: bool,
+    },
+    NegSat {
+        dst: u8,
+        src: u8,
+    },
+    Max {
+        dst: u8,
+        src1: u8,
+        src2: u8,
+    },
+    Maxu {
+        dst: u8,
+        src1: u8,
+        src2: u8,
+    },
+    Min {
+        dst: u8,
+        src1: u8,
+        src2: u8,
+    },
+    Minu {
+        dst: u8,
+        src1: u8,
+        src2: u8,
+    },
+    ClearCond {
+        dst: u8,
+        pred: PredCond,
+    },
+    Extend {
+        dst: u8,
+        src: u8,
+        kind: ExtendKind,
+    },
     Combine {
         dst: u8,
         high: CombineOperand,
@@ -109,7 +183,10 @@ pub enum DecodedInsn {
         width: MemWidth,
         pred: Option<PredCond>,
     },
-    AllocFrame { base: u8, size: u32 },
+    AllocFrame {
+        base: u8,
+        size: u32,
+    },
     DeallocFrame {
         base: u8,
         dst: Option<u8>,
@@ -121,22 +198,30 @@ pub enum DecodedInsn {
         pred: Option<PredCond>,
         update_lr_fp: bool,
     },
-    Jump { offset: i32 },
+    Jump {
+        offset: i32,
+    },
     JumpCond {
         offset: i32,
         pred: u8,
         sense: bool,
         pred_new: bool,
     },
-    JumpReg { src: u8 },
+    JumpReg {
+        src: u8,
+    },
     JumpRegCond {
         src: u8,
         pred: u8,
         sense: bool,
         pred_new: bool,
     },
-    Call { offset: i32 },
-    CallReg { src: u8 },
+    Call {
+        offset: i32,
+    },
+    CallReg {
+        src: u8,
+    },
     Cmp {
         pred: u8,
         src1: u8,
@@ -150,7 +235,11 @@ pub enum DecodedInsn {
         kind: CmpKind,
         unsigned: bool,
     },
-    Mul { dst: u8, src1: u8, src2: u8 },
+    Mul {
+        dst: u8,
+        src1: u8,
+        src2: u8,
+    },
     ShiftImm {
         dst: u8,
         src: u8,
@@ -163,8 +252,14 @@ pub enum DecodedInsn {
         amt: u8,
         kind: ShiftKind,
     },
-    TfrCrR { dst: u8, src: u8 },
-    TfrRrCr { dst: u8, src: u8 },
+    TfrCrR {
+        dst: u8,
+        src: u8,
+    },
+    TfrRrCr {
+        dst: u8,
+        src: u8,
+    },
     LoopStartReg {
         loop_id: u8,
         start_offset: i32,
@@ -229,9 +324,7 @@ fn pred_uses_dotnew(pred: Option<PredCond>) -> bool {
 fn insn_uses_dotnew(insn: &DecodedInsn) -> bool {
     match insn {
         DecodedInsn::Load { pred, .. } => pred_uses_dotnew(*pred),
-        DecodedInsn::Store {
-            pred, src_new, ..
-        } => pred_uses_dotnew(*pred) || *src_new,
+        DecodedInsn::Store { pred, src_new, .. } => pred_uses_dotnew(*pred) || *src_new,
         DecodedInsn::StoreImm { pred, .. } => pred_uses_dotnew(*pred),
         DecodedInsn::JumpCond { pred_new, .. } => *pred_new,
         DecodedInsn::JumpRegCond { pred_new, .. } => *pred_new,
@@ -282,20 +375,12 @@ fn field_u8(decoded: &DecodedOp, letter: u8) -> Option<u8> {
     decoded.field(letter).map(|val| val.value as u8)
 }
 
-fn decode_field_simm(
-    decoded: &DecodedOp,
-    letter: u8,
-    immext: Option<u32>,
-) -> Option<(i32, bool)> {
+fn decode_field_simm(decoded: &DecodedOp, letter: u8, immext: Option<u32>) -> Option<(i32, bool)> {
     let field = field_val(decoded, letter)?;
     Some(decode_simm_val(field.value, field.bits, immext))
 }
 
-fn decode_field_uimm(
-    decoded: &DecodedOp,
-    letter: u8,
-    immext: Option<u32>,
-) -> Option<(u32, bool)> {
+fn decode_field_uimm(decoded: &DecodedOp, letter: u8, immext: Option<u32>) -> Option<(u32, bool)> {
     let field = field_val(decoded, letter)?;
     Some(decode_uimm_val(field.value, immext))
 }
@@ -411,11 +496,7 @@ fn store_io(
     ))
 }
 
-fn store_gp(
-    decoded: &DecodedOp,
-    width: MemWidth,
-    src_new: bool,
-) -> Option<(DecodedInsn, bool)> {
+fn store_gp(decoded: &DecodedOp, width: MemWidth, src_new: bool) -> Option<(DecodedInsn, bool)> {
     let src = field_u8(decoded, b't')?;
     let (imm, _) = decode_field_uimm(decoded, b'i', None)?;
     let offset = (imm << width_shift(width)) as i32;
@@ -431,11 +512,7 @@ fn store_gp(
     ))
 }
 
-fn store_pi(
-    decoded: &DecodedOp,
-    width: MemWidth,
-    src_new: bool,
-) -> Option<(DecodedInsn, bool)> {
+fn store_pi(decoded: &DecodedOp, width: MemWidth, src_new: bool) -> Option<(DecodedInsn, bool)> {
     let base = field_u8(decoded, b'x')?;
     let src = field_u8(decoded, b't')?;
     let (imm, _) = decode_field_simm(decoded, b'i', None)?;
@@ -519,66 +596,31 @@ fn decode_main(decoded: &DecodedOp, word: u32, immext: Option<u32>) -> (DecodedI
             let dst = req!(field_u8(decoded, b'd'));
             let src1 = req!(field_u8(decoded, b's'));
             let src2 = req!(field_u8(decoded, b't'));
-            (
-                DecodedInsn::Add {
-                    dst,
-                    src1,
-                    src2,
-                },
-                false,
-            )
+            (DecodedInsn::Add { dst, src1, src2 }, false)
         }
         Opcode::A2_sub => {
             let dst = req!(field_u8(decoded, b'd'));
             let src1 = req!(field_u8(decoded, b't'));
             let src2 = req!(field_u8(decoded, b's'));
-            (
-                DecodedInsn::Sub {
-                    dst,
-                    src1,
-                    src2,
-                },
-                false,
-            )
+            (DecodedInsn::Sub { dst, src1, src2 }, false)
         }
         Opcode::A2_and => {
             let dst = req!(field_u8(decoded, b'd'));
             let src1 = req!(field_u8(decoded, b's'));
             let src2 = req!(field_u8(decoded, b't'));
-            (
-                DecodedInsn::And {
-                    dst,
-                    src1,
-                    src2,
-                },
-                false,
-            )
+            (DecodedInsn::And { dst, src1, src2 }, false)
         }
         Opcode::A2_or => {
             let dst = req!(field_u8(decoded, b'd'));
             let src1 = req!(field_u8(decoded, b's'));
             let src2 = req!(field_u8(decoded, b't'));
-            (
-                DecodedInsn::Or {
-                    dst,
-                    src1,
-                    src2,
-                },
-                false,
-            )
+            (DecodedInsn::Or { dst, src1, src2 }, false)
         }
         Opcode::A2_xor => {
             let dst = req!(field_u8(decoded, b'd'));
             let src1 = req!(field_u8(decoded, b's'));
             let src2 = req!(field_u8(decoded, b't'));
-            (
-                DecodedInsn::Xor {
-                    dst,
-                    src1,
-                    src2,
-                },
-                false,
-            )
+            (DecodedInsn::Xor { dst, src1, src2 }, false)
         }
         Opcode::A2_addi => {
             let dst = req!(field_u8(decoded, b'd'));
@@ -659,14 +701,7 @@ fn decode_main(decoded: &DecodedOp, word: u32, immext: Option<u32>) -> (DecodedI
             let dst = req!(field_u8(decoded, b'd'));
             let src1 = req!(field_u8(decoded, b's'));
             let src2 = req!(field_u8(decoded, b't'));
-            (
-                DecodedInsn::Mul {
-                    dst,
-                    src1,
-                    src2,
-                },
-                false,
-            )
+            (DecodedInsn::Mul { dst, src1, src2 }, false)
         }
         Opcode::S2_asr_i_r => {
             let dst = req!(field_u8(decoded, b'd'));
@@ -998,7 +1033,12 @@ fn decode_main(decoded: &DecodedOp, word: u32, immext: Option<u32>) -> (DecodedI
         Opcode::L2_loadrh_io => req!(load_io(decoded, MemWidth::Half, MemSign::Signed, immext)),
         Opcode::L2_loadruh_io => req!(load_io(decoded, MemWidth::Half, MemSign::Unsigned, immext)),
         Opcode::L2_loadri_io => req!(load_io(decoded, MemWidth::Word, MemSign::Unsigned, immext)),
-        Opcode::L2_loadrd_io => req!(load_io(decoded, MemWidth::Double, MemSign::Unsigned, immext)),
+        Opcode::L2_loadrd_io => req!(load_io(
+            decoded,
+            MemWidth::Double,
+            MemSign::Unsigned,
+            immext
+        )),
         Opcode::L2_loadrbgp => req!(load_gp(decoded, MemWidth::Byte, MemSign::Signed)),
         Opcode::L2_loadrubgp => req!(load_gp(decoded, MemWidth::Byte, MemSign::Unsigned)),
         Opcode::L2_loadrhgp => req!(load_gp(decoded, MemWidth::Half, MemSign::Signed)),
@@ -1023,7 +1063,9 @@ fn decode_main(decoded: &DecodedOp, word: u32, immext: Option<u32>) -> (DecodedI
         Opcode::S2_storerh_pi => req!(store_pi(decoded, MemWidth::Half, false)),
         Opcode::S2_storeri_pi => req!(store_pi(decoded, MemWidth::Word, false)),
         Opcode::S2_storerd_pi => req!(store_pi(decoded, MemWidth::Double, false)),
-        Opcode::L2_ploadrbt_io | Opcode::L2_ploadrbf_io | Opcode::L2_ploadrbtnew_io
+        Opcode::L2_ploadrbt_io
+        | Opcode::L2_ploadrbf_io
+        | Opcode::L2_ploadrbtnew_io
         | Opcode::L2_ploadrbfnew_io => {
             let (sense, pred_new) = match decoded.opcode {
                 Opcode::L2_ploadrbt_io => (true, false),
@@ -1039,7 +1081,9 @@ fn decode_main(decoded: &DecodedOp, word: u32, immext: Option<u32>) -> (DecodedI
                 pred_new
             ))
         }
-        Opcode::L2_ploadrubt_io | Opcode::L2_ploadrubf_io | Opcode::L2_ploadrubtnew_io
+        Opcode::L2_ploadrubt_io
+        | Opcode::L2_ploadrubf_io
+        | Opcode::L2_ploadrubtnew_io
         | Opcode::L2_ploadrubfnew_io => {
             let (sense, pred_new) = match decoded.opcode {
                 Opcode::L2_ploadrubt_io => (true, false),
@@ -1055,7 +1099,9 @@ fn decode_main(decoded: &DecodedOp, word: u32, immext: Option<u32>) -> (DecodedI
                 pred_new
             ))
         }
-        Opcode::L2_ploadrht_io | Opcode::L2_ploadrhf_io | Opcode::L2_ploadrhtnew_io
+        Opcode::L2_ploadrht_io
+        | Opcode::L2_ploadrhf_io
+        | Opcode::L2_ploadrhtnew_io
         | Opcode::L2_ploadrhfnew_io => {
             let (sense, pred_new) = match decoded.opcode {
                 Opcode::L2_ploadrht_io => (true, false),
@@ -1071,7 +1117,9 @@ fn decode_main(decoded: &DecodedOp, word: u32, immext: Option<u32>) -> (DecodedI
                 pred_new
             ))
         }
-        Opcode::L2_ploadruht_io | Opcode::L2_ploadruhf_io | Opcode::L2_ploadruhtnew_io
+        Opcode::L2_ploadruht_io
+        | Opcode::L2_ploadruhf_io
+        | Opcode::L2_ploadruhtnew_io
         | Opcode::L2_ploadruhfnew_io => {
             let (sense, pred_new) = match decoded.opcode {
                 Opcode::L2_ploadruht_io => (true, false),
@@ -1087,7 +1135,9 @@ fn decode_main(decoded: &DecodedOp, word: u32, immext: Option<u32>) -> (DecodedI
                 pred_new
             ))
         }
-        Opcode::L2_ploadrit_io | Opcode::L2_ploadrif_io | Opcode::L2_ploadritnew_io
+        Opcode::L2_ploadrit_io
+        | Opcode::L2_ploadrif_io
+        | Opcode::L2_ploadritnew_io
         | Opcode::L2_ploadrifnew_io => {
             let (sense, pred_new) = match decoded.opcode {
                 Opcode::L2_ploadrit_io => (true, false),
@@ -1103,7 +1153,9 @@ fn decode_main(decoded: &DecodedOp, word: u32, immext: Option<u32>) -> (DecodedI
                 pred_new
             ))
         }
-        Opcode::L2_ploadrdt_io | Opcode::L2_ploadrdf_io | Opcode::L2_ploadrdtnew_io
+        Opcode::L2_ploadrdt_io
+        | Opcode::L2_ploadrdf_io
+        | Opcode::L2_ploadrdtnew_io
         | Opcode::L2_ploadrdfnew_io => {
             let (sense, pred_new) = match decoded.opcode {
                 Opcode::L2_ploadrdt_io => (true, false),
@@ -1145,7 +1197,13 @@ fn decode_main(decoded: &DecodedOp, word: u32, immext: Option<u32>) -> (DecodedI
         }
         Opcode::S2_pstorerdt_io | Opcode::S2_pstorerdf_io => {
             let sense = matches!(decoded.opcode, Opcode::S2_pstorerdt_io);
-            req!(pred_store_io(decoded, MemWidth::Double, sense, false, false))
+            req!(pred_store_io(
+                decoded,
+                MemWidth::Double,
+                sense,
+                false,
+                false
+            ))
         }
         _ => (DecodedInsn::Unknown(word), false),
     }
@@ -1478,11 +1536,7 @@ fn decode_subinsn(sub: u16, class: EncClass, isa: HexagonIsa) -> Option<DecodedS
         Opcode::SA1_and1 => {
             let dst = subreg(field_u8(&decoded, b'd')?);
             let src = subreg(field_u8(&decoded, b's')?);
-            DecodedInsn::AndImm {
-                dst,
-                src,
-                imm: 1,
-            }
+            DecodedInsn::AndImm { dst, src, imm: 1 }
         }
         Opcode::SA1_sxtb => {
             let dst = subreg(field_u8(&decoded, b'd')?);

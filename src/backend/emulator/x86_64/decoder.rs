@@ -8,17 +8,36 @@ use crate::error::{Error, Result};
 static PREFIX_LUT: [u8; 256] = {
     let mut lut = [0u8; 256];
     // Segment overrides
-    lut[0x26] = 1; lut[0x2E] = 1; lut[0x36] = 1;
-    lut[0x3E] = 1; lut[0x64] = 1; lut[0x65] = 1;
+    lut[0x26] = 1;
+    lut[0x2E] = 1;
+    lut[0x36] = 1;
+    lut[0x3E] = 1;
+    lut[0x64] = 1;
+    lut[0x65] = 1;
     // Operand/address size
-    lut[0x66] = 1; lut[0x67] = 1;
+    lut[0x66] = 1;
+    lut[0x67] = 1;
     // LOCK, REP
-    lut[0xF0] = 1; lut[0xF2] = 1; lut[0xF3] = 1;
+    lut[0xF0] = 1;
+    lut[0xF2] = 1;
+    lut[0xF3] = 1;
     // REX (0x40-0x4F)
-    lut[0x40] = 1; lut[0x41] = 1; lut[0x42] = 1; lut[0x43] = 1;
-    lut[0x44] = 1; lut[0x45] = 1; lut[0x46] = 1; lut[0x47] = 1;
-    lut[0x48] = 1; lut[0x49] = 1; lut[0x4A] = 1; lut[0x4B] = 1;
-    lut[0x4C] = 1; lut[0x4D] = 1; lut[0x4E] = 1; lut[0x4F] = 1;
+    lut[0x40] = 1;
+    lut[0x41] = 1;
+    lut[0x42] = 1;
+    lut[0x43] = 1;
+    lut[0x44] = 1;
+    lut[0x45] = 1;
+    lut[0x46] = 1;
+    lut[0x47] = 1;
+    lut[0x48] = 1;
+    lut[0x49] = 1;
+    lut[0x4A] = 1;
+    lut[0x4B] = 1;
+    lut[0x4C] = 1;
+    lut[0x4D] = 1;
+    lut[0x4E] = 1;
+    lut[0x4F] = 1;
     lut
 };
 
@@ -33,7 +52,10 @@ impl Decoder {
 
     /// Decode instruction prefixes and return context.
     #[inline]
-    pub fn decode_prefixes(bytes: [u8; super::cpu::MAX_INSN_LEN], bytes_len: usize) -> Result<InsnContext> {
+    pub fn decode_prefixes(
+        bytes: [u8; super::cpu::MAX_INSN_LEN],
+        bytes_len: usize,
+    ) -> Result<InsnContext> {
         if bytes_len == 0 {
             return Err(Error::Emulator("instruction too short".to_string()));
         }
@@ -229,10 +251,13 @@ impl X86_64Vcpu {
                 addr = rip_after.wrapping_add(disp) as u64;
 
                 // Debug: check if the computed address is in blake2s range (including full 64-bit)
-                if (addr >= 0x83b49000 && addr <= 0x83b4a000) ||
-                   (addr >= 0xffffffff83b49000 && addr <= 0xffffffff83b4a000) {
-                    eprintln!("[RIP-REL] RIP={:#x} modrm_off={} rip_rel_off={} disp={:#x} -> addr={:#x}",
-                              self.regs.rip, modrm_offset, ctx.rip_relative_offset, disp, addr);
+                if (addr >= 0x83b49000 && addr <= 0x83b4a000)
+                    || (addr >= 0xffffffff83b49000 && addr <= 0xffffffff83b4a000)
+                {
+                    eprintln!(
+                        "[RIP-REL] RIP={:#x} modrm_off={} rip_rel_off={} disp={:#x} -> addr={:#x}",
+                        self.regs.rip, modrm_offset, ctx.rip_relative_offset, disp, addr
+                    );
                 }
             } else {
                 // Compatibility/legacy mode: absolute [disp32]
@@ -282,10 +307,7 @@ impl X86_64Vcpu {
     /// Decode ModR/M and return (reg, rm, is_memory, address_if_memory, extra_bytes).
     /// This is a convenience function that handles both register and memory operands.
     #[inline]
-    pub(super) fn decode_modrm(
-        &self,
-        ctx: &mut InsnContext,
-    ) -> Result<(u8, u8, bool, u64, usize)> {
+    pub(super) fn decode_modrm(&self, ctx: &mut InsnContext) -> Result<(u8, u8, bool, u64, usize)> {
         let modrm_start = ctx.cursor;
         let modrm = ctx.consume_u8()?;
         let reg = ((modrm >> 3) & 0x07) | ctx.rex_r();
@@ -344,11 +366,7 @@ impl X86_64Vcpu {
     /// Decode ModR/M address when modrm byte has already been consumed.
     /// Used by FPU instructions where the modrm byte determines the operation.
     /// This reads any SIB/displacement bytes from ctx and updates cursor.
-    pub(super) fn decode_fpu_modrm_addr(
-        &self,
-        ctx: &mut InsnContext,
-        modrm: u8,
-    ) -> Result<u64> {
+    pub(super) fn decode_fpu_modrm_addr(&self, ctx: &mut InsnContext, modrm: u8) -> Result<u64> {
         let mod_bits = modrm >> 6;
         let rm_field = modrm & 0x07;
         let rm = rm_field | ctx.rex_b();
