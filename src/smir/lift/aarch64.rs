@@ -108,6 +108,7 @@ impl Aarch64Lifter {
             MemOffset::Imm(off) => Address::BaseOffset {
                 base: self.arm_reg(&mem.base),
                 offset: *off,
+                disp_size: DispSize::Auto,
             },
             MemOffset::Reg(idx) => {
                 let tmp = ctx.alloc_vreg();
@@ -1322,7 +1323,11 @@ impl Aarch64Lifter {
                     pc,
                     OpKind::Load {
                         dst,
-                        addr: Address::PcRel { offset: *off },
+                        addr: Address::PcRel {
+                            offset: *off,
+                            disp_size: DispSize::Auto,
+                            base: None,
+                        },
                         width,
                         sign: extend,
                     },
@@ -1474,10 +1479,16 @@ impl Aarch64Lifter {
             Address::Direct(base) => Address::BaseOffset {
                 base: *base,
                 offset: offset2,
+                disp_size: DispSize::Auto,
             },
-            Address::BaseOffset { base, offset } => Address::BaseOffset {
+            Address::BaseOffset {
+                base,
+                offset,
+                disp_size,
+            } => Address::BaseOffset {
                 base: *base,
                 offset: *offset + offset2,
+                disp_size: *disp_size,
             },
             _ => load_addr,
         };
@@ -1556,10 +1567,16 @@ impl Aarch64Lifter {
             Address::Direct(base) => Address::BaseOffset {
                 base: *base,
                 offset: offset2,
+                disp_size: DispSize::Auto,
             },
-            Address::BaseOffset { base, offset } => Address::BaseOffset {
+            Address::BaseOffset {
+                base,
+                offset,
+                disp_size,
+            } => Address::BaseOffset {
                 base: *base,
                 offset: *offset + offset2,
+                disp_size: *disp_size,
             },
             _ => store_addr,
         };

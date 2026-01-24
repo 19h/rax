@@ -4,10 +4,12 @@
 
 use std::collections::HashMap;
 
-use crate::smir::ir::{SmirBlock, SmirFunction, Terminator};
+use crate::smir::flags::FlagUpdate;
+use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
 use crate::smir::ops::OpKind;
 use crate::smir::types::{
-    Address, BlockId, Condition, MemWidth, OpWidth, SignExtend, SrcOperand, VReg,
+    Address, ArchReg, BlockId, Condition, DispSize, GuestAddr, MemWidth, OpWidth, SignExtend,
+    SrcOperand, VReg, X86Reg,
 };
 
 use super::regalloc::{PhysReg, RegAlloc, RegLocation};
@@ -220,18 +222,34 @@ impl<'a> X86Emitter<'a> {
 
     /// Emit ModR/M and optional SIB for memory operand [base + disp]
     fn emit_modrm_mem(&mut self, reg: PhysReg, base: PhysReg, disp: i32) {
+        self.emit_modrm_mem_disp(reg, base, disp, DispSize::Auto);
+    }
+
+    fn emit_modrm_mem_disp(
+        &mut self,
+        reg: PhysReg,
+        base: PhysReg,
+        disp: i32,
+        disp_size: DispSize,
+    ) -> Option<usize> {
         // RSP/R12 needs SIB byte
         let needs_sib = base == PhysReg::Rsp || base == PhysReg::R12;
 
         // RBP/R13 with no displacement needs explicit disp8=0
         let force_disp = (base == PhysReg::Rbp || base == PhysReg::R13) && disp == 0;
 
-        let (mode, disp_size) = if disp == 0 && !force_disp {
-            (0b00, 0) // [base]
-        } else if disp >= -128 && disp <= 127 {
-            (0b01, 1) // [base + disp8]
-        } else {
-            (0b10, 4) // [base + disp32]
+        let (mode, disp_bytes) = match disp_size {
+            DispSize::Auto => {
+                if disp == 0 && !force_disp {
+                    (0b00, 0) // [base]
+                } else if disp >= -128 && disp <= 127 {
+                    (0b01, 1) // [base + disp8]
+                } else {
+                    (0b10, 4) // [base + disp32]
+                }
+            }
+            DispSize::Disp8 => (0b01, 1),
+            DispSize::Disp32 => (0b10, 4),
         };
 
         if needs_sib {
@@ -241,11 +259,19 @@ impl<'a> X86Emitter<'a> {
             self.emit_modrm(mode, reg, base);
         }
 
-        match disp_size {
-            1 => self.code.emit_i8(disp as i8),
-            4 => self.code.emit_i32(disp),
-            _ => {}
-        }
+        let disp_offset = if disp_bytes > 0 {
+            let off = self.code.position();
+            match disp_bytes {
+                1 => self.code.emit_i8(disp as i8),
+                4 => self.code.emit_i32(disp),
+                _ => {}
+            }
+            Some(off)
+        } else {
+            None
+        };
+
+        disp_offset
     }
 
     /// Emit ModR/M for [base + index*scale + disp]
@@ -257,22 +283,59 @@ impl<'a> X86Emitter<'a> {
         scale: u8,
         disp: i32,
     ) {
-        let (mode, base_reg) = match base {
-            Some(b) if disp == 0 && b != PhysReg::Rbp && b != PhysReg::R13 => (0b00, b),
-            Some(b) if disp >= -128 && disp <= 127 => (0b01, b),
-            Some(b) => (0b10, b),
-            None => (0b00, PhysReg::Rbp), // disp32 only mode
+        self.emit_modrm_sib_disp(reg, base, index, scale, disp, DispSize::Auto);
+    }
+
+    fn emit_modrm_sib_disp(
+        &mut self,
+        reg: PhysReg,
+        base: Option<PhysReg>,
+        index: PhysReg,
+        scale: u8,
+        disp: i32,
+        disp_size: DispSize,
+    ) -> Option<usize> {
+        let (mode, base_reg, disp_bytes) = match base {
+            Some(b) => match disp_size {
+                DispSize::Auto => {
+                    if disp == 0 && b != PhysReg::Rbp && b != PhysReg::R13 {
+                        (0b00, b, 0)
+                    } else if disp >= -128 && disp <= 127 {
+                        (0b01, b, 1)
+                    } else {
+                        (0b10, b, 4)
+                    }
+                }
+                DispSize::Disp8 => (0b01, b, 1),
+                DispSize::Disp32 => (0b10, b, 4),
+            },
+            None => (0b00, PhysReg::Rbp, 4), // disp32 only mode
         };
 
         self.emit_modrm(mode, reg, PhysReg::Rsp); // rm=100 signals SIB
         self.emit_sib(scale, index, base_reg);
 
-        match (mode, base) {
-            (0b00, None) => self.code.emit_i32(disp), // disp32 only
-            (0b01, _) => self.code.emit_i8(disp as i8),
-            (0b10, _) => self.code.emit_i32(disp),
-            _ => {}
-        }
+        let disp_offset = if disp_bytes > 0 {
+            let off = self.code.position();
+            match disp_bytes {
+                1 => self.code.emit_i8(disp as i8),
+                4 => self.code.emit_i32(disp),
+                _ => {}
+            }
+            Some(off)
+        } else {
+            None
+        };
+
+        disp_offset
+    }
+
+    fn emit_modrm_pcrel(&mut self, reg: PhysReg, disp: i32) -> usize {
+        // mod=00, rm=101 indicates RIP-relative
+        self.emit_modrm(0b00, reg, PhysReg::Rbp);
+        let off = self.code.position();
+        self.code.emit_i32(disp);
+        off
     }
 
     /// Emit ModR/M for absolute address [disp32] (no base, no index)
@@ -362,6 +425,17 @@ impl<'a> X86Emitter<'a> {
 
     /// MOV r64, [base + disp]
     pub fn emit_mov_rm(&mut self, dst: PhysReg, base: PhysReg, disp: i32, width: OpWidth) {
+        self.emit_mov_rm_disp(dst, base, disp, DispSize::Auto, width);
+    }
+
+    pub fn emit_mov_rm_disp(
+        &mut self,
+        dst: PhysReg,
+        base: PhysReg,
+        disp: i32,
+        disp_size: DispSize,
+        width: OpWidth,
+    ) {
         self.emit_rex_for_width(width, dst, base);
 
         let opcode = match width {
@@ -369,11 +443,22 @@ impl<'a> X86Emitter<'a> {
             _ => 0x8B,
         };
         self.code.emit_u8(opcode);
-        self.emit_modrm_mem(dst, base, disp);
+        self.emit_modrm_mem_disp(dst, base, disp, disp_size);
     }
 
     /// MOV [base + disp], r64
     pub fn emit_mov_mr(&mut self, base: PhysReg, disp: i32, src: PhysReg, width: OpWidth) {
+        self.emit_mov_mr_disp(base, disp, DispSize::Auto, src, width);
+    }
+
+    pub fn emit_mov_mr_disp(
+        &mut self,
+        base: PhysReg,
+        disp: i32,
+        disp_size: DispSize,
+        src: PhysReg,
+        width: OpWidth,
+    ) {
         self.emit_rex_for_width(width, src, base);
 
         let opcode = match width {
@@ -381,7 +466,7 @@ impl<'a> X86Emitter<'a> {
             _ => 0x89,
         };
         self.code.emit_u8(opcode);
-        self.emit_modrm_mem(src, base, disp);
+        self.emit_modrm_mem_disp(src, base, disp, disp_size);
     }
 
     /// MOV r64, [abs32] - Load from absolute 32-bit address
@@ -421,6 +506,19 @@ impl<'a> X86Emitter<'a> {
         disp: i32,
         width: OpWidth,
     ) {
+        self.emit_mov_rm_sib_disp(dst, base, index, scale, disp, DispSize::Auto, width);
+    }
+
+    pub fn emit_mov_rm_sib_disp(
+        &mut self,
+        dst: PhysReg,
+        base: Option<PhysReg>,
+        index: PhysReg,
+        scale: u8,
+        disp: i32,
+        disp_size: DispSize,
+        width: OpWidth,
+    ) {
         // REX prefix - use index for the rm extension bit since it's in the SIB
         let base_for_rex = base.unwrap_or(PhysReg::Rax);
         let w = width == OpWidth::W64;
@@ -431,7 +529,7 @@ impl<'a> X86Emitter<'a> {
             _ => 0x8B,
         };
         self.code.emit_u8(opcode);
-        self.emit_modrm_sib(dst, base, index, scale, disp);
+        self.emit_modrm_sib_disp(dst, base, index, scale, disp, disp_size);
     }
 
     /// MOV [base + index*scale + disp], r64 - Store with SIB addressing
@@ -444,6 +542,19 @@ impl<'a> X86Emitter<'a> {
         src: PhysReg,
         width: OpWidth,
     ) {
+        self.emit_mov_mr_sib_disp(base, index, scale, disp, DispSize::Auto, src, width);
+    }
+
+    pub fn emit_mov_mr_sib_disp(
+        &mut self,
+        base: Option<PhysReg>,
+        index: PhysReg,
+        scale: u8,
+        disp: i32,
+        disp_size: DispSize,
+        src: PhysReg,
+        width: OpWidth,
+    ) {
         let base_for_rex = base.unwrap_or(PhysReg::Rax);
         let w = width == OpWidth::W64;
         self.emit_rex(w, src, Some(index), base_for_rex);
@@ -453,7 +564,53 @@ impl<'a> X86Emitter<'a> {
             _ => 0x89,
         };
         self.code.emit_u8(opcode);
-        self.emit_modrm_sib(src, base, index, scale, disp);
+        self.emit_modrm_sib_disp(src, base, index, scale, disp, disp_size);
+    }
+
+    /// MOV r64, [rip + disp32]
+    pub fn emit_mov_rm_pcrel(&mut self, dst: PhysReg, disp: i32, width: OpWidth) -> usize {
+        self.emit_rex_for_width(width, dst, PhysReg::Rbp);
+
+        let opcode = match width {
+            OpWidth::W8 => 0x8A,
+            _ => 0x8B,
+        };
+        self.code.emit_u8(opcode);
+        self.emit_modrm_pcrel(dst, disp)
+    }
+
+    /// MOV [rip + disp32], r64
+    pub fn emit_mov_mr_pcrel(&mut self, disp: i32, src: PhysReg, width: OpWidth) -> usize {
+        self.emit_rex_for_width(width, src, PhysReg::Rbp);
+
+        let opcode = match width {
+            OpWidth::W8 => 0x88,
+            _ => 0x89,
+        };
+        self.code.emit_u8(opcode);
+        self.emit_modrm_pcrel(src, disp)
+    }
+
+    /// REP STOS (store AL/AX/EAX/RAX to [RDI])
+    pub fn emit_rep_stos(&mut self, width: MemWidth) {
+        self.code.emit_u8(0xF3); // REP prefix
+        match width {
+            MemWidth::B1 => {
+                self.code.emit_u8(0xAA); // STOSB
+            }
+            MemWidth::B2 => {
+                self.code.emit_u8(0x66); // Operand size override
+                self.code.emit_u8(0xAB); // STOSW
+            }
+            MemWidth::B4 => {
+                self.code.emit_u8(0xAB); // STOSD
+            }
+            MemWidth::B8 => {
+                self.code.emit_u8(0x48); // REX.W
+                self.code.emit_u8(0xAB); // STOSQ
+            }
+            MemWidth::B16 | MemWidth::B32 | MemWidth::B64 => {}
+        }
     }
 
     /// MOVZX r64, r/m8 or r/m16
@@ -1082,9 +1239,13 @@ impl<'a> X86Emitter<'a> {
 
     /// LEA r64, [base + disp]
     pub fn emit_lea(&mut self, dst: PhysReg, base: PhysReg, disp: i32) {
+        self.emit_lea_disp(dst, base, disp, DispSize::Auto);
+    }
+
+    pub fn emit_lea_disp(&mut self, dst: PhysReg, base: PhysReg, disp: i32, disp_size: DispSize) {
         self.emit_rex_rr(true, dst, base);
         self.code.emit_u8(0x8D);
-        self.emit_modrm_mem(dst, base, disp);
+        self.emit_modrm_mem_disp(dst, base, disp, disp_size);
     }
 
     /// LEA r64, [base + index*scale + disp]
@@ -1096,9 +1257,28 @@ impl<'a> X86Emitter<'a> {
         scale: u8,
         disp: i32,
     ) {
+        self.emit_lea_sib_disp(dst, base, index, scale, disp, DispSize::Auto);
+    }
+
+    pub fn emit_lea_sib_disp(
+        &mut self,
+        dst: PhysReg,
+        base: Option<PhysReg>,
+        index: PhysReg,
+        scale: u8,
+        disp: i32,
+        disp_size: DispSize,
+    ) {
         self.emit_rex(true, dst, Some(index), base.unwrap_or(PhysReg::Rbp));
         self.code.emit_u8(0x8D);
-        self.emit_modrm_sib(dst, base, index, scale, disp);
+        self.emit_modrm_sib_disp(dst, base, index, scale, disp, disp_size);
+    }
+
+    /// LEA r64, [rip + disp32]
+    pub fn emit_lea_pcrel(&mut self, dst: PhysReg, disp: i32) -> usize {
+        self.emit_rex_rr(true, dst, PhysReg::Rbp);
+        self.code.emit_u8(0x8D);
+        self.emit_modrm_pcrel(dst, disp)
     }
 
     /// XCHG r64, r64
@@ -1196,6 +1376,15 @@ pub struct X86_64Lowerer {
 
     /// Pending jumps to fix up (source offset, target block, reloc kind)
     pending_jumps: Vec<(usize, BlockId, RelocKind)>,
+
+    /// Guest base address used for PC-relative fixups
+    guest_base: GuestAddr,
+
+    /// Guest PC for blocks
+    block_guest_pcs: HashMap<BlockId, GuestAddr>,
+
+    /// Whether to adjust PC-relative displacements for code layout
+    pcrel_adjust: bool,
 }
 
 impl X86_64Lowerer {
@@ -1207,7 +1396,14 @@ impl X86_64Lowerer {
             block_offsets: HashMap::new(),
             relocations: Vec::new(),
             pending_jumps: Vec::new(),
+            guest_base: 0,
+            pcrel_adjust: true,
+            block_guest_pcs: HashMap::new(),
         }
+    }
+
+    pub fn set_pcrel_adjust(&mut self, adjust: bool) {
+        self.pcrel_adjust = adjust;
     }
 
     /// Get a physical register for a VReg, loading from stack if needed
@@ -1337,16 +1533,21 @@ impl X86_64Lowerer {
                         let mut emitter = X86Emitter::new(&mut self.code);
                         emitter.emit_mov_rr(dst_reg, base_reg, OpWidth::W64);
                     }
-                    Address::BaseOffset { base, offset } => {
+                    Address::BaseOffset {
+                        base,
+                        offset,
+                        disp_size,
+                    } => {
                         let base_reg = self.get_reg(*base)?;
                         let mut emitter = X86Emitter::new(&mut self.code);
-                        emitter.emit_lea(dst_reg, base_reg, *offset as i32);
+                        emitter.emit_lea_disp(dst_reg, base_reg, *offset as i32, *disp_size);
                     }
                     Address::BaseIndexScale {
                         base,
                         index,
                         scale,
                         disp,
+                        disp_size,
                     } => {
                         let index_reg = self.get_reg(*index)?;
                         let base_phys = match base {
@@ -1354,15 +1555,49 @@ impl X86_64Lowerer {
                             None => None,
                         };
                         let mut emitter = X86Emitter::new(&mut self.code);
-                        emitter.emit_lea_sib(dst_reg, base_phys, index_reg, *scale, *disp);
+                        emitter.emit_lea_sib_disp(
+                            dst_reg, base_phys, index_reg, *scale, *disp, *disp_size,
+                        );
                     }
-                    Address::PcRel { offset } => {
-                        // For PC-relative, compute the absolute address
-                        // This requires knowing the current PC, which we don't have here
-                        // For now, use a MOV with the computed address
-                        return Err(LowerError::UnsupportedOp {
-                            op: "Lea with PcRel address".to_string(),
-                        });
+                    Address::PcRel { offset, base, .. } => {
+                        let disp_offset = {
+                            let mut emitter = X86Emitter::new(&mut self.code);
+                            emitter.emit_lea_pcrel(dst_reg, 0)
+                        };
+                        let insn_end = self.code.position();
+
+                        let disp = if let Some(base_pc) = base {
+                            let target = (*base_pc as i64 + *offset) as u64;
+                            let disp = if self.pcrel_adjust {
+                                let next_rip = self.guest_base as i64 + insn_end as i64;
+                                target as i64 - next_rip
+                            } else {
+                                *offset
+                            };
+                            if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                                return Err(LowerError::InvalidOperand {
+                                    op: "Lea".to_string(),
+                                    operand: "PcRel offset out of range".to_string(),
+                                });
+                            }
+                            self.relocations.push(Relocation {
+                                offset: disp_offset,
+                                kind: RelocKind::PcRel32,
+                                target: RelocTarget::GuestAddr(target),
+                            });
+                            disp
+                        } else {
+                            let disp = *offset;
+                            if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                                return Err(LowerError::InvalidOperand {
+                                    op: "Lea".to_string(),
+                                    operand: "PcRel offset out of range".to_string(),
+                                });
+                            }
+                            disp
+                        };
+
+                        self.code.patch_i32(disp_offset, disp as i32);
                     }
                     Address::Absolute(addr) => {
                         // LEA with absolute address - just MOV the constant
@@ -1540,6 +1775,36 @@ impl X86_64Lowerer {
 
                 let mut emitter = X86Emitter::new(&mut self.code);
                 emitter.emit_neg(dst_reg, *width);
+            }
+
+            OpKind::Inc {
+                dst, src, width, ..
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+
+                if dst_reg != src_reg {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_mov_rr(dst_reg, src_reg, *width);
+                }
+
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_inc(dst_reg, *width);
+            }
+
+            OpKind::Dec {
+                dst, src, width, ..
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+
+                if dst_reg != src_reg {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_mov_rr(dst_reg, src_reg, *width);
+                }
+
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_dec(dst_reg, *width);
             }
 
             OpKind::MulS {
@@ -2108,6 +2373,10 @@ impl X86_64Lowerer {
             } => {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let op_width = width.to_op_width().unwrap_or(OpWidth::W64);
+                let preserve_x86_partial = matches!(dst, VReg::Arch(ArchReg::X86(_)))
+                    && matches!(op_width, OpWidth::W8 | OpWidth::W16)
+                    && matches!(sign, SignExtend::Zero);
+                let needs_extend = op_width != OpWidth::W64 && !preserve_x86_partial;
 
                 match addr {
                     Address::Direct(base) => {
@@ -2116,7 +2385,7 @@ impl X86_64Lowerer {
                         emitter.emit_mov_rm(dst_reg, base_reg, 0, op_width);
 
                         // Sign/zero extend if loading smaller than 64-bit
-                        if op_width != OpWidth::W64 {
+                        if needs_extend {
                             match sign {
                                 SignExtend::Zero => {
                                     // 32-bit loads automatically zero-extend
@@ -2135,12 +2404,22 @@ impl X86_64Lowerer {
                             }
                         }
                     }
-                    Address::BaseOffset { base, offset } => {
+                    Address::BaseOffset {
+                        base,
+                        offset,
+                        disp_size,
+                    } => {
                         let base_reg = self.get_reg(*base)?;
                         let mut emitter = X86Emitter::new(&mut self.code);
-                        emitter.emit_mov_rm(dst_reg, base_reg, *offset as i32, op_width);
+                        emitter.emit_mov_rm_disp(
+                            dst_reg,
+                            base_reg,
+                            *offset as i32,
+                            *disp_size,
+                            op_width,
+                        );
 
-                        if op_width != OpWidth::W64 {
+                        if needs_extend {
                             match sign {
                                 SignExtend::Zero => {
                                     if op_width != OpWidth::W32 {
@@ -2158,11 +2437,71 @@ impl X86_64Lowerer {
                             }
                         }
                     }
+                    Address::PcRel { offset, base, .. } => {
+                        let disp_offset = {
+                            let mut emitter = X86Emitter::new(&mut self.code);
+                            emitter.emit_mov_rm_pcrel(dst_reg, 0, op_width)
+                        };
+                        let insn_end = self.code.position();
+
+                        let disp = if let Some(base_pc) = base {
+                            let target = (*base_pc as i64 + *offset) as u64;
+                            let disp = if self.pcrel_adjust {
+                                let next_rip = self.guest_base as i64 + insn_end as i64;
+                                target as i64 - next_rip
+                            } else {
+                                *offset
+                            };
+                            if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                                return Err(LowerError::InvalidOperand {
+                                    op: "Load".to_string(),
+                                    operand: "PcRel offset out of range".to_string(),
+                                });
+                            }
+                            self.relocations.push(Relocation {
+                                offset: disp_offset,
+                                kind: RelocKind::PcRel32,
+                                target: RelocTarget::GuestAddr(target),
+                            });
+                            disp
+                        } else {
+                            let disp = *offset;
+                            if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                                return Err(LowerError::InvalidOperand {
+                                    op: "Load".to_string(),
+                                    operand: "PcRel offset out of range".to_string(),
+                                });
+                            }
+                            disp
+                        };
+
+                        self.code.patch_i32(disp_offset, disp as i32);
+
+                        if needs_extend {
+                            match sign {
+                                SignExtend::Zero => {
+                                    if op_width != OpWidth::W32 {
+                                        let mut emitter = X86Emitter::new(&mut self.code);
+                                        emitter.emit_movzx(
+                                            dst_reg,
+                                            dst_reg,
+                                            op_width,
+                                            OpWidth::W64,
+                                        );
+                                    }
+                                }
+                                SignExtend::Sign => {
+                                    let mut emitter = X86Emitter::new(&mut self.code);
+                                    emitter.emit_movsx(dst_reg, dst_reg, op_width, OpWidth::W64);
+                                }
+                            }
+                        }
+                    }
                     Address::Absolute(abs_addr) => {
                         let mut emitter = X86Emitter::new(&mut self.code);
                         emitter.emit_mov_rm_abs(dst_reg, *abs_addr, op_width);
 
-                        if op_width != OpWidth::W64 {
+                        if needs_extend {
                             match sign {
                                 SignExtend::Zero => {
                                     if op_width != OpWidth::W32 {
@@ -2185,14 +2524,16 @@ impl X86_64Lowerer {
                         index,
                         scale,
                         disp,
+                        disp_size,
                     } => {
                         let base_reg = base.map(|b| self.get_reg(b)).transpose()?;
                         let index_reg = self.get_reg(*index)?;
                         let mut emitter = X86Emitter::new(&mut self.code);
-                        emitter
-                            .emit_mov_rm_sib(dst_reg, base_reg, index_reg, *scale, *disp, op_width);
+                        emitter.emit_mov_rm_sib_disp(
+                            dst_reg, base_reg, index_reg, *scale, *disp, *disp_size, op_width,
+                        );
 
-                        if op_width != OpWidth::W64 {
+                        if needs_extend {
                             match sign {
                                 SignExtend::Zero => {
                                     if op_width != OpWidth::W32 {
@@ -2228,10 +2569,60 @@ impl X86_64Lowerer {
                         let mut emitter = X86Emitter::new(&mut self.code);
                         emitter.emit_mov_mr(base_reg, 0, src_reg, op_width);
                     }
-                    Address::BaseOffset { base, offset } => {
+                    Address::BaseOffset {
+                        base,
+                        offset,
+                        disp_size,
+                    } => {
                         let base_reg = self.get_reg(*base)?;
                         let mut emitter = X86Emitter::new(&mut self.code);
-                        emitter.emit_mov_mr(base_reg, *offset as i32, src_reg, op_width);
+                        emitter.emit_mov_mr_disp(
+                            base_reg,
+                            *offset as i32,
+                            *disp_size,
+                            src_reg,
+                            op_width,
+                        );
+                    }
+                    Address::PcRel { offset, base, .. } => {
+                        let disp_offset = {
+                            let mut emitter = X86Emitter::new(&mut self.code);
+                            emitter.emit_mov_mr_pcrel(0, src_reg, op_width)
+                        };
+                        let insn_end = self.code.position();
+
+                        let disp = if let Some(base_pc) = base {
+                            let target = (*base_pc as i64 + *offset) as u64;
+                            let disp = if self.pcrel_adjust {
+                                let next_rip = self.guest_base as i64 + insn_end as i64;
+                                target as i64 - next_rip
+                            } else {
+                                *offset
+                            };
+                            if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                                return Err(LowerError::InvalidOperand {
+                                    op: "Store".to_string(),
+                                    operand: "PcRel offset out of range".to_string(),
+                                });
+                            }
+                            self.relocations.push(Relocation {
+                                offset: disp_offset,
+                                kind: RelocKind::PcRel32,
+                                target: RelocTarget::GuestAddr(target),
+                            });
+                            disp
+                        } else {
+                            let disp = *offset;
+                            if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                                return Err(LowerError::InvalidOperand {
+                                    op: "Store".to_string(),
+                                    operand: "PcRel offset out of range".to_string(),
+                                });
+                            }
+                            disp
+                        };
+
+                        self.code.patch_i32(disp_offset, disp as i32);
                     }
                     Address::Absolute(abs_addr) => {
                         let mut emitter = X86Emitter::new(&mut self.code);
@@ -2242,16 +2633,178 @@ impl X86_64Lowerer {
                         index,
                         scale,
                         disp,
+                        disp_size,
                     } => {
                         let base_reg = base.map(|b| self.get_reg(b)).transpose()?;
                         let index_reg = self.get_reg(*index)?;
                         let mut emitter = X86Emitter::new(&mut self.code);
-                        emitter
-                            .emit_mov_mr_sib(base_reg, index_reg, *scale, *disp, src_reg, op_width);
+                        emitter.emit_mov_mr_sib_disp(
+                            base_reg, index_reg, *scale, *disp, *disp_size, src_reg, op_width,
+                        );
                     }
                     _ => {
                         return Err(LowerError::UnsupportedOp {
                             op: format!("Store with unsupported addressing: {:?}", addr),
+                        });
+                    }
+                }
+            }
+
+            OpKind::RepStos {
+                dst,
+                src,
+                count,
+                width,
+            } => {
+                let dst_reg = self.get_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                let count_reg = self.get_reg(*count)?;
+
+                if dst_reg != PhysReg::Rdi || src_reg != PhysReg::Rax || count_reg != PhysReg::Rcx {
+                    return Err(LowerError::InvalidOperand {
+                        op: "RepStos".to_string(),
+                        operand: "requires RDI/RAX/RCX".to_string(),
+                    });
+                }
+
+                let mut emitter = X86Emitter::new(&mut self.code);
+                match width {
+                    MemWidth::B1 | MemWidth::B2 | MemWidth::B4 | MemWidth::B8 => {
+                        emitter.emit_rep_stos(*width);
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("RepStos width {:?}", width),
+                        });
+                    }
+                }
+            }
+
+            OpKind::IoIn { dst, port, width } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                if dst_reg != PhysReg::Rax {
+                    return Err(LowerError::InvalidOperand {
+                        op: "IoIn".to_string(),
+                        operand: "destination must be RAX".to_string(),
+                    });
+                }
+
+                let imm_port = if let VReg::Imm(val) = port {
+                    if *val < 0 || *val > u8::MAX as i64 {
+                        return Err(LowerError::InvalidOperand {
+                            op: "IoIn".to_string(),
+                            operand: "port immediate out of range".to_string(),
+                        });
+                    }
+                    Some(*val as u8)
+                } else {
+                    None
+                };
+
+                if imm_port.is_none() {
+                    let port_reg = self.get_reg(*port)?;
+                    if port_reg != PhysReg::Rdx {
+                        return Err(LowerError::InvalidOperand {
+                            op: "IoIn".to_string(),
+                            operand: "port must be DX".to_string(),
+                        });
+                    }
+                }
+
+                match width {
+                    MemWidth::B1 => {
+                        if let Some(port) = imm_port {
+                            self.code.emit_u8(0xE4);
+                            self.code.emit_u8(port);
+                        } else {
+                            self.code.emit_u8(0xEC);
+                        }
+                    }
+                    MemWidth::B2 => {
+                        self.code.emit_u8(0x66);
+                        if let Some(port) = imm_port {
+                            self.code.emit_u8(0xE5);
+                            self.code.emit_u8(port);
+                        } else {
+                            self.code.emit_u8(0xED);
+                        }
+                    }
+                    MemWidth::B4 => {
+                        if let Some(port) = imm_port {
+                            self.code.emit_u8(0xE5);
+                            self.code.emit_u8(port);
+                        } else {
+                            self.code.emit_u8(0xED);
+                        }
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("IoIn width {:?}", width),
+                        });
+                    }
+                }
+            }
+
+            OpKind::IoOut { port, value, width } => {
+                let value_reg = self.get_reg(*value)?;
+                if value_reg != PhysReg::Rax {
+                    return Err(LowerError::InvalidOperand {
+                        op: "IoOut".to_string(),
+                        operand: "value must be RAX".to_string(),
+                    });
+                }
+
+                let imm_port = if let VReg::Imm(val) = port {
+                    if *val < 0 || *val > u8::MAX as i64 {
+                        return Err(LowerError::InvalidOperand {
+                            op: "IoOut".to_string(),
+                            operand: "port immediate out of range".to_string(),
+                        });
+                    }
+                    Some(*val as u8)
+                } else {
+                    None
+                };
+
+                if imm_port.is_none() {
+                    let port_reg = self.get_reg(*port)?;
+                    if port_reg != PhysReg::Rdx {
+                        return Err(LowerError::InvalidOperand {
+                            op: "IoOut".to_string(),
+                            operand: "port must be DX".to_string(),
+                        });
+                    }
+                }
+
+                match width {
+                    MemWidth::B1 => {
+                        if let Some(port) = imm_port {
+                            self.code.emit_u8(0xE6);
+                            self.code.emit_u8(port);
+                        } else {
+                            self.code.emit_u8(0xEE);
+                        }
+                    }
+                    MemWidth::B2 => {
+                        self.code.emit_u8(0x66);
+                        if let Some(port) = imm_port {
+                            self.code.emit_u8(0xE7);
+                            self.code.emit_u8(port);
+                        } else {
+                            self.code.emit_u8(0xEF);
+                        }
+                    }
+                    MemWidth::B4 => {
+                        if let Some(port) = imm_port {
+                            self.code.emit_u8(0xE7);
+                            self.code.emit_u8(port);
+                        } else {
+                            self.code.emit_u8(0xEF);
+                        }
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("IoOut width {:?}", width),
                         });
                     }
                 }
@@ -2370,6 +2923,74 @@ impl X86_64Lowerer {
                 self.emit_epilogue();
             }
 
+            Terminator::Call {
+                target,
+                continuation,
+                ..
+            } => match target {
+                CallTarget::GuestAddr(addr) => {
+                    let call_pos = self.code.position();
+                    let next_rip = if self.pcrel_adjust {
+                        self.guest_base as i64 + (call_pos + 5) as i64
+                    } else {
+                        self.block_guest_pcs
+                            .get(continuation)
+                            .copied()
+                            .unwrap_or(self.guest_base + (call_pos + 5) as u64)
+                            as i64
+                    };
+                    let rel = *addr as i64 - next_rip;
+                    if rel < i32::MIN as i64 || rel > i32::MAX as i64 {
+                        return Err(LowerError::RelocationOutOfRange {
+                            offset: call_pos,
+                            target: *addr as usize,
+                        });
+                    }
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_call_rel32(rel as i32);
+                }
+                CallTarget::Indirect(reg) => {
+                    let target_reg = self.get_reg(*reg)?;
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_call_reg(target_reg);
+                }
+                _ => {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("Call target {:?}", target),
+                    });
+                }
+            },
+
+            Terminator::TailCall { target, .. } => match target {
+                CallTarget::GuestAddr(addr) => {
+                    let jmp_pos = self.code.position();
+                    let next_rip = if self.pcrel_adjust {
+                        self.guest_base as i64 + (jmp_pos + 5) as i64
+                    } else {
+                        self.guest_base as i64 + (jmp_pos + 5) as i64
+                    };
+                    let rel = *addr as i64 - next_rip;
+                    if rel < i32::MIN as i64 || rel > i32::MAX as i64 {
+                        return Err(LowerError::RelocationOutOfRange {
+                            offset: jmp_pos,
+                            target: *addr as usize,
+                        });
+                    }
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_jmp_rel32(rel as i32);
+                }
+                CallTarget::Indirect(reg) => {
+                    let target_reg = self.get_reg(*reg)?;
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_jmp_reg(target_reg);
+                }
+                _ => {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("TailCall target {:?}", target),
+                    });
+                }
+            },
+
             Terminator::Unreachable => {
                 let mut emitter = X86Emitter::new(&mut self.code);
                 emitter.emit_ud2();
@@ -2385,18 +3006,90 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    fn is_rsp(&self, vreg: VReg) -> bool {
+        matches!(vreg, VReg::Arch(ArchReg::X86(X86Reg::Rsp)))
+    }
+
+    fn try_lower_push_pop(
+        &mut self,
+        ops: &[crate::smir::ops::SmirOp],
+        idx: usize,
+    ) -> Result<Option<usize>, LowerError> {
+        if idx + 1 >= ops.len() {
+            return Ok(None);
+        }
+
+        match (&ops[idx].kind, &ops[idx + 1].kind) {
+            (
+                OpKind::Sub {
+                    dst,
+                    src1,
+                    src2: SrcOperand::Imm(8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                OpKind::Store {
+                    src,
+                    addr: Address::Direct(addr_base),
+                    width: MemWidth::B8,
+                },
+            ) if *dst == *src1 && self.is_rsp(*dst) && self.is_rsp(*addr_base) => {
+                if matches!(src, VReg::Arch(ArchReg::X86(X86Reg::Rsp))) {
+                    return Ok(None);
+                }
+                let src_reg = self.get_reg(*src)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_push(src_reg);
+                return Ok(Some(2));
+            }
+            (
+                OpKind::Load {
+                    dst,
+                    addr: Address::Direct(addr_base),
+                    width: MemWidth::B8,
+                    sign: SignExtend::Zero,
+                },
+                OpKind::Add {
+                    dst: add_dst,
+                    src1,
+                    src2: SrcOperand::Imm(8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ) if *add_dst == *src1 && self.is_rsp(*add_dst) && self.is_rsp(*addr_base) => {
+                if matches!(dst, VReg::Arch(ArchReg::X86(X86Reg::Rsp))) {
+                    return Ok(None);
+                }
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_pop(dst_reg);
+                return Ok(Some(2));
+            }
+            _ => {}
+        }
+
+        Ok(None)
+    }
+
     /// Lower a single basic block
     fn lower_block(&mut self, block: &SmirBlock) -> Result<(), LowerError> {
         // Record block offset
         self.block_offsets.insert(block.id, self.code.position());
+        self.block_guest_pcs.insert(block.id, block.guest_pc);
 
         // Initialize register allocator for this block
         self.regalloc.begin_block(block);
 
         // Lower each operation
-        for (idx, op) in block.ops.iter().enumerate() {
+        let mut idx = 0;
+        while idx < block.ops.len() {
             self.regalloc.set_current_idx(idx);
-            self.lower_op(op)?;
+            if let Some(consumed) = self.try_lower_push_pop(&block.ops, idx)? {
+                idx += consumed;
+                continue;
+            }
+            self.lower_op(&block.ops[idx])?;
+            idx += 1;
         }
 
         // Lower terminator
@@ -2462,6 +3155,12 @@ impl SmirLowerer for X86_64Lowerer {
         self.block_offsets.clear();
         self.relocations.clear();
         self.pending_jumps.clear();
+        self.guest_base = func.guest_range.0;
+        self.block_guest_pcs = func
+            .blocks
+            .iter()
+            .map(|block| (block.id, block.guest_pc))
+            .collect();
 
         let entry_offset = self.code.position();
 

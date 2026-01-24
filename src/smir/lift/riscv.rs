@@ -505,6 +505,7 @@ impl RiscVLifter {
             let address = Address::BaseOffset {
                 base: rs1,
                 offset: imm,
+                disp_size: DispSize::Auto,
             };
             ops.push(SmirOp::new(
                 ctx.next_op_id(),
@@ -553,6 +554,7 @@ impl RiscVLifter {
         let address = Address::BaseOffset {
             base: rs1,
             offset: imm,
+            disp_size: DispSize::Auto,
         };
 
         ops.push(SmirOp::new(
@@ -1636,7 +1638,11 @@ impl RiscVLifter {
                 addr,
                 OpKind::Load {
                     dst,
-                    addr: Address::BaseOffset { base, offset: uimm },
+                    addr: Address::BaseOffset {
+                        base,
+                        offset: uimm,
+                        disp_size: DispSize::Auto,
+                    },
                     width: MemWidth::B4,
                     sign: SignExtend::Sign,
                 },
@@ -1666,7 +1672,11 @@ impl RiscVLifter {
                 addr,
                 OpKind::Load {
                     dst,
-                    addr: Address::BaseOffset { base, offset: uimm },
+                    addr: Address::BaseOffset {
+                        base,
+                        offset: uimm,
+                        disp_size: DispSize::Auto,
+                    },
                     width: MemWidth::B8,
                     sign: SignExtend::Zero,
                 },
@@ -1697,7 +1707,11 @@ impl RiscVLifter {
             addr,
             OpKind::Store {
                 src,
-                addr: Address::BaseOffset { base, offset: uimm },
+                addr: Address::BaseOffset {
+                    base,
+                    offset: uimm,
+                    disp_size: DispSize::Auto,
+                },
                 width: MemWidth::B4,
             },
         )];
@@ -1724,7 +1738,11 @@ impl RiscVLifter {
             addr,
             OpKind::Store {
                 src,
-                addr: Address::BaseOffset { base, offset: uimm },
+                addr: Address::BaseOffset {
+                    base,
+                    offset: uimm,
+                    disp_size: DispSize::Auto,
+                },
                 width: MemWidth::B8,
             },
         )];
@@ -2303,6 +2321,7 @@ impl RiscVLifter {
                     addr: Address::BaseOffset {
                         base: sp,
                         offset: uimm,
+                        disp_size: DispSize::Auto,
                     },
                     width: MemWidth::B4,
                     sign: SignExtend::Sign,
@@ -2344,6 +2363,7 @@ impl RiscVLifter {
                     addr: Address::BaseOffset {
                         base: sp,
                         offset: uimm,
+                        disp_size: DispSize::Auto,
                     },
                     width: MemWidth::B8,
                     sign: SignExtend::Zero,
@@ -2459,6 +2479,7 @@ impl RiscVLifter {
                 addr: Address::BaseOffset {
                     base: sp,
                     offset: uimm,
+                    disp_size: DispSize::Auto,
                 },
                 width: MemWidth::B4,
             },
@@ -2488,6 +2509,7 @@ impl RiscVLifter {
                 addr: Address::BaseOffset {
                     base: sp,
                     offset: uimm,
+                    disp_size: DispSize::Auto,
                 },
                 width: MemWidth::B8,
             },

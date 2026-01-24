@@ -259,6 +259,36 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::Inc {
+                dst,
+                src,
+                width,
+                flags,
+            } => {
+                let a = ctx.read_vreg(*src);
+                let result = a.wrapping_add(1) & width.mask();
+                Self::write_x86_partial(ctx, *dst, result, *width);
+
+                if flags.updates_any() {
+                    ctx.flags.lazy = Some(LazyFlags::inc(a, result, *width));
+                }
+            }
+
+            OpKind::Dec {
+                dst,
+                src,
+                width,
+                flags,
+            } => {
+                let a = ctx.read_vreg(*src);
+                let result = a.wrapping_sub(1) & width.mask();
+                Self::write_x86_partial(ctx, *dst, result, *width);
+
+                if flags.updates_any() {
+                    ctx.flags.lazy = Some(LazyFlags::dec(a, result, *width));
+                }
+            }
+
             OpKind::Cmp { src1, src2, width } => {
                 let a = ctx.read_vreg(*src1);
                 let b = self.read_src_operand(ctx, src2);
@@ -905,8 +935,8 @@ impl SmirInterpreter {
             // DATA MOVEMENT
             // ==================================================================
             OpKind::Mov { dst, src, width } => {
-                let val = self.read_src_operand(ctx, src) & width.mask();
-                ctx.write_vreg(*dst, val);
+                let val = self.read_src_operand(ctx, src);
+                Self::write_x86_partial(ctx, *dst, val, *width);
             }
 
             OpKind::CMove {
@@ -996,7 +1026,12 @@ impl SmirInterpreter {
             } => {
                 let effective_addr = self.compute_address(ctx, addr);
                 let val = self.load_memory(memory, effective_addr, *width, *sign)?;
-                ctx.write_vreg(*dst, val);
+                let op_width = width.to_op_width().unwrap_or(OpWidth::W64);
+                if *sign == SignExtend::Zero {
+                    Self::write_x86_partial(ctx, *dst, val, op_width);
+                } else {
+                    ctx.write_vreg(*dst, val);
+                }
             }
 
             OpKind::Store { src, addr, width } => {
@@ -1004,6 +1039,33 @@ impl SmirInterpreter {
                 let val = ctx.read_vreg(*src);
                 self.store_memory(memory, effective_addr, val, *width)?;
             }
+
+            OpKind::RepStos {
+                dst,
+                src,
+                count,
+                width,
+            } => {
+                let mut addr = ctx.read_vreg(*dst);
+                let mut remaining = ctx.read_vreg(*count);
+                let val = ctx.read_vreg(*src);
+                let stride = width.bytes() as u64;
+
+                while remaining > 0 {
+                    self.store_memory(memory, addr, val, *width)?;
+                    addr = addr.wrapping_add(stride);
+                    remaining -= 1;
+                }
+
+                ctx.write_vreg(*dst, addr);
+                ctx.write_vreg(*count, remaining);
+            }
+
+            OpKind::IoIn { dst, .. } => {
+                ctx.write_vreg(*dst, 0);
+            }
+
+            OpKind::IoOut { .. } => {}
 
             OpKind::LoadPair {
                 dst1,
@@ -1553,6 +1615,18 @@ impl SmirInterpreter {
         Ok(())
     }
 
+    fn write_x86_partial(ctx: &mut SmirContext, dst: VReg, value: u64, width: OpWidth) {
+        if let VReg::Arch(ArchReg::X86(_)) = dst {
+            if matches!(width, OpWidth::W8 | OpWidth::W16) {
+                let mask = width.mask();
+                let prev = ctx.read_vreg(dst);
+                ctx.write_vreg(dst, (prev & !mask) | (value & mask));
+                return;
+            }
+        }
+        ctx.write_vreg(dst, value & width.mask());
+    }
+
     /// Execute block terminator
     fn execute_terminator(
         &self,
@@ -1748,18 +1822,24 @@ impl SmirInterpreter {
     fn compute_address(&self, ctx: &SmirContext, addr: &Address) -> GuestAddr {
         match addr {
             Address::Direct(r) => ctx.read_vreg(*r),
-            Address::BaseOffset { base, offset } => (ctx.read_vreg(*base) as i64 + offset) as u64,
+            Address::BaseOffset { base, offset, .. } => {
+                (ctx.read_vreg(*base) as i64 + offset) as u64
+            }
             Address::BaseIndexScale {
                 base,
                 index,
                 scale,
                 disp,
+                ..
             } => {
                 let base_val = base.map(|b| ctx.read_vreg(b)).unwrap_or(0);
                 let index_val = ctx.read_vreg(*index);
                 (base_val as i64 + (index_val as i64 * *scale as i64) + *disp as i64) as u64
             }
-            Address::PcRel { offset } => (ctx.pc as i64 + offset) as u64,
+            Address::PcRel { offset, base, .. } => {
+                let base_pc = base.unwrap_or(ctx.pc);
+                (base_pc as i64 + offset) as u64
+            }
             Address::GpRel { offset } => {
                 let gp = match &ctx.arch_regs {
                     ArchRegState::Hexagon(hex) => hex.gp as u64,

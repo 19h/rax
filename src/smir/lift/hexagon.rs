@@ -77,6 +77,7 @@ impl HexagonLifter {
                 Address::BaseOffset {
                     base: self.hex_reg(*base),
                     offset: offset as i64,
+                    disp_size: DispSize::Auto,
                 }
             }
             AddrMode::PostIncImm { base, offset: _ } => {
@@ -800,6 +801,7 @@ impl HexagonLifter {
                     addr: Address::BaseOffset {
                         base: sp,
                         offset: *size as i64,
+                        disp_size: DispSize::Auto,
                     },
                     width: MemWidth::B4,
                 });
@@ -810,6 +812,7 @@ impl HexagonLifter {
                     addr: Address::BaseOffset {
                         base: sp,
                         offset: (*size + 4) as i64,
+                        disp_size: DispSize::Auto,
                     },
                     width: MemWidth::B4,
                 });
@@ -850,6 +853,7 @@ impl HexagonLifter {
                         addr: Address::BaseOffset {
                             base: self.hex_reg(*base),
                             offset: 4,
+                            disp_size: DispSize::Auto,
                         },
                         width: MemWidth::B4,
                         sign: SignExtend::Zero,
@@ -891,6 +895,7 @@ impl HexagonLifter {
                         addr: Address::BaseOffset {
                             base: self.hex_reg(*base),
                             offset: 4,
+                            disp_size: DispSize::Auto,
                         },
                         width: MemWidth::B4,
                         sign: SignExtend::Zero,

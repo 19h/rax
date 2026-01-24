@@ -81,6 +81,22 @@ pub enum OpKind {
         flags: FlagUpdate,
     },
 
+    /// Increment: dst = src + 1
+    Inc {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Decrement: dst = src - 1
+    Dec {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
     /// Compare (subtract without storing): flags = src1 - src2
     Cmp {
         src1: VReg,
@@ -429,6 +445,14 @@ pub enum OpKind {
         width: MemWidth,
     },
 
+    /// Repeat store (x86 REP STOS)
+    RepStos {
+        dst: VReg,
+        src: VReg,
+        count: VReg,
+        width: MemWidth,
+    },
+
     /// Load pair (ARM LDP)
     LoadPair {
         dst1: VReg,
@@ -751,6 +775,20 @@ pub enum OpKind {
         width: VecWidth,
     },
 
+    /// I/O port input
+    IoIn {
+        dst: VReg,
+        port: VReg,
+        width: MemWidth,
+    },
+
+    /// I/O port output
+    IoOut {
+        port: VReg,
+        value: VReg,
+        width: MemWidth,
+    },
+
     /// Broadcast scalar to all lanes
     VBroadcast {
         dst: VReg,
@@ -824,6 +862,8 @@ impl OpKind {
             | OpKind::Adc { dst, .. }
             | OpKind::Sbb { dst, .. }
             | OpKind::Neg { dst, .. }
+            | OpKind::Inc { dst, .. }
+            | OpKind::Dec { dst, .. }
             | OpKind::And { dst, .. }
             | OpKind::Or { dst, .. }
             | OpKind::Xor { dst, .. }
@@ -885,6 +925,7 @@ impl OpKind {
             | OpKind::VShuffle { dst, .. }
             | OpKind::VLoad { dst, .. }
             | OpKind::VBroadcast { dst, .. }
+            | OpKind::IoIn { dst, .. }
             | OpKind::ReadFlags { dst, .. }
             | OpKind::TestCondition { dst, .. }
             | OpKind::SetCC { dst, .. }
@@ -907,6 +948,8 @@ impl OpKind {
             }
 
             OpKind::MulAdd { dst, .. } | OpKind::MulSub { dst, .. } => vec![*dst],
+
+            OpKind::RepStos { dst, count, .. } => vec![*dst, *count],
 
             OpKind::LoadPair { dst1, dst2, .. } => vec![*dst1, *dst2],
 
@@ -933,6 +976,7 @@ impl OpKind {
             | OpKind::CmcCF
             | OpKind::MaterializeFlags
             | OpKind::Syscall { .. }
+            | OpKind::IoOut { .. }
             | OpKind::Swi { .. }
             | OpKind::WriteSysReg { .. }
             | OpKind::Nop
@@ -946,11 +990,14 @@ impl OpKind {
         matches!(
             self,
             OpKind::Store { .. }
+                | OpKind::RepStos { .. }
                 | OpKind::StorePair { .. }
                 | OpKind::AtomicStore { .. }
                 | OpKind::AtomicRmw { .. }
                 | OpKind::Cas { .. }
                 | OpKind::StoreExclusive { .. }
+                | OpKind::IoIn { .. }
+                | OpKind::IoOut { .. }
                 | OpKind::ClearExclusive
                 | OpKind::Fence { .. }
                 | OpKind::VStore { .. }
@@ -984,6 +1031,7 @@ impl OpKind {
         matches!(
             self,
             OpKind::Store { .. }
+                | OpKind::RepStos { .. }
                 | OpKind::StorePair { .. }
                 | OpKind::AtomicStore { .. }
                 | OpKind::AtomicRmw { .. }

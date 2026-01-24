@@ -222,6 +222,8 @@ pub struct X86Address {
     pub disp: i64,
     /// RIP-relative addressing?
     pub rip_relative: bool,
+    /// Displacement size hint
+    pub disp_size: DispSize,
 }
 
 /// Decode ModR/M byte and any following SIB/displacement
@@ -263,6 +265,7 @@ fn decode_modrm(bytes: &[u8], prefix: &X86Prefix, addr: u64) -> Result<ModRm, Li
         scale: 1,
         disp: 0,
         rip_relative: false,
+        disp_size: DispSize::Auto,
     };
 
     if rm_field == 4 {
@@ -309,6 +312,7 @@ fn decode_modrm(bytes: &[u8], prefix: &X86Prefix, addr: u64) -> Result<ModRm, Li
             ]) as i64;
             consumed += 4;
             x86_addr.disp = disp;
+            x86_addr.disp_size = DispSize::Disp32;
         } else {
             x86_addr.base = Some(base);
         }
@@ -325,6 +329,7 @@ fn decode_modrm(bytes: &[u8], prefix: &X86Prefix, addr: u64) -> Result<ModRm, Li
         consumed += 4;
         x86_addr.disp = disp;
         x86_addr.rip_relative = true;
+        x86_addr.disp_size = DispSize::Disp32;
     } else {
         // Regular register indirect
         x86_addr.base = Some(rm);
@@ -342,6 +347,7 @@ fn decode_modrm(bytes: &[u8], prefix: &X86Prefix, addr: u64) -> Result<ModRm, Li
             }
             x86_addr.disp = bytes[consumed] as i8 as i64;
             consumed += 1;
+            x86_addr.disp_size = DispSize::Disp8;
         }
         2 => {
             if bytes.len() < consumed + 4 {
@@ -358,6 +364,7 @@ fn decode_modrm(bytes: &[u8], prefix: &X86Prefix, addr: u64) -> Result<ModRm, Li
                 bytes[consumed + 3],
             ]) as i64;
             consumed += 4;
+            x86_addr.disp_size = DispSize::Disp32;
         }
         _ => {}
     }
@@ -433,9 +440,14 @@ impl X86_64Lifter {
         };
 
         if x86_addr.rip_relative {
-            // RIP-relative: compute RIP + disp as immediate address
-            let effective = (next_rip as i64 + x86_addr.disp) as u64;
-            return (Address::Absolute(effective), pre_ops);
+            return (
+                Address::PcRel {
+                    offset: x86_addr.disp,
+                    disp_size: x86_addr.disp_size,
+                    base: Some(next_rip),
+                },
+                pre_ops,
+            );
         }
 
         match (x86_addr.base, x86_addr.index) {
@@ -444,13 +456,14 @@ impl X86_64Lifter {
                 (Address::Absolute(x86_addr.disp as u64), pre_ops)
             }
             (Some(base), None) => {
-                if x86_addr.disp == 0 {
+                if x86_addr.disp == 0 && x86_addr.disp_size == DispSize::Auto {
                     (Address::Direct(self.gpr(base)), pre_ops)
                 } else {
                     (
                         Address::BaseOffset {
                             base: self.gpr(base),
                             offset: x86_addr.disp,
+                            disp_size: x86_addr.disp_size,
                         },
                         pre_ops,
                     )
@@ -464,6 +477,7 @@ impl X86_64Lifter {
                             index: self.gpr(index),
                             scale: x86_addr.scale,
                             disp,
+                            disp_size: x86_addr.disp_size,
                         },
                         pre_ops,
                     )
@@ -525,6 +539,7 @@ impl X86_64Lifter {
                             index: self.gpr(index),
                             scale: x86_addr.scale,
                             disp,
+                            disp_size: x86_addr.disp_size,
                         },
                         pre_ops,
                     )
@@ -576,6 +591,7 @@ impl X86_64Lifter {
                             Address::BaseOffset {
                                 base: tmp_sum,
                                 offset: x86_addr.disp,
+                                disp_size: x86_addr.disp_size,
                             },
                             pre_ops,
                         )
@@ -691,7 +707,7 @@ impl X86_64Lifter {
         };
 
         // Determine operation from opcode high bits
-        let result = ctx.alloc_vreg();
+        let result = dst;
         let op_kind = match (opcode >> 3) & 0x07 {
             0 => OpKind::Add {
                 dst: result,
@@ -776,27 +792,210 @@ impl X86_64Lifter {
                     width: self.size_to_memwidth(op_size),
                 },
             ));
-        } else if !modrm.is_memory {
-            // Register destination - copy result
-            let dst_reg = if dir_rm_reg {
-                self.gpr(modrm.rm)
-            } else {
-                self.gpr(modrm.reg)
-            };
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Mov {
-                    dst: dst_reg,
-                    src: SrcOperand::Reg(result),
-                    width,
-                },
-            ));
         }
 
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift Group 1 immediate instructions (80/81/83)
+    fn lift_group1_imm(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let is_8bit = opcode == 0x80;
+        let op_size = if is_8bit { 1 } else { prefix.op_size() };
+        let width = self.size_to_width(op_size);
+        let mem_width = self.size_to_memwidth(op_size);
+
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let imm_offset = modrm.bytes_consumed;
+
+        let (imm, imm_size) = match opcode {
+            0x80 => {
+                if bytes.len() < imm_offset + 1 {
+                    return Err(LiftError::Incomplete {
+                        addr: pc,
+                        have: bytes.len(),
+                        need: imm_offset + 1,
+                    });
+                }
+                (bytes[imm_offset] as i8 as i64, 1)
+            }
+            0x81 => {
+                let imm_size = if op_size == 2 { 2 } else { 4 };
+                if bytes.len() < imm_offset + imm_size {
+                    return Err(LiftError::Incomplete {
+                        addr: pc,
+                        have: bytes.len(),
+                        need: imm_offset + imm_size,
+                    });
+                }
+                let imm = if imm_size == 2 {
+                    i16::from_le_bytes([bytes[imm_offset], bytes[imm_offset + 1]]) as i64
+                } else {
+                    i32::from_le_bytes([
+                        bytes[imm_offset],
+                        bytes[imm_offset + 1],
+                        bytes[imm_offset + 2],
+                        bytes[imm_offset + 3],
+                    ]) as i64
+                };
+                (imm, imm_size)
+            }
+            0x83 => {
+                if bytes.len() < imm_offset + 1 {
+                    return Err(LiftError::Incomplete {
+                        addr: pc,
+                        have: bytes.len(),
+                        need: imm_offset + 1,
+                    });
+                }
+                (bytes[imm_offset] as i8 as i64, 1)
+            }
+            _ => unreachable!(),
+        };
+
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64 + imm_size as u64;
+        let mut ops = Vec::new();
+
+        let (dst, addr) = if modrm.is_memory {
+            let x86_addr = modrm.addr.as_ref().unwrap();
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            ops.extend(pre_ops);
+
+            let tmp = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: tmp,
+                    addr: addr.clone(),
+                    width: mem_width,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            (tmp, Some(addr))
+        } else {
+            (self.gpr(modrm.rm), None)
+        };
+
+        let group = (modrm.byte >> 3) & 0x07;
+        match group {
+            0 => ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Add {
+                    dst,
+                    src1: dst,
+                    src2: SrcOperand::Imm(imm),
+                    width,
+                    flags: FlagUpdate::All,
+                },
+            )),
+            1 => ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Or {
+                    dst,
+                    src1: dst,
+                    src2: SrcOperand::Imm(imm),
+                    width,
+                    flags: FlagUpdate::All,
+                },
+            )),
+            2 => ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Adc {
+                    dst,
+                    src1: dst,
+                    src2: SrcOperand::Imm(imm),
+                    width,
+                    flags: FlagUpdate::All,
+                },
+            )),
+            3 => ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Sbb {
+                    dst,
+                    src1: dst,
+                    src2: SrcOperand::Imm(imm),
+                    width,
+                    flags: FlagUpdate::All,
+                },
+            )),
+            4 => ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::And {
+                    dst,
+                    src1: dst,
+                    src2: SrcOperand::Imm(imm),
+                    width,
+                    flags: FlagUpdate::All,
+                },
+            )),
+            5 => ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Sub {
+                    dst,
+                    src1: dst,
+                    src2: SrcOperand::Imm(imm),
+                    width,
+                    flags: FlagUpdate::All,
+                },
+            )),
+            6 => ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Xor {
+                    dst,
+                    src1: dst,
+                    src2: SrcOperand::Imm(imm),
+                    width,
+                    flags: FlagUpdate::All,
+                },
+            )),
+            7 => {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Cmp {
+                        src1: dst,
+                        src2: SrcOperand::Imm(imm),
+                        width,
+                    },
+                ));
+            }
+            _ => {}
+        }
+
+        if group != 7 {
+            if let Some(addr) = addr {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Store {
+                        src: dst,
+                        addr,
+                        width: mem_width,
+                    },
+                ));
+            }
+        }
+
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed + imm_size,
         ))
     }
 
@@ -848,7 +1047,7 @@ impl X86_64Lifter {
             (self.gpr(modrm.rm), None)
         };
 
-        let result = ctx.alloc_vreg();
+        let result = src;
         let op_kind = match group {
             4 => OpKind::Shl {
                 dst: result,
@@ -895,16 +1094,6 @@ impl X86_64Lifter {
                     src: result,
                     addr,
                     width: self.size_to_memwidth(op_size),
-                },
-            ));
-        } else {
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Mov {
-                    dst: self.gpr(modrm.rm),
-                    src: SrcOperand::Reg(result),
-                    width,
                 },
             ));
         }
@@ -954,7 +1143,7 @@ impl X86_64Lifter {
             (self.gpr(modrm.rm), None)
         };
 
-        let result = ctx.alloc_vreg();
+        let result = src;
         let op_kind = match group {
             4 => OpKind::Shl {
                 dst: result,
@@ -1003,22 +1192,161 @@ impl X86_64Lifter {
                     width: self.size_to_memwidth(op_size),
                 },
             ));
-        } else {
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Mov {
-                    dst: self.gpr(modrm.rm),
-                    src: SrcOperand::Reg(result),
-                    width,
-                },
-            ));
         }
 
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
         ))
+    }
+
+    /// Lift group 5 instructions (FF)
+    fn lift_group5(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let op_size = prefix.op_size();
+        let width = self.size_to_width(op_size);
+        let mem_width = self.size_to_memwidth(op_size);
+
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+
+        let (operand, addr) = if modrm.is_memory {
+            let x86_addr = modrm.addr.as_ref().unwrap();
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            ops.extend(pre_ops);
+
+            let tmp = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: tmp,
+                    addr: addr.clone(),
+                    width: mem_width,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            (tmp, Some(addr))
+        } else {
+            (self.gpr(modrm.rm), None)
+        };
+
+        let group = (modrm.byte >> 3) & 0x07;
+        match group {
+            0 => {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Inc {
+                        dst: operand,
+                        src: operand,
+                        width,
+                        flags: FlagUpdate::All,
+                    },
+                ));
+                if let Some(addr) = addr {
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::Store {
+                            src: operand,
+                            addr,
+                            width: mem_width,
+                        },
+                    ));
+                }
+                Ok(LiftResult::fallthrough(
+                    ops,
+                    prefix.cursor + modrm.bytes_consumed,
+                ))
+            }
+            1 => {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Dec {
+                        dst: operand,
+                        src: operand,
+                        width,
+                        flags: FlagUpdate::All,
+                    },
+                ));
+                if let Some(addr) = addr {
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::Store {
+                            src: operand,
+                            addr,
+                            width: mem_width,
+                        },
+                    ));
+                }
+                Ok(LiftResult::fallthrough(
+                    ops,
+                    prefix.cursor + modrm.bytes_consumed,
+                ))
+            }
+            2 => Ok(LiftResult {
+                ops,
+                bytes_consumed: prefix.cursor + modrm.bytes_consumed,
+                control_flow: ControlFlow::Call {
+                    target: CallTarget::Indirect(operand),
+                },
+                branch_targets: vec![],
+            }),
+            4 => Ok(LiftResult {
+                ops,
+                bytes_consumed: prefix.cursor + modrm.bytes_consumed,
+                control_flow: ControlFlow::IndirectBranch { target: operand },
+                branch_targets: vec![],
+            }),
+            6 => {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Sub {
+                        dst: self.rsp(),
+                        src1: self.rsp(),
+                        src2: SrcOperand::Imm(8),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Store {
+                        src: operand,
+                        addr: Address::Direct(self.rsp()),
+                        width: MemWidth::B8,
+                    },
+                ));
+                Ok(LiftResult::fallthrough(
+                    ops,
+                    prefix.cursor + modrm.bytes_consumed,
+                ))
+            }
+            _ => {
+                if self.strict {
+                    Err(LiftError::Unsupported {
+                        addr: pc,
+                        mnemonic: format!("group5 {}", group),
+                    })
+                } else {
+                    Ok(LiftResult::fallthrough(
+                        vec![SmirOp::new(OpId(0), pc, OpKind::Nop)],
+                        prefix.cursor + modrm.bytes_consumed,
+                    ))
+                }
+            }
+        }
     }
 
     /// Lift MOV r, imm (B8-BF)
@@ -1228,33 +1556,8 @@ impl X86_64Lifter {
         let next_rip = pc + insn_len as u64;
         let target = (next_rip as i64 + rel) as u64;
 
-        let mut ops = Vec::new();
-
-        // Push return address
-        ops.push(SmirOp::new(
-            OpId(0),
-            pc,
-            OpKind::Sub {
-                dst: self.rsp(),
-                src1: self.rsp(),
-                src2: SrcOperand::Imm(8),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            },
-        ));
-
-        ops.push(SmirOp::new(
-            OpId(1),
-            pc,
-            OpKind::Store {
-                src: VReg::Imm(next_rip as i64),
-                addr: Address::Direct(self.rsp()),
-                width: MemWidth::B8,
-            },
-        ));
-
         Ok(LiftResult {
-            ops,
+            ops: vec![],
             bytes_consumed: insn_len,
             control_flow: ControlFlow::Call {
                 target: CallTarget::GuestAddr(target),
@@ -1415,6 +1718,171 @@ impl X86_64Lifter {
             ops,
             prefix.cursor + modrm.bytes_consumed,
         ))
+    }
+
+    /// Lift STOS/REP STOS (AA/AB with optional REP prefix)
+    fn lift_stos(
+        &self,
+        opcode: u8,
+        prefix: &X86Prefix,
+        pc: u64,
+        _ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let width = match opcode {
+            0xAA => MemWidth::B1,
+            0xAB => self.size_to_memwidth(prefix.op_size()),
+            _ => MemWidth::B1,
+        };
+
+        if prefix.rep_prefix == Some(0xF3) {
+            let ops = vec![SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::RepStos {
+                    dst: self.gpr(7),
+                    src: self.gpr(0),
+                    count: self.gpr(1),
+                    width,
+                },
+            )];
+
+            Ok(LiftResult::fallthrough(ops, prefix.cursor))
+        } else if self.strict {
+            Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "stos".to_string(),
+            })
+        } else {
+            Ok(LiftResult::fallthrough(vec![], prefix.cursor))
+        }
+    }
+
+    /// Lift IN imm8 or DX (E4/E5/EC/ED)
+    fn lift_in(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
+        let (port, width, imm_len) = match opcode {
+            0xE4 => {
+                if bytes.is_empty() {
+                    return Err(LiftError::Incomplete {
+                        addr: pc,
+                        have: 0,
+                        need: 1,
+                    });
+                }
+                (VReg::Imm(bytes[0] as i8 as i64), MemWidth::B1, 1)
+            }
+            0xE5 => {
+                if bytes.is_empty() {
+                    return Err(LiftError::Incomplete {
+                        addr: pc,
+                        have: 0,
+                        need: 1,
+                    });
+                }
+                let width = if prefix.operand_size_override {
+                    MemWidth::B2
+                } else {
+                    MemWidth::B4
+                };
+                (VReg::Imm(bytes[0] as i8 as i64), width, 1)
+            }
+            0xEC => (self.gpr(2), MemWidth::B1, 0),
+            0xED => {
+                let width = if prefix.operand_size_override {
+                    MemWidth::B2
+                } else {
+                    MemWidth::B4
+                };
+                (self.gpr(2), width, 0)
+            }
+            _ => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes.to_vec(),
+                })
+            }
+        };
+
+        let ops = vec![SmirOp::new(
+            OpId(0),
+            pc,
+            OpKind::IoIn {
+                dst: self.gpr(0),
+                port,
+                width,
+            },
+        )];
+
+        Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_len))
+    }
+
+    /// Lift OUT imm8 or DX (E6/E7/EE/EF)
+    fn lift_out(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
+        let (port, width, imm_len) = match opcode {
+            0xE6 => {
+                if bytes.is_empty() {
+                    return Err(LiftError::Incomplete {
+                        addr: pc,
+                        have: 0,
+                        need: 1,
+                    });
+                }
+                (VReg::Imm(bytes[0] as i8 as i64), MemWidth::B1, 1)
+            }
+            0xE7 => {
+                if bytes.is_empty() {
+                    return Err(LiftError::Incomplete {
+                        addr: pc,
+                        have: 0,
+                        need: 1,
+                    });
+                }
+                let width = if prefix.operand_size_override {
+                    MemWidth::B2
+                } else {
+                    MemWidth::B4
+                };
+                (VReg::Imm(bytes[0] as i8 as i64), width, 1)
+            }
+            0xEE => (self.gpr(2), MemWidth::B1, 0),
+            0xEF => {
+                let width = if prefix.operand_size_override {
+                    MemWidth::B2
+                } else {
+                    MemWidth::B4
+                };
+                (self.gpr(2), width, 0)
+            }
+            _ => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes.to_vec(),
+                })
+            }
+        };
+
+        let ops = vec![SmirOp::new(
+            OpId(0),
+            pc,
+            OpKind::IoOut {
+                port,
+                value: self.gpr(0),
+                width,
+            },
+        )];
+
+        Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_len))
     }
 
     /// Lift NOP (90)
@@ -1601,12 +2069,11 @@ impl X86_64Lifter {
                         sign: SignExtend::Zero,
                     },
                 ));
-                let result = ctx.alloc_vreg();
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
                     OpKind::Xor {
-                        dst: result,
+                        dst: tmp,
                         src1: tmp,
                         src2: SrcOperand::Reg(self.gpr(modrm.reg)),
                         width,
@@ -1617,7 +2084,7 @@ impl X86_64Lifter {
                     OpId(ops.len() as u16),
                     pc,
                     OpKind::Store {
-                        src: result,
+                        src: tmp,
                         addr,
                         width: self.size_to_memwidth(op_size),
                     },
@@ -1633,7 +2100,7 @@ impl X86_64Lifter {
             (self.gpr(modrm.rm), self.gpr(modrm.rm), self.gpr(modrm.reg))
         };
 
-        let result = ctx.alloc_vreg();
+        let result = dst;
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
@@ -1643,16 +2110,6 @@ impl X86_64Lifter {
                 src2: SrcOperand::Reg(src2),
                 width,
                 flags: FlagUpdate::All,
-            },
-        ));
-
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Mov {
-                dst,
-                src: SrcOperand::Reg(result),
-                width,
             },
         ));
 
@@ -1910,10 +2367,33 @@ impl X86_64Lifter {
                 ctx,
             ), // CMP
 
+            // Group 1 immediate (80/81/83)
+            0x80 | 0x81 | 0x83 => self.lift_group1_imm(
+                opcode,
+                after_opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+                ctx,
+            ),
+
             // Logic
             0x84 | 0x85 => self.lift_test_rm_r(
                 opcode,
                 after_opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+                ctx,
+            ),
+
+            // String ops
+            0xAA | 0xAB => self.lift_stos(
+                opcode,
                 &X86Prefix {
                     cursor: prefix.cursor + 1,
                     ..prefix
@@ -1944,6 +2424,37 @@ impl X86_64Lifter {
                 },
                 pc,
                 ctx,
+            ),
+
+            // Group 5 (FF)
+            0xFF => self.lift_group5(
+                after_opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+                ctx,
+            ),
+
+            // I/O port instructions
+            0xE4 | 0xE5 | 0xEC | 0xED => self.lift_in(
+                opcode,
+                after_opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+            ),
+            0xE6 | 0xE7 | 0xEE | 0xEF => self.lift_out(
+                opcode,
+                after_opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
             ),
 
             // Unsupported - return error with mnemonic
