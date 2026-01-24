@@ -541,6 +541,7 @@ mod tests {
                         func.add_block(block);
 
                         let mut lowerer = X86_64Lowerer::new();
+                        lowerer.set_pcrel_adjust(false);
                         if lowerer.lower_function(&func).is_err() {
                             mismatches.push((pc, insn_bytes, vec![]));
                             pc += result.bytes_consumed as u64;
@@ -558,7 +559,7 @@ mod tests {
                             }
                         };
 
-                        match strip_prologue_epilogue("microkernel", &lowered) {
+                        match strip_prologue_epilogue("microkernel", &lowered, Some(&insn_bytes)) {
                             Ok((start, end)) => {
                                 let body = lowered[start..end].to_vec();
                                 if body == insn_bytes {
@@ -626,12 +627,11 @@ mod tests {
     use crate::smir::memory::FlatMemory;
     use crate::smir::types::{ArchReg, X86Reg};
 
-    /// Execute a block with initial register and memory state
-    fn execute_block_with_state(
+    fn execute_block(
         block: &SmirBlock,
         regs: &[(X86Reg, u64)],
         mem_init: &[(u64, &[u8])],
-    ) -> (u64, FlatMemory) {
+    ) -> (SmirContext, FlatMemory) {
         let mut ctx = SmirContext::new_x86_64();
         let mut mem = FlatMemory::new(0x10000);
 
@@ -654,6 +654,16 @@ mod tests {
 
         let _result = interp.run(&mut ctx, &mut mem);
 
+        (ctx, mem)
+    }
+
+    /// Execute a block with initial register and memory state
+    fn execute_block_with_state(
+        block: &SmirBlock,
+        regs: &[(X86Reg, u64)],
+        mem_init: &[(u64, &[u8])],
+    ) -> (u64, FlatMemory) {
+        let (ctx, mem) = execute_block(block, regs, mem_init);
         (ctx.read_arch_reg(ArchReg::X86(X86Reg::Rax)), mem)
     }
 
@@ -714,6 +724,7 @@ mod tests {
         func.add_block(block);
 
         let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_pcrel_adjust(false);
         lowerer
             .lower_function(&func)
             .map_err(|e| format!("{}: lower error: {:?}", name, e))?;
@@ -722,11 +733,29 @@ mod tests {
             .finalize()
             .map_err(|e| format!("{}: finalize error: {:?}", name, e))?;
 
-        let (start, end) = strip_prologue_epilogue(name, &lowered_bytes)?;
+        let (start, end) = strip_prologue_epilogue(name, &lowered_bytes, Some(bytes))?;
         Ok(lowered_bytes[start..end].to_vec())
     }
 
-    fn strip_prologue_epilogue(name: &str, code: &[u8]) -> Result<(usize, usize), String> {
+    fn find_last_subslice(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+        if needle.is_empty() || haystack.len() < needle.len() {
+            return None;
+        }
+
+        let mut pos = None;
+        for i in 0..=haystack.len() - needle.len() {
+            if &haystack[i..i + needle.len()] == needle {
+                pos = Some(i);
+            }
+        }
+        pos
+    }
+
+    fn strip_prologue_epilogue(
+        name: &str,
+        code: &[u8],
+        body_hint: Option<&[u8]>,
+    ) -> Result<(usize, usize), String> {
         if code.len() < 6 {
             return Err(format!("{}: lowered bytes too short", name));
         }
@@ -737,6 +766,13 @@ mod tests {
         }
 
         let mut start = 4;
+
+        if let Some(hint) = body_hint {
+            if let Some(pos) = find_last_subslice(&code[start..], hint) {
+                let body_start = start + pos;
+                return Ok((body_start, body_start + hint.len()));
+            }
+        }
 
         // Skip callee-saved pushes
         loop {
@@ -913,12 +949,13 @@ mod tests {
 
         // Step 4: Re-lift the lowered code
         let mut ctx2 = LiftContext::new(SourceArch::X86_64);
-        let mut block2 = SmirBlock::new(BlockId(1), 0x2000);
+        let block2_base = block1.guest_pc;
+        let mut block2 = SmirBlock::new(BlockId(1), block2_base);
 
         // Skip the prologue (push rbp; mov rbp, rsp = 4 bytes)
         let code_start = 4; // Skip prologue
         let mut offset2 = code_start;
-        let mut pc2 = 0x2000u64 + code_start as u64;
+        let mut pc2 = block2_base + code_start as u64;
 
         while offset2 < lowered_bytes.len() {
             let remaining = &lowered_bytes[offset2..];
@@ -1293,6 +1330,93 @@ mod tests {
     }
 
     #[test]
+    fn test_semantic_pcrel_load() {
+        // MOV RAX, [RIP+0x10]
+        let bytes = vec![0x48, 0x8B, 0x05, 0x10, 0x00, 0x00, 0x00];
+        let base_pc = 0x1800u64;
+        let target = base_pc + 7 + 0x10;
+        let value = 0xCAFEBABEDEADBEEFu64;
+        let value_bytes = value.to_le_bytes();
+
+        let block = lift_bytes_to_block("mov rax,[rip+0x10]", &bytes, BlockId(20), base_pc)
+            .expect("lift pcrel load");
+        let (result, mut mem) = execute_block_with_state(&block, &[], &[(target, &value_bytes)]);
+        assert_eq!(result, value);
+        assert_eq!(read_u64(&mut mem, target), value);
+
+        assert!(verify_semantic_equivalence_with_memory(
+            "mov rax,[rip+0x10]",
+            &bytes,
+            &[],
+            &[(target, &value_bytes)],
+            &[(target, 8)],
+        ));
+    }
+
+    #[test]
+    fn test_semantic_pcrel_lea() {
+        // LEA RAX, [RIP+0x10]
+        let bytes = vec![0x48, 0x8D, 0x05, 0x10, 0x00, 0x00, 0x00];
+        let base_pc = 0x1900u64;
+        let expected = base_pc + 7 + 0x10;
+
+        let block = lift_bytes_to_block("lea rax,[rip+0x10]", &bytes, BlockId(21), base_pc)
+            .expect("lift pcrel lea");
+        let (result, _mem) = execute_block_with_state(&block, &[], &[]);
+        assert_eq!(result, expected);
+
+        assert!(verify_semantic_equivalence_with_memory(
+            "lea rax,[rip+0x10]",
+            &bytes,
+            &[],
+            &[],
+            &[],
+        ));
+    }
+
+    #[test]
+    fn test_semantic_rep_stosq() {
+        // REP STOSQ
+        let bytes = vec![0xF3, 0x48, 0xAB];
+        let addr = 0x200u64;
+        let value = 0x0F1E2D3C4B5A6978u64;
+        let count = 3u64;
+
+        let block =
+            lift_bytes_to_block("rep stosq", &bytes, BlockId(22), 0x1A00).expect("lift rep stosq");
+        let (ctx, mut mem) = execute_block(
+            &block,
+            &[
+                (X86Reg::Rdi, addr),
+                (X86Reg::Rax, value),
+                (X86Reg::Rcx, count),
+            ],
+            &[],
+        );
+
+        assert_eq!(
+            ctx.read_arch_reg(ArchReg::X86(X86Reg::Rdi)),
+            addr + 8 * count
+        );
+        assert_eq!(ctx.read_arch_reg(ArchReg::X86(X86Reg::Rcx)), 0);
+        assert_eq!(read_u64(&mut mem, addr), value);
+        assert_eq!(read_u64(&mut mem, addr + 8), value);
+        assert_eq!(read_u64(&mut mem, addr + 16), value);
+
+        assert!(verify_semantic_equivalence_with_memory(
+            "rep stosq",
+            &bytes,
+            &[
+                (X86Reg::Rdi, addr),
+                (X86Reg::Rax, value),
+                (X86Reg::Rcx, count),
+            ],
+            &[],
+            &[(addr, 24)],
+        ));
+    }
+
+    #[test]
     fn test_semantic_cmp_sete() {
         // CMP RAX, RBX; SETE AL
         let bytes = vec![0x48, 0x39, 0xD8, 0x0F, 0x94, 0xC0];
@@ -1339,6 +1463,7 @@ mod tests {
             ("shr rax, 4", vec![0x48, 0xC1, 0xE8, 0x04]),
             ("sar rax, 4", vec![0x48, 0xC1, 0xF8, 0x04]),
             ("sete al", vec![0x0F, 0x94, 0xC0]),
+            ("rep stosq", vec![0xF3, 0x48, 0xAB]),
         ];
 
         for (name, bytes) in cases {
@@ -1353,6 +1478,27 @@ mod tests {
             ("mov rax, [rdi]", vec![0x48, 0x8B, 0x07]),
             ("mov [rdi], rax", vec![0x48, 0x89, 0x07]),
             ("mov rax, [rdi+8]", vec![0x48, 0x8B, 0x47, 0x08]),
+            ("mov rax, [rdi+0x7f]", vec![0x48, 0x8B, 0x47, 0x7F]),
+            (
+                "mov rax, [rdi+0x80]",
+                vec![0x48, 0x8B, 0x87, 0x80, 0x00, 0x00, 0x00],
+            ),
+            (
+                "mov rax, [rdi+rsi*4+16]",
+                vec![0x48, 0x8B, 0x84, 0xB7, 0x10, 0x00, 0x00, 0x00],
+            ),
+            (
+                "lea rax, [rdi+rsi*4+16]",
+                vec![0x48, 0x8D, 0x84, 0xB7, 0x10, 0x00, 0x00, 0x00],
+            ),
+            (
+                "mov rax, [rip+0x10]",
+                vec![0x48, 0x8B, 0x05, 0x10, 0x00, 0x00, 0x00],
+            ),
+            (
+                "lea rax, [rip+0x10]",
+                vec![0x48, 0x8D, 0x05, 0x10, 0x00, 0x00, 0x00],
+            ),
             (
                 "mov rax, [abs32]",
                 vec![0x48, 0x8B, 0x04, 0x25, 0x00, 0x02, 0x00, 0x00],

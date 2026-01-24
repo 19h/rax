@@ -868,6 +868,12 @@ fn redundant_load_elimination_block(block: &mut SmirBlock) -> usize {
                 new_ops.push(op.clone());
             }
 
+            OpKind::IoIn { .. } | OpKind::IoOut { .. } => {
+                // I/O has side effects; be conservative
+                mem_to_reg.clear();
+                new_ops.push(op.clone());
+            }
+
             OpKind::Syscall { .. } => {
                 // System calls may have memory side effects
                 mem_to_reg.clear();
@@ -888,7 +894,7 @@ fn redundant_load_elimination_block(block: &mut SmirBlock) -> usize {
 fn address_key(addr: &Address, width: MemWidth) -> (Option<VReg>, i64, MemWidth) {
     match addr {
         Address::Direct(r) => (Some(*r), 0, width),
-        Address::BaseOffset { base, offset } => (Some(*base), *offset, width),
+        Address::BaseOffset { base, offset, .. } => (Some(*base), *offset, width),
         Address::Absolute(a) => (None, *a as i64, width),
         // For complex addresses, don't track (return unique key that won't match)
         _ => (None, i64::MIN, width),
@@ -908,6 +914,8 @@ impl OpKind {
             | OpKind::Adc { flags, .. }
             | OpKind::Sbb { flags, .. }
             | OpKind::Neg { flags, .. }
+            | OpKind::Inc { flags, .. }
+            | OpKind::Dec { flags, .. }
             | OpKind::And { flags, .. }
             | OpKind::Or { flags, .. }
             | OpKind::Xor { flags, .. }
@@ -933,6 +941,8 @@ impl OpKind {
             | OpKind::Adc { flags, .. }
             | OpKind::Sbb { flags, .. }
             | OpKind::Neg { flags, .. }
+            | OpKind::Inc { flags, .. }
+            | OpKind::Dec { flags, .. }
             | OpKind::And { flags, .. }
             | OpKind::Or { flags, .. }
             | OpKind::Xor { flags, .. }
@@ -1021,6 +1031,8 @@ impl OpKind {
             }
 
             OpKind::Neg { src, .. }
+            | OpKind::Inc { src, .. }
+            | OpKind::Dec { src, .. }
             | OpKind::Not { src, .. }
             | OpKind::Bsf { src, .. }
             | OpKind::Bsr { src, .. }
@@ -1109,6 +1121,14 @@ impl OpKind {
                 result.extend(addr.regs());
             }
 
+            OpKind::RepStos {
+                dst, src, count, ..
+            } => {
+                result.push(*dst);
+                result.push(*src);
+                result.push(*count);
+            }
+
             OpKind::LoadPair { addr, .. } => {
                 result.extend(addr.regs());
             }
@@ -1140,6 +1160,15 @@ impl OpKind {
             OpKind::StoreExclusive { src, addr, .. } => {
                 result.push(*src);
                 result.extend(addr.regs());
+            }
+
+            OpKind::IoIn { port, .. } => {
+                result.push(*port);
+            }
+
+            OpKind::IoOut { port, value, .. } => {
+                result.push(*port);
+                result.push(*value);
             }
 
             OpKind::WriteFlags { src } | OpKind::WriteSysReg { src, .. } => {
@@ -1245,6 +1274,8 @@ impl OpKind {
             | OpKind::ClearExclusive
             | OpKind::Prefetch { .. }
             | OpKind::Fence { .. }
+            | OpKind::IoIn { .. }
+            | OpKind::IoOut { .. }
             | OpKind::Swi { .. }
             | OpKind::ReadSysReg { .. }
             | OpKind::Nop

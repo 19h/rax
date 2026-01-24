@@ -403,6 +403,17 @@ pub enum SignExtend {
 // Address Modes
 // ============================================================================
 
+/// Displacement size hint (x86 addressing)
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum DispSize {
+    /// Automatically choose smallest encoding
+    Auto,
+    /// Force 8-bit displacement
+    Disp8,
+    /// Force 32-bit displacement
+    Disp32,
+}
+
 /// Memory address operand
 #[derive(Clone, Debug, PartialEq)]
 pub enum Address {
@@ -410,7 +421,11 @@ pub enum Address {
     Direct(VReg),
 
     /// Base + displacement: [reg + offset]
-    BaseOffset { base: VReg, offset: i64 },
+    BaseOffset {
+        base: VReg,
+        offset: i64,
+        disp_size: DispSize,
+    },
 
     /// Base + index + scale + displacement: [base + index*scale + disp]
     /// Used for x86 SIB addressing
@@ -419,10 +434,15 @@ pub enum Address {
         index: VReg,
         scale: u8, // 1, 2, 4, or 8
         disp: i32,
+        disp_size: DispSize,
     },
 
     /// PC-relative: [PC + offset]
-    PcRel { offset: i64 },
+    PcRel {
+        offset: i64,
+        disp_size: DispSize,
+        base: Option<GuestAddr>,
+    },
 
     /// GP-relative (Hexagon): [GP + offset]
     GpRel { offset: i32 },
@@ -439,7 +459,11 @@ impl Address {
 
     /// Create base + offset address
     pub fn base_off(base: VReg, offset: i64) -> Self {
-        Address::BaseOffset { base, offset }
+        Address::BaseOffset {
+            base,
+            offset,
+            disp_size: DispSize::Auto,
+        }
     }
 
     /// Create x86-style SIB address
@@ -449,6 +473,7 @@ impl Address {
             index,
             scale,
             disp,
+            disp_size: DispSize::Auto,
         }
     }
 
