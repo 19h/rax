@@ -1503,6 +1503,28 @@ impl X86_64Lifter {
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
 
+        let group = (modrm.byte >> 3) & 0x07;
+
+        if modrm.is_memory && (group == 2 || group == 4) {
+            let x86_addr = modrm.addr.as_ref().unwrap();
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            ops.extend(pre_ops);
+            let control_flow = if group == 2 {
+                ControlFlow::Call {
+                    target: CallTarget::IndirectMem(addr),
+                }
+            } else {
+                ControlFlow::IndirectBranchMem { addr }
+            };
+
+            return Ok(LiftResult {
+                ops,
+                bytes_consumed: prefix.cursor + modrm.bytes_consumed,
+                control_flow,
+                branch_targets: vec![],
+            });
+        }
+
         let (operand, addr) = if modrm.is_memory {
             let x86_addr = modrm.addr.as_ref().unwrap();
             let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
@@ -1524,7 +1546,6 @@ impl X86_64Lifter {
             (self.gpr(modrm.rm), None)
         };
 
-        let group = (modrm.byte >> 3) & 0x07;
         match group {
             0 => {
                 ops.push(SmirOp::new(
@@ -2814,6 +2835,63 @@ impl X86_64Lifter {
         ))
     }
 
+    /// Lift MOVSXD r64, r/m32 (63)
+    fn lift_movsxd(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let mut ops = Vec::new();
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+
+        if modrm.is_memory {
+            let x86_addr = modrm.addr.as_ref().unwrap();
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            ops.extend(pre_ops);
+
+            let tmp = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: tmp,
+                    addr,
+                    width: MemWidth::B4,
+                    sign: SignExtend::Sign,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::SignExtend {
+                    dst: self.gpr(modrm.reg),
+                    src: tmp,
+                    from_width: OpWidth::W32,
+                    to_width: OpWidth::W64,
+                },
+            ));
+        } else {
+            ops.push(SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::SignExtend {
+                    dst: self.gpr(modrm.reg),
+                    src: self.gpr(modrm.rm),
+                    from_width: OpWidth::W32,
+                    to_width: OpWidth::W64,
+                },
+            ));
+        }
+
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
     /// Lift MOV r/m, imm (C6/C7)
     fn lift_mov_rm_imm(
         &self,
@@ -3139,6 +3217,10 @@ impl X86_64Lifter {
                 vec![SmirOp::new(OpId(0), pc, OpKind::SetDF { value: true })],
                 prefix.cursor + 1,
             )),
+            0xCC => Ok(LiftResult::fallthrough(
+                vec![SmirOp::new(OpId(0), pc, OpKind::Breakpoint)],
+                prefix.cursor + 1,
+            )),
 
             // HLT
             0xF4 => Ok(LiftResult {
@@ -3265,6 +3347,15 @@ impl X86_64Lifter {
                 ctx,
             ),
             0x8D => self.lift_lea(
+                after_opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+                ctx,
+            ),
+            0x63 => self.lift_movsxd(
                 after_opcode,
                 &X86Prefix {
                     cursor: prefix.cursor + 1,
@@ -4046,6 +4137,13 @@ impl SmirLifter for X86_64Lifter {
                 ControlFlow::IndirectBranch { target } => {
                     block.terminator = Terminator::IndirectBranch {
                         target,
+                        possible_targets: vec![],
+                    };
+                    break;
+                }
+                ControlFlow::IndirectBranchMem { addr } => {
+                    block.terminator = Terminator::IndirectBranchMem {
+                        addr,
                         possible_targets: vec![],
                     };
                     break;

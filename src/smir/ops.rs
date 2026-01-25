@@ -82,6 +82,8 @@ pub enum X86OpHint {
     ImulImm32,
     /// SSE mov with explicit prefix/opcode
     SseMov { prefix: X86SsePrefix, opcode: u8 },
+    /// SSE opcode with explicit prefix/opcode
+    SseOp { prefix: X86SsePrefix, opcode: u8 },
 }
 
 // ============================================================================

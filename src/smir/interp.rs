@@ -1805,6 +1805,14 @@ impl SmirInterpreter {
                 BlockResult::Continue(addr)
             }
 
+            Terminator::IndirectBranchMem { addr, .. } => {
+                let target_addr = self.compute_address(ctx, addr);
+                let val = self
+                    .load_memory(memory, target_addr, MemWidth::B8, SignExtend::Zero)
+                    .unwrap_or(0);
+                BlockResult::Continue(val)
+            }
+
             Terminator::Return { values: _ } => {
                 // Get return address from arch-specific location
                 let ret_addr = match &ctx.arch_regs {
@@ -1838,6 +1846,11 @@ impl SmirInterpreter {
                         .map(|f| f.guest_range.0)
                         .unwrap_or(0),
                     CallTarget::Indirect(reg) => ctx.read_vreg(*reg),
+                    CallTarget::IndirectMem(addr) => {
+                        let target_addr = self.compute_address(ctx, addr);
+                        self.load_memory(memory, target_addr, MemWidth::B8, SignExtend::Zero)
+                            .unwrap_or(0)
+                    }
                     CallTarget::Runtime(_) => {
                         // Return to continuation for runtime calls
                         let addr = self
@@ -1860,6 +1873,11 @@ impl SmirInterpreter {
                         .map(|f| f.guest_range.0)
                         .unwrap_or(0),
                     CallTarget::Indirect(reg) => ctx.read_vreg(*reg),
+                    CallTarget::IndirectMem(addr) => {
+                        let target_addr = self.compute_address(ctx, addr);
+                        self.load_memory(memory, target_addr, MemWidth::B8, SignExtend::Zero)
+                            .unwrap_or(0)
+                    }
                     CallTarget::Runtime(_) => 0,
                 };
                 BlockResult::Continue(target_addr)

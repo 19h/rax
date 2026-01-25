@@ -285,6 +285,13 @@ pub enum Terminator {
         possible_targets: Vec<BlockId>,
     },
 
+    /// Indirect branch through memory
+    IndirectBranchMem {
+        addr: Address,
+        /// Possible targets (for analysis, may be incomplete)
+        possible_targets: Vec<BlockId>,
+    },
+
     /// Function return
     Return { values: Vec<VReg> },
 
@@ -323,6 +330,9 @@ impl Terminator {
                 v
             }
             Terminator::IndirectBranch {
+                possible_targets, ..
+            } => possible_targets.clone(),
+            Terminator::IndirectBranchMem {
                 possible_targets, ..
             } => possible_targets.clone(),
             Terminator::Call { continuation, .. } => vec![*continuation],
@@ -364,6 +374,8 @@ pub enum CallTarget {
     GuestAddr(GuestAddr),
     /// Indirect call through register
     Indirect(VReg),
+    /// Indirect call through memory
+    IndirectMem(Address),
     /// External runtime function
     Runtime(RuntimeFunc),
 }

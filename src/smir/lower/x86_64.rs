@@ -9,7 +9,7 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
 use crate::smir::ops::{OpKind, X86AluEncoding, X86OpHint, X86SsePrefix};
 use crate::smir::types::{
     Address, ArchReg, BlockId, Condition, DispSize, GuestAddr, MemWidth, OpWidth, SignExtend,
-    SrcOperand, VReg, VecWidth, X86Reg,
+    SrcOperand, VReg, VecElementType, VecWidth, X86Reg,
 };
 
 use super::regalloc::{PhysReg, RegAlloc, RegLocation};
@@ -131,6 +131,23 @@ impl<'a> X86Emitter<'a> {
         }
     }
 
+    fn emit_rex_force(&mut self, w: bool, r: PhysReg, x: Option<PhysReg>, b: PhysReg) {
+        let mut rex = 0x40u8;
+        if w {
+            rex |= 0x08;
+        }
+        if r.is_extended() {
+            rex |= 0x04;
+        }
+        if x.map_or(false, |reg| reg.is_extended()) {
+            rex |= 0x02;
+        }
+        if b.is_extended() {
+            rex |= 0x01;
+        }
+        self.code.emit_u8(rex);
+    }
+
     /// Emit REX prefix for 64-bit operation with single register
     fn emit_rex_w(&mut self, reg: PhysReg) {
         let mut rex = 0x48u8; // REX.W
@@ -171,7 +188,11 @@ impl<'a> X86Emitter<'a> {
                         PhysReg::Rsp | PhysReg::Rbp | PhysReg::Rsi | PhysReg::Rdi
                     )
                 {
-                    self.emit_rex_rr(false, r, rm);
+                    if r.is_extended() || rm.is_extended() {
+                        self.emit_rex_rr(false, r, rm);
+                    } else {
+                        self.emit_rex_force(false, r, None, rm);
+                    }
                 }
             }
             OpWidth::W128 => {
@@ -204,6 +225,12 @@ impl<'a> X86Emitter<'a> {
         }
     }
 
+    fn emit_rex_for_mem(&mut self, base: PhysReg, index: Option<PhysReg>) {
+        if base.is_extended() || index.map_or(false, |reg| reg.is_extended()) {
+            self.emit_rex(false, PhysReg::Rax, index, base);
+        }
+    }
+
     fn emit_rex_for_width_mem_reg(
         &mut self,
         width: OpWidth,
@@ -233,7 +260,11 @@ impl<'a> X86Emitter<'a> {
                         PhysReg::Rsp | PhysReg::Rbp | PhysReg::Rsi | PhysReg::Rdi
                     )
                 {
-                    self.emit_rex(false, reg, index, base);
+                    if needs_rex {
+                        self.emit_rex(false, reg, index, base);
+                    } else {
+                        self.emit_rex_force(false, reg, index, base);
+                    }
                 }
             }
             OpWidth::W128 => {}
@@ -655,7 +686,19 @@ impl<'a> X86Emitter<'a> {
         // REX prefix - use index for the rm extension bit since it's in the SIB
         let base_for_rex = base.unwrap_or(PhysReg::Rax);
         let w = width == OpWidth::W64;
-        self.emit_rex(w, dst, Some(index), base_for_rex);
+        if width == OpWidth::W8
+            && !dst.is_extended()
+            && !base_for_rex.is_extended()
+            && !index.is_extended()
+            && matches!(
+                dst,
+                PhysReg::Rsp | PhysReg::Rbp | PhysReg::Rsi | PhysReg::Rdi
+            )
+        {
+            self.emit_rex_force(false, dst, Some(index), base_for_rex);
+        } else {
+            self.emit_rex(w, dst, Some(index), base_for_rex);
+        }
 
         let opcode = match width {
             OpWidth::W8 => 0x8A,
@@ -711,7 +754,19 @@ impl<'a> X86Emitter<'a> {
     ) {
         let base_for_rex = base.unwrap_or(PhysReg::Rax);
         let w = width == OpWidth::W64;
-        self.emit_rex(w, src, Some(index), base_for_rex);
+        if width == OpWidth::W8
+            && !src.is_extended()
+            && !base_for_rex.is_extended()
+            && !index.is_extended()
+            && matches!(
+                src,
+                PhysReg::Rsp | PhysReg::Rbp | PhysReg::Rsi | PhysReg::Rdi
+            )
+        {
+            self.emit_rex_force(false, src, Some(index), base_for_rex);
+        } else {
+            self.emit_rex(w, src, Some(index), base_for_rex);
+        }
 
         let opcode = match width {
             OpWidth::W8 => 0x88,
@@ -1775,6 +1830,39 @@ impl<'a> X86Emitter<'a> {
             _ => 0xF7,
         };
         self.code.emit_u8(opcode);
+        self.emit_modrm_pcrel(Self::digit_reg(digit), disp)
+    }
+
+    pub fn emit_group5_m_disp(&mut self, digit: u8, base: PhysReg, disp: i32, disp_size: DispSize) {
+        self.emit_rex_for_mem(base, None);
+        self.code.emit_u8(0xFF);
+        self.emit_modrm_mem_disp(Self::digit_reg(digit), base, disp, disp_size);
+    }
+
+    pub fn emit_group5_m_sib_disp(
+        &mut self,
+        digit: u8,
+        base: Option<PhysReg>,
+        index: PhysReg,
+        scale: u8,
+        disp: i32,
+        disp_size: DispSize,
+    ) {
+        let base_reg = base.unwrap_or(PhysReg::Rbp);
+        self.emit_rex_for_mem(base_reg, Some(index));
+        self.code.emit_u8(0xFF);
+        self.emit_modrm_sib_disp(Self::digit_reg(digit), base, index, scale, disp, disp_size);
+    }
+
+    pub fn emit_group5_m_abs(&mut self, digit: u8, addr: u64) {
+        self.emit_rex_for_mem(PhysReg::Rbp, None);
+        self.code.emit_u8(0xFF);
+        self.emit_modrm_abs(Self::digit_reg(digit), addr);
+    }
+
+    pub fn emit_group5_m_pcrel(&mut self, digit: u8, disp: i32) -> usize {
+        self.emit_rex_for_mem(PhysReg::Rbp, None);
+        self.code.emit_u8(0xFF);
         self.emit_modrm_pcrel(Self::digit_reg(digit), disp)
     }
 
@@ -4725,6 +4813,16 @@ impl X86_64Lowerer {
                     .push((jmp_offset + 1, *false_target, RelocKind::PcRel32));
             }
 
+            Terminator::IndirectBranch { target, .. } => {
+                let target_reg = self.get_reg(*target)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_jmp_reg(target_reg);
+            }
+
+            Terminator::IndirectBranchMem { addr, .. } => {
+                self.emit_group5_mem(4, addr)?;
+            }
+
             Terminator::Return { .. } => {
                 let ret_imm = self.pending_ret_imm.take();
                 self.emit_epilogue_with_ret(ret_imm);
@@ -4761,6 +4859,9 @@ impl X86_64Lowerer {
                     let mut emitter = X86Emitter::new(&mut self.code);
                     emitter.emit_call_reg(target_reg);
                 }
+                CallTarget::IndirectMem(addr) => {
+                    self.emit_group5_mem(2, addr)?;
+                }
                 _ => {
                     return Err(LowerError::UnsupportedOp {
                         op: format!("Call target {:?}", target),
@@ -4791,6 +4892,9 @@ impl X86_64Lowerer {
                     let mut emitter = X86Emitter::new(&mut self.code);
                     emitter.emit_jmp_reg(target_reg);
                 }
+                CallTarget::IndirectMem(addr) => {
+                    self.emit_group5_mem(4, addr)?;
+                }
                 _ => {
                     return Err(LowerError::UnsupportedOp {
                         op: format!("TailCall target {:?}", target),
@@ -4819,19 +4923,23 @@ impl X86_64Lowerer {
 
     fn sse_prefix(&self, hint: Option<X86OpHint>) -> Option<u8> {
         match hint {
-            Some(X86OpHint::SseMov { prefix, .. }) => match prefix {
-                X86SsePrefix::None => None,
-                X86SsePrefix::OpSize => Some(0x66),
-                X86SsePrefix::Rep => Some(0xF3),
-                X86SsePrefix::Repne => Some(0xF2),
-            },
+            Some(X86OpHint::SseMov { prefix, .. }) | Some(X86OpHint::SseOp { prefix, .. }) => {
+                match prefix {
+                    X86SsePrefix::None => None,
+                    X86SsePrefix::OpSize => Some(0x66),
+                    X86SsePrefix::Rep => Some(0xF3),
+                    X86SsePrefix::Repne => Some(0xF2),
+                }
+            }
             _ => None,
         }
     }
 
     fn sse_opcode(&self, hint: Option<X86OpHint>, default: u8) -> u8 {
         match hint {
-            Some(X86OpHint::SseMov { opcode, .. }) => opcode,
+            Some(X86OpHint::SseMov { opcode, .. }) | Some(X86OpHint::SseOp { opcode, .. }) => {
+                opcode
+            }
             _ => default,
         }
     }
@@ -5591,6 +5699,89 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    fn emit_group5_mem(&mut self, digit: u8, addr: &Address) -> Result<(), LowerError> {
+        match addr {
+            Address::Direct(base) => {
+                let base_reg = self.get_reg(*base)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_group5_m_disp(digit, base_reg, 0, DispSize::Auto);
+            }
+            Address::BaseOffset {
+                base,
+                offset,
+                disp_size,
+            } => {
+                let base_reg = self.get_reg(*base)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_group5_m_disp(digit, base_reg, *offset as i32, *disp_size);
+            }
+            Address::BaseIndexScale {
+                base,
+                index,
+                scale,
+                disp,
+                disp_size,
+            } => {
+                let base_reg = base.map(|b| self.get_reg(b)).transpose()?;
+                let index_reg = self.get_reg(*index)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter
+                    .emit_group5_m_sib_disp(digit, base_reg, index_reg, *scale, *disp, *disp_size);
+            }
+            Address::PcRel { offset, base, .. } => {
+                let disp_offset = {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_group5_m_pcrel(digit, 0)
+                };
+                let insn_end = self.code.position();
+
+                let disp = if let Some(base_pc) = base {
+                    let target = (*base_pc as i64 + *offset) as u64;
+                    let disp = if self.pcrel_adjust {
+                        let next_rip = self.guest_base as i64 + insn_end as i64;
+                        target as i64 - next_rip
+                    } else {
+                        *offset
+                    };
+                    if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                        return Err(LowerError::InvalidOperand {
+                            op: "PcRel Group5".to_string(),
+                            operand: "offset out of range".to_string(),
+                        });
+                    }
+                    self.relocations.push(Relocation {
+                        offset: disp_offset,
+                        kind: RelocKind::PcRel32,
+                        target: RelocTarget::GuestAddr(target),
+                    });
+                    disp
+                } else {
+                    let disp = *offset;
+                    if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                        return Err(LowerError::InvalidOperand {
+                            op: "PcRel Group5".to_string(),
+                            operand: "offset out of range".to_string(),
+                        });
+                    }
+                    disp
+                };
+
+                self.code.patch_i32(disp_offset, disp as i32);
+            }
+            Address::Absolute(addr) => {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_group5_m_abs(digit, *addr);
+            }
+            _ => {
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("Group5 with unsupported addressing: {:?}", addr),
+                });
+            }
+        }
+
+        Ok(())
+    }
+
     fn emit_shld_mem(
         &mut self,
         addr: &Address,
@@ -5991,6 +6182,54 @@ impl X86_64Lowerer {
             } if *src == tmp && *from_width == op_width && sign == SignExtend::Sign => {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 self.emit_movsx_mem(dst_reg, addr, *from_width, *to_width)?;
+                return Ok(Some(2));
+            }
+            _ => {}
+        }
+
+        Ok(None)
+    }
+
+    fn try_lower_vmem_binop(
+        &mut self,
+        ops: &[crate::smir::ops::SmirOp],
+        idx: usize,
+    ) -> Result<Option<usize>, LowerError> {
+        let (tmp, addr, width) = match ops.get(idx).map(|op| &op.kind) {
+            Some(OpKind::VLoad { dst, addr, width }) => (*dst, addr, *width),
+            _ => return Ok(None),
+        };
+
+        if width != VecWidth::V128 {
+            return Ok(None);
+        }
+
+        let op = match ops.get(idx + 1) {
+            Some(op) => op,
+            None => return Ok(None),
+        };
+
+        match &op.kind {
+            OpKind::VAdd {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+            } if *src2 == tmp && *dst == *src1 => {
+                if *elem != VecElementType::I32 || *lanes != 4 {
+                    return Ok(None);
+                }
+                let dst_reg = self.get_dst_reg(*dst)?;
+                if !dst_reg.is_xmm() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VAdd".to_string(),
+                        operand: "destination must be XMM".to_string(),
+                    });
+                }
+                let prefix = self.sse_prefix(op.x86_hint);
+                let opcode = self.sse_opcode(op.x86_hint, 0xFE);
+                self.emit_sse_mov_mem(prefix, opcode, dst_reg, addr)?;
                 return Ok(Some(2));
             }
             _ => {}
@@ -6544,6 +6783,10 @@ impl X86_64Lowerer {
         while idx < end_idx {
             self.regalloc.set_current_idx(idx);
             if let Some(consumed) = self.try_lower_mem_extend(&block.ops, idx)? {
+                idx += consumed;
+                continue;
+            }
+            if let Some(consumed) = self.try_lower_vmem_binop(&block.ops, idx)? {
                 idx += consumed;
                 continue;
             }
