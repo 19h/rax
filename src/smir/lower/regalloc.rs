@@ -35,6 +35,8 @@ pub enum PhysReg {
     R13,
     R14,
     R15,
+    // XMM registers
+    Xmm(u8),
 }
 
 impl PhysReg {
@@ -57,6 +59,7 @@ impl PhysReg {
             PhysReg::R13 => 13,
             PhysReg::R14 => 14,
             PhysReg::R15 => 15,
+            PhysReg::Xmm(idx) => idx,
         }
     }
 
@@ -83,6 +86,10 @@ impl PhysReg {
     /// Get the low 3 bits of encoding (for instruction encoding)
     pub fn low3(self) -> u8 {
         self.encoding() & 0x7
+    }
+
+    pub fn is_xmm(self) -> bool {
+        matches!(self, PhysReg::Xmm(_))
     }
 
     /// All general purpose registers
@@ -164,6 +171,7 @@ impl PhysReg {
             X86Reg::R13 => Some(PhysReg::R13),
             X86Reg::R14 => Some(PhysReg::R14),
             X86Reg::R15 => Some(PhysReg::R15),
+            X86Reg::Xmm(n) => Some(PhysReg::Xmm(n)),
             _ => None,
         }
     }
@@ -187,6 +195,7 @@ impl PhysReg {
             PhysReg::R13 => X86Reg::R13,
             PhysReg::R14 => X86Reg::R14,
             PhysReg::R15 => X86Reg::R15,
+            PhysReg::Xmm(n) => X86Reg::Xmm(n),
         }
     }
 }

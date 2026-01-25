@@ -59,6 +59,14 @@ pub enum X86AluEncoding {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86SsePrefix {
+    None,
+    OpSize,
+    Rep,
+    Repne,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum X86OpHint {
     /// ALU encoding preference
     AluEncoding(X86AluEncoding),
@@ -72,6 +80,8 @@ pub enum X86OpHint {
     ImulImm8,
     /// IMUL with 32-bit immediate
     ImulImm32,
+    /// SSE mov with explicit prefix/opcode
+    SseMov { prefix: X86SsePrefix, opcode: u8 },
 }
 
 // ============================================================================
@@ -474,6 +484,13 @@ pub enum OpKind {
         to_width: OpWidth,
     },
 
+    /// Sign-extend accumulator into high register (x86 CWD/CDQ/CQO)
+    Cwd {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    },
+
     /// Truncate
     Truncate {
         dst: VReg,
@@ -512,6 +529,14 @@ pub enum OpKind {
 
     /// Repeat store (x86 REP STOS)
     RepStos {
+        dst: VReg,
+        src: VReg,
+        count: VReg,
+        width: MemWidth,
+    },
+
+    /// Repeat move (x86 REP MOVS)
+    RepMovs {
         dst: VReg,
         src: VReg,
         count: VReg,
@@ -877,6 +902,9 @@ pub enum OpKind {
     /// Set carry flag
     SetCF { value: bool },
 
+    /// Set direction flag (x86 CLD/STD)
+    SetDF { value: bool },
+
     /// Complement carry flag
     CmcCF,
 
@@ -961,6 +989,7 @@ impl OpKind {
             | OpKind::Select { dst, .. }
             | OpKind::ZeroExtend { dst, .. }
             | OpKind::SignExtend { dst, .. }
+            | OpKind::Cwd { dst, .. }
             | OpKind::Truncate { dst, .. }
             | OpKind::Lea { dst, .. }
             | OpKind::Load { dst, .. }
@@ -1026,6 +1055,10 @@ impl OpKind {
 
             OpKind::RepStos { dst, count, .. } => vec![*dst, *count],
 
+            OpKind::RepMovs {
+                dst, src, count, ..
+            } => vec![*dst, *src, *count],
+
             OpKind::LoadPair { dst1, dst2, .. } => vec![*dst1, *dst2],
 
             OpKind::Cas { dst, success, .. } => vec![*dst, *success],
@@ -1048,6 +1081,7 @@ impl OpKind {
             | OpKind::VStore { .. }
             | OpKind::WriteFlags { .. }
             | OpKind::SetCF { .. }
+            | OpKind::SetDF { .. }
             | OpKind::CmcCF
             | OpKind::MaterializeFlags
             | OpKind::Syscall { .. }
@@ -1067,6 +1101,7 @@ impl OpKind {
             self,
             OpKind::Store { .. }
                 | OpKind::RepStos { .. }
+                | OpKind::RepMovs { .. }
                 | OpKind::StorePair { .. }
                 | OpKind::AtomicStore { .. }
                 | OpKind::AtomicRmw { .. }
@@ -1080,6 +1115,7 @@ impl OpKind {
                 | OpKind::VStore { .. }
                 | OpKind::WriteFlags { .. }
                 | OpKind::SetCF { .. }
+                | OpKind::SetDF { .. }
                 | OpKind::CmcCF
                 | OpKind::MaterializeFlags
                 | OpKind::Syscall { .. }
@@ -1099,6 +1135,7 @@ impl OpKind {
                 | OpKind::AtomicRmw { .. }
                 | OpKind::Cas { .. }
                 | OpKind::LoadExclusive { .. }
+                | OpKind::RepMovs { .. }
                 | OpKind::VLoad { .. }
                 | OpKind::Leave
         )
@@ -1110,6 +1147,7 @@ impl OpKind {
             self,
             OpKind::Store { .. }
                 | OpKind::RepStos { .. }
+                | OpKind::RepMovs { .. }
                 | OpKind::StorePair { .. }
                 | OpKind::AtomicStore { .. }
                 | OpKind::AtomicRmw { .. }

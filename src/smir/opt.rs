@@ -1063,6 +1063,7 @@ impl OpKind {
             | OpKind::Inc { src, .. }
             | OpKind::Dec { src, .. }
             | OpKind::Not { src, .. }
+            | OpKind::Cwd { src, .. }
             | OpKind::Bsf { src, .. }
             | OpKind::Bsr { src, .. }
             | OpKind::Clz { src, .. }
@@ -1155,6 +1156,14 @@ impl OpKind {
             }
 
             OpKind::RepStos {
+                dst, src, count, ..
+            } => {
+                result.push(*dst);
+                result.push(*src);
+                result.push(*count);
+            }
+
+            OpKind::RepMovs {
                 dst, src, count, ..
             } => {
                 result.push(*dst);
@@ -1300,6 +1309,7 @@ impl OpKind {
             // Operations with no source registers
             OpKind::ReadFlags { .. }
             | OpKind::SetCF { .. }
+            | OpKind::SetDF { .. }
             | OpKind::CmcCF
             | OpKind::MaterializeFlags
             | OpKind::TestCondition { .. }
