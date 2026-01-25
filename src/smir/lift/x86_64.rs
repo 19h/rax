@@ -1167,7 +1167,7 @@ impl X86_64Lifter {
                 width,
                 flags: FlagUpdate::All,
             },
-            4 => OpKind::Shl {
+            4 | 6 => OpKind::Shl {
                 dst: result,
                 src,
                 amount: SrcOperand::Imm(imm),
@@ -1277,7 +1277,7 @@ impl X86_64Lifter {
                 width,
                 flags: FlagUpdate::All,
             },
-            4 => OpKind::Shl {
+            4 | 6 => OpKind::Shl {
                 dst: result,
                 src,
                 amount: SrcOperand::Imm(1),
@@ -1295,6 +1295,117 @@ impl X86_64Lifter {
                 dst: result,
                 src,
                 amount: SrcOperand::Imm(1),
+                width,
+                flags: FlagUpdate::All,
+            },
+            _ => {
+                if self.strict {
+                    return Err(LiftError::Unsupported {
+                        addr: pc,
+                        mnemonic: format!("shift group {}", group),
+                    });
+                }
+                return Ok(LiftResult::fallthrough(
+                    vec![SmirOp::new(OpId(0), pc, OpKind::Nop)],
+                    prefix.cursor + modrm.bytes_consumed,
+                ));
+            }
+        };
+
+        ops.push(SmirOp::new(OpId(ops.len() as u16), pc, op_kind));
+
+        if let Some(addr) = addr {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Store {
+                    src: result,
+                    addr,
+                    width: self.size_to_memwidth(op_size),
+                },
+            ));
+        }
+
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift shift instructions with count in CL (D2/D3)
+    fn lift_shift_cl(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let op_size = if opcode == 0xD2 { 1 } else { prefix.op_size() };
+        let width = self.size_to_width(op_size);
+
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+
+        let group = (modrm.byte >> 3) & 0x07;
+
+        let (src, addr) = if modrm.is_memory {
+            let x86_addr = modrm.addr.as_ref().unwrap();
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            ops.extend(pre_ops);
+
+            let tmp = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: tmp,
+                    addr: addr.clone(),
+                    width: self.size_to_memwidth(op_size),
+                    sign: SignExtend::Zero,
+                },
+            ));
+            (tmp, Some(addr))
+        } else {
+            (self.gpr(modrm.rm), None)
+        };
+
+        let result = src;
+        let amount = SrcOperand::Reg(self.gpr(1));
+        let op_kind = match group {
+            0 => OpKind::Rol {
+                dst: result,
+                src,
+                amount,
+                width,
+                flags: FlagUpdate::All,
+            },
+            1 => OpKind::Ror {
+                dst: result,
+                src,
+                amount,
+                width,
+                flags: FlagUpdate::All,
+            },
+            4 | 6 => OpKind::Shl {
+                dst: result,
+                src,
+                amount,
+                width,
+                flags: FlagUpdate::All,
+            },
+            5 => OpKind::Shr {
+                dst: result,
+                src,
+                amount,
+                width,
+                flags: FlagUpdate::All,
+            },
+            7 => OpKind::Sar {
+                dst: result,
+                src,
+                amount,
                 width,
                 flags: FlagUpdate::All,
             },
@@ -1485,6 +1596,220 @@ impl X86_64Lifter {
             ops,
             prefix.cursor + modrm.bytes_consumed,
         ))
+    }
+
+    /// Lift SSE PADDD (66 0F FE)
+    fn lift_sse_padd(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let mut ops = Vec::new();
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+
+        let prefix_kind = if prefix.rep_prefix == Some(0xF3) {
+            X86SsePrefix::Rep
+        } else if prefix.rep_prefix == Some(0xF2) {
+            X86SsePrefix::Repne
+        } else if prefix.operand_size_override {
+            X86SsePrefix::OpSize
+        } else {
+            X86SsePrefix::None
+        };
+
+        if prefix_kind != X86SsePrefix::OpSize {
+            if self.strict {
+                return Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("sse opcode 0x{:02X}", opcode),
+                });
+            }
+            return Ok(LiftResult::fallthrough(
+                vec![SmirOp::new(OpId(0), pc, OpKind::Nop)],
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+
+        let hint = X86OpHint::SseOp {
+            prefix: prefix_kind,
+            opcode,
+        };
+
+        let dst = self.xmm(modrm.reg);
+        if modrm.is_memory {
+            let x86_addr = modrm.addr.as_ref().unwrap();
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            ops.extend(pre_ops);
+
+            let tmp = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLoad {
+                    dst: tmp,
+                    addr,
+                    width: VecWidth::V128,
+                },
+            ));
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VAdd {
+                    dst,
+                    src1: dst,
+                    src2: tmp,
+                    elem: VecElementType::I32,
+                    lanes: 4,
+                },
+                hint,
+            ));
+        } else {
+            ops.push(SmirOp::with_hint(
+                OpId(0),
+                pc,
+                OpKind::VAdd {
+                    dst,
+                    src1: dst,
+                    src2: self.xmm(modrm.rm),
+                    elem: VecElementType::I32,
+                    lanes: 4,
+                },
+                hint,
+            ));
+        }
+
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift SSE4.1 PMULLD (66 0F 38 40)
+    fn lift_sse_pmulld(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let mut ops = Vec::new();
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+
+        let prefix_kind = if prefix.rep_prefix == Some(0xF3) {
+            X86SsePrefix::Rep
+        } else if prefix.rep_prefix == Some(0xF2) {
+            X86SsePrefix::Repne
+        } else if prefix.operand_size_override {
+            X86SsePrefix::OpSize
+        } else {
+            X86SsePrefix::None
+        };
+
+        if prefix_kind != X86SsePrefix::OpSize {
+            if self.strict {
+                return Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("sse opcode 0x{:02X}", opcode),
+                });
+            }
+            return Ok(LiftResult::fallthrough(
+                vec![SmirOp::new(OpId(0), pc, OpKind::Nop)],
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+
+        let dst = self.xmm(modrm.reg);
+        if modrm.is_memory {
+            let x86_addr = modrm.addr.as_ref().unwrap();
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            ops.extend(pre_ops);
+
+            let tmp = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLoad {
+                    dst: tmp,
+                    addr,
+                    width: VecWidth::V128,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VMul {
+                    dst,
+                    src1: dst,
+                    src2: tmp,
+                    elem: VecElementType::I32,
+                    lanes: 4,
+                },
+            ));
+        } else {
+            ops.push(SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::VMul {
+                    dst,
+                    src1: dst,
+                    src2: self.xmm(modrm.rm),
+                    elem: VecElementType::I32,
+                    lanes: 4,
+                },
+            ));
+        }
+
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift 0F 38-prefixed (three-byte) opcodes
+    fn lift_0f38_opcode(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if bytes.is_empty() {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: prefix.cursor + 1,
+                need: prefix.cursor + 2,
+            });
+        }
+
+        let opcode3 = bytes[0];
+        let after_opcode = &bytes[1..];
+        let prefix3 = X86Prefix {
+            cursor: prefix.cursor + 1,
+            ..prefix.clone()
+        };
+
+        match opcode3 {
+            0x40 => self.lift_sse_pmulld(opcode3, after_opcode, &prefix3, pc, ctx),
+            _ => {
+                if self.strict {
+                    Err(LiftError::Unsupported {
+                        addr: pc,
+                        mnemonic: format!("0x0F 0x38 0x{:02X}", opcode3),
+                    })
+                } else {
+                    Ok(LiftResult::fallthrough(
+                        vec![SmirOp::new(OpId(0), pc, OpKind::Nop)],
+                        prefix3.cursor,
+                    ))
+                }
+            }
+        }
     }
 
     /// Lift group 5 instructions (FF)
@@ -3561,6 +3886,18 @@ impl X86_64Lifter {
                 ctx,
             ),
 
+            // Shift/rotate group (D2/D3) - count in CL
+            0xD2 | 0xD3 => self.lift_shift_cl(
+                opcode,
+                after_opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+                ctx,
+            ),
+
             // Group 5 (FF)
             0xFF => self.lift_group5(
                 after_opcode,
@@ -3768,6 +4105,12 @@ impl X86_64Lifter {
 
             // SSE MOVDQA/MOVDQU (0F 6F/7F)
             0x6F | 0x7F => self.lift_sse_mov(opcode2, after_opcode, &prefix2, pc, ctx),
+
+            // SSE PADDD (66 0F FE)
+            0xFE => self.lift_sse_padd(opcode2, after_opcode, &prefix2, pc, ctx),
+
+            // SSE4.1 opcodes (0F 38)
+            0x38 => self.lift_0f38_opcode(after_opcode, &prefix2, pc, ctx),
 
             // SHLD/SHRD (0F A4/A5/AC/AD)
             0xA4 | 0xA5 | 0xAC | 0xAD => {

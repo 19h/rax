@@ -88,6 +88,13 @@ impl X86Cond {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+enum ShiftCount {
+    One,
+    Imm(u8),
+    Cl,
+}
+
 // ============================================================================
 // x86_64 Instruction Emitter
 // ============================================================================
@@ -1212,6 +1219,92 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_pcrel(reg, disp)
     }
 
+    pub fn emit_sse_op38_rr(&mut self, prefix: Option<u8>, opcode: u8, reg: PhysReg, rm: PhysReg) {
+        if let Some(prefix) = prefix {
+            self.code.emit_u8(prefix);
+        }
+        self.emit_rex_for_xmm(reg, rm);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0x38);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(reg, rm);
+    }
+
+    pub fn emit_sse_op38_rm_disp(
+        &mut self,
+        prefix: Option<u8>,
+        opcode: u8,
+        reg: PhysReg,
+        base: PhysReg,
+        disp: i32,
+        disp_size: DispSize,
+    ) {
+        if let Some(prefix) = prefix {
+            self.code.emit_u8(prefix);
+        }
+        self.emit_rex_for_xmm_mem(reg, base, None);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0x38);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_mem_disp(reg, base, disp, disp_size);
+    }
+
+    pub fn emit_sse_op38_rm_sib_disp(
+        &mut self,
+        prefix: Option<u8>,
+        opcode: u8,
+        reg: PhysReg,
+        base: Option<PhysReg>,
+        index: PhysReg,
+        scale: u8,
+        disp: i32,
+        disp_size: DispSize,
+    ) {
+        let base_reg = base.unwrap_or(PhysReg::Rbp);
+        if let Some(prefix) = prefix {
+            self.code.emit_u8(prefix);
+        }
+        self.emit_rex_for_xmm_mem(reg, base_reg, Some(index));
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0x38);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_sib_disp(reg, base, index, scale, disp, disp_size);
+    }
+
+    pub fn emit_sse_op38_rm_abs(
+        &mut self,
+        prefix: Option<u8>,
+        opcode: u8,
+        reg: PhysReg,
+        addr: u64,
+    ) {
+        if let Some(prefix) = prefix {
+            self.code.emit_u8(prefix);
+        }
+        self.emit_rex_for_xmm(reg, PhysReg::Rax);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0x38);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_abs(reg, addr);
+    }
+
+    pub fn emit_sse_op38_rm_pcrel(
+        &mut self,
+        prefix: Option<u8>,
+        opcode: u8,
+        reg: PhysReg,
+        disp: i32,
+    ) -> usize {
+        if let Some(prefix) = prefix {
+            self.code.emit_u8(prefix);
+        }
+        self.emit_rex_for_xmm(reg, PhysReg::Rbp);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0x38);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_pcrel(reg, disp)
+    }
+
     // ========================================================================
     // ALU Instructions (two-operand)
     // ========================================================================
@@ -2038,6 +2131,89 @@ impl<'a> X86Emitter<'a> {
         };
         self.code.emit_u8(opcode);
         self.emit_modrm_digit(0b11, 1, dst);
+    }
+
+    fn shift_opcode(width: OpWidth, count: ShiftCount) -> u8 {
+        match count {
+            ShiftCount::One => match width {
+                OpWidth::W8 => 0xD0,
+                _ => 0xD1,
+            },
+            ShiftCount::Cl => match width {
+                OpWidth::W8 => 0xD2,
+                _ => 0xD3,
+            },
+            ShiftCount::Imm(_) => match width {
+                OpWidth::W8 => 0xC0,
+                _ => 0xC1,
+            },
+        }
+    }
+
+    pub fn emit_shift_m_disp(
+        &mut self,
+        digit: u8,
+        base: PhysReg,
+        disp: i32,
+        disp_size: DispSize,
+        width: OpWidth,
+        count: ShiftCount,
+    ) {
+        self.emit_rex_for_width_mem(width, base, None);
+        let opcode = Self::shift_opcode(width, count);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_mem_disp(Self::digit_reg(digit), base, disp, disp_size);
+        if let ShiftCount::Imm(imm) = count {
+            self.code.emit_u8(imm);
+        }
+    }
+
+    pub fn emit_shift_m_sib_disp(
+        &mut self,
+        digit: u8,
+        base: Option<PhysReg>,
+        index: PhysReg,
+        scale: u8,
+        disp: i32,
+        disp_size: DispSize,
+        width: OpWidth,
+        count: ShiftCount,
+    ) {
+        let base_reg = base.unwrap_or(PhysReg::Rbp);
+        self.emit_rex_for_width_mem(width, base_reg, Some(index));
+        let opcode = Self::shift_opcode(width, count);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_sib_disp(Self::digit_reg(digit), base, index, scale, disp, disp_size);
+        if let ShiftCount::Imm(imm) = count {
+            self.code.emit_u8(imm);
+        }
+    }
+
+    pub fn emit_shift_m_abs(&mut self, digit: u8, addr: u64, width: OpWidth, count: ShiftCount) {
+        self.emit_rex_for_width_mem(width, PhysReg::Rbp, None);
+        let opcode = Self::shift_opcode(width, count);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_abs(Self::digit_reg(digit), addr);
+        if let ShiftCount::Imm(imm) = count {
+            self.code.emit_u8(imm);
+        }
+    }
+
+    pub fn emit_shift_m_pcrel(
+        &mut self,
+        digit: u8,
+        disp: i32,
+        width: OpWidth,
+        count: ShiftCount,
+    ) -> usize {
+        self.emit_rex_for_width_mem(width, PhysReg::Rbp, None);
+        let opcode = Self::shift_opcode(width, count);
+        self.code.emit_u8(opcode);
+        let offset = self.emit_modrm_pcrel(Self::digit_reg(digit), disp);
+        if let ShiftCount::Imm(imm) = count {
+            self.code.emit_u8(imm);
+        }
+        offset
     }
 
     pub fn emit_shld_rr_imm(&mut self, dst: PhysReg, src: PhysReg, imm: u8, width: OpWidth) {
@@ -4098,6 +4274,66 @@ impl X86_64Lowerer {
                 emitter.emit_sse_mov_rr(prefix, opcode, reg, rm);
             }
 
+            OpKind::VAdd {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+            } => {
+                if *elem != VecElementType::I32 || *lanes != 4 {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("VAdd {:?}x{}", elem, lanes),
+                    });
+                }
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                if !dst_reg.is_xmm() || !src1_reg.is_xmm() || !src2_reg.is_xmm() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VAdd".to_string(),
+                        operand: "requires XMM operands".to_string(),
+                    });
+                }
+                let prefix = self.sse_prefix(op.x86_hint);
+                if dst_reg != src1_reg {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_sse_mov_rr(prefix, 0x6F, dst_reg, src1_reg);
+                }
+                let opcode = self.sse_opcode(op.x86_hint, 0xFE);
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_sse_mov_rr(prefix, opcode, dst_reg, src2_reg);
+            }
+
+            OpKind::VMul {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+            } => {
+                if *elem != VecElementType::I32 || *lanes != 4 {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("VMul {:?}x{}", elem, lanes),
+                    });
+                }
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                if !dst_reg.is_xmm() || !src1_reg.is_xmm() || !src2_reg.is_xmm() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VMul".to_string(),
+                        operand: "requires XMM operands".to_string(),
+                    });
+                }
+                if dst_reg != src1_reg {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_sse_mov_rr(Some(0x66), 0x6F, dst_reg, src1_reg);
+                }
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_sse_op38_rr(Some(0x66), 0x40, dst_reg, src2_reg);
+            }
+
             OpKind::Load {
                 dst,
                 addr,
@@ -5041,6 +5277,103 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    fn emit_sse_op38_mem(
+        &mut self,
+        prefix: Option<u8>,
+        opcode: u8,
+        reg: PhysReg,
+        addr: &Address,
+    ) -> Result<(), LowerError> {
+        match addr {
+            Address::Direct(base) => {
+                let base_reg = self.get_reg(*base)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_sse_op38_rm_disp(prefix, opcode, reg, base_reg, 0, DispSize::Auto);
+            }
+            Address::BaseOffset {
+                base,
+                offset,
+                disp_size,
+            } => {
+                let base_reg = self.get_reg(*base)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_sse_op38_rm_disp(
+                    prefix,
+                    opcode,
+                    reg,
+                    base_reg,
+                    *offset as i32,
+                    *disp_size,
+                );
+            }
+            Address::BaseIndexScale {
+                base,
+                index,
+                scale,
+                disp,
+                disp_size,
+            } => {
+                let base_reg = base.map(|b| self.get_reg(b)).transpose()?;
+                let index_reg = self.get_reg(*index)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_sse_op38_rm_sib_disp(
+                    prefix, opcode, reg, base_reg, index_reg, *scale, *disp, *disp_size,
+                );
+            }
+            Address::PcRel { offset, base, .. } => {
+                let disp_offset = {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_sse_op38_rm_pcrel(prefix, opcode, reg, 0)
+                };
+                let insn_end = self.code.position();
+
+                let disp = if let Some(base_pc) = base {
+                    let target = (*base_pc as i64 + *offset) as u64;
+                    let disp = if self.pcrel_adjust {
+                        let next_rip = self.guest_base as i64 + insn_end as i64;
+                        target as i64 - next_rip
+                    } else {
+                        *offset
+                    };
+                    if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                        return Err(LowerError::InvalidOperand {
+                            op: "PcRel SSE 0F 38".to_string(),
+                            operand: "offset out of range".to_string(),
+                        });
+                    }
+                    self.relocations.push(Relocation {
+                        offset: disp_offset,
+                        kind: RelocKind::PcRel32,
+                        target: RelocTarget::GuestAddr(target),
+                    });
+                    disp
+                } else {
+                    let disp = *offset;
+                    if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                        return Err(LowerError::InvalidOperand {
+                            op: "PcRel SSE 0F 38".to_string(),
+                            operand: "offset out of range".to_string(),
+                        });
+                    }
+                    disp
+                };
+
+                self.code.patch_i32(disp_offset, disp as i32);
+            }
+            Address::Absolute(addr) => {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_sse_op38_rm_abs(prefix, opcode, reg, *addr);
+            }
+            _ => {
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("SSE 0F 38 with unsupported addressing: {:?}", addr),
+                });
+            }
+        }
+
+        Ok(())
+    }
+
     fn emit_movzx_mem(
         &mut self,
         dst: PhysReg,
@@ -5699,6 +6032,103 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    fn emit_shift_mem(
+        &mut self,
+        digit: u8,
+        addr: &Address,
+        width: OpWidth,
+        count: ShiftCount,
+    ) -> Result<(), LowerError> {
+        match addr {
+            Address::Direct(base) => {
+                let base_reg = self.get_reg(*base)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_shift_m_disp(digit, base_reg, 0, DispSize::Auto, width, count);
+            }
+            Address::BaseOffset {
+                base,
+                offset,
+                disp_size,
+            } => {
+                let base_reg = self.get_reg(*base)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_shift_m_disp(
+                    digit,
+                    base_reg,
+                    *offset as i32,
+                    *disp_size,
+                    width,
+                    count,
+                );
+            }
+            Address::BaseIndexScale {
+                base,
+                index,
+                scale,
+                disp,
+                disp_size,
+            } => {
+                let base_reg = base.map(|b| self.get_reg(b)).transpose()?;
+                let index_reg = self.get_reg(*index)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_shift_m_sib_disp(
+                    digit, base_reg, index_reg, *scale, *disp, *disp_size, width, count,
+                );
+            }
+            Address::PcRel { offset, base, .. } => {
+                let disp_offset = {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_shift_m_pcrel(digit, 0, width, count)
+                };
+                let insn_end = self.code.position();
+
+                let disp = if let Some(base_pc) = base {
+                    let target = (*base_pc as i64 + *offset) as u64;
+                    let disp = if self.pcrel_adjust {
+                        let next_rip = self.guest_base as i64 + insn_end as i64;
+                        target as i64 - next_rip
+                    } else {
+                        *offset
+                    };
+                    if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                        return Err(LowerError::InvalidOperand {
+                            op: "PcRel shift".to_string(),
+                            operand: "offset out of range".to_string(),
+                        });
+                    }
+                    self.relocations.push(Relocation {
+                        offset: disp_offset,
+                        kind: RelocKind::PcRel32,
+                        target: RelocTarget::GuestAddr(target),
+                    });
+                    disp
+                } else {
+                    let disp = *offset;
+                    if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                        return Err(LowerError::InvalidOperand {
+                            op: "PcRel shift".to_string(),
+                            operand: "offset out of range".to_string(),
+                        });
+                    }
+                    disp
+                };
+
+                self.code.patch_i32(disp_offset, disp as i32);
+            }
+            Address::Absolute(addr) => {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_shift_m_abs(digit, *addr, width, count);
+            }
+            _ => {
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("Shift with unsupported addressing: {:?}", addr),
+                });
+            }
+        }
+
+        Ok(())
+    }
+
     fn emit_group5_mem(&mut self, digit: u8, addr: &Address) -> Result<(), LowerError> {
         match addr {
             Address::Direct(base) => {
@@ -6232,10 +6662,136 @@ impl X86_64Lowerer {
                 self.emit_sse_mov_mem(prefix, opcode, dst_reg, addr)?;
                 return Ok(Some(2));
             }
+            OpKind::VMul {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+            } if *src2 == tmp && *dst == *src1 => {
+                if *elem != VecElementType::I32 || *lanes != 4 {
+                    return Ok(None);
+                }
+                let dst_reg = self.get_dst_reg(*dst)?;
+                if !dst_reg.is_xmm() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VMul".to_string(),
+                        operand: "destination must be XMM".to_string(),
+                    });
+                }
+                self.emit_sse_op38_mem(Some(0x66), 0x40, dst_reg, addr)?;
+                return Ok(Some(2));
+            }
             _ => {}
         }
 
         Ok(None)
+    }
+
+    fn try_lower_mem_shift(
+        &mut self,
+        ops: &[crate::smir::ops::SmirOp],
+        idx: usize,
+    ) -> Result<Option<usize>, LowerError> {
+        if idx + 2 >= ops.len() {
+            return Ok(None);
+        }
+
+        let (tmp, addr, mem_width, sign) = match ops.get(idx).map(|op| &op.kind) {
+            Some(OpKind::Load {
+                dst,
+                addr,
+                width,
+                sign,
+            }) => (*dst, addr, *width, *sign),
+            _ => return Ok(None),
+        };
+
+        if sign != SignExtend::Zero {
+            return Ok(None);
+        }
+
+        let op_width = match mem_width.to_op_width() {
+            Some(width) => width,
+            None => return Ok(None),
+        };
+
+        let (digit, amount, dst, src, width) = match &ops[idx + 1].kind {
+            OpKind::Rol {
+                dst,
+                src,
+                amount,
+                width,
+                ..
+            } => (0, amount, dst, src, width),
+            OpKind::Ror {
+                dst,
+                src,
+                amount,
+                width,
+                ..
+            } => (1, amount, dst, src, width),
+            OpKind::Shl {
+                dst,
+                src,
+                amount,
+                width,
+                ..
+            } => (4, amount, dst, src, width),
+            OpKind::Shr {
+                dst,
+                src,
+                amount,
+                width,
+                ..
+            } => (5, amount, dst, src, width),
+            OpKind::Sar {
+                dst,
+                src,
+                amount,
+                width,
+                ..
+            } => (7, amount, dst, src, width),
+            _ => return Ok(None),
+        };
+
+        if *dst != tmp || *src != tmp || *width != op_width {
+            return Ok(None);
+        }
+
+        match &ops[idx + 2].kind {
+            OpKind::Store {
+                src,
+                addr: store_addr,
+                width: store_width,
+            } if *src == tmp && *store_addr == *addr && *store_width == mem_width => {}
+            _ => return Ok(None),
+        }
+
+        let count = match amount {
+            SrcOperand::Imm(val) => {
+                if *val < 0 || *val > u8::MAX as i64 {
+                    return Ok(None);
+                }
+                let imm = *val as u8;
+                if imm == 1 {
+                    ShiftCount::One
+                } else {
+                    ShiftCount::Imm(imm)
+                }
+            }
+            SrcOperand::Reg(reg) => {
+                let amt_reg = self.get_reg(*reg)?;
+                if amt_reg != PhysReg::Rcx {
+                    return Ok(None);
+                }
+                ShiftCount::Cl
+            }
+            _ => return Ok(None),
+        };
+
+        self.emit_shift_mem(digit, addr, op_width, count)?;
+        Ok(Some(3))
     }
 
     fn try_lower_mem_alu(
@@ -6787,6 +7343,10 @@ impl X86_64Lowerer {
                 continue;
             }
             if let Some(consumed) = self.try_lower_vmem_binop(&block.ops, idx)? {
+                idx += consumed;
+                continue;
+            }
+            if let Some(consumed) = self.try_lower_mem_shift(&block.ops, idx)? {
                 idx += consumed;
                 continue;
             }
