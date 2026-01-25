@@ -1544,6 +1544,74 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_digit(0b11, 7, dst);
     }
 
+    /// ROL r/m, imm8
+    pub fn emit_rol_ri(&mut self, dst: PhysReg, amount: u8, width: OpWidth) {
+        self.emit_rex_for_width(width, PhysReg::Rax, dst);
+
+        if amount == 1 {
+            let opcode = match width {
+                OpWidth::W8 => 0xD0,
+                _ => 0xD1,
+            };
+            self.code.emit_u8(opcode);
+            self.emit_modrm_digit(0b11, 0, dst);
+        } else {
+            let opcode = match width {
+                OpWidth::W8 => 0xC0,
+                _ => 0xC1,
+            };
+            self.code.emit_u8(opcode);
+            self.emit_modrm_digit(0b11, 0, dst);
+            self.code.emit_u8(amount);
+        }
+    }
+
+    /// ROL r/m, CL
+    pub fn emit_rol_cl(&mut self, dst: PhysReg, width: OpWidth) {
+        self.emit_rex_for_width(width, PhysReg::Rax, dst);
+
+        let opcode = match width {
+            OpWidth::W8 => 0xD2,
+            _ => 0xD3,
+        };
+        self.code.emit_u8(opcode);
+        self.emit_modrm_digit(0b11, 0, dst);
+    }
+
+    /// ROR r/m, imm8
+    pub fn emit_ror_ri(&mut self, dst: PhysReg, amount: u8, width: OpWidth) {
+        self.emit_rex_for_width(width, PhysReg::Rax, dst);
+
+        if amount == 1 {
+            let opcode = match width {
+                OpWidth::W8 => 0xD0,
+                _ => 0xD1,
+            };
+            self.code.emit_u8(opcode);
+            self.emit_modrm_digit(0b11, 1, dst);
+        } else {
+            let opcode = match width {
+                OpWidth::W8 => 0xC0,
+                _ => 0xC1,
+            };
+            self.code.emit_u8(opcode);
+            self.emit_modrm_digit(0b11, 1, dst);
+            self.code.emit_u8(amount);
+        }
+    }
+
+    /// ROR r/m, CL
+    pub fn emit_ror_cl(&mut self, dst: PhysReg, width: OpWidth) {
+        self.emit_rex_for_width(width, PhysReg::Rax, dst);
+
+        let opcode = match width {
+            OpWidth::W8 => 0xD2,
+            _ => 0xD3,
+        };
+        self.code.emit_u8(opcode);
+        self.emit_modrm_digit(0b11, 1, dst);
+    }
+
     pub fn emit_shld_rr_imm(&mut self, dst: PhysReg, src: PhysReg, imm: u8, width: OpWidth) {
         self.emit_rex_for_width(width, src, dst);
         self.code.emit_u8(0x0F);
@@ -2034,6 +2102,21 @@ impl<'a> X86Emitter<'a> {
         self.code.emit_u8(0x90);
     }
 
+    /// CLC
+    pub fn emit_clc(&mut self) {
+        self.code.emit_u8(0xF8);
+    }
+
+    /// STC
+    pub fn emit_stc(&mut self) {
+        self.code.emit_u8(0xF9);
+    }
+
+    /// CMC
+    pub fn emit_cmc(&mut self) {
+        self.code.emit_u8(0xF5);
+    }
+
     /// Multi-byte NOP
     pub fn emit_nop_n(&mut self, n: usize) {
         // Use optimal multi-byte NOPs
@@ -2140,6 +2223,13 @@ impl<'a> X86Emitter<'a> {
 
     /// XCHG r64, r64
     pub fn emit_xchg(&mut self, r1: PhysReg, r2: PhysReg, width: OpWidth) {
+        if width != OpWidth::W8 && (r1 == PhysReg::Rax || r2 == PhysReg::Rax) {
+            let other = if r1 == PhysReg::Rax { r2 } else { r1 };
+            self.emit_rex_for_width(width, other, PhysReg::Rax);
+            self.code.emit_u8(0x90 + other.low3());
+            return;
+        }
+
         self.emit_rex_for_width(width, r1, r2);
 
         let opcode = match width {
@@ -2352,7 +2442,11 @@ impl X86_64Lowerer {
 
         // RET
         if let Some(imm) = ret_imm {
-            emitter.emit_ret_imm16(imm);
+            if imm == 0 {
+                emitter.emit_ret();
+            } else {
+                emitter.emit_ret_imm16(imm);
+            }
         } else {
             emitter.emit_ret();
         }
@@ -2489,6 +2583,13 @@ impl X86_64Lowerer {
                         });
                     }
                 }
+            }
+
+            OpKind::Xchg { reg1, reg2, width } => {
+                let reg1 = self.get_dst_reg(*reg1)?;
+                let reg2 = self.get_dst_reg(*reg2)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_xchg(reg1, reg2, *width);
             }
 
             OpKind::CMove {
@@ -3128,6 +3229,24 @@ impl X86_64Lowerer {
                 emitter.emit_not(dst_reg, *width);
             }
 
+            OpKind::Bsf {
+                dst, src, width, ..
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_bsf(dst_reg, src_reg, *width);
+            }
+
+            OpKind::Bsr {
+                dst, src, width, ..
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_bsr(dst_reg, src_reg, *width);
+            }
+
             // ================================================================
             // Shifts
             // ================================================================
@@ -3238,6 +3357,80 @@ impl X86_64Lowerer {
                     _ => {
                         return Err(LowerError::UnsupportedOp {
                             op: "Sar with shifted operand".to_string(),
+                        });
+                    }
+                }
+            }
+
+            OpKind::Rol {
+                dst,
+                src,
+                amount,
+                width,
+                ..
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+
+                if dst_reg != src_reg {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_mov_rr(dst_reg, src_reg, *width);
+                }
+
+                match amount {
+                    SrcOperand::Imm(val) => {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_rol_ri(dst_reg, *val as u8, *width);
+                    }
+                    SrcOperand::Reg(r) => {
+                        let amt_reg = self.get_reg(*r)?;
+                        if amt_reg != PhysReg::Rcx {
+                            let mut emitter = X86Emitter::new(&mut self.code);
+                            emitter.emit_mov_rr(PhysReg::Rcx, amt_reg, OpWidth::W8);
+                        }
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_rol_cl(dst_reg, *width);
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: "Rol with shifted operand".to_string(),
+                        });
+                    }
+                }
+            }
+
+            OpKind::Ror {
+                dst,
+                src,
+                amount,
+                width,
+                ..
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+
+                if dst_reg != src_reg {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_mov_rr(dst_reg, src_reg, *width);
+                }
+
+                match amount {
+                    SrcOperand::Imm(val) => {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_ror_ri(dst_reg, *val as u8, *width);
+                    }
+                    SrcOperand::Reg(r) => {
+                        let amt_reg = self.get_reg(*r)?;
+                        if amt_reg != PhysReg::Rcx {
+                            let mut emitter = X86Emitter::new(&mut self.code);
+                            emitter.emit_mov_rr(PhysReg::Rcx, amt_reg, OpWidth::W8);
+                        }
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_ror_cl(dst_reg, *width);
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: "Ror with shifted operand".to_string(),
                         });
                     }
                 }
@@ -3374,6 +3567,20 @@ impl X86_64Lowerer {
                 if *width != OpWidth::W8 {
                     emitter.emit_movzx(dst_reg, dst_reg, OpWidth::W8, *width);
                 }
+            }
+
+            OpKind::SetCF { value } => {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                if *value {
+                    emitter.emit_stc();
+                } else {
+                    emitter.emit_clc();
+                }
+            }
+
+            OpKind::CmcCF => {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_cmc();
             }
 
             // ================================================================
@@ -5463,10 +5670,10 @@ impl X86_64Lowerer {
         if matches!(block.terminator, Terminator::Return { .. }) && block.ops.len() >= 2 {
             if let (
                 OpKind::Load {
+                    dst: load_dst,
                     addr: Address::Direct(addr_base),
                     width: MemWidth::B8,
                     sign: SignExtend::Zero,
-                    ..
                 },
                 OpKind::Add {
                     dst,
@@ -5479,7 +5686,11 @@ impl X86_64Lowerer {
                 &block.ops[block.ops.len() - 2].kind,
                 &block.ops[block.ops.len() - 1].kind,
             ) {
-                if self.is_rsp(*dst) && self.is_rsp(*src1) && self.is_rsp(*addr_base) {
+                if self.is_rsp(*dst)
+                    && self.is_rsp(*src1)
+                    && self.is_rsp(*addr_base)
+                    && matches!(load_dst, VReg::Virtual(_))
+                {
                     let imm_total = *imm;
                     if imm_total >= 8 && imm_total <= (8 + u16::MAX as i64) {
                         self.pending_ret_imm = Some((imm_total - 8) as u16);

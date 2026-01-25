@@ -1149,6 +1149,20 @@ impl X86_64Lifter {
 
         let result = src;
         let op_kind = match group {
+            0 => OpKind::Rol {
+                dst: result,
+                src,
+                amount: SrcOperand::Imm(imm),
+                width,
+                flags: FlagUpdate::All,
+            },
+            1 => OpKind::Ror {
+                dst: result,
+                src,
+                amount: SrcOperand::Imm(imm),
+                width,
+                flags: FlagUpdate::All,
+            },
             4 => OpKind::Shl {
                 dst: result,
                 src,
@@ -1245,6 +1259,20 @@ impl X86_64Lifter {
 
         let result = src;
         let op_kind = match group {
+            0 => OpKind::Rol {
+                dst: result,
+                src,
+                amount: SrcOperand::Imm(1),
+                width,
+                flags: FlagUpdate::All,
+            },
+            1 => OpKind::Ror {
+                dst: result,
+                src,
+                amount: SrcOperand::Imm(1),
+                width,
+                flags: FlagUpdate::All,
+            },
             4 => OpKind::Shl {
                 dst: result,
                 src,
@@ -1293,6 +1321,67 @@ impl X86_64Lifter {
                 },
             ));
         }
+
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    /// Lift BSF/BSR (0F BC/0F BD)
+    fn lift_bsf_bsr(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let op_size = prefix.op_size();
+        let width = self.size_to_width(op_size);
+        let mem_width = self.size_to_memwidth(op_size);
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let mut ops = Vec::new();
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+
+        let src = if modrm.is_memory {
+            let x86_addr = modrm.addr.as_ref().unwrap();
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            ops.extend(pre_ops);
+
+            let tmp = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: tmp,
+                    addr,
+                    width: mem_width,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            tmp
+        } else {
+            self.gpr(modrm.rm)
+        };
+
+        let op_kind = if opcode == 0xBC {
+            OpKind::Bsf {
+                dst: self.gpr(modrm.reg),
+                src,
+                width,
+                flags: FlagUpdate::All,
+            }
+        } else {
+            OpKind::Bsr {
+                dst: self.gpr(modrm.reg),
+                src,
+                width,
+                flags: FlagUpdate::All,
+            }
+        };
+
+        ops.push(SmirOp::new(OpId(ops.len() as u16), pc, op_kind));
 
         Ok(LiftResult::fallthrough(
             ops,
@@ -2017,6 +2106,28 @@ impl X86_64Lifter {
                 flags: FlagUpdate::None,
             },
         ));
+
+        Ok(LiftResult::fallthrough(ops, prefix.cursor))
+    }
+
+    /// Lift XCHG rax, r64 (90-97)
+    fn lift_xchg_rax(
+        &self,
+        opcode: u8,
+        prefix: &X86Prefix,
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
+        let reg = (opcode & 0x07) | prefix.rex_b();
+        let width = self.size_to_width(prefix.op_size());
+        let ops = vec![SmirOp::new(
+            OpId(0),
+            pc,
+            OpKind::Xchg {
+                reg1: self.gpr(0),
+                reg2: self.gpr(reg),
+                width,
+            },
+        )];
 
         Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
@@ -2845,13 +2956,14 @@ impl X86_64Lifter {
         let after_opcode = &opcode_bytes[1..];
 
         match opcode {
-            // NOP / PAUSE (with REP prefix)
-            0x90 => {
-                if prefix.rep_prefix == Some(0xF3) {
+            // XCHG rax, r64 / NOP / PAUSE (with REP prefix)
+            0x90..=0x97 => {
+                if opcode == 0x90 && prefix.rep_prefix == Some(0xF3) {
                     // PAUSE - treat as NOP for lifting
                     Ok(LiftResult::fallthrough(vec![], prefix.cursor + 1))
                 } else {
-                    self.lift_nop(
+                    self.lift_xchg_rax(
+                        opcode,
                         &X86Prefix {
                             cursor: prefix.cursor + 1,
                             ..prefix
@@ -2860,6 +2972,20 @@ impl X86_64Lifter {
                     )
                 }
             }
+
+            // CMC/CLC/STC
+            0xF5 => Ok(LiftResult::fallthrough(
+                vec![SmirOp::new(OpId(0), pc, OpKind::CmcCF)],
+                prefix.cursor + 1,
+            )),
+            0xF8 => Ok(LiftResult::fallthrough(
+                vec![SmirOp::new(OpId(0), pc, OpKind::SetCF { value: false })],
+                prefix.cursor + 1,
+            )),
+            0xF9 => Ok(LiftResult::fallthrough(
+                vec![SmirOp::new(OpId(0), pc, OpKind::SetCF { value: true })],
+                prefix.cursor + 1,
+            )),
 
             // HLT
             0xF4 => Ok(LiftResult {
@@ -3475,6 +3601,9 @@ impl X86_64Lifter {
                     prefix2.cursor + modrm.bytes_consumed,
                 ))
             }
+
+            // BSF/BSR (0F BC/0F BD)
+            0xBC | 0xBD => self.lift_bsf_bsr(opcode2, after_opcode, &prefix2, pc, ctx),
 
             // MOVSX r, r/m8 (0F BE)
             0xBE => {
