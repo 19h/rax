@@ -7,7 +7,7 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::smir::flags::{FlagSet, FlagState, FlagUpdate};
-use crate::smir::ir::{SmirBlock, SmirFunction, Terminator};
+use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
 use crate::smir::ops::{OpKind, SmirOp};
 use crate::smir::types::{Address, ArchReg, BlockId, MemWidth, OpWidth, SrcOperand, VReg, X86Reg};
 
@@ -594,6 +594,9 @@ pub fn dead_code_elimination(block: &mut SmirBlock) -> usize {
         Terminator::IndirectBranch { target, .. } => {
             used.insert(*target);
         }
+        Terminator::IndirectBranchMem { addr, .. } => {
+            used.extend(addr.regs());
+        }
         Terminator::Return { values } => {
             for v in values {
                 used.insert(*v);
@@ -602,7 +605,24 @@ pub fn dead_code_elimination(block: &mut SmirBlock) -> usize {
         Terminator::Switch { index, .. } => {
             used.insert(*index);
         }
-        Terminator::Call { args, .. } | Terminator::TailCall { args, .. } => {
+        Terminator::Call { target, args, .. } => {
+            if let CallTarget::Indirect(reg) = target {
+                used.insert(*reg);
+            }
+            if let CallTarget::IndirectMem(addr) = target {
+                used.extend(addr.regs());
+            }
+            for arg in args {
+                used.insert(*arg);
+            }
+        }
+        Terminator::TailCall { target, args, .. } => {
+            if let CallTarget::Indirect(reg) = target {
+                used.insert(*reg);
+            }
+            if let CallTarget::IndirectMem(addr) = target {
+                used.extend(addr.regs());
+            }
             for arg in args {
                 used.insert(*arg);
             }

@@ -2658,6 +2658,10 @@ impl SmirLifter for RiscVLifter {
                         target,
                         possible_targets: vec![],
                     },
+                    ControlFlow::IndirectBranchMem { addr } => Terminator::IndirectBranchMem {
+                        addr,
+                        possible_targets: vec![],
+                    },
                     ControlFlow::Call { target } => Terminator::Call {
                         target,
                         args: vec![],

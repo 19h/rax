@@ -146,6 +146,8 @@ pub enum ControlFlow {
     },
     /// Indirect branch (computed target)
     IndirectBranch { target: VReg },
+    /// Indirect branch through memory
+    IndirectBranchMem { addr: Address },
     /// Function call
     Call { target: CallTarget },
     /// Return from function

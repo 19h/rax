@@ -1724,6 +1724,10 @@ impl crate::smir::lift::SmirLifter for Aarch64Lifter {
                         target,
                         possible_targets: vec![],
                     },
+                    ControlFlow::IndirectBranchMem { addr } => Terminator::IndirectBranchMem {
+                        addr,
+                        possible_targets: vec![],
+                    },
                     ControlFlow::Call { target } => Terminator::Call {
                         target,
                         args: vec![],
