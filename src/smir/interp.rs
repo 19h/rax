@@ -664,6 +664,56 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::Shld {
+                dst,
+                src,
+                amount,
+                width,
+                flags,
+            } => {
+                let left = ctx.read_vreg(*dst) & width.mask();
+                let right = ctx.read_vreg(*src) & width.mask();
+                let bits = width.bits() as u64;
+                let mask = if bits == 64 { 0x3F } else { 0x1F };
+                let amt = self.read_src_operand(ctx, amount) & mask;
+                let result = if amt == 0 {
+                    left
+                } else {
+                    ((left << amt) | (right >> (bits - amt))) & width.mask()
+                };
+
+                ctx.write_vreg(*dst, result);
+
+                if flags.updates_any() {
+                    ctx.flags.set_lazy_logic(result, *width);
+                }
+            }
+
+            OpKind::Shrd {
+                dst,
+                src,
+                amount,
+                width,
+                flags,
+            } => {
+                let left = ctx.read_vreg(*dst) & width.mask();
+                let right = ctx.read_vreg(*src) & width.mask();
+                let bits = width.bits() as u64;
+                let mask = if bits == 64 { 0x3F } else { 0x1F };
+                let amt = self.read_src_operand(ctx, amount) & mask;
+                let result = if amt == 0 {
+                    left
+                } else {
+                    ((left >> amt) | (right << (bits - amt))) & width.mask()
+                };
+
+                ctx.write_vreg(*dst, result);
+
+                if flags.updates_any() {
+                    ctx.flags.set_lazy_logic(result, *width);
+                }
+            }
+
             OpKind::Rol {
                 dst,
                 src,
@@ -1059,6 +1109,15 @@ impl SmirInterpreter {
 
                 ctx.write_vreg(*dst, addr);
                 ctx.write_vreg(*count, remaining);
+            }
+
+            OpKind::Leave => {
+                let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
+                let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+                let frame = ctx.read_vreg(rbp);
+                let val = self.load_memory(memory, frame, MemWidth::B8, SignExtend::Zero)?;
+                ctx.write_vreg(rsp, frame.wrapping_add(8));
+                ctx.write_vreg(rbp, val);
             }
 
             OpKind::IoIn { dst, .. } => {

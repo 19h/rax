@@ -9,7 +9,7 @@ use std::collections::{HashMap, HashSet};
 use crate::smir::flags::{FlagSet, FlagState, FlagUpdate};
 use crate::smir::ir::{SmirBlock, SmirFunction, Terminator};
 use crate::smir::ops::{OpKind, SmirOp};
-use crate::smir::types::{Address, BlockId, MemWidth, OpWidth, SrcOperand, VReg};
+use crate::smir::types::{Address, ArchReg, BlockId, MemWidth, OpWidth, SrcOperand, VReg, X86Reg};
 
 // ============================================================================
 // Optimization Level
@@ -837,6 +837,7 @@ fn redundant_load_elimination_block(block: &mut SmirBlock) -> usize {
                             src: SrcOperand::Reg(existing),
                             width: width.to_op_width().unwrap_or(OpWidth::W64),
                         },
+                        x86_hint: None,
                     });
                     eliminated += 1;
                 } else {
@@ -923,6 +924,8 @@ impl OpKind {
             | OpKind::Shl { flags, .. }
             | OpKind::Shr { flags, .. }
             | OpKind::Sar { flags, .. }
+            | OpKind::Shld { flags, .. }
+            | OpKind::Shrd { flags, .. }
             | OpKind::Rol { flags, .. }
             | OpKind::Ror { flags, .. }
             | OpKind::Bsf { flags, .. }
@@ -950,6 +953,8 @@ impl OpKind {
             | OpKind::Shl { flags, .. }
             | OpKind::Shr { flags, .. }
             | OpKind::Sar { flags, .. }
+            | OpKind::Shld { flags, .. }
+            | OpKind::Shrd { flags, .. }
             | OpKind::Rol { flags, .. }
             | OpKind::Ror { flags, .. }
             | OpKind::Bsf { flags, .. }
@@ -1009,6 +1014,25 @@ impl OpKind {
                 }
             }
 
+            OpKind::Shld {
+                dst: src1,
+                src: src3,
+                amount: src2,
+                ..
+            }
+            | OpKind::Shrd {
+                dst: src1,
+                src: src3,
+                amount: src2,
+                ..
+            } => {
+                result.push(*src1);
+                result.push(*src3);
+                if let SrcOperand::Reg(r) = src2 {
+                    result.push(*r);
+                }
+            }
+
             OpKind::MulU { src1, src2, .. }
             | OpKind::MulS { src1, src2, .. }
             | OpKind::DivU { src1, src2, .. }
@@ -1042,6 +1066,10 @@ impl OpKind {
             | OpKind::Bswap { src, .. }
             | OpKind::Rbit { src, .. } => {
                 result.push(*src);
+            }
+
+            OpKind::Leave => {
+                result.push(VReg::Arch(ArchReg::X86(X86Reg::Rbp)));
             }
 
             OpKind::Shl { src, amount, .. }

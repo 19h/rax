@@ -18,13 +18,60 @@ pub struct SmirOp {
     pub guest_pc: GuestAddr,
     /// The operation kind and operands
     pub kind: OpKind,
+    /// x86-specific encoding hints
+    pub x86_hint: Option<X86OpHint>,
 }
 
 impl SmirOp {
     /// Create a new operation
     pub fn new(id: OpId, guest_pc: GuestAddr, kind: OpKind) -> Self {
-        SmirOp { id, guest_pc, kind }
+        SmirOp {
+            id,
+            guest_pc,
+            kind,
+            x86_hint: None,
+        }
     }
+
+    /// Create a new operation with x86 hint
+    pub fn with_hint(id: OpId, guest_pc: GuestAddr, kind: OpKind, hint: X86OpHint) -> Self {
+        SmirOp {
+            id,
+            guest_pc,
+            kind,
+            x86_hint: Some(hint),
+        }
+    }
+}
+
+// ============================================================================
+// x86 Encoding Hints
+// ============================================================================
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86AluEncoding {
+    /// r/m, reg encoding
+    RmReg,
+    /// reg, r/m encoding
+    RegRm,
+    /// Accumulator immediate encoding
+    AccImm,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86OpHint {
+    /// ALU encoding preference
+    AluEncoding(X86AluEncoding),
+    /// Use ModR/M immediate encoding for MOV
+    MovImmModRm,
+    /// Push with 8-bit immediate
+    PushImm8,
+    /// Push with 32-bit immediate
+    PushImm32,
+    /// IMUL with 8-bit immediate
+    ImulImm8,
+    /// IMUL with 32-bit immediate
+    ImulImm32,
 }
 
 // ============================================================================
@@ -236,6 +283,24 @@ pub enum OpKind {
 
     /// Arithmetic shift right: dst = src >> amount (sign-fill)
     Sar {
+        dst: VReg,
+        src: VReg,
+        amount: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Shift left double: dst = (dst << amount) | (src >> (width - amount))
+    Shld {
+        dst: VReg,
+        src: VReg,
+        amount: SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// Shift right double: dst = (dst >> amount) | (src << (width - amount))
+    Shrd {
         dst: VReg,
         src: VReg,
         amount: SrcOperand,
@@ -775,6 +840,9 @@ pub enum OpKind {
         width: VecWidth,
     },
 
+    /// Leave stack frame (x86 LEAVE)
+    Leave,
+
     /// I/O port input
     IoIn {
         dst: VReg,
@@ -872,6 +940,8 @@ impl OpKind {
             | OpKind::Shl { dst, .. }
             | OpKind::Shr { dst, .. }
             | OpKind::Sar { dst, .. }
+            | OpKind::Shld { dst, .. }
+            | OpKind::Shrd { dst, .. }
             | OpKind::Rol { dst, .. }
             | OpKind::Ror { dst, .. }
             | OpKind::Bts { dst, .. }
@@ -931,6 +1001,11 @@ impl OpKind {
             | OpKind::SetCC { dst, .. }
             | OpKind::ReadSysReg { dst, .. } => vec![*dst],
 
+            OpKind::Leave => vec![
+                VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
+                VReg::Arch(ArchReg::X86(X86Reg::Rbp)),
+            ],
+
             OpKind::MulU { dst_lo, dst_hi, .. } | OpKind::MulS { dst_lo, dst_hi, .. } => {
                 let mut v = vec![*dst_lo];
                 if let Some(hi) = dst_hi {
@@ -979,6 +1054,7 @@ impl OpKind {
             | OpKind::IoOut { .. }
             | OpKind::Swi { .. }
             | OpKind::WriteSysReg { .. }
+            | OpKind::Leave
             | OpKind::Nop
             | OpKind::Undefined { .. }
             | OpKind::Breakpoint => vec![],
@@ -998,6 +1074,7 @@ impl OpKind {
                 | OpKind::StoreExclusive { .. }
                 | OpKind::IoIn { .. }
                 | OpKind::IoOut { .. }
+                | OpKind::Leave
                 | OpKind::ClearExclusive
                 | OpKind::Fence { .. }
                 | OpKind::VStore { .. }
@@ -1023,6 +1100,7 @@ impl OpKind {
                 | OpKind::Cas { .. }
                 | OpKind::LoadExclusive { .. }
                 | OpKind::VLoad { .. }
+                | OpKind::Leave
         )
     }
 
