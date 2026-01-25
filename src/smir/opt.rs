@@ -968,6 +968,8 @@ impl OpKind {
             // Bit test updates CF
             OpKind::Bt { .. } => FlagSet::CF,
 
+            OpKind::SetCF { .. } | OpKind::CmcCF => FlagSet::CF,
+
             _ => FlagSet::EMPTY,
         }
     }
@@ -985,6 +987,9 @@ impl OpKind {
 
             // TestCondition reads flags
             OpKind::TestCondition { cond, .. } => FlagState::required_flags(*cond),
+
+            // Complement carry reads CF
+            OpKind::CmcCF => FlagSet::CF,
 
             // ReadFlags reads all flags
             OpKind::ReadFlags { .. } => FlagSet::ALL_X86,
