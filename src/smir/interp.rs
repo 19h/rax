@@ -1043,6 +1043,17 @@ impl SmirInterpreter {
                 ctx.write_vreg(*dst, extended & to_width.mask());
             }
 
+            OpKind::Cwd { dst, src, width } => {
+                let val = ctx.read_vreg(*src) & width.mask();
+                let sign_bit = width.sign_bit();
+                let result = if (val & sign_bit) != 0 {
+                    width.mask()
+                } else {
+                    0
+                };
+                Self::write_x86_partial(ctx, *dst, result, *width);
+            }
+
             OpKind::Truncate {
                 dst,
                 src,
@@ -1108,6 +1119,36 @@ impl SmirInterpreter {
                 }
 
                 ctx.write_vreg(*dst, addr);
+                ctx.write_vreg(*count, remaining);
+            }
+
+            OpKind::RepMovs {
+                dst,
+                src,
+                count,
+                width,
+            } => {
+                let mut dst_addr = ctx.read_vreg(*dst);
+                let mut src_addr = ctx.read_vreg(*src);
+                let mut remaining = ctx.read_vreg(*count);
+                let stride = width.bytes() as u64;
+                let forward = !ctx.flags.materialized.df;
+
+                while remaining > 0 {
+                    let val = self.load_memory(memory, src_addr, *width, SignExtend::Zero)?;
+                    self.store_memory(memory, dst_addr, val, *width)?;
+                    if forward {
+                        dst_addr = dst_addr.wrapping_add(stride);
+                        src_addr = src_addr.wrapping_add(stride);
+                    } else {
+                        dst_addr = dst_addr.wrapping_sub(stride);
+                        src_addr = src_addr.wrapping_sub(stride);
+                    }
+                    remaining -= 1;
+                }
+
+                ctx.write_vreg(*dst, dst_addr);
+                ctx.write_vreg(*src, src_addr);
                 ctx.write_vreg(*count, remaining);
             }
 
@@ -1525,13 +1566,8 @@ impl SmirInterpreter {
             }
 
             OpKind::VMov { dst, src, width: _ } => {
-                let a = ctx.vregs.get_vec(match *src {
-                    VReg::Virtual(id) => id,
-                    _ => panic!(),
-                });
-                if let VReg::Virtual(id) = *dst {
-                    ctx.vregs.set_vec(id, a);
-                }
+                let val = Self::read_vec(ctx, *src);
+                Self::write_vec(ctx, *dst, val);
             }
 
             OpKind::VShift { .. }
@@ -1556,17 +1592,12 @@ impl SmirInterpreter {
                     0
                 };
 
-                if let VReg::Virtual(id) = *dst {
-                    ctx.vregs.set_vec(id, [lo, hi]);
-                }
+                Self::write_vec(ctx, *dst, [lo, hi]);
             }
 
             OpKind::VStore { src, addr, width } => {
                 let effective_addr = self.compute_address(ctx, addr);
-                let val = ctx.vregs.get_vec(match *src {
-                    VReg::Virtual(id) => id,
-                    _ => panic!(),
-                });
+                let val = Self::read_vec(ctx, *src);
 
                 let size = width.bytes() as usize;
                 let mut buf = [0u8; 64];
@@ -1596,6 +1627,11 @@ impl SmirInterpreter {
             OpKind::SetCF { value } => {
                 ctx.flags.materialize_all();
                 ctx.flags.materialized.cf = *value;
+            }
+
+            OpKind::SetDF { value } => {
+                ctx.flags.materialize_all();
+                ctx.flags.materialized.df = *value;
             }
 
             OpKind::CmcCF => {
@@ -1672,6 +1708,29 @@ impl SmirInterpreter {
         }
 
         Ok(())
+    }
+
+    fn read_vec(ctx: &SmirContext, reg: VReg) -> [u64; 2] {
+        match reg {
+            VReg::Virtual(id) => ctx.vregs.get_vec(id),
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(n))) => match &ctx.arch_regs {
+                ArchRegState::X86_64(x86) => x86.xmm[n as usize],
+                _ => [0, 0],
+            },
+            _ => [0, 0],
+        }
+    }
+
+    fn write_vec(ctx: &mut SmirContext, reg: VReg, value: [u64; 2]) {
+        match reg {
+            VReg::Virtual(id) => ctx.vregs.set_vec(id, value),
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(n))) => {
+                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                    x86.xmm[n as usize] = value;
+                }
+            }
+            _ => {}
+        }
     }
 
     fn write_x86_partial(ctx: &mut SmirContext, dst: VReg, value: u64, width: OpWidth) {
