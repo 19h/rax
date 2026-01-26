@@ -242,9 +242,7 @@ static mut ALLOCATOR: BumpAllocator = BumpAllocator::new();
 /// Helper to access the allocator safely
 #[inline(always)]
 fn allocator() -> &'static mut BumpAllocator {
-    unsafe {
-        &mut *core::ptr::addr_of_mut!(ALLOCATOR)
-    }
+    unsafe { &mut *core::ptr::addr_of_mut!(ALLOCATOR) }
 }
 
 // =============================================================================
@@ -478,6 +476,31 @@ impl NBodySimulation {
 // Instruction Coverage Tests
 // =============================================================================
 
+#[repr(align(16))]
+struct Aligned16<T>(T);
+
+#[repr(align(32))]
+struct Aligned32<T>(T);
+
+#[repr(align(64))]
+struct Aligned64<T>(T);
+
+fn sum_i32(values: &[i32]) -> u64 {
+    let mut sum = 0u64;
+    for value in values {
+        sum = sum.wrapping_add(*value as i64 as u64);
+    }
+    sum
+}
+
+fn sum_f32_bits(values: &[f32]) -> u64 {
+    let mut sum = 0u64;
+    for value in values {
+        sum = sum.wrapping_add(value.to_bits() as u64);
+    }
+    sum
+}
+
 fn test_arithmetic() -> u64 {
     let mut a: u64 = 12345;
     let mut b: u64 = 6789;
@@ -549,6 +572,106 @@ fn test_simd() -> [i32; 4] {
     result
 }
 
+fn test_sse_extensions() -> u64 {
+    let a = Aligned16([1i32, -2, 3, -4]);
+    let b = Aligned16([5i32, 6, -7, 8]);
+    let mut result = Aligned16([0i32; 4]);
+
+    unsafe {
+        asm!(
+            "movdqa xmm0, [{a}]",
+            "movdqa xmm1, [{b}]",
+            "pabsd xmm0, xmm0",
+            "paddd xmm0, xmm1",
+            "pshufd xmm0, xmm0, 0x1B",
+            "pmulld xmm0, xmm1",
+            "movdqa [{r}], xmm0",
+            a = in(reg) &a.0,
+            b = in(reg) &b.0,
+            r = in(reg) &mut result.0,
+            options(nostack)
+        );
+    }
+
+    sum_i32(&result.0)
+}
+
+#[target_feature(enable = "avx")]
+unsafe fn test_avx128() -> u64 {
+    let a = Aligned16([1.0f32, 2.0, 3.0, 4.0]);
+    let b = Aligned16([5.0f32, 6.0, 7.0, 8.0]);
+    let mut result = Aligned16([0f32; 4]);
+
+    unsafe {
+        asm!(
+            "vmovaps xmm0, [{a}]",
+            "vmovaps xmm1, [{b}]",
+            "vaddps xmm0, xmm0, xmm1",
+            "vmaxps xmm0, xmm0, xmm1",
+            "vmulps xmm0, xmm0, xmm1",
+            "vmovaps [{r}], xmm0",
+            a = in(reg) &a.0,
+            b = in(reg) &b.0,
+            r = in(reg) &mut result.0,
+            options(nostack)
+        );
+    }
+
+    sum_f32_bits(&result.0)
+}
+
+#[target_feature(enable = "avx,avx2")]
+unsafe fn test_avx256() -> u64 {
+    let a = Aligned32([1i32, 2, 3, 4, 5, 6, 7, 8]);
+    let b = Aligned32([2i32, 3, 4, 5, 6, 7, 8, 9]);
+    let mut result = Aligned32([0i32; 8]);
+
+    unsafe {
+        asm!(
+            "vmovdqa ymm0, [{a}]",
+            "vmovdqa ymm1, [{b}]",
+            "vpaddd ymm0, ymm0, ymm1",
+            "vpmulld ymm0, ymm0, ymm1",
+            "vpslld ymm0, ymm0, 1",
+            "vmovdqa [{r}], ymm0",
+            a = in(reg) &a.0,
+            b = in(reg) &b.0,
+            r = in(reg) &mut result.0,
+            options(nostack)
+        );
+    }
+
+    sum_i32(&result.0)
+}
+
+#[target_feature(enable = "avx512f")]
+unsafe fn test_avx512() -> u64 {
+    let a = Aligned64([
+        1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
+    ]);
+    let b = Aligned64([
+        16.0f32, 15.0, 14.0, 13.0, 12.0, 11.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0,
+    ]);
+    let mut result = Aligned64([0f32; 16]);
+
+    unsafe {
+        asm!(
+            "vmovaps zmm0, [{a}]",
+            "vmovaps zmm1, [{b}]",
+            "vaddps zmm0, zmm0, zmm1",
+            "vsubps zmm0, zmm0, zmm1",
+            "vmulps zmm0, zmm0, zmm1",
+            "vmovaps [{r}], zmm0",
+            a = in(reg) &a.0,
+            b = in(reg) &b.0,
+            r = in(reg) &mut result.0,
+            options(nostack)
+        );
+    }
+
+    sum_f32_bits(&result.0)
+}
+
 // =============================================================================
 // Kernel Main
 // =============================================================================
@@ -581,7 +704,9 @@ fn kernel_main() {
     println!("{}", 12345u64);
 
     // Initialize allocator
-    unsafe { allocator().init(); }
+    unsafe {
+        allocator().init();
+    }
 
     for c in b"[INIT] Heap allocator initialized\n" {
         serial.write_byte(*c);
@@ -690,6 +815,18 @@ fn kernel_main() {
     for c in b"]\n" {
         serial.write_byte(*c);
     }
+
+    let sse_ext_sum = test_sse_extensions();
+    println!("[TEST] SSE ext sum: {}", sse_ext_sum);
+
+    let avx128_sum = unsafe { test_avx128() };
+    println!("[TEST] AVX-128 sum: {}", avx128_sum);
+
+    let avx256_sum = unsafe { test_avx256() };
+    println!("[TEST] AVX2-256 sum: {}", avx256_sum);
+
+    let avx512_sum = unsafe { test_avx512() };
+    println!("[TEST] AVX-512 sum: {}", avx512_sum);
 
     // Final stats
     for c in b"\n=== Final Statistics ===\n" {
