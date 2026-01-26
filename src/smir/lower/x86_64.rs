@@ -4381,18 +4381,16 @@ impl X86_64Lowerer {
                     );
                     self.emit_vec_mem(enc, dst_reg, None, addr)?;
                 } else {
-                    if self.vec_requires_vex(&[dst_reg]) {
-                        return Err(LowerError::UnsupportedOp {
-                            op: "VLoad requires VEX/EVEX encoding".to_string(),
-                        });
+                    if *width != VecWidth::V128 || self.vec_requires_vex(&[dst_reg]) {
+                        let enc = self.coerce_vec_encoding(
+                            self.default_vec_mov_encoding(*width, 0x6F),
+                            &[dst_reg],
+                        );
+                        self.emit_vec_mem(enc, dst_reg, None, addr)?;
+                    } else {
+                        let prefix = self.sse_prefix(op.x86_hint);
+                        self.emit_sse_mov_mem(prefix, 0x6F, dst_reg, addr)?;
                     }
-                    if *width != VecWidth::V128 {
-                        return Err(LowerError::UnsupportedOp {
-                            op: format!("VLoad width {:?}", width),
-                        });
-                    }
-                    let prefix = self.sse_prefix(op.x86_hint);
-                    self.emit_sse_mov_mem(prefix, 0x6F, dst_reg, addr)?;
                 }
             }
 
@@ -4414,18 +4412,16 @@ impl X86_64Lowerer {
                     );
                     self.emit_vec_mem(enc, src_reg, None, addr)?;
                 } else {
-                    if self.vec_requires_vex(&[src_reg]) {
-                        return Err(LowerError::UnsupportedOp {
-                            op: "VStore requires VEX/EVEX encoding".to_string(),
-                        });
+                    if *width != VecWidth::V128 || self.vec_requires_vex(&[src_reg]) {
+                        let enc = self.coerce_vec_encoding(
+                            self.default_vec_mov_encoding(*width, 0x7F),
+                            &[src_reg],
+                        );
+                        self.emit_vec_mem(enc, src_reg, None, addr)?;
+                    } else {
+                        let prefix = self.sse_prefix(op.x86_hint);
+                        self.emit_sse_mov_mem(prefix, 0x7F, src_reg, addr)?;
                     }
-                    if *width != VecWidth::V128 {
-                        return Err(LowerError::UnsupportedOp {
-                            op: format!("VStore width {:?}", width),
-                        });
-                    }
-                    let prefix = self.sse_prefix(op.x86_hint);
-                    self.emit_sse_mov_mem(prefix, 0x7F, src_reg, addr)?;
                 }
             }
 
@@ -4454,25 +4450,23 @@ impl X86_64Lowerer {
                     };
                     self.emit_vec_rr(enc, reg, rm, 0x1F);
                 } else {
-                    if self.vec_requires_vex(&[dst_reg, src_reg]) {
-                        return Err(LowerError::UnsupportedOp {
-                            op: "VMov requires VEX/EVEX encoding".to_string(),
-                        });
-                    }
-                    if *width != VecWidth::V128 {
-                        return Err(LowerError::UnsupportedOp {
-                            op: format!("VMov width {:?}", width),
-                        });
-                    }
-                    let prefix = self.sse_prefix(op.x86_hint);
-                    let opcode = self.sse_opcode(op.x86_hint, 0x6F);
-                    let (reg, rm) = if opcode == 0x7F {
-                        (src_reg, dst_reg)
+                    if *width != VecWidth::V128 || self.vec_requires_vex(&[dst_reg, src_reg]) {
+                        let enc = self.coerce_vec_encoding(
+                            self.default_vec_mov_encoding(*width, 0x6F),
+                            &[dst_reg, src_reg],
+                        );
+                        self.emit_vec_rr(enc, dst_reg, src_reg, 0x1F);
                     } else {
-                        (dst_reg, src_reg)
-                    };
-                    let mut emitter = X86Emitter::new(&mut self.code);
-                    emitter.emit_sse_mov_rr(prefix, opcode, reg, rm);
+                        let prefix = self.sse_prefix(op.x86_hint);
+                        let opcode = self.sse_opcode(op.x86_hint, 0x6F);
+                        let (reg, rm) = if opcode == 0x7F {
+                            (src_reg, dst_reg)
+                        } else {
+                            (dst_reg, src_reg)
+                        };
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_mov_rr(prefix, opcode, reg, rm);
+                    }
                 }
             }
 
@@ -5754,6 +5748,16 @@ impl X86_64Lowerer {
             encoding.kind = VecEncodingKind::Evex;
         }
         encoding
+    }
+
+    fn default_vec_mov_encoding(&self, width: VecWidth, opcode: u8) -> VecEncoding {
+        VecEncoding {
+            kind: VecEncodingKind::Vex,
+            map: X86VecMap::Map0F,
+            pp: X86SsePrefix::Rep,
+            opcode,
+            width,
+        }
     }
 
     fn vec_width_from_lanes(&self, elem: VecElementType, lanes: u8) -> Option<VecWidth> {
