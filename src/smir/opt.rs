@@ -903,6 +903,10 @@ fn update_pointer_alignment(op: &SmirOp, alignments: &mut HashMap<VReg, usize>) 
                 if let Some(&alignment) = alignments.get(&src_reg) {
                     computed.insert(*dst, alignment);
                 }
+            } else if let Some(imm) = src.as_imm() {
+                if imm >= 0 {
+                    computed.insert(*dst, alignment_from_addr(imm as u64));
+                }
             }
         }
         OpKind::Add {
@@ -919,8 +923,29 @@ fn update_pointer_alignment(op: &SmirOp, alignments: &mut HashMap<VReg, usize>) 
             width,
             ..
         } if *width == OpWidth::W64 => {
-            if let (Some(imm), Some(&src_align)) = (src2.as_imm(), alignments.get(src1)) {
-                computed.insert(*dst, gcd(src_align, imm.unsigned_abs() as usize));
+            if let Some(&src_align) = alignments.get(src1) {
+                if let Some(imm) = src2.as_imm() {
+                    computed.insert(*dst, gcd(src_align, imm.unsigned_abs() as usize));
+                } else if let Some(src2_reg) = src2.as_reg() {
+                    if let Some(&src2_align) = alignments.get(&src2_reg) {
+                        computed.insert(*dst, gcd(src_align, src2_align));
+                    }
+                }
+            }
+        }
+        OpKind::Shl {
+            dst,
+            src,
+            amount,
+            width,
+            ..
+        } if *width == OpWidth::W64 => {
+            if let (Some(&src_align), Some(shift)) = (alignments.get(src), amount.as_imm()) {
+                if let Ok(shift) = u32::try_from(shift) {
+                    if let Some(alignment) = src_align.checked_shl(shift) {
+                        computed.insert(*dst, alignment);
+                    }
+                }
             }
         }
         OpKind::And {
@@ -994,6 +1019,23 @@ fn address_alignment(addr: &Address, alignments: &HashMap<VReg, usize>) -> Optio
         Address::BaseOffset { base, offset, .. } => {
             let base_align = alignments.get(base).copied()?;
             Some(gcd(base_align, offset.unsigned_abs() as usize))
+        }
+        Address::BaseIndexScale {
+            base,
+            index,
+            scale,
+            disp,
+            ..
+        } => {
+            let index_align = alignments.get(index).copied()?;
+            let scaled = index_align.checked_mul(*scale as usize)?;
+            let mut alignment = scaled;
+            if let Some(base_reg) = base {
+                let base_align = alignments.get(base_reg).copied()?;
+                alignment = gcd(alignment, base_align);
+            }
+            alignment = gcd(alignment, (*disp as i64).unsigned_abs() as usize);
+            Some(alignment)
         }
         Address::PcRel { offset, base, .. } => {
             let base_addr = match base {

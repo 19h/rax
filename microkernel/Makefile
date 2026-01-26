@@ -10,6 +10,11 @@
 
 .PHONY: all baremetal usermode test-sde test-rax clean
 
+OBJCOPY ?= $(shell command -v objcopy 2>/dev/null || command -v llvm-objcopy 2>/dev/null)
+ifeq ($(OBJCOPY),)
+$(error objcopy not found; install binutils or llvm-objcopy)
+endif
+
 # Default: build bare-metal
 all: baremetal usermode
 
@@ -18,7 +23,7 @@ baremetal: microkernel.bin
 usermode: target/x86_64-unknown-linux-gnu/release/microkernel
 
 microkernel.bin: target/x86_64-unknown-none/release/microkernel
-	objcopy -O binary $< $@
+	$(OBJCOPY) -O binary $< $@
 
 target/x86_64-unknown-none/release/microkernel: src/main.rs Cargo.toml linker.ld
 	cargo build --release -Z build-std=core -Z build-std-features=compiler-builtins-mem
