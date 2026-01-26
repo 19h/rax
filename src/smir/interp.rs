@@ -4,7 +4,7 @@
 
 use std::collections::HashMap;
 
-use crate::smir::context::{ArchRegState, ExitReason, SmirContext};
+use crate::smir::context::{ArchRegState, ExitReason, SmirContext, VecValue};
 use crate::smir::flags::{FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 use crate::smir::memory::{MemoryError, SmirMemory};
@@ -1478,11 +1478,19 @@ impl SmirInterpreter {
                 src2,
                 elem,
                 lanes,
-            } => {
-                self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
-                    a.wrapping_add(b)
-                });
-            }
+            } => match elem {
+                VecElementType::F32 => {
+                    self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| a + b);
+                }
+                VecElementType::F64 => {
+                    self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| a + b);
+                }
+                _ => {
+                    self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
+                        a.wrapping_add(b)
+                    });
+                }
+            },
 
             OpKind::VSub {
                 dst,
@@ -1490,11 +1498,37 @@ impl SmirInterpreter {
                 src2,
                 elem,
                 lanes,
-            } => {
-                self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
-                    a.wrapping_sub(b)
-                });
-            }
+            } => match elem {
+                VecElementType::F32 => {
+                    self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| a - b);
+                }
+                VecElementType::F64 => {
+                    self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| a - b);
+                }
+                _ => {
+                    self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
+                        a.wrapping_sub(b)
+                    });
+                }
+            },
+
+            OpKind::VMax {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+            } => match elem {
+                VecElementType::F32 => {
+                    self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| a.max(b));
+                }
+                VecElementType::F64 => {
+                    self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| a.max(b));
+                }
+                _ => {
+                    self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| a.max(b));
+                }
+            },
 
             OpKind::VMul {
                 dst,
@@ -1502,17 +1536,25 @@ impl SmirInterpreter {
                 src2,
                 elem,
                 lanes,
-            } => {
-                self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
-                    a.wrapping_mul(b)
-                });
-            }
+            } => match elem {
+                VecElementType::F32 => {
+                    self.vec_binary_op_f32(ctx, *dst, *src1, *src2, *lanes, |a, b| a * b);
+                }
+                VecElementType::F64 => {
+                    self.vec_binary_op_f64(ctx, *dst, *src1, *src2, *lanes, |a, b| a * b);
+                }
+                _ => {
+                    self.vec_binary_op(ctx, *dst, *src1, *src2, *elem, *lanes, |a, b| {
+                        a.wrapping_mul(b)
+                    });
+                }
+            },
 
             OpKind::VAnd {
                 dst,
                 src1,
                 src2,
-                width: _,
+                width,
             } => {
                 let a = ctx.vregs.get_vec(match *src1 {
                     VReg::Virtual(id) => id,
@@ -1523,7 +1565,12 @@ impl SmirInterpreter {
                     _ => panic!(),
                 });
                 if let VReg::Virtual(id) = *dst {
-                    ctx.vregs.set_vec(id, [a[0] & b[0], a[1] & b[1]]);
+                    let mut result = [0u64; 8];
+                    let word_count = (width.bytes() / 8) as usize;
+                    for i in 0..word_count {
+                        result[i] = a[i] & b[i];
+                    }
+                    ctx.vregs.set_vec(id, result);
                 }
             }
 
@@ -1531,7 +1578,7 @@ impl SmirInterpreter {
                 dst,
                 src1,
                 src2,
-                width: _,
+                width,
             } => {
                 let a = ctx.vregs.get_vec(match *src1 {
                     VReg::Virtual(id) => id,
@@ -1542,7 +1589,12 @@ impl SmirInterpreter {
                     _ => panic!(),
                 });
                 if let VReg::Virtual(id) = *dst {
-                    ctx.vregs.set_vec(id, [a[0] | b[0], a[1] | b[1]]);
+                    let mut result = [0u64; 8];
+                    let word_count = (width.bytes() / 8) as usize;
+                    for i in 0..word_count {
+                        result[i] = a[i] | b[i];
+                    }
+                    ctx.vregs.set_vec(id, result);
                 }
             }
 
@@ -1550,7 +1602,7 @@ impl SmirInterpreter {
                 dst,
                 src1,
                 src2,
-                width: _,
+                width,
             } => {
                 let a = ctx.vregs.get_vec(match *src1 {
                     VReg::Virtual(id) => id,
@@ -1561,7 +1613,12 @@ impl SmirInterpreter {
                     _ => panic!(),
                 });
                 if let VReg::Virtual(id) = *dst {
-                    ctx.vregs.set_vec(id, [a[0] ^ b[0], a[1] ^ b[1]]);
+                    let mut result = [0u64; 8];
+                    let word_count = (width.bytes() / 8) as usize;
+                    for i in 0..word_count {
+                        result[i] = a[i] ^ b[i];
+                    }
+                    ctx.vregs.set_vec(id, result);
                 }
             }
 
@@ -1570,8 +1627,41 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, val);
             }
 
-            OpKind::VShift { .. }
-            | OpKind::VCmp { .. }
+            OpKind::VShift {
+                dst,
+                src,
+                amount,
+                shift,
+                elem,
+                lanes,
+            } => {
+                let amt = match amount {
+                    SrcOperand::Imm(val) => *val as u32,
+                    SrcOperand::Reg(reg) => ctx.read_vreg(*reg) as u32,
+                    _ => 0,
+                };
+                let elem_bits = elem.bytes() * 8;
+                let mask = if elem_bits == 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << elem_bits) - 1
+                };
+                let src_val = Self::read_vec(ctx, *src);
+                let mut result = [0u64; 8];
+                for lane in 0..*lanes {
+                    let val = Self::get_lane(&src_val, lane, elem_bits);
+                    let shifted = match shift {
+                        ShiftOp::Lsl => (val << (amt % elem_bits)) & mask,
+                        ShiftOp::Lsr => (val >> (amt % elem_bits)) & mask,
+                        ShiftOp::Asr => ((val as i64) >> (amt % elem_bits)) as u64 & mask,
+                        _ => val,
+                    };
+                    Self::set_lane(&mut result, lane, elem_bits, shifted);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VCmp { .. }
             | OpKind::VInsertLane { .. }
             | OpKind::VExtractLane { .. }
             | OpKind::VShuffle { .. }
@@ -1585,14 +1675,15 @@ impl SmirInterpreter {
                 let size = width.bytes() as usize;
                 memory.read(effective_addr, &mut buf[..size])?;
 
-                let lo = u64::from_le_bytes(buf[0..8].try_into().unwrap());
-                let hi = if size > 8 {
-                    u64::from_le_bytes(buf[8..16].try_into().unwrap())
-                } else {
-                    0
-                };
+                let mut vec = [0u64; 8];
+                let words = (size + 7) / 8;
+                for i in 0..words {
+                    let start = i * 8;
+                    let end = start + 8;
+                    vec[i] = u64::from_le_bytes(buf[start..end].try_into().unwrap());
+                }
 
-                Self::write_vec(ctx, *dst, [lo, hi]);
+                Self::write_vec(ctx, *dst, vec);
             }
 
             OpKind::VStore { src, addr, width } => {
@@ -1601,9 +1692,11 @@ impl SmirInterpreter {
 
                 let size = width.bytes() as usize;
                 let mut buf = [0u8; 64];
-                buf[0..8].copy_from_slice(&val[0].to_le_bytes());
-                if size > 8 {
-                    buf[8..16].copy_from_slice(&val[1].to_le_bytes());
+                let words = (size + 7) / 8;
+                for i in 0..words {
+                    let start = i * 8;
+                    let end = start + 8;
+                    buf[start..end].copy_from_slice(&val[i].to_le_bytes());
                 }
 
                 memory.write(effective_addr, &buf[..size])?;
@@ -1710,21 +1803,25 @@ impl SmirInterpreter {
         Ok(())
     }
 
-    fn read_vec(ctx: &SmirContext, reg: VReg) -> [u64; 2] {
+    fn read_vec(ctx: &SmirContext, reg: VReg) -> VecValue {
         match reg {
             VReg::Virtual(id) => ctx.vregs.get_vec(id),
-            VReg::Arch(ArchReg::X86(X86Reg::Xmm(n))) => match &ctx.arch_regs {
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(n)))
+            | VReg::Arch(ArchReg::X86(X86Reg::Ymm(n)))
+            | VReg::Arch(ArchReg::X86(X86Reg::Zmm(n))) => match &ctx.arch_regs {
                 ArchRegState::X86_64(x86) => x86.xmm[n as usize],
-                _ => [0, 0],
+                _ => [0; 8],
             },
-            _ => [0, 0],
+            _ => [0; 8],
         }
     }
 
-    fn write_vec(ctx: &mut SmirContext, reg: VReg, value: [u64; 2]) {
+    fn write_vec(ctx: &mut SmirContext, reg: VReg, value: VecValue) {
         match reg {
             VReg::Virtual(id) => ctx.vregs.set_vec(id, value),
-            VReg::Arch(ArchReg::X86(X86Reg::Xmm(n))) => {
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(n)))
+            | VReg::Arch(ArchReg::X86(X86Reg::Ymm(n)))
+            | VReg::Arch(ArchReg::X86(X86Reg::Zmm(n))) => {
                 if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
                     x86.xmm[n as usize] = value;
                 }
@@ -2066,7 +2163,53 @@ impl SmirInterpreter {
         ctx.write_vreg(vreg, bits);
     }
 
-    /// Vector binary operation helper
+    fn get_lane(value: &VecValue, lane: u8, elem_bits: u32) -> u64 {
+        let bit_index = lane as u32 * elem_bits;
+        let word_index = (bit_index / 64) as usize;
+        let bit_offset = bit_index % 64;
+
+        if elem_bits == 64 {
+            return value[word_index];
+        }
+
+        let mask = (1u64 << elem_bits) - 1;
+        if bit_offset + elem_bits <= 64 {
+            (value[word_index] >> bit_offset) & mask
+        } else {
+            let low = value[word_index] >> bit_offset;
+            let high = value[word_index + 1] << (64 - bit_offset);
+            (low | high) & mask
+        }
+    }
+
+    fn set_lane(value: &mut VecValue, lane: u8, elem_bits: u32, bits: u64) {
+        let bit_index = lane as u32 * elem_bits;
+        let word_index = (bit_index / 64) as usize;
+        let bit_offset = bit_index % 64;
+
+        if elem_bits == 64 {
+            value[word_index] = bits;
+            return;
+        }
+
+        let mask = (1u64 << elem_bits) - 1;
+        let bits = bits & mask;
+        if bit_offset + elem_bits <= 64 {
+            let clear = !(mask << bit_offset);
+            value[word_index] = (value[word_index] & clear) | (bits << bit_offset);
+        } else {
+            let low_bits = 64 - bit_offset;
+            let low_mask = (1u64 << low_bits) - 1;
+            let high_bits = elem_bits - low_bits;
+            let high_mask = (1u64 << high_bits) - 1;
+
+            value[word_index] =
+                (value[word_index] & !(low_mask << bit_offset)) | ((bits & low_mask) << bit_offset);
+            value[word_index + 1] = (value[word_index + 1] & !high_mask) | (bits >> low_bits);
+        }
+    }
+
+    /// Vector binary operation helper (integer)
     fn vec_binary_op<F>(
         &self,
         ctx: &mut SmirContext,
@@ -2074,45 +2217,75 @@ impl SmirInterpreter {
         src1: VReg,
         src2: VReg,
         elem: VecElementType,
-        _lanes: u8,
+        lanes: u8,
         op: F,
     ) where
         F: Fn(u64, u64) -> u64,
     {
-        let a = ctx.vregs.get_vec(match src1 {
-            VReg::Virtual(id) => id,
-            _ => return,
-        });
-        let b = ctx.vregs.get_vec(match src2 {
-            VReg::Virtual(id) => id,
-            _ => return,
-        });
+        let a = Self::read_vec(ctx, src1);
+        let b = Self::read_vec(ctx, src2);
 
         let elem_bits = elem.bytes() * 8;
-        let elem_mask = (1u64 << elem_bits) - 1;
+        let mut result = [0u64; 8];
 
-        let mut result = [0u64; 2];
-
-        // Process 128-bit vector
-        for (word_idx, (a_word, b_word)) in [a[0], a[1]].iter().zip([b[0], b[1]].iter()).enumerate()
-        {
-            let mut r = 0u64;
-            let elems_per_word = 64 / elem_bits as u32;
-
-            for i in 0..elems_per_word {
-                let shift = i * elem_bits as u32;
-                let a_elem = (a_word >> shift) & elem_mask;
-                let b_elem = (b_word >> shift) & elem_mask;
-                let res_elem = op(a_elem, b_elem) & elem_mask;
-                r |= res_elem << shift;
-            }
-
-            result[word_idx] = r;
+        for lane in 0..lanes {
+            let a_elem = Self::get_lane(&a, lane, elem_bits);
+            let b_elem = Self::get_lane(&b, lane, elem_bits);
+            let res_elem = op(a_elem, b_elem);
+            Self::set_lane(&mut result, lane, elem_bits, res_elem);
         }
 
-        if let VReg::Virtual(id) = dst {
-            ctx.vregs.set_vec(id, result);
+        Self::write_vec(ctx, dst, result);
+    }
+
+    fn vec_binary_op_f32<F>(
+        &self,
+        ctx: &mut SmirContext,
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        lanes: u8,
+        op: F,
+    ) where
+        F: Fn(f32, f32) -> f32,
+    {
+        let a = Self::read_vec(ctx, src1);
+        let b = Self::read_vec(ctx, src2);
+        let mut result = [0u64; 8];
+
+        for lane in 0..lanes {
+            let a_bits = Self::get_lane(&a, lane, 32) as u32;
+            let b_bits = Self::get_lane(&b, lane, 32) as u32;
+            let res = op(f32::from_bits(a_bits), f32::from_bits(b_bits));
+            Self::set_lane(&mut result, lane, 32, res.to_bits() as u64);
         }
+
+        Self::write_vec(ctx, dst, result);
+    }
+
+    fn vec_binary_op_f64<F>(
+        &self,
+        ctx: &mut SmirContext,
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        lanes: u8,
+        op: F,
+    ) where
+        F: Fn(f64, f64) -> f64,
+    {
+        let a = Self::read_vec(ctx, src1);
+        let b = Self::read_vec(ctx, src2);
+        let mut result = [0u64; 8];
+
+        for lane in 0..lanes {
+            let a_bits = Self::get_lane(&a, lane, 64);
+            let b_bits = Self::get_lane(&b, lane, 64);
+            let res = op(f64::from_bits(a_bits), f64::from_bits(b_bits));
+            Self::set_lane(&mut result, lane, 64, res.to_bits());
+        }
+
+        Self::write_vec(ctx, dst, result);
     }
 }
 

@@ -13,7 +13,7 @@ use crate::smir::lift::{
     ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter,
 };
 use crate::smir::memory::MemoryError;
-use crate::smir::ops::{OpKind, SmirOp, X86AluEncoding, X86OpHint, X86SsePrefix};
+use crate::smir::ops::{OpKind, SmirOp, X86AluEncoding, X86OpHint, X86SsePrefix, X86VecMap};
 use crate::smir::types::*;
 
 // ============================================================================
@@ -91,6 +91,24 @@ pub struct X86Prefix {
     pub lock: bool,
     /// Cursor position after prefixes
     pub cursor: usize,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum VecEncodingKind {
+    Vex,
+    Evex,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct VecPrefix {
+    encoding: VecEncodingKind,
+    map: X86VecMap,
+    pp: X86SsePrefix,
+    width: VecWidth,
+    w: bool,
+    vvvv: u8,
+    rex: Option<u8>,
+    bytes: usize,
 }
 
 impl X86Prefix {
@@ -184,6 +202,173 @@ fn decode_prefixes(bytes: &[u8]) -> Result<X86Prefix, LiftError> {
 
     prefix.cursor = cursor;
     Ok(prefix)
+}
+
+fn vex_pp_to_prefix(pp: u8) -> X86SsePrefix {
+    match pp & 0x3 {
+        0 => X86SsePrefix::None,
+        1 => X86SsePrefix::OpSize,
+        2 => X86SsePrefix::Rep,
+        _ => X86SsePrefix::Repne,
+    }
+}
+
+fn vec_map_from_bits(map: u8) -> Option<X86VecMap> {
+    match map {
+        0x01 => Some(X86VecMap::Map0F),
+        0x02 => Some(X86VecMap::Map0F38),
+        0x03 => Some(X86VecMap::Map0F3A),
+        _ => None,
+    }
+}
+
+fn build_rex(r: u8, x: u8, b: u8, w: bool) -> Option<u8> {
+    let mut rex = 0x40;
+    if w {
+        rex |= 0x08;
+    }
+    if r != 0 {
+        rex |= 0x04;
+    }
+    if x != 0 {
+        rex |= 0x02;
+    }
+    if b != 0 {
+        rex |= 0x01;
+    }
+    if rex == 0x40 {
+        None
+    } else {
+        Some(rex)
+    }
+}
+
+fn decode_vex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
+    if bytes.is_empty() {
+        return Err(LiftError::Incomplete {
+            addr,
+            have: 0,
+            need: 1,
+        });
+    }
+
+    match bytes[0] {
+        0xC5 => {
+            if bytes.len() < 2 {
+                return Err(LiftError::Incomplete {
+                    addr,
+                    have: bytes.len(),
+                    need: 2,
+                });
+            }
+            let b1 = bytes[1];
+            let r = ((b1 >> 7) & 1) ^ 1;
+            let vvvv = (!b1 >> 3) & 0x0F;
+            let l = (b1 >> 2) & 1;
+            let pp = vex_pp_to_prefix(b1 & 0x3);
+
+            Ok(VecPrefix {
+                encoding: VecEncodingKind::Vex,
+                map: X86VecMap::Map0F,
+                pp,
+                width: if l == 1 {
+                    VecWidth::V256
+                } else {
+                    VecWidth::V128
+                },
+                w: false,
+                vvvv,
+                rex: build_rex(r, 0, 0, false),
+                bytes: 2,
+            })
+        }
+        0xC4 => {
+            if bytes.len() < 3 {
+                return Err(LiftError::Incomplete {
+                    addr,
+                    have: bytes.len(),
+                    need: 3,
+                });
+            }
+            let b1 = bytes[1];
+            let b2 = bytes[2];
+            let r = ((b1 >> 7) & 1) ^ 1;
+            let x = ((b1 >> 6) & 1) ^ 1;
+            let b = ((b1 >> 5) & 1) ^ 1;
+            let map = vec_map_from_bits(b1 & 0x1F).ok_or_else(|| LiftError::Unsupported {
+                addr,
+                mnemonic: format!("VEX map 0x{:02X}", b1 & 0x1F),
+            })?;
+            let w = (b2 >> 7) & 1 != 0;
+            let vvvv = (!b2 >> 3) & 0x0F;
+            let l = (b2 >> 2) & 1;
+            let pp = vex_pp_to_prefix(b2 & 0x3);
+
+            Ok(VecPrefix {
+                encoding: VecEncodingKind::Vex,
+                map,
+                pp,
+                width: if l == 1 {
+                    VecWidth::V256
+                } else {
+                    VecWidth::V128
+                },
+                w,
+                vvvv,
+                rex: build_rex(r, x, b, w),
+                bytes: 3,
+            })
+        }
+        _ => Err(LiftError::Unsupported {
+            addr,
+            mnemonic: "VEX prefix".to_string(),
+        }),
+    }
+}
+
+fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
+    if bytes.len() < 4 {
+        return Err(LiftError::Incomplete {
+            addr,
+            have: bytes.len(),
+            need: 4,
+        });
+    }
+
+    let b1 = bytes[1];
+    let b2 = bytes[2];
+    let b3 = bytes[3];
+
+    let r = ((b1 >> 4) & 1) ^ 1;
+    let x = ((b1 >> 6) & 1) ^ 1;
+    let b = ((b1 >> 5) & 1) ^ 1;
+    let map = vec_map_from_bits(b1 & 0x0F).ok_or_else(|| LiftError::Unsupported {
+        addr,
+        mnemonic: format!("EVEX map 0x{:02X}", b1 & 0x0F),
+    })?;
+
+    let w = (b2 >> 7) & 1 != 0;
+    let vvvv = (!b2 >> 3) & 0x0F;
+    let pp = vex_pp_to_prefix(b2 & 0x3);
+
+    let l_bits = (b3 >> 5) & 0x3;
+    let width = match l_bits {
+        0 => VecWidth::V128,
+        1 => VecWidth::V256,
+        2 => VecWidth::V512,
+        _ => VecWidth::V512,
+    };
+
+    Ok(VecPrefix {
+        encoding: VecEncodingKind::Evex,
+        map,
+        pp,
+        width,
+        w,
+        vvvv,
+        rex: build_rex(r, x, b, w),
+        bytes: 4,
+    })
 }
 
 // ============================================================================
@@ -397,6 +582,23 @@ impl X86_64Lifter {
 
     fn xmm(&self, reg: u8) -> VReg {
         VReg::Arch(ArchReg::X86(X86Reg::Xmm(reg)))
+    }
+
+    fn ymm(&self, reg: u8) -> VReg {
+        VReg::Arch(ArchReg::X86(X86Reg::Ymm(reg)))
+    }
+
+    fn zmm(&self, reg: u8) -> VReg {
+        VReg::Arch(ArchReg::X86(X86Reg::Zmm(reg)))
+    }
+
+    fn vec_reg(&self, reg: u8, width: VecWidth) -> VReg {
+        match width {
+            VecWidth::V128 => self.xmm(reg),
+            VecWidth::V256 => self.ymm(reg),
+            VecWidth::V512 => self.zmm(reg),
+            VecWidth::V64 => self.xmm(reg),
+        }
     }
 
     /// Get RSP register
@@ -1810,6 +2012,342 @@ impl X86_64Lifter {
                 }
             }
         }
+    }
+
+    fn vec_hint(&self, prefix: VecPrefix, opcode: u8) -> X86OpHint {
+        match prefix.encoding {
+            VecEncodingKind::Vex => X86OpHint::VexOp {
+                map: prefix.map,
+                pp: prefix.pp,
+                opcode,
+                width: prefix.width,
+            },
+            VecEncodingKind::Evex => X86OpHint::EvexOp {
+                map: prefix.map,
+                pp: prefix.pp,
+                opcode,
+                width: prefix.width,
+            },
+        }
+    }
+
+    fn lift_vec_opcode(
+        &self,
+        prefix: VecPrefix,
+        bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if bytes.len() < prefix.bytes + 1 {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: bytes.len(),
+                need: prefix.bytes + 1,
+            });
+        }
+
+        let opcode = bytes[prefix.bytes];
+        let after_opcode = &bytes[prefix.bytes + 1..];
+        let cursor = prefix.bytes + 1;
+        let prefix_modrm = X86Prefix {
+            rex: prefix.rex,
+            operand_size_override: matches!(prefix.pp, X86SsePrefix::OpSize),
+            rep_prefix: match prefix.pp {
+                X86SsePrefix::Rep => Some(0xF3),
+                X86SsePrefix::Repne => Some(0xF2),
+                _ => None,
+            },
+            cursor,
+            ..X86Prefix::default()
+        };
+
+        let mut ops = Vec::new();
+        let hint = self.vec_hint(prefix, opcode);
+
+        match prefix.map {
+            X86VecMap::Map0F => match opcode {
+                // VMOVAPS (0F 28/29) and VMOVDQA (0F 6F/7F with 66)
+                0x28 | 0x29 | 0x6F | 0x7F => {
+                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+                    let dst_reg = self.vec_reg(modrm.reg, prefix.width);
+                    let rm_reg = self.vec_reg(modrm.rm, prefix.width);
+
+                    match opcode {
+                        0x28 | 0x6F => {
+                            if modrm.is_memory {
+                                let x86_addr = modrm.addr.as_ref().unwrap();
+                                let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+                                ops.extend(pre_ops);
+                                ops.push(SmirOp::with_hint(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::VLoad {
+                                        dst: dst_reg,
+                                        addr,
+                                        width: prefix.width,
+                                    },
+                                    hint,
+                                ));
+                            } else {
+                                ops.push(SmirOp::with_hint(
+                                    OpId(0),
+                                    pc,
+                                    OpKind::VMov {
+                                        dst: dst_reg,
+                                        src: rm_reg,
+                                        width: prefix.width,
+                                    },
+                                    hint,
+                                ));
+                            }
+                        }
+                        0x29 | 0x7F => {
+                            if modrm.is_memory {
+                                let x86_addr = modrm.addr.as_ref().unwrap();
+                                let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+                                ops.extend(pre_ops);
+                                ops.push(SmirOp::with_hint(
+                                    OpId(ops.len() as u16),
+                                    pc,
+                                    OpKind::VStore {
+                                        src: dst_reg,
+                                        addr,
+                                        width: prefix.width,
+                                    },
+                                    hint,
+                                ));
+                            } else {
+                                ops.push(SmirOp::with_hint(
+                                    OpId(0),
+                                    pc,
+                                    OpKind::VMov {
+                                        dst: rm_reg,
+                                        src: dst_reg,
+                                        width: prefix.width,
+                                    },
+                                    hint,
+                                ));
+                            }
+                        }
+                        _ => {}
+                    }
+
+                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                }
+
+                // VADDPS/VADDPS/VMULPS/VMAXPS
+                0x58 | 0x59 | 0x5C | 0x5F | 0xFE => {
+                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+                    let dst = self.vec_reg(modrm.reg, prefix.width);
+                    let src1 = self.vec_reg(prefix.vvvv, prefix.width);
+
+                    let (elem, lanes) = if opcode == 0xFE {
+                        (
+                            VecElementType::I32,
+                            prefix.width.lanes(VecElementType::I32) as u8,
+                        )
+                    } else {
+                        (
+                            VecElementType::F32,
+                            prefix.width.lanes(VecElementType::F32) as u8,
+                        )
+                    };
+
+                    let src2 = if modrm.is_memory {
+                        let x86_addr = modrm.addr.as_ref().unwrap();
+                        let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+                        ops.extend(pre_ops);
+                        let tmp = ctx.alloc_vreg();
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::VLoad {
+                                dst: tmp,
+                                addr,
+                                width: prefix.width,
+                            },
+                        ));
+                        tmp
+                    } else {
+                        self.vec_reg(modrm.rm, prefix.width)
+                    };
+
+                    let op_kind = match opcode {
+                        0x58 | 0xFE => OpKind::VAdd {
+                            dst,
+                            src1,
+                            src2,
+                            elem,
+                            lanes,
+                        },
+                        0x5C => OpKind::VSub {
+                            dst,
+                            src1,
+                            src2,
+                            elem,
+                            lanes,
+                        },
+                        0x59 => OpKind::VMul {
+                            dst,
+                            src1,
+                            src2,
+                            elem,
+                            lanes,
+                        },
+                        0x5F => OpKind::VMax {
+                            dst,
+                            src1,
+                            src2,
+                            elem,
+                            lanes,
+                        },
+                        _ => {
+                            return Err(LiftError::Unsupported {
+                                addr: pc,
+                                mnemonic: format!("VEX opcode 0x{:02X}", opcode),
+                            })
+                        }
+                    };
+
+                    ops.push(SmirOp::with_hint(OpId(ops.len() as u16), pc, op_kind, hint));
+
+                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                }
+
+                // VPSLLD imm8 (0F 72 /6)
+                0x72 => {
+                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    let imm_offset = modrm.bytes_consumed;
+                    if after_opcode.len() <= imm_offset {
+                        return Err(LiftError::Incomplete {
+                            addr: pc,
+                            have: bytes.len(),
+                            need: cursor + imm_offset + 1,
+                        });
+                    }
+                    let imm = after_opcode[imm_offset];
+                    let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64 + 1;
+
+                    let group = (modrm.byte >> 3) & 0x07;
+                    if group != 6 {
+                        return Err(LiftError::Unsupported {
+                            addr: pc,
+                            mnemonic: format!("VEX shift group {}", group),
+                        });
+                    }
+
+                    let dst = self.vec_reg(prefix.vvvv, prefix.width);
+                    let src = if modrm.is_memory {
+                        let x86_addr = modrm.addr.as_ref().unwrap();
+                        let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+                        ops.extend(pre_ops);
+                        let tmp = ctx.alloc_vreg();
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::VLoad {
+                                dst: tmp,
+                                addr,
+                                width: prefix.width,
+                            },
+                        ));
+                        tmp
+                    } else {
+                        self.vec_reg(modrm.rm, prefix.width)
+                    };
+
+                    ops.push(SmirOp::with_hint(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VShift {
+                            dst,
+                            src,
+                            amount: SrcOperand::Imm(imm as i64),
+                            shift: ShiftOp::Lsl,
+                            elem: VecElementType::I32,
+                            lanes: prefix.width.lanes(VecElementType::I32) as u8,
+                        },
+                        hint,
+                    ));
+
+                    Ok(LiftResult::fallthrough(
+                        ops,
+                        cursor + modrm.bytes_consumed + 1,
+                    ))
+                }
+
+                _ => Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("VEX opcode 0x{:02X}", opcode),
+                }),
+            },
+            X86VecMap::Map0F38 => match opcode {
+                0x40 => {
+                    let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+                    let dst = self.vec_reg(modrm.reg, prefix.width);
+                    let src1 = self.vec_reg(prefix.vvvv, prefix.width);
+
+                    let src2 = if modrm.is_memory {
+                        let x86_addr = modrm.addr.as_ref().unwrap();
+                        let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+                        ops.extend(pre_ops);
+                        let tmp = ctx.alloc_vreg();
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::VLoad {
+                                dst: tmp,
+                                addr,
+                                width: prefix.width,
+                            },
+                        ));
+                        tmp
+                    } else {
+                        self.vec_reg(modrm.rm, prefix.width)
+                    };
+
+                    ops.push(SmirOp::with_hint(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VMul {
+                            dst,
+                            src1,
+                            src2,
+                            elem: VecElementType::I32,
+                            lanes: prefix.width.lanes(VecElementType::I32) as u8,
+                        },
+                        hint,
+                    ));
+
+                    Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+                }
+                _ => Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("VEX 0F38 opcode 0x{:02X}", opcode),
+                }),
+            },
+            X86VecMap::Map0F3A => Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "VEX 0F3A".to_string(),
+            }),
+        }
+    }
+
+    fn lift_vex_evex(
+        &self,
+        pc: u64,
+        bytes: &[u8],
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let prefix = match bytes.first().copied() {
+            Some(0x62) => decode_evex_prefix(bytes, pc)?,
+            _ => decode_vex_prefix(bytes, pc)?,
+        };
+
+        self.lift_vec_opcode(prefix, bytes, pc, ctx)
     }
 
     /// Lift group 5 instructions (FF)

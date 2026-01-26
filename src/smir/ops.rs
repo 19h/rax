@@ -67,6 +67,13 @@ pub enum X86SsePrefix {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86VecMap {
+    Map0F,
+    Map0F38,
+    Map0F3A,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum X86OpHint {
     /// ALU encoding preference
     AluEncoding(X86AluEncoding),
@@ -84,6 +91,20 @@ pub enum X86OpHint {
     SseMov { prefix: X86SsePrefix, opcode: u8 },
     /// SSE opcode with explicit prefix/opcode
     SseOp { prefix: X86SsePrefix, opcode: u8 },
+    /// VEX-encoded opcode (map/pp/opcode/width)
+    VexOp {
+        map: X86VecMap,
+        pp: X86SsePrefix,
+        opcode: u8,
+        width: VecWidth,
+    },
+    /// EVEX-encoded opcode (map/pp/opcode/width)
+    EvexOp {
+        map: X86VecMap,
+        pp: X86SsePrefix,
+        opcode: u8,
+        width: VecWidth,
+    },
 }
 
 // ============================================================================
@@ -766,6 +787,15 @@ pub enum OpKind {
         lanes: u8,
     },
 
+    /// Vector max
+    VMax {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        lanes: u8,
+    },
+
     /// Vector multiply
     VMul {
         dst: VReg,
@@ -1014,6 +1044,7 @@ impl OpKind {
             | OpKind::FRound { dst, .. }
             | OpKind::VAdd { dst, .. }
             | OpKind::VSub { dst, .. }
+            | OpKind::VMax { dst, .. }
             | OpKind::VMul { dst, .. }
             | OpKind::VAnd { dst, .. }
             | OpKind::VOr { dst, .. }

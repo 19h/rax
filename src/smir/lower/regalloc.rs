@@ -35,8 +35,10 @@ pub enum PhysReg {
     R13,
     R14,
     R15,
-    // XMM registers
+    // Vector registers
     Xmm(u8),
+    Ymm(u8),
+    Zmm(u8),
 }
 
 impl PhysReg {
@@ -59,7 +61,7 @@ impl PhysReg {
             PhysReg::R13 => 13,
             PhysReg::R14 => 14,
             PhysReg::R15 => 15,
-            PhysReg::Xmm(idx) => idx,
+            PhysReg::Xmm(idx) | PhysReg::Ymm(idx) | PhysReg::Zmm(idx) => idx,
         }
     }
 
@@ -88,8 +90,28 @@ impl PhysReg {
         self.encoding() & 0x7
     }
 
+    pub fn vec_ext(self) -> u8 {
+        (self.encoding() >> 3) & 0x1
+    }
+
+    pub fn vec_ext2(self) -> u8 {
+        (self.encoding() >> 4) & 0x1
+    }
+
+    pub fn is_vec(self) -> bool {
+        matches!(self, PhysReg::Xmm(_) | PhysReg::Ymm(_) | PhysReg::Zmm(_))
+    }
+
     pub fn is_xmm(self) -> bool {
         matches!(self, PhysReg::Xmm(_))
+    }
+
+    pub fn is_ymm(self) -> bool {
+        matches!(self, PhysReg::Ymm(_))
+    }
+
+    pub fn is_zmm(self) -> bool {
+        matches!(self, PhysReg::Zmm(_))
     }
 
     /// All general purpose registers
@@ -172,6 +194,8 @@ impl PhysReg {
             X86Reg::R14 => Some(PhysReg::R14),
             X86Reg::R15 => Some(PhysReg::R15),
             X86Reg::Xmm(n) => Some(PhysReg::Xmm(n)),
+            X86Reg::Ymm(n) => Some(PhysReg::Ymm(n)),
+            X86Reg::Zmm(n) => Some(PhysReg::Zmm(n)),
             _ => None,
         }
     }
@@ -196,6 +220,8 @@ impl PhysReg {
             PhysReg::R14 => X86Reg::R14,
             PhysReg::R15 => X86Reg::R15,
             PhysReg::Xmm(n) => X86Reg::Xmm(n),
+            PhysReg::Ymm(n) => X86Reg::Ymm(n),
+            PhysReg::Zmm(n) => X86Reg::Zmm(n),
         }
     }
 }
