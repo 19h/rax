@@ -1275,6 +1275,7 @@ impl OpKind {
             // Vector operations
             OpKind::VAdd { src1, src2, .. }
             | OpKind::VSub { src1, src2, .. }
+            | OpKind::VMax { src1, src2, .. }
             | OpKind::VMul { src1, src2, .. }
             | OpKind::VAnd { src1, src2, .. }
             | OpKind::VOr { src1, src2, .. }

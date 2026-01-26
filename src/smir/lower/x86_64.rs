@@ -6,10 +6,10 @@ use std::collections::HashMap;
 
 use crate::smir::flags::FlagUpdate;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
-use crate::smir::ops::{OpKind, X86AluEncoding, X86OpHint, X86SsePrefix};
+use crate::smir::ops::{OpKind, X86AluEncoding, X86OpHint, X86SsePrefix, X86VecMap};
 use crate::smir::types::{
-    Address, ArchReg, BlockId, Condition, DispSize, GuestAddr, MemWidth, OpWidth, SignExtend,
-    SrcOperand, VReg, VecElementType, VecWidth, X86Reg,
+    Address, ArchReg, BlockId, Condition, DispSize, GuestAddr, MemWidth, OpWidth, ShiftOp,
+    SignExtend, SrcOperand, VReg, VecElementType, VecWidth, X86Reg,
 };
 
 use super::regalloc::{PhysReg, RegAlloc, RegLocation};
@@ -93,6 +93,21 @@ enum ShiftCount {
     One,
     Imm(u8),
     Cl,
+}
+
+#[derive(Clone, Copy, Debug)]
+enum VecEncodingKind {
+    Vex,
+    Evex,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct VecEncoding {
+    kind: VecEncodingKind,
+    map: X86VecMap,
+    pp: X86SsePrefix,
+    opcode: u8,
+    width: VecWidth,
 }
 
 // ============================================================================
@@ -1303,6 +1318,139 @@ impl<'a> X86Emitter<'a> {
         self.code.emit_u8(0x38);
         self.code.emit_u8(opcode);
         self.emit_modrm_pcrel(reg, disp)
+    }
+
+    fn vex_pp_bits(pp: X86SsePrefix) -> u8 {
+        match pp {
+            X86SsePrefix::None => 0,
+            X86SsePrefix::OpSize => 1,
+            X86SsePrefix::Rep => 2,
+            X86SsePrefix::Repne => 3,
+        }
+    }
+
+    fn vex_map_bits(map: X86VecMap) -> u8 {
+        match map {
+            X86VecMap::Map0F => 0x01,
+            X86VecMap::Map0F38 => 0x02,
+            X86VecMap::Map0F3A => 0x03,
+        }
+    }
+
+    fn emit_vex_prefix(
+        &mut self,
+        map: X86VecMap,
+        pp: X86SsePrefix,
+        width: VecWidth,
+        w: bool,
+        r: u8,
+        x: u8,
+        b: u8,
+        vvvv: u8,
+    ) {
+        let l_bit = match width {
+            VecWidth::V256 => 1,
+            _ => 0,
+        };
+        let pp_bits = Self::vex_pp_bits(pp);
+        let vvvv_inv = (!vvvv) & 0x0F;
+        let r_inv = if r != 0 { 0 } else { 1 };
+        let x_inv = if x != 0 { 0 } else { 1 };
+        let b_inv = if b != 0 { 0 } else { 1 };
+
+        if map == X86VecMap::Map0F && !w && x == 0 && b == 0 {
+            self.code.emit_u8(0xC5);
+            let byte2 = (r_inv << 7) | (vvvv_inv << 3) | (l_bit << 2) | pp_bits;
+            self.code.emit_u8(byte2);
+        } else {
+            self.code.emit_u8(0xC4);
+            let map_bits = Self::vex_map_bits(map) & 0x1F;
+            let byte2 = (r_inv << 7) | (x_inv << 6) | (b_inv << 5) | map_bits;
+            let byte3 = ((w as u8) << 7) | (vvvv_inv << 3) | (l_bit << 2) | pp_bits;
+            self.code.emit_u8(byte2);
+            self.code.emit_u8(byte3);
+        }
+    }
+
+    fn emit_evex_prefix(
+        &mut self,
+        map: X86VecMap,
+        pp: X86SsePrefix,
+        width: VecWidth,
+        w: bool,
+        r: u8,
+        x: u8,
+        b: u8,
+        r2: u8,
+        x2: u8,
+        b2: u8,
+        vvvv: u8,
+    ) {
+        let pp_bits = Self::vex_pp_bits(pp);
+        let vvvv_low = vvvv & 0x0F;
+        let vvvv_high = (vvvv >> 4) & 0x01;
+        let vvvv_inv = (!vvvv_low) & 0x0F;
+        let vprime_inv = if vvvv_high != 0 { 0 } else { 1 };
+        let r_inv = if r != 0 { 0 } else { 1 };
+        let x_inv = if x != 0 { 0 } else { 1 };
+        let b_inv = if b != 0 { 0 } else { 1 };
+        let r2_inv = if r2 != 0 { 0 } else { 1 };
+        let x2_inv = if x2 != 0 { 0 } else { 1 };
+        let b2_inv = if b2 != 0 { 0 } else { 1 };
+
+        let l_bits = match width {
+            VecWidth::V128 => 0,
+            VecWidth::V256 => 1,
+            VecWidth::V512 => 2,
+            VecWidth::V64 => 0,
+        };
+
+        self.code.emit_u8(0x62);
+        let map_bits = Self::vex_map_bits(map) & 0x0F;
+        let byte2 = (r2_inv << 7) | (x2_inv << 6) | (b2_inv << 5) | (r_inv << 4) | map_bits;
+        let byte3 = ((w as u8) << 7) | (vvvv_inv << 3) | 0x04 | pp_bits;
+        let byte4 = (l_bits << 5) | (vprime_inv << 3);
+        self.code.emit_u8(byte2);
+        self.code.emit_u8(byte3);
+        self.code.emit_u8(byte4);
+    }
+
+    pub fn emit_vex_rrr(
+        &mut self,
+        map: X86VecMap,
+        pp: X86SsePrefix,
+        width: VecWidth,
+        opcode: u8,
+        dst: PhysReg,
+        src1: PhysReg,
+        src2: PhysReg,
+    ) {
+        let r = dst.vec_ext();
+        let b = src2.vec_ext();
+        let vvvv = src1.encoding() & 0x1F;
+        self.emit_vex_prefix(map, pp, width, false, r, 0, b, vvvv);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(dst, src2);
+    }
+
+    pub fn emit_evex_rrr(
+        &mut self,
+        map: X86VecMap,
+        pp: X86SsePrefix,
+        width: VecWidth,
+        opcode: u8,
+        dst: PhysReg,
+        src1: PhysReg,
+        src2: PhysReg,
+    ) {
+        let r = dst.vec_ext();
+        let r2 = dst.vec_ext2();
+        let b = src2.vec_ext();
+        let b2 = src2.vec_ext2();
+        let vvvv = src1.encoding() & 0x1F;
+        self.emit_evex_prefix(map, pp, width, false, r, 0, b, r2, 0, b2, vvvv);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(dst, src2);
     }
 
     // ========================================================================
@@ -4216,62 +4364,116 @@ impl X86_64Lowerer {
             // Memory Operations
             // ================================================================
             OpKind::VLoad { dst, addr, width } => {
-                if *width != VecWidth::V128 {
-                    return Err(LowerError::UnsupportedOp {
-                        op: format!("VLoad width {:?}", width),
-                    });
-                }
                 let dst_reg = self.get_dst_reg(*dst)?;
-                if !dst_reg.is_xmm() {
+                if !dst_reg.is_vec() {
                     return Err(LowerError::InvalidOperand {
                         op: "VLoad".to_string(),
-                        operand: "destination must be XMM".to_string(),
+                        operand: "destination must be vector register".to_string(),
                     });
                 }
-                let prefix = self.sse_prefix(op.x86_hint);
-                self.emit_sse_mov_mem(prefix, 0x6F, dst_reg, addr)?;
+                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    let enc = self.coerce_vec_encoding(
+                        VecEncoding {
+                            width: *width,
+                            ..enc_hint
+                        },
+                        &[dst_reg],
+                    );
+                    self.emit_vec_mem(enc, dst_reg, None, addr)?;
+                } else {
+                    if self.vec_requires_vex(&[dst_reg]) {
+                        return Err(LowerError::UnsupportedOp {
+                            op: "VLoad requires VEX/EVEX encoding".to_string(),
+                        });
+                    }
+                    if *width != VecWidth::V128 {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("VLoad width {:?}", width),
+                        });
+                    }
+                    let prefix = self.sse_prefix(op.x86_hint);
+                    self.emit_sse_mov_mem(prefix, 0x6F, dst_reg, addr)?;
+                }
             }
 
             OpKind::VStore { src, addr, width } => {
-                if *width != VecWidth::V128 {
-                    return Err(LowerError::UnsupportedOp {
-                        op: format!("VStore width {:?}", width),
-                    });
-                }
                 let src_reg = self.get_reg(*src)?;
-                if !src_reg.is_xmm() {
+                if !src_reg.is_vec() {
                     return Err(LowerError::InvalidOperand {
                         op: "VStore".to_string(),
-                        operand: "source must be XMM".to_string(),
+                        operand: "source must be vector register".to_string(),
                     });
                 }
-                let prefix = self.sse_prefix(op.x86_hint);
-                self.emit_sse_mov_mem(prefix, 0x7F, src_reg, addr)?;
+                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    let enc = self.coerce_vec_encoding(
+                        VecEncoding {
+                            width: *width,
+                            ..enc_hint
+                        },
+                        &[src_reg],
+                    );
+                    self.emit_vec_mem(enc, src_reg, None, addr)?;
+                } else {
+                    if self.vec_requires_vex(&[src_reg]) {
+                        return Err(LowerError::UnsupportedOp {
+                            op: "VStore requires VEX/EVEX encoding".to_string(),
+                        });
+                    }
+                    if *width != VecWidth::V128 {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("VStore width {:?}", width),
+                        });
+                    }
+                    let prefix = self.sse_prefix(op.x86_hint);
+                    self.emit_sse_mov_mem(prefix, 0x7F, src_reg, addr)?;
+                }
             }
 
             OpKind::VMov { dst, src, width } => {
-                if *width != VecWidth::V128 {
-                    return Err(LowerError::UnsupportedOp {
-                        op: format!("VMov width {:?}", width),
-                    });
-                }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src_reg = self.get_reg(*src)?;
-                if !dst_reg.is_xmm() || !src_reg.is_xmm() {
+                if !dst_reg.is_vec() || !src_reg.is_vec() {
                     return Err(LowerError::InvalidOperand {
                         op: "VMov".to_string(),
-                        operand: "requires XMM operands".to_string(),
+                        operand: "requires vector registers".to_string(),
                     });
                 }
-                let prefix = self.sse_prefix(op.x86_hint);
-                let opcode = self.sse_opcode(op.x86_hint, 0x6F);
-                let (reg, rm) = if opcode == 0x7F {
-                    (src_reg, dst_reg)
+                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    let enc = self.coerce_vec_encoding(
+                        VecEncoding {
+                            width: *width,
+                            ..enc_hint
+                        },
+                        &[dst_reg, src_reg],
+                    );
+                    let opcode = enc.opcode;
+                    let (reg, rm) = if opcode == 0x7F || opcode == 0x29 {
+                        (src_reg, dst_reg)
+                    } else {
+                        (dst_reg, src_reg)
+                    };
+                    self.emit_vec_rr(enc, reg, rm, 0x1F);
                 } else {
-                    (dst_reg, src_reg)
-                };
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_sse_mov_rr(prefix, opcode, reg, rm);
+                    if self.vec_requires_vex(&[dst_reg, src_reg]) {
+                        return Err(LowerError::UnsupportedOp {
+                            op: "VMov requires VEX/EVEX encoding".to_string(),
+                        });
+                    }
+                    if *width != VecWidth::V128 {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("VMov width {:?}", width),
+                        });
+                    }
+                    let prefix = self.sse_prefix(op.x86_hint);
+                    let opcode = self.sse_opcode(op.x86_hint, 0x6F);
+                    let (reg, rm) = if opcode == 0x7F {
+                        (src_reg, dst_reg)
+                    } else {
+                        (dst_reg, src_reg)
+                    };
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_sse_mov_rr(prefix, opcode, reg, rm);
+                }
             }
 
             OpKind::VAdd {
@@ -4281,28 +4483,217 @@ impl X86_64Lowerer {
                 elem,
                 lanes,
             } => {
-                if *elem != VecElementType::I32 || *lanes != 4 {
-                    return Err(LowerError::UnsupportedOp {
+                let width = self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                    LowerError::UnsupportedOp {
                         op: format!("VAdd {:?}x{}", elem, lanes),
-                    });
-                }
+                    }
+                })?;
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
                 let src2_reg = self.get_reg(*src2)?;
-                if !dst_reg.is_xmm() || !src1_reg.is_xmm() || !src2_reg.is_xmm() {
+                if !dst_reg.is_vec() || !src1_reg.is_vec() || !src2_reg.is_vec() {
                     return Err(LowerError::InvalidOperand {
                         op: "VAdd".to_string(),
-                        operand: "requires XMM operands".to_string(),
+                        operand: "requires vector registers".to_string(),
                     });
                 }
-                let prefix = self.sse_prefix(op.x86_hint);
-                if dst_reg != src1_reg {
+
+                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    let enc = self.coerce_vec_encoding(
+                        VecEncoding { width, ..enc_hint },
+                        &[dst_reg, src1_reg, src2_reg],
+                    );
+                    self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
+                } else if width != VecWidth::V128
+                    || self.vec_requires_vex(&[dst_reg, src1_reg, src2_reg])
+                {
+                    let (map, pp, opcode) = match elem {
+                        VecElementType::I32 => (X86VecMap::Map0F, X86SsePrefix::OpSize, 0xFE),
+                        VecElementType::F32 => (X86VecMap::Map0F, X86SsePrefix::None, 0x58),
+                        VecElementType::F64 => (X86VecMap::Map0F, X86SsePrefix::OpSize, 0x58),
+                        _ => {
+                            return Err(LowerError::UnsupportedOp {
+                                op: format!("VAdd {:?}x{}", elem, lanes),
+                            })
+                        }
+                    };
+                    let kind = if self.vec_requires_evex(width, &[dst_reg, src1_reg, src2_reg]) {
+                        VecEncodingKind::Evex
+                    } else {
+                        VecEncodingKind::Vex
+                    };
+                    let enc = VecEncoding {
+                        kind,
+                        map,
+                        pp,
+                        opcode,
+                        width,
+                    };
+                    self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
+                } else {
+                    let (prefix, opcode) = match elem {
+                        VecElementType::I32 => (Some(0x66), 0xFE),
+                        VecElementType::F32 => (None, 0x58),
+                        VecElementType::F64 => (Some(0x66), 0x58),
+                        _ => {
+                            return Err(LowerError::UnsupportedOp {
+                                op: format!("VAdd {:?}x{}", elem, lanes),
+                            })
+                        }
+                    };
+                    if dst_reg != src1_reg {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_mov_rr(prefix, 0x6F, dst_reg, src1_reg);
+                    }
                     let mut emitter = X86Emitter::new(&mut self.code);
-                    emitter.emit_sse_mov_rr(prefix, 0x6F, dst_reg, src1_reg);
+                    emitter.emit_sse_mov_rr(prefix, opcode, dst_reg, src2_reg);
                 }
-                let opcode = self.sse_opcode(op.x86_hint, 0xFE);
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_sse_mov_rr(prefix, opcode, dst_reg, src2_reg);
+            }
+
+            OpKind::VSub {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+            } => {
+                let width = self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                    LowerError::UnsupportedOp {
+                        op: format!("VSub {:?}x{}", elem, lanes),
+                    }
+                })?;
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                if !dst_reg.is_vec() || !src1_reg.is_vec() || !src2_reg.is_vec() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VSub".to_string(),
+                        operand: "requires vector registers".to_string(),
+                    });
+                }
+
+                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    let enc = self.coerce_vec_encoding(
+                        VecEncoding { width, ..enc_hint },
+                        &[dst_reg, src1_reg, src2_reg],
+                    );
+                    self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
+                } else if width != VecWidth::V128
+                    || self.vec_requires_vex(&[dst_reg, src1_reg, src2_reg])
+                {
+                    let (map, pp, opcode) = match elem {
+                        VecElementType::I32 => (X86VecMap::Map0F, X86SsePrefix::OpSize, 0xFA),
+                        VecElementType::F32 => (X86VecMap::Map0F, X86SsePrefix::None, 0x5C),
+                        VecElementType::F64 => (X86VecMap::Map0F, X86SsePrefix::OpSize, 0x5C),
+                        _ => {
+                            return Err(LowerError::UnsupportedOp {
+                                op: format!("VSub {:?}x{}", elem, lanes),
+                            })
+                        }
+                    };
+                    let kind = if self.vec_requires_evex(width, &[dst_reg, src1_reg, src2_reg]) {
+                        VecEncodingKind::Evex
+                    } else {
+                        VecEncodingKind::Vex
+                    };
+                    let enc = VecEncoding {
+                        kind,
+                        map,
+                        pp,
+                        opcode,
+                        width,
+                    };
+                    self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
+                } else {
+                    let (prefix, opcode) = match elem {
+                        VecElementType::I32 => (Some(0x66), 0xFA),
+                        VecElementType::F32 => (None, 0x5C),
+                        VecElementType::F64 => (Some(0x66), 0x5C),
+                        _ => {
+                            return Err(LowerError::UnsupportedOp {
+                                op: format!("VSub {:?}x{}", elem, lanes),
+                            })
+                        }
+                    };
+                    if dst_reg != src1_reg {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_mov_rr(prefix, 0x6F, dst_reg, src1_reg);
+                    }
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_sse_mov_rr(prefix, opcode, dst_reg, src2_reg);
+                }
+            }
+
+            OpKind::VMax {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+            } => {
+                let width = self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                    LowerError::UnsupportedOp {
+                        op: format!("VMax {:?}x{}", elem, lanes),
+                    }
+                })?;
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                if !dst_reg.is_vec() || !src1_reg.is_vec() || !src2_reg.is_vec() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VMax".to_string(),
+                        operand: "requires vector registers".to_string(),
+                    });
+                }
+
+                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    let enc = self.coerce_vec_encoding(
+                        VecEncoding { width, ..enc_hint },
+                        &[dst_reg, src1_reg, src2_reg],
+                    );
+                    self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
+                } else if width != VecWidth::V128
+                    || self.vec_requires_vex(&[dst_reg, src1_reg, src2_reg])
+                {
+                    let (map, pp, opcode) = match elem {
+                        VecElementType::F32 => (X86VecMap::Map0F, X86SsePrefix::None, 0x5F),
+                        VecElementType::F64 => (X86VecMap::Map0F, X86SsePrefix::OpSize, 0x5F),
+                        _ => {
+                            return Err(LowerError::UnsupportedOp {
+                                op: format!("VMax {:?}x{}", elem, lanes),
+                            })
+                        }
+                    };
+                    let kind = if self.vec_requires_evex(width, &[dst_reg, src1_reg, src2_reg]) {
+                        VecEncodingKind::Evex
+                    } else {
+                        VecEncodingKind::Vex
+                    };
+                    let enc = VecEncoding {
+                        kind,
+                        map,
+                        pp,
+                        opcode,
+                        width,
+                    };
+                    self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
+                } else {
+                    let (prefix, opcode) = match elem {
+                        VecElementType::F32 => (None, 0x5F),
+                        VecElementType::F64 => (Some(0x66), 0x5F),
+                        _ => {
+                            return Err(LowerError::UnsupportedOp {
+                                op: format!("VMax {:?}x{}", elem, lanes),
+                            })
+                        }
+                    };
+                    if dst_reg != src1_reg {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_mov_rr(prefix, 0x6F, dst_reg, src1_reg);
+                    }
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_sse_mov_rr(prefix, opcode, dst_reg, src2_reg);
+                }
             }
 
             OpKind::VMul {
@@ -4312,26 +4703,165 @@ impl X86_64Lowerer {
                 elem,
                 lanes,
             } => {
-                if *elem != VecElementType::I32 || *lanes != 4 {
-                    return Err(LowerError::UnsupportedOp {
+                let width = self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                    LowerError::UnsupportedOp {
                         op: format!("VMul {:?}x{}", elem, lanes),
-                    });
-                }
+                    }
+                })?;
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
                 let src2_reg = self.get_reg(*src2)?;
-                if !dst_reg.is_xmm() || !src1_reg.is_xmm() || !src2_reg.is_xmm() {
+                if !dst_reg.is_vec() || !src1_reg.is_vec() || !src2_reg.is_vec() {
                     return Err(LowerError::InvalidOperand {
                         op: "VMul".to_string(),
-                        operand: "requires XMM operands".to_string(),
+                        operand: "requires vector registers".to_string(),
                     });
                 }
-                if dst_reg != src1_reg {
-                    let mut emitter = X86Emitter::new(&mut self.code);
-                    emitter.emit_sse_mov_rr(Some(0x66), 0x6F, dst_reg, src1_reg);
+
+                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    let enc = self.coerce_vec_encoding(
+                        VecEncoding { width, ..enc_hint },
+                        &[dst_reg, src1_reg, src2_reg],
+                    );
+                    self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
+                } else if width != VecWidth::V128
+                    || self.vec_requires_vex(&[dst_reg, src1_reg, src2_reg])
+                {
+                    let (map, pp, opcode) = match elem {
+                        VecElementType::I32 => (X86VecMap::Map0F38, X86SsePrefix::OpSize, 0x40),
+                        VecElementType::F32 => (X86VecMap::Map0F, X86SsePrefix::None, 0x59),
+                        VecElementType::F64 => (X86VecMap::Map0F, X86SsePrefix::OpSize, 0x59),
+                        _ => {
+                            return Err(LowerError::UnsupportedOp {
+                                op: format!("VMul {:?}x{}", elem, lanes),
+                            })
+                        }
+                    };
+                    let kind = if self.vec_requires_evex(width, &[dst_reg, src1_reg, src2_reg]) {
+                        VecEncodingKind::Evex
+                    } else {
+                        VecEncodingKind::Vex
+                    };
+                    let enc = VecEncoding {
+                        kind,
+                        map,
+                        pp,
+                        opcode,
+                        width,
+                    };
+                    self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
+                } else {
+                    match elem {
+                        VecElementType::I32 => {
+                            if dst_reg != src1_reg {
+                                let mut emitter = X86Emitter::new(&mut self.code);
+                                emitter.emit_sse_mov_rr(Some(0x66), 0x6F, dst_reg, src1_reg);
+                            }
+                            let mut emitter = X86Emitter::new(&mut self.code);
+                            emitter.emit_sse_op38_rr(Some(0x66), 0x40, dst_reg, src2_reg);
+                        }
+                        VecElementType::F32 | VecElementType::F64 => {
+                            let prefix = if matches!(elem, VecElementType::F64) {
+                                Some(0x66)
+                            } else {
+                                None
+                            };
+                            if dst_reg != src1_reg {
+                                let mut emitter = X86Emitter::new(&mut self.code);
+                                emitter.emit_sse_mov_rr(prefix, 0x6F, dst_reg, src1_reg);
+                            }
+                            let mut emitter = X86Emitter::new(&mut self.code);
+                            emitter.emit_sse_mov_rr(prefix, 0x59, dst_reg, src2_reg);
+                        }
+                        _ => {
+                            return Err(LowerError::UnsupportedOp {
+                                op: format!("VMul {:?}x{}", elem, lanes),
+                            })
+                        }
+                    }
                 }
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_sse_op38_rr(Some(0x66), 0x40, dst_reg, src2_reg);
+            }
+
+            OpKind::VShift {
+                dst,
+                src,
+                amount,
+                shift,
+                elem,
+                lanes,
+            } => {
+                if *shift != ShiftOp::Lsl || *elem != VecElementType::I32 {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("VShift {:?} {:?}x{}", shift, elem, lanes),
+                    });
+                }
+                let imm = match amount {
+                    SrcOperand::Imm(val) => {
+                        if *val < 0 || *val > u8::MAX as i64 {
+                            return Err(LowerError::InvalidOperand {
+                                op: "VShift".to_string(),
+                                operand: "imm out of range".to_string(),
+                            });
+                        }
+                        *val as u8
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: "VShift with non-imm".to_string(),
+                        });
+                    }
+                };
+
+                let width = self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                    LowerError::UnsupportedOp {
+                        op: format!("VShift {:?}x{}", elem, lanes),
+                    }
+                })?;
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                if !dst_reg.is_vec() || !src_reg.is_vec() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VShift".to_string(),
+                        operand: "requires vector registers".to_string(),
+                    });
+                }
+
+                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    let enc = self.coerce_vec_encoding(
+                        VecEncoding { width, ..enc_hint },
+                        &[dst_reg, src_reg],
+                    );
+                    self.emit_vec_shift_imm(enc, dst_reg, src_reg, imm);
+                } else if width != VecWidth::V128 || self.vec_requires_vex(&[dst_reg, src_reg]) {
+                    let kind = if self.vec_requires_evex(width, &[dst_reg, src_reg]) {
+                        VecEncodingKind::Evex
+                    } else {
+                        VecEncodingKind::Vex
+                    };
+                    let enc = VecEncoding {
+                        kind,
+                        map: X86VecMap::Map0F,
+                        pp: X86SsePrefix::OpSize,
+                        opcode: 0x72,
+                        width,
+                    };
+                    self.emit_vec_shift_imm(enc, dst_reg, src_reg, imm);
+                } else {
+                    let prefix = Some(0x66);
+                    if dst_reg != src_reg {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_mov_rr(prefix, 0x6F, dst_reg, src_reg);
+                    }
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    if let Some(prefix) = prefix {
+                        emitter.code.emit_u8(prefix);
+                    }
+                    emitter.emit_rex_for_xmm(dst_reg, dst_reg);
+                    emitter.code.emit_u8(0x0F);
+                    emitter.code.emit_u8(0x72);
+                    emitter.emit_modrm_digit(0b11, 6, dst_reg);
+                    emitter.code.emit_u8(imm);
+                }
             }
 
             OpKind::Load {
@@ -5180,6 +5710,64 @@ impl X86_64Lowerer {
         }
     }
 
+    fn vec_hint(&self, hint: Option<X86OpHint>) -> Option<VecEncoding> {
+        match hint {
+            Some(X86OpHint::VexOp {
+                map,
+                pp,
+                opcode,
+                width,
+            }) => Some(VecEncoding {
+                kind: VecEncodingKind::Vex,
+                map,
+                pp,
+                opcode,
+                width,
+            }),
+            Some(X86OpHint::EvexOp {
+                map,
+                pp,
+                opcode,
+                width,
+            }) => Some(VecEncoding {
+                kind: VecEncodingKind::Evex,
+                map,
+                pp,
+                opcode,
+                width,
+            }),
+            _ => None,
+        }
+    }
+
+    fn vec_requires_vex(&self, regs: &[PhysReg]) -> bool {
+        regs.iter()
+            .any(|reg| reg.is_ymm() || reg.is_zmm() || reg.vec_ext2() != 0)
+    }
+
+    fn vec_requires_evex(&self, width: VecWidth, regs: &[PhysReg]) -> bool {
+        width == VecWidth::V512 || regs.iter().any(|reg| reg.is_zmm() || reg.vec_ext2() != 0)
+    }
+
+    fn coerce_vec_encoding(&self, mut encoding: VecEncoding, regs: &[PhysReg]) -> VecEncoding {
+        if self.vec_requires_evex(encoding.width, regs) {
+            encoding.kind = VecEncodingKind::Evex;
+        }
+        encoding
+    }
+
+    fn vec_width_from_lanes(&self, elem: VecElementType, lanes: u8) -> Option<VecWidth> {
+        if lanes == VecWidth::V128.lanes(elem) as u8 {
+            Some(VecWidth::V128)
+        } else if lanes == VecWidth::V256.lanes(elem) as u8 {
+            Some(VecWidth::V256)
+        } else if lanes == VecWidth::V512.lanes(elem) as u8 {
+            Some(VecWidth::V512)
+        } else {
+            None
+        }
+    }
+
     fn emit_sse_mov_mem(
         &mut self,
         prefix: Option<u8>,
@@ -5372,6 +5960,370 @@ impl X86_64Lowerer {
         }
 
         Ok(())
+    }
+
+    fn emit_vec_mem(
+        &mut self,
+        encoding: VecEncoding,
+        reg: PhysReg,
+        vvvv_reg: Option<PhysReg>,
+        addr: &Address,
+    ) -> Result<(), LowerError> {
+        let encoding = match vvvv_reg {
+            Some(vreg) => self.coerce_vec_encoding(encoding, &[reg, vreg]),
+            None => self.coerce_vec_encoding(encoding, &[reg]),
+        };
+        let vvvv = vvvv_reg.map_or(0x1F, |vreg| vreg.encoding() & 0x1F);
+        let r = reg.vec_ext();
+        let r2 = reg.vec_ext2();
+
+        match addr {
+            Address::Direct(base) => {
+                let base_reg = self.get_reg(*base)?;
+                let b = base_reg.vec_ext();
+                let b2 = base_reg.vec_ext2();
+                let mut emitter = X86Emitter::new(&mut self.code);
+                match encoding.kind {
+                    VecEncodingKind::Vex => {
+                        emitter.emit_vex_prefix(
+                            encoding.map,
+                            encoding.pp,
+                            encoding.width,
+                            false,
+                            r,
+                            0,
+                            b,
+                            vvvv,
+                        );
+                    }
+                    VecEncodingKind::Evex => {
+                        emitter.emit_evex_prefix(
+                            encoding.map,
+                            encoding.pp,
+                            encoding.width,
+                            false,
+                            r,
+                            0,
+                            b,
+                            r2,
+                            0,
+                            b2,
+                            vvvv,
+                        );
+                    }
+                }
+                emitter.code.emit_u8(encoding.opcode);
+                emitter.emit_modrm_mem_disp(reg, base_reg, 0, DispSize::Auto);
+            }
+            Address::BaseOffset {
+                base,
+                offset,
+                disp_size,
+            } => {
+                let base_reg = self.get_reg(*base)?;
+                let b = base_reg.vec_ext();
+                let b2 = base_reg.vec_ext2();
+                let mut emitter = X86Emitter::new(&mut self.code);
+                match encoding.kind {
+                    VecEncodingKind::Vex => {
+                        emitter.emit_vex_prefix(
+                            encoding.map,
+                            encoding.pp,
+                            encoding.width,
+                            false,
+                            r,
+                            0,
+                            b,
+                            vvvv,
+                        );
+                    }
+                    VecEncodingKind::Evex => {
+                        emitter.emit_evex_prefix(
+                            encoding.map,
+                            encoding.pp,
+                            encoding.width,
+                            false,
+                            r,
+                            0,
+                            b,
+                            r2,
+                            0,
+                            b2,
+                            vvvv,
+                        );
+                    }
+                }
+                emitter.code.emit_u8(encoding.opcode);
+                emitter.emit_modrm_mem_disp(reg, base_reg, *offset as i32, *disp_size);
+            }
+            Address::BaseIndexScale {
+                base,
+                index,
+                scale,
+                disp,
+                disp_size,
+            } => {
+                let base_reg = base.map(|b| self.get_reg(b)).transpose()?;
+                let index_reg = self.get_reg(*index)?;
+                let base_bits = base_reg.unwrap_or(PhysReg::Rbp);
+                let b = base_bits.vec_ext();
+                let b2 = base_bits.vec_ext2();
+                let x = index_reg.vec_ext();
+                let x2 = index_reg.vec_ext2();
+                let mut emitter = X86Emitter::new(&mut self.code);
+                match encoding.kind {
+                    VecEncodingKind::Vex => {
+                        emitter.emit_vex_prefix(
+                            encoding.map,
+                            encoding.pp,
+                            encoding.width,
+                            false,
+                            r,
+                            x,
+                            b,
+                            vvvv,
+                        );
+                    }
+                    VecEncodingKind::Evex => {
+                        emitter.emit_evex_prefix(
+                            encoding.map,
+                            encoding.pp,
+                            encoding.width,
+                            false,
+                            r,
+                            x,
+                            b,
+                            r2,
+                            x2,
+                            b2,
+                            vvvv,
+                        );
+                    }
+                }
+                emitter.code.emit_u8(encoding.opcode);
+                emitter.emit_modrm_sib_disp(reg, base_reg, index_reg, *scale, *disp, *disp_size);
+            }
+            Address::PcRel { offset, base, .. } => {
+                let disp_offset = {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    match encoding.kind {
+                        VecEncodingKind::Vex => {
+                            emitter.emit_vex_prefix(
+                                encoding.map,
+                                encoding.pp,
+                                encoding.width,
+                                false,
+                                r,
+                                0,
+                                0,
+                                vvvv,
+                            );
+                        }
+                        VecEncodingKind::Evex => {
+                            emitter.emit_evex_prefix(
+                                encoding.map,
+                                encoding.pp,
+                                encoding.width,
+                                false,
+                                r,
+                                0,
+                                0,
+                                r2,
+                                0,
+                                0,
+                                vvvv,
+                            );
+                        }
+                    }
+                    emitter.code.emit_u8(encoding.opcode);
+                    emitter.emit_modrm_pcrel(reg, 0)
+                };
+                let insn_end = self.code.position();
+
+                let disp = if let Some(base_pc) = base {
+                    let target = (*base_pc as i64 + *offset) as u64;
+                    let disp = if self.pcrel_adjust {
+                        let next_rip = self.guest_base as i64 + insn_end as i64;
+                        target as i64 - next_rip
+                    } else {
+                        *offset
+                    };
+                    if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                        return Err(LowerError::InvalidOperand {
+                            op: "PcRel VEX/EVEX".to_string(),
+                            operand: "offset out of range".to_string(),
+                        });
+                    }
+                    self.relocations.push(Relocation {
+                        offset: disp_offset,
+                        kind: RelocKind::PcRel32,
+                        target: RelocTarget::GuestAddr(target),
+                    });
+                    disp
+                } else {
+                    let disp = *offset;
+                    if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                        return Err(LowerError::InvalidOperand {
+                            op: "PcRel VEX/EVEX".to_string(),
+                            operand: "offset out of range".to_string(),
+                        });
+                    }
+                    disp
+                };
+
+                self.code.patch_i32(disp_offset, disp as i32);
+            }
+            Address::Absolute(addr) => {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                match encoding.kind {
+                    VecEncodingKind::Vex => {
+                        emitter.emit_vex_prefix(
+                            encoding.map,
+                            encoding.pp,
+                            encoding.width,
+                            false,
+                            r,
+                            0,
+                            0,
+                            vvvv,
+                        );
+                    }
+                    VecEncodingKind::Evex => {
+                        emitter.emit_evex_prefix(
+                            encoding.map,
+                            encoding.pp,
+                            encoding.width,
+                            false,
+                            r,
+                            0,
+                            0,
+                            r2,
+                            0,
+                            0,
+                            vvvv,
+                        );
+                    }
+                }
+                emitter.code.emit_u8(encoding.opcode);
+                emitter.emit_modrm_abs(reg, *addr);
+            }
+            _ => {
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("VEX/EVEX with unsupported addressing: {:?}", addr),
+                });
+            }
+        }
+
+        Ok(())
+    }
+
+    fn emit_vec_rrr(&mut self, encoding: VecEncoding, dst: PhysReg, src1: PhysReg, src2: PhysReg) {
+        let encoding = self.coerce_vec_encoding(encoding, &[dst, src1, src2]);
+        let mut emitter = X86Emitter::new(&mut self.code);
+        match encoding.kind {
+            VecEncodingKind::Vex => {
+                emitter.emit_vex_rrr(
+                    encoding.map,
+                    encoding.pp,
+                    encoding.width,
+                    encoding.opcode,
+                    dst,
+                    src1,
+                    src2,
+                );
+            }
+            VecEncodingKind::Evex => {
+                emitter.emit_evex_rrr(
+                    encoding.map,
+                    encoding.pp,
+                    encoding.width,
+                    encoding.opcode,
+                    dst,
+                    src1,
+                    src2,
+                );
+            }
+        }
+    }
+
+    fn emit_vec_rr(&mut self, encoding: VecEncoding, reg: PhysReg, rm: PhysReg, vvvv: u8) {
+        let encoding = self.coerce_vec_encoding(encoding, &[reg, rm]);
+        let r = reg.vec_ext();
+        let r2 = reg.vec_ext2();
+        let b = rm.vec_ext();
+        let b2 = rm.vec_ext2();
+        let mut emitter = X86Emitter::new(&mut self.code);
+        match encoding.kind {
+            VecEncodingKind::Vex => {
+                emitter.emit_vex_prefix(
+                    encoding.map,
+                    encoding.pp,
+                    encoding.width,
+                    false,
+                    r,
+                    0,
+                    b,
+                    vvvv,
+                );
+            }
+            VecEncodingKind::Evex => {
+                emitter.emit_evex_prefix(
+                    encoding.map,
+                    encoding.pp,
+                    encoding.width,
+                    false,
+                    r,
+                    0,
+                    b,
+                    r2,
+                    0,
+                    b2,
+                    vvvv,
+                );
+            }
+        }
+        emitter.code.emit_u8(encoding.opcode);
+        emitter.emit_modrm_rr(reg, rm);
+    }
+
+    fn emit_vec_shift_imm(&mut self, encoding: VecEncoding, dst: PhysReg, src: PhysReg, imm: u8) {
+        let encoding = self.coerce_vec_encoding(encoding, &[dst, src]);
+        let b = src.vec_ext();
+        let b2 = src.vec_ext2();
+        let vvvv = dst.encoding() & 0x1F;
+        let mut emitter = X86Emitter::new(&mut self.code);
+        match encoding.kind {
+            VecEncodingKind::Vex => {
+                emitter.emit_vex_prefix(
+                    encoding.map,
+                    encoding.pp,
+                    encoding.width,
+                    false,
+                    0,
+                    0,
+                    b,
+                    vvvv,
+                );
+            }
+            VecEncodingKind::Evex => {
+                emitter.emit_evex_prefix(
+                    encoding.map,
+                    encoding.pp,
+                    encoding.width,
+                    false,
+                    0,
+                    0,
+                    b,
+                    0,
+                    0,
+                    b2,
+                    vvvv,
+                );
+            }
+        }
+        emitter.code.emit_u8(encoding.opcode);
+        emitter.emit_modrm_digit(0b11, 6, src);
+        emitter.code.emit_u8(imm);
     }
 
     fn emit_movzx_mem(
@@ -6651,15 +7603,23 @@ impl X86_64Lowerer {
                     return Ok(None);
                 }
                 let dst_reg = self.get_dst_reg(*dst)?;
-                if !dst_reg.is_xmm() {
+                if !dst_reg.is_vec() {
                     return Err(LowerError::InvalidOperand {
                         op: "VAdd".to_string(),
-                        operand: "destination must be XMM".to_string(),
+                        operand: "destination must be vector register".to_string(),
                     });
                 }
-                let prefix = self.sse_prefix(op.x86_hint);
-                let opcode = self.sse_opcode(op.x86_hint, 0xFE);
-                self.emit_sse_mov_mem(prefix, opcode, dst_reg, addr)?;
+                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    let enc = VecEncoding { width, ..enc_hint };
+                    self.emit_vec_mem(enc, dst_reg, Some(dst_reg), addr)?;
+                } else {
+                    if self.vec_requires_vex(&[dst_reg]) {
+                        return Ok(None);
+                    }
+                    let prefix = self.sse_prefix(op.x86_hint);
+                    let opcode = self.sse_opcode(op.x86_hint, 0xFE);
+                    self.emit_sse_mov_mem(prefix, opcode, dst_reg, addr)?;
+                }
                 return Ok(Some(2));
             }
             OpKind::VMul {
@@ -6673,13 +7633,21 @@ impl X86_64Lowerer {
                     return Ok(None);
                 }
                 let dst_reg = self.get_dst_reg(*dst)?;
-                if !dst_reg.is_xmm() {
+                if !dst_reg.is_vec() {
                     return Err(LowerError::InvalidOperand {
                         op: "VMul".to_string(),
-                        operand: "destination must be XMM".to_string(),
+                        operand: "destination must be vector register".to_string(),
                     });
                 }
-                self.emit_sse_op38_mem(Some(0x66), 0x40, dst_reg, addr)?;
+                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    let enc = VecEncoding { width, ..enc_hint };
+                    self.emit_vec_mem(enc, dst_reg, Some(dst_reg), addr)?;
+                } else {
+                    if self.vec_requires_vex(&[dst_reg]) {
+                        return Ok(None);
+                    }
+                    self.emit_sse_op38_mem(Some(0x66), 0x40, dst_reg, addr)?;
+                }
                 return Ok(Some(2));
             }
             _ => {}

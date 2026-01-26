@@ -76,13 +76,15 @@ impl DebugState {
 // Virtual Register File
 // ============================================================================
 
+pub type VecValue = [u64; 8];
+
 /// Virtual register file
 #[derive(Clone, Debug, Default)]
 pub struct VRegFile {
     /// Scalar register values
     values: HashMap<VirtualId, u64>,
-    /// Vector register values (128-bit)
-    vec_values: HashMap<VirtualId, [u64; 2]>,
+    /// Vector register values (up to 512-bit)
+    vec_values: HashMap<VirtualId, VecValue>,
 }
 
 impl VRegFile {
@@ -98,11 +100,11 @@ impl VRegFile {
         self.values.insert(id, value);
     }
 
-    pub fn get_vec(&self, id: VirtualId) -> [u64; 2] {
-        self.vec_values.get(&id).copied().unwrap_or([0, 0])
+    pub fn get_vec(&self, id: VirtualId) -> VecValue {
+        self.vec_values.get(&id).copied().unwrap_or([0; 8])
     }
 
-    pub fn set_vec(&mut self, id: VirtualId, value: [u64; 2]) {
+    pub fn set_vec(&mut self, id: VirtualId, value: VecValue) {
         self.vec_values.insert(id, value);
     }
 
@@ -180,8 +182,8 @@ pub struct X86RegState {
     pub fs_base: u64,
     /// GS base
     pub gs_base: u64,
-    /// XMM registers (128-bit each)
-    pub xmm: [[u64; 2]; 32],
+    /// XMM/YMM/ZMM registers (up to 512-bit each)
+    pub xmm: [VecValue; 32],
     /// MXCSR (SSE control/status)
     pub mxcsr: u32,
 }
@@ -229,7 +231,7 @@ impl X86RegState {
             X86Reg::Rflags => self.rflags,
             X86Reg::FsBase => self.fs_base,
             X86Reg::GsBase => self.gs_base,
-            X86Reg::Xmm(n) => self.xmm[n as usize][0],
+            X86Reg::Xmm(n) | X86Reg::Ymm(n) | X86Reg::Zmm(n) => self.xmm[n as usize][0],
             _ => 0,
         }
     }
@@ -257,7 +259,7 @@ impl X86RegState {
             X86Reg::Rflags => self.rflags = val,
             X86Reg::FsBase => self.fs_base = val,
             X86Reg::GsBase => self.gs_base = val,
-            X86Reg::Xmm(n) => self.xmm[n as usize][0] = val,
+            X86Reg::Xmm(n) | X86Reg::Ymm(n) | X86Reg::Zmm(n) => self.xmm[n as usize][0] = val,
             _ => {}
         }
     }
