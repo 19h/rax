@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 use crate::smir::flags::FlagUpdate;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
-use crate::smir::ops::{OpKind, X86AluEncoding, X86OpHint, X86SsePrefix, X86VecMap};
+use crate::smir::ops::{OpKind, X86AluEncoding, X86OpHint, X86SsePrefix, X86VecAlign, X86VecMap};
 use crate::smir::types::{
     Address, ArchReg, BlockId, Condition, DispSize, GuestAddr, MemWidth, OpWidth, ShiftOp,
     SignExtend, SrcOperand, VReg, VecElementType, VecWidth, X86Reg,
@@ -4383,12 +4383,14 @@ impl X86_64Lowerer {
                 } else {
                     if *width != VecWidth::V128 || self.vec_requires_vex(&[dst_reg]) {
                         let enc = self.coerce_vec_encoding(
-                            self.default_vec_mov_encoding(*width, 0x6F),
+                            self.default_vec_mov_encoding(*width, 0x6F, op.x86_hint),
                             &[dst_reg],
                         );
                         self.emit_vec_mem(enc, dst_reg, None, addr)?;
                     } else {
-                        let prefix = self.sse_prefix(op.x86_hint);
+                        let prefix = self
+                            .sse_prefix(op.x86_hint)
+                            .or_else(|| self.vec_move_prefix(op.x86_hint));
                         self.emit_sse_mov_mem(prefix, 0x6F, dst_reg, addr)?;
                     }
                 }
@@ -4414,12 +4416,14 @@ impl X86_64Lowerer {
                 } else {
                     if *width != VecWidth::V128 || self.vec_requires_vex(&[src_reg]) {
                         let enc = self.coerce_vec_encoding(
-                            self.default_vec_mov_encoding(*width, 0x7F),
+                            self.default_vec_mov_encoding(*width, 0x7F, op.x86_hint),
                             &[src_reg],
                         );
                         self.emit_vec_mem(enc, src_reg, None, addr)?;
                     } else {
-                        let prefix = self.sse_prefix(op.x86_hint);
+                        let prefix = self
+                            .sse_prefix(op.x86_hint)
+                            .or_else(|| self.vec_move_prefix(op.x86_hint));
                         self.emit_sse_mov_mem(prefix, 0x7F, src_reg, addr)?;
                     }
                 }
@@ -4452,12 +4456,14 @@ impl X86_64Lowerer {
                 } else {
                     if *width != VecWidth::V128 || self.vec_requires_vex(&[dst_reg, src_reg]) {
                         let enc = self.coerce_vec_encoding(
-                            self.default_vec_mov_encoding(*width, 0x6F),
+                            self.default_vec_mov_encoding(*width, 0x6F, op.x86_hint),
                             &[dst_reg, src_reg],
                         );
                         self.emit_vec_rr(enc, dst_reg, src_reg, 0x1F);
                     } else {
-                        let prefix = self.sse_prefix(op.x86_hint);
+                        let prefix = self
+                            .sse_prefix(op.x86_hint)
+                            .or_else(|| self.vec_move_prefix(op.x86_hint));
                         let opcode = self.sse_opcode(op.x86_hint, 0x6F);
                         let (reg, rm) = if opcode == 0x7F {
                             (src_reg, dst_reg)
@@ -5750,11 +5756,33 @@ impl X86_64Lowerer {
         encoding
     }
 
-    fn default_vec_mov_encoding(&self, width: VecWidth, opcode: u8) -> VecEncoding {
+    fn vec_move_pp(&self, hint: Option<X86OpHint>) -> X86SsePrefix {
+        match hint {
+            Some(X86OpHint::VecAlign(X86VecAlign::Aligned)) => X86SsePrefix::OpSize,
+            Some(X86OpHint::VecAlign(X86VecAlign::Unaligned)) => X86SsePrefix::Rep,
+            _ => X86SsePrefix::Rep,
+        }
+    }
+
+    fn vec_move_prefix(&self, hint: Option<X86OpHint>) -> Option<u8> {
+        match self.vec_move_pp(hint) {
+            X86SsePrefix::OpSize => Some(0x66),
+            X86SsePrefix::Rep => Some(0xF3),
+            X86SsePrefix::Repne => Some(0xF2),
+            X86SsePrefix::None => None,
+        }
+    }
+
+    fn default_vec_mov_encoding(
+        &self,
+        width: VecWidth,
+        opcode: u8,
+        hint: Option<X86OpHint>,
+    ) -> VecEncoding {
         VecEncoding {
             kind: VecEncodingKind::Vex,
             map: X86VecMap::Map0F,
-            pp: X86SsePrefix::Rep,
+            pp: self.vec_move_pp(hint),
             opcode,
             width,
         }

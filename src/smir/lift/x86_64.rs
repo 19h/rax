@@ -13,7 +13,9 @@ use crate::smir::lift::{
     ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter,
 };
 use crate::smir::memory::MemoryError;
-use crate::smir::ops::{OpKind, SmirOp, X86AluEncoding, X86OpHint, X86SsePrefix, X86VecMap};
+use crate::smir::ops::{
+    OpKind, SmirOp, X86AluEncoding, X86OpHint, X86SsePrefix, X86VecAlign, X86VecMap,
+};
 use crate::smir::types::*;
 
 // ============================================================================
@@ -1848,7 +1850,7 @@ impl X86_64Lifter {
             ops.extend(pre_ops);
 
             let tmp = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
+            ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
                 OpKind::VLoad {
@@ -1856,6 +1858,7 @@ impl X86_64Lifter {
                     addr,
                     width: VecWidth::V128,
                 },
+                X86OpHint::VecAlign(X86VecAlign::Unaligned),
             ));
             ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
@@ -1933,7 +1936,7 @@ impl X86_64Lifter {
             ops.extend(pre_ops);
 
             let tmp = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
+            ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
                 OpKind::VLoad {
@@ -1941,6 +1944,7 @@ impl X86_64Lifter {
                     addr,
                     width: VecWidth::V128,
                 },
+                X86OpHint::VecAlign(X86VecAlign::Unaligned),
             ));
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
@@ -2160,7 +2164,7 @@ impl X86_64Lifter {
                         let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
                         ops.extend(pre_ops);
                         let tmp = ctx.alloc_vreg();
-                        ops.push(SmirOp::new(
+                        ops.push(SmirOp::with_hint(
                             OpId(ops.len() as u16),
                             pc,
                             OpKind::VLoad {
@@ -2168,6 +2172,7 @@ impl X86_64Lifter {
                                 addr,
                                 width: prefix.width,
                             },
+                            X86OpHint::VecAlign(X86VecAlign::Unaligned),
                         ));
                         tmp
                     } else {
@@ -2244,7 +2249,7 @@ impl X86_64Lifter {
                         let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
                         ops.extend(pre_ops);
                         let tmp = ctx.alloc_vreg();
-                        ops.push(SmirOp::new(
+                        ops.push(SmirOp::with_hint(
                             OpId(ops.len() as u16),
                             pc,
                             OpKind::VLoad {
@@ -2252,6 +2257,7 @@ impl X86_64Lifter {
                                 addr,
                                 width: prefix.width,
                             },
+                            X86OpHint::VecAlign(X86VecAlign::Unaligned),
                         ));
                         tmp
                     } else {
@@ -2295,7 +2301,7 @@ impl X86_64Lifter {
                         let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
                         ops.extend(pre_ops);
                         let tmp = ctx.alloc_vreg();
-                        ops.push(SmirOp::new(
+                        ops.push(SmirOp::with_hint(
                             OpId(ops.len() as u16),
                             pc,
                             OpKind::VLoad {
@@ -2303,6 +2309,7 @@ impl X86_64Lifter {
                                 addr,
                                 width: prefix.width,
                             },
+                            X86OpHint::VecAlign(X86VecAlign::Unaligned),
                         ));
                         tmp
                     } else {
