@@ -8,8 +8,10 @@ use std::collections::{HashMap, HashSet};
 
 use crate::smir::flags::{FlagSet, FlagState, FlagUpdate};
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
-use crate::smir::ops::{OpKind, SmirOp};
-use crate::smir::types::{Address, ArchReg, BlockId, MemWidth, OpWidth, SrcOperand, VReg, X86Reg};
+use crate::smir::ops::{OpKind, SmirOp, X86OpHint, X86VecAlign};
+use crate::smir::types::{
+    Address, ArchReg, BlockId, MemWidth, OpWidth, SrcOperand, VReg, VecWidth, X86Reg,
+};
 
 // ============================================================================
 // Optimization Level
@@ -56,6 +58,9 @@ pub struct OptStats {
 
     /// Redundant loads eliminated
     pub redundant_loads_eliminated: usize,
+
+    /// Vector alignment hints inferred
+    pub vector_alignments_inferred: usize,
 }
 
 impl OptStats {
@@ -73,6 +78,7 @@ impl OptStats {
         self.strength_reductions += other.strength_reductions;
         self.blocks_merged += other.blocks_merged;
         self.redundant_loads_eliminated += other.redundant_loads_eliminated;
+        self.vector_alignments_inferred += other.vector_alignments_inferred;
     }
 
     /// Total optimizations applied
@@ -84,6 +90,7 @@ impl OptStats {
             + self.strength_reductions
             + self.blocks_merged
             + self.redundant_loads_eliminated
+            + self.vector_alignments_inferred
     }
 }
 
@@ -119,6 +126,7 @@ pub fn optimize_function_with_stats(func: &mut SmirFunction, level: OptLevel) ->
             }
             stats.blocks_merged += block_merging(func);
             stats.redundant_loads_eliminated += redundant_load_elimination(func);
+            stats.vector_alignments_inferred += vector_alignment_inference(func);
         }
     }
 
@@ -828,6 +836,202 @@ pub fn redundant_load_elimination(func: &mut SmirFunction) -> usize {
     }
 
     eliminated
+}
+
+// ============================================================================
+// Vector Alignment Inference
+// ============================================================================
+
+/// Infer vector alignment hints for VLoad/VStore ops.
+pub fn vector_alignment_inference(func: &mut SmirFunction) -> usize {
+    let mut inferred = 0;
+
+    for block in &mut func.blocks {
+        inferred += vector_alignment_inference_block(block);
+    }
+
+    inferred
+}
+
+fn vector_alignment_inference_block(block: &mut SmirBlock) -> usize {
+    let mut inferred = 0;
+    let mut alignments = seed_x86_alignments();
+
+    for op in &mut block.ops {
+        inferred += apply_vec_align_hint(op, &alignments);
+        update_pointer_alignment(op, &mut alignments);
+    }
+
+    inferred
+}
+
+fn seed_x86_alignments() -> HashMap<VReg, usize> {
+    let mut alignments = HashMap::new();
+    alignments.insert(VReg::Arch(ArchReg::X86(X86Reg::Rsp)), 16);
+    alignments.insert(VReg::Arch(ArchReg::X86(X86Reg::Rbp)), 16);
+    alignments
+}
+
+fn apply_vec_align_hint(op: &mut SmirOp, alignments: &HashMap<VReg, usize>) -> usize {
+    let (addr, width) = match &op.kind {
+        OpKind::VLoad { addr, width, .. } | OpKind::VStore { addr, width, .. } => (addr, width),
+        _ => return 0,
+    };
+
+    match op.x86_hint {
+        None | Some(X86OpHint::VecAlign(X86VecAlign::Unaligned)) => {}
+        _ => return 0,
+    }
+
+    let required = vec_width_bytes(*width);
+    if let Some(alignment) = address_alignment(addr, alignments) {
+        if alignment >= required {
+            op.x86_hint = Some(X86OpHint::VecAlign(X86VecAlign::Aligned));
+            return 1;
+        }
+    }
+
+    0
+}
+
+fn update_pointer_alignment(op: &SmirOp, alignments: &mut HashMap<VReg, usize>) {
+    let mut computed = HashMap::new();
+
+    match &op.kind {
+        OpKind::Mov { dst, src, width } if *width == OpWidth::W64 => {
+            if let Some(src_reg) = src.as_reg() {
+                if let Some(&alignment) = alignments.get(&src_reg) {
+                    computed.insert(*dst, alignment);
+                }
+            }
+        }
+        OpKind::Add {
+            dst,
+            src1,
+            src2,
+            width,
+            ..
+        }
+        | OpKind::Sub {
+            dst,
+            src1,
+            src2,
+            width,
+            ..
+        } if *width == OpWidth::W64 => {
+            if let (Some(imm), Some(&src_align)) = (src2.as_imm(), alignments.get(src1)) {
+                computed.insert(*dst, gcd(src_align, imm.unsigned_abs() as usize));
+            }
+        }
+        OpKind::And {
+            dst,
+            src1,
+            src2,
+            width,
+            ..
+        } if *width == OpWidth::W64 => {
+            if let Some(imm) = src2.as_imm() {
+                let mask = imm as u64;
+                let mut alignment = if mask == 0 {
+                    1
+                } else {
+                    1usize << mask.trailing_zeros()
+                };
+                if let Some(&src_align) = alignments.get(src1) {
+                    alignment = alignment.max(src_align);
+                }
+                computed.insert(*dst, alignment);
+            }
+        }
+        OpKind::CMove {
+            dst, src, width, ..
+        } if *width == OpWidth::W64 => {
+            if let (Some(&dst_align), Some(&src_align)) = (alignments.get(dst), alignments.get(src))
+            {
+                computed.insert(*dst, gcd(dst_align, src_align));
+            }
+        }
+        OpKind::Select {
+            dst,
+            src_true,
+            src_false,
+            width,
+            ..
+        } if *width == OpWidth::W64 => {
+            if let (Some(&a), Some(&b)) = (alignments.get(src_true), alignments.get(src_false)) {
+                computed.insert(*dst, gcd(a, b));
+            }
+        }
+        OpKind::Lea { dst, addr } => {
+            if let Some(alignment) = address_alignment(addr, alignments) {
+                computed.insert(*dst, alignment);
+            }
+        }
+        _ => {}
+    }
+
+    for dst in op.kind.dests() {
+        if let Some(&alignment) = computed.get(&dst) {
+            alignments.insert(dst, alignment);
+        } else {
+            alignments.remove(&dst);
+        }
+    }
+}
+
+fn vec_width_bytes(width: VecWidth) -> usize {
+    match width {
+        VecWidth::V64 => 8,
+        VecWidth::V128 => 16,
+        VecWidth::V256 => 32,
+        VecWidth::V512 => 64,
+    }
+}
+
+fn address_alignment(addr: &Address, alignments: &HashMap<VReg, usize>) -> Option<usize> {
+    match addr {
+        Address::Direct(base) => alignments.get(base).copied(),
+        Address::BaseOffset { base, offset, .. } => {
+            let base_align = alignments.get(base).copied()?;
+            Some(gcd(base_align, offset.unsigned_abs() as usize))
+        }
+        Address::PcRel { offset, base, .. } => {
+            let base_addr = match base {
+                Some(base_addr) => *base_addr as i128,
+                None => return None,
+            };
+            let target = base_addr + *offset as i128;
+            if target < 0 {
+                None
+            } else {
+                Some(alignment_from_addr(target as u64))
+            }
+        }
+        Address::Absolute(addr) => Some(alignment_from_addr(*addr)),
+        _ => None,
+    }
+}
+
+fn alignment_from_addr(addr: u64) -> usize {
+    if addr == 0 {
+        return 1;
+    }
+    1usize << addr.trailing_zeros()
+}
+
+fn gcd(mut a: usize, mut b: usize) -> usize {
+    if a == 0 {
+        return b;
+    }
+    if b == 0 {
+        return a;
+    }
+    while b != 0 {
+        let tmp = a % b;
+        a = b;
+        b = tmp;
+    }
+    a
 }
 
 fn redundant_load_elimination_block(block: &mut SmirBlock) -> usize {

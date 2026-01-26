@@ -74,6 +74,12 @@ pub enum X86VecMap {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86VecAlign {
+    Aligned,
+    Unaligned,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum X86OpHint {
     /// ALU encoding preference
     AluEncoding(X86AluEncoding),
@@ -105,6 +111,8 @@ pub enum X86OpHint {
         opcode: u8,
         width: VecWidth,
     },
+    /// Alignment hint for default vector moves
+    VecAlign(X86VecAlign),
 }
 
 // ============================================================================
