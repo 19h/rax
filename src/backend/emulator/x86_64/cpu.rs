@@ -275,6 +275,8 @@ pub(super) struct InsnContext {
     pub bytes_len: usize,
     pub cursor: usize,
     pub rex: Option<u8>,
+    /// REX2 prefix state (if present) - APX extension
+    pub rex2: Option<Rex2Prefix>,
     pub operand_size_override: bool,
     pub address_size_override: bool,
     pub rep_prefix: Option<u8>,
@@ -284,6 +286,28 @@ pub(super) struct InsnContext {
     pub segment_override: Option<u8>,
     /// EVEX prefix state (if present)
     pub evex: Option<EvexPrefix>,
+}
+
+/// REX2 prefix decoded fields (2-byte prefix for APX EGPR access)
+/// Format: 0xD5 [M:R3:X3:B3:W:R4:X4:B4]
+#[derive(Clone, Copy, Debug)]
+pub(super) struct Rex2Prefix {
+    /// M bit: opcode map select (0=legacy map, 1=0F map)
+    pub m: bool,
+    /// W bit: operand size (0=default, 1=64-bit)
+    pub w: bool,
+    /// R3 bit (inverted): ModR/M reg extension bit 3
+    pub r3: bool,
+    /// X3 bit (inverted): SIB index extension bit 3
+    pub x3: bool,
+    /// B3 bit (inverted): ModR/M r/m or SIB base extension bit 3
+    pub b3: bool,
+    /// R4 bit (inverted): ModR/M reg extension bit 4 (for EGPR R16-R31)
+    pub r4: bool,
+    /// X4 bit (inverted): SIB index extension bit 4 (for EGPR R16-R31)
+    pub x4: bool,
+    /// B4 bit (inverted): ModR/M r/m extension bit 4 (for EGPR R16-R31)
+    pub b4: bool,
 }
 
 /// EVEX prefix decoded fields (4-byte prefix for AVX-512)
@@ -315,6 +339,17 @@ pub(super) struct EvexPrefix {
     pub v_prime: bool,
     /// aaa field (opmask register k0-k7)
     pub aaa: u8,
+    // APX-specific fields
+    /// B4 bit (inverted, extends r/m to 5 bits for EGPR R16-R31)
+    pub b4: bool,
+    /// X4 bit (inverted, extends SIB index to 5 bits for EGPR R16-R31)
+    pub x4: bool,
+    /// ND bit (New Data Destination - 3-operand form)
+    pub nd: bool,
+    /// NF bit (No Flags - suppress RFLAGS updates)
+    pub nf: bool,
+    /// APX mode indicator (for EVEX-encoded GPR instructions)
+    pub apx_mode: bool,
 }
 
 impl InsnContext {
@@ -334,6 +369,90 @@ impl InsnContext {
     #[inline(always)]
     pub fn rex_b(&self) -> u8 {
         self.rex.map_or(0, |r| (r & 0x01) << 3)
+    }
+
+    // =========================================================================
+    // REX2 helper methods (APX)
+    // =========================================================================
+
+    /// Check if REX2 prefix is present
+    #[inline(always)]
+    pub fn has_rex2(&self) -> bool {
+        self.rex2.is_some()
+    }
+
+    /// Check if any REX-type prefix is present (REX or REX2)
+    #[inline(always)]
+    pub fn has_any_rex(&self) -> bool {
+        self.rex.is_some() || self.rex2.is_some()
+    }
+
+    /// Get REX2.W flag (64-bit operand size)
+    #[inline(always)]
+    pub fn rex2_w(&self) -> bool {
+        self.rex2.map_or(false, |r| r.w)
+    }
+
+    /// Get W flag from either REX or REX2
+    #[inline(always)]
+    pub fn any_rex_w(&self) -> bool {
+        self.rex_w() || self.rex2_w()
+    }
+
+    /// Get REX2.M flag (opcode map: 0=legacy, 1=0F map)
+    #[inline(always)]
+    pub fn rex2_m(&self) -> bool {
+        self.rex2.map_or(false, |r| r.m)
+    }
+
+    /// Get full 5-bit reg extension from REX2 (R3 + R4)
+    #[inline(always)]
+    pub fn rex2_r(&self) -> u8 {
+        self.rex2.map_or(0, |r| {
+            let r3 = if r.r3 { 0 } else { 8 };
+            let r4 = if r.r4 { 0 } else { 16 };
+            r3 | r4
+        })
+    }
+
+    /// Get full 5-bit r/m extension from REX2 (B3 + B4)
+    #[inline(always)]
+    pub fn rex2_b(&self) -> u8 {
+        self.rex2.map_or(0, |r| {
+            let b3 = if r.b3 { 0 } else { 8 };
+            let b4 = if r.b4 { 0 } else { 16 };
+            b3 | b4
+        })
+    }
+
+    /// Get full 5-bit index extension from REX2 (X3 + X4)
+    #[inline(always)]
+    pub fn rex2_x(&self) -> u8 {
+        self.rex2.map_or(0, |r| {
+            let x3 = if r.x3 { 0 } else { 8 };
+            let x4 = if r.x4 { 0 } else { 16 };
+            x3 | x4
+        })
+    }
+
+    /// Get combined reg extension from REX or REX2
+    #[inline(always)]
+    pub fn any_rex_r(&self) -> u8 {
+        if self.rex2.is_some() {
+            self.rex2_r()
+        } else {
+            self.rex_r()
+        }
+    }
+
+    /// Get combined r/m extension from REX or REX2
+    #[inline(always)]
+    pub fn any_rex_b(&self) -> u8 {
+        if self.rex2.is_some() {
+            self.rex2_b()
+        } else {
+            self.rex_b()
+        }
     }
 
     // =========================================================================
@@ -364,13 +483,31 @@ impl InsnContext {
     }
 
     /// Get full 5-bit r/m register (extended by EVEX.B and EVEX.X for certain encodings)
+    /// For APX mode, uses B4 bit for EGPR extension
     pub fn evex_rm_reg(&self) -> u8 {
         if let Some(evex) = &self.evex {
             let b_ext = if evex.b { 0 } else { 8 };
-            let x_ext = if evex.x { 0 } else { 16 };
-            b_ext | x_ext
+            // For APX, use B4 for 5th bit; for vector, use X
+            let high_ext = if evex.apx_mode {
+                if evex.b4 { 0 } else { 16 }
+            } else {
+                if evex.x { 0 } else { 16 }
+            };
+            b_ext | high_ext
         } else {
             self.rex_b()
+        }
+    }
+
+    /// Get full 5-bit SIB index register for APX (uses X4 for EGPR)
+    pub fn evex_index_reg(&self) -> u8 {
+        if let Some(evex) = &self.evex {
+            let x_ext = if evex.x { 0 } else { 8 };
+            let x4_ext = if evex.x4 { 0 } else { 16 };
+            x_ext | x4_ext
+        } else {
+            // Fall back to REX.X
+            self.rex.map_or(0, |r| (r & 0x02) << 2)
         }
     }
 
@@ -406,6 +543,37 @@ impl InsnContext {
     /// Get EVEX.W bit (element width)
     pub fn evex_w(&self) -> bool {
         self.evex.map_or(false, |e| e.w)
+    }
+
+    // =========================================================================
+    // APX-specific helper methods
+    // =========================================================================
+
+    /// Check if this is an APX (EVEX-encoded GPR) instruction
+    #[inline(always)]
+    pub fn is_apx(&self) -> bool {
+        self.evex.map_or(false, |e| e.apx_mode)
+    }
+
+    /// Check if NDD (New Data Destination) mode is enabled
+    /// In NDD mode, the vvvv field specifies a separate destination register
+    #[inline(always)]
+    pub fn apx_ndd(&self) -> bool {
+        self.evex.map_or(false, |e| e.nd)
+    }
+
+    /// Check if NF (No Flags) mode is enabled
+    /// In NF mode, arithmetic operations don't update RFLAGS
+    #[inline(always)]
+    pub fn apx_nf(&self) -> bool {
+        self.evex.map_or(false, |e| e.nf)
+    }
+
+    /// Get the NDD destination register (from vvvv field with V4 extension)
+    /// Only valid when apx_ndd() returns true
+    #[inline(always)]
+    pub fn apx_ndd_reg(&self) -> u8 {
+        self.evex_vvvv()
     }
 
     /// Consume and return the next byte.
@@ -1163,6 +1331,7 @@ impl X86_64Vcpu {
                 bytes_len,
                 cursor: cached.cursor + 1, // Skip past opcode byte
                 rex: cached.rex,
+                rex2: None,
                 operand_size_override: cached.operand_size_override,
                 address_size_override: cached.address_size_override,
                 rep_prefix: cached.rep_prefix,
@@ -1362,7 +1531,7 @@ impl X86_64Vcpu {
     // Register access methods
     #[inline(always)]
     pub(super) fn get_reg(&self, reg: u8, size: u8) -> u64 {
-        let val = match reg & 0x0F {
+        let val = match reg & 0x1F {
             0 => self.regs.rax,
             1 => self.regs.rcx,
             2 => self.regs.rdx,
@@ -1379,6 +1548,23 @@ impl X86_64Vcpu {
             13 => self.regs.r13,
             14 => self.regs.r14,
             15 => self.regs.r15,
+            // APX Extended General Purpose Registers (R16-R31)
+            16 => self.regs.r16,
+            17 => self.regs.r17,
+            18 => self.regs.r18,
+            19 => self.regs.r19,
+            20 => self.regs.r20,
+            21 => self.regs.r21,
+            22 => self.regs.r22,
+            23 => self.regs.r23,
+            24 => self.regs.r24,
+            25 => self.regs.r25,
+            26 => self.regs.r26,
+            27 => self.regs.r27,
+            28 => self.regs.r28,
+            29 => self.regs.r29,
+            30 => self.regs.r30,
+            31 => self.regs.r31,
             _ => 0,
         };
 
@@ -1439,7 +1625,7 @@ impl X86_64Vcpu {
 
     #[inline(always)]
     pub(super) fn set_reg(&mut self, reg: u8, value: u64, size: u8) {
-        let reg_ref = match reg & 0x0F {
+        let reg_ref = match reg & 0x1F {
             0 => &mut self.regs.rax,
             1 => &mut self.regs.rcx,
             2 => &mut self.regs.rdx,
@@ -1456,10 +1642,27 @@ impl X86_64Vcpu {
             13 => &mut self.regs.r13,
             14 => &mut self.regs.r14,
             15 => &mut self.regs.r15,
+            // APX Extended General Purpose Registers (R16-R31)
+            16 => &mut self.regs.r16,
+            17 => &mut self.regs.r17,
+            18 => &mut self.regs.r18,
+            19 => &mut self.regs.r19,
+            20 => &mut self.regs.r20,
+            21 => &mut self.regs.r21,
+            22 => &mut self.regs.r22,
+            23 => &mut self.regs.r23,
+            24 => &mut self.regs.r24,
+            25 => &mut self.regs.r25,
+            26 => &mut self.regs.r26,
+            27 => &mut self.regs.r27,
+            28 => &mut self.regs.r28,
+            29 => &mut self.regs.r29,
+            30 => &mut self.regs.r30,
+            31 => &mut self.regs.r31,
             _ => return,
         };
 
-        let old_val = *reg_ref;
+        let _old_val = *reg_ref;
         match size {
             1 => *reg_ref = (*reg_ref & !0xFF) | (value & 0xFF),
             2 => *reg_ref = (*reg_ref & !0xFFFF) | (value & 0xFFFF),

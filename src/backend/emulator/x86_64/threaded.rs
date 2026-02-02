@@ -78,6 +78,7 @@ impl X86_64Vcpu {
                 bytes_len,
                 cursor: cached.cursor + 1,
                 rex: cached.rex,
+                rex2: None,
                 operand_size_override: cached.operand_size_override,
                 address_size_override: cached.address_size_override,
                 rep_prefix: cached.rep_prefix,

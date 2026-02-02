@@ -39,6 +39,7 @@ impl X86_64Vcpu {
             1 => self.execute_evex_0f(ctx, opcode),
             2 => self.execute_evex_0f38(ctx, opcode),
             3 => self.execute_evex_0f3a(ctx, opcode),
+            4 => self.execute_evex_map4_apx(ctx, opcode),  // APX GPR instructions
             5 => self.execute_evex_map5(ctx, opcode),
             _ => Err(Error::Emulator(format!(
                 "Invalid EVEX mm field {} at RIP={:#x}",
@@ -2349,6 +2350,603 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
+
+    // ============================================================================
+    // APX EVEX-MAP4 Instruction Implementations (GPR Instructions)
+    // ============================================================================
+
+    /// EVEX MAP4 opcode map (mm=4) - APX GPR instructions
+    /// APX extends EVEX encoding to support:
+    /// - EGPR (R16-R31) via B4, X4, R4 bits
+    /// - NDD (New Data Destination) - 3-operand forms where vvvv is destination
+    /// - NF (No Flags) - arithmetic without updating RFLAGS
+    fn execute_evex_map4_apx(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+        let evex = ctx
+            .evex
+            .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
+
+        // APX uses ND (New Data Destination) for 3-operand forms
+        // and NF (No Flags) for flag-suppressing variants
+        let ndd = evex.nd;  // 3-operand form
+        let nf = evex.nf;   // No flags update
+
+        match opcode {
+            // ADD variants (0x00-0x03)
+            0x00 | 0x01 | 0x02 | 0x03 => self.execute_apx_alu(ctx, opcode, ndd, nf, ApxAluOp::Add),
+
+            // OR variants (0x08-0x0B)
+            0x08 | 0x09 | 0x0A | 0x0B => self.execute_apx_alu(ctx, opcode, ndd, nf, ApxAluOp::Or),
+
+            // AND variants (0x20-0x23)
+            0x20 | 0x21 | 0x22 | 0x23 => self.execute_apx_alu(ctx, opcode, ndd, nf, ApxAluOp::And),
+
+            // SUB variants (0x28-0x2B)
+            0x28 | 0x29 | 0x2A | 0x2B => self.execute_apx_alu(ctx, opcode, ndd, nf, ApxAluOp::Sub),
+
+            // XOR variants (0x30-0x33)
+            0x30 | 0x31 | 0x32 | 0x33 => self.execute_apx_alu(ctx, opcode, ndd, nf, ApxAluOp::Xor),
+
+            // CMP variants (0x38-0x3B) - always updates flags, no NDD
+            0x38 | 0x39 | 0x3A | 0x3B => self.execute_apx_cmp(ctx, opcode),
+
+            // TEST variants (0x84-0x85)
+            0x84 | 0x85 => self.execute_apx_test(ctx, opcode),
+
+            // MOV variants (0x88-0x8B)
+            0x88 | 0x89 | 0x8A | 0x8B => self.execute_apx_mov(ctx, opcode),
+
+            // LEA (0x8D)
+            0x8D => self.execute_apx_lea(ctx),
+
+            // POP2 (0x8F)
+            0x8F => self.execute_apx_pop2(ctx),
+
+            // IMUL (0x69, 0x6B)
+            0x69 => self.execute_apx_imul_imm(ctx, ndd, nf, true),
+            0x6B => self.execute_apx_imul_imm(ctx, ndd, nf, false),
+
+            // Shift variants (0xC0, 0xC1, 0xD0-0xD3)
+            0xC0 | 0xC1 => self.execute_apx_shift_imm(ctx, opcode, ndd, nf),
+            0xD0 | 0xD1 | 0xD2 | 0xD3 => self.execute_apx_shift_cl(ctx, opcode, ndd, nf),
+
+            // INC/DEC (0xFE, 0xFF with ModR/M)
+            0xFE | 0xFF => self.execute_apx_inc_dec(ctx, opcode, ndd, nf),
+
+            // PUSH2 (encoded with 0xFF opcode, specific ModR/M)
+            // This is distinguished from INC/DEC by ModR/M reg field
+
+            _ => Err(Error::Emulator(format!(
+                "Unimplemented APX MAP4 opcode {:#x} at RIP={:#x}",
+                opcode, self.regs.rip
+            ))),
+        }
+    }
+
+    /// Generic APX ALU operation with NDD and NF support
+    fn execute_apx_alu(
+        &mut self,
+        ctx: &mut InsnContext,
+        opcode: u8,
+        ndd: bool,
+        nf: bool,
+        alu_op: ApxAluOp,
+    ) -> Result<Option<VcpuExit>> {
+        // Determine operand size from opcode and EVEX.W
+        let is_byte = (opcode & 0x01) == 0;
+        let op_size = if is_byte { 1 } else if ctx.evex_w() { 8 } else { 4 };
+
+        // Determine direction (reg->rm or rm->reg)
+        let reg_is_src = (opcode & 0x02) == 0;
+
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        // Apply EVEX register extensions for EGPR (R16-R31)
+        let reg = reg | ctx.evex_dest_reg();
+        let rm = if is_memory { rm } else { rm | ctx.evex_rm_reg() };
+
+        // Get source values
+        let (src1, src2) = if reg_is_src {
+            let r_val = self.get_reg(reg, op_size);
+            let rm_val = if is_memory {
+                self.read_mem(addr, op_size)?
+            } else {
+                self.get_reg(rm, op_size)
+            };
+            (rm_val, r_val)
+        } else {
+            let r_val = self.get_reg(reg, op_size);
+            let rm_val = if is_memory {
+                self.read_mem(addr, op_size)?
+            } else {
+                self.get_reg(rm, op_size)
+            };
+            (r_val, rm_val)
+        };
+
+        // Perform ALU operation
+        let result = match alu_op {
+            ApxAluOp::Add => src1.wrapping_add(src2),
+            ApxAluOp::Or => src1 | src2,
+            ApxAluOp::And => src1 & src2,
+            ApxAluOp::Sub => src1.wrapping_sub(src2),
+            ApxAluOp::Xor => src1 ^ src2,
+        };
+
+        // Determine destination
+        if ndd {
+            // NDD mode: destination is from vvvv field
+            let dest = ctx.evex_vvvv();
+            self.set_reg(dest, result, op_size);
+        } else if reg_is_src {
+            // Destination is r/m
+            if is_memory {
+                self.write_mem(addr, result, op_size)?;
+            } else {
+                self.set_reg(rm, result, op_size);
+            }
+        } else {
+            // Destination is reg
+            self.set_reg(reg, result, op_size);
+        }
+
+        // Update flags unless NF is set
+        if !nf {
+            self.update_flags_alu(result, src1, src2, op_size, alu_op);
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// APX CMP operation (always updates flags)
+    fn execute_apx_cmp(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+        let is_byte = (opcode & 0x01) == 0;
+        let op_size = if is_byte { 1 } else if ctx.evex_w() { 8 } else { 4 };
+        let reg_is_src = (opcode & 0x02) == 0;
+
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let reg = reg | ctx.evex_dest_reg();
+        let rm = if is_memory { rm } else { rm | ctx.evex_rm_reg() };
+
+        let (src1, src2) = if reg_is_src {
+            let r_val = self.get_reg(reg, op_size);
+            let rm_val = if is_memory {
+                self.read_mem(addr, op_size)?
+            } else {
+                self.get_reg(rm, op_size)
+            };
+            (rm_val, r_val)
+        } else {
+            let r_val = self.get_reg(reg, op_size);
+            let rm_val = if is_memory {
+                self.read_mem(addr, op_size)?
+            } else {
+                self.get_reg(rm, op_size)
+            };
+            (r_val, rm_val)
+        };
+
+        let result = src1.wrapping_sub(src2);
+        self.update_flags_alu(result, src1, src2, op_size, ApxAluOp::Sub);
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// APX TEST operation
+    fn execute_apx_test(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+        let is_byte = opcode == 0x84;
+        let op_size = if is_byte { 1 } else if ctx.evex_w() { 8 } else { 4 };
+
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let reg = reg | ctx.evex_dest_reg();
+        let rm = if is_memory { rm } else { rm | ctx.evex_rm_reg() };
+
+        let src1 = self.get_reg(reg, op_size);
+        let src2 = if is_memory {
+            self.read_mem(addr, op_size)?
+        } else {
+            self.get_reg(rm, op_size)
+        };
+
+        let result = src1 & src2;
+        self.update_flags_alu(result, src1, src2, op_size, ApxAluOp::And);
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// APX MOV operation
+    fn execute_apx_mov(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+        let is_byte = (opcode & 0x01) == 0;
+        let op_size = if is_byte { 1 } else if ctx.evex_w() { 8 } else { 4 };
+        let reg_is_src = (opcode & 0x02) == 0;
+
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let reg = reg | ctx.evex_dest_reg();
+        let rm = if is_memory { rm } else { rm | ctx.evex_rm_reg() };
+
+        if reg_is_src {
+            // MOV r/m, r
+            let value = self.get_reg(reg, op_size);
+            if is_memory {
+                self.write_mem(addr, value, op_size)?;
+            } else {
+                self.set_reg(rm, value, op_size);
+            }
+        } else {
+            // MOV r, r/m
+            let value = if is_memory {
+                self.read_mem(addr, op_size)?
+            } else {
+                self.get_reg(rm, op_size)
+            };
+            self.set_reg(reg, value, op_size);
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// APX LEA operation
+    fn execute_apx_lea(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let op_size = if ctx.evex_w() { 8 } else { 4 };
+        let modrm_start = ctx.cursor;
+        let (reg, _, is_memory, _, _) = self.decode_modrm(ctx)?;
+
+        if !is_memory {
+            return Err(Error::Emulator("LEA requires memory operand".to_string()));
+        }
+
+        // Recalculate address without actually reading memory
+        let (addr, _) = self.decode_modrm_addr(ctx, modrm_start)?;
+        let reg = reg | ctx.evex_dest_reg();
+
+        self.set_reg(reg, addr, op_size);
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// APX POP2 - Pop two registers atomically
+    fn execute_apx_pop2(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let modrm = ctx.consume_u8()?;
+
+        // Extract register operands
+        let reg1 = (modrm & 0x07) | ctx.evex_rm_reg();
+        let reg2 = ctx.evex_vvvv();
+
+        // Pop reg1 first (from RSP), then reg2 (from RSP+8)
+        let val1 = self.read_mem(self.regs.rsp, 8)?;
+        let val2 = self.read_mem(self.regs.rsp + 8, 8)?;
+        self.regs.rsp = self.regs.rsp.wrapping_add(16);
+
+        self.set_reg(reg1, val1, 8);
+        self.set_reg(reg2, val2, 8);
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// APX IMUL with immediate
+    fn execute_apx_imul_imm(&mut self, ctx: &mut InsnContext, ndd: bool, nf: bool, imm32: bool) -> Result<Option<VcpuExit>> {
+        let op_size = if ctx.evex_w() { 8 } else { 4 };
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let reg = reg | ctx.evex_dest_reg();
+
+        let src = if is_memory {
+            self.read_mem(addr, op_size)?
+        } else {
+            let rm = rm | ctx.evex_rm_reg();
+            self.get_reg(rm, op_size)
+        };
+
+        let imm = if imm32 {
+            ctx.consume_u32()? as i32 as i64 as u64
+        } else {
+            ctx.consume_u8()? as i8 as i64 as u64
+        };
+
+        let result = if op_size == 8 {
+            (src as i64).wrapping_mul(imm as i64) as u64
+        } else {
+            ((src as i32).wrapping_mul(imm as i32)) as u64
+        };
+
+        let dest_reg = if ndd { ctx.evex_vvvv() } else { reg };
+        self.set_reg(dest_reg, result, op_size);
+
+        if !nf {
+            // Set OF/CF if result overflowed
+            let sign_extended = if op_size == 8 {
+                (result as i64) as i128 == (src as i64 as i128) * (imm as i64 as i128)
+            } else {
+                (result as i32) as i64 == (src as i32 as i64) * (imm as i32 as i64)
+            };
+            let flags = self.regs.rflags & !(0x801); // Clear OF, CF
+            self.regs.rflags = if sign_extended { flags } else { flags | 0x801 };
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// APX shift with immediate
+    fn execute_apx_shift_imm(&mut self, ctx: &mut InsnContext, opcode: u8, ndd: bool, nf: bool) -> Result<Option<VcpuExit>> {
+        let is_byte = opcode == 0xC0;
+        let op_size = if is_byte { 1 } else if ctx.evex_w() { 8 } else { 4 };
+
+        let modrm = ctx.peek_u8()?;
+        let shift_type = (modrm >> 3) & 0x07;
+        let (_, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let rm = rm | ctx.evex_rm_reg();
+        let imm = ctx.consume_u8()?;
+
+        let src = if is_memory {
+            self.read_mem(addr, op_size)?
+        } else {
+            self.get_reg(rm, op_size)
+        };
+
+        let shift_mask = if op_size == 8 { 0x3F } else { 0x1F };
+        let count = (imm as u64) & shift_mask;
+
+        let result = self.perform_shift(src, count, shift_type, op_size);
+
+        let dest = if ndd { ctx.evex_vvvv() } else { rm };
+
+        if ndd || !is_memory {
+            self.set_reg(dest, result, op_size);
+        } else {
+            self.write_mem(addr, result, op_size)?;
+        }
+
+        if !nf && count != 0 {
+            self.update_flags_shift(result, src, count, shift_type, op_size);
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// APX shift by CL
+    fn execute_apx_shift_cl(&mut self, ctx: &mut InsnContext, opcode: u8, ndd: bool, nf: bool) -> Result<Option<VcpuExit>> {
+        let is_byte = (opcode & 0x01) == 0;
+        let op_size = if is_byte { 1 } else if ctx.evex_w() { 8 } else { 4 };
+        let by_one = (opcode & 0x02) == 0;
+
+        let modrm = ctx.peek_u8()?;
+        let shift_type = (modrm >> 3) & 0x07;
+        let (_, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let rm = rm | ctx.evex_rm_reg();
+
+        let src = if is_memory {
+            self.read_mem(addr, op_size)?
+        } else {
+            self.get_reg(rm, op_size)
+        };
+
+        let shift_mask = if op_size == 8 { 0x3F } else { 0x1F };
+        let count = if by_one { 1 } else { self.regs.rcx & shift_mask };
+
+        let result = self.perform_shift(src, count, shift_type, op_size);
+
+        let dest = if ndd { ctx.evex_vvvv() } else { rm };
+
+        if ndd || !is_memory {
+            self.set_reg(dest, result, op_size);
+        } else {
+            self.write_mem(addr, result, op_size)?;
+        }
+
+        if !nf && count != 0 {
+            self.update_flags_shift(result, src, count, shift_type, op_size);
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// APX INC/DEC
+    fn execute_apx_inc_dec(&mut self, ctx: &mut InsnContext, opcode: u8, ndd: bool, nf: bool) -> Result<Option<VcpuExit>> {
+        let is_byte = opcode == 0xFE;
+        let op_size = if is_byte { 1 } else if ctx.evex_w() { 8 } else { 4 };
+
+        let modrm = ctx.peek_u8()?;
+        let op_type = (modrm >> 3) & 0x07;
+        let is_dec = op_type == 1;
+
+        let (_, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let rm = rm | ctx.evex_rm_reg();
+
+        let src = if is_memory {
+            self.read_mem(addr, op_size)?
+        } else {
+            self.get_reg(rm, op_size)
+        };
+
+        let result = if is_dec {
+            src.wrapping_sub(1)
+        } else {
+            src.wrapping_add(1)
+        };
+
+        let dest = if ndd { ctx.evex_vvvv() } else { rm };
+
+        if ndd || !is_memory {
+            self.set_reg(dest, result, op_size);
+        } else {
+            self.write_mem(addr, result, op_size)?;
+        }
+
+        if !nf {
+            // INC/DEC don't affect CF
+            let old_cf = self.regs.rflags & 0x001;
+            self.update_flags_alu(result, src, 1, op_size, if is_dec { ApxAluOp::Sub } else { ApxAluOp::Add });
+            self.regs.rflags = (self.regs.rflags & !0x001) | old_cf;
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// Helper: perform shift operation
+    fn perform_shift(&self, src: u64, count: u64, shift_type: u8, op_size: u8) -> u64 {
+        if count == 0 {
+            return src;
+        }
+
+        match shift_type {
+            0 => src.rotate_left(count as u32),  // ROL
+            1 => src.rotate_right(count as u32), // ROR
+            2 => {
+                // RCL
+                let cf = (self.regs.rflags & 1) as u64;
+                let bits = op_size as u64 * 8 + 1;
+                let combined = (cf << (op_size as u64 * 8)) | src;
+                let rotated = combined.rotate_left((count % bits) as u32);
+                rotated & ((1u64 << (op_size as u64 * 8)) - 1)
+            }
+            3 => {
+                // RCR
+                let cf = (self.regs.rflags & 1) as u64;
+                let bits = op_size as u64 * 8 + 1;
+                let combined = (cf << (op_size as u64 * 8)) | src;
+                let rotated = combined.rotate_right((count % bits) as u32);
+                rotated & ((1u64 << (op_size as u64 * 8)) - 1)
+            }
+            4 | 6 => src << count, // SHL/SAL
+            5 => src >> count,      // SHR
+            7 => {
+                // SAR - arithmetic shift right
+                match op_size {
+                    1 => ((src as i8) >> count) as u8 as u64,
+                    2 => ((src as i16) >> count) as u16 as u64,
+                    4 => ((src as i32) >> count) as u32 as u64,
+                    8 => ((src as i64) >> count) as u64,
+                    _ => src,
+                }
+            }
+            _ => src,
+        }
+    }
+
+    /// Update flags for ALU operations
+    fn update_flags_alu(&mut self, result: u64, src1: u64, src2: u64, op_size: u8, alu_op: ApxAluOp) {
+        let sign_bit: u64 = match op_size {
+            1 => 0x80,
+            2 => 0x8000,
+            4 => 0x8000_0000,
+            8 => 0x8000_0000_0000_0000,
+            _ => 0x8000_0000,
+        };
+        let max_val: u64 = match op_size {
+            1 => 0xFF,
+            2 => 0xFFFF,
+            4 => 0xFFFF_FFFF,
+            8 => u64::MAX,
+            _ => 0xFFFF_FFFF,
+        };
+
+        let masked_result = result & max_val;
+
+        // ZF - zero flag
+        let zf = masked_result == 0;
+        // SF - sign flag
+        let sf = (masked_result & sign_bit) != 0;
+        // PF - parity flag (low byte)
+        let pf = (result as u8).count_ones() % 2 == 0;
+
+        // CF and OF depend on operation
+        let (cf, of) = match alu_op {
+            ApxAluOp::Add => {
+                let cf = result > max_val || result < src1;
+                let of = ((!(src1 ^ src2)) & (src1 ^ result) & sign_bit) != 0;
+                (cf, of)
+            }
+            ApxAluOp::Sub => {
+                let cf = src1 < src2;
+                let of = ((src1 ^ src2) & (src1 ^ result) & sign_bit) != 0;
+                (cf, of)
+            }
+            ApxAluOp::And | ApxAluOp::Or | ApxAluOp::Xor => {
+                (false, false) // Logical ops clear CF and OF
+            }
+        };
+
+        // Update RFLAGS
+        let mut flags = self.regs.rflags;
+        flags &= !(0x8D5); // Clear CF, PF, ZF, SF, OF
+        if cf { flags |= 0x001; }
+        if pf { flags |= 0x004; }
+        if zf { flags |= 0x040; }
+        if sf { flags |= 0x080; }
+        if of { flags |= 0x800; }
+        self.regs.rflags = flags;
+    }
+
+    /// Update flags for shift operations
+    fn update_flags_shift(&mut self, result: u64, src: u64, count: u64, shift_type: u8, op_size: u8) {
+        let sign_bit: u64 = match op_size {
+            1 => 0x80,
+            2 => 0x8000,
+            4 => 0x8000_0000,
+            8 => 0x8000_0000_0000_0000,
+            _ => 0x8000_0000,
+        };
+        let max_val: u64 = match op_size {
+            1 => 0xFF,
+            2 => 0xFFFF,
+            4 => 0xFFFF_FFFF,
+            8 => u64::MAX,
+            _ => 0xFFFF_FFFF,
+        };
+
+        let masked_result = result & max_val;
+
+        // ZF, SF, PF from result
+        let zf = masked_result == 0;
+        let sf = (masked_result & sign_bit) != 0;
+        let pf = (result as u8).count_ones() % 2 == 0;
+
+        // CF depends on shift type and direction
+        let bits = op_size as u64 * 8;
+        let cf = match shift_type {
+            4 | 6 => (src >> (bits - count)) & 1 != 0, // SHL/SAL: last bit shifted out
+            5 | 7 => (src >> (count - 1)) & 1 != 0,    // SHR/SAR: last bit shifted out
+            _ => (self.regs.rflags & 1) != 0,          // Rotates: varies
+        };
+
+        // OF is only defined for count=1
+        let of = if count == 1 {
+            match shift_type {
+                4 | 6 => (masked_result & sign_bit) != (src & sign_bit), // SHL: sign change
+                5 => (src & sign_bit) != 0,                              // SHR: old sign
+                7 => false,                                              // SAR: always 0
+                _ => (self.regs.rflags & 0x800) != 0,
+            }
+        } else {
+            false // Undefined for count > 1, we clear it
+        };
+
+        let mut flags = self.regs.rflags;
+        flags &= !(0x8D5);
+        if cf { flags |= 0x001; }
+        if pf { flags |= 0x004; }
+        if zf { flags |= 0x040; }
+        if sf { flags |= 0x080; }
+        if of { flags |= 0x800; }
+        self.regs.rflags = flags;
+    }
+}
+
+/// APX ALU operation types
+#[derive(Clone, Copy)]
+enum ApxAluOp {
+    Add,
+    Or,
+    And,
+    Sub,
+    Xor,
 }
 
 /// Convert IEEE 754 half-precision (FP16) to single-precision (f32)

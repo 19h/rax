@@ -84,6 +84,26 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
         let v_prime = (p2 & 0x08) != 0; // V' bit (inverted)
         let aaa = p2 & 0x07; // aaa field (opmask)
 
+        // Detect APX mode: mm=4 indicates EVEX-MAP4 (APX GPR instructions)
+        let apx_mode = mm == 4;
+
+        // For APX mode, decode additional bits differently:
+        // - P1[4] (where r_prime normally is) becomes NF (No Flags)
+        // - P2[4] (broadcast bit) becomes ND (New Data Destination)
+        // - B4 and X4 come from different positions for EGPR
+        let (nf, nd, b4, x4) = if apx_mode {
+            // In APX mode:
+            // NF is in P1 bit 4 (inverted r_prime position)
+            // ND is in P2 bit 4 (broadcast position)
+            // B4 is encoded in P1 bit 3 for some encodings
+            // X4 is encoded in P2 bit 3 for some encodings
+            let nf_bit = !r_prime; // NF uses r_prime position when mm=4
+            let nd_bit = broadcast; // ND uses broadcast position when mm=4
+            (nf_bit, nd_bit, false, false) // B4/X4 not yet decoded
+        } else {
+            (false, false, false, false)
+        };
+
         // Store EVEX prefix in context
         ctx.evex = Some(EvexPrefix {
             r,
@@ -99,6 +119,12 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
             broadcast,
             v_prime,
             aaa,
+            // APX-specific fields
+            b4,
+            x4,
+            nd,
+            nf,
+            apx_mode,
         });
 
         // Set operand size based on W bit

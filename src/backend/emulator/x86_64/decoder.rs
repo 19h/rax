@@ -1,6 +1,6 @@
 //! x86_64 instruction decoder with LUT-based prefix detection.
 
-use super::cpu::{InsnContext, X86_64Vcpu};
+use super::cpu::{InsnContext, Rex2Prefix, X86_64Vcpu};
 use crate::error::{Error, Result};
 
 /// Lookup table for prefix detection (256 bytes, index = byte value).
@@ -38,6 +38,8 @@ static PREFIX_LUT: [u8; 256] = {
     lut[0x4D] = 1;
     lut[0x4E] = 1;
     lut[0x4F] = 1;
+    // REX2 (0xD5) - APX extended prefix
+    lut[0xD5] = 1;
     lut
 };
 
@@ -69,6 +71,7 @@ impl Decoder {
                 bytes_len,
                 cursor: 0,
                 rex: None,
+                rex2: None,
                 operand_size_override: false,
                 address_size_override: false,
                 rep_prefix: None,
@@ -85,6 +88,7 @@ impl Decoder {
             bytes_len,
             cursor: 0,
             rex: None,
+            rex2: None,
             operand_size_override: false,
             address_size_override: false,
             rep_prefix: None,
@@ -103,6 +107,30 @@ impl Decoder {
                 0x66 => ctx.operand_size_override = true,
                 0x67 => ctx.address_size_override = true,
                 0x40..=0x4F => ctx.rex = Some(b),
+                0xD5 => {
+                    // REX2 prefix: 0xD5 [M:R3:X3:B3:W:R4:X4:B4]
+                    // REX2 must be the last prefix before the opcode
+                    ctx.cursor += 1;
+                    if ctx.cursor >= ctx.bytes_len {
+                        return Err(Error::Emulator("REX2: missing payload byte".to_string()));
+                    }
+                    let payload = ctx.bytes[ctx.cursor];
+                    // Decode REX2 payload: [M:R3:X3:B3:W:R4:X4:B4]
+                    // Bits are inverted for R3/X3/B3/R4/X4/B4
+                    ctx.rex2 = Some(Rex2Prefix {
+                        m: (payload & 0x80) != 0,      // bit 7: map select
+                        r3: (payload & 0x40) != 0,    // bit 6: R3 (inverted)
+                        x3: (payload & 0x20) != 0,    // bit 5: X3 (inverted)
+                        b3: (payload & 0x10) != 0,    // bit 4: B3 (inverted)
+                        w: (payload & 0x08) != 0,     // bit 3: W (operand size)
+                        r4: (payload & 0x04) != 0,    // bit 2: R4 (inverted)
+                        x4: (payload & 0x02) != 0,    // bit 1: X4 (inverted)
+                        b4: (payload & 0x01) != 0,    // bit 0: B4 (inverted)
+                    });
+                    ctx.cursor += 1;
+                    // REX2 is always the last prefix
+                    break;
+                }
                 0xF0 => {} // LOCK - ignore for now
                 0xF2 | 0xF3 => ctx.rep_prefix = Some(b),
                 0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65 => {
@@ -145,11 +173,44 @@ mod tests {
             assert!(Decoder::is_prefix(i), "REX 0x{:02X} not detected", i);
         }
 
+        // REX2
+        assert!(Decoder::is_prefix(0xD5));
+
         // Non-prefixes
         assert!(!Decoder::is_prefix(0x00));
         assert!(!Decoder::is_prefix(0x90)); // NOP
         assert!(!Decoder::is_prefix(0xB8)); // MOV
         assert!(!Decoder::is_prefix(0xFF));
+    }
+
+    #[test]
+    fn test_rex2_decode() {
+        use super::super::cpu::MAX_INSN_LEN;
+
+        // REX2 with M=0, W=1, R4=1 (inverted=0), all others cleared
+        // 0xD5 0x08 = REX2 with W=1 (64-bit operand)
+        let mut bytes = [0u8; MAX_INSN_LEN];
+        bytes[0] = 0xD5;
+        bytes[1] = 0x08; // W=1, all extension bits set (meaning 0 extension)
+        bytes[2] = 0x90; // NOP opcode
+        let ctx = Decoder::decode_prefixes(bytes, 3).unwrap();
+        assert!(ctx.rex2.is_some());
+        let rex2 = ctx.rex2.unwrap();
+        assert!(!rex2.m);    // M=0 (legacy map)
+        assert!(rex2.w);     // W=1 (64-bit)
+        assert!(rex2.r3);    // R3 inverted bit set (meaning R3=0)
+        assert!(rex2.r4);    // R4 inverted bit set (meaning R4=0)
+        assert_eq!(ctx.cursor, 2); // Cursor should be after REX2
+
+        // REX2 with M=1 (0F map), W=0, all extension bits cleared (meaning extended)
+        // 0xD5 0x80 = REX2 with M=1
+        bytes[1] = 0x80;
+        let ctx = Decoder::decode_prefixes(bytes, 3).unwrap();
+        let rex2 = ctx.rex2.unwrap();
+        assert!(rex2.m);      // M=1 (0F map)
+        assert!(!rex2.w);     // W=0
+        assert!(!rex2.r3);    // R3 cleared = register extension enabled
+        assert!(!rex2.r4);    // R4 cleared = EGPR extension enabled
     }
 }
 
