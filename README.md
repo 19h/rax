@@ -4,7 +4,7 @@ A comprehensive x86_64 hypervisor and emulator written in Rust. It boots Linux.
 
 ## Why?
 
-If you've ever wondered what happens between pressing Enter on `./linux` and seeing a shell, this is a good place to find out. RAX implements virtualization machinery to boot a real Linux kernel, with a software emulator that covers nearly the entire x86_64 instruction set including AVX-512.
+If you've ever wondered what happens between pressing Enter on `./linux` and seeing a shell, this is a good place to find out. RAX implements virtualization machinery to boot a real Linux kernel, with a software emulator that covers nearly the entire x86_64 instruction set including AVX-512, AVX10.1/10.2, and Intel APX.
 
 There are two backends:
 
@@ -80,9 +80,12 @@ loop {
 | FMA | VFMADD/SUB/NMADD/NSUB 132/213/231 variants |
 | BMI1/BMI2 | ANDN, BLSI, BLSR, BZHI, PEXT, PDEP, MULX |
 | AES/SHA | AESENC, AESDEC, SHA1/256 rounds |
+| AVX10.1 | VNNI (VPDPBUSD, VPDPWSSD), IFMA, VPOPCNTDQ, VBMI, BF16 |
+| AVX10.2 | VMPSADBW, VMINMAX, saturation converts, media accel |
+| APX | REX2 prefix, R16-R31, NDD (3-operand), NF (no flags) |
 | System | CPUID, RDMSR, WRMSR, MOV CR, LGDT, LIDT |
 
-The emulator handles the full x86 encoding complexity: REX prefixes, legacy prefixes (operand size, address size, REP, segments), ModR/M, SIB, VEX2/VEX3, EVEX, and RIP-relative addressing.
+The emulator handles the full x86 encoding complexity: REX/REX2 prefixes, legacy prefixes (operand size, address size, REP, segments), ModR/M, SIB, VEX2/VEX3, EVEX (including APX Map 4), and RIP-relative addressing.
 
 ### Devices
 
@@ -146,8 +149,8 @@ src/
 cargo test --features x86_64-suite
 ```
 
-- **27,168 tests** covering individual instruction behavior
-- **100% passing**
+- **73,141 tests** covering individual instruction behavior
+- Includes dedicated suites for AVX10.1/10.2 and APX
 
 ## Configuration
 
@@ -200,7 +203,9 @@ cmdline = "console=ttyS0 earlyprintk=serial"
 | FMA | Complete |
 | AVX-512 | Complete (F, VL, BW, DQ, CD) |
 | AES/SHA | Complete |
-| AVX10 | Not implemented |
+| AVX10.1 | Complete (VNNI, IFMA, VPOPCNTDQ, VBMI, BF16) |
+| AVX10.2 | Complete (VMPSADBW, VMINMAX, saturation converts) |
+| APX | Complete (REX2, EGPRs R16-R31, NDD, NF) |
 
 ## What's Missing
 
@@ -209,7 +214,6 @@ For a production hypervisor you'd need:
 - **SMP**: Only one vCPU currently executes
 - **Full APIC**: Basic interrupt routing only
 - **Disk/Network/Graphics**: No storage, networking, or display
-- **AVX10**: Not implemented
 
 ## Microkernel Test Harness
 
