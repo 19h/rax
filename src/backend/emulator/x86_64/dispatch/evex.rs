@@ -536,6 +536,120 @@ impl X86_64Vcpu {
                 }
             }
 
+            // ============================================================================
+            // AVX10.1 VNNI Instructions
+            // ============================================================================
+
+            // VPDPBUSD (0x50) - Multiply and Add Unsigned and Signed Bytes
+            0x50 if evex.pp == 1 => self.execute_vpdpbusd(ctx, false),
+            // VPDPBUSDS (0x51) - Multiply and Add Unsigned and Signed Bytes with Saturation
+            0x51 if evex.pp == 1 => self.execute_vpdpbusd(ctx, true),
+            // VPDPWSSD (0x52) - Multiply and Add Signed Word Integers
+            0x52 if evex.pp == 1 && !evex.w => self.execute_vpdpwssd(ctx, false),
+            // VPDPWSSDS (0x53) - Multiply and Add Signed Word Integers with Saturation
+            0x53 if evex.pp == 1 => self.execute_vpdpwssd(ctx, true),
+
+            // ============================================================================
+            // AVX10.1 IFMA Instructions
+            // ============================================================================
+
+            // VPMADD52LUQ (0xB4) - Packed Multiply of Unsigned 52-bit and Add Low Qword
+            0xB4 if evex.pp == 1 && evex.w => self.execute_vpmadd52(ctx, false),
+            // VPMADD52HUQ (0xB5) - Packed Multiply of Unsigned 52-bit and Add High Qword
+            0xB5 if evex.pp == 1 && evex.w => self.execute_vpmadd52(ctx, true),
+
+            // ============================================================================
+            // AVX10.1 VPOPCNTDQ Instructions
+            // ============================================================================
+
+            // VPOPCNTB/W (0x54) - Population count for packed bytes/words
+            0x54 if evex.pp == 1 => {
+                if evex.w {
+                    self.execute_vpopcnt(ctx, 2) // VPOPCNTW
+                } else {
+                    self.execute_vpopcnt(ctx, 1) // VPOPCNTB
+                }
+            }
+            // VPOPCNTD/Q (0x55) - Population count for packed dwords/qwords
+            0x55 if evex.pp == 1 => {
+                if evex.w {
+                    self.execute_vpopcnt(ctx, 8) // VPOPCNTQ
+                } else {
+                    self.execute_vpopcnt(ctx, 4) // VPOPCNTD
+                }
+            }
+
+            // ============================================================================
+            // AVX10.1 VBMI Instructions
+            // ============================================================================
+
+            // VPERMB (0x8D) - Permute Packed Bytes Elements
+            0x8D if evex.pp == 1 && !evex.w => self.execute_vpermb(ctx),
+            // VPERMI2B (0x75) - Full Permute of Bytes from Two Tables Overwriting Index
+            0x75 if evex.pp == 1 && !evex.w => self.execute_vpermi2b(ctx),
+            // VPERMT2B (0x7D) - Full Permute of Bytes from Two Tables Overwriting Table
+            0x7D if evex.pp == 1 && !evex.w => self.execute_vpermt2b(ctx),
+
+            // ============================================================================
+            // AVX10.1 BITALG Instructions
+            // ============================================================================
+
+            // VPSHUFBITQMB (0x8F) - Shuffle Bits from Quadword Elements Using Byte Indexes into Mask
+            0x8F if evex.pp == 1 && !evex.w => self.execute_vpshufbitqmb(ctx),
+
+            // ============================================================================
+            // AVX10.1 BF16 Instructions
+            // ============================================================================
+
+            // VDPBF16PS (0x52) - Dot Product of BF16 Pairs Accumulated into FP32
+            0x52 if evex.pp == 2 && !evex.w => self.execute_vdpbf16ps(ctx),
+            // VCVTNEPS2BF16 (0x72) - Convert Packed Single to BF16
+            0x72 if evex.pp == 2 && !evex.w => self.execute_vcvtneps2bf16(ctx),
+            // VCVTNE2PS2BF16 (0x72) - Convert Two Packed Single to BF16
+            0x72 if evex.pp == 3 && !evex.w => self.execute_vcvtne2ps2bf16(ctx),
+
+            // ============================================================================
+            // AVX10.2 Saturation Conversion Instructions
+            // ============================================================================
+
+            // VCVTTPS2IBS (0x68) - Convert with Truncation Packed Single to Signed Byte with Saturation
+            0x68 if evex.pp == 0 && !evex.w => self.execute_vcvttps2ibs(ctx),
+            // VCVTTPS2IUBS (0x6A) - Convert with Truncation Packed Single to Unsigned Byte with Saturation
+            0x6A if evex.pp == 0 && !evex.w => self.execute_vcvttps2iubs(ctx),
+            // VCVTTPD2QQS (0x6D) - Convert with Truncation Packed Double to Signed Qword with Saturation
+            0x6D if evex.pp == 1 && evex.w => self.execute_vcvttpd2qqs(ctx),
+            // VCVTTPD2UQQS (0x6C) - Convert with Truncation Packed Double to Unsigned Qword with Saturation
+            0x6C if evex.pp == 1 && evex.w => self.execute_vcvttpd2uqqs(ctx),
+
+            // ============================================================================
+            // AVX10.2 Media Acceleration Instructions (VPDPB*/VPDPW*)
+            // ============================================================================
+
+            // VPDPBSSD (0x50) - Multiply and Add Signed Byte Integers
+            0x50 if evex.pp == 2 && !evex.w => self.execute_vpdpbssd(ctx, false),
+            // VPDPBSSDS (0x51) - Multiply and Add Signed Byte Integers with Saturation
+            0x51 if evex.pp == 2 && !evex.w => self.execute_vpdpbssd(ctx, true),
+            // VPDPBSUD (0x50) - Multiply and Add Signed/Unsigned Byte Integers
+            0x50 if evex.pp == 2 && evex.w => self.execute_vpdpbsud(ctx, false),
+            // VPDPBSUDS (0x51) - Multiply and Add Signed/Unsigned Byte Integers with Saturation
+            0x51 if evex.pp == 2 && evex.w => self.execute_vpdpbsud(ctx, true),
+            // VPDPBUUD (0x50) - Multiply and Add Unsigned Byte Integers
+            0x50 if evex.pp == 0 && evex.w => self.execute_vpdpbuud(ctx, false),
+            // VPDPBUUDS (0x51) - Multiply and Add Unsigned Byte Integers with Saturation
+            0x51 if evex.pp == 0 && evex.w => self.execute_vpdpbuud(ctx, true),
+            // VPDPWSUD (0xD2) - Multiply and Add Signed/Unsigned Word Integers
+            0xD2 if evex.pp == 2 && !evex.w => self.execute_vpdpwsud(ctx, false),
+            // VPDPWSUDS (0xD3) - Multiply and Add Signed/Unsigned Word Integers with Saturation
+            0xD3 if evex.pp == 2 && !evex.w => self.execute_vpdpwsud(ctx, true),
+            // VPDPWUSD (0xD2) - Multiply and Add Unsigned/Signed Word Integers
+            0xD2 if evex.pp == 1 && !evex.w => self.execute_vpdpwusd(ctx, false),
+            // VPDPWUSDS (0xD3) - Multiply and Add Unsigned/Signed Word Integers with Saturation
+            0xD3 if evex.pp == 1 && !evex.w => self.execute_vpdpwusd(ctx, true),
+            // VPDPWUUD (0xD2) - Multiply and Add Unsigned Word Integers
+            0xD2 if evex.pp == 0 && !evex.w => self.execute_vpdpwuud(ctx, false),
+            // VPDPWUUDS (0xD3) - Multiply and Add Unsigned Word Integers with Saturation
+            0xD3 if evex.pp == 0 && !evex.w => self.execute_vpdpwuud(ctx, true),
+
             _ => Err(Error::Emulator(format!(
                 "Unimplemented EVEX.0F38 opcode {:#04x} (W={}) at RIP={:#x}",
                 opcode, evex.w as u8, self.regs.rip
@@ -545,10 +659,36 @@ impl X86_64Vcpu {
 
     /// EVEX 0F3A opcode map (mm=3)
     fn execute_evex_0f3a(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
-        Err(Error::Emulator(format!(
-            "Unimplemented EVEX.0F3A opcode {:#04x} at RIP={:#x}",
-            opcode, self.regs.rip
-        )))
+        let evex = ctx
+            .evex
+            .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
+
+        match opcode {
+            // ============================================================================
+            // AVX10.2 VMPSADBW Instruction
+            // ============================================================================
+
+            // VMPSADBW (0x42) - Compute Multiple Packed Sums of Absolute Difference
+            0x42 if evex.pp == 1 => self.execute_vmpsadbw(ctx),
+
+            // ============================================================================
+            // AVX10.2 VMINMAX Instructions
+            // ============================================================================
+
+            // VMINMAXPS (0x52) - Minimum/Maximum of Packed Single-Precision Floats
+            0x52 if evex.pp == 0 && !evex.w => self.execute_vminmax_ps(ctx),
+            // VMINMAXPD (0x52) - Minimum/Maximum of Packed Double-Precision Floats
+            0x52 if evex.pp == 1 && evex.w => self.execute_vminmax_pd(ctx),
+            // VMINMAXSS (0x53) - Minimum/Maximum of Scalar Single-Precision Float
+            0x53 if evex.pp == 0 && !evex.w => self.execute_vminmax_ss(ctx),
+            // VMINMAXSD (0x53) - Minimum/Maximum of Scalar Double-Precision Float
+            0x53 if evex.pp == 1 && evex.w => self.execute_vminmax_sd(ctx),
+
+            _ => Err(Error::Emulator(format!(
+                "Unimplemented EVEX.0F3A opcode {:#04x} at RIP={:#x}",
+                opcode, self.regs.rip
+            ))),
+        }
     }
 
     /// EVEX MAP5 opcode map (mm=5) - AVX-512 FP16 instructions
@@ -645,6 +785,1573 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
+
+    // ============================================================================
+    // AVX10.1 VNNI Instruction Implementations
+    // ============================================================================
+
+    /// VPDPBUSD/VPDPBUSDS - Multiply and Add Unsigned and Signed Bytes
+    fn execute_vpdpbusd(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        // Destination/accumulator register
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        // Source1 from vvvv (first multiplicand)
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        // Vector length from L'L
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let num_dwords = vl / 4;
+
+        // Load source2
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+        let mut dst = self.get_zmm_data(zmm_dst, vl);
+
+        // Process each dword
+        for i in 0..num_dwords {
+            let base = i * 4;
+            // Each dword contains 4 bytes
+            let mut sum = i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
+
+            for j in 0..4 {
+                let a = src1[base + j] as u8 as i32;  // unsigned byte
+                let b = src2[base + j] as i8 as i32;  // signed byte
+                sum += (a * b) as i64;
+            }
+
+            let result = if saturate {
+                sum.clamp(i32::MIN as i64, i32::MAX as i64) as i32
+            } else {
+                sum as i32
+            };
+
+            let bytes = result.to_le_bytes();
+            dst[base..base + 4].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VPDPWSSD/VPDPWSSDS - Multiply and Add Signed Word Integers
+    fn execute_vpdpwssd(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let num_dwords = vl / 4;
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+        let mut dst = self.get_zmm_data(zmm_dst, vl);
+
+        for i in 0..num_dwords {
+            let base = i * 4;
+            let mut sum = i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
+
+            // Two pairs of signed words per dword
+            let a0 = i16::from_le_bytes([src1[base], src1[base + 1]]) as i32;
+            let b0 = i16::from_le_bytes([src2[base], src2[base + 1]]) as i32;
+            let a1 = i16::from_le_bytes([src1[base + 2], src1[base + 3]]) as i32;
+            let b1 = i16::from_le_bytes([src2[base + 2], src2[base + 3]]) as i32;
+
+            sum += (a0 * b0 + a1 * b1) as i64;
+
+            let result = if saturate {
+                sum.clamp(i32::MIN as i64, i32::MAX as i64) as i32
+            } else {
+                sum as i32
+            };
+
+            let bytes = result.to_le_bytes();
+            dst[base..base + 4].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    // ============================================================================
+    // AVX10.1 IFMA Instruction Implementations
+    // ============================================================================
+
+    /// VPMADD52LUQ/VPMADD52HUQ - Packed Multiply of Unsigned 52-bit and Add
+    fn execute_vpmadd52(&mut self, ctx: &mut InsnContext, high: bool) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let num_qwords = vl / 8;
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+        let mut dst = self.get_zmm_data(zmm_dst, vl);
+
+        for i in 0..num_qwords {
+            let base = i * 8;
+            let a = u64::from_le_bytes([
+                src1[base], src1[base + 1], src1[base + 2], src1[base + 3],
+                src1[base + 4], src1[base + 5], src1[base + 6], src1[base + 7],
+            ]) & 0x000F_FFFF_FFFF_FFFF; // 52-bit mask
+
+            let b = u64::from_le_bytes([
+                src2[base], src2[base + 1], src2[base + 2], src2[base + 3],
+                src2[base + 4], src2[base + 5], src2[base + 6], src2[base + 7],
+            ]) & 0x000F_FFFF_FFFF_FFFF;
+
+            let d = u64::from_le_bytes([
+                dst[base], dst[base + 1], dst[base + 2], dst[base + 3],
+                dst[base + 4], dst[base + 5], dst[base + 6], dst[base + 7],
+            ]);
+
+            // 52x52 multiplication gives 104-bit result
+            let product = (a as u128) * (b as u128);
+            let result = if high {
+                // High 52 bits of 104-bit product, added to dest
+                d.wrapping_add(((product >> 52) & 0x000F_FFFF_FFFF_FFFF) as u64)
+            } else {
+                // Low 52 bits of 104-bit product, added to dest
+                d.wrapping_add((product & 0x000F_FFFF_FFFF_FFFF) as u64)
+            };
+
+            let bytes = result.to_le_bytes();
+            dst[base..base + 8].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    // ============================================================================
+    // AVX10.1 VPOPCNTDQ Instruction Implementations
+    // ============================================================================
+
+    /// VPOPCNTB/W/D/Q - Population count for packed elements
+    fn execute_vpopcnt(&mut self, ctx: &mut InsnContext, elem_size: usize) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let src = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src, vl)
+        };
+
+        let mut dst = [0u8; 64];
+        let num_elems = vl / elem_size;
+
+        for i in 0..num_elems {
+            let base = i * elem_size;
+            let mut count = 0u64;
+
+            for j in 0..elem_size {
+                count += src[base + j].count_ones() as u64;
+            }
+
+            match elem_size {
+                1 => dst[base] = count as u8,
+                2 => {
+                    let bytes = (count as u16).to_le_bytes();
+                    dst[base..base + 2].copy_from_slice(&bytes);
+                }
+                4 => {
+                    let bytes = (count as u32).to_le_bytes();
+                    dst[base..base + 4].copy_from_slice(&bytes);
+                }
+                8 => {
+                    let bytes = count.to_le_bytes();
+                    dst[base..base + 8].copy_from_slice(&bytes);
+                }
+                _ => {}
+            }
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    // ============================================================================
+    // AVX10.1 VBMI Instruction Implementations
+    // ============================================================================
+
+    /// VPERMB - Permute Packed Bytes Elements
+    fn execute_vpermb(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_idx = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let src = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src, vl)
+        };
+
+        let idx = self.get_zmm_data(zmm_idx, vl);
+        let mut dst = [0u8; 64];
+
+        for i in 0..vl {
+            let index = (idx[i] as usize) % vl;
+            dst[i] = src[index];
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VPERMI2B - Full Permute of Bytes from Two Tables Overwriting Index
+    fn execute_vpermi2b(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_idx = if !evex.r { reg + 8 } else { reg };
+        let zmm_idx = if !evex.r_prime { zmm_idx + 16 } else { zmm_idx } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+        let idx = self.get_zmm_data(zmm_idx, vl);
+
+        let mut dst = [0u8; 64];
+        let table_size = vl * 2;
+
+        for i in 0..vl {
+            let index = (idx[i] as usize) % table_size;
+            dst[i] = if index < vl { src1[index] } else { src2[index - vl] };
+        }
+
+        self.set_zmm_data(zmm_idx, &dst[..vl], vl);
+
+        if vl < 64 && zmm_idx < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_idx][0] = 0;
+                self.regs.ymm_high[zmm_idx][1] = 0;
+            }
+            self.regs.zmm_high[zmm_idx] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VPERMT2B - Full Permute of Bytes from Two Tables Overwriting Table
+    fn execute_vpermt2b(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_idx = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_dst, vl);
+        let idx = self.get_zmm_data(zmm_idx, vl);
+
+        let mut dst = [0u8; 64];
+        let table_size = vl * 2;
+
+        for i in 0..vl {
+            let index = (idx[i] as usize) % table_size;
+            dst[i] = if index < vl { src1[index] } else { src2[index - vl] };
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    // ============================================================================
+    // AVX10.1 BITALG Instruction Implementations
+    // ============================================================================
+
+    /// VPSHUFBITQMB - Shuffle Bits from Quadword Elements Using Byte Indexes into Mask
+    fn execute_vpshufbitqmb(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let k_dst = reg as usize & 0x7;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+        let mut result: u64 = 0;
+
+        // Process each qword
+        for qword_idx in 0..(vl / 8) {
+            let qword_base = qword_idx * 8;
+            let mut qword = 0u64;
+            for i in 0..8 {
+                qword |= (src1[qword_base + i] as u64) << (i * 8);
+            }
+
+            // Each byte in src2 selects a bit from the corresponding qword
+            for byte_idx in 0..8 {
+                let bit_index = src2[qword_base + byte_idx] & 0x3F; // 6-bit index
+                let bit = (qword >> bit_index) & 1;
+                result |= bit << (qword_idx * 8 + byte_idx);
+            }
+        }
+
+        self.regs.k[k_dst] = result;
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    // ============================================================================
+    // AVX10.1 BF16 Instruction Implementations
+    // ============================================================================
+
+    /// VDPBF16PS - Dot Product of BF16 Pairs Accumulated into FP32
+    fn execute_vdpbf16ps(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let num_floats = vl / 4;
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+        let mut dst = self.get_zmm_data(zmm_dst, vl);
+
+        for i in 0..num_floats {
+            let base = i * 4;
+            // Read accumulator as f32
+            let acc = f32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]);
+
+            // Two BF16 values per dword
+            let a0 = bf16_to_f32(u16::from_le_bytes([src1[base], src1[base + 1]]));
+            let b0 = bf16_to_f32(u16::from_le_bytes([src2[base], src2[base + 1]]));
+            let a1 = bf16_to_f32(u16::from_le_bytes([src1[base + 2], src1[base + 3]]));
+            let b1 = bf16_to_f32(u16::from_le_bytes([src2[base + 2], src2[base + 3]]));
+
+            let result = acc + a0 * b0 + a1 * b1;
+            let bytes = result.to_le_bytes();
+            dst[base..base + 4].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VCVTNEPS2BF16 - Convert Packed Single-Precision to BF16
+    fn execute_vcvtneps2bf16(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let src = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src, vl)
+        };
+
+        let num_floats = vl / 4;
+        let dst_vl = vl / 2; // Output is half the size
+        let mut dst = [0u8; 64];
+
+        for i in 0..num_floats {
+            let src_base = i * 4;
+            let f = f32::from_le_bytes([
+                src[src_base], src[src_base + 1], src[src_base + 2], src[src_base + 3],
+            ]);
+            let bf16 = f32_to_bf16(f);
+            let dst_base = i * 2;
+            let bytes = bf16.to_le_bytes();
+            dst[dst_base..dst_base + 2].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..dst_vl], dst_vl);
+
+        // Always zero upper bits for this conversion
+        if zmm_dst < 16 {
+            if dst_vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VCVTNE2PS2BF16 - Convert Two Packed Single-Precision to BF16
+    fn execute_vcvtne2ps2bf16(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+
+        let num_floats = vl / 4;
+        let mut dst = [0u8; 64];
+
+        // First half from src2
+        for i in 0..num_floats {
+            let src_base = i * 4;
+            let f = f32::from_le_bytes([
+                src2[src_base], src2[src_base + 1], src2[src_base + 2], src2[src_base + 3],
+            ]);
+            let bf16 = f32_to_bf16(f);
+            let dst_base = i * 2;
+            let bytes = bf16.to_le_bytes();
+            dst[dst_base..dst_base + 2].copy_from_slice(&bytes);
+        }
+
+        // Second half from src1
+        for i in 0..num_floats {
+            let src_base = i * 4;
+            let f = f32::from_le_bytes([
+                src1[src_base], src1[src_base + 1], src1[src_base + 2], src1[src_base + 3],
+            ]);
+            let bf16 = f32_to_bf16(f);
+            let dst_base = (vl / 2) + i * 2;
+            let bytes = bf16.to_le_bytes();
+            dst[dst_base..dst_base + 2].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    // ============================================================================
+    // AVX10.2 VMPSADBW Instruction Implementation
+    // ============================================================================
+
+    /// VMPSADBW - Compute Multiple Packed Sums of Absolute Difference
+    fn execute_vmpsadbw(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+        let mut dst = [0u8; 64];
+
+        // Process 128-bit lanes
+        let num_lanes = vl / 16;
+
+        for lane in 0..num_lanes {
+            let lane_base = lane * 16;
+            let blk1 = ((imm8 >> (lane * 2)) & 0x3) as usize;
+            let blk2 = ((imm8 >> (lane * 2 + 4)) & 0x3) as usize;
+
+            // Source block offsets
+            let src1_offset = lane_base + (blk1 * 4);
+            let src2_offset = lane_base + (blk2 * 4);
+
+            // Calculate 8 SAD values per lane
+            for i in 0..8 {
+                let mut sad: u16 = 0;
+                for j in 0..4 {
+                    let a = src1[src1_offset + j] as i16;
+                    let b = src2[src2_offset + i + j] as i16;
+                    sad += (a - b).unsigned_abs();
+                }
+                let dst_offset = lane_base + i * 2;
+                let bytes = sad.to_le_bytes();
+                dst[dst_offset..dst_offset + 2].copy_from_slice(&bytes);
+            }
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    // ============================================================================
+    // AVX10.2 VMINMAX Instruction Implementations
+    // ============================================================================
+
+    /// VMINMAXPS - Minimum/Maximum of Packed Single-Precision Floats
+    fn execute_vminmax_ps(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+        let mut dst = [0u8; 64];
+
+        let num_elems = vl / 4;
+        let is_min = (imm8 & 0x1) == 0;
+
+        for i in 0..num_elems {
+            let base = i * 4;
+            let a = f32::from_le_bytes([src1[base], src1[base + 1], src1[base + 2], src1[base + 3]]);
+            let b = f32::from_le_bytes([src2[base], src2[base + 1], src2[base + 2], src2[base + 3]]);
+
+            let result = if is_min { a.min(b) } else { a.max(b) };
+            let bytes = result.to_le_bytes();
+            dst[base..base + 4].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VMINMAXPD - Minimum/Maximum of Packed Double-Precision Floats
+    fn execute_vminmax_pd(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+        let mut dst = [0u8; 64];
+
+        let num_elems = vl / 8;
+        let is_min = (imm8 & 0x1) == 0;
+
+        for i in 0..num_elems {
+            let base = i * 8;
+            let a = f64::from_le_bytes([
+                src1[base], src1[base + 1], src1[base + 2], src1[base + 3],
+                src1[base + 4], src1[base + 5], src1[base + 6], src1[base + 7],
+            ]);
+            let b = f64::from_le_bytes([
+                src2[base], src2[base + 1], src2[base + 2], src2[base + 3],
+                src2[base + 4], src2[base + 5], src2[base + 6], src2[base + 7],
+            ]);
+
+            let result = if is_min { a.min(b) } else { a.max(b) };
+            let bytes = result.to_le_bytes();
+            dst[base..base + 8].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VMINMAXSS - Minimum/Maximum of Scalar Single-Precision Float
+    fn execute_vminmax_ss(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let b_val = if is_memory {
+            let bytes = self.load_zmm_data(addr, 4)?;
+            f32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]])
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let src2 = self.get_zmm_data(zmm_src2, 16);
+            f32::from_le_bytes([src2[0], src2[1], src2[2], src2[3]])
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, 16);
+        let a_val = f32::from_le_bytes([src1[0], src1[1], src1[2], src1[3]]);
+
+        let is_min = (imm8 & 0x1) == 0;
+        let result = if is_min { a_val.min(b_val) } else { a_val.max(b_val) };
+
+        // Copy src1 to dst, then overwrite lowest element
+        let mut dst = self.get_zmm_data(zmm_src1, 16);
+        let bytes = result.to_le_bytes();
+        dst[0..4].copy_from_slice(&bytes);
+
+        self.set_zmm_data(zmm_dst, &dst[..16], 16);
+
+        // Zero upper bits
+        if zmm_dst < 16 {
+            self.regs.ymm_high[zmm_dst][0] = 0;
+            self.regs.ymm_high[zmm_dst][1] = 0;
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VMINMAXSD - Minimum/Maximum of Scalar Double-Precision Float
+    fn execute_vminmax_sd(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+        let imm8 = ctx.consume_u8()?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let b_val = if is_memory {
+            let bytes = self.load_zmm_data(addr, 8)?;
+            f64::from_le_bytes([
+                bytes[0], bytes[1], bytes[2], bytes[3],
+                bytes[4], bytes[5], bytes[6], bytes[7],
+            ])
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let src2 = self.get_zmm_data(zmm_src2, 16);
+            f64::from_le_bytes([
+                src2[0], src2[1], src2[2], src2[3],
+                src2[4], src2[5], src2[6], src2[7],
+            ])
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, 16);
+        let a_val = f64::from_le_bytes([
+            src1[0], src1[1], src1[2], src1[3],
+            src1[4], src1[5], src1[6], src1[7],
+        ]);
+
+        let is_min = (imm8 & 0x1) == 0;
+        let result = if is_min { a_val.min(b_val) } else { a_val.max(b_val) };
+
+        // Copy src1 to dst, then overwrite lowest element
+        let mut dst = self.get_zmm_data(zmm_src1, 16);
+        let bytes = result.to_le_bytes();
+        dst[0..8].copy_from_slice(&bytes);
+
+        self.set_zmm_data(zmm_dst, &dst[..16], 16);
+
+        // Zero upper bits
+        if zmm_dst < 16 {
+            self.regs.ymm_high[zmm_dst][0] = 0;
+            self.regs.ymm_high[zmm_dst][1] = 0;
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    // ============================================================================
+    // AVX10.2 Saturation Conversion Instruction Implementations
+    // ============================================================================
+
+    /// VCVTTPS2IBS - Convert with Truncation Packed Single to Signed Byte with Saturation
+    fn execute_vcvttps2ibs(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let src = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src, vl)
+        };
+
+        let num_floats = vl / 4;
+        let dst_vl = vl / 4; // Output is 1/4 the size
+        let mut dst = [0u8; 64];
+
+        for i in 0..num_floats {
+            let src_base = i * 4;
+            let f = f32::from_le_bytes([
+                src[src_base], src[src_base + 1], src[src_base + 2], src[src_base + 3],
+            ]);
+            // Truncate and saturate to i8
+            let val = f.trunc() as i32;
+            let saturated = val.clamp(i8::MIN as i32, i8::MAX as i32) as i8;
+            dst[i] = saturated as u8;
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..dst_vl], dst_vl);
+
+        // Zero upper bits
+        if zmm_dst < 16 {
+            if dst_vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VCVTTPS2IUBS - Convert with Truncation Packed Single to Unsigned Byte with Saturation
+    fn execute_vcvttps2iubs(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let src = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src, vl)
+        };
+
+        let num_floats = vl / 4;
+        let dst_vl = vl / 4;
+        let mut dst = [0u8; 64];
+
+        for i in 0..num_floats {
+            let src_base = i * 4;
+            let f = f32::from_le_bytes([
+                src[src_base], src[src_base + 1], src[src_base + 2], src[src_base + 3],
+            ]);
+            // Truncate and saturate to u8
+            let val = f.trunc() as i32;
+            let saturated = val.clamp(0, u8::MAX as i32) as u8;
+            dst[i] = saturated;
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..dst_vl], dst_vl);
+
+        if zmm_dst < 16 {
+            if dst_vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VCVTTPD2QQS - Convert with Truncation Packed Double to Signed Qword with Saturation
+    fn execute_vcvttpd2qqs(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let src = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src, vl)
+        };
+
+        let num_doubles = vl / 8;
+        let mut dst = [0u8; 64];
+
+        for i in 0..num_doubles {
+            let base = i * 8;
+            let f = f64::from_le_bytes([
+                src[base], src[base + 1], src[base + 2], src[base + 3],
+                src[base + 4], src[base + 5], src[base + 6], src[base + 7],
+            ]);
+            // Truncate and saturate to i64
+            let val = f.trunc();
+            let saturated = if val >= i64::MAX as f64 {
+                i64::MAX
+            } else if val <= i64::MIN as f64 {
+                i64::MIN
+            } else {
+                val as i64
+            };
+            let bytes = saturated.to_le_bytes();
+            dst[base..base + 8].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VCVTTPD2UQQS - Convert with Truncation Packed Double to Unsigned Qword with Saturation
+    fn execute_vcvttpd2uqqs(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let src = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src, vl)
+        };
+
+        let num_doubles = vl / 8;
+        let mut dst = [0u8; 64];
+
+        for i in 0..num_doubles {
+            let base = i * 8;
+            let f = f64::from_le_bytes([
+                src[base], src[base + 1], src[base + 2], src[base + 3],
+                src[base + 4], src[base + 5], src[base + 6], src[base + 7],
+            ]);
+            // Truncate and saturate to u64
+            let val = f.trunc();
+            let saturated = if val >= u64::MAX as f64 {
+                u64::MAX
+            } else if val < 0.0 {
+                0
+            } else {
+                val as u64
+            };
+            let bytes = saturated.to_le_bytes();
+            dst[base..base + 8].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    // ============================================================================
+    // AVX10.2 Media Acceleration Instruction Implementations
+    // ============================================================================
+
+    /// VPDPBSSD/VPDPBSSDS - Multiply and Add Signed Byte Integers
+    fn execute_vpdpbssd(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let num_dwords = vl / 4;
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+        let mut dst = self.get_zmm_data(zmm_dst, vl);
+
+        for i in 0..num_dwords {
+            let base = i * 4;
+            let mut sum = i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
+
+            for j in 0..4 {
+                let a = src1[base + j] as i8 as i32;  // signed byte
+                let b = src2[base + j] as i8 as i32;  // signed byte
+                sum += (a * b) as i64;
+            }
+
+            let result = if saturate {
+                sum.clamp(i32::MIN as i64, i32::MAX as i64) as i32
+            } else {
+                sum as i32
+            };
+
+            let bytes = result.to_le_bytes();
+            dst[base..base + 4].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VPDPBSUD/VPDPBSUDS - Multiply and Add Signed/Unsigned Byte Integers
+    fn execute_vpdpbsud(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let num_dwords = vl / 4;
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+        let mut dst = self.get_zmm_data(zmm_dst, vl);
+
+        for i in 0..num_dwords {
+            let base = i * 4;
+            let mut sum = i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
+
+            for j in 0..4 {
+                let a = src1[base + j] as i8 as i32;   // signed byte
+                let b = src2[base + j] as u8 as i32;  // unsigned byte
+                sum += (a * b) as i64;
+            }
+
+            let result = if saturate {
+                sum.clamp(i32::MIN as i64, i32::MAX as i64) as i32
+            } else {
+                sum as i32
+            };
+
+            let bytes = result.to_le_bytes();
+            dst[base..base + 4].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VPDPBUUD/VPDPBUUDS - Multiply and Add Unsigned Byte Integers
+    fn execute_vpdpbuud(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let num_dwords = vl / 4;
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+        let mut dst = self.get_zmm_data(zmm_dst, vl);
+
+        for i in 0..num_dwords {
+            let base = i * 4;
+            let mut sum = u32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as u64;
+
+            for j in 0..4 {
+                let a = src1[base + j] as u32;  // unsigned byte
+                let b = src2[base + j] as u32;  // unsigned byte
+                sum += (a * b) as u64;
+            }
+
+            let result = if saturate {
+                sum.min(u32::MAX as u64) as u32
+            } else {
+                sum as u32
+            };
+
+            let bytes = result.to_le_bytes();
+            dst[base..base + 4].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VPDPWSUD/VPDPWSUDS - Multiply and Add Signed/Unsigned Word Integers
+    fn execute_vpdpwsud(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let num_dwords = vl / 4;
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+        let mut dst = self.get_zmm_data(zmm_dst, vl);
+
+        for i in 0..num_dwords {
+            let base = i * 4;
+            let mut sum = i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
+
+            // Two pairs of words per dword
+            let a0 = i16::from_le_bytes([src1[base], src1[base + 1]]) as i32;       // signed
+            let b0 = u16::from_le_bytes([src2[base], src2[base + 1]]) as i32;       // unsigned
+            let a1 = i16::from_le_bytes([src1[base + 2], src1[base + 3]]) as i32;   // signed
+            let b1 = u16::from_le_bytes([src2[base + 2], src2[base + 3]]) as i32;   // unsigned
+
+            sum += (a0 * b0 + a1 * b1) as i64;
+
+            let result = if saturate {
+                sum.clamp(i32::MIN as i64, i32::MAX as i64) as i32
+            } else {
+                sum as i32
+            };
+
+            let bytes = result.to_le_bytes();
+            dst[base..base + 4].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VPDPWUSD/VPDPWUSDS - Multiply and Add Unsigned/Signed Word Integers
+    fn execute_vpdpwusd(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let num_dwords = vl / 4;
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+        let mut dst = self.get_zmm_data(zmm_dst, vl);
+
+        for i in 0..num_dwords {
+            let base = i * 4;
+            let mut sum = i32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as i64;
+
+            // Two pairs of words per dword
+            let a0 = u16::from_le_bytes([src1[base], src1[base + 1]]) as i32;       // unsigned
+            let b0 = i16::from_le_bytes([src2[base], src2[base + 1]]) as i32;       // signed
+            let a1 = u16::from_le_bytes([src1[base + 2], src1[base + 3]]) as i32;   // unsigned
+            let b1 = i16::from_le_bytes([src2[base + 2], src2[base + 3]]) as i32;   // signed
+
+            sum += (a0 * b0 + a1 * b1) as i64;
+
+            let result = if saturate {
+                sum.clamp(i32::MIN as i64, i32::MAX as i64) as i32
+            } else {
+                sum as i32
+            };
+
+            let bytes = result.to_le_bytes();
+            dst[base..base + 4].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// VPDPWUUD/VPDPWUUDS - Multiply and Add Unsigned Word Integers
+    fn execute_vpdpwuud(&mut self, ctx: &mut InsnContext, saturate: bool) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+
+        let vl = match evex.ll {
+            0 => 16,
+            1 => 32,
+            2 => 64,
+            _ => 64,
+        };
+
+        let num_dwords = vl / 4;
+
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+        let mut dst = self.get_zmm_data(zmm_dst, vl);
+
+        for i in 0..num_dwords {
+            let base = i * 4;
+            let mut sum = u32::from_le_bytes([dst[base], dst[base + 1], dst[base + 2], dst[base + 3]]) as u64;
+
+            // Two pairs of words per dword
+            let a0 = u16::from_le_bytes([src1[base], src1[base + 1]]) as u32;       // unsigned
+            let b0 = u16::from_le_bytes([src2[base], src2[base + 1]]) as u32;       // unsigned
+            let a1 = u16::from_le_bytes([src1[base + 2], src1[base + 3]]) as u32;   // unsigned
+            let b1 = u16::from_le_bytes([src2[base + 2], src2[base + 3]]) as u32;   // unsigned
+
+            sum += (a0 * b0 + a1 * b1) as u64;
+
+            let result = if saturate {
+                sum.min(u32::MAX as u64) as u32
+            } else {
+                sum as u32
+            };
+
+            let bytes = result.to_le_bytes();
+            dst[base..base + 4].copy_from_slice(&bytes);
+        }
+
+        self.set_zmm_data(zmm_dst, &dst[..vl], vl);
+
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
 }
 
 /// Convert IEEE 754 half-precision (FP16) to single-precision (f32)
@@ -724,4 +2431,26 @@ fn f32_to_fp16(f: f32) -> u16 {
             (sign << 15) | ((new_exp as u16) << 10) | (new_mant & 0x3FF)
         }
     }
+}
+
+/// Convert BFloat16 (BF16) to single-precision (f32)
+fn bf16_to_f32(bf: u16) -> f32 {
+    // BF16 is simply the upper 16 bits of f32
+    f32::from_bits((bf as u32) << 16)
+}
+
+/// Convert single-precision (f32) to BFloat16 (BF16)
+fn f32_to_bf16(f: f32) -> u16 {
+    // BF16 is the upper 16 bits of f32 with round-to-nearest-even
+    let bits = f.to_bits();
+
+    // Check for NaN and preserve signaling NaN
+    if (bits & 0x7FFFFFFF) > 0x7F800000 {
+        // NaN - ensure we keep a non-zero mantissa
+        return ((bits >> 16) as u16) | 0x0040;
+    }
+
+    // Round to nearest even
+    let rounding_bias = 0x7FFF + ((bits >> 16) & 1);
+    ((bits.wrapping_add(rounding_bias)) >> 16) as u16
 }
