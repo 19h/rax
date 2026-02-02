@@ -7,3 +7,4 @@ mod avx512;
 mod avx512_extended;
 mod avx512_mask_ops;
 mod packing_ops;
+mod avx10;
