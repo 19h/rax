@@ -805,6 +805,64 @@ pub enum VecCmpCond {
 }
 
 // ============================================================================
+// AVX10 Types
+// ============================================================================
+
+/// AVX10 FP16 arithmetic operation
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Avx10FP16Op {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Sqrt,
+    Min,
+    Max,
+}
+
+/// AVX10 dot product variant
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Avx10DotProductKind {
+    /// VPDPBUSD: unsigned bytes * signed bytes
+    BuSd,
+    /// VPDPWSSD: signed words * signed words
+    WsSd,
+    /// VPDPBSSD: signed bytes * signed bytes (AVX10.2)
+    BsSd,
+    /// VPDPBSUD: signed bytes * unsigned bytes (AVX10.2)
+    BsUd,
+    /// VPDPBUUD: unsigned bytes * unsigned bytes (AVX10.2)
+    BuUd,
+    /// VPDPWSUD: signed words * unsigned words (AVX10.2)
+    WsUd,
+    /// VPDPWUSD: unsigned words * signed words (AVX10.2)
+    WuSd,
+    /// VPDPWUUD: unsigned words * unsigned words (AVX10.2)
+    WuUd,
+}
+
+/// AVX10 instruction encoding info (for roundtrip preservation)
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct Avx10Encoding {
+    /// EVEX map (0F, 0F38, 0F3A)
+    pub map: u8,
+    /// EVEX.pp (none, 66, F3, F2)
+    pub pp: u8,
+    /// EVEX.W bit
+    pub w: bool,
+    /// Opcode byte
+    pub opcode: u8,
+    /// Vector length (128, 256, 512)
+    pub vl: VecWidth,
+    /// Opmask register (k0-k7)
+    pub mask: Option<u8>,
+    /// Zeroing masking
+    pub zeroing: bool,
+    /// Embedded rounding mode
+    pub rounding: Option<u8>,
+}
+
+// ============================================================================
 // Condition Codes
 // ============================================================================
 

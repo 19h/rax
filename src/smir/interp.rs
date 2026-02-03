@@ -1798,6 +1798,32 @@ impl SmirInterpreter {
             OpKind::Breakpoint => {
                 ctx.request_exit(ExitReason::Breakpoint { addr: ctx.pc });
             }
+
+            // ==================================================================
+            // AVX10 OPERATIONS (Stubs - not yet implemented in interpreter)
+            // ==================================================================
+            OpKind::VMin { .. }
+            | OpKind::VFma { .. }
+            | OpKind::VDotProduct { .. }
+            | OpKind::VMultiplyAdd52 { .. }
+            | OpKind::VPopcnt { .. }
+            | OpKind::VPermute { .. }
+            | OpKind::VShuffleBitQM { .. }
+            | OpKind::VDotProductBF16 { .. }
+            | OpKind::VCvtFP32ToBF16 { .. }
+            | OpKind::VCvtBF16ToFP32 { .. }
+            | OpKind::VFP16Arith { .. }
+            | OpKind::VCvtFpToIntSat { .. }
+            | OpKind::VMinMax { .. }
+            | OpKind::VMpsadbw { .. }
+            | OpKind::VDotProductExt { .. } => {
+                // AVX10 operations not yet implemented in interpreter
+                // These would require full vector register state tracking
+                ctx.request_exit(ExitReason::Undefined {
+                    addr: ctx.pc,
+                    opcode: 0,
+                });
+            }
         }
 
         Ok(())

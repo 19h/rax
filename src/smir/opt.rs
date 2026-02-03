@@ -1591,6 +1591,79 @@ impl OpKind {
             | OpKind::Nop
             | OpKind::Undefined { .. }
             | OpKind::Breakpoint => {}
+
+            // AVX10 operations - extract source registers
+            OpKind::VMin { src1, src2, .. } | OpKind::VFma { src1, src2, .. } => {
+                result.push(*src1);
+                result.push(*src2);
+            }
+
+            OpKind::VDotProduct {
+                acc, src1, src2, ..
+            }
+            | OpKind::VDotProductBF16 {
+                acc, src1, src2, ..
+            } => {
+                result.push(*acc);
+                result.push(*src1);
+                result.push(*src2);
+            }
+
+            OpKind::VMultiplyAdd52 {
+                dst, src1, src2, ..
+            } => {
+                result.push(*dst); // dst is also input (accumulator)
+                result.push(*src1);
+                result.push(*src2);
+            }
+
+            OpKind::VPopcnt { src, .. } | OpKind::VCvtBF16ToFP32 { src, .. } => {
+                result.push(*src);
+            }
+
+            OpKind::VPermute {
+                src1,
+                src2,
+                indices,
+                ..
+            } => {
+                result.push(*src1);
+                if let Some(s2) = src2 {
+                    result.push(*s2);
+                }
+                result.push(*indices);
+            }
+
+            OpKind::VShuffleBitQM { src, indices, .. } => {
+                result.push(*src);
+                result.push(*indices);
+            }
+
+            OpKind::VCvtFP32ToBF16 { src1, src2, .. } => {
+                result.push(*src1);
+                if let Some(s2) = src2 {
+                    result.push(*s2);
+                }
+            }
+
+            OpKind::VFP16Arith { src1, src2, .. }
+            | OpKind::VMinMax { src1, src2, .. }
+            | OpKind::VMpsadbw { src1, src2, .. } => {
+                result.push(*src1);
+                result.push(*src2);
+            }
+
+            OpKind::VCvtFpToIntSat { src, .. } => {
+                result.push(*src);
+            }
+
+            OpKind::VDotProductExt {
+                acc, src1, src2, ..
+            } => {
+                result.push(*acc);
+                result.push(*src1);
+                result.push(*src2);
+            }
         }
 
         result

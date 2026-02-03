@@ -80,10 +80,12 @@ pub use ir::{
     SmirModule, Terminator, TrapKind,
 };
 pub use lift::aarch64::Aarch64Lifter;
+pub use lift::avx10::{Avx10Lifter, EvexPrefix};
 pub use lift::hexagon::HexagonLifter;
 pub use lift::riscv::RiscVLifter;
 pub use lift::x86_64::X86_64Lifter;
 pub use lift::{ControlFlow, LiftContext, LiftError, LiftResult, SmirLifter};
+pub use lower::avx10::{Avx10Lowerer, EvexEncoder};
 pub use lower::regalloc::{PhysReg, RegAlloc, RegLocation};
 pub use lower::x86_64::{X86Cond, X86Emitter, X86_64Lowerer};
 pub use lower::{
@@ -97,8 +99,9 @@ pub use memory::{
 pub use ops::{OpKind, SmirOp};
 pub use opt::{optimize_function, OptLevel, OptStats};
 pub use types::{
-    Address, ArchReg, ArmReg, AtomicOp, BlockId, BlockIdAllocator, Condition, Endian, ExtendOp,
-    FenceKind, FpPrecision, FpRoundMode, FunctionId, GuestAddr, HexagonReg, LocalId, MemWidth,
-    MemoryOrder, ModuleId, OpId, OpWidth, RiscVReg, ShiftOp, SignExtend, SourceArch, SrcOperand,
-    VReg, VRegAllocator, VecCmpCond, VecElementType, VecWidth, VirtualId, X86Reg,
+    Address, ArchReg, ArmReg, AtomicOp, Avx10DotProductKind, Avx10Encoding, Avx10FP16Op, BlockId,
+    BlockIdAllocator, Condition, Endian, ExtendOp, FenceKind, FpPrecision, FpRoundMode, FunctionId,
+    GuestAddr, HexagonReg, LocalId, MemWidth, MemoryOrder, ModuleId, OpId, OpWidth, RiscVReg,
+    ShiftOp, SignExtend, SourceArch, SrcOperand, VReg, VRegAllocator, VecCmpCond, VecElementType,
+    VecWidth, VirtualId, X86Reg,
 };

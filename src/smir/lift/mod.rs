@@ -3,6 +3,7 @@
 //! This module provides traits and types for lifting machine code to SMIR.
 
 pub mod aarch64;
+pub mod avx10;
 pub mod hexagon;
 pub mod riscv;
 pub mod x86_64;

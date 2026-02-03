@@ -26,6 +26,7 @@
 //! └─────────────────┘
 //! ```
 
+pub mod avx10;
 pub mod regalloc;
 #[cfg(test)]
 mod validation;
@@ -214,6 +215,11 @@ impl CodeBuffer {
         &self.data
     }
 
+    /// Get the raw code bytes as a slice (alias for data())
+    pub fn as_slice(&self) -> &[u8] {
+        &self.data
+    }
+
     /// Consume and return the code bytes
     pub fn into_data(self) -> Vec<u8> {
         self.data
@@ -364,6 +370,9 @@ pub enum LowerError {
     /// Unsupported operation
     UnsupportedOp { op: String },
 
+    /// Unsupported operation (string-only variant)
+    UnsupportedOperation(String),
+
     /// Register allocation failed
     RegisterAllocationFailed { reason: String },
 
@@ -376,6 +385,9 @@ pub enum LowerError {
     /// Invalid operand
     InvalidOperand { op: String, operand: String },
 
+    /// Invalid register for lowering
+    InvalidRegister(String),
+
     /// Stack overflow (too many spills)
     StackOverflow { required: usize, limit: usize },
 
@@ -387,6 +399,7 @@ impl std::fmt::Display for LowerError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             LowerError::UnsupportedOp { op } => write!(f, "unsupported operation: {}", op),
+            LowerError::UnsupportedOperation(op) => write!(f, "unsupported operation: {}", op),
             LowerError::RegisterAllocationFailed { reason } => {
                 write!(f, "register allocation failed: {}", reason)
             }
@@ -396,6 +409,9 @@ impl std::fmt::Display for LowerError {
             }
             LowerError::InvalidOperand { op, operand } => {
                 write!(f, "invalid operand for {}: {}", op, operand)
+            }
+            LowerError::InvalidRegister(reg) => {
+                write!(f, "invalid register: {}", reg)
             }
             LowerError::StackOverflow { required, limit } => {
                 write!(

@@ -930,6 +930,188 @@ pub enum OpKind {
         lanes: u8,
     },
 
+    /// Vector minimum
+    VMin {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        signed: bool,
+    },
+
+    /// Vector FMA: dst = acc + (src1 * src2) or dst = acc - (src1 * src2)
+    VFma {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        acc: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        negate_product: bool,
+        negate_acc: bool,
+    },
+
+    // ========================================================================
+    // AVX10.1 OPERATIONS
+    // ========================================================================
+    /// VNNI dot product: dst = acc + dot(src1, src2)
+    /// VPDPBUSD: unsigned bytes * signed bytes -> dword accumulate
+    /// VPDPBUSDS: same with saturation
+    /// VPDPWSSD: signed words * signed words -> dword accumulate
+    /// VPDPWSSDS: same with saturation
+    VDotProduct {
+        dst: VReg,
+        acc: VReg,
+        src1: VReg,
+        src2: VReg,
+        /// Element type for src1 (I8 for byte, I16 for word)
+        src_elem: VecElementType,
+        /// Element type for accumulator (typically I32)
+        acc_elem: VecElementType,
+        width: VecWidth,
+        /// true=src1 unsigned, src2 signed; false=both signed
+        src1_unsigned: bool,
+        /// Saturate result instead of wrapping
+        saturate: bool,
+    },
+
+    /// IFMA 52-bit multiply-add: dst = acc + (src1[51:0] * src2[51:0])
+    /// VPMADD52LUQ: low 52 bits of product
+    /// VPMADD52HUQ: high 52 bits of product
+    VMultiplyAdd52 {
+        dst: VReg,
+        acc: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: VecWidth,
+        /// true = high 52 bits, false = low 52 bits
+        high: bool,
+    },
+
+    /// Vector population count per element
+    /// VPOPCNTB/W/D/Q
+    VPopcnt {
+        dst: VReg,
+        src: VReg,
+        elem: VecElementType,
+        width: VecWidth,
+    },
+
+    /// Byte permutation from one or two sources
+    /// VPERMB: permute bytes from single source
+    /// VPERMI2B: permute bytes from two sources, overwrite index
+    /// VPERMT2B: permute bytes from two sources, overwrite table
+    VPermute {
+        dst: VReg,
+        src1: VReg,
+        src2: Option<VReg>,
+        indices: VReg,
+        elem: VecElementType,
+        width: VecWidth,
+        /// Which register to overwrite (false=indices, true=table)
+        overwrite_table: bool,
+    },
+
+    /// Shuffle bits from qwords using byte indices into mask
+    /// VPSHUFBITQMB
+    VShuffleBitQM {
+        dst: VReg,
+        src: VReg,
+        indices: VReg,
+        width: VecWidth,
+    },
+
+    /// BFloat16 dot product: dst = acc + dot(bf16_to_f32(src1), bf16_to_f32(src2))
+    /// VDPBF16PS
+    VDotProductBF16 {
+        dst: VReg,
+        acc: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: VecWidth,
+    },
+
+    /// Convert FP32 to BFloat16
+    /// VCVTNEPS2BF16, VCVTNE2PS2BF16
+    VCvtFP32ToBF16 {
+        dst: VReg,
+        src1: VReg,
+        src2: Option<VReg>,
+        width: VecWidth,
+    },
+
+    /// Convert BFloat16 to FP32
+    VCvtBF16ToFP32 {
+        dst: VReg,
+        src: VReg,
+        width: VecWidth,
+    },
+
+    /// FP16 arithmetic operations
+    /// VADDPH, VSUBPH, VMULPH, VDIVPH
+    VFP16Arith {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        op: Avx10FP16Op,
+        width: VecWidth,
+    },
+
+    // ========================================================================
+    // AVX10.2 OPERATIONS
+    // ========================================================================
+    /// Saturating FP to int conversion
+    /// VCVTTPS2IBS, VCVTTPS2IUBS, VCVTTPD2QQS, VCVTTPD2UQQS
+    VCvtFpToIntSat {
+        dst: VReg,
+        src: VReg,
+        fp_elem: VecElementType,
+        int_elem: VecElementType,
+        width: VecWidth,
+        signed: bool,
+    },
+
+    /// VMINMAX with explicit predicate
+    /// VMINMAXPS, VMINMAXPD, VMINMAXSS, VMINMAXSD
+    VMinMax {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        width: VecWidth,
+        /// Immediate encoding the min/max selection
+        imm: u8,
+    },
+
+    /// Multiple packed sum of absolute differences
+    /// VMPSADBW
+    VMpsadbw {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: VecWidth,
+        imm: u8,
+    },
+
+    /// AVX10.2 media acceleration dot products
+    /// VPDPBSSD/S, VPDPBSUD/S, VPDPBUUD/S (byte variants)
+    /// VPDPWSUD/S, VPDPWUSD/S, VPDPWUUD/S (word variants)
+    VDotProductExt {
+        dst: VReg,
+        acc: VReg,
+        src1: VReg,
+        src2: VReg,
+        src_elem: VecElementType,
+        acc_elem: VecElementType,
+        width: VecWidth,
+        /// src1 signedness: true=signed, false=unsigned
+        src1_signed: bool,
+        /// src2 signedness: true=signed, false=unsigned
+        src2_signed: bool,
+        saturate: bool,
+    },
+
     // ========================================================================
     // FLAG OPERATIONS
     // ========================================================================
@@ -1065,6 +1247,21 @@ impl OpKind {
             | OpKind::VShuffle { dst, .. }
             | OpKind::VLoad { dst, .. }
             | OpKind::VBroadcast { dst, .. }
+            | OpKind::VMin { dst, .. }
+            | OpKind::VFma { dst, .. }
+            | OpKind::VDotProduct { dst, .. }
+            | OpKind::VMultiplyAdd52 { dst, .. }
+            | OpKind::VPopcnt { dst, .. }
+            | OpKind::VPermute { dst, .. }
+            | OpKind::VShuffleBitQM { dst, .. }
+            | OpKind::VDotProductBF16 { dst, .. }
+            | OpKind::VCvtFP32ToBF16 { dst, .. }
+            | OpKind::VCvtBF16ToFP32 { dst, .. }
+            | OpKind::VFP16Arith { dst, .. }
+            | OpKind::VCvtFpToIntSat { dst, .. }
+            | OpKind::VMinMax { dst, .. }
+            | OpKind::VMpsadbw { dst, .. }
+            | OpKind::VDotProductExt { dst, .. }
             | OpKind::IoIn { dst, .. }
             | OpKind::ReadFlags { dst, .. }
             | OpKind::TestCondition { dst, .. }
