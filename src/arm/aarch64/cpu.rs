@@ -1375,6 +1375,79 @@ impl AArch64Cpu {
             return Ok(CpuExit::Continue);
         }
 
+        // Floating-point conditional compare (FCCMP / FCCMPE)
+        // bits[31:24]=0001_1110, bit21=1, bits[11:10]=01
+        if (insn >> 24) & 0xFF == 0b00011110
+            && (insn >> 21) & 1 == 1
+            && (insn >> 10) & 0x3 == 0b01
+        {
+            let fp_type = (insn >> 22) & 0x3;
+            let rm = ((insn >> 16) & 0x1F) as usize;
+            let cond = ((insn >> 12) & 0xF) as u8;
+            let rn = ((insn >> 5) & 0x1F) as usize;
+            let nzcv_imm = (insn & 0xF) as u8;
+
+            let to_f64 = |bits: u128| -> Option<f64> {
+                Some(match fp_type {
+                    0b00 => f32::from_bits(bits as u32) as f64,
+                    0b01 => f64::from_bits(bits as u64),
+                    0b11 => Self::fp16_to_f32(bits as u16) as f64,
+                    _ => return None,
+                })
+            };
+            let (a, b) = match (to_f64(self.v[rn]), to_f64(self.v[rm])) {
+                (Some(a), Some(b)) => (a, b),
+                _ => return Err(ArmError::UndefinedInstruction(insn)),
+            };
+
+            if self.condition_holds(cond) {
+                let (n, z, c, v) = if a.is_nan() || b.is_nan() {
+                    (false, false, true, true)
+                } else if a == b {
+                    (false, true, true, false)
+                } else if a < b {
+                    (true, false, false, false)
+                } else {
+                    (false, false, true, false)
+                };
+                self.set_nzcv(n, z, c, v);
+            } else {
+                self.set_n(nzcv_imm & 0b1000 != 0);
+                self.set_z(nzcv_imm & 0b0100 != 0);
+                self.set_c(nzcv_imm & 0b0010 != 0);
+                self.set_v(nzcv_imm & 0b0001 != 0);
+            }
+            return Ok(CpuExit::Continue);
+        }
+
+        // Floating-point conditional select (FCSEL)
+        // bits[31:24]=0001_1110, bit21=1, bits[11:10]=11
+        if (insn >> 24) & 0xFF == 0b00011110
+            && (insn >> 21) & 1 == 1
+            && (insn >> 10) & 0x3 == 0b11
+        {
+            let fp_type = (insn >> 22) & 0x3;
+            let rm = ((insn >> 16) & 0x1F) as usize;
+            let cond = ((insn >> 12) & 0xF) as u8;
+            let rn = ((insn >> 5) & 0x1F) as usize;
+            let rd = (insn & 0x1F) as usize;
+
+            let width: u32 = match fp_type {
+                0b00 => 32,
+                0b01 => 64,
+                0b11 => 16,
+                _ => return Err(ArmError::UndefinedInstruction(insn)),
+            };
+            let src = if self.condition_holds(cond) {
+                self.v[rn]
+            } else {
+                self.v[rm]
+            };
+            let mask = (1u128 << width) - 1;
+            self.v[rd] = src & mask; // scalar result, upper bits zeroed
+            return Ok(CpuExit::Continue);
+        }
+
         // FMOV (general) - move between FP and general registers
         // bits[31] = sf
         // bits[30:24] = 0011110
@@ -2729,182 +2802,233 @@ impl AArch64Cpu {
         let rm = ((insn >> 16) & 0x1F) as usize;
         let rn = ((insn >> 5) & 0x1F) as usize;
         let rd = (insn & 0x1F) as usize;
+        let scalar = ((insn >> 24) & 0x1F) == 0b11110;
 
-        if opcode == 0b11010 && ((insn >> 23) & 1) == 0 {
-            return self.exec_simd_fp_add_uniform(insn);
+        // Floating-point three-same opcodes (0b11000..=0b11111).
+        if opcode >= 0b11000 {
+            return self.exec_simd_three_same_fp(insn, scalar);
         }
 
-        let is_fp = opcode >= 0b11000;
-        let esize = if is_fp {
-            if size & 1 == 0 {
-                4
-            } else {
-                8
+        // Logical operations (opcode 0b00011) act on the whole register; the
+        // `size` field selects the operation rather than the element size.
+        if opcode == 0b00011 {
+            let n1 = self.v[rn];
+            let n2 = self.v[rm];
+            let dd = self.v[rd];
+            let result = match (u, size) {
+                (0, 0b00) => n1 & n2,                // AND
+                (0, 0b01) => n1 & !n2,               // BIC
+                (0, 0b10) => n1 | n2,                // ORR
+                (0, 0b11) => n1 | !n2,               // ORN
+                (1, 0b00) => n1 ^ n2,                // EOR
+                (1, 0b01) => n2 ^ (dd & (n2 ^ n1)),  // BSL
+                (1, 0b10) => dd ^ ((dd ^ n1) & n2),  // BIT
+                (1, 0b11) => dd ^ ((dd ^ n1) & !n2), // BIF
+                _ => unreachable!(),
+            };
+            let mask = if q == 1 { u128::MAX } else { 0xFFFF_FFFF_FFFF_FFFF };
+            self.v[rd] = result & mask;
+            return Ok(CpuExit::Continue);
+        }
+
+        let bits = 8u32 << size; // 8, 16, 32 or 64
+        let esize = (bits / 8) as usize;
+
+        // Reject UNDEFINED (opcode, size) combinations. These integer opcodes
+        // have no 64-bit (size==0b11) vector form.
+        let no_64 = matches!(
+            opcode,
+            0b00000 | 0b00010 | 0b00100 | 0b01100 | 0b01101 | 0b01110 | 0b01111 | 0b10010 | 0b10100
+                | 0b10101
+        );
+        if size == 0b11 && no_64 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+        // 64-bit elements need the 2D (Q==1) arrangement; "1D" is not a valid
+        // vector form. (Scalar uses a single element and is handled separately.)
+        if size == 0b11 && q == 0 && !scalar {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+        match opcode {
+            0b10011 => {
+                // MUL: no 64-bit form; PMUL: 8-bit only.
+                if u == 0 && size == 0b11 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+                if u == 1 && size != 0b00 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
             }
+            0b10110 => {
+                // SQDMULH/SQRDMULH: 16- or 32-bit only.
+                if size == 0b00 || size == 0b11 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+            }
+            0b10111 => {
+                // ADDP is U==0 only; U==1 at this opcode is unallocated.
+                if u == 1 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+            }
+            _ => {}
+        }
+
+        let datasize = if scalar {
+            esize
+        } else if q == 1 {
+            16
         } else {
-            1usize << size
+            8
         };
-        let datasize = if q == 1 { 16 } else { 8 };
         let elements = datasize / esize;
+
+        // SMAXP/SMINP/ADDP take their operands pairwise from the Vn:Vm concat.
+        let pairwise = matches!(opcode, 0b10100 | 0b10101 | 0b10111);
 
         let src1 = self.v[rn].to_le_bytes();
         let src2 = self.v[rm].to_le_bytes();
+        let old_d = self.v[rd].to_le_bytes();
         let mut dst = [0u8; 16];
 
-        for e in 0..elements {
-            let offset = e * esize;
+        let mut concat = [0u8; 32];
+        if pairwise {
+            concat[..datasize].copy_from_slice(&src1[..datasize]);
+            concat[datasize..datasize * 2].copy_from_slice(&src2[..datasize]);
+        }
 
-            match esize {
-                1 => {
-                    let a = src1[offset];
-                    let b = src2[offset];
-                    dst[offset] = match (u, opcode) {
-                        (0, 0b10000) => a.wrapping_add(b), // ADD
-                        (1, 0b10000) => a.wrapping_sub(b), // SUB
-                        (0, 0b00011) => a & b,             // AND
-                        (1, 0b00011) => a ^ b,             // EOR
-                        _ => a,
-                    };
-                }
-                2 => {
-                    let a = u16::from_le_bytes([src1[offset], src1[offset + 1]]);
-                    let b = u16::from_le_bytes([src2[offset], src2[offset + 1]]);
-                    let result = match (u, opcode) {
-                        (0, 0b10000) => a.wrapping_add(b),
-                        (1, 0b10000) => a.wrapping_sub(b),
-                        (0, 0b10011) => a.wrapping_mul(b), // MUL
-                        (0, 0b00011) => a & b,
-                        (1, 0b00011) => a ^ b,
-                        _ => a,
-                    };
-                    let bytes = result.to_le_bytes();
-                    dst[offset..offset + 2].copy_from_slice(&bytes);
-                }
-                4 => {
-                    // Could be integer or FP depending on opcode
-                    if opcode >= 0b11000 {
-                        // FP operations
-                        let a = f32::from_le_bytes([
-                            src1[offset],
-                            src1[offset + 1],
-                            src1[offset + 2],
-                            src1[offset + 3],
-                        ]);
-                        let b = f32::from_le_bytes([
-                            src2[offset],
-                            src2[offset + 1],
-                            src2[offset + 2],
-                            src2[offset + 3],
-                        ]);
-                        let result = match (u, opcode) {
-                            (0, 0b11010) => a + b,    // FADD
-                            (1, 0b11010) => a - b,    // FSUB
-                            (0, 0b11011) => a * b,    // FMUL
-                            (1, 0b11111) => a / b,    // FDIV
-                            (0, 0b11110) => a.max(b), // FMAX
-                            (1, 0b11110) => a.min(b), // FMIN
-                            _ => a,
-                        };
-                        let bytes = result.to_le_bytes();
-                        dst[offset..offset + 4].copy_from_slice(&bytes);
-                    } else {
-                        // Integer operations
-                        let a = u32::from_le_bytes([
-                            src1[offset],
-                            src1[offset + 1],
-                            src1[offset + 2],
-                            src1[offset + 3],
-                        ]);
-                        let b = u32::from_le_bytes([
-                            src2[offset],
-                            src2[offset + 1],
-                            src2[offset + 2],
-                            src2[offset + 3],
-                        ]);
-                        let result = match (u, opcode) {
-                            (0, 0b10000) => a.wrapping_add(b),
-                            (1, 0b10000) => a.wrapping_sub(b),
-                            (0, 0b10011) => a.wrapping_mul(b),
-                            (0, 0b00011) => a & b,
-                            (1, 0b00011) => a ^ b,
-                            _ => a,
-                        };
-                        let bytes = result.to_le_bytes();
-                        dst[offset..offset + 4].copy_from_slice(&bytes);
-                    }
-                }
-                8 => {
-                    if opcode >= 0b11000 {
-                        // FP double
-                        let a = f64::from_le_bytes([
-                            src1[offset],
-                            src1[offset + 1],
-                            src1[offset + 2],
-                            src1[offset + 3],
-                            src1[offset + 4],
-                            src1[offset + 5],
-                            src1[offset + 6],
-                            src1[offset + 7],
-                        ]);
-                        let b = f64::from_le_bytes([
-                            src2[offset],
-                            src2[offset + 1],
-                            src2[offset + 2],
-                            src2[offset + 3],
-                            src2[offset + 4],
-                            src2[offset + 5],
-                            src2[offset + 6],
-                            src2[offset + 7],
-                        ]);
-                        let result = match (u, opcode) {
-                            (0, 0b11010) => a + b,
-                            (1, 0b11010) => a - b,
-                            (0, 0b11011) => a * b,
-                            (1, 0b11111) => a / b,
-                            (0, 0b11110) => a.max(b),
-                            (1, 0b11110) => a.min(b),
-                            _ => a,
-                        };
-                        let bytes = result.to_le_bytes();
-                        dst[offset..offset + 8].copy_from_slice(&bytes);
-                    } else {
-                        // Integer 64-bit
-                        let a = u64::from_le_bytes([
-                            src1[offset],
-                            src1[offset + 1],
-                            src1[offset + 2],
-                            src1[offset + 3],
-                            src1[offset + 4],
-                            src1[offset + 5],
-                            src1[offset + 6],
-                            src1[offset + 7],
-                        ]);
-                        let b = u64::from_le_bytes([
-                            src2[offset],
-                            src2[offset + 1],
-                            src2[offset + 2],
-                            src2[offset + 3],
-                            src2[offset + 4],
-                            src2[offset + 5],
-                            src2[offset + 6],
-                            src2[offset + 7],
-                        ]);
-                        let result = match (u, opcode) {
-                            (0, 0b10000) => a.wrapping_add(b),
-                            (1, 0b10000) => a.wrapping_sub(b),
-                            (0, 0b00011) => a & b,
-                            (1, 0b00011) => a ^ b,
-                            _ => a,
-                        };
-                        let bytes = result.to_le_bytes();
-                        dst[offset..offset + 8].copy_from_slice(&bytes);
-                    }
-                }
-                _ => {}
-            }
+        for e in 0..elements {
+            let off = e * esize;
+            let (a, b) = if pairwise {
+                (
+                    read_elem(&concat, (2 * e) * esize, esize),
+                    read_elem(&concat, (2 * e + 1) * esize, esize),
+                )
+            } else {
+                (read_elem(&src1, off, esize), read_elem(&src2, off, esize))
+            };
+            let d = read_elem(&old_d, off, esize);
+            let res = adv_simd_three_same_int(u, opcode, bits, a, b, d);
+            write_elem(&mut dst, off, esize, res);
         }
 
         self.v[rd] = u128::from_le_bytes(dst);
+        Ok(CpuExit::Continue)
+    }
+
+    /// Execute an Advanced SIMD three-same floating-point instruction.
+    fn exec_simd_three_same_fp(&mut self, insn: u32, scalar: bool) -> Result<CpuExit, ArmError> {
+        let q = (insn >> 30) & 1;
+        let u = (insn >> 29) & 1;
+        let size = (insn >> 22) & 0x3;
+        let opcode = (insn >> 11) & 0x1F;
+        let rm = ((insn >> 16) & 0x1F) as usize;
+        let rn = ((insn >> 5) & 0x1F) as usize;
+        let rd = (insn & 0x1F) as usize;
+
+        let sz = size & 1; // 0 => f32, 1 => f64
+        let a_bit = (size >> 1) & 1;
+
+        // FEAT_FHM: FMLAL/FMLSL (U==0, opcode 0b11101) and FMLAL2/FMLSL2
+        // (U==1, opcode 0b11001) widen FP16 lanes into FP32 accumulator lanes.
+        // These are only defined for the vector (non-scalar) form.
+        if !scalar && ((u == 0 && opcode == 0b11101) || (u == 1 && opcode == 0b11001)) {
+            return self.exec_fmlal(insn);
+        }
+
+        let kind = match fp_three_same_decode(u, a_bit, opcode) {
+            Some(k) => k,
+            None => return Err(ArmError::UndefinedInstruction(insn)),
+        };
+        let esize = if sz == 0 { 4usize } else { 8 };
+
+        // A 64-bit vector cannot hold a single f64 element (needs 2D / Q==1).
+        if sz == 1 && q == 0 && !scalar {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+
+        let datasize = if scalar {
+            esize
+        } else if q == 1 {
+            16
+        } else {
+            8
+        };
+        let elements = datasize / esize;
+
+        let pairwise = matches!(
+            kind,
+            FpKind::Addp | FpKind::Maxp | FpKind::Minp | FpKind::MaxNmp | FpKind::MinNmp
+        );
+
+        let src1 = self.v[rn].to_le_bytes();
+        let src2 = self.v[rm].to_le_bytes();
+        let old_d = self.v[rd].to_le_bytes();
+        let mut dst = [0u8; 16];
+
+        let mut concat = [0u8; 32];
+        if pairwise {
+            concat[..datasize].copy_from_slice(&src1[..datasize]);
+            concat[datasize..datasize * 2].copy_from_slice(&src2[..datasize]);
+        }
+
+        for e in 0..elements {
+            let off = e * esize;
+            let (a, b) = if pairwise {
+                (
+                    read_elem(&concat, (2 * e) * esize, esize),
+                    read_elem(&concat, (2 * e + 1) * esize, esize),
+                )
+            } else {
+                (read_elem(&src1, off, esize), read_elem(&src2, off, esize))
+            };
+            let d = read_elem(&old_d, off, esize);
+            let res = if sz == 0 {
+                fp_three_same_f32(kind, a as u32, b as u32, d as u32) as u64
+            } else {
+                fp_three_same_f64(kind, a, b, d)
+            };
+            write_elem(&mut dst, off, esize, res);
+        }
+
+        self.v[rd] = u128::from_le_bytes(dst);
+        Ok(CpuExit::Continue)
+    }
+
+    /// FMLAL/FMLSL/FMLAL2/FMLSL2 (FEAT_FHM): widening FP16 fused multiply-add.
+    /// Each FP32 result lane accumulates the exact product of two FP16 source
+    /// lanes. The non-`2` forms take the lower half of the FP16 lanes, the `2`
+    /// forms the upper half. `a` (size<1>) selects add vs subtract.
+    fn exec_fmlal(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let q = (insn >> 30) & 1;
+        let u = (insn >> 29) & 1;
+        let sub = ((insn >> 23) & 1) != 0; // FMLSL / FMLSL2
+        let rm = ((insn >> 16) & 0x1F) as usize;
+        let rn = ((insn >> 5) & 0x1F) as usize;
+        let rd = (insn & 0x1F) as usize;
+
+        let elements = if q == 1 { 4 } else { 2 };
+        let part2 = u == 1; // FMLAL2 / FMLSL2 use the upper FP16 lanes
+        let sel = if part2 { elements } else { 0 };
+
+        let vn = self.v[rn];
+        let vm = self.v[rm];
+        let vd = self.v[rd];
+
+        let mut result: u128 = 0;
+        for e in 0..elements {
+            let lane = e + sel;
+            let h1 = ((vn >> (16 * lane)) & 0xFFFF) as u16;
+            let h2 = ((vm >> (16 * lane)) & 0xFFFF) as u16;
+            let f1 = Self::fp16_to_f32(h1);
+            let f2 = Self::fp16_to_f32(h2);
+            let acc = f32::from_bits((vd >> (32 * e)) as u32);
+            let prod = f1 * f2;
+            let r = if sub { acc - prod } else { acc + prod };
+            result |= (r.to_bits() as u128) << (32 * e);
+        }
+        // Q==0 leaves the upper 64 bits zero.
+        self.v[rd] = result;
         Ok(CpuExit::Continue)
     }
 
@@ -5060,7 +5184,10 @@ impl AArch64Cpu {
         let rn = ((insn >> 5) & 0x1F) as u8;
         let rd = (insn & 0x1F) as u8;
 
-        let datasize = if sf != 0 { 64 } else { 32 };
+        // For 32-bit forms a shift amount with bit 5 set is UNDEFINED.
+        if sf == 0 && (imm6 & 0x20) != 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
 
         let operand1 = if sf != 0 {
             self.get_x(rn)
@@ -5074,13 +5201,24 @@ impl AArch64Cpu {
             self.get_w(rm) as u64
         };
 
-        // Apply shift
-        operand2 = match shift {
-            0b00 => operand2 << imm6,                   // LSL
-            0b01 => operand2 >> imm6,                   // LSR
-            0b10 => ((operand2 as i64) >> imm6) as u64, // ASR
-            0b11 => operand2.rotate_right(imm6),        // ROR
-            _ => unreachable!(),
+        // Apply shift at the correct datasize (32 or 64 bits).
+        operand2 = if sf != 0 {
+            match shift {
+                0b00 => operand2 << imm6,                   // LSL
+                0b01 => operand2 >> imm6,                   // LSR
+                0b10 => ((operand2 as i64) >> imm6) as u64, // ASR
+                0b11 => operand2.rotate_right(imm6),        // ROR
+                _ => unreachable!(),
+            }
+        } else {
+            let v = operand2 as u32;
+            (match shift {
+                0b00 => v << imm6,                   // LSL
+                0b01 => v >> imm6,                   // LSR
+                0b10 => ((v as i32) >> imm6) as u32, // ASR
+                0b11 => v.rotate_right(imm6),        // ROR
+                _ => unreachable!(),
+            }) as u64
         };
 
         if sf == 0 {
@@ -5136,6 +5274,12 @@ impl AArch64Cpu {
             let shift = ((insn >> 22) & 0x3) as u32;
             let imm6 = ((insn >> 10) & 0x3F) as u32;
 
+            // ROR is not a valid shift for add/sub, and 32-bit forms with bit 5
+            // of the shift amount set are UNDEFINED.
+            if shift == 0b11 || (sf == 0 && (imm6 & 0x20) != 0) {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
+
             let operand1 = if sf != 0 {
                 self.get_x(rn)
             } else {
@@ -5150,8 +5294,22 @@ impl AArch64Cpu {
 
             operand2 = match shift {
                 0b00 => operand2 << imm6,
-                0b01 => operand2 >> imm6,
-                0b10 => ((operand2 as i64) >> imm6) as u64,
+                0b01 => {
+                    if sf != 0 {
+                        operand2 >> imm6
+                    } else {
+                        // 32-bit LSR: shift the 32-bit value, not the zero-extended u64.
+                        ((operand2 as u32) >> imm6) as u64
+                    }
+                }
+                0b10 => {
+                    if sf != 0 {
+                        ((operand2 as i64) >> imm6) as u64
+                    } else {
+                        // 32-bit ASR: sign-extend from bit 31 before shifting.
+                        (((operand2 as u32 as i32 as i64) >> imm6) as u64)
+                    }
+                }
                 _ => return Err(ArmError::UndefinedInstruction(insn)),
             };
 
@@ -6148,6 +6306,550 @@ fn crc32c(crc: u64, data: u64, size: u32) -> u64 {
     }
 
     crc as u64
+}
+
+// =============================================================================
+// Advanced SIMD (NEON) element helpers
+//
+// These operate on a single vector element whose value occupies the low
+// `bits` bits of a u64 (`bits` in {8, 16, 32, 64}). They implement the exact
+// per-element semantics from the ARM Architecture Reference Manual and are
+// verified differentially against qemu-user (tests/arm_diff.rs).
+// =============================================================================
+
+/// Mask covering the low `bits` bits.
+#[inline]
+fn elem_mask(bits: u32) -> u64 {
+    if bits >= 64 {
+        u64::MAX
+    } else {
+        (1u64 << bits) - 1
+    }
+}
+
+/// Sign-extend the low `bits` bits of `v` to i128.
+#[inline]
+fn sext_elem(v: u64, bits: u32) -> i128 {
+    let v = v & elem_mask(bits);
+    let shift = 64 - bits;
+    (((v << shift) as i64) >> shift) as i128
+}
+
+/// Zero-extend the low `bits` bits of `v` to u128.
+#[inline]
+fn uext_elem(v: u64, bits: u32) -> u128 {
+    (v & elem_mask(bits)) as u128
+}
+
+/// Saturate a signed value to the `bits`-bit signed range, returned as raw bits.
+#[inline]
+fn sat_signed(v: i128, bits: u32) -> u64 {
+    let max = (1i128 << (bits - 1)) - 1;
+    let min = -(1i128 << (bits - 1));
+    (v.clamp(min, max) as u64) & elem_mask(bits)
+}
+
+/// Saturate a value to the `bits`-bit unsigned range, returned as raw bits.
+#[inline]
+fn sat_unsigned(v: i128, bits: u32) -> u64 {
+    let max = (1i128 << bits) - 1;
+    (v.clamp(0, max) as u64) & elem_mask(bits)
+}
+
+/// All-ones if `cond`, else 0, in the low `bits` bits (comparison result).
+#[inline]
+fn bool_mask(cond: bool, bits: u32) -> u64 {
+    if cond { elem_mask(bits) } else { 0 }
+}
+
+/// Shift `a` (the low `bits` bits) by the signed amount `sh` per the ARM
+/// register-shift family. `signed` selects SSHL vs USHL; `rounding` adds the
+/// round constant on right shifts (SRSHL/URSHL); `saturating` clamps left-shift
+/// overflow to the element range (SQSHL/UQSHL etc.). Returns the raw result.
+fn adv_simd_shift_reg(
+    a: u64,
+    sh: i32,
+    bits: u32,
+    signed: bool,
+    rounding: bool,
+    saturating: bool,
+) -> u64 {
+    let m = elem_mask(bits);
+    if signed {
+        let sval = sext_elem(a, bits);
+        if sh >= 0 {
+            // Left shift.
+            let s = sh as u32;
+            if s >= bits || s >= 64 {
+                if saturating {
+                    if sval == 0 {
+                        0
+                    } else {
+                        sat_signed(if sval > 0 { i128::MAX } else { i128::MIN }, bits)
+                    }
+                } else {
+                    0
+                }
+            } else {
+                let res = sval << s;
+                if saturating {
+                    sat_signed(res, bits)
+                } else {
+                    (res as u64) & m
+                }
+            }
+        } else {
+            // Right shift (arithmetic), optionally rounded.
+            let rsh = (-sh) as u32;
+            if rsh > bits {
+                // Round constant dominates: rounded -> 0, unrounded -> sign.
+                if rounding {
+                    0
+                } else if sval < 0 {
+                    m
+                } else {
+                    0
+                }
+            } else {
+                let round = if rounding { 1i128 << (rsh - 1) } else { 0 };
+                let res = (sval + round) >> rsh;
+                (res as u64) & m
+            }
+        }
+    } else {
+        let uval = uext_elem(a, bits) as i128;
+        if sh >= 0 {
+            let s = sh as u32;
+            if s >= bits || s >= 64 {
+                if saturating {
+                    if uval == 0 { 0 } else { m }
+                } else {
+                    0
+                }
+            } else {
+                let res = uval << s;
+                if saturating {
+                    sat_unsigned(res, bits)
+                } else {
+                    (res as u64) & m
+                }
+            }
+        } else {
+            let rsh = (-sh) as u32;
+            if rsh > bits {
+                0
+            } else {
+                let round = if rounding { 1i128 << (rsh - 1) } else { 0 };
+                let res = (uval + round) >> rsh;
+                (res as u64) & m
+            }
+        }
+    }
+}
+
+/// Polynomial (carry-less) multiply of two 8-bit values, low 8 bits of result.
+#[inline]
+fn poly_mul_8(a: u64, b: u64) -> u64 {
+    let mut result: u64 = 0;
+    for i in 0..8 {
+        if (a >> i) & 1 != 0 {
+            result ^= b << i;
+        }
+    }
+    result & 0xFF
+}
+
+/// Compute one element of an Advanced SIMD three-same *integer* operation.
+///
+/// `a`, `b` are the source elements (low `bits` bits); `d` is the current
+/// destination element (used by accumulating ops MLA/MLS/SABA/UABA). `u` is the
+/// U bit and `opcode` the 5-bit opcode. For pairwise opcodes (SMAXP/SMINP/ADDP)
+/// the caller supplies the adjacent pair as `(a, b)`.
+fn adv_simd_three_same_int(u: u32, opcode: u32, bits: u32, a: u64, b: u64, d: u64) -> u64 {
+    let m = elem_mask(bits);
+    let sa = sext_elem(a, bits);
+    let sb = sext_elem(b, bits);
+    let ua = uext_elem(a, bits) as i128;
+    let ub = uext_elem(b, bits) as i128;
+    let ud = uext_elem(d, bits);
+
+    match opcode {
+        0b00000 => {
+            // SHADD / UHADD
+            if u == 0 {
+                ((sa + sb) >> 1) as u64 & m
+            } else {
+                ((ua + ub) >> 1) as u64 & m
+            }
+        }
+        0b00010 => {
+            // SRHADD / URHADD
+            if u == 0 {
+                ((sa + sb + 1) >> 1) as u64 & m
+            } else {
+                ((ua + ub + 1) >> 1) as u64 & m
+            }
+        }
+        0b00100 => {
+            // SHSUB / UHSUB
+            if u == 0 {
+                ((sa - sb) >> 1) as u64 & m
+            } else {
+                ((ua - ub) >> 1) as u64 & m
+            }
+        }
+        0b00001 => {
+            // SQADD / UQADD
+            if u == 0 {
+                sat_signed(sa + sb, bits)
+            } else {
+                sat_unsigned(ua + ub, bits)
+            }
+        }
+        0b00101 => {
+            // SQSUB / UQSUB
+            if u == 0 {
+                sat_signed(sa - sb, bits)
+            } else {
+                sat_unsigned(ua - ub, bits)
+            }
+        }
+        0b00110 => {
+            // CMGT / CMHI
+            let c = if u == 0 { sa > sb } else { ua > ub };
+            bool_mask(c, bits)
+        }
+        0b00111 => {
+            // CMGE / CMHS
+            let c = if u == 0 { sa >= sb } else { ua >= ub };
+            bool_mask(c, bits)
+        }
+        0b01000 | 0b01001 | 0b01010 | 0b01011 => {
+            // SSHL/USHL (1000), SQSHL/UQSHL (1001), SRSHL/URSHL (1010),
+            // SQRSHL/UQRSHL (1011). Shift amount is the low byte of b, signed.
+            let sh = (b as u8 as i8) as i32;
+            let rounding = opcode == 0b01010 || opcode == 0b01011;
+            let saturating = opcode == 0b01001 || opcode == 0b01011;
+            adv_simd_shift_reg(a, sh, bits, u == 0, rounding, saturating)
+        }
+        0b01100 => {
+            // SMAX / UMAX  (also SMAXP/UMAXP share this op via pairwise sourcing)
+            if u == 0 {
+                (sa.max(sb) as u64) & m
+            } else {
+                (ua.max(ub) as u64) & m
+            }
+        }
+        0b01101 => {
+            // SMIN / UMIN
+            if u == 0 {
+                (sa.min(sb) as u64) & m
+            } else {
+                (ua.min(ub) as u64) & m
+            }
+        }
+        0b01110 => {
+            // SABD / UABD
+            if u == 0 {
+                ((sa - sb).abs() as u64) & m
+            } else {
+                ((ua - ub).abs() as u64) & m
+            }
+        }
+        0b01111 => {
+            // SABA / UABA  (accumulate absolute difference)
+            let abd = if u == 0 { (sa - sb).abs() } else { (ua - ub).abs() };
+            ((ud as i128 + abd) as u64) & m
+        }
+        0b10000 => {
+            // ADD / SUB
+            if u == 0 {
+                ((ua + ub) as u64) & m
+            } else {
+                ((ua - ub) as u64) & m
+            }
+        }
+        0b10001 => {
+            // CMTST / CMEQ
+            let c = if u == 0 { (ua & ub) != 0 } else { ua == ub };
+            bool_mask(c, bits)
+        }
+        0b10010 => {
+            // MLA / MLS
+            let prod = (ua * ub) as u64;
+            if u == 0 {
+                (ud as u64).wrapping_add(prod) & m
+            } else {
+                (ud as u64).wrapping_sub(prod) & m
+            }
+        }
+        0b10011 => {
+            // MUL / PMUL
+            if u == 0 {
+                ((ua * ub) as u64) & m
+            } else {
+                poly_mul_8(a, b)
+            }
+        }
+        0b10100 => {
+            // SMAXP / UMAXP (pairwise max -- same kernel as SMAX/UMAX)
+            if u == 0 {
+                (sa.max(sb) as u64) & m
+            } else {
+                (ua.max(ub) as u64) & m
+            }
+        }
+        0b10101 => {
+            // SMINP / UMINP
+            if u == 0 {
+                (sa.min(sb) as u64) & m
+            } else {
+                (ua.min(ub) as u64) & m
+            }
+        }
+        0b10110 => {
+            // SQDMULH / SQRDMULH (signed saturating doubling multiply high)
+            let prod = sa * sb;
+            let rounded = if u == 1 {
+                prod * 2 + (1i128 << (bits - 1))
+            } else {
+                prod * 2
+            };
+            sat_signed(rounded >> bits, bits)
+        }
+        0b10111 => {
+            // ADDP (pairwise add)
+            ((ua + ub) as u64) & m
+        }
+        _ => a & m,
+    }
+}
+
+/// Read an `esize`-byte little-endian element from `bytes` at `off`.
+#[inline]
+fn read_elem(bytes: &[u8], off: usize, esize: usize) -> u64 {
+    let mut v = 0u64;
+    for i in 0..esize {
+        v |= (bytes[off + i] as u64) << (8 * i);
+    }
+    v
+}
+
+/// Write the low `esize` bytes of `val` little-endian into `bytes` at `off`.
+#[inline]
+fn write_elem(bytes: &mut [u8], off: usize, esize: usize, val: u64) {
+    for i in 0..esize {
+        bytes[off + i] = (val >> (8 * i)) as u8;
+    }
+}
+
+/// Advanced SIMD three-same floating-point operation kind.
+#[derive(Clone, Copy, PartialEq)]
+enum FpKind {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Mulx,
+    Mla,
+    Mls,
+    Max,
+    Min,
+    MaxNm,
+    MinNm,
+    CmEq,
+    CmGe,
+    CmGt,
+    AcGe,
+    AcGt,
+    Abd,
+    Recps,
+    Rsqrts,
+    Addp,
+    Maxp,
+    Minp,
+    MaxNmp,
+    MinNmp,
+}
+
+/// Decode the FP three-same opcode from (U, size<1>, opcode) into an `FpKind`.
+fn fp_three_same_decode(u: u32, a: u32, opcode: u32) -> Option<FpKind> {
+    use FpKind::*;
+    Some(match (u, a, opcode) {
+        (0, 0, 0b11000) => MaxNm,
+        (0, 0, 0b11001) => Mla,
+        (0, 0, 0b11010) => Add,
+        (0, 0, 0b11011) => Mulx,
+        (0, 0, 0b11100) => CmEq,
+        (0, 0, 0b11110) => Max,
+        (0, 0, 0b11111) => Recps,
+        (0, 1, 0b11000) => MinNm,
+        (0, 1, 0b11001) => Mls,
+        (0, 1, 0b11010) => Sub,
+        (0, 1, 0b11110) => Min,
+        (0, 1, 0b11111) => Rsqrts,
+        (1, 0, 0b11000) => MaxNmp,
+        (1, 0, 0b11010) => Addp,
+        (1, 0, 0b11011) => Mul,
+        (1, 0, 0b11100) => CmGe,
+        (1, 0, 0b11101) => AcGe,
+        (1, 0, 0b11110) => Maxp,
+        (1, 0, 0b11111) => Div,
+        (1, 1, 0b11000) => MinNmp,
+        (1, 1, 0b11010) => Abd,
+        (1, 1, 0b11100) => CmGt,
+        (1, 1, 0b11101) => AcGt,
+        (1, 1, 0b11110) => Minp,
+        _ => return None,
+    })
+}
+
+/// FMAX per ARM: NaN propagates; +0 is greater than -0.
+#[inline]
+fn fp_max_f32(a: f32, b: f32) -> f32 {
+    if a.is_nan() || b.is_nan() {
+        f32::NAN
+    } else if a == 0.0 && b == 0.0 {
+        if a.is_sign_positive() { a } else { b }
+    } else {
+        a.max(b)
+    }
+}
+#[inline]
+fn fp_min_f32(a: f32, b: f32) -> f32 {
+    if a.is_nan() || b.is_nan() {
+        f32::NAN
+    } else if a == 0.0 && b == 0.0 {
+        if a.is_sign_negative() { a } else { b }
+    } else {
+        a.min(b)
+    }
+}
+#[inline]
+fn fp_max_f64(a: f64, b: f64) -> f64 {
+    if a.is_nan() || b.is_nan() {
+        f64::NAN
+    } else if a == 0.0 && b == 0.0 {
+        if a.is_sign_positive() { a } else { b }
+    } else {
+        a.max(b)
+    }
+}
+#[inline]
+fn fp_min_f64(a: f64, b: f64) -> f64 {
+    if a.is_nan() || b.is_nan() {
+        f64::NAN
+    } else if a == 0.0 && b == 0.0 {
+        if a.is_sign_negative() { a } else { b }
+    } else {
+        a.min(b)
+    }
+}
+
+/// Compute one f32 element of an Advanced SIMD three-same FP operation.
+fn fp_three_same_f32(kind: FpKind, a: u32, b: u32, d: u32) -> u32 {
+    use FpKind::*;
+    let x = f32::from_bits(a);
+    let y = f32::from_bits(b);
+    let acc = f32::from_bits(d);
+    let mask = |c: bool| if c { u32::MAX } else { 0 };
+    match kind {
+        Add => (x + y).to_bits(),
+        Sub => (x - y).to_bits(),
+        Mul => (x * y).to_bits(),
+        Div => (x / y).to_bits(),
+        Mulx => {
+            if (x == 0.0 && y.is_infinite()) || (x.is_infinite() && y == 0.0) {
+                (2.0f32).copysign(x).copysign(y).to_bits()
+            } else {
+                (x * y).to_bits()
+            }
+        }
+        Mla => (acc + x * y).to_bits(),
+        Mls => (acc - x * y).to_bits(),
+        Max | Maxp => fp_max_f32(x, y).to_bits(),
+        Min | Minp => fp_min_f32(x, y).to_bits(),
+        MaxNm | MaxNmp => {
+            if x.is_nan() {
+                y.to_bits()
+            } else if y.is_nan() {
+                x.to_bits()
+            } else {
+                fp_max_f32(x, y).to_bits()
+            }
+        }
+        MinNm | MinNmp => {
+            if x.is_nan() {
+                y.to_bits()
+            } else if y.is_nan() {
+                x.to_bits()
+            } else {
+                fp_min_f32(x, y).to_bits()
+            }
+        }
+        CmEq => mask(x == y),
+        CmGe => mask(x >= y),
+        CmGt => mask(x > y),
+        AcGe => mask(x.abs() >= y.abs()),
+        AcGt => mask(x.abs() > y.abs()),
+        Abd => (x - y).abs().to_bits(),
+        Recps => (2.0f32 - x * y).to_bits(),
+        Rsqrts => ((3.0f32 - x * y) / 2.0).to_bits(),
+        Addp => (x + y).to_bits(),
+    }
+}
+
+/// Compute one f64 element of an Advanced SIMD three-same FP operation.
+fn fp_three_same_f64(kind: FpKind, a: u64, b: u64, d: u64) -> u64 {
+    use FpKind::*;
+    let x = f64::from_bits(a);
+    let y = f64::from_bits(b);
+    let acc = f64::from_bits(d);
+    let mask = |c: bool| if c { u64::MAX } else { 0 };
+    match kind {
+        Add => (x + y).to_bits(),
+        Sub => (x - y).to_bits(),
+        Mul => (x * y).to_bits(),
+        Div => (x / y).to_bits(),
+        Mulx => {
+            if (x == 0.0 && y.is_infinite()) || (x.is_infinite() && y == 0.0) {
+                (2.0f64).copysign(x).copysign(y).to_bits()
+            } else {
+                (x * y).to_bits()
+            }
+        }
+        Mla => (acc + x * y).to_bits(),
+        Mls => (acc - x * y).to_bits(),
+        Max | Maxp => fp_max_f64(x, y).to_bits(),
+        Min | Minp => fp_min_f64(x, y).to_bits(),
+        MaxNm | MaxNmp => {
+            if x.is_nan() {
+                y.to_bits()
+            } else if y.is_nan() {
+                x.to_bits()
+            } else {
+                fp_max_f64(x, y).to_bits()
+            }
+        }
+        MinNm | MinNmp => {
+            if x.is_nan() {
+                y.to_bits()
+            } else if y.is_nan() {
+                x.to_bits()
+            } else {
+                fp_min_f64(x, y).to_bits()
+            }
+        }
+        CmEq => mask(x == y),
+        CmGe => mask(x >= y),
+        CmGt => mask(x > y),
+        AcGe => mask(x.abs() >= y.abs()),
+        AcGt => mask(x.abs() > y.abs()),
+        Abd => (x - y).abs().to_bits(),
+        Recps => (2.0f64 - x * y).to_bits(),
+        Rsqrts => ((3.0f64 - x * y) / 2.0).to_bits(),
+        Addp => (x + y).to_bits(),
+    }
 }
 
 #[cfg(test)]

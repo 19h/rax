@@ -1,0 +1,701 @@
+//! AArch64 differential test harness: rax interpreter vs. QEMU (hardware oracle).
+//!
+//! The rax software interpreter (`src/arm/aarch64/cpu.rs`) is checked against a
+//! hardware-semantics reference produced by running each instruction under
+//! `qemu-aarch64` (user mode). The reference harness is `tools/arm-diff/oracle.c`,
+//! built on demand into a static AArch64 ELF.
+//!
+//! For each `(instruction, initial architectural state)` pair we:
+//!   1. run it on the oracle (X0..X30, SP, NZCV, V0..V31 captured), and
+//!   2. run it on the rax `AArch64Cpu` from the *identical* initial state,
+//! then compare the full register file. Any divergence is an interpreter bug.
+//!
+//! Robustness (mirrors `tests/differential.rs` for x86-vs-KVM):
+//!   - if the cross compiler or `qemu-aarch64` is unavailable, every test
+//!     self-skips (returns without failing) so the suite is green anywhere.
+//!   - only register-only instructions (no memory / branch / system) are tested;
+//!     these are exactly where the SIMD/FP semantic bugs live.
+//!
+//! Scope is intentionally exhaustive *within* a family: encodings are enumerated
+//! over their opcode/size/Q/U fields with fixed register fields, and many
+//! pseudo-random input states are driven through each.
+
+#![cfg(target_os = "linux")]
+
+use std::io::{Read, Write};
+use std::path::PathBuf;
+use std::process::{Command, Stdio};
+
+use rax::arm::{AArch64Config, AArch64Cpu, ArmCpu, CpuExit, FlatMemory};
+
+// ---------------------------------------------------------------------------
+// Wire format -- must match tools/arm-diff/oracle.c byte for byte.
+// ---------------------------------------------------------------------------
+
+/// Full architectural register file exchanged with the oracle.
+#[repr(C)]
+#[derive(Clone, Copy)]
+struct ArmState {
+    x: [u64; 31],   // X0..X30
+    sp: u64,        // SP
+    pc: u64,        // input: unused; output: post-instruction PC
+    pstate: u64,    // NZCV in bits [31:28]
+    fpsr: u64,
+    fpcr: u64,
+    v: [u64; 64],   // V0..V31 as lo/hi u64 pairs
+}
+
+impl ArmState {
+    fn zeroed() -> Self {
+        ArmState { x: [0; 31], sp: 0, pc: 0, pstate: 0, fpsr: 0, fpcr: 0, v: [0; 64] }
+    }
+    fn vreg(&self, r: usize) -> (u64, u64) {
+        (self.v[2 * r], self.v[2 * r + 1])
+    }
+    fn set_vreg(&mut self, r: usize, lo: u64, hi: u64) {
+        self.v[2 * r] = lo;
+        self.v[2 * r + 1] = hi;
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+struct InCase {
+    insn: u32,
+    flags: u32,
+    st: ArmState,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+struct OutCase {
+    st: ArmState,
+    trapped: u32,
+    valid: u32,
+}
+
+const WIRE_MAGIC: u32 = 0x314d_5241; // 'A','R','M','1'
+
+// Compile-time guarantee the layout matches the C side (808 / 808 bytes).
+const _: () = assert!(core::mem::size_of::<InCase>() == 808);
+const _: () = assert!(core::mem::size_of::<OutCase>() == 808);
+const _: () = assert!(core::mem::size_of::<ArmState>() == 800);
+
+// ---------------------------------------------------------------------------
+// Byte (de)serialisation helpers -- plain little-endian copies of the structs.
+// ---------------------------------------------------------------------------
+
+fn as_bytes<T: Copy>(v: &T) -> &[u8] {
+    unsafe { std::slice::from_raw_parts(v as *const T as *const u8, std::mem::size_of::<T>()) }
+}
+
+fn read_struct<T: Copy>(buf: &[u8], off: usize) -> T {
+    assert!(off + std::mem::size_of::<T>() <= buf.len());
+    unsafe { std::ptr::read_unaligned(buf[off..].as_ptr() as *const T) }
+}
+
+// ---------------------------------------------------------------------------
+// Oracle: build on demand, then run a whole batch through one qemu invocation.
+// ---------------------------------------------------------------------------
+
+/// Build the oracle if needed; return its path, or `None` if the toolchain is
+/// unavailable (test self-skips).
+fn oracle_path() -> Option<PathBuf> {
+    if which("qemu-aarch64").is_none() {
+        return None;
+    }
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tools/arm-diff");
+    let bin = dir.join("oracle");
+    let need_build = match (bin.metadata(), dir.join("oracle.c").metadata()) {
+        (Ok(b), Ok(c)) => match (b.modified(), c.modified()) {
+            (Ok(bm), Ok(cm)) => bm < cm,
+            _ => true,
+        },
+        _ => true,
+    };
+    if need_build {
+        let status = Command::new("bash")
+            .arg(dir.join("build.sh"))
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status();
+        match status {
+            Ok(s) if s.success() => {}
+            _ => return None, // cross compiler absent -> skip
+        }
+    }
+    if bin.exists() { Some(bin) } else { None }
+}
+
+fn which(prog: &str) -> Option<PathBuf> {
+    let path = std::env::var_os("PATH")?;
+    for dir in std::env::split_paths(&path) {
+        let cand = dir.join(prog);
+        if cand.is_file() {
+            return Some(cand);
+        }
+    }
+    None
+}
+
+/// Run `cases` through the oracle under qemu; returns one `OutCase` per input.
+fn run_oracle(oracle: &PathBuf, cases: &[(u32, ArmState)]) -> Option<Vec<OutCase>> {
+    let mut payload = Vec::with_capacity(8 + cases.len() * std::mem::size_of::<InCase>());
+    payload.extend_from_slice(&WIRE_MAGIC.to_le_bytes());
+    payload.extend_from_slice(&(cases.len() as u32).to_le_bytes());
+    for (insn, st) in cases {
+        let ic = InCase { insn: *insn, flags: 0, st: *st };
+        payload.extend_from_slice(as_bytes(&ic));
+    }
+
+    let mut child = Command::new("qemu-aarch64")
+        .arg(oracle)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .ok()?;
+    // The oracle interleaves reads and writes, so feeding the whole batch before
+    // draining stdout would deadlock once both pipe buffers fill. Write from a
+    // dedicated thread while the main thread drains stdout.
+    let mut stdin = child.stdin.take().unwrap();
+    let writer = std::thread::spawn(move || {
+        let _ = stdin.write_all(&payload);
+        // drop(stdin) closes the pipe, signalling EOF to the oracle
+    });
+    let mut out = Vec::new();
+    child.stdout.take().unwrap().read_to_end(&mut out).ok()?;
+    let _ = writer.join();
+    let status = child.wait().ok()?;
+    if !status.success() {
+        return None;
+    }
+    if out.len() < 8 {
+        return None;
+    }
+    let magic = u32::from_le_bytes([out[0], out[1], out[2], out[3]]);
+    let count = u32::from_le_bytes([out[4], out[5], out[6], out[7]]) as usize;
+    if magic != WIRE_MAGIC || count != cases.len() {
+        return None;
+    }
+    let mut res = Vec::with_capacity(count);
+    let mut off = 8;
+    for _ in 0..count {
+        res.push(read_struct::<OutCase>(&out, off));
+        off += std::mem::size_of::<OutCase>();
+    }
+    Some(res)
+}
+
+// ---------------------------------------------------------------------------
+// rax: run one instruction from an identical initial state.
+// ---------------------------------------------------------------------------
+
+/// Returns `Some(out_state)` if rax executed the instruction (CpuExit::Continue),
+/// or `None` if rax treated it as undefined / errored.
+fn run_rax(insn: u32, input: &ArmState) -> Option<ArmState> {
+    let mem = FlatMemory::new(0, 0x10_0000);
+    let mut cpu = AArch64Cpu::new(AArch64Config::default(), Box::new(mem));
+
+    for i in 0..31u8 {
+        cpu.set_gpr(i, input.x[i as usize]);
+    }
+    cpu.set_current_sp(input.sp);
+    let ps = input.pstate;
+    cpu.set_nzcv(ps & (1 << 31) != 0, ps & (1 << 30) != 0, ps & (1 << 29) != 0, ps & (1 << 28) != 0);
+    for r in 0..32u8 {
+        let (lo, hi) = input.vreg(r as usize);
+        cpu.set_simd_reg(r, lo, hi).ok()?;
+    }
+
+    cpu.write_memory(0, &insn.to_le_bytes()).ok()?;
+    cpu.set_pc(0);
+
+    match cpu.step() {
+        Ok(CpuExit::Continue) => {}
+        _ => return None,
+    }
+
+    let mut out = ArmState::zeroed();
+    for i in 0..31u8 {
+        out.x[i as usize] = cpu.get_gpr(i);
+    }
+    out.sp = cpu.current_sp();
+    out.pc = cpu.get_pc();
+    let mut pstate = 0u64;
+    if cpu.get_n() { pstate |= 1 << 31; }
+    if cpu.get_z() { pstate |= 1 << 30; }
+    if cpu.get_c() { pstate |= 1 << 29; }
+    if cpu.get_v() { pstate |= 1 << 28; }
+    out.pstate = pstate;
+    for r in 0..32u8 {
+        if let Some((lo, hi)) = cpu.get_simd_reg(r) {
+            out.set_vreg(r as usize, lo, hi);
+        }
+    }
+    Some(out)
+}
+
+// ---------------------------------------------------------------------------
+// Comparison.
+// ---------------------------------------------------------------------------
+
+/// Description of a single divergence between rax and the oracle.
+struct Mismatch {
+    label: String,
+    insn: u32,
+    detail: String,
+}
+
+/// Compare one case. `cmp_flags` selects whether NZCV is compared (only for
+/// flag-setting instructions; otherwise both should be unchanged anyway).
+fn compare_case(
+    label: &str,
+    insn: u32,
+    input: &ArmState,
+    oracle: &OutCase,
+    mismatches: &mut Vec<Mismatch>,
+) {
+    let rax = run_rax(insn, input);
+
+    // Agreement on legality first.
+    if oracle.trapped != 0 {
+        if rax.is_some() {
+            mismatches.push(Mismatch {
+                label: label.into(),
+                insn,
+                detail: format!(
+                    "hw faulted (sig {}) but rax executed the encoding",
+                    oracle.trapped
+                ),
+            });
+        }
+        return; // both reject -> fine; nothing to value-compare
+    }
+    let rax = match rax {
+        Some(s) => s,
+        None => {
+            mismatches.push(Mismatch {
+                label: label.into(),
+                insn,
+                detail: "hw executed but rax rejected the encoding (undefined/err)".into(),
+            });
+            return;
+        }
+    };
+
+    let mut diffs = Vec::new();
+    for i in 0..31 {
+        if rax.x[i] != oracle.st.x[i] {
+            diffs.push(format!("x{i}: rax={:#018x} hw={:#018x}", rax.x[i], oracle.st.x[i]));
+        }
+    }
+    if rax.sp != oracle.st.sp {
+        diffs.push(format!("sp: rax={:#018x} hw={:#018x}", rax.sp, oracle.st.sp));
+    }
+    let rax_nzcv = (rax.pstate >> 28) & 0xF;
+    let hw_nzcv = (oracle.st.pstate >> 28) & 0xF;
+    if rax_nzcv != hw_nzcv {
+        diffs.push(format!("nzcv: rax={:#x} hw={:#x}", rax_nzcv, hw_nzcv));
+    }
+    for r in 0..32 {
+        let (rlo, rhi) = rax.vreg(r);
+        let (hlo, hhi) = oracle.st.vreg(r);
+        if (rlo, rhi) != (hlo, hhi) {
+            diffs.push(format!(
+                "v{r}: rax={:#018x}{:016x} hw={:#018x}{:016x}",
+                rhi, rlo, hhi, hlo
+            ));
+        }
+    }
+
+    if !diffs.is_empty() {
+        mismatches.push(Mismatch {
+            label: label.into(),
+            insn,
+            detail: diffs.join("  |  "),
+        });
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Deterministic pseudo-random input generation.
+// ---------------------------------------------------------------------------
+
+struct Rng(u64);
+impl Rng {
+    fn new(seed: u64) -> Self {
+        Rng(seed ^ 0x9e37_79b9_7f4a_7c15)
+    }
+    fn next(&mut self) -> u64 {
+        // xorshift64*
+        let mut x = self.0;
+        x ^= x >> 12;
+        x ^= x << 25;
+        x ^= x >> 27;
+        self.0 = x;
+        x.wrapping_mul(0x2545_F491_4F6C_DD1D)
+    }
+    /// A value biased toward "interesting" bit patterns.
+    fn interesting(&mut self) -> u64 {
+        match self.next() % 8 {
+            0 => 0,
+            1 => u64::MAX,
+            2 => 1,
+            3 => 0x8000_0000_0000_0000,
+            4 => 0x0000_0000_8000_0000,
+            5 => self.next() & 0xFF,
+            6 => self.next() & 0xFFFF_FFFF,
+            _ => self.next(),
+        }
+    }
+}
+
+/// Build a randomised input state. GPRs x1.. and V1.. carry operands; the
+/// destination registers are also randomised so unintended clobbers show up.
+fn gen_input(rng: &mut Rng) -> ArmState {
+    let mut st = ArmState::zeroed();
+    for i in 0..31 {
+        st.x[i] = rng.interesting();
+    }
+    st.sp = rng.interesting() & !0xF; // keep 16-aligned-ish; sp not dereferenced
+    st.pstate = (rng.next() & 0xF) << 28; // random NZCV
+    st.fpcr = 0; // round-to-nearest, no flush -- matches rax default
+    st.fpsr = 0;
+    for r in 0..32 {
+        st.set_vreg(r, rng.interesting(), rng.interesting());
+    }
+    st
+}
+
+// ---------------------------------------------------------------------------
+// Instruction family encoders.  Register fields are fixed: Rd=0, Rn=1, Rm=2,
+// Ra=3.  Inputs vary the register *values*, exercising the data path.
+// ---------------------------------------------------------------------------
+
+const RD: u32 = 0;
+const RN: u32 = 1;
+const RM: u32 = 2;
+const RA: u32 = 3;
+
+/// Advanced SIMD three-same (integer + FP), main encoding:
+/// `0 Q U 01110 size 1 Rm opcode 1 Rn Rd`
+fn enc_three_same(q: u32, u: u32, size: u32, opcode: u32) -> u32 {
+    (q << 30) | (u << 29) | (0b01110 << 24) | (size << 22) | (1 << 21)
+        | (RM << 16) | (opcode << 11) | (1 << 10) | (RN << 5) | RD
+}
+
+/// Build the full list of three-same encodings to test (over-generates; illegal
+/// combos are filtered by oracle agreement).
+fn three_same_cases() -> Vec<(String, u32)> {
+    let mut v = Vec::new();
+    for q in 0..2 {
+        for u in 0..2 {
+            for size in 0..4 {
+                // Integer opcodes 0x00..=0x17. FP opcodes (0x18..=0x1F) are
+                // exercised separately with NaN-aware comparison.
+                for opcode in 0..0b11000u32 {
+                    let insn = enc_three_same(q, u, size, opcode);
+                    v.push((
+                        format!("3same q{q} u{u} sz{size} op{:05b}", opcode),
+                        insn,
+                    ));
+                }
+            }
+        }
+    }
+    v
+}
+
+/// Data-processing (2 source): `sf 0 0 11010110 Rm opcode2 Rn Rd`
+fn enc_dp2(sf: u32, opcode2: u32) -> u32 {
+    (sf << 31) | (0b0011010110 << 21) | (RM << 16) | (opcode2 << 10) | (RN << 5) | RD
+}
+
+fn dp2_cases() -> Vec<(String, u32)> {
+    let mut v = Vec::new();
+    // opcode2: 0010=UDIV 0011=SDIV 1000=LSLV 1001=LSRV 1010=ASRV 1011=RORV
+    for &op in &[0b0010u32, 0b0011, 0b1000, 0b1001, 0b1010, 0b1011] {
+        for sf in 0..2 {
+            v.push((format!("dp2 sf{sf} op{:04b}", op), enc_dp2(sf, op)));
+        }
+    }
+    v
+}
+
+/// Data-processing (3 source): `sf 00 11011 op31 Rm o0 Ra Rn Rd`
+fn enc_dp3(sf: u32, op31: u32, o0: u32) -> u32 {
+    enc_dp3_ra(sf, op31, o0, RA)
+}
+
+/// Same, but with an explicit Ra field (SMULH/UMULH require Ra = 31/xzr).
+fn enc_dp3_ra(sf: u32, op31: u32, o0: u32, ra: u32) -> u32 {
+    (sf << 31) | (0b11011 << 24) | (op31 << 21) | (RM << 16) | (o0 << 15)
+        | (ra << 10) | (RN << 5) | RD
+}
+
+fn dp3_cases() -> Vec<(String, u32)> {
+    let mut v = Vec::new();
+    // MADD: op31=000 o0=0 ; MSUB: op31=000 o0=1
+    v.push(("madd".into(), enc_dp3(1, 0b000, 0)));
+    v.push(("msub".into(), enc_dp3(1, 0b000, 1)));
+    v.push(("madd_w".into(), enc_dp3(0, 0b000, 0)));
+    v.push(("msub_w".into(), enc_dp3(0, 0b000, 1)));
+    // SMADDL: op31=001 o0=0 ; SMSUBL: 001 o0=1 ; UMADDL: 101 o0=0 ; UMSUBL: 101 o0=1
+    v.push(("smaddl".into(), enc_dp3(1, 0b001, 0)));
+    v.push(("smsubl".into(), enc_dp3(1, 0b001, 1)));
+    v.push(("umaddl".into(), enc_dp3(1, 0b101, 0)));
+    v.push(("umsubl".into(), enc_dp3(1, 0b101, 1)));
+    // SMULH: op31=010 o0=0 ; UMULH: 110 o0=0 (Ra must be 31/xzr)
+    v.push(("smulh".into(), enc_dp3_ra(1, 0b010, 0, 31)));
+    v.push(("umulh".into(), enc_dp3_ra(1, 0b110, 0, 31)));
+    v
+}
+
+/// Add/subtract (shifted register): `sf op S 01011 shift 0 Rm imm6 Rn Rd`
+fn enc_addsub_shift(sf: u32, op: u32, s: u32, shift: u32, imm6: u32) -> u32 {
+    (sf << 31) | (op << 30) | (s << 29) | (0b01011 << 24) | (shift << 22)
+        | (RM << 16) | (imm6 << 10) | (RN << 5) | RD
+}
+
+fn addsub_shift_cases() -> Vec<(String, u32)> {
+    let mut v = Vec::new();
+    for sf in 0..2 {
+        for op in 0..2 {
+            for s in 0..2 {
+                for shift in 0..3 {
+                    // LSL/LSR/ASR
+                    for &imm6 in &[0u32, 1, 7, 31, if sf == 1 { 63 } else { 31 }] {
+                        v.push((
+                            format!("addsub sf{sf} op{op} s{s} sh{shift} #{imm6}"),
+                            enc_addsub_shift(sf, op, s, shift, imm6),
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    v
+}
+
+/// Logical (shifted register): `sf opc 01010 shift N Rm imm6 Rn Rd`
+fn enc_logical_shift(sf: u32, opc: u32, shift: u32, n: u32, imm6: u32) -> u32 {
+    (sf << 31) | (opc << 29) | (0b01010 << 24) | (shift << 22) | (n << 21)
+        | (RM << 16) | (imm6 << 10) | (RN << 5) | RD
+}
+
+fn logical_shift_cases() -> Vec<(String, u32)> {
+    let mut v = Vec::new();
+    for sf in 0..2 {
+        for opc in 0..4 {
+            // AND/ORR/EOR/ANDS
+            for n in 0..2 {
+                for shift in 0..4 {
+                    for &imm6 in &[0u32, 1, 31, if sf == 1 { 63 } else { 31 }] {
+                        v.push((
+                            format!("logical sf{sf} opc{opc} n{n} sh{shift} #{imm6}"),
+                            enc_logical_shift(sf, opc, shift, n, imm6),
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    v
+}
+
+// ---------------------------------------------------------------------------
+// Test driver.
+// ---------------------------------------------------------------------------
+
+/// Run a family of encodings, each with `n_inputs` random states, against the
+/// oracle and assert no divergences.
+fn run_family(name: &str, cases: Vec<(String, u32)>, n_inputs: usize, seed: u64) {
+    // Build the full batch of (label, insn, state) triples.
+    let mut rng = Rng::new(seed);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in &cases {
+        for _ in 0..n_inputs {
+            let st = gen_input(&mut rng);
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch(name, batch);
+}
+
+/// Run an explicit batch of (label, insn, input-state) triples against the
+/// oracle and assert no divergences. Self-skips if the toolchain is absent.
+fn run_batch(name: &str, batch: Vec<(String, u32, ArmState)>) {
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("[arm_diff] {name}: qemu/cross-toolchain unavailable -> skipping");
+            return;
+        }
+    };
+
+    let labels: Vec<String> = batch.iter().map(|(l, _, _)| l.clone()).collect();
+    let cases: Vec<(u32, ArmState)> = batch.iter().map(|(_, i, s)| (*i, *s)).collect();
+
+    let outs = match run_oracle(&oracle, &cases) {
+        Some(o) => o,
+        None => {
+            eprintln!("[arm_diff] {name}: oracle run failed -> skipping");
+            return;
+        }
+    };
+    assert_eq!(outs.len(), cases.len());
+
+    let mut mismatches = Vec::new();
+    for (i, ((insn, st), out)) in cases.iter().zip(outs.iter()).enumerate() {
+        compare_case(&labels[i], *insn, st, out, &mut mismatches);
+    }
+
+    let batch = &cases; // for the count in the summary below
+    if !mismatches.is_empty() {
+        // Summarise: group by label, show a few representative cases.
+        use std::collections::BTreeMap;
+        let mut by_label: BTreeMap<String, usize> = BTreeMap::new();
+        for m in &mismatches {
+            *by_label.entry(m.label.clone()).or_default() += 1;
+        }
+        eprintln!("\n==== {name}: {} mismatches across {} cases ====", mismatches.len(), batch.len());
+        eprintln!("-- by encoding --");
+        for (label, count) in &by_label {
+            eprintln!("  {count:5}x  {label}");
+        }
+        eprintln!("-- first 25 examples --");
+        for m in mismatches.iter().take(25) {
+            eprintln!("  [{}] {:#010x}: {}", m.label, m.insn, m.detail);
+        }
+        panic!("{name}: {} divergences vs hardware oracle", mismatches.len());
+    }
+}
+
+#[test]
+fn diff_dp_addsub_shifted() {
+    run_family("dp_addsub_shifted", addsub_shift_cases(), 12, 0x1001);
+}
+
+#[test]
+fn diff_dp_logical_shifted() {
+    run_family("dp_logical_shifted", logical_shift_cases(), 12, 0x1002);
+}
+
+#[test]
+fn diff_dp2_source() {
+    run_family("dp2_source", dp2_cases(), 40, 0x1003);
+}
+
+#[test]
+fn diff_dp3_source() {
+    run_family("dp3_source", dp3_cases(), 40, 0x1004);
+}
+
+#[test]
+fn diff_simd_three_same() {
+    run_family("simd_three_same", three_same_cases(), 8, 0x2001);
+}
+
+// A few finite FP16 bit patterns; products stay exactly representable in FP32,
+// so the result can be compared bit-exactly (no NaN/inf payload ambiguity).
+const F16_VALUES: [u16; 10] = [
+    0x0000, // 0.0
+    0x3C00, // 1.0
+    0x4000, // 2.0
+    0x4200, // 3.0
+    0x4400, // 4.0
+    0x3800, // 0.5
+    0xBC00, // -1.0
+    0xC000, // -2.0
+    0xB800, // -0.5
+    0x4500, // 5.0
+];
+
+/// FMLAL/FMLSL/FMLAL2/FMLSL2 widening FP16 multiply-accumulate. Inputs use
+/// clean finite FP16 lanes and small finite FP32 accumulators.
+#[test]
+fn diff_fmlal() {
+    // size<1:0> = {a, 0}: a=0 -> FMLAL/FMLAL2, a=1 -> FMLSL/FMLSL2.
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for q in 0..2 {
+        // FMLAL (u=0, opcode 11101, size=00) / FMLSL (size=10)
+        cases.push((format!("fmlal q{q}"), enc_three_same(q, 0, 0b00, 0b11101)));
+        cases.push((format!("fmlsl q{q}"), enc_three_same(q, 0, 0b10, 0b11101)));
+        // FMLAL2 (u=1, opcode 11001, size=00) / FMLSL2 (size=10)
+        cases.push((format!("fmlal2 q{q}"), enc_three_same(q, 1, 0b00, 0b11001)));
+        cases.push((format!("fmlsl2 q{q}"), enc_three_same(q, 1, 0b10, 0b11001)));
+    }
+
+    let mut rng = Rng::new(0x2002);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in &cases {
+        for _ in 0..32 {
+            let mut st = ArmState::zeroed();
+            // v1 (Rn) and v2 (Rm): 8 finite FP16 lanes each.
+            for r in [1usize, 2] {
+                let mut packed: u128 = 0;
+                for lane in 0..8 {
+                    let h = F16_VALUES[(rng.next() as usize) % F16_VALUES.len()] as u128;
+                    packed |= h << (16 * lane);
+                }
+                st.set_vreg(r, packed as u64, (packed >> 64) as u64);
+            }
+            // v0 (Rd) accumulator: 4 small finite FP32 lanes.
+            let mut acc: u128 = 0;
+            for lane in 0..4 {
+                let val = ((rng.next() % 21) as i64 - 10) as f32; // -10..10
+                acc |= (val.to_bits() as u128) << (32 * lane);
+            }
+            st.set_vreg(0, acc as u64, (acc >> 64) as u64);
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("fmlal", batch);
+}
+
+/// FCCMP/FCCMPE: scalar FP conditional compare. Output is only NZCV (the flag
+/// rules are deterministic even for NaN operands), so comparison is exact.
+#[test]
+fn diff_fp_ccmp() {
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for &fp_type in &[0b00u32, 0b01, 0b11] {
+        for cond in 0..16u32 {
+            for op in 0..2u32 {
+                for &nzcv in &[0u32, 0xF, 0x5] {
+                    let insn = (0b00011110u32 << 24)
+                        | (fp_type << 22)
+                        | (1 << 21)
+                        | (RM << 16)
+                        | (cond << 12)
+                        | (0b01 << 10)
+                        | (RN << 5)
+                        | (op << 4)
+                        | nzcv;
+                    cases.push((format!("fccmp ty{fp_type} cond{cond} op{op} nzcv{nzcv}"), insn));
+                }
+            }
+        }
+    }
+    run_family("fp_ccmp", cases, 6, 0x3001);
+}
+
+/// FCSEL: scalar FP conditional select. Output is a bit-exact register copy.
+#[test]
+fn diff_fp_csel() {
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for &fp_type in &[0b00u32, 0b01, 0b11] {
+        for cond in 0..16u32 {
+            let insn = (0b00011110u32 << 24)
+                | (fp_type << 22)
+                | (1 << 21)
+                | (RM << 16)
+                | (cond << 12)
+                | (0b11 << 10)
+                | (RN << 5)
+                | RD;
+            cases.push((format!("fcsel ty{fp_type} cond{cond}"), insn));
+        }
+    }
+    run_family("fp_csel", cases, 8, 0x3002);
+}
