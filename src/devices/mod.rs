@@ -18,3 +18,6 @@ pub mod virtio;
 pub mod nvme;
 pub mod e1000;
 pub mod ac97;
+pub mod ide;
+pub mod fdc;
+pub mod uhci;
