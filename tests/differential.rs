@@ -2123,3 +2123,818 @@ fn sse_pmulhw() {
         sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()),
     );
 }
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 2: x87 FPU / string ops / SSE2-SSE3 float / BMI
+// ===========================================================================
+//
+// These reuse the existing infrastructure:
+//  - x87 and string tests drive data through the scratch page (just like the
+//    SSE tests) so we never rely on host-side FPU/XMM injection surviving
+//    KVM_RUN. The guest loads from / stores to the scratch page and we compare
+//    it byte-for-byte plus the relevant GPRs.
+//  - BMI/MOVBE/SAHF/LAHF are plain GPR ops driven by `check`/`check_flags_masked`.
+//
+// IMPORTANT x87 caveat: rax keeps the x87 stack as f64, not the architectural
+// 80-bit extended format. Therefore every x87 value used below is chosen so the
+// 80-bit and 64-bit representations are *bit-identical*: small integers and
+// exact dyadic fractions (n / 2^k). Results are stored as m64 (FSTP qword) so
+// what we compare is exactly the f64 the op produced — which, for these
+// operands, equals what real hardware computes in 80-bit then rounds to 64-bit.
+
+/// A scratch-comparing runner for memory-effect tests (x87 store / string ops).
+/// Compares all GPRs, the masked flags, and the scratch page.
+fn check_mem(label: &str, code: &[u8], init: Registers, scratch_in: [u8; 64], flag_mask: u64) {
+    let Some((interp, kvm)) = run_both(code, init, scratch_in) else {
+        return;
+    };
+    let opts = CompareOpts {
+        flag_mask,
+        scratch: true,
+        ..CompareOpts::default()
+    };
+    assert_match(label, code, &interp, &kvm, opts);
+}
+
+/// Emit `mov rdi, DATA_ADDR` (REX.W mov r/m64, imm32 sign-extended; 0x30000 fits).
+fn load_rdi_data() -> Vec<u8> {
+    let mut c = vec![0x48, 0xC7, 0xC7];
+    c.extend_from_slice(&(DATA_ADDR as u32).to_le_bytes());
+    c
+}
+
+/// Build a 64-byte scratch page from a list of f64 inputs laid out from offset 0.
+fn scratch_f64(vals: &[f64]) -> [u8; 64] {
+    let mut s = [0u8; 64];
+    for (i, v) in vals.iter().enumerate() {
+        s[i * 8..i * 8 + 8].copy_from_slice(&v.to_le_bytes());
+    }
+    s
+}
+
+// ---- x87: load / arithmetic round-trips, result stored as FSTP qword ----
+//
+// Program skeleton for a binary op on two m64 inputs:
+//   mov rdi, DATA_ADDR
+//   fld qword [rdi+0]      ; ST0 = a            (DD /0)
+//   f<op> qword [rdi+8]    ; ST0 = a <op> b     (DC /n, memory form)
+//   fstp qword [rdi+16]    ; store + pop        (DD /3)
+//   hlt
+// Inputs a,b at offsets 0 and 8; result compared at offset 16.
+
+/// Build an x87 "load a; <mem-op> b; store result" program. `op_modrm` is the
+/// ModRM byte selecting the DC-escape memory operation against [rdi+8].
+fn x87_binop(op_escape: u8, op_modrm: u8) -> Vec<u8> {
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    c.extend_from_slice(&[op_escape, op_modrm]); // f<op> qword [rdi+8] (modrm encodes disp8 0x08)
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10]
+    c.push(HLT);
+    c
+}
+
+#[test]
+fn x87_fld_fstp_roundtrip() {
+    // Load an exact f64 and store it straight back — pure load/store fidelity.
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10]
+    c.push(HLT);
+    // 12345.5 is exactly representable.
+    check_mem("x87_fld_fstp", &with_hlt(c), regs(), scratch_f64(&[12345.5]), 0);
+}
+
+#[test]
+fn x87_fadd_m64() {
+    // DC /0 = FADD m64. ModRM for [rdi+disp8], reg=000 -> 0x47, disp8=0x08.
+    check_mem(
+        "x87_fadd",
+        &with_hlt(x87_binop(0xDC, 0x47)),
+        regs(),
+        scratch_f64(&[3.5, 4.25]),
+        0,
+    );
+}
+
+#[test]
+fn x87_fsub_m64() {
+    // DC /4 = FSUB m64. reg=100 -> modrm 0x67.
+    check_mem(
+        "x87_fsub",
+        &with_hlt(x87_binop(0xDC, 0x67)),
+        regs(),
+        scratch_f64(&[10.0, 2.5]),
+        0,
+    );
+}
+
+#[test]
+fn x87_fmul_m64() {
+    // DC /1 = FMUL m64. reg=001 -> modrm 0x4F.
+    check_mem(
+        "x87_fmul",
+        &with_hlt(x87_binop(0xDC, 0x4F)),
+        regs(),
+        scratch_f64(&[6.0, 7.0]),
+        0,
+    );
+}
+
+#[test]
+fn x87_fdiv_m64() {
+    // DC /6 = FDIV m64. reg=110 -> modrm 0x77. 9/8 = 1.125 is exact.
+    check_mem(
+        "x87_fdiv",
+        &with_hlt(x87_binop(0xDC, 0x77)),
+        regs(),
+        scratch_f64(&[9.0, 8.0]),
+        0,
+    );
+}
+
+#[test]
+fn x87_fsqrt() {
+    // fld qword [rdi]; fsqrt (D9 FA); fstp qword [rdi+0x10]. sqrt(16)=4 exact.
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    c.extend_from_slice(&[0xD9, 0xFA]); // fsqrt
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10]
+    c.push(HLT);
+    check_mem("x87_fsqrt", &with_hlt(c), regs(), scratch_f64(&[16.0]), 0);
+}
+
+#[test]
+fn x87_fild_fistp_roundtrip() {
+    // FILD m32 (DB /0) loads a 32-bit integer; FISTP m32 (DB /3) stores it back.
+    // Put the integer at offset 0, read the stored int back at offset 16.
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&(-12345i32).to_le_bytes());
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDB, 0x07]); // fild dword [rdi]
+    c.extend_from_slice(&[0xDB, 0x5F, 0x10]); // fistp dword [rdi+0x10]
+    c.push(HLT);
+    check_mem("x87_fild_fistp", &with_hlt(c), regs(), s, 0);
+}
+
+#[test]
+fn x87_fild_fadd_fistp() {
+    // Integer load, add an exact float, store back as integer (round-to-nearest).
+    // 100 + 23.0 = 123 -> stored int 123.
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&100i32.to_le_bytes());
+    s[8..16].copy_from_slice(&23.0f64.to_le_bytes());
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDB, 0x07]); // fild dword [rdi]
+    c.extend_from_slice(&[0xDC, 0x47, 0x08]); // fadd qword [rdi+8]
+    c.extend_from_slice(&[0xDB, 0x5F, 0x10]); // fistp dword [rdi+0x10]
+    c.push(HLT);
+    check_mem("x87_fild_fadd_fistp", &with_hlt(c), regs(), s, 0);
+}
+
+#[test]
+fn x87_fist_m64() {
+    // FILD m32 then FISTP m64 (DF /7) round-trip of a 64-bit integer store.
+    let mut s = [0u8; 64];
+    s[0..4].copy_from_slice(&424242i32.to_le_bytes());
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDB, 0x07]); // fild dword [rdi]
+    c.extend_from_slice(&[0xDF, 0x7F, 0x10]); // fistp qword [rdi+0x10]
+    c.push(HLT);
+    check_mem("x87_fist_m64", &with_hlt(c), regs(), s, 0);
+}
+
+#[test]
+fn x87_fadd_st_chain() {
+    // Two sequential memory adds: ((1 + 2.5) + 4.25) = 7.75, all exact dyadic.
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]      ST0=1.0
+    c.extend_from_slice(&[0xDC, 0x47, 0x08]); // fadd qword [rdi+8]   ST0=3.5
+    c.extend_from_slice(&[0xDC, 0x47, 0x10]); // fadd qword [rdi+16]  ST0=7.75
+    c.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp qword [rdi+0x18]
+    c.push(HLT);
+    check_mem(
+        "x87_fadd_chain",
+        &with_hlt(c),
+        regs(),
+        scratch_f64(&[1.0, 2.5, 4.25]),
+        0,
+    );
+}
+
+#[test]
+fn x87_fsubr_m64() {
+    // DC /5 = FSUBR m64 (ST0 = mem - ST0). reg=101 -> modrm 0x6F. 2.5 - 10 = -7.5.
+    check_mem(
+        "x87_fsubr",
+        &with_hlt(x87_binop(0xDC, 0x6F)),
+        regs(),
+        scratch_f64(&[10.0, 2.5]),
+        0,
+    );
+}
+
+#[test]
+fn x87_fdivr_m64() {
+    // DC /7 = FDIVR m64 (ST0 = mem / ST0). reg=111 -> modrm 0x7F. 8/2 = 4.
+    check_mem(
+        "x87_fdivr",
+        &with_hlt(x87_binop(0xDC, 0x7F)),
+        regs(),
+        scratch_f64(&[2.0, 8.0]),
+        0,
+    );
+}
+
+// ---- x87 FCOMI / FUCOMI: compare ST0 with ST(i), set ZF/PF/CF directly ----
+//
+// Setup: fld b ([rdi+8]) then fld a ([rdi]) so ST0=a, ST1=b, then FCOMI ST0,ST1.
+// FCOMI sets ZF/PF/CF in EFLAGS; OF/SF/AF are cleared. We compare exactly the
+// status mask (the harness masks to the 6 status flags; FCOMI clears AF/SF/OF).
+
+const FCOMI_FLAGS: u64 = flags::bits::ZF | flags::bits::PF | flags::bits::CF;
+
+/// Build: load b then a so ST0=a,ST1=b; FCOMI ST0,ST1 (DB F1); HLT.
+fn fcomi_program() -> Vec<u8> {
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8]  -> ST0=b
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]    -> ST0=a, ST1=b
+    c.extend_from_slice(&[0xDB, 0xF1]); // fcomi st0, st1
+    c.push(HLT);
+    c
+}
+
+#[test]
+fn x87_fcomi_greater() {
+    // a > b: ZF=0, CF=0, PF=0.
+    check_mem(
+        "x87_fcomi_gt",
+        &fcomi_program(),
+        regs(),
+        scratch_f64(&[5.0, 3.0]),
+        FCOMI_FLAGS,
+    );
+}
+
+#[test]
+fn x87_fcomi_less() {
+    // a < b: ZF=0, CF=1, PF=0.
+    check_mem(
+        "x87_fcomi_lt",
+        &fcomi_program(),
+        regs(),
+        scratch_f64(&[3.0, 5.0]),
+        FCOMI_FLAGS,
+    );
+}
+
+#[test]
+fn x87_fcomi_equal() {
+    // a == b: ZF=1, CF=0, PF=0.
+    check_mem(
+        "x87_fcomi_eq",
+        &fcomi_program(),
+        regs(),
+        scratch_f64(&[42.0, 42.0]),
+        FCOMI_FLAGS,
+    );
+}
+
+#[test]
+fn x87_fucomi_equal() {
+    // FUCOMI ST0,ST1 = DB E9. Same ordered result for non-NaN operands.
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8]
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    c.extend_from_slice(&[0xDB, 0xE9]); // fucomi st0, st1
+    c.push(HLT);
+    check_mem("x87_fucomi_eq", &c, regs(), scratch_f64(&[7.5, 7.5]), FCOMI_FLAGS);
+}
+
+// ---- String ops: MOVS / STOS / LODS / SCAS / CMPS (with and without REP, DF) ----
+//
+// Scratch layout convention:
+//   src buffer at offset 0, dst buffer at offset 16. We set RSI/RDI to the
+//   matching guest addresses, RCX to the element count, and clear/set DF as
+//   needed. We compare the whole scratch page plus the final RSI/RDI/RCX.
+// String ops affect no arithmetic flags (except SCAS/CMPS which set them like
+// CMP); DF must be restored where we set it, and we always end with `CLD`-free
+// HLT — the harness reads RFLAGS so we keep DF out of the compared mask.
+
+const SRC_OFF: u64 = 0;
+const DST_OFF: u64 = 16;
+
+/// Initial regs for a string test: RSI=src, RDI=dst, RCX=count.
+fn string_regs(count: u64) -> Registers {
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rdi = DATA_ADDR + DST_OFF;
+    r.rcx = count;
+    r
+}
+
+/// Scratch with a source byte pattern at offset 0 (dst region left zero).
+fn string_scratch(src: &[u8]) -> [u8; 64] {
+    let mut s = [0u8; 64];
+    s[..src.len()].copy_from_slice(src);
+    s
+}
+
+#[test]
+fn str_rep_movsb() {
+    // REP MOVSB: copy RCX bytes src->dst. F3 A4.
+    let r = string_regs(8);
+    check_mem(
+        "rep_movsb",
+        &with_hlt(vec![0xF3, 0xA4]),
+        r,
+        string_scratch(&[0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88]),
+        0,
+    );
+}
+
+#[test]
+fn str_rep_movsw() {
+    // REP MOVSW: copy RCX words. 66 F3 A5 (operand-size 16). Copy 4 words.
+    let r = string_regs(4);
+    check_mem(
+        "rep_movsw",
+        &with_hlt(vec![0xF3, 0x66, 0xA5]),
+        r,
+        string_scratch(&[0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]),
+        0,
+    );
+}
+
+#[test]
+fn str_rep_movsd() {
+    // REP MOVSD: copy RCX dwords. F3 A5. Copy 2 dwords.
+    let r = string_regs(2);
+    check_mem(
+        "rep_movsd",
+        &with_hlt(vec![0xF3, 0xA5]),
+        r,
+        string_scratch(&[0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE]),
+        0,
+    );
+}
+
+#[test]
+fn str_rep_movsq() {
+    // REP MOVSQ: copy RCX qwords. F3 48 A5. Copy 1 qword.
+    let r = string_regs(1);
+    check_mem(
+        "rep_movsq",
+        &with_hlt(vec![0xF3, 0x48, 0xA5]),
+        r,
+        string_scratch(&[1, 2, 3, 4, 5, 6, 7, 8]),
+        0,
+    );
+}
+
+#[test]
+fn str_movsb_single() {
+    // Single MOVSB (no REP): copies 1 byte, advances RSI/RDI by 1.
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rdi = DATA_ADDR + DST_OFF;
+    check_mem(
+        "movsb_single",
+        &with_hlt(vec![0xA4]),
+        r,
+        string_scratch(&[0xAB, 0xCD]),
+        0,
+    );
+}
+
+#[test]
+fn str_rep_movsb_df_reverse() {
+    // DF=1 reverse copy. Point RSI/RDI at the LAST element so the run walks down.
+    // 3 bytes at offsets 0,1,2 copied to dst 16,17,18 in reverse address order.
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF + 2;
+    r.rdi = DATA_ADDR + DST_OFF + 2;
+    r.rcx = 3;
+    r.rflags = flags::bits::DF; // set direction = down
+    check_mem(
+        "rep_movsb_df",
+        &with_hlt(vec![0xF3, 0xA4]),
+        r,
+        string_scratch(&[0xA1, 0xB2, 0xC3]),
+        0,
+    );
+}
+
+#[test]
+fn str_rep_stosb() {
+    // REP STOSB: fill RCX bytes at dst with AL. F3 AA. AL=0x5A, count=6.
+    let mut r = string_regs(6);
+    r.rax = 0x5A;
+    check_mem("rep_stosb", &with_hlt(vec![0xF3, 0xAA]), r, string_scratch(&[]), 0);
+}
+
+#[test]
+fn str_rep_stosd() {
+    // REP STOSD: fill RCX dwords with EAX. F3 AB. EAX=0xCAFEBABE, count=3.
+    let mut r = string_regs(3);
+    r.rax = 0xCAFE_BABE;
+    check_mem("rep_stosd", &with_hlt(vec![0xF3, 0xAB]), r, string_scratch(&[]), 0);
+}
+
+#[test]
+fn str_lodsb() {
+    // LODSB: AL <- [RSI], RSI advances. AC. Single, no REP.
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rax = 0x1122_3344_5566_7700; // only AL should change
+    check_mem(
+        "lodsb",
+        &with_hlt(vec![0xAC]),
+        r,
+        string_scratch(&[0x99, 0x88]),
+        0,
+    );
+}
+
+#[test]
+fn str_repne_scasb_found() {
+    // REPNE SCASB: scan dst for AL, stop on match. F2 AE.
+    // Buffer at dst (offset 16) = [1,2,3,4,5,...]; AL=4, count large enough.
+    let mut s = [0u8; 64];
+    s[DST_OFF as usize..DST_OFF as usize + 6].copy_from_slice(&[1, 2, 3, 4, 5, 6]);
+    let mut r = regs();
+    r.rdi = DATA_ADDR + DST_OFF;
+    r.rcx = 6;
+    r.rax = 4; // AL = 4 -> match at index 3
+    // SCAS sets arithmetic flags like CMP; compare all status flags.
+    check_mem("repne_scasb", &with_hlt(vec![0xF2, 0xAE]), r, s, FLAG_MASK);
+}
+
+#[test]
+fn str_scasb_single_equal() {
+    // Single SCASB where [RDI]==AL -> ZF=1, all CMP flags defined.
+    let mut s = [0u8; 64];
+    s[DST_OFF as usize] = 0x7F;
+    let mut r = regs();
+    r.rdi = DATA_ADDR + DST_OFF;
+    r.rax = 0x7F;
+    check_mem("scasb_eq", &with_hlt(vec![0xAE]), r, s, FLAG_MASK);
+}
+
+#[test]
+fn str_repe_cmpsb_equal_run() {
+    // REPE CMPSB: compare src vs dst while equal. F3 A6.
+    // Make src==dst for the whole run -> RCX hits 0, ZF=1 at the end.
+    let mut s = [0u8; 64];
+    let pat = [0xDE, 0xAD, 0xBE, 0xEF, 0x12];
+    s[SRC_OFF as usize..SRC_OFF as usize + 5].copy_from_slice(&pat);
+    s[DST_OFF as usize..DST_OFF as usize + 5].copy_from_slice(&pat);
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rdi = DATA_ADDR + DST_OFF;
+    r.rcx = 5;
+    check_mem("repe_cmpsb_eq", &with_hlt(vec![0xF3, 0xA6]), r, s, FLAG_MASK);
+}
+
+#[test]
+fn str_repe_cmpsb_mismatch() {
+    // REPE CMPSB stops at the first differing byte; flags reflect that compare.
+    let mut s = [0u8; 64];
+    s[SRC_OFF as usize..SRC_OFF as usize + 5].copy_from_slice(&[1, 2, 3, 4, 5]);
+    s[DST_OFF as usize..DST_OFF as usize + 5].copy_from_slice(&[1, 2, 9, 4, 5]);
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rdi = DATA_ADDR + DST_OFF;
+    r.rcx = 5;
+    check_mem("repe_cmpsb_ne", &with_hlt(vec![0xF3, 0xA6]), r, s, FLAG_MASK);
+}
+
+#[test]
+fn str_cmpsb_single() {
+    // Single CMPSB: compares [RSI] vs [RDI], sets CMP flags, advances both.
+    let mut s = [0u8; 64];
+    s[SRC_OFF as usize] = 0x10;
+    s[DST_OFF as usize] = 0x20; // 0x10 - 0x20 -> CF, SF
+    let mut r = regs();
+    r.rsi = DATA_ADDR + SRC_OFF;
+    r.rdi = DATA_ADDR + DST_OFF;
+    check_mem("cmpsb_single", &with_hlt(vec![0xA6]), r, s, FLAG_MASK);
+}
+
+// ---- SSE3 / SSE2 float: HADDPS/HSUBPS/ADDSUBPS/MOVDDUP/SHUFPD + conversions ----
+//
+// All packed-float results below use exactly-representable values so the f64/f32
+// rounding is bit-identical across backends. We reuse `sse_program` for the
+// 2-operand reg forms and `check_sse` to compare the stored 128-bit result.
+
+#[test]
+fn sse3_haddps() {
+    // HADDPS xmm0, xmm1 = F2 0F 7C C1. Horizontal add of single-precision lanes.
+    // a = [1,2,3,4], b = [10,20,30,40] (as f32). result = [a0+a1, a2+a3, b0+b1, b2+b3].
+    let af = [1.0f32, 2.0, 3.0, 4.0];
+    let bf = [10.0f32, 20.0, 30.0, 40.0];
+    let mut a = [0u8; 16];
+    let mut b = [0u8; 16];
+    for i in 0..4 {
+        a[i * 4..i * 4 + 4].copy_from_slice(&af[i].to_le_bytes());
+        b[i * 4..i * 4 + 4].copy_from_slice(&bf[i].to_le_bytes());
+    }
+    check_sse("haddps", &sse_program(&[0xF2, 0x0F, 0x7C, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse3_hsubps() {
+    // HSUBPS xmm0, xmm1 = F2 0F 7D C1.
+    let af = [10.0f32, 3.0, 8.0, 2.5];
+    let bf = [100.0f32, 40.0, 9.0, 1.0];
+    let mut a = [0u8; 16];
+    let mut b = [0u8; 16];
+    for i in 0..4 {
+        a[i * 4..i * 4 + 4].copy_from_slice(&af[i].to_le_bytes());
+        b[i * 4..i * 4 + 4].copy_from_slice(&bf[i].to_le_bytes());
+    }
+    check_sse("hsubps", &sse_program(&[0xF2, 0x0F, 0x7D, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse3_addsubps() {
+    // ADDSUBPS xmm0, xmm1 = F2 0F D0 C1. Subtract even lanes, add odd lanes.
+    let af = [5.0f32, 5.0, 5.0, 5.0];
+    let bf = [1.0f32, 2.0, 3.0, 4.0];
+    let mut a = [0u8; 16];
+    let mut b = [0u8; 16];
+    for i in 0..4 {
+        a[i * 4..i * 4 + 4].copy_from_slice(&af[i].to_le_bytes());
+        b[i * 4..i * 4 + 4].copy_from_slice(&bf[i].to_le_bytes());
+    }
+    check_sse("addsubps", &sse_program(&[0xF2, 0x0F, 0xD0, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+#[ignore = "GENUINE DIVERGENCE: legacy-encoded MOVDDUP (F2 0F 12) is mis-decoded \
+as MOVLPS/MOVHLPS. dispatch/twobyte/dispatch/primary.rs maps opcode 0x12 \
+unconditionally to insn::simd::movlps_load without inspecting the mandatory \
+prefix, so F2 0F 12 (MOVDDUP), F3 0F 12 (MOVSLDUP) and F3 0F 16 (MOVSHDUP) all \
+behave like MOVLPS. Expected result.hi == result.lo == src.lo (KVM=[12.5,12.5]); \
+interp leaves the high lane untouched (=[12.5,99.0]). Note: the VEX form \
+(execute_vex_movddup) is handled correctly; only the legacy SSE3 encoding is broken."]
+fn sse3_movddup() {
+    // MOVDDUP xmm0, xmm1 = F2 0F 12 C1. Duplicate the low f64 of the source.
+    let a = [0u8; 16]; // dest, overwritten
+    let b = [12.5f64.to_le_bytes(), 99.0f64.to_le_bytes()].concat();
+    check_sse(
+        "movddup",
+        &sse_program(&[0xF2, 0x0F, 0x12, 0xC1]),
+        sse_scratch(a, b.try_into().unwrap()),
+    );
+}
+
+#[test]
+fn sse2_shufpd() {
+    // SHUFPD xmm0, xmm1, imm8 = 66 0F C6 C1 ib. imm=0b10 -> dst.lo=a.hi, dst.hi=b.lo.
+    let a = [1.0f64.to_le_bytes(), 2.0f64.to_le_bytes()].concat();
+    let b = [3.0f64.to_le_bytes(), 4.0f64.to_le_bytes()].concat();
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
+    prog.extend_from_slice(&[0x66, 0x0F, 0xC6, 0xC1, 0x02]); // shufpd xmm0, xmm1, 2
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm0
+    prog.push(HLT);
+    check_sse("shufpd", &prog, sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+}
+
+#[test]
+fn sse2_cvtdq2ps() {
+    // CVTDQ2PS xmm0, xmm1 = 0F 5B C1. Convert 4 packed i32 -> 4 packed f32.
+    // Use exact integers (small) so the result is bit-exact.
+    let a = [0u8; 16];
+    let ints = [3i32, -7, 100, -1];
+    let mut b = [0u8; 16];
+    for i in 0..4 {
+        b[i * 4..i * 4 + 4].copy_from_slice(&ints[i].to_le_bytes());
+    }
+    check_sse("cvtdq2ps", &sse_program(&[0x0F, 0x5B, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse2_cvtps2dq() {
+    // CVTPS2DQ xmm0, xmm1 = 66 0F 5B C1. Convert 4 f32 -> 4 i32 (round-to-nearest).
+    // Integral inputs -> exact.
+    let a = [0u8; 16];
+    let fs = [3.0f32, -7.0, 100.0, -1.0];
+    let mut b = [0u8; 16];
+    for i in 0..4 {
+        b[i * 4..i * 4 + 4].copy_from_slice(&fs[i].to_le_bytes());
+    }
+    check_sse("cvtps2dq", &sse_program(&[0x66, 0x0F, 0x5B, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse2_cvttps2dq_truncates() {
+    // CVTTPS2DQ xmm0, xmm1 = F3 0F 5B C1. Truncating convert f32 -> i32.
+    // 3.9 -> 3, -3.9 -> -3, 2.1 -> 2, -0.9 -> 0.
+    let a = [0u8; 16];
+    let fs = [3.9f32, -3.9, 2.1, -0.9];
+    let mut b = [0u8; 16];
+    for i in 0..4 {
+        b[i * 4..i * 4 + 4].copy_from_slice(&fs[i].to_le_bytes());
+    }
+    check_sse("cvttps2dq", &sse_program(&[0xF3, 0x0F, 0x5B, 0xC1]), sse_scratch(a, b));
+}
+
+// ---- Misc: SAHF / LAHF ----
+
+#[test]
+fn sahf_loads_flags() {
+    // SAHF (9E): AH -> low byte of RFLAGS (SF,ZF,_,AF,_,PF,_,CF). AH=0xD5
+    // sets SF,ZF,AF,PF (and bit1 reserved=1, CF=1). We then read the status flags.
+    let mut r = regs();
+    // AH = 1101_0101: SF=1 ZF=1 (bit5=0) AF=1 (bit3=0) PF=1 (bit1=1 reserved) CF=1
+    r.rax = 0xD5 << 8;
+    check("sahf", &with_hlt(vec![0x9E]), r);
+}
+
+#[test]
+fn lahf_stores_flags() {
+    // LAHF (9F): low byte of RFLAGS -> AH. Set a known flag state via CMP first.
+    let mut r = regs();
+    r.rax = 0x0; // 0 - 1
+    r.rbx = 0x1;
+    // 48 39 D8  cmp rax, rbx  (sets SF, CF, AF)
+    // 9F        lahf          (AH <- status byte)
+    check("lahf", &with_hlt(vec![0x48, 0x39, 0xD8, 0x9F]), r);
+}
+
+#[test]
+fn lahf_sahf_roundtrip() {
+    // LAHF then SAHF should reproduce the same flag state. Seed via CMP.
+    let mut r = regs();
+    r.rax = 0x5;
+    r.rbx = 0x5; // equal -> ZF, PF
+    // cmp; lahf; xor ah with nothing; sahf
+    check("lahf_sahf", &with_hlt(vec![0x48, 0x39, 0xD8, 0x9F, 0x9E]), r);
+}
+
+// ---- MOVBE (move with byte swap) ----
+
+#[test]
+fn movbe_load_r64() {
+    // MOVBE r64, m64 = 48 0F 38 F0 /r. Load+byteswap from [rdi].
+    let mut s = [0u8; 64];
+    s[0..8].copy_from_slice(&0x0011_2233_4455_6677u64.to_le_bytes());
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    // 48 0F 38 F0 07  movbe rax, [rdi]
+    check_mem("movbe_load64", &with_hlt(vec![0x48, 0x0F, 0x38, 0xF0, 0x07]), r, s, 0);
+}
+
+#[test]
+fn movbe_store_r32() {
+    // MOVBE m32, r32 = 0F 38 F1 /r. Store EAX byteswapped to [rdi]; verify scratch.
+    let mut r = regs();
+    r.rax = 0x1122_3344;
+    r.rdi = DATA_ADDR;
+    // 0F 38 F1 07  movbe [rdi], eax
+    check_mem("movbe_store32", &with_hlt(vec![0x0F, 0x38, 0xF1, 0x07]), r, zero_scratch(), 0);
+}
+
+// ---- BMI1: ANDN / BLSI / BLSR / BLSMSK (VEX-encoded) ----
+//
+// BMI1 defines ZF and SF from the result, clears OF; AF/PF are undefined and CF
+// is defined per-instruction (ANDN clears CF; BLS* set CF specially). To stay on
+// the safe side we compare the architecturally-defined bits: ZF, SF, CF, OF.
+const BMI_DEFINED: u64 = flags::bits::ZF | flags::bits::SF | flags::bits::CF | flags::bits::OF;
+
+#[test]
+#[ignore = "GENUINE DIVERGENCE: BMI1 ANDN has its two source operands swapped. \
+insn/bmi.rs::andn computes `src1 & !src2` but ANDN is defined as `~src1 & src2` \
+(Intel SDM: DEST = NOT(SRC1) AND SRC2, where SRC1 = VEX.vvvv reg, SRC2 = r/m). \
+With src1=ebx=0xFF, src2=ecx=0xAAAA: correct = ~0xFF & 0xAAAA = 0xAA00 (KVM); \
+interp = 0xFF & ~0xAAAA = 0x55. Fix: swap the operands in the computation."]
+fn bmi_andn() {
+    // ANDN r32a, r32b, r/m32 = VEX.LZ.0F38.W0 F2 /r : dest = ~src1 & src2.
+    // VEX 2-byte: C4 E2 (map 0F38) ... use 3-byte VEX. Encode andn eax, ebx, ecx:
+    //   VEX.NDS.LZ.0F38.W0 F2 /r, vvvv = ~ebx, src2 = ecx (modrm).
+    // C4 E2 60 F2 C1  -> andn eax, ebx, ecx   (dest=~ebx & ecx = 0xAA00)
+    let mut r = regs();
+    r.rbx = 0x0000_00FF; // src1 (inverted)
+    r.rcx = 0x0000_AAAA; // src2
+    check_flags_masked("andn", &with_hlt(vec![0xC4, 0xE2, 0x60, 0xF2, 0xC1]), r, BMI_DEFINED);
+}
+
+#[test]
+fn bmi_blsi() {
+    // BLSI r32, r/m32 = VEX.LZ.0F38.W0 F3 /3 : dest = src & -src (isolate lowest set bit).
+    // vvvv encodes dest, modrm.reg=/3 selects the op, modrm.rm=src.
+    // andn-style 3-byte VEX with vvvv=eax(dest), rm=ecx(src): C4 E2 78 F3 D9
+    //   reg field = 011 (/3 = BLSI), rm = 001 (ecx), vvvv=1111-? -> dest eax.
+    let mut r = regs();
+    r.rcx = 0x0000_00B0; // lowest set bit is bit 4 (0x10)
+    check_flags_masked("blsi", &with_hlt(vec![0xC4, 0xE2, 0x78, 0xF3, 0xD9]), r, BMI_DEFINED);
+}
+
+#[test]
+fn bmi_blsr() {
+    // BLSR r32, r/m32 = VEX.LZ.0F38.W0 F3 /1 : dest = src & (src-1) (clear lowest set bit).
+    // reg field = 001 (/1 = BLSR), rm=001(ecx), vvvv -> eax. C4 E2 78 F3 C9.
+    let mut r = regs();
+    r.rcx = 0x0000_00B0;
+    check_flags_masked("blsr", &with_hlt(vec![0xC4, 0xE2, 0x78, 0xF3, 0xC9]), r, BMI_DEFINED);
+}
+
+#[test]
+fn bmi_blsmsk() {
+    // BLSMSK r32, r/m32 = VEX.LZ.0F38.W0 F3 /2 : dest = src ^ (src-1) (mask up to lowest set bit).
+    // reg field = 010 (/2 = BLSMSK), rm=001(ecx), vvvv -> eax. C4 E2 78 F3 D1.
+    let mut r = regs();
+    r.rcx = 0x0000_00B0;
+    check_flags_masked("blsmsk", &with_hlt(vec![0xC4, 0xE2, 0x78, 0xF3, 0xD1]), r, BMI_DEFINED);
+}
+
+// ---- BMI2: PEXT / PDEP / MULX / RORX / SARX / SHRX / SHLX ----
+//
+// BMI2 bit-manipulation ops do NOT affect flags at all, so compare GPRs only.
+
+#[test]
+fn bmi2_pext() {
+    // PEXT r32, r32, r/m32 = VEX.LZ.F3.0F38.W0 F5 /r : extract bits of src1 selected by mask.
+    //   andn-form: vvvv = src1 (ebx), rm = mask (ecx), dest = eax.
+    //   pp=10 (F3), map=0F38 -> VEX3 C4 E2 62 F5 C1.
+    let mut r = regs();
+    r.rbx = 0x1234_5678; // source
+    r.rcx = 0x0F0F_0F0F; // mask: take low nibble of each byte
+    check_flags_masked("pext", &with_hlt(vec![0xC4, 0xE2, 0x62, 0xF5, 0xC1]), r, 0);
+}
+
+#[test]
+fn bmi2_pdep() {
+    // PDEP r32, r32, r/m32 = VEX.LZ.F2.0F38.W0 F5 /r : deposit bits into mask positions.
+    //   pp=11 (F2) -> VEX3 C4 E2 63 F5 C1. vvvv=src1(ebx), rm=mask(ecx), dest=eax.
+    let mut r = regs();
+    r.rbx = 0x0000_000F; // 4 source bits
+    r.rcx = 0x0F0F_0F0F; // scatter into these positions
+    check_flags_masked("pdep", &with_hlt(vec![0xC4, 0xE2, 0x63, 0xF5, 0xC1]), r, 0);
+}
+
+#[test]
+fn bmi2_mulx() {
+    // MULX r32a, r32b, r/m32 = VEX.LZ.F2.0F38.W0 F6 /r : unsigned mul of EDX by r/m,
+    //   high half -> dest1 (vvvv), low half -> dest2 (modrm.reg). EDX is implicit.
+    //   mulx eax, ebx, ecx : reg=eax(dest2), vvvv=ebx(dest1), rm=ecx(src2).
+    //   pp=11(F2), map=0F38 -> C4 E2 63 F6 C1  (vvvv=ebx=0b1101 inverted... encode below)
+    // Encoding: C4 E2 (62?) — vvvv must encode ebx(=0b0011) inverted = 0b1100.
+    //   byte3 = W(0)|vvvv(1100)|L(0)|pp(11) = 0 1100 0 11 = 0x63. reg/rm: reg=eax(000), rm=ecx(001) -> modrm C1.
+    let mut r = regs();
+    r.rdx = 0x0001_0000; // implicit multiplicand
+    r.rcx = 0x0001_0000; // src2 -> product 0x1_0000_0000
+    check_flags_masked("mulx", &with_hlt(vec![0xC4, 0xE2, 0x63, 0xF6, 0xC1]), r, 0);
+}
+
+#[test]
+fn bmi2_rorx() {
+    // RORX r32, r/m32, imm8 = VEX.LZ.F2.0F3A.W0 F0 /r ib : rotate right, no flags.
+    //   map=0F3A -> byte2 low nibble = 3. pp=11(F2). rorx eax, ecx, 8.
+    //   C4 E3 7B F0 C1 08 : reg=eax(000), rm=ecx(001) -> C1, imm=8.
+    let mut r = regs();
+    r.rcx = 0x1234_5678;
+    check_flags_masked("rorx", &with_hlt(vec![0xC4, 0xE3, 0x7B, 0xF0, 0xC1, 0x08]), r, 0);
+}
+
+#[test]
+fn bmi2_sarx() {
+    // SARX r32, r/m32, r32 = VEX.LZ.F3.0F38.W0 F7 /r : arithmetic shift right by count reg.
+    //   pp=10(F3). vvvv encodes the count register (ebx). sarx eax, ecx, ebx.
+    //   byte3 = W0 vvvv(~ebx=1100) L0 pp(10) -> 0 1100 0 10 = 0x62. modrm reg=eax,rm=ecx -> C1.
+    let mut r = regs();
+    r.rcx = 0xFFFF_8000; // negative when treated as i32
+    r.rbx = 4; // shift count
+    check_flags_masked("sarx", &with_hlt(vec![0xC4, 0xE2, 0x62, 0xF7, 0xC1]), r, 0);
+}
+
+#[test]
+fn bmi2_shrx() {
+    // SHRX r32, r/m32, r32 = VEX.LZ.F2.0F38.W0 F7 /r : logical shift right.
+    //   pp=11(F2). vvvv=ebx(count). byte3 = 0 1100 0 11 = 0x63.
+    let mut r = regs();
+    r.rcx = 0xF000_0000;
+    r.rbx = 8;
+    check_flags_masked("shrx", &with_hlt(vec![0xC4, 0xE2, 0x63, 0xF7, 0xC1]), r, 0);
+}
+
+#[test]
+fn bmi2_shlx() {
+    // SHLX r32, r/m32, r32 = VEX.LZ.66.0F38.W0 F7 /r : logical shift left.
+    //   pp=01(66). vvvv=ebx(count). byte3 = 0 1100 0 01 = 0x61.
+    let mut r = regs();
+    r.rcx = 0x0000_00FF;
+    r.rbx = 12;
+    check_flags_masked("shlx", &with_hlt(vec![0xC4, 0xE2, 0x61, 0xF7, 0xC1]), r, 0);
+}
+
+#[test]
+fn bmi2_rorx_r64() {
+    // 64-bit RORX: VEX.LZ.F2.0F3A.W1 F0 /r ib. W1 -> byte3 bit7 set: 0xFB.
+    //   rorx rax, rcx, 20 : C4 E3 FB F0 C1 14.
+    let mut r = regs();
+    r.rcx = 0x0123_4567_89AB_CDEF;
+    check_flags_masked("rorx64", &with_hlt(vec![0xC4, 0xE3, 0xFB, 0xF0, 0xC1, 0x14]), r, 0);
+}
