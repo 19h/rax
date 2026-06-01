@@ -439,16 +439,18 @@ fn test_paddusb_saturation_progressive() {
 
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    // 250+10=255(saturates), 240+20=255(saturates), 200+60=255(saturates), 150+110=255(saturates)
+    // Per-byte unsigned saturating add (cap at 255). Lanes (low->high):
+    //   0xFA+0x00=250                 0x96+0x06=156
+    //   0xFA+0x05=255                 0x96+0x6E=260 -> 255 (sat)
+    //   0xF0+0x0A=250                 0xC8+0x1C=228
+    //   0x64+0x3C=160                 0x96+0x6E=260 -> 255 (sat)
     write_mm_via_mem(&mem, 0x2000, 0x9664C8F096FA96FA);
     write_mm_via_mem(&mem, 0x2008, 0x6E3C1C0A6E050600);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    // Each byte should saturate to 255 or be below
-    // This is complex calculation, just verify operation completed
-    let _result = read_mem_at_u64(&mem, 0x2010);
+    assert_eq!(result, 0xFFA0E4FAFFFF9CFA, "PADDUSB: progressive saturation to 255");
 }
 
 #[test]

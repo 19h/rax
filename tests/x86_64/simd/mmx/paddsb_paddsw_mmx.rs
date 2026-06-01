@@ -634,17 +634,18 @@ fn test_paddsb_random_values() {
 
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    write_mm_via_mem(&mem, 0x2000, 0x1A2B3C4D5E6F7081);
-    write_mm_via_mem(&mem, 0x2008, 0xE5D4C3B2A1908F7E);
+    // Per-byte signed saturating add. Lanes (low->high):
+    //   100+50=150  -> +127 (pos sat)    -100+-50=-150 -> -128 (neg sat)
+    //   10+20=30                          -10+-20=-30
+    //   127+127     -> +127 (pos sat)    -128+-128     -> -128 (neg sat)
+    //   0+0=0                             64+(-64)=0
+    write_mm_via_mem(&mem, 0x2000, 0x4000807FF60A9C64);
+    write_mm_via_mem(&mem, 0x2008, 0xC000807FEC14CE32);
 
     run_until_hlt(&mut vcpu).unwrap();
 
     let result = read_mem_at_u64(&mem, 0x2010);
-    // Each byte adds with saturation
-    // 0x1A+0xE5=0xFF (saturates to 0x7F), etc.
-    // This needs manual calculation for each byte
-    let _result = read_mem_at_u64(&mem, 0x2010);
-    // Just verify operation completed
+    assert_eq!(result, 0x0000807FE21E807F, "PADDSB: mixed values with saturation");
 }
 
 #[test]
@@ -659,11 +660,16 @@ fn test_paddsw_random_values() {
 
     let (mut vcpu, mem) = setup_vm(&code, None);
 
-    write_mm_via_mem(&mem, 0x2000, 0x1A2B3C4D5E6F7081);
-    write_mm_via_mem(&mem, 0x2008, 0xE5D4C3B2A1908F7E);
+    // Per-word signed saturating add. Lanes (low->high):
+    //   30000+5000=35000   -> +32767 (pos sat)
+    //   -30000+-5000       -> -32768 (neg sat)
+    //   1000+2000=3000
+    //   -1000+500=-500
+    write_mm_via_mem(&mem, 0x2000, 0xFC1803E88AD07530);
+    write_mm_via_mem(&mem, 0x2008, 0x01F407D0EC781388);
 
     run_until_hlt(&mut vcpu).unwrap();
 
-    let _result = read_mem_at_u64(&mem, 0x2010);
-    // Just verify operation completed
+    let result = read_mem_at_u64(&mem, 0x2010);
+    assert_eq!(result, 0xFE0C0BB880007FFF, "PADDSW: mixed values with saturation");
 }
