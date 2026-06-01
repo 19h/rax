@@ -17,6 +17,13 @@ use super::opcode::DecodedOp;
 use crate::cpu::HexagonRegisters;
 
 mod alu;
+mod alu_pred;
+mod bitmanip;
+mod compare;
+mod float;
+mod mpy;
+mod shift;
+mod vecalu;
 
 /// USR sticky overflow / saturation bit (`USR:0`).
 pub const USR_OVF: u32 = 1 << 0;
@@ -158,5 +165,13 @@ pub(crate) fn fimm_u(d: &DecodedOp, letter: u8, immext: Option<u32>) -> u32 {
 /// Returns `true` if a handler executed the instruction.
 pub fn dispatch(d: &DecodedOp, ctx: &mut SemCtx) -> bool {
     // Each class returns `false` for opcodes it does not own; try them in turn.
-    alu::exec(d.opcode, d, ctx)
+    let op = d.opcode;
+    alu::exec(op, d, ctx)
+        || alu_pred::exec(op, d, ctx)
+        || bitmanip::exec(op, d, ctx)
+        || compare::exec(op, d, ctx)
+        || float::exec(op, d, ctx)
+        || mpy::exec(op, d, ctx)
+        || shift::exec(op, d, ctx)
+        || vecalu::exec(op, d, ctx)
 }
