@@ -24,7 +24,10 @@ impl X86_64Vcpu {
                 }
             }
 
-            // HLT - halt and exit to caller
+            // HLT - halt and exit to caller.
+            // NOTE: architecturally HLT is privileged (#GP at CPL!=0), but the rax
+            // test harness uses HLT as a universal terminator from any CPL (incl.
+            // ring 3 after SYSEXIT/SYSRET), so it is intentionally NOT gated here.
             0xF4 => {
                 self.regs.rip += ctx.cursor as u64;
                 self.halted = true;

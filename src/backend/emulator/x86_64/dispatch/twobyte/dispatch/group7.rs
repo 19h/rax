@@ -157,9 +157,13 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
                 0xF8 => {
-                    // SWAPGS (0x0F 0x01 0xF8) - Swap GS base with IA32_KERNEL_GS_BASE
+                    // SWAPGS (0x0F 0x01 0xF8) - privileged: #GP(0) at CPL != 0
                     ctx.consume_u8()?; // consume modrm
-                                       // Exchange GS.base with IA32_KERNEL_GS_BASE MSR (0xC0000102)
+                    if self.sregs.cr0 & 1 != 0 && (self.sregs.cs.selector & 3) != 0 {
+                        self.inject_exception(13, Some(0))?;
+                        return Ok(None);
+                    }
+                    // Exchange GS.base with IA32_KERNEL_GS_BASE MSR (0xC0000102)
                     let gs_base = self.sregs.gs.base;
                     let kernel_gs_base = self.kernel_gs_base;
                     self.sregs.gs.base = kernel_gs_base;
