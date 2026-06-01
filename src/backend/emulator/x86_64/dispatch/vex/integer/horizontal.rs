@@ -402,10 +402,14 @@ impl X86_64Vcpu {
     fn pmaddubsw_64(&self, a: u64, b: u64) -> u64 {
         let mut result = 0u64;
         for i in 0..4 {
-            let a0 = ((a >> (i * 16)) & 0xFF) as u8 as i16;
-            let a1 = ((a >> (i * 16 + 8)) & 0xFF) as u8 as i16;
-            let b0 = ((b >> (i * 16)) & 0xFF) as i8 as i16;
-            let b1 = ((b >> (i * 16 + 8)) & 0xFF) as i8 as i16;
+            // First operand is treated as unsigned bytes, second as signed bytes.
+            // The two products and their sum must be accumulated at i32 width: each
+            // product can reach 255*127 = 32385 and the sum 255*-128*2 = -65280,
+            // both of which overflow i16 before the signed-saturate to a word.
+            let a0 = ((a >> (i * 16)) & 0xFF) as u8 as i32;
+            let a1 = ((a >> (i * 16 + 8)) & 0xFF) as u8 as i32;
+            let b0 = ((b >> (i * 16)) & 0xFF) as i8 as i32;
+            let b1 = ((b >> (i * 16 + 8)) & 0xFF) as i8 as i32;
             let prod = (a0 * b0 + a1 * b1).clamp(-32768, 32767) as u16;
             result |= (prod as u64) << (i * 16);
         }

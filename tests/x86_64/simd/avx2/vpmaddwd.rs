@@ -516,3 +516,49 @@ fn test_vpmaddwd_checkerboard() {
     mem.write_slice(&checkerboard, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Regression: VPMADDWD intermediate accumulation must be wide enough.
+//
+// Each i16*i16 product fits in i32, but the sum of the two products per output
+// dword can overflow i32 (0x8000*0x8000 in both lanes = 2147483648). The result
+// must wrap (as on hardware), not panic/overflow. Also verifies value semantics.
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn vpmaddwd_ymm_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn vpmaddwd_ymm_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let regs = vcpu.get_regs().unwrap();
+    (regs.xmm[idx][0] as u128) | ((regs.xmm[idx][1] as u128) << 64)
+}
+
+#[test]
+fn test_vpmaddwd_basic_value() {
+    // VPMADDWD ymm0, ymm1, ymm2 ; words a=[2,3], b=[5,7] -> 2*5+3*7 = 31.
+    let code = [0xc5, 0xf5, 0xf5, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    vpmaddwd_ymm_set(&mut vcpu, 1, 0x0003_0002, 0);
+    vpmaddwd_ymm_set(&mut vcpu, 2, 0x0007_0005, 0);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(vpmaddwd_ymm_lo(&vcpu, 0) as u32, 31);
+}
+
+#[test]
+fn test_vpmaddwd_overflow_wraps() {
+    // All words = 0x8000 (-32768): (-32768)^2 * 2 = 2147483648 overflows i32 and
+    // wraps to 0x80000000. This previously panicked due to an i32 add overflow.
+    let code = [0xc5, 0xf5, 0xf5, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    vpmaddwd_ymm_set(&mut vcpu, 1, 0x8000_8000_8000_8000, 0);
+    vpmaddwd_ymm_set(&mut vcpu, 2, 0x8000_8000_8000_8000, 0);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(vpmaddwd_ymm_lo(&vcpu, 0) as u32, 0x80000000);
+}

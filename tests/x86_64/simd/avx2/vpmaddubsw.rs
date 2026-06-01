@@ -571,3 +571,63 @@ fn test_vpmaddubsw_max_unsigned_negative_signed() {
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Regression: VPMADDUBSW intermediate accumulation must be wide enough.
+//
+// First operand bytes are unsigned, second signed. A single product can reach
+// 255*127 and the sum of two products per word can exceed the i16 range before
+// the final signed-saturate to a word. The accumulation must be done at i32
+// width (this previously panicked from an i16 multiply/add overflow), then the
+// word result is signed-saturated to [-32768, 32767].
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn vpmaddubsw_ymm_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn vpmaddubsw_ymm_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let regs = vcpu.get_regs().unwrap();
+    (regs.xmm[idx][0] as u128) | ((regs.xmm[idx][1] as u128) << 64)
+}
+
+#[test]
+fn test_vpmaddubsw_positive_saturate() {
+    // VPMADDUBSW ymm0, ymm1, ymm2 ; a bytes (unsigned) = [200,200], b (signed) = [100,100]
+    // 200*100 + 200*100 = 40000 -> signed-saturate to 0x7FFF.
+    let code = [0xc4, 0xe2, 0x75, 0x04, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    vpmaddubsw_ymm_set(&mut vcpu, 1, 0xC8C8, 0);
+    vpmaddubsw_ymm_set(&mut vcpu, 2, 0x6464, 0);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(vpmaddubsw_ymm_lo(&vcpu, 0) as u16, 32767);
+}
+
+#[test]
+fn test_vpmaddubsw_negative_saturate() {
+    // a bytes (unsigned) = [255,255], b (signed) = [-128,-128] = [0x80,0x80].
+    // 255*(-128) + 255*(-128) = -65280 -> signed-saturate to -32768 = 0x8000.
+    let code = [0xc4, 0xe2, 0x75, 0x04, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    vpmaddubsw_ymm_set(&mut vcpu, 1, 0xFFFF, 0);
+    vpmaddubsw_ymm_set(&mut vcpu, 2, 0x8080, 0);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(vpmaddubsw_ymm_lo(&vcpu, 0) as u16, 0x8000);
+}
+
+#[test]
+fn test_vpmaddubsw_basic() {
+    // a=[1,2], b=[3,4] -> 1*3 + 2*4 = 11 (no saturation).
+    let code = [0xc4, 0xe2, 0x75, 0x04, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    vpmaddubsw_ymm_set(&mut vcpu, 1, 0x0201, 0);
+    vpmaddubsw_ymm_set(&mut vcpu, 2, 0x0403, 0);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(vpmaddubsw_ymm_lo(&vcpu, 0) as u16, 11);
+}

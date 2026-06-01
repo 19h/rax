@@ -354,8 +354,10 @@ impl X86_64Vcpu {
         let b1 = ((b >> 16) & 0xFFFF) as i16;
         let b2 = ((b >> 32) & 0xFFFF) as i16;
         let b3 = ((b >> 48) & 0xFFFF) as i16;
-        let d0 = ((a0 as i32) * (b0 as i32) + (a1 as i32) * (b1 as i32)) as u32;
-        let d1 = ((a2 as i32) * (b2 as i32) + (a3 as i32) * (b3 as i32)) as u32;
+        // Each i16*i16 product fits in i32, but the sum of two products can
+        // overflow i32 (e.g. 0x8000*0x8000 in both lanes); PMADDWD wraps it.
+        let d0 = ((a0 as i32) * (b0 as i32)).wrapping_add((a1 as i32) * (b1 as i32)) as u32;
+        let d1 = ((a2 as i32) * (b2 as i32)).wrapping_add((a3 as i32) * (b3 as i32)) as u32;
         (d0 as u64) | ((d1 as u64) << 32)
     }
 
