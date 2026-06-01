@@ -17,3 +17,4 @@ pub mod vga;
 pub mod virtio;
 pub mod nvme;
 pub mod e1000;
+pub mod ac97;

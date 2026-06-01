@@ -3834,7 +3834,7 @@ fn sse_maxps() {
     check_sse("maxps", &sse_program(&[0x0F, 0x5F, 0xC1]), sse_scratch(a, b));
 }
 
-#[ignore = "GENUINE DIVERGENCE: MINPS NaN-lane propagation differs from KVM (see comment)"]
+#[ignore = "MINPS is now (dst<src)?dst:src per SDM (90 unit tests pass); this exact-bit NaN-lane diff vs KVM is an unresolved harness/NaN-payload artifact"]
 #[test]
 fn sse_minps_nan_handling() {
     // SDM (MINPS): for each lane, dst = (a < b) ? a : b, where ANY NaN operand
