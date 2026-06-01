@@ -819,6 +819,51 @@ fn diff_simd_shift_fixedpoint() {
     run_batch("simd_shift_fixedpoint", batch);
 }
 
+/// Advanced SIMD three-different (widening/narrowing): `0 Q U 01110 size 1 Rm opcode 00 Rn Rd`.
+fn enc_3diff(q: u32, u: u32, size: u32, opcode: u32) -> u32 {
+    (q << 30) | (u << 29) | (0b01110 << 24) | (size << 22) | (1 << 21) | (RM << 16)
+        | (opcode << 12) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_simd_three_diff() {
+    // (opcode, U-options, name)
+    let ops: &[(u32, &[u32], &str)] = &[
+        (0b0000, &[0, 1], "saddl_uaddl"),
+        (0b0001, &[0, 1], "saddw_uaddw"),
+        (0b0010, &[0, 1], "ssubl_usubl"),
+        (0b0011, &[0, 1], "ssubw_usubw"),
+        (0b0100, &[0, 1], "addhn_raddhn"),
+        (0b0101, &[0, 1], "sabal_uabal"),
+        (0b0110, &[0, 1], "subhn_rsubhn"),
+        (0b0111, &[0, 1], "sabdl_uabdl"),
+        (0b1000, &[0, 1], "smlal_umlal"),
+        (0b1001, &[0], "sqdmlal"),
+        (0b1010, &[0, 1], "smlsl_umlsl"),
+        (0b1011, &[0], "sqdmlsl"),
+        (0b1100, &[0, 1], "smull_umull"),
+        (0b1101, &[0], "sqdmull"),
+        (0b1110, &[0], "pmull"),
+    ];
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for &(opcode, us, name) in ops {
+        for &u in us {
+            for size in 0..3 {
+                for q in 0..2 {
+                    cases.push((format!("{name} sz{size} q{q}"), enc_3diff(q, u, size, opcode)));
+                }
+            }
+            // PMULL.1Q (size==3) for the polynomial op only.
+            if opcode == 0b1110 {
+                for q in 0..2 {
+                    cases.push((format!("{name} sz3 q{q}"), enc_3diff(q, u, 3, opcode)));
+                }
+            }
+        }
+    }
+    run_family("simd_three_diff", cases, 8, 0x8001);
+}
+
 /// Advanced SIMD across-lanes reduction: `0 Q U 01110 size 11000 opcode 10 Rn Rd`.
 fn enc_across(q: u32, u: u32, size: u32, opcode: u32) -> u32 {
     (q << 30) | (u << 29) | (0b01110 << 24) | (size << 22) | (0b11000 << 17)

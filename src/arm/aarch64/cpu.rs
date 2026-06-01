@@ -2303,165 +2303,160 @@ impl AArch64Cpu {
         let rn = ((insn >> 5) & 0x1F) as usize;
         let rd = (insn & 0x1F) as usize;
 
-        // Source element size
-        let esize = 1usize << size;
-        // Result element size is 2x source
-        let dsize = esize * 2;
-        // For Q=0, use lower half; for Q=1, use upper half
-        let part = q as usize;
-        let elements = 8 / esize; // Number of elements in half register
+        let bits = 8u32 << size; // source element (or narrowing destination) size
+        let esize = (bits / 8) as usize;
+        let dbits = 2 * bits; // doubled (wide) element size
+        let part = q as usize; // "2" forms use the upper half of the narrow source
+        let signed = u == 0;
 
-        let src1 = self.v[rn].to_le_bytes();
-        let src2 = self.v[rm].to_le_bytes();
-        let dst_val = self.v[rd].to_le_bytes();
-        let mut dst = [0u8; 16];
+        let vn = self.v[rn];
+        let vm = self.v[rm];
+        let vd = self.v[rd];
+        let vn_b = vn.to_le_bytes();
+        let vm_b = vm.to_le_bytes();
 
-        // For accumulate operations, start with current destination value
-        if opcode >= 0b1000 {
-            dst.copy_from_slice(&dst_val);
-        }
-
-        for e in 0..elements {
-            let src_off = part * 8 + e * esize;
-            let dst_off = e * dsize;
-
-            match (size, opcode) {
-                // Size 0: 8-bit -> 16-bit operations
-                (0, _) => {
-                    let a = if u == 0 {
-                        src1[src_off] as i8 as i16
-                    } else {
-                        src1[src_off] as u8 as i16
-                    };
-                    let b = if u == 0 {
-                        src2[src_off] as i8 as i16
-                    } else {
-                        src2[src_off] as u8 as i16
-                    };
-                    let acc = i16::from_le_bytes([dst[dst_off], dst[dst_off + 1]]);
-
-                    let result: i16 = match opcode {
-                        0b0000 => a + b,               // SADDL/UADDL
-                        0b0001 => a + b,               // SADDW/UADDW (simplified)
-                        0b0010 => a - b,               // SSUBL/USUBL
-                        0b0011 => a - b,               // SSUBW/USUBW (simplified)
-                        0b0100 => (a - b).abs(),       // SABDL/UABDL
-                        0b0101 => acc + (a - b).abs(), // SABAL/UABAL
-                        0b0110 => a - b,               // SUBHN (simplified)
-                        0b0111 => a + b,               // ADDHN (simplified)
-                        0b1000 => acc + a * b,         // SMLAL/UMLAL
-                        0b1010 => acc - a * b,         // SMLSL/UMLSL
-                        0b1100 => a * b,               // SMULL/UMULL
-                        0b1110 => a * b,               // PMULL (simplified as MUL)
-                        _ => return Ok(CpuExit::Undefined(insn)),
-                    };
-                    let bytes = result.to_le_bytes();
-                    dst[dst_off..dst_off + 2].copy_from_slice(&bytes);
+        match opcode {
+            // ---- ADDHN/RADDHN (0100), SUBHN/RSUBHN (0110): add/sub then take
+            //      the high half, narrowing 2*bits -> bits. ----
+            0b0100 | 0b0110 => {
+                if size == 0b11 {
+                    return Err(ArmError::UndefinedInstruction(insn));
                 }
-                // Size 1: 16-bit -> 32-bit operations
-                (1, _) => {
-                    let a = if u == 0 {
-                        i16::from_le_bytes([src1[src_off], src1[src_off + 1]]) as i32
+                let rounding = u == 1;
+                let add = opcode == 0b0100;
+                let elements = 64 / bits as usize;
+                let dmask = elem_mask_u128(dbits);
+                let mut packed = 0u64;
+                for e in 0..elements {
+                    let a = (vn >> (e * dbits as usize)) & dmask;
+                    let b = (vm >> (e * dbits as usize)) & dmask;
+                    let mut s = if add {
+                        a.wrapping_add(b) & dmask
                     } else {
-                        u16::from_le_bytes([src1[src_off], src1[src_off + 1]]) as i32
+                        a.wrapping_sub(b) & dmask
                     };
-                    let b = if u == 0 {
-                        i16::from_le_bytes([src2[src_off], src2[src_off + 1]]) as i32
-                    } else {
-                        u16::from_le_bytes([src2[src_off], src2[src_off + 1]]) as i32
-                    };
-                    let acc = i32::from_le_bytes([
-                        dst[dst_off],
-                        dst[dst_off + 1],
-                        dst[dst_off + 2],
-                        dst[dst_off + 3],
-                    ]);
-
-                    let result: i32 = match opcode {
-                        0b0000 => a + b,
-                        0b0001 => a + b,
-                        0b0010 => a - b,
-                        0b0011 => a - b,
-                        0b0100 => (a - b).abs(),
-                        0b0101 => acc + (a - b).abs(),
-                        0b0110 => a - b,
-                        0b0111 => a + b,
-                        0b1000 => acc + a * b,
-                        0b1010 => acc - a * b,
-                        0b1100 => a * b,
-                        0b1110 => a * b,
-                        _ => return Ok(CpuExit::Undefined(insn)),
-                    };
-                    let bytes = result.to_le_bytes();
-                    dst[dst_off..dst_off + 4].copy_from_slice(&bytes);
+                    if rounding {
+                        s = s.wrapping_add(1u128 << (bits - 1)) & dmask;
+                    }
+                    let narrowed = ((s >> bits) & elem_mask_u128(bits)) as u64;
+                    packed |= (narrowed & elem_mask(bits)) << (e * bits as usize);
                 }
-                // Size 2: 32-bit -> 64-bit operations
-                (2, _) => {
-                    let a = if u == 0 {
-                        i32::from_le_bytes([
-                            src1[src_off],
-                            src1[src_off + 1],
-                            src1[src_off + 2],
-                            src1[src_off + 3],
-                        ]) as i64
-                    } else {
-                        u32::from_le_bytes([
-                            src1[src_off],
-                            src1[src_off + 1],
-                            src1[src_off + 2],
-                            src1[src_off + 3],
-                        ]) as i64
-                    };
-                    let b = if u == 0 {
-                        i32::from_le_bytes([
-                            src2[src_off],
-                            src2[src_off + 1],
-                            src2[src_off + 2],
-                            src2[src_off + 3],
-                        ]) as i64
-                    } else {
-                        u32::from_le_bytes([
-                            src2[src_off],
-                            src2[src_off + 1],
-                            src2[src_off + 2],
-                            src2[src_off + 3],
-                        ]) as i64
-                    };
-                    let acc = i64::from_le_bytes([
-                        dst[dst_off],
-                        dst[dst_off + 1],
-                        dst[dst_off + 2],
-                        dst[dst_off + 3],
-                        dst[dst_off + 4],
-                        dst[dst_off + 5],
-                        dst[dst_off + 6],
-                        dst[dst_off + 7],
-                    ]);
-
-                    let result: i64 = match opcode {
-                        0b0000 => a + b,
-                        0b0001 => a + b,
-                        0b0010 => a - b,
-                        0b0011 => a - b,
-                        0b0100 => (a - b).abs(),
-                        0b0101 => acc + (a - b).abs(),
-                        0b0110 => a - b,
-                        0b0111 => a + b,
-                        0b1000 => acc + a * b,
-                        0b1010 => acc - a * b,
-                        0b1100 => a * b,
-                        0b1110 => a * b,
-                        _ => return Ok(CpuExit::Undefined(insn)),
-                    };
-                    let bytes = result.to_le_bytes();
-                    dst[dst_off..dst_off + 8].copy_from_slice(&bytes);
+                let mut bytes = vd.to_le_bytes();
+                bytes[part * 8..part * 8 + 8].copy_from_slice(&packed.to_le_bytes());
+                if part == 0 {
+                    bytes[8..16].copy_from_slice(&[0u8; 8]);
                 }
-                _ => return Ok(CpuExit::Undefined(insn)),
+                self.v[rd] = u128::from_le_bytes(bytes);
+                Ok(CpuExit::Continue)
+            }
+            // ---- SADDW/UADDW (0001), SSUBW/USUBW (0011): Vn is already wide. ----
+            0b0001 | 0b0011 => {
+                if size == 0b11 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+                let add = opcode == 0b0001;
+                let elements = 64 / bits as usize;
+                let mut result = 0u128;
+                for e in 0..elements {
+                    let aw = (vn >> (e * dbits as usize)) & elem_mask_u128(dbits);
+                    let awide: i128 = if signed {
+                        sext_elem_wide(aw, dbits)
+                    } else {
+                        aw as i128
+                    };
+                    let bn = read_elem(&vm_b, part * 8 + e * esize, esize);
+                    let bwide: i128 = if signed {
+                        sext_elem(bn, bits)
+                    } else {
+                        uext_elem(bn, bits) as i128
+                    };
+                    let r = if add { awide + bwide } else { awide - bwide };
+                    result |= ((r as u128) & elem_mask_u128(dbits)) << (e * dbits as usize);
+                }
+                self.v[rd] = result;
+                Ok(CpuExit::Continue)
+            }
+            // ---- Widening L-forms ----
+            _ => {
+                // PMULL.1Q (size==11) is the only size-3 form.
+                if size == 0b11 && opcode != 0b1110 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+                if size == 0b11 && opcode == 0b1110 {
+                    // PMULL/PMULL2 of 64-bit -> 128-bit polynomial product.
+                    if u == 1 {
+                        return Err(ArmError::UndefinedInstruction(insn));
+                    }
+                    let a = (vn >> (part * 64)) as u64;
+                    let b = (vm >> (part * 64)) as u64;
+                    self.v[rd] = poly_mul_64(a, b);
+                    return Ok(CpuExit::Continue);
+                }
+                // SQDMLAL/SQDMLSL/SQDMULL need a 16- or 32-bit source.
+                if matches!(opcode, 0b1001 | 0b1011 | 0b1101) && size == 0b00 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+                // PMULL (vector form here) is 8-bit source only.
+                if opcode == 0b1110 && size != 0b00 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+                let elements = 64 / bits as usize;
+                let dmask = elem_mask_u128(dbits);
+                let mut result = 0u128;
+                for e in 0..elements {
+                    let off = part * 8 + e * esize;
+                    let an = read_elem(&vn_b, off, esize);
+                    let bn = read_elem(&vm_b, off, esize);
+                    let (av, bv): (i128, i128) = if signed {
+                        (sext_elem(an, bits), sext_elem(bn, bits))
+                    } else {
+                        (uext_elem(an, bits) as i128, uext_elem(bn, bits) as i128)
+                    };
+                    let dval = ((vd >> (e * dbits as usize)) & dmask) as u64;
+                    let r: u128 = match opcode {
+                        0b0000 => ((av + bv) as u128) & dmask,          // SADDL/UADDL
+                        0b0010 => ((av - bv) as u128) & dmask,          // SSUBL/USUBL
+                        0b0111 => (((av - bv).abs()) as u128) & dmask,  // SABDL/UABDL
+                        0b0101 => {
+                            ((sext_elem_wide(dval as u128, dbits) + (av - bv).abs()) as u128) & dmask
+                            // SABAL/UABAL
+                        }
+                        0b1000 => {
+                            ((sext_elem_wide(dval as u128, dbits) + av * bv) as u128) & dmask // SMLAL/UMLAL
+                        }
+                        0b1010 => {
+                            ((sext_elem_wide(dval as u128, dbits) - av * bv) as u128) & dmask // SMLSL/UMLSL
+                        }
+                        0b1100 => ((av * bv) as u128) & dmask,          // SMULL/UMULL
+                        0b1110 => {
+                            if u == 1 {
+                                return Err(ArmError::UndefinedInstruction(insn));
+                            }
+                            poly_mul_wide(an, bn, bits) as u128 & dmask // PMULL (8->16)
+                        }
+                        0b1001 | 0b1011 | 0b1101 => {
+                            // SQDMLAL / SQDMLSL / SQDMULL (signed only).
+                            if u == 1 {
+                                return Err(ArmError::UndefinedInstruction(insn));
+                            }
+                            let dmin = -(1i128 << (dbits - 1));
+                            let dmax = (1i128 << (dbits - 1)) - 1;
+                            let prod = (2 * av * bv).clamp(dmin, dmax);
+                            let acc = match opcode {
+                                0b1001 => sext_elem_wide(dval as u128, dbits) + prod,
+                                0b1011 => sext_elem_wide(dval as u128, dbits) - prod,
+                                _ => prod,
+                            };
+                            (sat_signed_wide(acc, dbits)) & dmask
+                        }
+                        _ => return Err(ArmError::UndefinedInstruction(insn)),
+                    };
+                    result |= r << (e * dbits as usize);
+                }
+                self.v[rd] = result;
+                Ok(CpuExit::Continue)
             }
         }
-
-        self.v[rd] = u128::from_le_bytes(dst);
-        Ok(CpuExit::Continue)
     }
 
     /// Execute cryptographic operations (AES, SHA, SM3, SM4).
@@ -6873,6 +6868,47 @@ fn poly_mul_8(a: u64, b: u64) -> u64 {
         }
     }
     result & 0xFF
+}
+
+/// Widening polynomial multiply: `bits`-bit operands -> full `2*bits` product.
+#[inline]
+fn poly_mul_wide(a: u64, b: u64, bits: u32) -> u64 {
+    let mut result: u64 = 0;
+    for i in 0..bits {
+        if (a >> i) & 1 != 0 {
+            result ^= b << i;
+        }
+    }
+    result
+}
+
+/// 64x64 -> 128-bit polynomial (carry-less) multiply (PMULL.1Q).
+#[inline]
+fn poly_mul_64(a: u64, b: u64) -> u128 {
+    let mut result: u128 = 0;
+    for i in 0..64 {
+        if (a >> i) & 1 != 0 {
+            result ^= (b as u128) << i;
+        }
+    }
+    result
+}
+
+/// Sign-extend the low `bits` bits of a u128 (`bits` up to 64) to i128.
+#[inline]
+fn sext_elem_wide(v: u128, bits: u32) -> i128 {
+    let v = v & elem_mask_u128(bits);
+    let shift = 128 - bits;
+    ((v << shift) as i128) >> shift
+}
+
+/// Saturate a signed value to the `bits`-bit signed range (`bits` up to 64),
+/// returned as raw bits in a u128.
+#[inline]
+fn sat_signed_wide(v: i128, bits: u32) -> u128 {
+    let max = (1i128 << (bits - 1)) - 1;
+    let min = -(1i128 << (bits - 1));
+    (v.clamp(min, max) as u128) & elem_mask_u128(bits)
 }
 
 /// Compute one element of an Advanced SIMD three-same *integer* operation.
