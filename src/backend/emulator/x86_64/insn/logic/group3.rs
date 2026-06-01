@@ -136,8 +136,16 @@ pub fn group3_rm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
             }
             let dividend = vcpu.regs.rax as i16;
             let divisor = divisor as i8 as i16;
-            let quotient = dividend / divisor;
-            let remainder = dividend % divisor;
+            // Guard against INT_MIN / -1: the division itself would overflow
+            // (and panic the host). This must raise #DE without advancing RIP.
+            let (quotient, remainder) = match (dividend.checked_div(divisor), dividend.checked_rem(divisor)) {
+                (Some(q), Some(r)) => (q, r),
+                _ => {
+                    // #DE exception for overflow - don't advance RIP
+                    vcpu.inject_exception(0, None)?;
+                    return Ok(None);
+                }
+            };
             if quotient < i8::MIN as i16 || quotient > i8::MAX as i16 {
                 // #DE exception for overflow - don't advance RIP
                 vcpu.inject_exception(0, None)?;
@@ -382,8 +390,15 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     let dividend = (((vcpu.regs.rdx as u16 as u32) << 16)
                         | (vcpu.regs.rax as u16 as u32)) as i32;
                     let divisor = divisor as i16 as i32;
-                    let quotient = dividend / divisor;
-                    let remainder = dividend % divisor;
+                    // Guard against INT_MIN / -1 (division would panic the host).
+                    let (quotient, remainder) = match (dividend.checked_div(divisor), dividend.checked_rem(divisor)) {
+                        (Some(q), Some(r)) => (q, r),
+                        _ => {
+                            // #DE exception for overflow - don't advance RIP
+                            vcpu.inject_exception(0, None)?;
+                            return Ok(None);
+                        }
+                    };
                     if quotient < i16::MIN as i32 || quotient > i16::MAX as i32 {
                         // #DE exception for overflow - don't advance RIP
                         vcpu.inject_exception(0, None)?;
@@ -396,8 +411,15 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     let dividend = (((vcpu.regs.rdx as u32 as u64) << 32)
                         | (vcpu.regs.rax as u32 as u64)) as i64;
                     let divisor = divisor as i32 as i64;
-                    let quotient = dividend / divisor;
-                    let remainder = dividend % divisor;
+                    // Guard against INT_MIN / -1 (division would panic the host).
+                    let (quotient, remainder) = match (dividend.checked_div(divisor), dividend.checked_rem(divisor)) {
+                        (Some(q), Some(r)) => (q, r),
+                        _ => {
+                            // #DE exception for overflow - don't advance RIP
+                            vcpu.inject_exception(0, None)?;
+                            return Ok(None);
+                        }
+                    };
                     if quotient < i32::MIN as i64 || quotient > i32::MAX as i64 {
                         // #DE exception for overflow - don't advance RIP
                         vcpu.inject_exception(0, None)?;
@@ -410,8 +432,15 @@ pub fn group3_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
                     let dividend =
                         (((vcpu.regs.rdx as u128) << 64) | (vcpu.regs.rax as u128)) as i128;
                     let divisor = divisor as i64 as i128;
-                    let quotient = dividend / divisor;
-                    let remainder = dividend % divisor;
+                    // Guard against INT_MIN / -1 (division would panic the host).
+                    let (quotient, remainder) = match (dividend.checked_div(divisor), dividend.checked_rem(divisor)) {
+                        (Some(q), Some(r)) => (q, r),
+                        _ => {
+                            // #DE exception for overflow - don't advance RIP
+                            vcpu.inject_exception(0, None)?;
+                            return Ok(None);
+                        }
+                    };
                     if quotient < i64::MIN as i128 || quotient > i64::MAX as i128 {
                         // #DE exception for overflow - don't advance RIP
                         vcpu.inject_exception(0, None)?;

@@ -662,3 +662,110 @@ fn test_idiv_max_positive() {
     assert_eq!(regs.rax, 0x7FFFFFFF, "Quotient = max i32");
     assert_eq!(regs.rdx, 0, "Remainder = 0");
 }
+
+// ============================================================================
+// #DE (Divide Error, vector 0) regression tests
+//
+// These verify the emulator raises #DE instead of panicking the host process.
+// We use `setup_vm_no_idt` so that exception delivery surfaces as an Err (no
+// IDT entry is present for vector 0), mirroring the pattern in misc/ud.rs.
+// A non-erroring run that reaches HLT means the guest divide either completed
+// or panicked the host -- both are failures here.
+// ============================================================================
+
+/// Shared helper: single-step the VM and assert it raises #DE (vector 0).
+///
+/// With `setup_vm_no_idt` there is no IDT entry for vector 0, so exception
+/// delivery fails with an error mentioning "IDT entry 0" -- this is how we
+/// observe that the divide-error vector (0) was raised. Reaching HLT means the
+/// divide wrongly completed; a host panic (the bug being fixed) would abort the
+/// test process outright, which is also a failure.
+fn assert_raises_de(vcpu: &mut rax::backend::emulator::x86_64::X86_64Vcpu) {
+    let mut reached_hlt = false;
+    let mut raised_de = false;
+    for _ in 0..10 {
+        match vcpu.step() {
+            Ok(Some(VcpuExit::Hlt)) => {
+                reached_hlt = true;
+                break;
+            }
+            Ok(_) => continue,
+            Err(e) => {
+                let msg = format!("{e}");
+                assert!(
+                    msg.contains("IDT entry 0 "),
+                    "expected #DE (vector 0) delivery, got: {msg}"
+                );
+                raised_de = true;
+                break;
+            }
+        }
+    }
+    assert!(!reached_hlt, "divide must raise #DE, not complete");
+    assert!(raised_de, "divide must raise #DE (vector 0)");
+}
+
+#[test]
+fn test_idiv_eax_int_min_div_neg_one_raises_de() {
+    // INT32_MIN (0x80000000) IDIV -1 overflows: |quotient| = 2^31 does not fit
+    // in a signed 32-bit result. Must raise #DE (vector 0).
+    let code = [
+        0x99,       // CDQ (sign-extend EAX into EDX => EDX:EAX = -2147483648)
+        0xf7, 0xfb, // IDIV EBX
+        0xf4,       // HLT (must NOT be reached)
+    ];
+    let mut regs = Registers::default();
+    regs.rax = 0x8000_0000; // EAX = INT32_MIN
+    regs.rbx = 0xFFFF_FFFF;  // EBX = -1
+    let (mut vcpu, _) = setup_vm_no_idt(&code, Some(regs));
+    assert_raises_de(&mut vcpu);
+}
+
+#[test]
+fn test_idiv_eax_dividend_i64_min_div_neg_one_no_host_panic() {
+    // The genuine host-panic path: the 32-bit IDIV widens EDX:EAX to i64, and
+    // i64::MIN / -1 overflows -- `dividend / divisor` would panic the whole
+    // emulator process. The fix must turn this into a #DE (vector 0) instead.
+    // EDX:EAX = 0x8000000000000000 = i64::MIN (set directly; CDQ cannot produce it).
+    let code = [
+        0xf7, 0xfb, // IDIV EBX
+        0xf4,       // HLT (must NOT be reached)
+    ];
+    let mut regs = Registers::default();
+    regs.rax = 0x0000_0000;  // EAX (low dword) = 0
+    regs.rdx = 0x8000_0000;  // EDX (high dword) = 0x80000000 => EDX:EAX = i64::MIN
+    regs.rbx = 0xFFFF_FFFF;  // EBX = -1
+    let (mut vcpu, _) = setup_vm_no_idt(&code, Some(regs));
+    assert_raises_de(&mut vcpu);
+}
+
+#[test]
+fn test_idiv_rax_dividend_i128_min_div_neg_one_no_host_panic() {
+    // 64-bit IDIV widens RDX:RAX to i128; i128::MIN / -1 would panic the host.
+    // RDX:RAX = i128::MIN (RDX high bit set, rest zero). Must raise #DE.
+    let code = [
+        0x48, 0xf7, 0xfb, // IDIV RBX (REX.W F7 /7)
+        0xf4,             // HLT (must NOT be reached)
+    ];
+    let mut regs = Registers::default();
+    regs.rax = 0;
+    regs.rdx = 0x8000_0000_0000_0000; // RDX:RAX = i128::MIN
+    regs.rbx = (-1i64) as u64;        // RBX = -1
+    let (mut vcpu, _) = setup_vm_no_idt(&code, Some(regs));
+    assert_raises_de(&mut vcpu);
+}
+
+#[test]
+fn test_idiv_eax_div_by_zero_raises_de() {
+    // IDIV by zero must raise #DE (vector 0), not panic the host.
+    let code = [
+        0x99,       // CDQ
+        0xf7, 0xfb, // IDIV EBX  (EBX = 0)
+        0xf4,       // HLT (must NOT be reached)
+    ];
+    let mut regs = Registers::default();
+    regs.rax = 100;
+    regs.rbx = 0; // divisor == 0
+    let (mut vcpu, _) = setup_vm_no_idt(&code, Some(regs));
+    assert_raises_de(&mut vcpu);
+}
