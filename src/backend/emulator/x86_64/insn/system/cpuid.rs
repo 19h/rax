@@ -45,12 +45,17 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                                   | (1 << 26); // SSE2 - REQUIRED
                                                // ECX: SSE3(0), SSSE3(9), SSE4.1(19), SSE4.2(20), POPCNT(23)
                                                // Note: TSC_DEADLINE (bit 24) NOT advertised - LAPIC only supports oneshot/periodic modes
-                                               // Note: AVX/XSAVE NOT advertised - we don't implement XSAVE instruction properly
+                                               // XSAVE (26), OSXSAVE (27, reflects CR4) and AVX (28) ARE advertised:
+                                               // XGETBV/XSETBV/XSAVE/XRSTOR + XCR0 are implemented (see group7.rs, leaf 0xD).
+            let osxsave = ((vcpu.sregs.cr4 >> 18) & 1) as u32; // CR4.OSXSAVE
             let features_ecx: u32 = (1 << 0)   // SSE3
                                   | (1 << 9)   // SSSE3
                                   | (1 << 19)  // SSE4.1
                                   | (1 << 20)  // SSE4.2
-                                  | (1 << 23); // POPCNT
+                                  | (1 << 23)  // POPCNT
+                                  | (1 << 26)  // XSAVE
+                                  | (osxsave << 27) // OSXSAVE (reflects CR4.OSXSAVE)
+                                  | (1 << 28); // AVX
             (signature, 0x00000000, features_ecx, features_edx)
         }
         0x15 => {
@@ -75,8 +80,9 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         7 => {
             // Extended feature flags (subleaf 0)
             if subleaf == 0 {
-                // Note: AVX2 NOT advertised - we don't implement XSAVE properly
-                let ebx = 1u32 << 20; // SMAP
+                // AVX2 IS advertised now that XSAVE/XCR0 are implemented.
+                let ebx = (1u32 << 20) // SMAP
+                        | (1u32 << 5); // AVX2
                 let ecx = 1u32 << 8; // GFNI (GF2P8MULB / GF2P8AFFINE[INV]QB)
                 let edx = 1u32 << 14; // SERIALIZE
                 (0, ebx, ecx, edx)
@@ -121,6 +127,25 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             let linear_bits: u32 = 48;
             (phys_bits | (linear_bits << 8), 0, 0, 0)
         }
+        0xD => {
+            // XSAVE feature enumeration leaf.
+            match subleaf {
+                // Subleaf 0: EAX/EDX = supported XCR0 bits; EBX = area size for the
+                // currently-enabled features; ECX = max area size for all supported.
+                0 => {
+                    let xcr0_valid_lo = 0x7u32; // x87 | SSE | AVX
+                    let max_size = 832u32; // legacy 512 + header 64 + YMM_Hi128 256
+                    let cur_size = if vcpu.xcr0 & 0x4 != 0 { 832 } else { 576 };
+                    (xcr0_valid_lo, cur_size, max_size, 0)
+                }
+                // Subleaf 1: XSAVEOPT/XSAVEC/XSAVES not supported.
+                1 => (0, 0, 0, 0),
+                // Subleaf 2: AVX (YMM_Hi128) component size + offset.
+                2 => (256, 576, 0, 0),
+                _ => (0, 0, 0, 0),
+            }
+        }
+
         _ => (0, 0, 0, 0),
     };
 

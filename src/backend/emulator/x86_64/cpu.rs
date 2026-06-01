@@ -202,6 +202,10 @@ pub struct X86_64Vcpu {
     pub(super) kernel_gs_base: u64,
     /// Protection Key Rights Register (PKRU).
     pub(super) pkru: u32,
+    /// Extended control register XCR0 (XSAVE feature-enable mask): bit0 x87
+    /// (always 1), bit1 SSE, bit2 AVX (YMM_Hi128). Written by XSETBV, read by
+    /// XGETBV, and consulted by XSAVE/XRSTOR and CPUID leaf 0xD.
+    pub(super) xcr0: u64,
     /// Decoded instruction cache for avoiding re-decode in hot loops
     pub(super) decode_cache: Box<[DecodeCacheEntry; DECODE_CACHE_SIZE]>,
     /// Lazy flag state for deferred flag computation (Cell for interior mutability in get_state)
@@ -690,6 +694,8 @@ impl X86_64Vcpu {
             io_pending: None,
             kernel_gs_base: 0,
             pkru: 0,
+            xcr0: 1, // x87 state component always enabled
+
             decode_cache,
             lazy_flags: Cell::new(LazyFlags::default()),
             #[cfg(feature = "debug")]

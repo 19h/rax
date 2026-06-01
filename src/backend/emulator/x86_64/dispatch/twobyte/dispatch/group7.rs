@@ -47,22 +47,38 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
                 0xD0 => {
-                    // XGETBV (0x0F 0x01 0xD0) - Get extended control register
+                    // XGETBV (0F 01 D0) - read extended control register XCR[ECX].
                     ctx.consume_u8()?; // consume modrm
-                                       // ECX specifies which XCR (only XCR0 is typically supported)
-                                       // Returns XCR value in EDX:EAX (zero-extended in 64-bit mode)
-                                       // For XCR0, return x87 bit set (bit 0) and SSE bit (bit 1)
-                    let xcr0 = 0x03u64; // x87 + SSE always enabled
-                                        // In 64-bit mode, writes to EAX/EDX zero-extend to RAX/RDX
-                    self.regs.rax = xcr0 & 0xFFFFFFFF;
-                    self.regs.rdx = (xcr0 >> 32) & 0xFFFFFFFF;
+                    // Return the tracked XCR0 (EDX:EAX, zero-extended in 64-bit mode).
+                    // Lenient on CR4.OSXSAVE since the harness reads XCR0 directly.
+                    let value = self.xcr0;
+                    self.regs.rax = value & 0xFFFF_FFFF;
+                    self.regs.rdx = (value >> 32) & 0xFFFF_FFFF;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xD1 => {
-                    // XSETBV (0x0F 0x01 0xD1) - Set extended control register
+                    // XSETBV (0F 01 D1) - write XCR[ECX] from EDX:EAX (privileged).
                     ctx.consume_u8()?; // consume modrm
-                                       // In emulator, just NOP (we ignore the write)
+                    // #GP(0) if CPL != 0.
+                    if self.sregs.cr0 & 1 != 0 && (self.sregs.cs.selector & 3) != 0 {
+                        self.inject_exception(13, Some(0))?;
+                        return Ok(None);
+                    }
+                    let ecx = self.regs.rcx as u32;
+                    let value = (self.regs.rax & 0xFFFF_FFFF) | (self.regs.rdx << 32);
+                    // Only XCR0 exists; x87 (bit0) must stay set; AVX (bit2) requires
+                    // SSE (bit1); bits outside x87|SSE|AVX (0x7) are reserved -> #GP(0).
+                    const SUPPORTED: u64 = 0x7;
+                    let invalid = ecx != 0
+                        || (value & 1) == 0
+                        || (value & !SUPPORTED) != 0
+                        || ((value & 0x4) != 0 && (value & 0x2) == 0);
+                    if invalid {
+                        self.inject_exception(13, Some(0))?;
+                        return Ok(None);
+                    }
+                    self.xcr0 = value;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
@@ -351,23 +367,108 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
                 4 => {
-                    // XSAVE - save extended processor state
-                    // EDX:EAX specifies which components to save
-                    // Write minimal XSAVE area header (64 bytes)
-                    // XSTATE_BV at offset 0 (8 bytes) - saved components
-                    let xcr0 = 0x03u64; // x87 + SSE
-                    self.write_mem(addr + 512, xcr0, 8)?; // XSTATE_BV in header
-                    self.write_mem(addr + 520, 0u64, 8)?; // XCOMP_BV
-                                                          // Zero rest of legacy region
-                    for i in 0..64 {
-                        self.write_mem(addr + i * 8, 0u64, 8)?;
+                    // XSAVE - save x87/SSE/AVX state selected by (EDX:EAX) & XCR0.
+                    let rfbm = ((self.regs.rax & 0xFFFF_FFFF) | (self.regs.rdx << 32))
+                        & self.xcr0;
+                    let mut xstate_bv = 0u64;
+                    // Component 0 (x87): legacy region header + ST0-7.
+                    if rfbm & 0x1 != 0 {
+                        self.write_mem16(addr, self.fpu.control_word)?;
+                        self.write_mem16(addr + 2, self.fpu.status_word)?;
+                        let mut abtw = 0u8;
+                        for i in 0..8 {
+                            if (self.fpu.tag_word >> (i * 2)) & 3 != 3 {
+                                abtw |= 1 << i;
+                            }
+                        }
+                        self.mmu.write_u8(addr + 4, abtw, &self.sregs)?;
+                        self.write_mem16(addr + 6, self.fpu.last_opcode)?;
+                        self.write_mem64(addr + 8, self.fpu.instr_ptr)?;
+                        self.write_mem64(addr + 16, self.fpu.data_ptr)?;
+                        for i in 0..8 {
+                            let bytes = insn::fpu::f64_to_f80_pub(self.fpu.get_st(i as u8));
+                            self.write_bytes(addr + 32 + (i as u64) * 16, &bytes)?;
+                        }
+                        xstate_bv |= 0x1;
                     }
+                    // Component 1 (SSE): MXCSR + XMM0-15.
+                    if rfbm & 0x2 != 0 {
+                        self.write_mem32(addr + 24, 0x1F80)?;
+                        self.write_mem32(addr + 28, 0xFFFF)?;
+                        for i in 0..16 {
+                            self.write_mem64(addr + 160 + (i as u64) * 16, self.regs.xmm[i][0])?;
+                            self.write_mem64(addr + 160 + (i as u64) * 16 + 8, self.regs.xmm[i][1])?;
+                        }
+                        xstate_bv |= 0x2;
+                    }
+                    // Component 2 (AVX): upper 128 bits of YMM0-15 at offset 576.
+                    if rfbm & 0x4 != 0 {
+                        for i in 0..16 {
+                            self.write_mem64(addr + 576 + (i as u64) * 16, self.regs.ymm_high[i][0])?;
+                            self.write_mem64(addr + 576 + (i as u64) * 16 + 8, self.regs.ymm_high[i][1])?;
+                        }
+                        xstate_bv |= 0x4;
+                    }
+                    // XSAVE header (standard, non-compacted): XSTATE_BV + XCOMP_BV.
+                    self.write_mem64(addr + 512, xstate_bv)?;
+                    self.write_mem64(addr + 520, 0)?;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 5 => {
-                    // XRSTOR - restore extended processor state
-                    // Just skip - we don't actually restore state
+                    // XRSTOR - restore x87/SSE/AVX state selected by (EDX:EAX) & XCR0.
+                    let rfbm = ((self.regs.rax & 0xFFFF_FFFF) | (self.regs.rdx << 32))
+                        & self.xcr0;
+                    let xstate_bv = self.read_mem64(addr + 512)?;
+                    if rfbm & 0x1 != 0 {
+                        if xstate_bv & 0x1 != 0 {
+                            self.fpu.control_word = self.read_mem16(addr)?;
+                            self.fpu.status_word = self.read_mem16(addr + 2)?;
+                            self.fpu.top = ((self.fpu.status_word >> 11) & 7) as u8;
+                            let abtw = self.mmu.read_u8(addr + 4, &self.sregs)?;
+                            self.fpu.tag_word = 0;
+                            for i in 0..8 {
+                                if abtw & (1 << i) == 0 {
+                                    self.fpu.tag_word |= 3 << (i * 2);
+                                }
+                            }
+                            self.fpu.last_opcode = self.read_mem16(addr + 6)?;
+                            self.fpu.instr_ptr = self.read_mem64(addr + 8)?;
+                            self.fpu.data_ptr = self.read_mem64(addr + 16)?;
+                            for i in 0..8 {
+                                let bytes = self.read_bytes(addr + 32 + (i as u64) * 16, 10)?;
+                                self.fpu.set_st(i as u8, insn::fpu::f80_to_f64_pub(&bytes));
+                            }
+                        } else {
+                            self.fpu.init();
+                        }
+                    }
+                    if rfbm & 0x2 != 0 {
+                        if xstate_bv & 0x2 != 0 {
+                            for i in 0..16 {
+                                self.regs.xmm[i][0] = self.read_mem64(addr + 160 + (i as u64) * 16)?;
+                                self.regs.xmm[i][1] =
+                                    self.read_mem64(addr + 160 + (i as u64) * 16 + 8)?;
+                            }
+                        } else {
+                            for i in 0..16 {
+                                self.regs.xmm[i] = [0, 0];
+                            }
+                        }
+                    }
+                    if rfbm & 0x4 != 0 {
+                        if xstate_bv & 0x4 != 0 {
+                            for i in 0..16 {
+                                self.regs.ymm_high[i][0] = self.read_mem64(addr + 576 + (i as u64) * 16)?;
+                                self.regs.ymm_high[i][1] =
+                                    self.read_mem64(addr + 576 + (i as u64) * 16 + 8)?;
+                            }
+                        } else {
+                            for i in 0..16 {
+                                self.regs.ymm_high[i] = [0, 0];
+                            }
+                        }
+                    }
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }

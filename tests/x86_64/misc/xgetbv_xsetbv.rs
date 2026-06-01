@@ -417,3 +417,70 @@ fn test_xgetbv_multiple_sequential_reads() {
     assert_eq!(read1, read2, "Read 1 and 2 should match");
     assert_eq!(read2, read3, "Read 2 and 3 should match");
 }
+
+// ===== AVX-ENABLE + XSAVE/XRSTOR ROUND-TRIP =====
+
+#[test]
+fn test_avx_enable_handshake() {
+    // Full enable sequence: set CR4.OSXSAVE, XSETBV XCR0 = x87|SSE|AVX (0x7),
+    // then XGETBV must read back 0x7.
+    let code = [
+        0x0f, 0x20, 0xe0, // MOV RAX, CR4
+        0x48, 0x0d, 0x00, 0x00, 0x04, 0x00, // OR RAX, 0x40000 (OSXSAVE, bit 18)
+        0x0f, 0x22, 0xe0, // MOV CR4, RAX
+        0xb8, 0x07, 0x00, 0x00, 0x00, // MOV EAX, 7
+        0x31, 0xd2, // XOR EDX, EDX
+        0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
+        0x0f, 0x01, 0xd1, // XSETBV
+        0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
+        0x0f, 0x01, 0xd0, // XGETBV
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        regs.rax & 0xFFFF_FFFF,
+        0x7,
+        "XGETBV should read back XCR0 = 0x7 after enabling AVX"
+    );
+}
+
+#[test]
+fn test_xsave_xrstor_roundtrip_xmm() {
+    // Enable AVX state, stash a known value in XMM0, XSAVE it to a scratch buffer,
+    // clobber XMM0, XRSTOR, and confirm the value survived.
+    let code = [
+        // Enable OSXSAVE + XCR0 = 0x7.
+        0x0f, 0x20, 0xe0, // MOV RAX, CR4
+        0x48, 0x0d, 0x00, 0x00, 0x04, 0x00, // OR RAX, 0x40000
+        0x0f, 0x22, 0xe0, // MOV CR4, RAX
+        0xb8, 0x07, 0x00, 0x00, 0x00, // MOV EAX, 7
+        0x31, 0xd2, // XOR EDX, EDX
+        0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
+        0x0f, 0x01, 0xd1, // XSETBV
+        // XMM0 = 0xDEADBEEFCAFEBABE
+        0x48, 0xb8, 0xbe, 0xba, 0xfe, 0xca, 0xef, 0xbe, 0xad, 0xde, // MOV RAX, imm64
+        0x66, 0x48, 0x0f, 0x6e, 0xc0, // MOVQ XMM0, RAX
+        // RDI = 0x40000 scratch buffer (64-byte aligned, mapped RAM)
+        0xbf, 0x00, 0x00, 0x04, 0x00, // MOV EDI, 0x40000
+        // XSAVE [RDI] with feature mask EDX:EAX = 0x7
+        0xb8, 0x07, 0x00, 0x00, 0x00, // MOV EAX, 7
+        0x31, 0xd2, // XOR EDX, EDX
+        0x0f, 0xae, 0x27, // XSAVE [RDI]
+        // Clobber XMM0 to zero
+        0x66, 0x0f, 0xef, 0xc0, // PXOR XMM0, XMM0
+        // XRSTOR [RDI] with mask 0x7
+        0xb8, 0x07, 0x00, 0x00, 0x00, // MOV EAX, 7
+        0x31, 0xd2, // XOR EDX, EDX
+        0x0f, 0xae, 0x2f, // XRSTOR [RDI]
+        // RAX = XMM0 low 64 bits
+        0x66, 0x48, 0x0f, 0x7e, 0xc0, // MOVQ RAX, XMM0
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        regs.rax, 0xDEAD_BEEF_CAFE_BABE,
+        "XMM0 low qword should survive XSAVE/XRSTOR round-trip"
+    );
+}
