@@ -726,3 +726,70 @@ fn test_movbe_does_not_modify_flags() {
 
     assert_eq!(regs.rflags, initial_flags, "Flags should not be modified");
 }
+
+// ============================================================================
+// Strengthened MOVBE tests (appended): exact byte-swapped values for load
+// (0F 38 F0) and store (0F 38 F1) at 16/32/64-bit operand sizes.
+// ============================================================================
+
+#[test]
+fn test_strict_movbe_load_r32_exact() {
+    // MOVBE EAX, [RBX]: memory 0x12345678 -> EAX 0x78563412, upper RAX cleared.
+    let code = [0x0f, 0x38, 0xf0, 0x03, 0xf4]; // MOVBE EAX, [RBX]
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    regs.rbx = DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    write_mem_at_u32(&mem, DATA_ADDR, 0x12345678);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_7856_3412, "MOVBE load byte-swaps and clears upper RAX");
+}
+
+#[test]
+fn test_strict_movbe_load_r64_exact() {
+    // MOVBE RAX, [RBX]: 0x0102030405060708 -> 0x0807060504030201.
+    let code = [0x48, 0x0f, 0x38, 0xf0, 0x03, 0xf4]; // MOVBE RAX, [RBX]
+    let mut regs = Registers::default();
+    regs.rbx = DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    write_mem_at_u64(&mem, DATA_ADDR, 0x0102_0304_0506_0708);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0807_0605_0403_0201, "MOVBE RAX load byte-swaps 8 bytes");
+}
+
+#[test]
+fn test_strict_movbe_load_r16_preserves_upper() {
+    // MOVBE AX, [RBX] (0x66 operand size): 16-bit swap, upper 48 bits preserved.
+    let code = [0x66, 0x0f, 0x38, 0xf0, 0x03, 0xf4]; // MOVBE AX, [RBX]
+    let mut regs = Registers::default();
+    regs.rax = 0xAAAA_BBBB_CCCC_DDDD;
+    regs.rbx = DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    write_mem_at_u16(&mem, DATA_ADDR, 0x1234);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0xAAAA_BBBB_CCCC_3412, "MOVBE AX 16-bit byte-swap, upper preserved");
+}
+
+#[test]
+fn test_strict_movbe_store_r32_exact() {
+    // MOVBE [RBX], EAX (0F 38 F1): EAX 0xAABBCCDD stored as DD CC BB AA.
+    let code = [0x0f, 0x38, 0xf1, 0x03, 0xf4]; // MOVBE [RBX], EAX
+    let mut regs = Registers::default();
+    regs.rax = 0xAABB_CCDD;
+    regs.rbx = DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let _ = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_at_u32(&mem, DATA_ADDR), 0xDDCC_BBAA, "MOVBE store byte-swaps to memory");
+}
+
+#[test]
+fn test_strict_movbe_store_r64_exact() {
+    // MOVBE [RBX], RAX (REX.W 0F 38 F1).
+    let code = [0x48, 0x0f, 0x38, 0xf1, 0x03, 0xf4]; // MOVBE [RBX], RAX
+    let mut regs = Registers::default();
+    regs.rax = 0x1122_3344_5566_7788;
+    regs.rbx = DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let _ = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_at_u64(&mem, DATA_ADDR), 0x8877_6655_4433_2211, "MOVBE RAX store byte-swaps");
+}

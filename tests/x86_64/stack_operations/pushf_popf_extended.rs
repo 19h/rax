@@ -713,3 +713,69 @@ fn test_popfq_restore_auxiliary_carry() {
 
     assert!(af_set(regs.rflags), "AF should be restored");
 }
+
+// ============================================================================
+// Strengthened PUSHF/POPF tests (appended): exact RSP delta, the exact flag
+// image written by PUSHFQ, and a full status-flag round-trip through POPFQ.
+// ============================================================================
+
+#[test]
+fn test_strict_pushfq_rsp_delta_and_image() {
+    // PUSHFQ: RSP -= 8 and the qword written has bit 1 set, with the status flags
+    // we seeded reflected in the low byte. Seed CF and ZF.
+    let code = [0x9c, 0xf4]; // PUSHFQ
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    regs.rflags = 0x2 | 0x1 | 0x40; // reserved + CF + ZF
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let out = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(out.rsp, 0x4000 - 8, "PUSHFQ decrements RSP by 8");
+    let image = read_mem_at_u64(&mem, 0x4000 - 8);
+    assert_eq!(image & 0x1, 0x1, "CF present in pushed image");
+    assert_eq!(image & 0x40, 0x40, "ZF present in pushed image");
+    assert_eq!(image & 0x2, 0x2, "reserved bit 1 present in pushed image");
+}
+
+#[test]
+fn test_strict_popfq_loads_status_flags() {
+    // Place a flag image with CF+SF+OF set on the stack and POPFQ it.
+    // 0x2 | CF(0x1) | SF(0x80) | OF(0x800) = 0x883
+    let code = [0x9d, 0xf4]; // POPFQ
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    write_mem_at_u64(&mem, 0x4000, 0x883);
+    let out = run_until_hlt(&mut vcpu).unwrap();
+    assert!(cf_set(out.rflags), "CF restored");
+    assert!(sf_set(out.rflags), "SF restored");
+    assert!(of_set(out.rflags), "OF restored");
+    assert!(!zf_set(out.rflags), "ZF was not set in image");
+    assert_eq!(out.rsp, 0x4000 + 8, "POPFQ increments RSP by 8");
+}
+
+#[test]
+fn test_strict_pushfq_popfq_round_trip() {
+    // Seed several status flags, PUSHFQ then POPFQ, and verify they survive.
+    let code = [0x9c, 0x9d, 0xf4]; // PUSHFQ; POPFQ
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    regs.rflags = 0x2 | 0x1 | 0x4 | 0x40 | 0x80 | 0x800; // CF PF ZF SF OF
+    let before = regs.rflags & 0x8D5;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let out = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(out.rflags & 0x8D5, before, "status flags survive PUSHFQ/POPFQ round trip");
+    assert_eq!(out.rsp, 0x4000, "RSP restored after round trip");
+}
+
+#[test]
+fn test_strict_pushf_16bit_rsp_delta() {
+    // PUSHF with 0x66 (16-bit): RSP -= 2.
+    let code = [0x66, 0x9c, 0xf4]; // PUSHF (16-bit)
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    regs.rflags = 0x2 | 0x1; // CF
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let out = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(out.rsp, 0x4000 - 2, "16-bit PUSHF decrements RSP by 2");
+    assert_eq!(read_mem_at_u16(&mem, 0x4000 - 2) & 0x1, 0x1, "CF in 16-bit flag image");
+}

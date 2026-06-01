@@ -1216,3 +1216,93 @@ fn test_cmovl_esi_edi() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rsi & 0xFFFFFFFF, 0x66666666, "ESI should be moved");
 }
+
+// ============================================================================
+// Strengthened CMOVcc tests (appended): exact taken/not-taken destination
+// values, the 32-bit zero-extension quirk when taken, preservation of the
+// destination when not taken, memory source, and flag-neutrality.
+// ============================================================================
+
+#[test]
+fn test_strict_cmove_taken_r64_exact() {
+    // ZF set => CMOVE RAX, RBX moves; RAX becomes RBX exactly.
+    // XOR RCX,RCX sets ZF=1; CMOVE RAX,RBX.
+    let code = [
+        0x48, 0x31, 0xc9,       // XOR RCX, RCX -> ZF=1
+        0x48, 0x0f, 0x44, 0xc3, // CMOVE RAX, RBX
+        0xf4,
+    ];
+    let mut regs = Registers::default();
+    regs.rax = 0xDEAD_DEAD_DEAD_DEAD;
+    regs.rbx = 0x0123_4567_89AB_CDEF;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0123_4567_89AB_CDEF, "CMOVE taken copies full RBX");
+}
+
+#[test]
+fn test_strict_cmovne_not_taken_preserves_dest() {
+    // ZF set => CMOVNE not taken; RAX must be unchanged (full 64-bit).
+    let code = [
+        0x48, 0x31, 0xc9,       // XOR RCX, RCX -> ZF=1
+        0x48, 0x0f, 0x45, 0xc3, // CMOVNE RAX, RBX
+        0xf4,
+    ];
+    let mut regs = Registers::default();
+    regs.rax = 0x1122_3344_5566_7788;
+    regs.rbx = 0xFFFF_FFFF_FFFF_FFFF;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x1122_3344_5566_7788, "CMOVNE not taken preserves dest");
+}
+
+#[test]
+fn test_strict_cmov_taken_r32_zero_extends() {
+    // 32-bit CMOVE EAX, EBX when taken zero-extends EAX into RAX.
+    let code = [
+        0x48, 0x31, 0xc9,   // XOR RCX, RCX -> ZF=1
+        0x0f, 0x44, 0xc3,   // CMOVE EAX, EBX
+        0xf4,
+    ];
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    regs.rbx = 0x0000_0000_AABB_CCDD;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_AABB_CCDD, "32-bit CMOV taken zero-extends RAX");
+}
+
+#[test]
+fn test_strict_cmov_taken_from_memory() {
+    // CMOVE RAX, [RBX] when ZF set loads memory operand.
+    let code = [
+        0x48, 0x31, 0xc9,       // XOR RCX, RCX -> ZF=1
+        0x48, 0x0f, 0x44, 0x03, // CMOVE RAX, [RBX]
+        0xf4,
+    ];
+    let mut regs = Registers::default();
+    regs.rax = 0;
+    regs.rbx = crate::common::DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    crate::common::write_mem_at_u64(&mem, crate::common::DATA_ADDR, 0xCAFE_F00D_1234_5678);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0xCAFE_F00D_1234_5678, "CMOVE taken loads memory operand");
+}
+
+#[test]
+fn test_strict_cmov_does_not_change_flags() {
+    // CMOVcc must not modify flags; ZF set going in must remain set.
+    let code = [
+        0x48, 0x31, 0xc9,       // XOR RCX, RCX -> ZF=1, CF/OF=0
+        0x48, 0x0f, 0x44, 0xc3, // CMOVE RAX, RBX (taken)
+        0xf4,
+    ];
+    let mut regs = Registers::default();
+    regs.rbx = 5;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 5);
+    assert!(crate::common::zf_set(regs.rflags), "ZF from XOR must survive CMOV");
+    assert!(!crate::common::cf_set(regs.rflags), "CF must remain clear");
+    assert!(!crate::common::of_set(regs.rflags), "OF must remain clear");
+}

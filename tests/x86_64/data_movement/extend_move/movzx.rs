@@ -383,3 +383,82 @@ fn test_movzx_memory_word_negative() {
 
     assert_eq!(regs.rax & 0xFFFFFFFF, 0x0000FFFF, "Should zero-extend, not sign-extend");
 }
+
+// ============================================================================
+// Strengthened MOVZX tests (appended): exact full-RAX zero-extended results
+// for each source/dest combination, upper-bit clearing, and flag-neutrality.
+// ============================================================================
+
+#[test]
+fn test_strict_movzx_r32_r8_clears_full_rax() {
+    // MOVZX EAX, BL: BL=0xFF -> EAX=0x000000FF, RAX upper 32 cleared.
+    let code = [0x0f, 0xb6, 0xc3, 0xf4]; // MOVZX EAX, BL
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    regs.rbx = 0xFF;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_0000_00FF, "MOVZX EAX,BL zero-extends and clears upper RAX");
+}
+
+#[test]
+fn test_strict_movzx_r64_r8() {
+    // MOVZX RAX, BL: REX.W with 0F B6.
+    let code = [0x48, 0x0f, 0xb6, 0xc3, 0xf4]; // MOVZX RAX, BL
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    regs.rbx = 0xAB;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_0000_00AB, "MOVZX RAX,BL");
+}
+
+#[test]
+fn test_strict_movzx_r64_r16() {
+    // MOVZX RAX, BX: 0F B7 with REX.W.
+    let code = [0x48, 0x0f, 0xb7, 0xc3, 0xf4]; // MOVZX RAX, BX
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    regs.rbx = 0x8000;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_0000_8000, "MOVZX RAX,BX zero-extends 0x8000");
+}
+
+#[test]
+fn test_strict_movzx_r16_r8_preserves_upper() {
+    // MOVZX AX, BL (operand-size 0x66): only AX written, upper 48 preserved.
+    let code = [0x66, 0x0f, 0xb6, 0xc3, 0xf4]; // MOVZX AX, BL
+    let mut regs = Registers::default();
+    regs.rax = 0x1234_5678_9ABC_DEF0;
+    regs.rbx = 0xFF;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x1234_5678_9ABC_00FF, "AX zero-extended, upper 48 preserved");
+}
+
+#[test]
+fn test_strict_movzx_from_mem_byte() {
+    // MOVZX RAX, byte [RBX]: load 0xC3 from memory and zero-extend.
+    let code = [0x48, 0x0f, 0xb6, 0x03, 0xf4]; // MOVZX RAX, byte [RBX]
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    regs.rbx = DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    write_mem_at_u8(&mem, DATA_ADDR, 0xC3);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_0000_00C3, "MOVZX from memory byte zero-extends");
+}
+
+#[test]
+fn test_strict_movzx_does_not_touch_flags() {
+    let code = [0x0f, 0xb6, 0xc3, 0xf4]; // MOVZX EAX, BL
+    let mut regs = Registers::default();
+    regs.rbx = 0x12;
+    regs.rflags = 0x2 | 0x1 | 0x40 | 0x80 | 0x800;
+    let before = regs.rflags;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x12);
+    assert_eq!(regs.rflags & 0x8D5, before & 0x8D5, "MOVZX must not alter status flags");
+}

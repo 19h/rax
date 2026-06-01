@@ -716,3 +716,38 @@ fn test_leave_coroutine_switch_pattern() {
     assert_eq!(regs.rsp, 0x2000, "Context switch cleaned up");
     assert_eq!(regs.rax, 0xAA, "Registers preserved");
 }
+
+// ============================================================================
+// Strengthened LEAVE tests (appended): exact semantics RSP:=RBP; POP RBP. The
+// new RBP comes from [old RBP] and RSP ends at old RBP + 8.
+// ============================================================================
+
+#[test]
+fn test_strict_leave_exact_semantics() {
+    // RBP = 0x3FF8; [0x3FF8] = 0x5000 (caller's RBP). After LEAVE:
+    //   RSP := RBP = 0x3FF8; RBP := [0x3FF8] = 0x5000; RSP := 0x3FF8 + 8 = 0x4000.
+    let code = [0xc9, 0xf4]; // LEAVE
+    let mut regs = Registers::default();
+    regs.rsp = 0x3000;       // arbitrary; LEAVE overwrites RSP from RBP first
+    regs.rbp = 0x3FF8;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    write_mem_at_u64(&mem, 0x3FF8, 0x5000);
+    let out = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(out.rbp, 0x5000, "RBP loaded from [old RBP]");
+    assert_eq!(out.rsp, 0x4000, "RSP = old RBP + 8");
+}
+
+#[test]
+fn test_strict_leave_with_local_storage() {
+    // Simulate a frame with locals: RSP below RBP. LEAVE discards locals.
+    // RBP=0x4000; [0x4000]=0xCAFE (caller RBP). RSP starts at 0x3FC0 (locals).
+    let code = [0xc9, 0xf4]; // LEAVE
+    let mut regs = Registers::default();
+    regs.rsp = 0x3FC0;
+    regs.rbp = 0x4000;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    write_mem_at_u64(&mem, 0x4000, 0xCAFE);
+    let out = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(out.rbp, 0xCAFE, "caller RBP restored");
+    assert_eq!(out.rsp, 0x4008, "locals discarded, RSP = RBP + 8");
+}

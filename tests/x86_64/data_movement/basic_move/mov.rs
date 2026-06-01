@@ -475,3 +475,169 @@ fn test_mov_sequential_registers() {
     assert_eq!(regs.rcx & 0xFFFFFFFF, 0x33333333, "ECX should be set");
     assert_eq!(regs.rdx & 0xFFFFFFFF, 0x44444444, "EDX should be set");
 }
+
+// ============================================================================
+// Strengthened value/flag assertions (appended): exact destination values,
+// upper-bit zero-extension semantics, MOVNTI store, segment selector read,
+// and exact effective-address writes for MOV through SIB memory operands.
+// ============================================================================
+
+#[test]
+fn test_strict_mov_r32_zero_extends_upper32() {
+    // MOV EAX, EBX clears the upper 32 bits of RAX even when they were set.
+    let code = [0x89, 0xd8, 0xf4]; // MOV EAX, EBX
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    regs.rbx = 0x0000_0000_DEAD_BEEF;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_DEAD_BEEF, "32-bit MOV must zero-extend RAX");
+}
+
+#[test]
+fn test_strict_mov_r16_preserves_upper48() {
+    // MOV AX, BX preserves bits 63:16 of RAX.
+    let code = [0x66, 0x89, 0xd8, 0xf4]; // MOV AX, BX
+    let mut regs = Registers::default();
+    regs.rax = 0x1122_3344_5566_7788;
+    regs.rbx = 0x0000_0000_0000_BEEF;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x1122_3344_5566_BEEF, "16-bit MOV must preserve upper 48 bits");
+}
+
+#[test]
+fn test_strict_mov_r8l_preserves_upper56() {
+    // MOV AL, BL preserves bits 63:8 of RAX.
+    let code = [0x88, 0xd8, 0xf4]; // MOV AL, BL
+    let mut regs = Registers::default();
+    regs.rax = 0x1122_3344_5566_7788;
+    regs.rbx = 0x00000000_000000AA;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x1122_3344_5566_77AA, "8-bit MOV must preserve upper 56 bits");
+}
+
+#[test]
+fn test_strict_mov_r64_imm32_sign_extends() {
+    // REX.W C7 /0 id: MOV RAX, -1 (imm32 0xFFFFFFFF sign-extended to 64 bits).
+    let code = [0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, 0xf4]; // MOV RAX, -1
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0xFFFF_FFFF_FFFF_FFFF, "imm32 must sign-extend to RAX");
+}
+
+#[test]
+fn test_strict_mov_does_not_touch_flags() {
+    // MOV must not modify any flag; seed all-arithmetic-flags-set and verify unchanged.
+    let code = [0x48, 0xc7, 0xc0, 0x2a, 0x00, 0x00, 0x00, 0xf4]; // MOV RAX, 42
+    let mut regs = Registers::default();
+    regs.rflags = 0x2 | 0x1 | 0x4 | 0x40 | 0x80 | 0x800; // CF PF ZF SF OF
+    let before = regs.rflags;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 42);
+    assert_eq!(regs.rflags & 0x8D5, before & 0x8D5, "MOV must not alter status flags");
+}
+
+#[test]
+fn test_strict_mov_mem64_exact_bytes() {
+    // MOV [RBX], RAX writes exactly 8 little-endian bytes at the effective address.
+    let code = [0x48, 0x89, 0x03, 0xf4]; // MOV [RBX], RAX
+    let mut regs = Registers::default();
+    regs.rax = 0x0123_4567_89AB_CDEF;
+    regs.rbx = crate::common::DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(crate::common::read_mem_at_u64(&mem, crate::common::DATA_ADDR), 0x0123_4567_89AB_CDEF);
+}
+
+#[test]
+fn test_strict_mov_mem_via_sib_scale4_disp() {
+    // MOV [RBX + RCX*4 + 0x20], EAX — exact effective address store.
+    // EA = 0x2000 + 4*4 + 0x20 = 0x2030.
+    let code = [0x89, 0x44, 0x8b, 0x20, 0xf4]; // MOV [RBX+RCX*4+0x20], EAX
+    let mut regs = Registers::default();
+    regs.rax = 0xCAFEF00D;
+    regs.rbx = crate::common::DATA_ADDR; // 0x2000
+    regs.rcx = 0x4;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(crate::common::read_mem_at_u32(&mem, 0x2030), 0xCAFEF00D, "store lands at computed EA");
+    // Verify nothing was written at the base address.
+    assert_eq!(crate::common::read_mem_at_u32(&mem, crate::common::DATA_ADDR), 0, "base must be untouched");
+}
+
+#[test]
+fn test_strict_mov_load_from_sib() {
+    // MOV EAX, [RBX + RCX*2] — load exact value from computed EA.
+    // EA = 0x2000 + 8*2 = 0x2010.
+    let code = [0x8b, 0x04, 0x4b, 0xf4]; // MOV EAX, [RBX+RCX*2]
+    let mut regs = Registers::default();
+    regs.rbx = crate::common::DATA_ADDR;
+    regs.rcx = 0x8;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    crate::common::write_mem_at_u32(&mem, 0x2010, 0x1337_BEEF);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x1337_BEEF, "load from RBX+RCX*2 = [0x2010]");
+}
+
+#[test]
+fn test_strict_movsxd_negative() {
+    // MOVSXD RAX, ECX (0x63 with REX.W): sign-extend 32-bit -2 to 64-bit.
+    let code = [0x48, 0x63, 0xc1, 0xf4]; // MOVSXD RAX, ECX
+    let mut regs = Registers::default();
+    regs.rcx = 0x0000_0000_FFFF_FFFE; // ECX = -2
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0xFFFF_FFFF_FFFF_FFFE, "MOVSXD sign-extends -2");
+}
+
+#[test]
+fn test_strict_movsxd_positive() {
+    // MOVSXD RAX, ECX: positive value zero-fills high half.
+    let code = [0x48, 0x63, 0xc1, 0xf4]; // MOVSXD RAX, ECX
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    regs.rcx = 0x0000_0000_7FFF_FFFF; // ECX = max positive i32
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_7FFF_FFFF, "MOVSXD of positive zero-fills high");
+}
+
+#[test]
+fn test_strict_movnti_store_r64() {
+    // MOVNTI [RBX], RAX (0F C3) — non-temporal store of a 64-bit value.
+    let code = [0x48, 0x0f, 0xc3, 0x03, 0xf4]; // MOVNTI [RBX], RAX
+    let mut regs = Registers::default();
+    regs.rax = 0xDEAD_BEEF_FEED_FACE;
+    regs.rbx = crate::common::DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(crate::common::read_mem_at_u64(&mem, crate::common::DATA_ADDR), 0xDEAD_BEEF_FEED_FACE);
+}
+
+#[test]
+fn test_strict_movnti_store_r32() {
+    // MOVNTI [RBX], EAX (0F C3) — 32-bit non-temporal store, exactly 4 bytes.
+    let code = [0x0f, 0xc3, 0x03, 0xf4]; // MOVNTI [RBX], EAX
+    let mut regs = Registers::default();
+    regs.rax = 0xAABB_CCDD;
+    regs.rbx = crate::common::DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(crate::common::read_mem_at_u32(&mem, crate::common::DATA_ADDR), 0xAABB_CCDD);
+    // Bytes 4..8 must be untouched (start zero).
+    assert_eq!(crate::common::read_mem_at_u32(&mem, crate::common::DATA_ADDR + 4), 0);
+}
+
+#[test]
+fn test_strict_mov_reg_from_segment_cs() {
+    // MOV RAX, CS (8C /r): read the CS selector (set to 0x08 by the harness) into RAX.
+    let code = [0x48, 0x8c, 0xc8, 0xf4]; // MOV RAX, CS
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFFFF, 0x0008, "CS selector should be readable as 0x08");
+}

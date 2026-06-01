@@ -436,3 +436,75 @@ fn test_pop_preserves_other_registers() {
     assert_eq!(regs.rbx, 0x33, "RBX unchanged");
     assert_eq!(regs.rcx, 0x44, "RCX unchanged");
 }
+
+// ============================================================================
+// Strengthened POP tests (appended): exact popped value, exact RSP delta,
+// POP into memory, and 16-bit operand-size override (RSP += 2).
+// ============================================================================
+
+#[test]
+fn test_strict_pop_r64_value_and_rsp_delta() {
+    // Seed memory at RSP, POP RAX: RAX gets the value, RSP += 8.
+    let code = [0x58, 0xf4]; // POP RAX
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    crate::common::write_mem_at_u64(&mem, 0x4000, 0x0123_4567_89AB_CDEF);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0123_4567_89AB_CDEF, "POP loads value from TOS");
+    assert_eq!(regs.rsp, 0x4000 + 8, "POP r64 increments RSP by 8");
+}
+
+#[test]
+fn test_strict_pop_extended_reg_r13() {
+    // POP R13 (REX.B 0x5D).
+    let code = [0x41, 0x5d, 0xf4]; // POP R13
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    crate::common::write_mem_at_u64(&mem, 0x4000, 0xDEAD_BEEF_0000_1111);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.r13, 0xDEAD_BEEF_0000_1111);
+    assert_eq!(regs.rsp, 0x4008);
+}
+
+#[test]
+fn test_strict_pop_into_memory() {
+    // POP qword [RBX] (8F /0): pop into a memory location.
+    let code = [0x8f, 0x03, 0xf4]; // POP [RBX]
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    regs.rbx = crate::common::DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    crate::common::write_mem_at_u64(&mem, 0x4000, 0xCAFE_BABE_FACE_F00D);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(crate::common::read_mem_at_u64(&mem, crate::common::DATA_ADDR), 0xCAFE_BABE_FACE_F00D, "popped into memory");
+    assert_eq!(regs.rsp, 0x4008, "RSP advanced by 8");
+}
+
+#[test]
+fn test_strict_pop_r16_operand_size() {
+    // POP AX (0x66 prefix): RSP += 2, only AX loaded, upper bits of RAX preserved.
+    let code = [0x66, 0x58, 0xf4]; // POP AX
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    regs.rax = 0x1111_2222_3333_4444;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    crate::common::write_mem_at_u16(&mem, 0x4000, 0xBEEF);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x1111_2222_3333_BEEF, "16-bit POP writes only AX");
+    assert_eq!(regs.rsp, 0x4000 + 2, "16-bit POP increments RSP by 2");
+}
+
+#[test]
+fn test_strict_push_pop_round_trip() {
+    // PUSH RAX; POP RBX leaves RBX == RAX and RSP unchanged.
+    let code = [0x50, 0x5b, 0xf4]; // PUSH RAX; POP RBX
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    regs.rax = 0x8000_0000_0000_0001;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rbx, 0x8000_0000_0000_0001, "POP recovers pushed value");
+    assert_eq!(regs.rsp, 0x4000, "RSP restored after push/pop");
+}

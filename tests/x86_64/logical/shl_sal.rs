@@ -550,3 +550,115 @@ fn test_shl_multiple_operations() {
 
     assert_eq!(regs.rax & 0xFF, 0x84, "AL: 0x21 << 2 = 0x84");
 }
+
+// ============================================================================
+// Strengthened SHL tests (appended): exact result + CF (last bit shifted out)
+// and OF (defined only for count == 1: OF = MSB(result) XOR CF). Plus SHLD.
+// ============================================================================
+
+#[test]
+fn test_strict_shl_by1_cf_and_of() {
+    // SHL AL,1 with AL=0xC0 (1100_0000): result 0x80, bit shifted out = 1 -> CF=1.
+    // OF (count==1) = MSB(result) XOR CF = 1 XOR 1 = 0.
+    let code = [0xd0, 0xe0, 0xf4]; // SHL AL, 1
+    let mut regs = Registers::default();
+    regs.rax = 0xC0;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFF, 0x80, "0xC0 << 1 = 0x80");
+    assert!(cf_set(regs.rflags), "CF = bit shifted out (1)");
+    assert!(!of_set(regs.rflags), "OF = MSB^CF = 0");
+    assert!(sf_set(regs.rflags), "SF set (bit 7)");
+}
+
+#[test]
+fn test_strict_shl_by1_of_set() {
+    // SHL AL,1 with AL=0x40 (0100_0000): result 0x80, CF=0, OF = 1 XOR 0 = 1.
+    let code = [0xd0, 0xe0, 0xf4]; // SHL AL, 1
+    let mut regs = Registers::default();
+    regs.rax = 0x40;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFF, 0x80, "0x40 << 1 = 0x80");
+    assert!(!cf_set(regs.rflags), "CF = 0 (bit 6 shifted into bit 7)");
+    assert!(of_set(regs.rflags), "OF set (sign changed)");
+}
+
+#[test]
+fn test_strict_shl_r32_by_cl_cf() {
+    // SHL EAX, CL with EAX=0x8000_0001, CL=1: result 0x0000_0002, CF=1 (bit31 out).
+    let code = [0xd3, 0xe0, 0xf4]; // SHL EAX, CL
+    let mut regs = Registers::default();
+    regs.rax = 0x8000_0001;
+    regs.rcx = 1;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0002, "0x80000001 << 1 = 0x2 (32-bit, zero-extended)");
+    assert!(cf_set(regs.rflags), "CF = bit 31 shifted out");
+}
+
+#[test]
+fn test_strict_shl_r64_imm_cf() {
+    // SHL RAX, 4 with RAX=0x1000_0000_0000_000F -> 0x0000_0000_0000_00F0, CF = bit60 = 0.
+    let code = [0x48, 0xc1, 0xe0, 0x04, 0xf4]; // SHL RAX, 4
+    let mut regs = Registers::default();
+    regs.rax = 0x1000_0000_0000_000F;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_0000_00F0, "RAX << 4 drops top nibble");
+    // Last bit shifted out for SHL by N is original bit (width-N) = bit 60.
+    // 0x1000_0000_0000_000F has bit 60 set, so CF = 1.
+    assert!(cf_set(regs.rflags), "CF = last bit shifted out (bit 60 = 1)");
+}
+
+#[test]
+fn test_strict_shl_count_masked_64() {
+    // SHL RAX, 65: count masked to 65 & 0x3F = 1.
+    let code = [0x48, 0xc1, 0xe0, 0x41, 0xf4]; // SHL RAX, 0x41
+    let mut regs = Registers::default();
+    regs.rax = 0x1;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x2, "count masked to 1 -> shift by 1");
+}
+
+#[test]
+fn test_strict_shl_zero_count_preserves_flags() {
+    // SHL EAX, CL with CL=0 must NOT modify flags. Seed CF and verify it survives.
+    let code = [0xd3, 0xe0, 0xf4]; // SHL EAX, CL
+    let mut regs = Registers::default();
+    regs.rax = 0x1234;
+    regs.rcx = 0;
+    regs.rflags = 0x2 | 0x1; // CF set
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x1234, "value unchanged for count 0");
+    assert!(cf_set(regs.rflags), "flags unchanged when count == 0");
+}
+
+#[test]
+fn test_strict_shld_r32() {
+    // SHLD EAX, EDX, 8 (0F A4): shift EAX left 8, filling from high bits of EDX.
+    // EAX=0x12345678, EDX=0xAABBCCDD, count=8:
+    //   result = (0x12345678 << 8) | (0xAABBCCDD >> 24) = 0x345678AA.
+    let code = [0x0f, 0xa4, 0xd0, 0x08, 0xf4]; // SHLD EAX, EDX, 8
+    let mut regs = Registers::default();
+    regs.rax = 0x1234_5678;
+    regs.rdx = 0xAABB_CCDD;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x3456_78AA, "SHLD EAX,EDX,8 brings in EDX high byte");
+}
+
+#[test]
+fn test_strict_shld_r64() {
+    // SHLD RAX, RDX, 16 (REX.W 0F A4):
+    //   (0x1122334455667788 << 16) | (0xAABBCCDDEEFF0011 >> 48) = 0x334455667788AABB.
+    let code = [0x48, 0x0f, 0xa4, 0xd0, 0x10, 0xf4]; // SHLD RAX, RDX, 16
+    let mut regs = Registers::default();
+    regs.rax = 0x1122_3344_5566_7788;
+    regs.rdx = 0xAABB_CCDD_EEFF_0011;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x3344_5566_7788_AABB, "SHLD RAX,RDX,16");
+}

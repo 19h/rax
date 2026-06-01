@@ -693,3 +693,69 @@ fn test_and_check_bit_clear() {
     assert_eq!(regs.rax & 0xFF, 0, "Bit 4 is clear");
     assert!(zf_set(regs.rflags), "ZF set means bit was clear");
 }
+
+// ============================================================================
+// Strengthened AND tests (appended): exact result with the full flag contract
+// (OF and CF always cleared; SF/ZF/PF per the result) across operand sizes.
+// ============================================================================
+
+#[test]
+fn test_strict_and_r64_full_flags() {
+    // AND RAX, RBX: 0xF0F0_F0F0_F0F0_F0FF & 0x8000_0000_0000_00F0 = 0x8000_0000_0000_00F0.
+    // Bit 63 set -> SF=1; nonzero -> ZF=0; low byte 0xF0 -> PF=1; CF=0, OF=0.
+    let code = [0x48, 0x21, 0xd8, 0xf4]; // AND RAX, RBX
+    let mut regs = Registers::default();
+    regs.rax = 0xF0F0_F0F0_F0F0_F0FF;
+    regs.rbx = 0x8000_0000_0000_00F0;
+    regs.rflags = 0x2 | 0x1 | 0x800; // seed CF and OF to confirm clearing
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x8000_0000_0000_00F0, "AND result");
+    assert!(sf_set(regs.rflags), "SF set (bit 63)");
+    assert!(!zf_set(regs.rflags), "ZF clear (nonzero)");
+    assert!(pf_set(regs.rflags), "PF set (0xF0 even parity)");
+    assert!(!cf_set(regs.rflags), "CF cleared by AND");
+    assert!(!of_set(regs.rflags), "OF cleared by AND");
+}
+
+#[test]
+fn test_strict_and_zero_result_full_flags() {
+    // AND RAX, RBX with disjoint masks -> 0: ZF=1, SF=0, PF=1, CF=0, OF=0.
+    let code = [0x48, 0x21, 0xd8, 0xf4]; // AND RAX, RBX
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_0000_FFFF_0000;
+    regs.rbx = 0x0000_FFFF_0000_FFFF;
+    regs.rflags = 0x2 | 0x1 | 0x800;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0);
+    assert!(zf_set(regs.rflags), "ZF set");
+    assert!(!sf_set(regs.rflags), "SF clear");
+    assert!(pf_set(regs.rflags), "PF set (0)");
+    assert!(!cf_set(regs.rflags) && !of_set(regs.rflags), "CF/OF cleared");
+}
+
+#[test]
+fn test_strict_and_r32_zero_extends() {
+    // AND EAX, EBX clears the upper 32 bits of RAX.
+    let code = [0x21, 0xd8, 0xf4]; // AND EAX, EBX
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_00FF_00FF;
+    regs.rbx = 0x0000_0000_0F0F_0F0F;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_000F_000F, "32-bit AND zero-extends upper RAX");
+}
+
+#[test]
+fn test_strict_and_mem_operand() {
+    // AND qword [RBX], RAX: mask a memory operand in place.
+    let code = [0x48, 0x21, 0x03, 0xf4]; // AND [RBX], RAX
+    let mut regs = Registers::default();
+    regs.rax = 0x00FF_00FF_00FF_00FF;
+    regs.rbx = DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    write_mem_at_u64(&mem, DATA_ADDR, 0xFFFF_FFFF_FFFF_FFFF);
+    let _ = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_at_u64(&mem, DATA_ADDR), 0x00FF_00FF_00FF_00FF, "AND applied to memory");
+}

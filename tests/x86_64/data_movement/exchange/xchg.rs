@@ -360,3 +360,107 @@ fn test_xchg_eax_esp() {
     assert_eq!(regs.rax, 0x0000000022222222, "RAX should have ESP's value (upper bits zeroed)");
     assert_eq!(regs.rsp, 0x0000000011111111, "RSP should have EAX's value (upper bits zeroed)");
 }
+
+// ============================================================================
+// Strengthened XCHG tests (appended): exact swapped values across all operand
+// sizes, register<->memory exchange (implicitly atomic per the ISA), and the
+// guarantee that XCHG does not affect flags.
+// ============================================================================
+
+#[test]
+fn test_strict_xchg_r64_r64_exact() {
+    // XCHG RAX, RBX swaps full 64-bit values.
+    let code = [0x48, 0x93, 0xf4]; // XCHG RAX, RBX
+    let mut regs = Registers::default();
+    regs.rax = 0x0123_4567_89AB_CDEF;
+    regs.rbx = 0xFEDC_BA98_7654_3210;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0xFEDC_BA98_7654_3210);
+    assert_eq!(regs.rbx, 0x0123_4567_89AB_CDEF);
+}
+
+#[test]
+fn test_strict_xchg_r8_exact() {
+    // XCHG AL, BL swaps only the low byte, preserving the rest.
+    let code = [0x86, 0xd8, 0xf4]; // XCHG AL, BL
+    let mut regs = Registers::default();
+    regs.rax = 0x1111_1111_1111_1111;
+    regs.rbx = 0x2222_2222_2222_2222;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x1111_1111_1111_1122, "AL got BL");
+    assert_eq!(regs.rbx, 0x2222_2222_2222_2211, "BL got AL");
+}
+
+#[test]
+fn test_strict_xchg_r16_exact() {
+    // XCHG AX, BX swaps low 16 bits, preserving the upper 48.
+    let code = [0x66, 0x87, 0xd8, 0xf4]; // XCHG AX, BX
+    let mut regs = Registers::default();
+    regs.rax = 0xAAAA_AAAA_AAAA_1234;
+    regs.rbx = 0xBBBB_BBBB_BBBB_5678;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0xAAAA_AAAA_AAAA_5678);
+    assert_eq!(regs.rbx, 0xBBBB_BBBB_BBBB_1234);
+}
+
+#[test]
+fn test_strict_xchg_r64_mem_atomic_swap() {
+    // XCHG RAX, [RBX]: exchange register with memory. XCHG with a memory operand
+    // is implicitly locked (atomic) per the ISA; observable effect is a full swap.
+    let code = [0x48, 0x87, 0x03, 0xf4]; // XCHG RAX, [RBX]
+    let mut regs = Registers::default();
+    regs.rax = 0xCAFE_BABE_DEAD_BEEF;
+    regs.rbx = crate::common::DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    crate::common::write_mem_at_u64(&mem, crate::common::DATA_ADDR, 0x1122_3344_5566_7788);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x1122_3344_5566_7788, "RAX got memory value");
+    assert_eq!(crate::common::read_mem_at_u64(&mem, crate::common::DATA_ADDR), 0xCAFE_BABE_DEAD_BEEF, "memory got RAX");
+}
+
+#[test]
+fn test_strict_xchg_r32_mem_zero_extends() {
+    // XCHG EAX, [RBX]: 32-bit memory swap; RAX upper 32 bits cleared.
+    let code = [0x87, 0x03, 0xf4]; // XCHG EAX, [RBX]
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_AABB_CCDD;
+    regs.rbx = crate::common::DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    crate::common::write_mem_at_u32(&mem, crate::common::DATA_ADDR, 0x1234_5678);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_1234_5678, "EAX got mem value, upper cleared");
+    assert_eq!(crate::common::read_mem_at_u32(&mem, crate::common::DATA_ADDR), 0xAABB_CCDD, "mem got EAX");
+}
+
+#[test]
+fn test_strict_xchg_lock_prefix_mem() {
+    // LOCK XCHG [RBX], RAX — explicit LOCK prefix, same observable swap.
+    let code = [0xf0, 0x48, 0x87, 0x03, 0xf4]; // LOCK XCHG [RBX], RAX
+    let mut regs = Registers::default();
+    regs.rax = 0x00FF_00FF_00FF_00FF;
+    regs.rbx = crate::common::DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    crate::common::write_mem_at_u64(&mem, crate::common::DATA_ADDR, 0xFF00_FF00_FF00_FF00);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0xFF00_FF00_FF00_FF00);
+    assert_eq!(crate::common::read_mem_at_u64(&mem, crate::common::DATA_ADDR), 0x00FF_00FF_00FF_00FF);
+}
+
+#[test]
+fn test_strict_xchg_does_not_touch_flags() {
+    // XCHG must not affect flags.
+    let code = [0x48, 0x93, 0xf4]; // XCHG RAX, RBX
+    let mut regs = Registers::default();
+    regs.rax = 1;
+    regs.rbx = 2;
+    regs.rflags = 0x2 | 0x1 | 0x40 | 0x80 | 0x800;
+    let before = regs.rflags;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 2);
+    assert_eq!(regs.rbx, 1);
+    assert_eq!(regs.rflags & 0x8D5, before & 0x8D5, "XCHG must not alter status flags");
+}

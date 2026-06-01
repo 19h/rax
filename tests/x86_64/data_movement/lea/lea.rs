@@ -345,3 +345,72 @@ fn test_lea_chain() {
     assert_eq!(regs.rdx, 120, "RDX should be 120");
     assert_eq!(regs.rcx, 360, "RCX should be 360");
 }
+
+// ============================================================================
+// Strengthened LEA tests (appended): exact effective addresses for full SIB
+// (base + index*scale + disp), operand-size truncation of the result, and the
+// guarantee that LEA never touches flags.
+// ============================================================================
+
+#[test]
+fn test_strict_lea_full_sib_scale8_disp32() {
+    // LEA RAX, [RBX + RCX*8 + 0x1000]
+    // EA = 0x10000 + 0x20*8 + 0x1000 = 0x10000 + 0x100 + 0x1000 = 0x11100
+    let code = [0x48, 0x8d, 0x84, 0xcb, 0x00, 0x10, 0x00, 0x00, 0xf4];
+    let mut regs = Registers::default();
+    regs.rbx = 0x10000;
+    regs.rcx = 0x20;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x11100, "RAX = RBX + RCX*8 + 0x1000");
+}
+
+#[test]
+fn test_strict_lea_index_only_scale4_disp32() {
+    // LEA RAX, [RCX*4 + 0x40]  (no base; mod=00, base=101 => disp32 only)
+    // EA = 0x100*4 + 0x40 = 0x440
+    let code = [0x48, 0x8d, 0x04, 0x8d, 0x40, 0x00, 0x00, 0x00, 0xf4];
+    let mut regs = Registers::default();
+    regs.rcx = 0x100;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x440, "RAX = RCX*4 + 0x40");
+}
+
+#[test]
+fn test_strict_lea_negative_disp8() {
+    // LEA RAX, [RBX - 8]  (disp8 = 0xF8 = -8)
+    let code = [0x48, 0x8d, 0x43, 0xf8, 0xf4];
+    let mut regs = Registers::default();
+    regs.rbx = 0x2000;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x1FF8, "RAX = RBX - 8");
+}
+
+#[test]
+fn test_strict_lea_32bit_truncates_result() {
+    // LEA EAX, [RBX + RCX]  — 32-bit operand size truncates the EA to 32 bits.
+    // EA = 0xFFFF_FFFF + 1 = 0x1_0000_0000, truncated to 0x0000_0000.
+    let code = [0x8d, 0x04, 0x0b, 0xf4]; // LEA EAX, [RBX+RCX]
+    let mut regs = Registers::default();
+    regs.rbx = 0xFFFF_FFFF;
+    regs.rcx = 0x1;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000, "32-bit LEA truncates and zero-extends result");
+}
+
+#[test]
+fn test_strict_lea_does_not_touch_flags() {
+    // LEA must never change flags; seed CF/ZF/SF/OF and verify unchanged.
+    let code = [0x48, 0x8d, 0x43, 0x10, 0xf4]; // LEA RAX, [RBX+0x10]
+    let mut regs = Registers::default();
+    regs.rbx = 0x2000;
+    regs.rflags = 0x2 | 0x1 | 0x40 | 0x80 | 0x800;
+    let before = regs.rflags;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x2010);
+    assert_eq!(regs.rflags & 0x8D5, before & 0x8D5, "LEA must not alter status flags");
+}

@@ -401,3 +401,86 @@ fn test_push_all_extended_regs() {
     vm.read_slice(&mut val, GuestAddress(regs.rsp)).unwrap();
     assert_eq!(u64::from_le_bytes(val), 0x0F, "R15 on top");
 }
+
+// ============================================================================
+// Strengthened PUSH tests (appended): exact RSP delta, exact bytes written at
+// the new top-of-stack, immediate sign-extension, memory source, and 16-bit
+// operand-size override (RSP -= 2 with exactly 2 bytes written).
+// ============================================================================
+
+#[test]
+fn test_strict_push_r64_rsp_delta_and_bytes() {
+    // PUSH RAX: RSP -= 8, [new RSP] = RAX (8 LE bytes).
+    let code = [0x50, 0xf4]; // PUSH RAX
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    regs.rax = 0x1122_3344_5566_7788;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rsp, 0x4000 - 8, "PUSH r64 decrements RSP by 8");
+    assert_eq!(read_mem_at_u64(&mem, 0x4000 - 8), 0x1122_3344_5566_7788, "exact value at TOS");
+}
+
+#[test]
+fn test_strict_push_imm32_sign_extended() {
+    // PUSH imm32 (0x68): -1 (0xFFFFFFFF) sign-extended to 64 bits, RSP -= 8.
+    let code = [0x68, 0xff, 0xff, 0xff, 0xff, 0xf4]; // PUSH -1
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rsp, 0x4000 - 8, "PUSH imm32 decrements RSP by 8");
+    assert_eq!(read_mem_at_u64(&mem, 0x4000 - 8), 0xFFFF_FFFF_FFFF_FFFF, "imm32 sign-extended on stack");
+}
+
+#[test]
+fn test_strict_push_imm8_sign_extended() {
+    // PUSH imm8 (0x6A): 0x80 (-128) sign-extended to 64 bits.
+    let code = [0x6a, 0x80, 0xf4]; // PUSH -128
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rsp, 0x4000 - 8);
+    assert_eq!(read_mem_at_u64(&mem, 0x4000 - 8), 0xFFFF_FFFF_FFFF_FF80, "imm8 sign-extended");
+}
+
+#[test]
+fn test_strict_push_mem64() {
+    // PUSH qword [RBX] (FF /6): push memory operand.
+    let code = [0xff, 0x33, 0xf4]; // PUSH [RBX]
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    regs.rbx = DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    write_mem_at_u64(&mem, DATA_ADDR, 0xABCD_1234_5678_9ABC);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rsp, 0x4000 - 8);
+    assert_eq!(read_mem_at_u64(&mem, 0x4000 - 8), 0xABCD_1234_5678_9ABC, "memory value pushed");
+}
+
+#[test]
+fn test_strict_push_r16_operand_size() {
+    // PUSH AX (0x66 prefix): RSP -= 2, exactly 2 bytes written.
+    let code = [0x66, 0x50, 0xf4]; // PUSH AX
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    regs.rax = 0x0000_0000_0000_BEEF;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rsp, 0x4000 - 2, "16-bit PUSH decrements RSP by 2");
+    assert_eq!(read_mem_at_u16(&mem, 0x4000 - 2), 0xBEEF, "exact 16-bit value at TOS");
+}
+
+#[test]
+fn test_strict_push_extended_reg_r12() {
+    // PUSH R12 (REX.B 0x54): RSP -= 8, value at TOS.
+    let code = [0x41, 0x54, 0xf4]; // PUSH R12
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    regs.r12 = 0xFEED_FACE_DEAD_C0DE;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rsp, 0x4000 - 8);
+    assert_eq!(read_mem_at_u64(&mem, 0x4000 - 8), 0xFEED_FACE_DEAD_C0DE, "R12 pushed");
+}

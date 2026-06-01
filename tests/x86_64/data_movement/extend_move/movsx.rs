@@ -381,3 +381,80 @@ fn test_movsx_practical_short_to_long() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rax, 0xFFFFFFFFFFFF8001, "RAX should represent -32767 as 64-bit signed");
 }
+
+// ============================================================================
+// Strengthened MOVSX/MOVSXD tests (appended): exact extended values for each
+// source/dest size combination plus the full-RAX result, and flag-neutrality.
+// ============================================================================
+
+#[test]
+fn test_strict_movsx_r32_r8_negative_full_rax() {
+    // MOVSX EAX, BL: BL=0x80 -> EAX=0xFFFFFF80, RAX upper 32 zeroed.
+    let code = [0x0f, 0xbe, 0xc3, 0xf4]; // MOVSX EAX, BL
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    regs.rbx = 0x80;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_FFFF_FF80, "EAX sign-extend of 0x80, upper RAX cleared");
+}
+
+#[test]
+fn test_strict_movsx_r64_r8_negative() {
+    // MOVSX RAX, BL: BL=0xFF (-1) -> RAX=all ones.
+    let code = [0x48, 0x0f, 0xbe, 0xc3, 0xf4]; // MOVSX RAX, BL
+    let mut regs = Registers::default();
+    regs.rbx = 0xFF;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0xFFFF_FFFF_FFFF_FFFF, "MOVSX RAX,BL of -1");
+}
+
+#[test]
+fn test_strict_movsx_r64_r16_positive() {
+    // MOVSX RAX, BX: BX=0x7FFF (max positive) -> 0x0000_0000_0000_7FFF.
+    let code = [0x48, 0x0f, 0xbf, 0xc3, 0xf4]; // MOVSX RAX, BX
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_FFFF_FFFF;
+    regs.rbx = 0x7FFF;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_0000_7FFF, "positive 16-bit sign-extend");
+}
+
+#[test]
+fn test_strict_movsx_r16_r8_preserves_upper() {
+    // MOVSX AX, BL (operand-size 0x66): only AX is written; upper 48 bits preserved.
+    let code = [0x66, 0x0f, 0xbe, 0xc3, 0xf4]; // MOVSX AX, BL
+    let mut regs = Registers::default();
+    regs.rax = 0x1234_5678_9ABC_DEF0;
+    regs.rbx = 0x80; // -128 -> 0xFF80
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x1234_5678_9ABC_FF80, "AX sign-extended, upper 48 preserved");
+}
+
+#[test]
+fn test_strict_movsxd_from_mem() {
+    // MOVSXD RAX, dword [RBX]: load 0xFFFFFFFE (-2) from memory, sign-extend.
+    let code = [0x48, 0x63, 0x03, 0xf4]; // MOVSXD RAX, [RBX]
+    let mut regs = Registers::default();
+    regs.rbx = crate::common::DATA_ADDR;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    crate::common::write_mem_at_u32(&mem, crate::common::DATA_ADDR, 0xFFFF_FFFE);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0xFFFF_FFFF_FFFF_FFFE, "MOVSXD from memory sign-extends");
+}
+
+#[test]
+fn test_strict_movsx_does_not_touch_flags() {
+    let code = [0x48, 0x0f, 0xbe, 0xc3, 0xf4]; // MOVSX RAX, BL
+    let mut regs = Registers::default();
+    regs.rbx = 0xFF;
+    regs.rflags = 0x2 | 0x1 | 0x40 | 0x800;
+    let before = regs.rflags;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0xFFFF_FFFF_FFFF_FFFF);
+    assert_eq!(regs.rflags & 0x8D5, before & 0x8D5, "MOVSX must not alter status flags");
+}

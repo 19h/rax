@@ -611,3 +611,64 @@ fn test_xor_associative() {
 
     assert_eq!(regs1.rax & 0xFF, regs2.rax & 0xFF, "XOR is associative");
 }
+
+// ============================================================================
+// Strengthened XOR tests (appended): exact result and full flag contract.
+// ============================================================================
+
+#[test]
+fn test_strict_xor_self_zeroes_and_flags() {
+    // XOR RAX, RAX -> 0; ZF=1, SF=0, PF=1, CF=0, OF=0.
+    let code = [0x48, 0x31, 0xc0, 0xf4]; // XOR RAX, RAX
+    let mut regs = Registers::default();
+    regs.rax = 0xDEAD_BEEF_DEAD_BEEF;
+    regs.rflags = 0x2 | 0x1 | 0x800; // seed CF/OF to be cleared
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0, "XOR self gives 0");
+    assert!(zf_set(regs.rflags), "ZF set");
+    assert!(!sf_set(regs.rflags), "SF clear");
+    assert!(pf_set(regs.rflags), "PF set (0 even parity)");
+    assert!(!cf_set(regs.rflags) && !of_set(regs.rflags), "CF/OF cleared");
+}
+
+#[test]
+fn test_strict_xor_r64_result_and_flags() {
+    // XOR RAX, RBX: 0xF0F0..F0F0 ^ 0x0F0F..0F0F = all ones.
+    // Result bit 63 set -> SF=1; nonzero -> ZF=0; low byte 0xFF has 8 bits -> PF=1.
+    let code = [0x48, 0x31, 0xd8, 0xf4]; // XOR RAX, RBX
+    let mut regs = Registers::default();
+    regs.rax = 0xF0F0_F0F0_F0F0_F0F0;
+    regs.rbx = 0x0F0F_0F0F_0F0F_0F0F;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0xFFFF_FFFF_FFFF_FFFF);
+    assert!(sf_set(regs.rflags), "SF set");
+    assert!(!zf_set(regs.rflags), "ZF clear");
+    assert!(pf_set(regs.rflags), "PF set (0xFF even parity)");
+    assert!(!cf_set(regs.rflags) && !of_set(regs.rflags), "CF/OF cleared");
+}
+
+#[test]
+fn test_strict_xor_toggle_low_byte_pf_odd() {
+    // XOR AL, 0x01 with AL=0x00 -> 0x01: one bit set -> PF=0 (odd), SF=0, ZF=0.
+    let code = [0x34, 0x01, 0xf4]; // XOR AL, 0x01
+    let mut regs = Registers::default();
+    regs.rax = 0;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFF, 0x01);
+    assert!(!pf_set(regs.rflags), "PF clear (odd parity)");
+    assert!(!zf_set(regs.rflags) && !sf_set(regs.rflags));
+}
+
+#[test]
+fn test_strict_xor_r32_zero_extends() {
+    let code = [0x31, 0xd8, 0xf4]; // XOR EAX, EBX
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_AAAA_AAAA;
+    regs.rbx = 0x0000_0000_5555_5555;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_FFFF_FFFF, "32-bit XOR zero-extends upper");
+}

@@ -514,3 +514,88 @@ fn test_shr_multiple_operations() {
 
     assert_eq!(regs.rax & 0xFF, 0x21, "AL: 0x84 >> 2 = 0x21");
 }
+
+// ============================================================================
+// Strengthened SHR tests (appended): exact result + CF (last bit shifted out)
+// and OF (count == 1: OF = MSB of the *original* operand). Plus SHRD.
+// ============================================================================
+
+#[test]
+fn test_strict_shr_by1_cf_set_of_from_orig_msb() {
+    // SHR AL,1 with AL=0x81 (1000_0001): result 0x40, CF=1 (bit0 out).
+    // OF (count==1) = MSB of original = 1.
+    let code = [0xd0, 0xe8, 0xf4]; // SHR AL, 1
+    let mut regs = Registers::default();
+    regs.rax = 0x81;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFF, 0x40, "0x81 >> 1 = 0x40");
+    assert!(cf_set(regs.rflags), "CF = bit 0 shifted out (1)");
+    assert!(of_set(regs.rflags), "OF = original MSB (1) for count 1");
+    assert!(!sf_set(regs.rflags), "SF clear (result bit7 = 0)");
+}
+
+#[test]
+fn test_strict_shr_by1_of_clear() {
+    // SHR AL,1 with AL=0x02 (0000_0010): result 0x01, CF=0, OF = orig MSB = 0.
+    let code = [0xd0, 0xe8, 0xf4]; // SHR AL, 1
+    let mut regs = Registers::default();
+    regs.rax = 0x02;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFF, 0x01);
+    assert!(!cf_set(regs.rflags), "CF = bit 0 out (0)");
+    assert!(!of_set(regs.rflags), "OF = original MSB (0)");
+}
+
+#[test]
+fn test_strict_shr_r32_zero_fill_and_cf() {
+    // SHR EAX, 4 with EAX=0x8000_001F: result 0x0800_0001, CF = bit3 of orig = 1.
+    let code = [0xc1, 0xe8, 0x04, 0xf4]; // SHR EAX, 4
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_8000_001F;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_0800_0001, "SHR EAX,4 zero-fills, clears upper RAX");
+    assert!(cf_set(regs.rflags), "CF = last bit shifted out (bit 3 of orig = 1)");
+}
+
+#[test]
+fn test_strict_shr_r64_to_zero_sets_zf() {
+    // SHR RAX, 63 with RAX=0x7FFF...: result 0 -> ZF=1; CF = bit 62 of orig = 1.
+    let code = [0x48, 0xc1, 0xe8, 0x3f, 0xf4]; // SHR RAX, 63
+    let mut regs = Registers::default();
+    regs.rax = 0x7FFF_FFFF_FFFF_FFFF;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0, "0x7FFF.. >> 63 = 0");
+    assert!(zf_set(regs.rflags), "ZF set");
+    assert!(cf_set(regs.rflags), "CF = bit 62 of original (1)");
+}
+
+#[test]
+fn test_strict_shrd_r32() {
+    // SHRD EAX, EDX, 8 (0F AC): shift EAX right 8, filling from low bits of EDX.
+    // EAX=0x12345678, EDX=0xAABBCCDD, count=8:
+    //   result = (0x12345678 >> 8) | (0xAABBCCDD << 24) = 0x00123456 | 0xDD000000 = 0xDD123456.
+    let code = [0x0f, 0xac, 0xd0, 0x08, 0xf4]; // SHRD EAX, EDX, 8
+    let mut regs = Registers::default();
+    regs.rax = 0x1234_5678;
+    regs.rdx = 0xAABB_CCDD;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0xDD12_3456, "SHRD EAX,EDX,8 brings in EDX low byte at top");
+}
+
+#[test]
+fn test_strict_shrd_r64() {
+    // SHRD RAX, RDX, 16 (REX.W 0F AC):
+    //   (0x1122334455667788 >> 16) | (0xAABBCCDDEEFF0011 << 48) = 0x0011112233445566.
+    let code = [0x48, 0x0f, 0xac, 0xd0, 0x10, 0xf4]; // SHRD RAX, RDX, 16
+    let mut regs = Registers::default();
+    regs.rax = 0x1122_3344_5566_7788;
+    regs.rdx = 0xAABB_CCDD_EEFF_0011;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0011_1122_3344_5566, "SHRD RAX,RDX,16");
+}

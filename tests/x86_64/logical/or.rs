@@ -701,3 +701,68 @@ fn test_or_idempotent() {
 
     assert_eq!(regs.rax & 0xFF, 0x42, "OR is idempotent");
 }
+
+// ============================================================================
+// Strengthened OR tests (appended): exact result and the full flag contract —
+// OF and CF always cleared; SF/ZF/PF set per the result.
+// ============================================================================
+
+#[test]
+fn test_strict_or_r64_result_and_flags() {
+    // OR RAX, RBX: 0x00FF_0000_0000_0000 | 0x0000_0000_0000_00F0 = 0x00FF_0000_0000_00F0.
+    // Result nonzero, bit 63 clear -> SF=0, ZF=0. Low byte 0xF0 has 4 set bits -> PF=1.
+    let code = [0x48, 0x09, 0xd8, 0xf4]; // OR RAX, RBX
+    let mut regs = Registers::default();
+    regs.rax = 0x00FF_0000_0000_0000;
+    regs.rbx = 0x0000_0000_0000_00F0;
+    regs.rflags = 0x2 | 0x1 | 0x800; // seed CF and OF to confirm they get cleared
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x00FF_0000_0000_00F0, "OR result");
+    assert!(!cf_set(regs.rflags), "CF cleared by OR");
+    assert!(!of_set(regs.rflags), "OF cleared by OR");
+    assert!(!zf_set(regs.rflags), "ZF clear (nonzero)");
+    assert!(!sf_set(regs.rflags), "SF clear (bit 63 = 0)");
+    assert!(pf_set(regs.rflags), "PF set (low byte 0xF0 has even parity)");
+}
+
+#[test]
+fn test_strict_or_zero_sets_zf_clears_sf() {
+    // OR AL, 0 with AL=0 -> result 0 -> ZF=1, SF=0, PF=1 (0 has even parity).
+    let code = [0x0c, 0x00, 0xf4]; // OR AL, 0
+    let mut regs = Registers::default();
+    regs.rax = 0;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFF, 0);
+    assert!(zf_set(regs.rflags), "ZF set");
+    assert!(!sf_set(regs.rflags), "SF clear");
+    assert!(pf_set(regs.rflags), "PF set for 0");
+    assert!(!cf_set(regs.rflags) && !of_set(regs.rflags), "CF/OF cleared");
+}
+
+#[test]
+fn test_strict_or_sets_sf() {
+    // OR AL, 0x80 with AL=0 -> 0x80 -> SF=1, ZF=0, PF=0 (one bit set, odd parity).
+    let code = [0x0c, 0x80, 0xf4]; // OR AL, 0x80
+    let mut regs = Registers::default();
+    regs.rax = 0;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFF, 0x80);
+    assert!(sf_set(regs.rflags), "SF set");
+    assert!(!zf_set(regs.rflags), "ZF clear");
+    assert!(!pf_set(regs.rflags), "PF clear (0x80 odd parity)");
+}
+
+#[test]
+fn test_strict_or_r32_zero_extends_upper() {
+    // OR EAX, EBX clears upper 32 bits of RAX.
+    let code = [0x09, 0xd8, 0xf4]; // OR EAX, EBX
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_0000_000F;
+    regs.rbx = 0x0000_0000_0000_00F0;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_0000_00FF, "32-bit OR zero-extends");
+}

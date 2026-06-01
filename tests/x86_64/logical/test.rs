@@ -545,3 +545,61 @@ fn test_test_register_negative() {
     assert!(!zf_set(regs.rflags), "ZF clear");
     assert!(sf_set(regs.rflags), "SF set (high bit set)");
 }
+
+// ============================================================================
+// Strengthened TEST tests (appended): operands unchanged, full flag contract
+// (OF/CF cleared, SF/ZF/PF from the AND result).
+// ============================================================================
+
+#[test]
+fn test_strict_test_does_not_modify_operands() {
+    // TEST RAX, RBX must leave both registers unchanged.
+    let code = [0x48, 0x85, 0xd8, 0xf4]; // TEST RAX, RBX
+    let mut regs = Registers::default();
+    regs.rax = 0x0F0F_0F0F_0F0F_0F0F;
+    regs.rbx = 0xFFFF_FFFF_FFFF_FFFF;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0F0F_0F0F_0F0F_0F0F, "TEST leaves RAX unchanged");
+    assert_eq!(regs.rbx, 0xFFFF_FFFF_FFFF_FFFF, "TEST leaves RBX unchanged");
+}
+
+#[test]
+fn test_strict_test_zero_result_flags() {
+    // TEST AL, 0x0F with AL=0xF0 -> AND = 0 -> ZF=1, SF=0, PF=1, CF=0, OF=0.
+    let code = [0xa8, 0x0f, 0xf4]; // TEST AL, 0x0F
+    let mut regs = Registers::default();
+    regs.rax = 0xF0;
+    regs.rflags = 0x2 | 0x1 | 0x800; // seed CF/OF to be cleared
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert!(zf_set(regs.rflags), "ZF set (AND = 0)");
+    assert!(!sf_set(regs.rflags), "SF clear");
+    assert!(pf_set(regs.rflags), "PF set (0)");
+    assert!(!cf_set(regs.rflags) && !of_set(regs.rflags), "CF/OF cleared");
+}
+
+#[test]
+fn test_strict_test_sign_and_parity() {
+    // TEST AL, 0xC0 with AL=0xFF -> AND = 0xC0 -> SF=1, ZF=0, PF=1 (2 bits set).
+    let code = [0xa8, 0xc0, 0xf4]; // TEST AL, 0xC0
+    let mut regs = Registers::default();
+    regs.rax = 0xFF;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert!(sf_set(regs.rflags), "SF set (bit 7 of result)");
+    assert!(!zf_set(regs.rflags), "ZF clear");
+    assert!(pf_set(regs.rflags), "PF set (0xC0 has 2 bits, even)");
+}
+
+#[test]
+fn test_strict_test_parity_odd() {
+    // TEST AL, 0x07 with AL=0xFF -> AND=0x07 (3 bits) -> PF=0 (odd), ZF=0, SF=0.
+    let code = [0xa8, 0x07, 0xf4]; // TEST AL, 0x07
+    let mut regs = Registers::default();
+    regs.rax = 0xFF;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert!(!pf_set(regs.rflags), "PF clear (3 bits, odd)");
+    assert!(!zf_set(regs.rflags) && !sf_set(regs.rflags));
+}

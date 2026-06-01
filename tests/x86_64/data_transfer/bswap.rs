@@ -730,3 +730,52 @@ fn test_bswap_with_does_not_modify_flags() {
 
     assert_eq!(regs.rflags, initial_flags, "Flags should not be modified");
 }
+
+// ============================================================================
+// Strengthened BSWAP tests (appended): exact byte-reversed results for 32-bit
+// (with upper-RAX clearing) and 64-bit operands, plus extended-register form.
+// ============================================================================
+
+#[test]
+fn test_strict_bswap_r32_exact_and_clears_upper() {
+    // BSWAP EAX: 0x11223344 -> 0x44332211; upper 32 bits of RAX cleared.
+    let code = [0x0f, 0xc8, 0xf4]; // BSWAP EAX
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_1122_3344;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_4433_2211, "BSWAP EAX reverses 4 bytes, clears upper");
+}
+
+#[test]
+fn test_strict_bswap_r64_exact() {
+    // BSWAP RAX: 0x0102030405060708 -> 0x0807060504030201.
+    let code = [0x48, 0x0f, 0xc8, 0xf4]; // BSWAP RAX
+    let mut regs = Registers::default();
+    regs.rax = 0x0102_0304_0506_0708;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0807_0605_0403_0201, "BSWAP RAX reverses 8 bytes");
+}
+
+#[test]
+fn test_strict_bswap_r64_extended_reg() {
+    // BSWAP R8: REX.WB 0F C8.
+    let code = [0x49, 0x0f, 0xc8, 0xf4]; // BSWAP R8
+    let mut regs = Registers::default();
+    regs.r8 = 0xDEAD_BEEF_CAFE_BABE;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.r8, 0xBEBA_FECA_EFBE_ADDE, "BSWAP R8 reverses 8 bytes");
+}
+
+#[test]
+fn test_strict_bswap_r32_round_trip() {
+    // Two BSWAP EBX in a row return the original 32-bit value.
+    let code = [0x0f, 0xcb, 0x0f, 0xcb, 0xf4]; // BSWAP EBX; BSWAP EBX
+    let mut regs = Registers::default();
+    regs.rbx = 0x0000_0000_ABCD_1234;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rbx, 0x0000_0000_ABCD_1234, "double BSWAP is identity (32-bit)");
+}

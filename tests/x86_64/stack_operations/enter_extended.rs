@@ -766,3 +766,51 @@ fn test_enter_mixed_sizes() {
     // 16 + 24 + 40 + 72 = 152
     assert_eq!(regs.rsp, 0x3000 - 152, "Mixed size allocations");
 }
+
+// ============================================================================
+// Strengthened ENTER tests (appended): exact frame setup for level 0 — the old
+// RBP is pushed, RBP := new RSP (the saved-RBP slot), and RSP := RBP - storage.
+// ============================================================================
+
+#[test]
+fn test_strict_enter_level0_frame_setup() {
+    // ENTER 0x20, 0  (C8 20 00 00)
+    // Steps: push RBP -> RSP=0x4000-8=0x3FF8, [0x3FF8]=old RBP(0x5000);
+    //        RBP := 0x3FF8; RSP := RBP - 0x20 = 0x3FD8.
+    let code = [0xc8, 0x20, 0x00, 0x00, 0xf4]; // ENTER 0x20, 0
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    regs.rbp = 0x5000;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let out = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(out.rbp, 0x3FF8, "RBP set to saved-RBP slot");
+    assert_eq!(out.rsp, 0x3FD8, "RSP = RBP - 0x20");
+    assert_eq!(read_mem_at_u64(&mem, 0x3FF8), 0x5000, "old RBP saved at new RBP slot");
+}
+
+#[test]
+fn test_strict_enter_level0_zero_storage() {
+    // ENTER 0, 0: just push RBP and set RBP=RSP; RSP only changes by the push.
+    let code = [0xc8, 0x00, 0x00, 0x00, 0xf4]; // ENTER 0, 0
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    regs.rbp = 0xABCD;
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    let out = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(out.rsp, 0x3FF8, "RSP decremented by the saved-RBP push only");
+    assert_eq!(out.rbp, 0x3FF8, "RBP points at saved-RBP slot");
+    assert_eq!(read_mem_at_u64(&mem, 0x3FF8), 0xABCD, "old RBP saved");
+}
+
+#[test]
+fn test_strict_enter_then_leave_restores() {
+    // ENTER 0x10,0 followed by LEAVE returns RSP and RBP to their originals.
+    let code = [0xc8, 0x10, 0x00, 0x00, 0xc9, 0xf4]; // ENTER 0x10,0; LEAVE
+    let mut regs = Registers::default();
+    regs.rsp = 0x4000;
+    regs.rbp = 0x5000;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let out = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(out.rbp, 0x5000, "LEAVE restores old RBP");
+    assert_eq!(out.rsp, 0x4000, "LEAVE restores RSP to pre-ENTER value");
+}

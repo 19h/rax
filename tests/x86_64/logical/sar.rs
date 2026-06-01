@@ -722,3 +722,75 @@ fn test_sar_multiple_operations() {
     // Second shift: 1110_0001 = 0xE1
     assert_eq!(regs.rax & 0xFF, 0xE1, "AL: 0x84 >> 2 = 0xE1 (sign extended)");
 }
+
+// ============================================================================
+// Strengthened SAR tests (appended): exact sign-extended result + CF (last bit
+// shifted out) and OF (always 0 for count == 1).
+// ============================================================================
+
+#[test]
+fn test_strict_sar_by1_negative_cf_of() {
+    // SAR AL,1 with AL=0x81 (-127): result 0xC0 (sign bit replicated), CF=1 (bit0 out).
+    // OF is always 0 for SAR count==1.
+    let code = [0xd0, 0xf8, 0xf4]; // SAR AL, 1
+    let mut regs = Registers::default();
+    regs.rax = 0x81;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFF, 0xC0, "0x81 >>a 1 = 0xC0");
+    assert!(cf_set(regs.rflags), "CF = bit 0 shifted out (1)");
+    assert!(!of_set(regs.rflags), "OF always 0 for SAR by 1");
+    assert!(sf_set(regs.rflags), "SF set (result negative)");
+}
+
+#[test]
+fn test_strict_sar_r32_sign_extends_and_cf() {
+    // SAR EAX, 4 with EAX=0x8000_001F (negative): result 0xF800_0001, CF=bit3 of orig=1.
+    let code = [0xc1, 0xf8, 0x04, 0xf4]; // SAR EAX, 4
+    let mut regs = Registers::default();
+    regs.rax = 0x0000_0000_8000_001F;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0000_0000_F800_0001, "SAR EAX,4 sign-extends within 32 bits");
+    assert!(cf_set(regs.rflags), "CF = last bit shifted out (bit 3 = 1)");
+}
+
+#[test]
+fn test_strict_sar_r64_negative_to_minus_one() {
+    // SAR RAX, 63 with RAX=0x8000_0000_0000_0000: result all ones (-1).
+    let code = [0x48, 0xc1, 0xf8, 0x3f, 0xf4]; // SAR RAX, 63
+    let mut regs = Registers::default();
+    regs.rax = 0x8000_0000_0000_0000;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0xFFFF_FFFF_FFFF_FFFF, "SAR of INT64_MIN by 63 = -1");
+    assert!(sf_set(regs.rflags), "SF set");
+    assert!(!zf_set(regs.rflags), "ZF clear");
+}
+
+#[test]
+fn test_strict_sar_positive_zero_extends() {
+    // SAR AL,1 with AL=0x40 (positive): result 0x20, CF=0, SF=0.
+    let code = [0xd0, 0xf8, 0xf4]; // SAR AL, 1
+    let mut regs = Registers::default();
+    regs.rax = 0x40;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFF, 0x20, "0x40 >>a 1 = 0x20");
+    assert!(!cf_set(regs.rflags), "CF = 0");
+    assert!(!sf_set(regs.rflags), "SF clear (positive)");
+}
+
+#[test]
+fn test_strict_sar_zero_count_preserves_flags() {
+    // SAR EAX, CL with CL=0 must not change flags or value.
+    let code = [0xd3, 0xf8, 0xf4]; // SAR EAX, CL
+    let mut regs = Registers::default();
+    regs.rax = 0xF000_000F;
+    regs.rcx = 0;
+    regs.rflags = 0x2 | 0x1; // CF set
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFFFF_FFFF, 0xF000_000F, "value unchanged for count 0");
+    assert!(cf_set(regs.rflags), "flags unchanged when count == 0");
+}
