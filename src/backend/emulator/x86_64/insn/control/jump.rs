@@ -75,9 +75,9 @@ pub fn jmp_far_ptr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
         ));
     }
 
-    // Load CS:IP (simplified - just set the registers)
-    // Full implementation would validate segment descriptor
-    vcpu.set_sreg(1, selector); // CS is segment register index 1
+    // Load CS:IP from the real descriptor (lenient: flat fallback for a sparse
+    // descriptor table so legacy flat-segment code keeps working).
+    vcpu.load_code_segment_lenient(selector);
     vcpu.regs.rip = offset;
     Ok(None)
 }
@@ -107,8 +107,8 @@ pub fn jmp_far_mem(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
         ));
     }
 
-    // Load CS:IP
-    vcpu.set_sreg(1, selector); // CS is segment register index 1
+    // Load CS:IP from the real descriptor (lenient: flat fallback).
+    vcpu.load_code_segment_lenient(selector);
     vcpu.regs.rip = offset;
     Ok(None)
 }

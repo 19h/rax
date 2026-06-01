@@ -1,4 +1,5 @@
 use crate::common::*;
+use rax::backend::emulator::x86_64::X86_64Vcpu;
 
 // Comprehensive tests for FAR CALL instruction (inter-segment call)
 // CALL ptr16:16, CALL ptr16:32, CALL m16:16, CALL m16:32, CALL m16:64
@@ -697,4 +698,218 @@ fn test_far_call_unaligned_addresses() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rip, 0x3004);
+}
+
+// ============================================================================
+// FAR CALL / RETF - Real GDT/LDT descriptor loading (regression)
+//
+// These exercise the load_code_segment path that reads the real 8-byte
+// descriptor from the GDT (or LDT) on a far control transfer, instead of
+// faking base=0/limit=max/DPL=0/L. They build a richer descriptor table than
+// the default test harness so the loaded CS reflects actual descriptor fields.
+// ============================================================================
+
+/// Encode an 8-byte legacy segment descriptor.
+/// `access` is the access byte (P/DPL/S/type); `flags` is the 4-bit high nibble
+/// (G/D/L/AVL) placed in the upper nibble of byte 6.
+fn encode_descriptor(base: u32, limit: u32, access: u8, flags: u8) -> [u8; 8] {
+    [
+        (limit & 0xFF) as u8,
+        ((limit >> 8) & 0xFF) as u8,
+        (base & 0xFF) as u8,
+        ((base >> 8) & 0xFF) as u8,
+        ((base >> 16) & 0xFF) as u8,
+        access,
+        (((flags & 0x0F) << 4) | (((limit >> 16) & 0x0F) as u8)),
+        ((base >> 24) & 0xFF) as u8,
+    ]
+}
+
+/// Write a far-return frame [offset][selector] (each `op_size` bytes) at `rsp`,
+/// growing downward, and leave RSP pointing at the offset word.
+fn write_far_return_frame(mem: &GuestMemoryMmap, rsp: u64, op_size: u8, ret_addr: u64, cs: u16) {
+    let sz = op_size as u64;
+    // selector at the higher address, offset at the lower (popped first).
+    mem.write_slice(&(cs as u64).to_le_bytes()[..sz as usize], GuestAddress(rsp + sz))
+        .unwrap();
+    mem.write_slice(&ret_addr.to_le_bytes()[..sz as usize], GuestAddress(rsp))
+        .unwrap();
+}
+
+/// Install a descriptor at GDT_BASE + offset and widen gdt.limit to cover it.
+fn install_gdt_descriptor(
+    vcpu: &mut X86_64Vcpu,
+    mem: &GuestMemoryMmap,
+    sel_index_bytes: u64,
+    desc: [u8; 8],
+) {
+    mem.write_slice(&desc, GuestAddress(GDT_BASE + sel_index_bytes))
+        .unwrap();
+    let mut sregs = vcpu.get_sregs().unwrap();
+    let needed = (sel_index_bytes + 7) as u16;
+    if sregs.gdt.limit < needed {
+        sregs.gdt.limit = needed;
+        vcpu.set_sregs(&sregs).unwrap();
+    }
+}
+
+#[test]
+fn test_retf_loads_real_descriptor_base_limit() {
+    // RETF (converted path) popping selector 0x30 must load the real descriptor
+    // base/limit/DPL from the GDT instead of the historical base=0/limit=max
+    // fake. (The converted instruction paths preserve the current execution
+    // mode, so CS.l is asserted via the strict loader tests below, not here.)
+    let code = [
+        0xcb, // RETF
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+
+    // Code descriptor with a distinctive base/limit, DPL=0, G=1, L=1.
+    let desc = encode_descriptor(0x000B_0000, 0x00042, 0x9A, 0b1010);
+    install_gdt_descriptor(&mut vcpu, &mem, 0x30, desc);
+
+    // Build a far-return frame on the stack: [RIP=0x3000][CS=0x30].
+    // RETF (0xCB) without REX.W uses the 32-bit default operand size here.
+    write_far_return_frame(&mem, STACK_ADDR, 4, 0x3000, 0x30);
+    mem.write_slice(&[0xf4], GuestAddress(0x3000)).unwrap();
+
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rip, 0x3001);
+
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(sregs.cs.selector, 0x30);
+    assert_eq!(sregs.cs.base, 0x000B_0000, "RETF loads real CS base");
+    // G=1 scales the 0x42-page limit to (0x42 << 12) | 0xFFF.
+    assert_eq!(sregs.cs.limit, (0x00042 << 12) | 0xFFF, "RETF loads G-scaled limit");
+    assert_eq!(sregs.cs.dpl, 0, "RETF loads real DPL");
+    assert!(sregs.cs.present);
+}
+
+#[test]
+fn test_far_call_ptr_loads_real_descriptor_base_limit() {
+    // CALL FAR ptr16:32 (0x9A, converted path) in compatibility mode loads the
+    // real descriptor base/limit for selector 0x30 from the GDT.
+    let code = [
+        0x66, 0x9a, 0x00, 0x30, 0x00, 0x00, 0x30, 0x00, // CALL 0x0030:0x00003000
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm_compat(&code, None);
+
+    // base=0x000C_0000, limit=0xFFFF bytes (G=0), 32-bit code (L=0, D=1).
+    let desc = encode_descriptor(0x000C_0000, 0xFFFF, 0x9A, 0b0100);
+    install_gdt_descriptor(&mut vcpu, &mem, 0x30, desc);
+    mem.write_slice(&[0xf4], GuestAddress(0x3000)).unwrap();
+
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rip, 0x3001);
+
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(sregs.cs.selector, 0x30);
+    assert_eq!(sregs.cs.base, 0x000C_0000, "CALL FAR loads real CS base");
+    assert_eq!(sregs.cs.limit, 0xFFFF, "byte-granular limit (G=0) loaded unscaled");
+}
+
+#[test]
+fn test_load_code_segment_loads_l_and_d_bits() {
+    // The strict loader adopts the descriptor's L/D execution-mode bits.
+    let code = [0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+
+    // 64-bit code segment (L=1) => CS.l=true, CS.db=false.
+    let desc64 = encode_descriptor(0x000A_0000, 0x12345, 0x9A, 0b1010);
+    install_gdt_descriptor(&mut vcpu, &mem, 0x30, desc64);
+    vcpu.load_code_segment_strict(0x30).unwrap();
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(sregs.cs.base, 0x000A_0000, "strict loads real base");
+    assert_eq!(sregs.cs.limit, (0x12345 << 12) | 0xFFF, "strict G-scaled limit");
+    assert!(sregs.cs.l, "L=1 adopted");
+    assert!(!sregs.cs.db, "D forced 0 when L=1");
+    assert_eq!(sregs.cs.dpl, 0);
+
+    // 32-bit code segment (L=0, D=1) => CS.l=false, CS.db=true, byte-granular.
+    let desc32 = encode_descriptor(0, 0xFFFF, 0x9A, 0b0100);
+    install_gdt_descriptor(&mut vcpu, &mem, 0x38, desc32);
+    vcpu.load_code_segment_strict(0x38).unwrap();
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(sregs.cs.limit, 0xFFFF, "byte-granular limit (G=0)");
+    assert!(!sregs.cs.l, "L=0 adopted");
+    assert!(sregs.cs.db, "D=1 adopted when L=0");
+}
+
+#[test]
+fn test_load_code_segment_not_present_faults_np() {
+    // Strict descriptor load of a not-present (P=0) code segment must fault (#NP).
+    let code = [0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+
+    // P=0 (access 0x1A => S=1, type=code, but present bit clear), L=1.
+    let desc = encode_descriptor(0, 0, 0x1A, 0b1010);
+    install_gdt_descriptor(&mut vcpu, &mem, 0x30, desc);
+
+    let err = vcpu.load_code_segment_strict(0x30);
+    assert!(err.is_err(), "not-present descriptor must fault");
+    let msg = format!("{:?}", err.unwrap_err());
+    assert!(msg.contains("#NP"), "expected #NP, got: {}", msg);
+}
+
+#[test]
+fn test_load_code_segment_non_code_faults_gp() {
+    // Strict descriptor load of a data segment (non-code) must fault (#GP).
+    let code = [0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+
+    // Present data segment: access 0x92 => P=1, S=1, type=0x2 (data, read/write).
+    let desc = encode_descriptor(0, 0xFFFF, 0x92, 0b1100);
+    install_gdt_descriptor(&mut vcpu, &mem, 0x30, desc);
+
+    let err = vcpu.load_code_segment_strict(0x30);
+    assert!(err.is_err(), "non-code descriptor must fault");
+    let msg = format!("{:?}", err.unwrap_err());
+    assert!(msg.contains("#GP"), "expected #GP, got: {}", msg);
+}
+
+#[test]
+fn test_load_code_segment_null_selector_faults_gp() {
+    // CS may never be loaded with a null selector: strict load must fault (#GP).
+    let code = [0xf4];
+    let (mut vcpu, _mem) = setup_vm(&code, None);
+
+    let err = vcpu.load_code_segment_strict(0x0000);
+    assert!(err.is_err(), "null selector must fault");
+    let msg = format!("{:?}", err.unwrap_err());
+    assert!(msg.contains("#GP"), "expected #GP, got: {}", msg);
+}
+
+#[test]
+fn test_load_code_segment_out_of_limit_faults_gp() {
+    // A selector beyond the GDT limit must fault (#GP).
+    let code = [0xf4];
+    let (mut vcpu, _mem) = setup_vm(&code, None);
+    // Default gdt.limit is 0x1F; selector 0xFFF8 is far past it.
+    let err = vcpu.load_code_segment_strict(0xFFF8);
+    assert!(err.is_err(), "out-of-limit selector must fault");
+    let msg = format!("{:?}", err.unwrap_err());
+    assert!(msg.contains("#GP"), "expected #GP, got: {}", msg);
+}
+
+#[test]
+fn test_far_transfer_selector_0x08_stays_64bit() {
+    // Regression guard: a converted far transfer (RETF) through the harness's
+    // selector 0x08 must keep CS in 64-bit mode (cs.l=true) so existing 64-bit
+    // tests that transfer through 0x08 keep running in 64-bit mode, while still
+    // loading the descriptor's real base (0 for the harness 0x08 descriptor).
+    let code = [
+        0xcb, // RETF
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_far_return_frame(&mem, STACK_ADDR, 4, 0x3000, 0x08);
+    mem.write_slice(&[0xf4], GuestAddress(0x3000)).unwrap();
+
+    run_until_hlt(&mut vcpu).unwrap();
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(sregs.cs.selector, 0x08);
+    assert!(sregs.cs.l, "selector 0x08 transfer must stay 64-bit");
+    assert_eq!(sregs.cs.base, 0, "harness 0x08 descriptor base is 0");
 }

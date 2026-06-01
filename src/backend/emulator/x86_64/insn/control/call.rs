@@ -98,7 +98,9 @@ pub fn retf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
     }
 
     vcpu.regs.rip = ret_addr;
-    vcpu.set_sreg(1, cs); // CS is segment register 1
+    // Load CS from the real descriptor (falls back to flat segmentation when the
+    // descriptor table slot is not a usable present code segment).
+    vcpu.load_code_segment_lenient(cs);
     Ok(None)
 }
 
@@ -121,7 +123,8 @@ pub fn retf_imm16(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
 
     vcpu.regs.rsp = vcpu.regs.rsp.wrapping_add(imm as u64);
     vcpu.regs.rip = ret_addr;
-    vcpu.set_sreg(1, cs); // CS is segment register 1
+    // Load CS from the real descriptor (lenient: flat fallback for sparse GDT).
+    vcpu.load_code_segment_lenient(cs);
     Ok(None)
 }
 
@@ -155,8 +158,8 @@ pub fn call_far_ptr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
     push_by_size(vcpu, ctx.op_size, old_cs as u64)?;
     push_by_size(vcpu, ctx.op_size, ret_addr)?;
 
-    // Load new CS:IP
-    vcpu.set_sreg(1, selector); // CS is segment register index 1
+    // Load new CS:IP from the real descriptor (lenient: flat fallback).
+    vcpu.load_code_segment_lenient(selector);
     vcpu.regs.rip = offset;
     Ok(None)
 }
@@ -186,8 +189,8 @@ pub fn call_far_mem(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
     push_by_size(vcpu, ctx.op_size, old_cs as u64)?;
     push_by_size(vcpu, ctx.op_size, ret_addr)?;
 
-    // Load new CS:IP
-    vcpu.set_sreg(1, selector); // CS is segment register index 1
+    // Load new CS:IP from the real descriptor (lenient: flat fallback).
+    vcpu.load_code_segment_lenient(selector);
     vcpu.regs.rip = offset;
     Ok(None)
 }

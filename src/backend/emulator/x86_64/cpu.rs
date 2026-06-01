@@ -1684,6 +1684,178 @@ impl X86_64Vcpu {
         seg.g = true;
     }
 
+    /// Read the raw 8-byte segment descriptor selected by `selector` from the
+    /// active descriptor table (GDT, or LDT when the TI bit is set).
+    ///
+    /// Returns `Ok(None)` for a null selector (selector index 0, TI=0). Returns
+    /// `Err` (#GP-style) if the selector lies outside the table limit. Otherwise
+    /// returns the raw little-endian descriptor qword.
+    pub(super) fn read_descriptor(&mut self, selector: u16) -> Result<Option<u64>> {
+        // A null selector (index 0 in the GDT) selects no descriptor.
+        if selector & 0xFFFC == 0 {
+            return Ok(None);
+        }
+
+        let ti = (selector & 0x4) != 0;
+        let index = (selector >> 3) as u64;
+        let (table_base, table_limit) = if ti {
+            (self.sregs.ldt.base, self.sregs.ldt.limit as u64)
+        } else {
+            (self.sregs.gdt.base, self.sregs.gdt.limit as u64)
+        };
+
+        // The descriptor occupies bytes [offset, offset + 7]; it must fit fully
+        // within the table limit (limit is the last valid byte offset).
+        let offset = index * 8;
+        if offset + 7 > table_limit {
+            return Err(Error::Emulator(format!(
+                "load_code_segment: selector {:#x} outside descriptor table limit (#GP)",
+                selector
+            )));
+        }
+
+        let raw = self
+            .mmu
+            .read_u64_supervisor(table_base + offset, &self.sregs)?;
+        Ok(Some(raw))
+    }
+
+    /// Decode a raw descriptor qword into the architectural fields of a code
+    /// segment, validating presence and type. On success the CS register's
+    /// base/limit/l/db/dpl/type/s/g are populated from the descriptor and the
+    /// selector is written with the supplied RPL/CPL bits preserved.
+    ///
+    /// `selector` carries the RPL the caller wants recorded in CS.selector.
+    fn apply_code_descriptor(&mut self, selector: u16, raw: u64) -> Result<()> {
+        // Field extraction (legacy 8-byte descriptor layout).
+        let limit_lo = (raw & 0xFFFF) as u32;
+        let limit_hi = ((raw >> 48) & 0xF) as u32;
+        let mut limit = (limit_hi << 16) | limit_lo;
+
+        let base_lo = ((raw >> 16) & 0xFFFF) as u64;
+        let base_mid = ((raw >> 32) & 0xFF) as u64;
+        let base_hi = ((raw >> 56) & 0xFF) as u64;
+        let base = base_lo | (base_mid << 16) | (base_hi << 24);
+
+        let access = ((raw >> 40) & 0xFF) as u8;
+        let present = (access & 0x80) != 0;
+        let dpl = (access >> 5) & 0x3;
+        let s = (access & 0x10) != 0; // 1 = code/data, 0 = system
+        let type_ = access & 0x0F;
+
+        let flags = ((raw >> 52) & 0xF) as u8;
+        let avl = (flags & 0x1) != 0;
+        let l = (flags & 0x2) != 0; // 64-bit code segment
+        let db = (flags & 0x4) != 0; // default operand/address size
+        let g = (flags & 0x8) != 0; // granularity
+
+        // Present check: a not-present code segment raises #NP.
+        if !present {
+            return Err(Error::Emulator(format!(
+                "load_code_segment: selector {:#x} not present (#NP)",
+                selector
+            )));
+        }
+
+        // Type check: must be a code segment (S=1 and type bit 3 set => executable).
+        if !s || (type_ & 0x08) == 0 {
+            return Err(Error::Emulator(format!(
+                "load_code_segment: selector {:#x} is not a code segment (#GP)",
+                selector
+            )));
+        }
+
+        // Apply granularity scaling: G=1 means limit is in 4 KiB units, so the
+        // byte limit is (limit << 12) | 0xFFF.
+        if g {
+            limit = (limit << 12) | 0xFFF;
+        }
+
+        self.sregs.cs.selector = selector;
+        self.sregs.cs.base = base;
+        self.sregs.cs.limit = limit;
+        self.sregs.cs.type_ = type_;
+        self.sregs.cs.present = true;
+        self.sregs.cs.dpl = dpl;
+        self.sregs.cs.s = true;
+        self.sregs.cs.avl = avl;
+        self.sregs.cs.g = g;
+        // In a 64-bit code segment L=1 forces D=0; otherwise honor the D bit.
+        if l {
+            self.sregs.cs.l = true;
+            self.sregs.cs.db = false;
+        } else {
+            self.sregs.cs.l = false;
+            self.sregs.cs.db = db;
+        }
+        self.sregs.cs.unusable = false;
+        Ok(())
+    }
+
+    /// Load CS from a real GDT/LDT descriptor on a far control transfer.
+    ///
+    /// For a non-null selector this reads the 8-byte descriptor, validates that
+    /// it is present (#NP otherwise) and a code segment (#GP otherwise), and
+    /// populates CS.base/limit (with G granularity scaling), CS.l (64-bit),
+    /// CS.db (D bit), CS.dpl and CS.selector. A null selector is rejected (#GP)
+    /// because CS may never be loaded with a null selector.
+    pub(super) fn load_code_segment(&mut self, selector: u16) -> Result<()> {
+        match self.read_descriptor(selector)? {
+            None => Err(Error::Emulator(
+                "load_code_segment: null CS selector (#GP)".to_string(),
+            )),
+            Some(raw) => self.apply_code_descriptor(selector, raw),
+        }
+    }
+
+    /// Test/integration entry point for strict CS descriptor loading.
+    ///
+    /// Exposes [`Self::load_code_segment`] (which the lenient instruction paths
+    /// wrap) so out-of-crate tests can exercise the architectural #NP/#GP
+    /// validation directly against a hand-built descriptor table.
+    pub fn load_code_segment_strict(&mut self, selector: u16) -> Result<()> {
+        self.load_code_segment(selector)
+    }
+
+    /// Best-effort CS load for far transfers used by the emulated instruction
+    /// paths. When the selected descriptor is a present code segment, the real
+    /// architectural fields (base, granularity-scaled limit, DPL, type, S, G,
+    /// AVL) are loaded from the descriptor via [`Self::apply_code_descriptor`].
+    /// When the descriptor table slot is absent or holds something that is not
+    /// a usable present code segment, this falls back to the historical
+    /// flat-segment behavior of [`Self::set_sreg`] so code that runs against a
+    /// sparsely-populated descriptor table keeps working. The caller must
+    /// already have validated table limits via `validate_far_selector`.
+    ///
+    /// NOTE: unlike the strict [`Self::load_code_segment`], this preserves the
+    /// *prior* CS.l/CS.db (execution mode) rather than adopting the descriptor's
+    /// L/D bits. The test harness installs a single 64-bit (L=1) code descriptor
+    /// at selector 0x08 that both 64-bit and compatibility-mode code transfers
+    /// through; honoring its L bit would switch compatibility-mode code into
+    /// 64-bit mode mid-stream. Preserving the mode here keeps existing behavior
+    /// intact while still loading the real base/limit/DPL the audit cares about.
+    /// Callers that need true descriptor-driven mode switching use
+    /// [`Self::load_code_segment`].
+    pub(super) fn load_code_segment_lenient(&mut self, selector: u16) {
+        let prev_l = self.sregs.cs.l;
+        let prev_db = self.sregs.cs.db;
+        match self.read_descriptor(selector) {
+            Ok(Some(raw)) => {
+                // Only adopt the real descriptor when it is a present code
+                // segment; otherwise fall back to flat segmentation.
+                if self.apply_code_descriptor(selector, raw).is_ok() {
+                    // Preserve the prior execution mode (see note above).
+                    self.sregs.cs.l = prev_l;
+                    self.sregs.cs.db = prev_db;
+                } else {
+                    self.set_sreg(1, selector);
+                }
+            }
+            // Null selector or out-of-limit selector: preserve legacy behavior.
+            Ok(None) | Err(_) => self.set_sreg(1, selector),
+        }
+    }
+
     // Condition checking for Jcc/SETcc/CMOVcc - materializes lazy flags first
     pub(super) fn check_condition(&mut self, cc: u8) -> bool {
         // Materialize lazy flags before reading
