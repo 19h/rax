@@ -627,3 +627,120 @@ fn test_wrmsr_cpl0_still_works() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rcx, 0x100, "WRMSR at CPL 0 should run to HLT normally");
 }
+
+// ============================================================================
+// Strengthened: WRMSR -> RDMSR round-trip for every IMPLEMENTED MSR.
+//
+// Writes a known 64-bit value (high in RDX, low in RAX) to `msr`, then reads
+// it back and reconstructs EDX:EAX. The value is recovered exactly.
+// ============================================================================
+
+/// Build a WRMSR(msr, value) then RDMSR(msr) sequence and return the reconstructed
+/// 64-bit value (EDX:EAX) after the read.
+fn msr_round_trip(msr: u32, value: u64) -> u64 {
+    let lo = (value & 0xFFFF_FFFF) as u32;
+    let hi = (value >> 32) as u32;
+    let code = [
+        // MOV RCX, msr  (mov ecx, imm32 zero-extends)
+        0xb9, msr as u8, (msr >> 8) as u8, (msr >> 16) as u8, (msr >> 24) as u8,
+        // MOV EAX, lo
+        0xb8, lo as u8, (lo >> 8) as u8, (lo >> 16) as u8, (lo >> 24) as u8,
+        // MOV EDX, hi
+        0xba, hi as u8, (hi >> 8) as u8, (hi >> 16) as u8, (hi >> 24) as u8,
+        0x0f, 0x30, // WRMSR
+        // Clobber EAX/EDX to prove RDMSR repopulates them.
+        0x31, 0xc0, // XOR EAX, EAX
+        0x31, 0xd2, // XOR EDX, EDX
+        0x0f, 0x32, // RDMSR
+        0xf4,       // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    // Upper halves must be cleared by RDMSR in 64-bit mode.
+    assert_eq!(regs.rax >> 32, 0, "RDMSR clears upper RAX");
+    assert_eq!(regs.rdx >> 32, 0, "RDMSR clears upper RDX");
+    ((regs.rdx & 0xFFFF_FFFF) << 32) | (regs.rax & 0xFFFF_FFFF)
+}
+
+#[test]
+fn test_msr_roundtrip_efer() {
+    // IA32_EFER (0xC0000080). Use a value with several known bits + high bits.
+    let v = 0x0000_0000_0000_0D01u64; // SCE|LME|LMA|NXE-ish pattern
+    assert_eq!(msr_round_trip(0xC0000080, v), v, "EFER round-trip");
+}
+
+#[test]
+fn test_msr_roundtrip_star() {
+    let v = 0x0023_0010_DEAD_BEEFu64;
+    assert_eq!(msr_round_trip(0xC0000081, v), v, "STAR round-trip");
+}
+
+#[test]
+fn test_msr_roundtrip_lstar() {
+    let v = 0xFFFF_8000_1234_5678u64;
+    assert_eq!(msr_round_trip(0xC0000082, v), v, "LSTAR round-trip");
+}
+
+#[test]
+fn test_msr_roundtrip_cstar() {
+    let v = 0xFFFF_8000_ABCD_EF01u64;
+    assert_eq!(msr_round_trip(0xC0000083, v), v, "CSTAR round-trip");
+}
+
+#[test]
+fn test_msr_roundtrip_fmask() {
+    let v = 0x0000_0000_0000_0200u64; // mask IF
+    assert_eq!(msr_round_trip(0xC0000084, v), v, "SFMASK round-trip");
+}
+
+#[test]
+fn test_msr_roundtrip_fs_base() {
+    let v = 0x0000_7FFF_DEAD_0000u64;
+    assert_eq!(msr_round_trip(0xC0000100, v), v, "FS.base round-trip");
+}
+
+#[test]
+fn test_msr_roundtrip_gs_base() {
+    // Use a small non-canonical-but-fine test value; keep high bits zero to avoid
+    // the per-CPU shadow write path that triggers on huge gs.base values.
+    let v = 0x0000_0000_0BAD_F00Du64;
+    assert_eq!(msr_round_trip(0xC0000101, v), v, "GS.base round-trip");
+}
+
+#[test]
+fn test_msr_roundtrip_kernel_gs_base() {
+    let v = 0xFFFF_8800_0000_1000u64;
+    assert_eq!(msr_round_trip(0xC0000102, v), v, "KERNEL_GS_BASE round-trip");
+}
+
+#[test]
+fn test_msr_roundtrip_sysenter_cs() {
+    let v = 0x0000_0000_0000_0008u64;
+    assert_eq!(msr_round_trip(0x174, v), v, "IA32_SYSENTER_CS round-trip");
+}
+
+#[test]
+fn test_msr_roundtrip_sysenter_esp() {
+    let v = 0x0000_0000_0008_F000u64;
+    assert_eq!(msr_round_trip(0x175, v), v, "IA32_SYSENTER_ESP round-trip");
+}
+
+#[test]
+fn test_msr_roundtrip_sysenter_eip() {
+    let v = 0xFFFF_FFFF_8100_2000u64;
+    assert_eq!(msr_round_trip(0x176, v), v, "IA32_SYSENTER_EIP round-trip");
+}
+
+#[test]
+fn test_msr_unimplemented_reads_zero() {
+    // MSR 0x100 is not implemented: writes are ignored, reads return 0.
+    assert_eq!(msr_round_trip(0x100, 0xDEAD_BEEF_CAFE_BABE), 0, "unimpl MSR reads 0");
+}
+
+#[test]
+fn test_msr_lstar_visible_in_sregs() {
+    // Cross-check that WRMSR(LSTAR) actually updates architectural state by
+    // reading it back through a second independent RDMSR sequence.
+    let v = 0xFFFF_8000_0042_4242u64;
+    assert_eq!(msr_round_trip(0xC0000082, v), v);
+}

@@ -32,10 +32,18 @@ fn test_cpuid_function_0_vendor_id() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // CPUID function 0 returns vendor string in EBX:EDX:ECX
-    // and max function number in EAX
-    // For a basic emulator, these should be set to some values
-    assert_ne!(regs.rbx, 0, "RBX should contain part of vendor ID");
+    // Exact "GenuineIntel" vendor string and max basic leaf 0x16.
+    // EBX="Genu"=0x756e6547, EDX="ineI"=0x49656e69, ECX="ntel"=0x6c65746e.
+    assert_eq!(regs.rax as u32, 0x16, "max basic leaf");
+    assert_eq!(regs.rbx as u32, 0x756e6547, "EBX = 'Genu'");
+    assert_eq!(regs.rdx as u32, 0x49656e69, "EDX = 'ineI'");
+    assert_eq!(regs.rcx as u32, 0x6c65746e, "ECX = 'ntel'");
+    // Verify it really spells GenuineIntel when reassembled.
+    let mut vendor = Vec::new();
+    vendor.extend_from_slice(&(regs.rbx as u32).to_le_bytes());
+    vendor.extend_from_slice(&(regs.rdx as u32).to_le_bytes());
+    vendor.extend_from_slice(&(regs.rcx as u32).to_le_bytes());
+    assert_eq!(&vendor, b"GenuineIntel");
 }
 
 // CPUID function 1 - Get Family, Model, Stepping, Features
@@ -51,12 +59,26 @@ fn test_cpuid_function_1_features() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // RAX contains version/stepping info
-    // RBX contains brand and cache info
-    // RCX contains feature bits
-    // RDX contains feature bits
-    // These should be non-zero for a valid emulator
-    assert_ne!(regs.rax, 0, "RAX should contain version info");
+    // Exact processor signature 0x6F1 (Stepping=1, Model=15, Family=6).
+    assert_eq!(regs.rax as u32, 0x000006F1, "leaf 1 signature");
+    assert_eq!(regs.rbx as u32, 0x00000000, "leaf 1 EBX");
+
+    // EDX feature bits: FPU(0) PSE(3) TSC(4) MSR(5) PAE(6) CX8(8) APIC(9)
+    // PGE(13) CMOV(15) CLFLUSH(19) MMX(23) FXSR(24) SSE(25) SSE2(26).
+    let edx = regs.rdx as u32;
+    assert_eq!(edx, 0x0788A379, "leaf 1 EDX feature bits");
+    for (bit, name) in [(0, "FPU"), (4, "TSC"), (5, "MSR"), (8, "CX8"),
+                        (15, "CMOV"), (23, "MMX"), (24, "FXSR"), (25, "SSE"), (26, "SSE2")] {
+        assert!(edx & (1 << bit) != 0, "leaf1 EDX bit {} ({}) should be set", bit, name);
+    }
+
+    // ECX with default CR4 (OSXSAVE=0): SSE3(0) SSSE3(9) SSE4.1(19) SSE4.2(20)
+    // POPCNT(23) XSAVE(26) AVX(28). OSXSAVE(27) is 0 because CR4.OSXSAVE=0.
+    let ecx = regs.rcx as u32;
+    assert_eq!(ecx, 0x14980201, "leaf 1 ECX with OSXSAVE clear");
+    assert!(ecx & (1 << 26) != 0, "XSAVE advertised");
+    assert!(ecx & (1 << 28) != 0, "AVX advertised");
+    assert_eq!(ecx & (1 << 27), 0, "OSXSAVE clear (CR4.OSXSAVE=0)");
 }
 
 // CPUID clears RCX when EAX < 0x80000000 and ECX input is non-zero
@@ -190,11 +212,14 @@ fn test_cpuid_function_7_extended_features() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // RAX contains maximum sub-leaf
-    // RBX contains extended feature flags
-    // RCX contains reserved
-    // RDX contains reserved
-    let _ = regs;
+    // Leaf 7 subleaf 0: EAX=0 (max subleaf), EBX has SMAP(20) + AVX2(5),
+    // ECX has GFNI(8), EDX has SERIALIZE(14).
+    assert_eq!(regs.rax as u32, 0, "leaf 7 max subleaf");
+    assert_eq!(regs.rbx as u32, 0x00100020, "leaf 7 EBX (SMAP|AVX2)");
+    assert!(regs.rbx as u32 & (1 << 5) != 0, "AVX2 advertised");
+    assert!(regs.rbx as u32 & (1 << 20) != 0, "SMAP advertised");
+    assert_eq!(regs.rcx as u32, 0x00000100, "leaf 7 ECX (GFNI)");
+    assert_eq!(regs.rdx as u32, 0x00004000, "leaf 7 EDX (SERIALIZE)");
 }
 
 // CPUID extended function 0x80000000 - Get Max Extended Function
@@ -210,9 +235,11 @@ fn test_cpuid_extended_function_80000000() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // RAX contains maximum extended function number
-    // Should be >= 0x80000001 for modern processors
-    assert!(regs.rax >= 0x80000000, "Extended functions should be supported");
+    // Exact max extended leaf 0x80000008.
+    assert_eq!(regs.rax as u32, 0x80000008, "max extended leaf");
+    assert_eq!(regs.rbx as u32, 0, "EBX reserved");
+    assert_eq!(regs.rcx as u32, 0, "ECX reserved");
+    assert_eq!(regs.rdx as u32, 0, "EDX reserved");
 }
 
 // CPUID extended function 0x80000001 - Extended Feature Info
@@ -228,11 +255,13 @@ fn test_cpuid_extended_function_80000001() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // RAX contains family, model, stepping
-    // RBX contains brand ID
-    // RCX contains advanced power management
-    // RDX contains extended features (NX, etc.)
-    assert_ne!(regs.rax, 0, "Should return CPU info");
+    // Extended signature equals leaf-1 signature; EDX has LM(29), RDTSCP(27), NX(20).
+    assert_eq!(regs.rax as u32, 0x000006F1, "extended signature");
+    let edx = regs.rdx as u32;
+    assert_eq!(edx, 0x28100000, "0x80000001 EDX (LM|RDTSCP|NX)");
+    assert!(edx & (1 << 29) != 0, "LM (long mode) advertised");
+    assert!(edx & (1 << 27) != 0, "RDTSCP advertised");
+    assert!(edx & (1 << 20) != 0, "NX advertised");
 }
 
 // CPUID extended function 0x80000002 - Brand String Part 1
@@ -248,9 +277,16 @@ fn test_cpuid_extended_function_80000002_brand_1() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // RAX:RBX:RCX:RDX contain brand string (first 16 chars)
-    // For an emulator, these might be empty but shouldn't crash
-    let _ = regs;
+    // Brand string part 1 = "Rax Emulator\0\0\0\0" (EAX:EBX:ECX:EDX little-endian).
+    assert_eq!(regs.rax as u32, 0x20786152, "brand part1 EAX = 'Rax '");
+    assert_eq!(regs.rbx as u32, 0x6c756d45, "brand part1 EBX = 'Emul'");
+    assert_eq!(regs.rcx as u32, 0x726f7461, "brand part1 ECX = 'ator'");
+    assert_eq!(regs.rdx as u32, 0x00000000, "brand part1 EDX = null");
+    let mut s = Vec::new();
+    for r in [regs.rax, regs.rbx, regs.rcx, regs.rdx] {
+        s.extend_from_slice(&(r as u32).to_le_bytes());
+    }
+    assert_eq!(&s[..12], b"Rax Emulator");
 }
 
 // CPUID extended function 0x80000003 - Brand String Part 2
@@ -360,12 +396,11 @@ fn test_cpuid_extended_function_80000008() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // RAX low byte = physical address bits
-    // RAX second byte = linear address bits
-    // RBX contains L1 TLB assoc for 4K pages
-    // RCX contains cores per processor
-    // RDX is reserved
-    let _ = regs;
+    // Address sizes: physical bits (low byte) = 48, linear bits (next byte) = 48.
+    let eax = regs.rax as u32;
+    assert_eq!(eax, 0x00003030, "0x80000008 EAX (48 phys | 48 linear)");
+    assert_eq!(eax & 0xFF, 48, "48 physical address bits");
+    assert_eq!((eax >> 8) & 0xFF, 48, "48 linear address bits");
 }
 
 // CPUID preserves register values when called with same input
@@ -616,6 +651,115 @@ fn test_cpuid_function_7_subleaves() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // Both sub-leaves should work
-    let _ = regs;
+    // After the sequence, RAX holds leaf 7 subleaf 1 EAX which is 0 (unsupported).
+    assert_eq!(regs.rax as u32, 0, "leaf 7 subleaf 1 EAX = 0");
+    assert_eq!(regs.rbx as u32, 0, "leaf 7 subleaf 1 EBX = 0");
+    assert_eq!(regs.rcx as u32, 0, "leaf 7 subleaf 1 ECX = 0");
+    assert_eq!(regs.rdx as u32, 0, "leaf 7 subleaf 1 EDX = 0");
+}
+
+// ============================================================================
+// Strengthened additions: leaf 0xD (XSAVE), 0x80000007 (invariant TSC),
+// OSXSAVE reflecting CR4, and unsupported-leaf zeroing.
+// ============================================================================
+
+// CPUID leaf 0xD subleaf 0 - XSAVE feature enumeration.
+#[test]
+fn test_cpuid_leaf_d_subleaf0_xsave_area() {
+    let code = [
+        0xb8, 0x0d, 0x00, 0x00, 0x00, // MOV EAX, 0xD
+        0x31, 0xc9,                   // XOR ECX, ECX (subleaf 0)
+        0x0f, 0xa2,                   // CPUID
+        0xf4,                         // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rsp = 0x1000;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    // EAX = supported XCR0 low bits = x87|SSE|AVX = 0x7.
+    // EBX = current enabled area size (XCR0 default has AVX disabled => 576).
+    // ECX = max area size for all supported (832). EDX = high XCR0 bits = 0.
+    assert_eq!(regs.rax as u32, 0x7, "XCR0 valid low bits x87|SSE|AVX");
+    assert_eq!(regs.rbx as u32, 576, "current XSAVE area (AVX disabled)");
+    assert_eq!(regs.rcx as u32, 832, "max XSAVE area");
+    assert_eq!(regs.rdx as u32, 0, "XCR0 high bits");
+}
+
+// CPUID leaf 0xD subleaf 2 - AVX (YMM_Hi128) component size/offset.
+#[test]
+fn test_cpuid_leaf_d_subleaf2_avx_component() {
+    let code = [
+        0xb8, 0x0d, 0x00, 0x00, 0x00, // MOV EAX, 0xD
+        0xb9, 0x02, 0x00, 0x00, 0x00, // MOV ECX, 2
+        0x0f, 0xa2,                   // CPUID
+        0xf4,                         // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rsp = 0x1000;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    // YMM_Hi128 component: size = 256 bytes, offset = 576.
+    assert_eq!(regs.rax as u32, 256, "AVX component size");
+    assert_eq!(regs.rbx as u32, 576, "AVX component offset");
+}
+
+// CPUID leaf 0x80000007 - Invariant TSC (EDX bit 8).
+#[test]
+fn test_cpuid_leaf_80000007_invariant_tsc() {
+    let code = [
+        0xb8, 0x07, 0x00, 0x00, 0x80, // MOV EAX, 0x80000007
+        0x0f, 0xa2,                   // CPUID
+        0xf4,                         // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rsp = 0x1000;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.rdx as u32, 1 << 8, "invariant TSC bit");
+    assert!(regs.rdx as u32 & (1 << 8) != 0, "invariant TSC advertised");
+}
+
+// CPUID leaf 1 ECX OSXSAVE bit reflects CR4.OSXSAVE (set via MOV CR4).
+#[test]
+fn test_cpuid_leaf1_osxsave_reflects_cr4() {
+    // Read CR4, set OSXSAVE (bit 18), write CR4, then CPUID leaf 1.
+    let code = [
+        0x0f, 0x20, 0xe0,             // MOV RAX, CR4
+        0x48, 0x0d, 0x00, 0x00, 0x04, 0x00, // OR RAX, 0x40000 (bit 18 OSXSAVE)
+        0x0f, 0x22, 0xe0,             // MOV CR4, RAX
+        0xb8, 0x01, 0x00, 0x00, 0x00, // MOV EAX, 1
+        0x0f, 0xa2,                   // CPUID
+        0xf4,                         // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rsp = 0x1000;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    let ecx = regs.rcx as u32;
+    // With CR4.OSXSAVE=1, leaf 1 ECX now has bit 27 set => 0x1C980201.
+    assert_eq!(ecx, 0x1C980201, "leaf 1 ECX with OSXSAVE set");
+    assert!(ecx & (1 << 27) != 0, "OSXSAVE bit reflects CR4.OSXSAVE=1");
+}
+
+// CPUID with an unsupported leaf returns all zeros.
+#[test]
+fn test_cpuid_unsupported_leaf_zeros() {
+    let code = [
+        0xb8, 0x00, 0x00, 0x00, 0x40, // MOV EAX, 0x40000000 (hypervisor leaf, unimpl)
+        0x0f, 0xa2,                   // CPUID
+        0xf4,                         // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rsp = 0x1000;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.rax as u32, 0, "unsupported leaf EAX=0");
+    assert_eq!(regs.rbx as u32, 0, "unsupported leaf EBX=0");
+    assert_eq!(regs.rcx as u32, 0, "unsupported leaf ECX=0");
+    assert_eq!(regs.rdx as u32, 0, "unsupported leaf EDX=0");
 }

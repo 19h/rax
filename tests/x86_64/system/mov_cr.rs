@@ -25,9 +25,10 @@ fn test_mov_cr0_to_rax() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // CR0 should have some bits set (at minimum PE=1 in protected mode)
-    // We can't predict exact value but it should be non-zero
-    assert!(regs.rax != 0, "CR0 should be non-zero");
+    // setup_vm initializes CR0 = 0x00050033 (PE|MP|ET|NE|WP|AM, PG clear).
+    assert_eq!(regs.rax, 0x00050033, "CR0 exact default");
+    assert!(regs.rax & 1 != 0, "PE set");
+    assert_eq!(regs.rax >> 31 & 1, 0, "PG clear (no paging)");
 }
 
 // Test MOV from CR0 to RBX
@@ -133,8 +134,9 @@ fn test_mov_cr4_to_rax() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // CR4 should have some extension flags set
-    let _ = regs.rax;
+    // setup_vm initializes CR4 = 0x20 (PAE, bit 5).
+    assert_eq!(regs.rax, 0x20, "CR4 exact default (PAE)");
+    assert!(regs.rax & (1 << 5) != 0, "PAE set");
 }
 
 // Test MOV from CR4 to RBX
@@ -638,4 +640,80 @@ fn test_cr0_to_multiple_registers() {
     // All should have same CR0 value
     assert_eq!(regs.rax, regs.rbx, "CR0 values should match");
     assert_eq!(regs.rax, regs.rcx, "CR0 values should match");
+}
+
+// ============================================================================
+// Strengthened: CR0/CR4 specific bit read/write assertions.
+// ============================================================================
+
+// Set CR0.WP (bit 16) on top of the default, read it back exactly.
+#[test]
+fn test_cr0_set_wp_bit_roundtrip() {
+    let code = [
+        0x0f, 0x20, 0xc0,                 // MOV RAX, CR0  (= 0x00050033)
+        0x48, 0x0d, 0x00, 0x00, 0x01, 0x00, // OR RAX, 0x10000 (WP, bit 16)
+        0x0f, 0x22, 0xc0,                 // MOV CR0, RAX
+        0x0f, 0x20, 0xc3,                 // MOV RBX, CR0 (read back)
+        0xf4,                             // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    // WP was already set in 0x00050033, OR is idempotent; value unchanged.
+    assert_eq!(regs.rbx, 0x00050033, "CR0 retains WP after OR");
+    assert!(regs.rbx & (1 << 16) != 0, "WP set");
+}
+
+// Clearing CR0.MP (bit 1) and reading it back. Avoids touching PG/PE so the
+// no-paging instruction-fetch path stays valid.
+#[test]
+fn test_cr0_clear_mp_bit_roundtrip() {
+    let code = [
+        0x0f, 0x20, 0xc0,                 // MOV RAX, CR0 (= 0x00050033, MP set)
+        0x48, 0x83, 0xe0, 0xfd,           // AND RAX, ~2 (clear MP, bit 1)
+        0x0f, 0x22, 0xc0,                 // MOV CR0, RAX
+        0x0f, 0x20, 0xc1,                 // MOV RCX, CR0
+        0xf4,
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0x00050031, "CR0 with MP cleared");
+    assert_eq!(regs.rcx & 2, 0, "MP cleared");
+    assert!(regs.rcx & 1 != 0, "PE preserved");
+}
+
+// Write a fresh CR4 value (PAE|PSE|OSFXSR|OSXSAVE) and read it back exactly.
+#[test]
+fn test_cr4_write_read_exact() {
+    // 0x30 = PAE|PSE; 0x200 = OSFXSR (bit 9); 0x40000 = OSXSAVE (bit 18).
+    let code = [
+        0x48, 0xc7, 0xc0, 0x30, 0x02, 0x04, 0x00, // MOV RAX, 0x40230
+        0x0f, 0x22, 0xe0,                          // MOV CR4, RAX
+        0x0f, 0x20, 0xe3,                          // MOV RBX, CR4
+        0xf4,
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rbx, 0x40230, "CR4 stores written value exactly");
+    assert!(regs.rbx & (1 << 5) != 0, "PAE");
+    assert!(regs.rbx & (1 << 4) != 0, "PSE");
+    assert!(regs.rbx & (1 << 9) != 0, "OSFXSR");
+    assert!(regs.rbx & (1 << 18) != 0, "OSXSAVE");
+}
+
+// CLTS clears CR0.TS (bit 3). Set TS, then CLTS, verify it is cleared.
+#[test]
+fn test_clts_clears_cr0_ts() {
+    let code = [
+        0x0f, 0x20, 0xc0,                 // MOV RAX, CR0
+        0x48, 0x83, 0xc8, 0x08,           // OR RAX, 8 (TS, bit 3)
+        0x0f, 0x22, 0xc0,                 // MOV CR0, RAX (TS now set)
+        0x0f, 0x06,                       // CLTS
+        0x0f, 0x20, 0xc3,                 // MOV RBX, CR0
+        0xf4,
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rbx & 8, 0, "CLTS cleared CR0.TS");
+    // The rest of CR0 (PE etc.) is preserved.
+    assert!(regs.rbx & 1 != 0, "PE preserved by CLTS");
 }

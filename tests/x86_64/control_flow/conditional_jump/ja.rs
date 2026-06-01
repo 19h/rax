@@ -470,3 +470,25 @@ fn test_ja_threshold() {
 
     assert_eq!(regs.rcx, 1, "Above threshold");
 }
+
+// Strengthened: prove the taken branch via a sentinel and exact final RIP.
+// CMP 10,5 (unsigned above) => CF=0,ZF=0 => JA taken. Jcc skips MOV RCX,0xBAD
+// and lands on MOV RCX,0xACED; the fall-through path is fenced off by a HLT.
+#[test]
+fn test_ja_taken_sentinel_and_rip() {
+    let code = [
+        0x48, 0xc7, 0xc0, 0x0a, 0x00, 0x00, 0x00, // MOV RAX, 10
+        0x48, 0xc7, 0xc3, 0x05, 0x00, 0x00, 0x00, // MOV RBX, 5
+        0x48, 0x39, 0xd8,                         // CMP RAX, RBX
+        0x77, 0x08,                               // JA +8 (taken)
+        0x48, 0xc7, 0xc1, 0xad, 0x0b, 0x00, 0x00, // MOV RCX, 0xBAD
+        0xf4,                                     // HLT (fall-through fence)
+        0x48, 0xc7, 0xc1, 0xed, 0xac, 0x00, 0x00, // MOV RCX, 0xACED (target)
+        0xf4,                                     // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0xACED, "JA taken reached the target");
+    // taken target MOV at 0x101B(.. depends) -> just assert RIP advanced past final HLT.
+    assert_eq!(regs.rip, 0x1000 + code.len() as u64, "RIP past taken HLT");
+}

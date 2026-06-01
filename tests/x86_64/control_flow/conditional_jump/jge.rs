@@ -2,6 +2,25 @@ use rax::cpu::Registers;
 
 use crate::common::{run_until_hlt, setup_vm};
 
+// Strengthened: CMP 5,5 (equal => SF=OF) => JGE taken; sentinel + RIP proof.
+#[test]
+fn test_jge_taken_sentinel_and_rip() {
+    let code = [
+        0x48, 0xc7, 0xc0, 0x05, 0x00, 0x00, 0x00, // MOV RAX, 5
+        0x48, 0xc7, 0xc3, 0x05, 0x00, 0x00, 0x00, // MOV RBX, 5
+        0x48, 0x39, 0xd8,                         // CMP RAX, RBX
+        0x7d, 0x08,                               // JGE +8
+        0x48, 0xc7, 0xc1, 0xad, 0x0b, 0x00, 0x00, // MOV RCX, 0xBAD
+        0xf4,                                     // HLT (fence)
+        0x48, 0xc7, 0xc1, 0xed, 0xac, 0x00, 0x00, // MOV RCX, 0xACED
+        0xf4,                                     // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0xACED, "JGE taken");
+    assert_eq!(regs.rip, 0x1000 + code.len() as u64, "RIP past taken HLT");
+}
+
 // JGE/JNL - Jump if Greater or Equal / Jump if Not Less
 // Jumps to target if SF = OF (signed comparison)
 

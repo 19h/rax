@@ -482,6 +482,64 @@ fn test_rdtsc_execution_speed() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // All calls should complete
-    let _ = regs;
+    // The last RDTSC result is non-zero (insn_count has advanced).
+    let tsc = ((regs.rdx & 0xFFFF_FFFF) << 32) | (regs.rax & 0xFFFF_FFFF);
+    assert!(tsc > 0, "TSC advanced after several instructions");
+    assert_eq!(regs.rax >> 32, 0, "upper RAX cleared");
+    assert_eq!(regs.rdx >> 32, 0, "upper RDX cleared");
+}
+
+// ============================================================================
+// Strengthened: deterministic TSC monotonicity. The emulator derives the TSC
+// from the retired-instruction count (3000 cycles per retired instruction), so
+// the delta between two reads equals exactly (#instructions between) * 3000.
+// ============================================================================
+
+#[test]
+fn test_rdtsc_strict_monotonic_with_known_delta() {
+    // RDTSC #1, save to RBX:RSI, run 3 NOPs, RDTSC #2 in RAX:RDX.
+    //   first RDTSC executes at some insn_count k.
+    //   instructions between the two reads: MOV,MOV,NOP,NOP,NOP = 5 retired
+    //   (the second RDTSC reads insn_count after it is incremented for itself).
+    // Rather than hard-code k, assert tsc2 > tsc1 strictly and the delta is a
+    // positive multiple of 3000.
+    let code = [
+        0x0f, 0x31,       // RDTSC (#1)
+        0x48, 0x89, 0xc3, // MOV RBX, RAX (save lo1)
+        0x48, 0x89, 0xd6, // MOV RSI, RDX (save hi1)
+        0x90, 0x90, 0x90, // NOP x3
+        0x0f, 0x31,       // RDTSC (#2)
+        0xf4,             // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    let tsc1 = ((regs.rsi & 0xFFFF_FFFF) << 32) | (regs.rbx & 0xFFFF_FFFF);
+    let tsc2 = ((regs.rdx & 0xFFFF_FFFF) << 32) | (regs.rax & 0xFFFF_FFFF);
+    assert!(tsc2 > tsc1, "TSC strictly increases across NOPs");
+    let delta = tsc2 - tsc1;
+    assert!(delta > 0 && delta % 3000 == 0, "TSC delta is a multiple of 3000 (got {})", delta);
+    // insn_count is incremented at the start of each step (including the 2nd
+    // RDTSC's own step), so the delta counts the 5 intervening instructions
+    // (2 MOV + 3 NOP) plus the second RDTSC itself = 6 ticks.
+    assert_eq!(delta, 6 * 3000, "exact instruction-count-derived delta");
+}
+
+#[test]
+fn test_rdtsc_back_to_back_delta_deterministic() {
+    // Two RDTSCs separated by two MOVs. insn_count increments per step including
+    // the second RDTSC, so the delta is (2 MOV + 1 RDTSC) * 3000 = 9000.
+    let code = [
+        0x0f, 0x31,       // RDTSC (#1)
+        0x48, 0x89, 0xc3, // MOV RBX, RAX (save lo1)
+        0x48, 0x89, 0xd6, // MOV RSI, RDX (save hi1)
+        0x0f, 0x31,       // RDTSC (#2)
+        0xf4,             // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    let tsc1 = ((regs.rsi & 0xFFFF_FFFF) << 32) | (regs.rbx & 0xFFFF_FFFF);
+    let tsc2 = ((regs.rdx & 0xFFFF_FFFF) << 32) | (regs.rax & 0xFFFF_FFFF);
+    assert_eq!(tsc2 - tsc1, 3 * 3000, "deterministic 3-tick delta");
+    assert!(tsc2 > tsc1, "monotonic");
 }

@@ -12,16 +12,19 @@ use rax::cpu::Registers;
 
 #[test]
 fn test_ja_short_taken() {
+    // JA target sets RCX=0xA1; the skipped path sets RCX=0xBAD.
     let code = [
         0x48, 0xc7, 0xc0, 0x10, 0x00, 0x00, 0x00, // MOV RAX, 16
         0x48, 0xc7, 0xc3, 0x08, 0x00, 0x00, 0x00, // MOV RBX, 8
         0x48, 0x39, 0xd8, // CMP RAX, RBX (16 > 8: CF=0, ZF=0)
-        0x77, 0x02, // JA +2 (should jump)
-        0xf4, 0xf4, // HLT, HLT (should not execute)
-        0xf4, // HLT (target)
+        0x77, 0x07, // JA +7 (should jump, skips MOV RCX,0xBAD)
+        0x48, 0xc7, 0xc1, 0xad, 0x0b, 0x00, 0x00, // MOV RCX, 0xBAD (not executed)
+        0x48, 0xc7, 0xc1, 0xa1, 0x00, 0x00, 0x00, // MOV RCX, 0xA1 (target)
+        0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
-    let _ = run_until_hlt(&mut vcpu).unwrap();
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0xA1, "JA should be taken (CF=0,ZF=0)");
 }
 
 #[test]
@@ -1042,4 +1045,236 @@ fn test_zero_offset_jump() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu).unwrap();
+}
+
+// ============================================================================
+// Strengthened: deterministic taken / not-taken assertions for every Jcc.
+//
+// Each helper preloads RFLAGS directly (so we control CF/ZF/SF/OF/PF exactly),
+// then executes a single short Jcc whose target sets RCX=0xACED and whose
+// fall-through path sets RCX=0xFA11. We assert the exact RCX sentinel AND the
+// final RIP, proving both the branch decision and the displacement arithmetic.
+// ============================================================================
+
+const FLAG_CF: u64 = 0x0001;
+const FLAG_PF: u64 = 0x0004;
+const FLAG_ZF: u64 = 0x0040;
+const FLAG_SF: u64 = 0x0080;
+const FLAG_OF: u64 = 0x0800;
+
+const TAKEN_SENTINEL: u64 = 0xACED;
+const FALL_SENTINEL: u64 = 0xFA11;
+
+/// Run a single 1-byte-opcode short Jcc (opcode `op`) with the given initial
+/// RFLAGS, returning (final RCX, final RIP). Layout:
+///   0x1000: Jcc +8                    (2 bytes)  -> target = 0x1002 + 8 = 0x100A
+///   0x1002: MOV RCX, 0xFA11           (7 bytes)  fall-through sentinel
+///   0x1009: HLT                       fall-through stop -> RIP = 0x100A
+///   0x100A: MOV RCX, 0xACED           (7 bytes)  taken sentinel
+///   0x1011: HLT                       taken stop      -> RIP = 0x1012
+fn run_jcc_short(op: u8, flags: u64) -> (u64, u64) {
+    let code = [
+        op, 0x08, // Jcc +8
+        0x48, 0xc7, 0xc1, 0x11, 0xfa, 0x00, 0x00, // MOV RCX, 0xFA11
+        0xf4, // HLT (fall-through stop)
+        0x48, 0xc7, 0xc1, 0xed, 0xac, 0x00, 0x00, // MOV RCX, 0xACED
+        0xf4, // HLT (taken stop)
+    ];
+    let mut regs = Registers::default();
+    regs.rflags = flags;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let out = run_until_hlt(&mut vcpu).unwrap();
+    (out.rcx, out.rip)
+}
+
+fn assert_taken(op: u8, flags: u64, msg: &str) {
+    let (rcx, rip) = run_jcc_short(op, flags);
+    assert_eq!(rcx, TAKEN_SENTINEL, "Jcc {:#04x} should be TAKEN: {}", op, msg);
+    assert_eq!(rip, 0x1012, "taken RIP for {:#04x}: {}", op, msg);
+}
+
+fn assert_not_taken(op: u8, flags: u64, msg: &str) {
+    let (rcx, rip) = run_jcc_short(op, flags);
+    assert_eq!(rcx, FALL_SENTINEL, "Jcc {:#04x} should NOT be taken: {}", op, msg);
+    assert_eq!(rip, 0x100A, "not-taken RIP for {:#04x}: {}", op, msg);
+}
+
+#[test]
+fn test_jcc_jo_taken_and_not() {
+    assert_taken(0x70, FLAG_OF, "OF=1");
+    assert_not_taken(0x70, 0, "OF=0");
+}
+
+#[test]
+fn test_jcc_jno_taken_and_not() {
+    assert_taken(0x71, 0, "OF=0");
+    assert_not_taken(0x71, FLAG_OF, "OF=1");
+}
+
+#[test]
+fn test_jcc_jb_jc_taken_and_not() {
+    // JB/JC/JNAE = 0x72, condition CF=1
+    assert_taken(0x72, FLAG_CF, "CF=1");
+    assert_not_taken(0x72, 0, "CF=0");
+}
+
+#[test]
+fn test_jcc_jae_jnc_taken_and_not() {
+    // JAE/JNB/JNC = 0x73, condition CF=0
+    assert_taken(0x73, 0, "CF=0");
+    assert_not_taken(0x73, FLAG_CF, "CF=1");
+}
+
+#[test]
+fn test_jcc_je_jz_taken_and_not() {
+    // JE/JZ = 0x74, condition ZF=1
+    assert_taken(0x74, FLAG_ZF, "ZF=1");
+    assert_not_taken(0x74, 0, "ZF=0");
+}
+
+#[test]
+fn test_jcc_jne_jnz_taken_and_not() {
+    // JNE/JNZ = 0x75, condition ZF=0
+    assert_taken(0x75, 0, "ZF=0");
+    assert_not_taken(0x75, FLAG_ZF, "ZF=1");
+}
+
+#[test]
+fn test_jcc_jbe_jna_taken_and_not() {
+    // JBE/JNA = 0x76, condition CF=1 OR ZF=1
+    assert_taken(0x76, FLAG_CF, "CF=1");
+    assert_taken(0x76, FLAG_ZF, "ZF=1");
+    assert_taken(0x76, FLAG_CF | FLAG_ZF, "CF=1,ZF=1");
+    assert_not_taken(0x76, 0, "CF=0,ZF=0");
+}
+
+#[test]
+fn test_jcc_ja_jnbe_taken_and_not() {
+    // JA/JNBE = 0x77, condition CF=0 AND ZF=0
+    assert_taken(0x77, 0, "CF=0,ZF=0");
+    assert_not_taken(0x77, FLAG_CF, "CF=1");
+    assert_not_taken(0x77, FLAG_ZF, "ZF=1");
+    assert_not_taken(0x77, FLAG_CF | FLAG_ZF, "CF=1,ZF=1");
+}
+
+#[test]
+fn test_jcc_js_taken_and_not() {
+    // JS = 0x78, condition SF=1
+    assert_taken(0x78, FLAG_SF, "SF=1");
+    assert_not_taken(0x78, 0, "SF=0");
+}
+
+#[test]
+fn test_jcc_jns_taken_and_not() {
+    // JNS = 0x79, condition SF=0
+    assert_taken(0x79, 0, "SF=0");
+    assert_not_taken(0x79, FLAG_SF, "SF=1");
+}
+
+#[test]
+fn test_jcc_jp_jpe_taken_and_not() {
+    // JP/JPE = 0x7A, condition PF=1
+    assert_taken(0x7A, FLAG_PF, "PF=1");
+    assert_not_taken(0x7A, 0, "PF=0");
+}
+
+#[test]
+fn test_jcc_jnp_jpo_taken_and_not() {
+    // JNP/JPO = 0x7B, condition PF=0
+    assert_taken(0x7B, 0, "PF=0");
+    assert_not_taken(0x7B, FLAG_PF, "PF=1");
+}
+
+#[test]
+fn test_jcc_jl_jnge_taken_and_not() {
+    // JL/JNGE = 0x7C, condition SF != OF
+    assert_taken(0x7C, FLAG_SF, "SF=1,OF=0");
+    assert_taken(0x7C, FLAG_OF, "SF=0,OF=1");
+    assert_not_taken(0x7C, 0, "SF=0,OF=0");
+    assert_not_taken(0x7C, FLAG_SF | FLAG_OF, "SF=1,OF=1");
+}
+
+#[test]
+fn test_jcc_jge_jnl_taken_and_not() {
+    // JGE/JNL = 0x7D, condition SF == OF
+    assert_taken(0x7D, 0, "SF=0,OF=0");
+    assert_taken(0x7D, FLAG_SF | FLAG_OF, "SF=1,OF=1");
+    assert_not_taken(0x7D, FLAG_SF, "SF=1,OF=0");
+    assert_not_taken(0x7D, FLAG_OF, "SF=0,OF=1");
+}
+
+#[test]
+fn test_jcc_jle_jng_taken_and_not() {
+    // JLE/JNG = 0x7E, condition ZF=1 OR SF != OF
+    assert_taken(0x7E, FLAG_ZF, "ZF=1");
+    assert_taken(0x7E, FLAG_SF, "SF != OF");
+    assert_taken(0x7E, FLAG_OF, "SF != OF");
+    assert_not_taken(0x7E, 0, "ZF=0,SF=OF");
+    assert_not_taken(0x7E, FLAG_SF | FLAG_OF, "ZF=0,SF=OF");
+}
+
+#[test]
+fn test_jcc_jg_jnle_taken_and_not() {
+    // JG/JNLE = 0x7F, condition ZF=0 AND SF == OF
+    assert_taken(0x7F, 0, "ZF=0,SF=OF");
+    assert_taken(0x7F, FLAG_SF | FLAG_OF, "ZF=0,SF=OF=1");
+    assert_not_taken(0x7F, FLAG_ZF, "ZF=1");
+    assert_not_taken(0x7F, FLAG_SF, "SF != OF");
+}
+
+/// Near (0F 8x, rel32) variant: target at +8, fall-through sentinel + HLT between.
+///   0x1000: 0F 8x rel32(+8)           (6 bytes) -> target = 0x1006 + 8 = 0x100E
+///   0x1006: MOV RCX, 0xFA11           (7 bytes)
+///   0x100D: HLT                       fall-through stop -> RIP = 0x100E
+///   0x100E: MOV RCX, 0xACED           (7 bytes)
+///   0x1015: HLT                       taken stop -> RIP = 0x1016
+fn run_jcc_near(op2: u8, flags: u64) -> (u64, u64) {
+    let code = [
+        0x0f, op2, 0x08, 0x00, 0x00, 0x00, // Jcc near +8
+        0x48, 0xc7, 0xc1, 0x11, 0xfa, 0x00, 0x00, // MOV RCX, 0xFA11
+        0xf4, // HLT (fall-through stop)
+        0x48, 0xc7, 0xc1, 0xed, 0xac, 0x00, 0x00, // MOV RCX, 0xACED
+        0xf4, // HLT (taken stop)
+    ];
+    let mut regs = Registers::default();
+    regs.rflags = flags;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let out = run_until_hlt(&mut vcpu).unwrap();
+    (out.rcx, out.rip)
+}
+
+#[test]
+fn test_jcc_near_displacement_taken_and_not() {
+    // 0F 84 = JE near, 0F 85 = JNE near. Verify rel32 displacement + RIP.
+    let (rcx_t, rip_t) = run_jcc_near(0x84, FLAG_ZF);
+    assert_eq!(rcx_t, TAKEN_SENTINEL, "JE near taken (ZF=1)");
+    assert_eq!(rip_t, 0x1016, "JE near taken RIP past HLT");
+
+    let (rcx_n, rip_n) = run_jcc_near(0x84, 0);
+    assert_eq!(rcx_n, FALL_SENTINEL, "JE near not taken (ZF=0)");
+    assert_eq!(rip_n, 0x100E, "JE near not-taken RIP at taken target start");
+
+    let (rcx_t2, _) = run_jcc_near(0x85, 0);
+    assert_eq!(rcx_t2, TAKEN_SENTINEL, "JNE near taken (ZF=0)");
+    let (rcx_n2, _) = run_jcc_near(0x85, FLAG_ZF);
+    assert_eq!(rcx_n2, FALL_SENTINEL, "JNE near not taken (ZF=1)");
+}
+
+#[test]
+fn test_jmp_forward_rel8_lands_exactly() {
+    // Validate that a forward JMP rel8 lands exactly on the HLT, skipping the MOV.
+    //   0x1000: XOR RCX,RCX           (3)
+    //   0x1003: JMP +7                (2) -> 0x1005 + 7 = 0x100C
+    //   0x1005: MOV RCX,0xACED        (7) ends 0x100C  (skipped)
+    //   0x100C: HLT                   -> RIP past HLT = 0x100D
+    let code = [
+        0x48, 0x31, 0xc9, // XOR RCX,RCX
+        0xeb, 0x07, // JMP +7
+        0x48, 0xc7, 0xc1, 0xed, 0xac, 0x00, 0x00, // MOV RCX,0xACED (skipped)
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0, "forward JMP skipped the MOV, RCX stays 0");
+    assert_eq!(regs.rip, 0x100D, "RIP is past the HLT at 0x100C");
 }
