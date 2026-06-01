@@ -63,14 +63,26 @@ impl X86_64Vcpu {
             0x11 | 0x29 if evex.pp == 0 => self.execute_evex_mov_store(ctx, opcode == 0x29),
             // VMOVUPD/VMOVAPD store (0x11/0x29 with 66 prefix)
             0x11 | 0x29 if evex.pp == 1 => self.execute_evex_mov_store(ctx, opcode == 0x29),
-            // VADDPS/VADDPD (0x58)
-            0x58 => self.execute_evex_fp_arith(ctx, |a, b| a + b),
-            // VMULPS/VMULPD (0x59)
-            0x59 => self.execute_evex_fp_arith(ctx, |a, b| a * b),
-            // VSUBPS/VSUBPD (0x5C)
-            0x5C => self.execute_evex_fp_arith(ctx, |a, b| a - b),
-            // VDIVPS/VDIVPD (0x5E)
-            0x5E => self.execute_evex_fp_arith(ctx, |a, b| a / b),
+            // VADDPS (pp=0/W=0) / VADDPD (pp=1/W=1) (0x58)
+            0x58 if evex.pp == 1 || evex.w => {
+                self.execute_evex_fp_arith_pd(ctx, |a, b| a + b)
+            }
+            0x58 => self.execute_evex_fp_arith_ps(ctx, |a, b| a + b),
+            // VMULPS / VMULPD (0x59)
+            0x59 if evex.pp == 1 || evex.w => {
+                self.execute_evex_fp_arith_pd(ctx, |a, b| a * b)
+            }
+            0x59 => self.execute_evex_fp_arith_ps(ctx, |a, b| a * b),
+            // VSUBPS / VSUBPD (0x5C)
+            0x5C if evex.pp == 1 || evex.w => {
+                self.execute_evex_fp_arith_pd(ctx, |a, b| a - b)
+            }
+            0x5C => self.execute_evex_fp_arith_ps(ctx, |a, b| a - b),
+            // VDIVPS / VDIVPD (0x5E)
+            0x5E if evex.pp == 1 || evex.w => {
+                self.execute_evex_fp_arith_pd(ctx, |a, b| a / b)
+            }
+            0x5E => self.execute_evex_fp_arith_ps(ctx, |a, b| a / b),
             // VXORPS/VXORPD (0x57)
             0x57 => self.execute_evex_bitwise_xor(ctx),
             _ => Err(Error::Emulator(format!(
@@ -181,20 +193,24 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-    /// EVEX floating-point arithmetic (VADDPS/PD, VMULPS/PD, VSUBPS/PD, VDIVPS/PD)
-    fn execute_evex_fp_arith<F>(&mut self, ctx: &mut InsnContext, op: F) -> Result<Option<VcpuExit>>
+    /// EVEX single-precision FP arithmetic (VADDPS, VMULPS, VSUBPS, VDIVPS)
+    fn execute_evex_fp_arith_ps<F>(
+        &mut self,
+        ctx: &mut InsnContext,
+        op: F,
+    ) -> Result<Option<VcpuExit>>
     where
         F: Fn(f32, f32) -> f32,
     {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
-        // Destination register (5 bits)
+        // Destination register (5 bits): reg + EVEX.R + EVEX.R'
         let zmm_dst = if !evex.r { reg + 8 } else { reg };
         let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
 
-        // Source1 from vvvv
-        let zmm_src1 = evex.vvvv as usize;
+        // Source1 from EVEX.vvvv (stored inverted) extended by EVEX.V'
+        let zmm_src1 = ctx.evex_vvvv() as usize;
 
         // Vector length from L'L
         let vl = match evex.ll {
@@ -207,35 +223,48 @@ impl X86_64Vcpu {
         // Number of f32 elements
         let num_elems = vl / 4;
 
-        // Load source2
+        // Load source2 (register operand also honors V'/X extension to 0-31)
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
         // Get source1
         let src1 = self.get_zmm_data(zmm_src1, vl);
 
-        // Perform operation
+        // Original destination contents (for merge masking)
+        let dest_old = self.get_zmm_data(zmm_dst, vl);
+
+        // Opmask: k0 => no masking (all elements active)
+        let mask = Self::evex_kmask(&evex, &self.regs.k, num_elems);
+
+        // Perform masked operation
         let mut result = [0u8; 64];
         for i in 0..num_elems {
-            let a = f32::from_le_bytes([
-                src1[i * 4],
-                src1[i * 4 + 1],
-                src1[i * 4 + 2],
-                src1[i * 4 + 3],
-            ]);
-            let b = f32::from_le_bytes([
-                src2[i * 4],
-                src2[i * 4 + 1],
-                src2[i * 4 + 2],
-                src2[i * 4 + 3],
-            ]);
-            let r = op(a, b);
-            let bytes = r.to_le_bytes();
-            result[i * 4..i * 4 + 4].copy_from_slice(&bytes);
+            let base = i * 4;
+            if (mask >> i) & 1 != 0 {
+                let a = f32::from_le_bytes([
+                    src1[base],
+                    src1[base + 1],
+                    src1[base + 2],
+                    src1[base + 3],
+                ]);
+                let b = f32::from_le_bytes([
+                    src2[base],
+                    src2[base + 1],
+                    src2[base + 2],
+                    src2[base + 3],
+                ]);
+                let r = op(a, b);
+                result[base..base + 4].copy_from_slice(&r.to_le_bytes());
+            } else if evex.z {
+                // Zeroing-masking: element becomes 0
+            } else {
+                // Merge-masking: keep original destination element
+                result[base..base + 4].copy_from_slice(&dest_old[base..base + 4]);
+            }
         }
 
         // Store result
@@ -254,17 +283,24 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-    /// EVEX bitwise XOR (VXORPS, VXORPD)
-    fn execute_evex_bitwise_xor(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    /// EVEX double-precision FP arithmetic (VADDPD, VMULPD, VSUBPD, VDIVPD)
+    fn execute_evex_fp_arith_pd<F>(
+        &mut self,
+        ctx: &mut InsnContext,
+        op: F,
+    ) -> Result<Option<VcpuExit>>
+    where
+        F: Fn(f64, f64) -> f64,
+    {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
-        // Destination register (5 bits)
+        // Destination register (5 bits): reg + EVEX.R + EVEX.R'
         let zmm_dst = if !evex.r { reg + 8 } else { reg };
         let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
 
-        // Source1 from vvvv (inverted)
-        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+        // Source1 from EVEX.vvvv (stored inverted) extended by EVEX.V'
+        let zmm_src1 = ctx.evex_vvvv() as usize;
 
         // Vector length from L'L
         let vl = match evex.ll {
@@ -274,11 +310,127 @@ impl X86_64Vcpu {
             _ => 64,
         };
 
-        // Load source2
+        // Number of f64 elements
+        let num_elems = vl / 8;
+
+        // Load source2 (register operand also honors V'/X extension to 0-31)
         let src2 = if is_memory {
             self.load_zmm_data(addr, vl)?
         } else {
-            let zmm_src2 = if !evex.b { rm + 8 } else { rm } as usize;
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
+            self.get_zmm_data(zmm_src2, vl)
+        };
+
+        // Get source1
+        let src1 = self.get_zmm_data(zmm_src1, vl);
+
+        // Original destination contents (for merge masking)
+        let dest_old = self.get_zmm_data(zmm_dst, vl);
+
+        // Opmask: k0 => no masking (all elements active)
+        let mask = Self::evex_kmask(&evex, &self.regs.k, num_elems);
+
+        // Perform masked operation
+        let mut result = [0u8; 64];
+        for i in 0..num_elems {
+            let base = i * 8;
+            if (mask >> i) & 1 != 0 {
+                let a = f64::from_le_bytes([
+                    src1[base],
+                    src1[base + 1],
+                    src1[base + 2],
+                    src1[base + 3],
+                    src1[base + 4],
+                    src1[base + 5],
+                    src1[base + 6],
+                    src1[base + 7],
+                ]);
+                let b = f64::from_le_bytes([
+                    src2[base],
+                    src2[base + 1],
+                    src2[base + 2],
+                    src2[base + 3],
+                    src2[base + 4],
+                    src2[base + 5],
+                    src2[base + 6],
+                    src2[base + 7],
+                ]);
+                let r = op(a, b);
+                result[base..base + 8].copy_from_slice(&r.to_le_bytes());
+            } else if evex.z {
+                // Zeroing-masking: element becomes 0
+            } else {
+                // Merge-masking: keep original destination element
+                result[base..base + 8].copy_from_slice(&dest_old[base..base + 8]);
+            }
+        }
+
+        // Store result
+        self.set_zmm_data(zmm_dst, &result[..vl], vl);
+
+        // Zero upper bits if not 512-bit (for ZMM0-15)
+        if vl < 64 && zmm_dst < 16 {
+            if vl <= 16 {
+                self.regs.ymm_high[zmm_dst][0] = 0;
+                self.regs.ymm_high[zmm_dst][1] = 0;
+            }
+            self.regs.zmm_high[zmm_dst] = [0; 4];
+        }
+
+        self.regs.rip += ctx.cursor as u64;
+        Ok(None)
+    }
+
+    /// Resolve the full 0-31 vector register index for an EVEX r/m register operand.
+    /// rm (3 bits) extended by EVEX.B (bit 3) and EVEX.X (bit 4, V' for reg-reg).
+    #[inline]
+    fn evex_rm_vec_reg(evex: &super::super::cpu::EvexPrefix, rm: u8) -> usize {
+        let base = if !evex.b { rm + 8 } else { rm };
+        let base = if !evex.x { base + 16 } else { base };
+        base as usize
+    }
+
+    /// Compute the active-element opmask for an EVEX op.
+    /// k0 (aaa == 0) means "no masking": all elements active.
+    #[inline]
+    fn evex_kmask(evex: &super::super::cpu::EvexPrefix, k: &[u64], num_elems: usize) -> u64 {
+        let full = if num_elems >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << num_elems) - 1
+        };
+        if evex.aaa == 0 {
+            full
+        } else {
+            k[evex.aaa as usize] & full
+        }
+    }
+
+    /// EVEX bitwise XOR (VXORPS, VXORPD)
+    fn execute_evex_bitwise_xor(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+        let evex = ctx.evex.unwrap();
+        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
+
+        // Destination register (5 bits)
+        let zmm_dst = if !evex.r { reg + 8 } else { reg };
+        let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
+
+        // Source1 from vvvv (inverted), extended by EVEX.V'
+        let zmm_src1 = ctx.evex_vvvv() as usize;
+
+        // Vector length from L'L
+        let vl = match evex.ll {
+            0 => 16, // 128-bit
+            1 => 32, // 256-bit
+            2 => 64, // 512-bit
+            _ => 64,
+        };
+
+        // Load source2 (register operand honors V'/X extension to 0-31)
+        let src2 = if is_memory {
+            self.load_zmm_data(addr, vl)?
+        } else {
+            let zmm_src2 = Self::evex_rm_vec_reg(&evex, rm);
             self.get_zmm_data(zmm_src2, vl)
         };
 
@@ -720,8 +872,8 @@ impl X86_64Vcpu {
         let zmm_dst = if !evex.r { reg + 8 } else { reg };
         let zmm_dst = if !evex.r_prime { zmm_dst + 16 } else { zmm_dst } as usize;
 
-        // Source1 from vvvv (inverted)
-        let zmm_src1 = (evex.vvvv ^ 0xF) as usize;
+        // Source1 from vvvv (inverted), extended by EVEX.V'
+        let zmm_src1 = ctx.evex_vvvv() as usize;
 
         // Vector length from L'L
         let vl = match evex.ll {

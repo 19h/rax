@@ -624,3 +624,252 @@ fn test_vaddps_mem_with_rdx_base() {
     mem.write_slice(&[0x00u8; 64], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Regression tests for EVEX FP-arith correctness (vvvv inversion, PS/PD split,
+// k-mask merge/zero handling). Values are set/read via VMOVUPS memory
+// round-trips, the same pattern as the SSE move tests.
+//
+// Memory layout used by these tests:
+//   0x3000 -> SRC1  (loaded into zmm1)
+//   0x3100 -> SRC2  (loaded into zmm2)
+//   0x3200 -> RESULT (zmm0 stored here, read back for assertions)
+//   0x3300 -> POISON (loaded into zmm14 = the *wrong*, non-inverted vvvv reg)
+// ============================================================================
+
+const REG_SRC1: u64 = 0x3000;
+const REG_SRC2: u64 = 0x3100;
+const REG_RESULT: u64 = 0x3200;
+const REG_POISON: u64 = 0x3300;
+
+/// Emit `mov r64, imm` for rax/rbx/rcx/rsi (sign-extended imm32 form, 7 bytes).
+fn mov_addrs(out: &mut Vec<u8>) {
+    // mov rax, REG_SRC1
+    out.extend_from_slice(&[0x48, 0xc7, 0xc0]);
+    out.extend_from_slice(&(REG_SRC1 as u32).to_le_bytes());
+    // mov rbx, REG_SRC2
+    out.extend_from_slice(&[0x48, 0xc7, 0xc3]);
+    out.extend_from_slice(&(REG_SRC2 as u32).to_le_bytes());
+    // mov rcx, REG_RESULT
+    out.extend_from_slice(&[0x48, 0xc7, 0xc1]);
+    out.extend_from_slice(&(REG_RESULT as u32).to_le_bytes());
+    // mov rsi, REG_POISON
+    out.extend_from_slice(&[0x48, 0xc7, 0xc6]);
+    out.extend_from_slice(&(REG_POISON as u32).to_le_bytes());
+}
+
+fn write_f32_lane(buf: &mut [u8; 64], i: usize, v: f32) {
+    buf[i * 4..i * 4 + 4].copy_from_slice(&v.to_le_bytes());
+}
+
+fn read_f32_lane(buf: &[u8; 64], i: usize) -> f32 {
+    f32::from_le_bytes([buf[i * 4], buf[i * 4 + 1], buf[i * 4 + 2], buf[i * 4 + 3]])
+}
+
+fn write_f64_lane(buf: &mut [u8; 64], i: usize, v: f64) {
+    buf[i * 8..i * 8 + 8].copy_from_slice(&v.to_le_bytes());
+}
+
+fn read_f64_lane(buf: &[u8; 64], i: usize) -> f64 {
+    f64::from_le_bytes([
+        buf[i * 8],
+        buf[i * 8 + 1],
+        buf[i * 8 + 2],
+        buf[i * 8 + 3],
+        buf[i * 8 + 4],
+        buf[i * 8 + 5],
+        buf[i * 8 + 6],
+        buf[i * 8 + 7],
+    ])
+}
+
+// Bug (a): EVEX.vvvv must be inverted to select src1. For `VADDPS zmm0,zmm1,zmm2`,
+// the raw (non-inverted) vvvv field is 0b1110 = 14, so a missing inversion would
+// read zmm14. We poison zmm14 with a value that would make the result obviously
+// wrong, and assert the result equals zmm1 + zmm2.
+#[test]
+fn test_vaddps_uses_inverted_vvvv_src1() {
+    let mut code = Vec::new();
+    mov_addrs(&mut code);
+    code.extend_from_slice(&[
+        0x62, 0xf1, 0x7c, 0x48, 0x10, 0x08, // VMOVUPS ZMM1, [RAX]  (src1)
+        0x62, 0xf1, 0x7c, 0x48, 0x10, 0x13, // VMOVUPS ZMM2, [RBX]  (src2)
+        0x62, 0x71, 0x7c, 0x48, 0x10, 0x36, // VMOVUPS ZMM14, [RSI] (poison)
+        0x62, 0xf1, 0x74, 0x48, 0x58, 0xc2, // VADDPS ZMM0, ZMM1, ZMM2
+        0x62, 0xf1, 0x7c, 0x48, 0x11, 0x01, // VMOVUPS [RCX], ZMM0
+        0xf4, // HLT
+    ]);
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+
+    let mut src1 = [0u8; 64];
+    let mut src2 = [0u8; 64];
+    let mut poison = [0u8; 64];
+    for i in 0..16 {
+        write_f32_lane(&mut src1, i, (i as f32) + 1.0); // 1..16
+        write_f32_lane(&mut src2, i, 100.0); // 100
+        write_f32_lane(&mut poison, i, -9999.0); // would corrupt result if used
+    }
+    mem.write_slice(&src1, GuestAddress(REG_SRC1)).unwrap();
+    mem.write_slice(&src2, GuestAddress(REG_SRC2)).unwrap();
+    mem.write_slice(&poison, GuestAddress(REG_POISON)).unwrap();
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let mut result = [0u8; 64];
+    mem.read_slice(&mut result, GuestAddress(REG_RESULT)).unwrap();
+    for i in 0..16 {
+        let expected = (i as f32) + 1.0 + 100.0; // src1 + src2, NOT poison
+        assert_eq!(
+            read_f32_lane(&result, i),
+            expected,
+            "lane {} should use zmm1 (src1) not zmm14",
+            i
+        );
+    }
+}
+
+// Bug (b): the 0x58/59/5C/5E opcodes must compute PD (f64) when the operand type
+// is double (66 prefix / EVEX.pp=1 with W=1), not 16 packed f32. VADDPD adds 8
+// f64 lanes; if mis-dispatched as PS it would garble the high dword of each lane.
+#[test]
+fn test_vaddpd_computes_f64_not_16xf32() {
+    let mut code = Vec::new();
+    mov_addrs(&mut code);
+    code.extend_from_slice(&[
+        0x62, 0xf1, 0x7c, 0x48, 0x10, 0x08, // VMOVUPS ZMM1, [RAX]  (src1)
+        0x62, 0xf1, 0x7c, 0x48, 0x10, 0x13, // VMOVUPS ZMM2, [RBX]  (src2)
+        0x62, 0xf1, 0xf5, 0x48, 0x58, 0xc2, // VADDPD ZMM0, ZMM1, ZMM2
+        0x62, 0xf1, 0x7c, 0x48, 0x11, 0x01, // VMOVUPS [RCX], ZMM0
+        0xf4, // HLT
+    ]);
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+
+    let mut src1 = [0u8; 64];
+    let mut src2 = [0u8; 64];
+    // Use values whose f64 sum differs from any f32-reinterpreted result. A large
+    // exponent ensures the f64 mantissa spans both dwords of the lane.
+    for i in 0..8 {
+        write_f64_lane(&mut src1, i, 1.0e300 + (i as f64));
+        write_f64_lane(&mut src2, i, 2.5e300);
+    }
+    mem.write_slice(&src1, GuestAddress(REG_SRC1)).unwrap();
+    mem.write_slice(&src2, GuestAddress(REG_SRC2)).unwrap();
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let mut result = [0u8; 64];
+    mem.read_slice(&mut result, GuestAddress(REG_RESULT)).unwrap();
+    for i in 0..8 {
+        let expected = (1.0e300 + (i as f64)) + 2.5e300;
+        assert_eq!(read_f64_lane(&result, i), expected, "f64 lane {}", i);
+    }
+}
+
+// Bug (c) merge-masking: with k1=0x5 (lanes 0 and 2 active), zeroing NOT set, the
+// inactive lanes must keep the prior destination value. We pre-load zmm0 (dest)
+// from the poison buffer so inactive lanes can be distinguished from zero.
+#[test]
+fn test_vaddps_merge_masking() {
+    let mut code = Vec::new();
+    mov_addrs(&mut code);
+    code.extend_from_slice(&[
+        0xb8, 0x05, 0x00, 0x00, 0x00, // MOV EAX, 5    (k-mask bits 0 and 2)
+        0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
+        0x62, 0xf1, 0x7c, 0x48, 0x10, 0x06, // VMOVUPS ZMM0, [RSI] (dest preload)
+    ]);
+    // mov_addrs set RAX=SRC1, but the 32-bit MOV EAX above clobbered RAX
+    // (high bits cleared). Reload RAX before loading src1.
+    code.extend_from_slice(&[0x48, 0xc7, 0xc0]);
+    code.extend_from_slice(&(REG_SRC1 as u32).to_le_bytes());
+    code.extend_from_slice(&[
+        0x62, 0xf1, 0x7c, 0x48, 0x10, 0x08, // VMOVUPS ZMM1, [RAX] (src1, reloaded)
+        0x62, 0xf1, 0x7c, 0x48, 0x10, 0x13, // VMOVUPS ZMM2, [RBX] (src2)
+        0x62, 0xf1, 0x74, 0x49, 0x58, 0xc2, // VADDPS ZMM0 {K1}, ZMM1, ZMM2 (merge)
+        0x62, 0xf1, 0x7c, 0x48, 0x11, 0x01, // VMOVUPS [RCX], ZMM0
+        0xf4, // HLT
+    ]);
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+
+    let mut src1 = [0u8; 64];
+    let mut src2 = [0u8; 64];
+    let mut dest = [0u8; 64];
+    for i in 0..16 {
+        write_f32_lane(&mut src1, i, 10.0);
+        write_f32_lane(&mut src2, i, 20.0);
+        write_f32_lane(&mut dest, i, 7.0); // prior dest value for inactive lanes
+    }
+    mem.write_slice(&src1, GuestAddress(REG_SRC1)).unwrap();
+    mem.write_slice(&src2, GuestAddress(REG_SRC2)).unwrap();
+    mem.write_slice(&dest, GuestAddress(REG_POISON)).unwrap();
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let mut result = [0u8; 64];
+    mem.read_slice(&mut result, GuestAddress(REG_RESULT)).unwrap();
+    for i in 0..16 {
+        let active = (5u64 >> i) & 1 != 0; // lanes 0 and 2
+        let expected = if active { 30.0 } else { 7.0 };
+        assert_eq!(
+            read_f32_lane(&result, i),
+            expected,
+            "lane {} merge-mask (active={})",
+            i,
+            active
+        );
+    }
+}
+
+// Bug (c) zeroing-masking: same as above but with {z}; inactive lanes must be 0.
+#[test]
+fn test_vaddps_zeroing_masking() {
+    let mut code = Vec::new();
+    mov_addrs(&mut code);
+    code.extend_from_slice(&[
+        0xb8, 0x05, 0x00, 0x00, 0x00, // MOV EAX, 5
+        0xc5, 0xf8, 0x92, 0xc8, // KMOVW K1, EAX
+        0x62, 0xf1, 0x7c, 0x48, 0x10, 0x06, // VMOVUPS ZMM0, [RSI] (dest preload, must be zeroed)
+    ]);
+    // Reload RAX (clobbered by the 32-bit MOV EAX above).
+    code.extend_from_slice(&[0x48, 0xc7, 0xc0]);
+    code.extend_from_slice(&(REG_SRC1 as u32).to_le_bytes());
+    code.extend_from_slice(&[
+        0x62, 0xf1, 0x7c, 0x48, 0x10, 0x08, // VMOVUPS ZMM1, [RAX] (src1)
+        0x62, 0xf1, 0x7c, 0x48, 0x10, 0x13, // VMOVUPS ZMM2, [RBX] (src2)
+        0x62, 0xf1, 0x74, 0xc9, 0x58, 0xc2, // VADDPS ZMM0 {K1}{z}, ZMM1, ZMM2
+        0x62, 0xf1, 0x7c, 0x48, 0x11, 0x01, // VMOVUPS [RCX], ZMM0
+        0xf4, // HLT
+    ]);
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+
+    let mut src1 = [0u8; 64];
+    let mut src2 = [0u8; 64];
+    let mut dest = [0u8; 64];
+    for i in 0..16 {
+        write_f32_lane(&mut src1, i, 10.0);
+        write_f32_lane(&mut src2, i, 20.0);
+        write_f32_lane(&mut dest, i, 7.0); // would survive if zeroing were broken
+    }
+    mem.write_slice(&src1, GuestAddress(REG_SRC1)).unwrap();
+    mem.write_slice(&src2, GuestAddress(REG_SRC2)).unwrap();
+    mem.write_slice(&dest, GuestAddress(REG_POISON)).unwrap();
+
+    run_until_hlt(&mut vcpu).unwrap();
+
+    let mut result = [0u8; 64];
+    mem.read_slice(&mut result, GuestAddress(REG_RESULT)).unwrap();
+    for i in 0..16 {
+        let active = (5u64 >> i) & 1 != 0;
+        let expected = if active { 30.0 } else { 0.0 };
+        assert_eq!(
+            read_f32_lane(&result, i),
+            expected,
+            "lane {} zero-mask (active={})",
+            i,
+            active
+        );
+    }
+}

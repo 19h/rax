@@ -435,7 +435,9 @@ pub fn vpmulld_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
                 // Zeroing: leave as 0
             } else {
                 // Merge: keep original dword
-                result[qword_idx] |= (dest_val[qword_idx] >> shift) & 0xFFFFFFFF << shift;
+                // NB: `<<` binds tighter than `&` in Rust, so the mask+shift-back
+                // must be parenthesized explicitly.
+                result[qword_idx] |= ((dest_val[qword_idx] >> shift) & 0xFFFFFFFF) << shift;
             }
         }
     }
