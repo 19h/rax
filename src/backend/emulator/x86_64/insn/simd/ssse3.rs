@@ -21,8 +21,10 @@ fn sat_sub_i16(a: i16, b: i16) -> i16 {
 }
 
 fn maddubs(a: u8, b: i8, c: u8, d: i8) -> i16 {
-    let prod1 = (a as i16) * (b as i16);
-    let prod2 = (c as i16) * (d as i16);
+    // Each unsigned*signed product fits in i16, but their sum can reach +-65280,
+    // so accumulate in i32 before signed-saturating to a word (PMADDUBSW).
+    let prod1 = (a as i32) * (b as i32);
+    let prod2 = (c as i32) * (d as i32);
     (prod1 + prod2).clamp(-32768, 32767) as i16
 }
 

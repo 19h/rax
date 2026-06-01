@@ -4620,7 +4620,6 @@ fn ssse3_phaddsw() {
     check_sse("phaddsw", &sse_program(&[0x66, 0x0F, 0x38, 0x03, 0xC1]), sse_scratch(a, b));
 }
 
-#[ignore = "GENUINE BUG: PMADDUBSW overflows in the interpreter. In \
 src/backend/emulator/x86_64/insn/simd/ssse3.rs the helper \
 `maddubs(a,b,c,d) = (prod1 + prod2).clamp(..) as i16` computes prod1/prod2 as \
 i16 and adds them as i16, but each unsigned*signed product spans roughly \
