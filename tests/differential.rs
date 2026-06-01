@@ -2805,11 +2805,6 @@ fn movbe_store_r32() {
 const BMI_DEFINED: u64 = flags::bits::ZF | flags::bits::SF | flags::bits::CF | flags::bits::OF;
 
 #[test]
-#[ignore = "GENUINE DIVERGENCE: BMI1 ANDN has its two source operands swapped. \
-insn/bmi.rs::andn computes `src1 & !src2` but ANDN is defined as `~src1 & src2` \
-(Intel SDM: DEST = NOT(SRC1) AND SRC2, where SRC1 = VEX.vvvv reg, SRC2 = r/m). \
-With src1=ebx=0xFF, src2=ecx=0xAAAA: correct = ~0xFF & 0xAAAA = 0xAA00 (KVM); \
-interp = 0xFF & ~0xAAAA = 0x55. Fix: swap the operands in the computation."]
 fn bmi_andn() {
     // ANDN r32a, r32b, r/m32 = VEX.LZ.0F38.W0 F2 /r : dest = ~src1 & src2.
     // VEX 2-byte: C4 E2 (map 0F38) ... use 3-byte VEX. Encode andn eax, ebx, ecx:

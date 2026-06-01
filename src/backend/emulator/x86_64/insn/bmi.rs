@@ -29,7 +29,8 @@ pub fn andn(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, vvvv: u8) -> Result<Op
     } else {
         vcpu.get_reg(rm, ctx.op_size) & mask
     };
-    let result = src1 & (!src2);
+    // ANDN: dest := (NOT SRC1) AND SRC2, where SRC1 = VEX.vvvv, SRC2 = r/m.
+    let result = (!src1) & src2;
     vcpu.set_reg(reg, result & mask, ctx.op_size);
     // SF and ZF based on result, OF and CF cleared
     let sf = if ctx.op_size == 8 {

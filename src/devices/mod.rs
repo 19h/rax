@@ -15,3 +15,5 @@ pub mod sysctl;
 pub mod dma;
 pub mod vga;
 pub mod virtio;
+pub mod nvme;
+pub mod e1000;
