@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{get_xmm, run_until_hlt, set_xmm, setup_vm};
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
@@ -441,4 +441,47 @@ fn test_aesdeclast_xmm10_mem() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
+}
+
+// ============================================================================
+// AESDECLAST Known-Answer Tests (Intel AES-NI reference vector)
+// ============================================================================
+//
+// AESDECLAST = InvShiftRows; InvSubBytes; XOR round key (no InvMixColumns).
+// Canonical Intel input:
+//   state = 7b5b54657374566563746f725d53475d
+//   rkey  = 48692853686179295b477565726f6e5d
+//   AESDECLAST result = c5a391ef6b317f95d410637b72a593d0
+
+const AESDECLAST_STATE: u128 = 0x7b5b54657374566563746f725d53475d;
+const AESDECLAST_RKEY: u128 = 0x48692853686179295b477565726f6e5d;
+const AESDECLAST_RESULT: u128 = 0xc5a391ef6b317f95d410637b72a593d0;
+
+#[test]
+fn kat_aesdeclast_intel_vector() {
+    // AESDECLAST XMM0, XMM1  (66 0F 38 DF C1)
+    let code = [0x66, 0x0f, 0x38, 0xdf, 0xc1, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, AESDECLAST_STATE);
+    set_xmm(&mem, &mut vcpu, 1, AESDECLAST_RKEY);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        get_xmm(&regs, 0),
+        AESDECLAST_RESULT,
+        "AESDECLAST produced {:032x}, expected {:032x}",
+        get_xmm(&regs, 0),
+        AESDECLAST_RESULT
+    );
+}
+
+#[test]
+fn kat_aesdeclast_zero_state_zero_key() {
+    // InvSubBytes(0)=0x52 everywhere; InvShiftRows is a no-op on a uniform
+    // state; no InvMixColumns; XOR zero key => all-0x52.
+    let code = [0x66, 0x0f, 0x38, 0xdf, 0xc1, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, 0);
+    set_xmm(&mem, &mut vcpu, 1, 0);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(get_xmm(&regs, 0), 0x5252525252525252_5252525252525252u128);
 }

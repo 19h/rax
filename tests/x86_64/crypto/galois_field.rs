@@ -1,4 +1,4 @@
-use crate::common::TestCase;
+use crate::common::{get_xmm, run_until_hlt, set_xmm, setup_vm, TestCase};
 
 // Galois Field (GF2P8) Instructions for AES-GCM
 
@@ -177,4 +177,53 @@ fn test_encodekey256_eax_ecx() {
 #[test]
 fn test_encodekey256_edx_ebx() {
     TestCase::from("f3 0f 38 fb d3").check();
+}
+
+// ============================================================================
+// GFNI Known-Answer Tests (Intel SDM GF2P8MULB / GF2P8AFFINEQB)
+// ============================================================================
+//
+// NOTE: GFNI is NOT implemented by the emulator (the GF2P8* legacy-map opcodes
+// fall through to `_ => Err(...)` in escape_38/escape_3a), so these
+// known-answer tests are `#[ignore]`d. They encode the correct Intel SDM
+// expected results and will validate the implementation once GFNI is added.
+
+#[test]
+#[ignore = "GFNI GF2P8MULB unimplemented: 66 0F 38 CF returns an emulator error"]
+fn kat_gf2p8mulb_fips_57x83() {
+    // FIPS-197 §4.2 worked example: 0x57 * 0x83 = 0xC1 in GF(2^8).
+    let code = [0x66, 0x0f, 0x38, 0xcf, 0xc1, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, 0x57);
+    set_xmm(&mem, &mut vcpu, 1, 0x83);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(get_xmm(&regs, 0) & 0xff, 0xc1);
+}
+
+#[test]
+#[ignore = "GFNI GF2P8MULB unimplemented: 66 0F 38 CF returns an emulator error"]
+fn kat_gf2p8mulb_by_two() {
+    // Multiply each lane by 0x02 (xtime): byte i = 2*i reduced by 0x11B.
+    // input  bytes 00..0f  -> u128 LE 0f0e..0100
+    // output bytes 00,02,04,..,1e -> u128 LE 1e1c..0200
+    let code = [0x66, 0x0f, 0x38, 0xcf, 0xc1, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, 0x0f0e0d0c0b0a09080706050403020100);
+    set_xmm(&mem, &mut vcpu, 1, 0x02020202020202020202020202020202);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(get_xmm(&regs, 0), 0x1e1c1a18161412100e0c0a0806040200);
+}
+
+#[test]
+#[ignore = "GFNI GF2P8AFFINEQB unimplemented: 66 0F 3A CE returns an emulator error"]
+fn kat_gf2p8affineqb_identity() {
+    // Bit-reflected identity matrix per qword (0x80,0x40,..,0x01) + imm8=0 is
+    // the identity transform: output == input.
+    let code = [0x66, 0x0f, 0x3a, 0xce, 0xc1, 0x00, 0xf4];
+    let x: u128 = 0x0011223344556677_8899aabbccddeeff;
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, x);
+    set_xmm(&mem, &mut vcpu, 1, 0x8040201008040201_8040201008040201);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(get_xmm(&regs, 0), x);
 }

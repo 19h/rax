@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{get_xmm, run_until_hlt, set_xmm, setup_vm};
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
@@ -492,4 +492,66 @@ fn test_aesenc_xmm10_mem() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
+}
+
+// ============================================================================
+// AESENC Known-Answer Tests (FIPS-197 / Intel AES-NI reference vectors)
+// ============================================================================
+//
+// Canonical Intel AES-NI vector (also used by Go's crypto/aes tests):
+//   state   (xmm dst) = 7b5b54657374566563746f725d53475d
+//   roundkey(xmm src) = 48692853686179295b477565726f6e5d
+//   AESENC result     = a8311c2f9fdba3c58b104b58ded7e595
+//
+// XMM values are modeled as little-endian u128: bit 0 of the u128 is bit 0 of
+// the XMM register (byte 0 of the AES state).
+
+const AESENC_STATE: u128 = 0x7b5b54657374566563746f725d53475d;
+const AESENC_RKEY: u128 = 0x48692853686179295b477565726f6e5d;
+const AESENC_RESULT: u128 = 0xa8311c2f9fdba3c58b104b58ded7e595;
+
+#[test]
+fn kat_aesenc_intel_vector() {
+    // AESENC XMM0, XMM1   (66 0F 38 DC C1): dst = xmm0 (state), src = xmm1 (key)
+    let code = [0x66, 0x0f, 0x38, 0xdc, 0xc1, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, AESENC_STATE);
+    set_xmm(&mem, &mut vcpu, 1, AESENC_RKEY);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        get_xmm(&regs, 0),
+        AESENC_RESULT,
+        "AESENC produced {:032x}, expected {:032x}",
+        get_xmm(&regs, 0),
+        AESENC_RESULT
+    );
+}
+
+#[test]
+fn kat_aesenc_zero_state_zero_key() {
+    // AESENC of an all-zero state with a zero round key: SubBytes(0)=0x63 for all
+    // bytes; ShiftRows of a uniform state is a no-op; MixColumns of the uniform
+    // 0x63 column maps each byte to (2^3)*0x63 = 0x63 again, so the result is
+    // all-0x63. XOR with zero key leaves 0x63...63.
+    let code = [0x66, 0x0f, 0x38, 0xdc, 0xc1, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, 0);
+    set_xmm(&mem, &mut vcpu, 1, 0);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(get_xmm(&regs, 0), 0x6363636363636363_6363636363636363u128);
+}
+
+#[test]
+fn kat_aesenc_memory_operand() {
+    // AESENC XMM0, [0x3000]: round key sourced from memory.
+    let code = [
+        0x66, 0x0f, 0x38, 0xdc, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // AESENC XMM0,[0x3000]
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, AESENC_STATE);
+    mem.write_slice(&AESENC_RKEY.to_le_bytes(), GuestAddress(0x3000))
+        .unwrap();
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(get_xmm(&regs, 0), AESENC_RESULT);
 }

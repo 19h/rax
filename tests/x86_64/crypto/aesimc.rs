@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{get_xmm, run_until_hlt, set_xmm, setup_vm};
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
@@ -373,4 +373,42 @@ fn test_aesimc_xmm3_mem() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
+}
+
+// ============================================================================
+// AESIMC Known-Answer Tests
+// ============================================================================
+//
+// AESIMC performs InvMixColumns(SRC) with no key XOR. Verified against the
+// FIPS-197 / Intel AES-NI InvMixColumns transform on the canonical input:
+//   src = 7b5b54657374566563746f725d53475d
+//   AESIMC result = 627a6f6644b109c82b18330a81c3b3e5
+
+const AESIMC_SRC: u128 = 0x7b5b54657374566563746f725d53475d;
+const AESIMC_RESULT: u128 = 0x627a6f6644b109c82b18330a81c3b3e5;
+
+#[test]
+fn kat_aesimc_intel_vector() {
+    // AESIMC XMM0, XMM1  (66 0F 38 DB C1): dst = xmm0, src = xmm1
+    let code = [0x66, 0x0f, 0x38, 0xdb, 0xc1, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 1, AESIMC_SRC);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        get_xmm(&regs, 0),
+        AESIMC_RESULT,
+        "AESIMC produced {:032x}, expected {:032x}",
+        get_xmm(&regs, 0),
+        AESIMC_RESULT
+    );
+}
+
+#[test]
+fn kat_aesimc_zero_is_zero() {
+    // InvMixColumns is GF(2^8)-linear, so InvMixColumns(0) == 0.
+    let code = [0x66, 0x0f, 0x38, 0xdb, 0xc1, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 1, 0);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(get_xmm(&regs, 0), 0);
 }

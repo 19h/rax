@@ -520,3 +520,93 @@ fn test_gf2p8_all_operations() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
+
+// ============================================================================
+// GFNI Known-Answer Tests (Intel SDM GF2P8MULB / GF2P8AFFINEQB vectors)
+// ============================================================================
+//
+// IMPORTANT: GFNI (GF2P8MULB / GF2P8AFFINEQB / GF2P8AFFINEINVQB) is NOT
+// implemented by the emulator. The legacy-map opcodes 66 0F 38 CF and
+// 66 0F 3A CE/CF fall through to the `_ => Err(...)` arm in escape_38/escape_3a,
+// so executing them returns an emulator error and `run_until_hlt(..).unwrap()`
+// panics. These known-answer tests encode the correct Intel SDM expected
+// outputs so they become live the moment GFNI is implemented, but they are
+// `#[ignore]`d until then. See the agent summary for the reported bug.
+//
+// Reduction polynomial for GF2P8MULB is x^8+x^4+x^3+x+1 (0x11B).
+
+// GF2P8MULB: byte-wise GF(2^8) multiply.
+//   src1 (xmm0) bytes = 00 01 02 .. 0f  (u128 LE = 0f0e..0100)
+//   src2 (xmm1) bytes = all 0x02
+//   result bytes      = 2*i mod poly = 00 02 04 .. 1e  (u128 LE = 1e1c..0200)
+const GF2P8MULB_A: u128 = 0x0f0e0d0c0b0a09080706050403020100;
+const GF2P8MULB_B: u128 = 0x02020202020202020202020202020202;
+const GF2P8MULB_RESULT: u128 = 0x1e1c1a18161412100e0c0a0806040200;
+
+#[test]
+#[ignore = "GFNI GF2P8MULB unimplemented: 66 0F 38 CF hits the escape_38 `_ => Err` arm"]
+fn kat_gf2p8mulb_intel_vector() {
+    // GF2P8MULB XMM0, XMM1  (66 0F 38 CF C1)
+    let code = [0x66, 0x0f, 0x38, 0xcf, 0xc1, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, GF2P8MULB_A);
+    set_xmm(&mem, &mut vcpu, 1, GF2P8MULB_B);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        get_xmm(&regs, 0),
+        GF2P8MULB_RESULT,
+        "GF2P8MULB produced {:032x}, expected {:032x}",
+        get_xmm(&regs, 0),
+        GF2P8MULB_RESULT
+    );
+}
+
+#[test]
+#[ignore = "GFNI GF2P8MULB unimplemented: 66 0F 38 CF hits the escape_38 `_ => Err` arm"]
+fn kat_gf2p8mulb_inverses() {
+    // 0x53 * 0xCA = 0x01 in GF(2^8) (FIPS-197 multiplicative inverses).
+    let code = [0x66, 0x0f, 0x38, 0xcf, 0xc1, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, 0x53);
+    set_xmm(&mem, &mut vcpu, 1, 0xca);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(get_xmm(&regs, 0) & 0xff, 0x01);
+}
+
+// GF2P8AFFINEQB XMM0, XMM1, imm8: for each byte x of xmm0, output bit (7-i) =
+// parity(rowbyte_i & x) ^ imm[7-i], where the 8 row bytes come from the
+// corresponding qword of xmm1. With xmm1 = the bit-reflected identity matrix
+// (rows 0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01 per qword) and imm8 = 0, the
+// transform is the identity, so output == input. With imm8 = 0xFF every output
+// byte is complemented.
+const GF2P8_IDENT_MATRIX: u128 = 0x8040201008040201_8040201008040201;
+const GF2P8_AFFINE_X: u128 = 0x0011223344556677_8899aabbccddeeff;
+
+#[test]
+#[ignore = "GFNI GF2P8AFFINEQB unimplemented: 66 0F 3A CE hits the escape_3a `_ => Err` arm"]
+fn kat_gf2p8affineqb_identity_imm0() {
+    // GF2P8AFFINEQB XMM0, XMM1, 0x00  (66 0F 3A CE C1 00)
+    let code = [0x66, 0x0f, 0x3a, 0xce, 0xc1, 0x00, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, GF2P8_AFFINE_X);
+    set_xmm(&mem, &mut vcpu, 1, GF2P8_IDENT_MATRIX);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        get_xmm(&regs, 0),
+        GF2P8_AFFINE_X,
+        "GF2P8AFFINEQB(identity, imm0) should be identity, got {:032x}",
+        get_xmm(&regs, 0)
+    );
+}
+
+#[test]
+#[ignore = "GFNI GF2P8AFFINEQB unimplemented: 66 0F 3A CE hits the escape_3a `_ => Err` arm"]
+fn kat_gf2p8affineqb_identity_immff() {
+    // imm8 = 0xFF complements every output byte: output == !x.
+    let code = [0x66, 0x0f, 0x3a, 0xce, 0xc1, 0xff, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, GF2P8_AFFINE_X);
+    set_xmm(&mem, &mut vcpu, 1, GF2P8_IDENT_MATRIX);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(get_xmm(&regs, 0), !GF2P8_AFFINE_X);
+}

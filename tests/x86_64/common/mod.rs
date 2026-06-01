@@ -354,6 +354,48 @@ pub fn df_set(rflags: u64) -> bool {
     flag_set(rflags, flags::bits::DF)
 }
 
+// ============================================================================
+// XMM register helpers
+// ============================================================================
+//
+// The emulator stores XMM registers directly in the `Registers` struct as
+// `xmm: [[u64; 2]; 16]`, where each entry is `[low_u64, high_u64]` (bits
+// 63:0 and bits 127:64 respectively). Because `get_regs`/`set_regs` round-trip
+// the *entire* `Registers` struct (including the `xmm` array) through the vcpu
+// state, the cleanest way to seed and read back vector results is to manipulate
+// that array directly — no MOVDQU code stub or guest-memory round-trip needed.
+//
+// A 128-bit value is modeled as a `u128`, matching the natural x86 little-endian
+// view of an XMM register: byte 0 (the least-significant byte of the `u128`) is
+// element 0 of the vector / byte 0 of an AES state. Concretely:
+//   xmm[index] = [value as u64, (value >> 64) as u64]
+// so `value`'s low 64 bits land in `xmm[index][0]` and its high 64 bits in
+// `xmm[index][1]`, exactly how the AES/SIMD helpers reconstruct the 16-byte
+// state via `to_le_bytes()`.
+
+/// Write a 128-bit value into XMM register `index` (0-15) of the given vcpu.
+///
+/// Reads the current register state, patches the requested XMM lane, and writes
+/// the state back. The `mem` argument is accepted for API symmetry with the
+/// other helpers but is unused (XMM state lives in the vcpu, not guest memory).
+pub fn set_xmm(_mem: &GuestMemoryMmap, vcpu: &mut X86_64Vcpu, index: usize, value: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[index][0] = value as u64;
+    regs.xmm[index][1] = (value >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+
+/// Read the 128-bit value of XMM register `index` (0-15) from final register state.
+pub fn get_xmm(regs: &Registers, index: usize) -> u128 {
+    (regs.xmm[index][0] as u128) | ((regs.xmm[index][1] as u128) << 64)
+}
+
+/// Read the 128-bit value of XMM register `index` directly from a vcpu.
+pub fn get_xmm_vcpu(vcpu: &X86_64Vcpu, index: usize) -> u128 {
+    let regs = vcpu.get_regs().unwrap();
+    get_xmm(&regs, index)
+}
+
 /// Write a value to memory at DATA_ADDR
 pub fn write_mem_u8(mem: &GuestMemoryMmap, value: u8) {
     mem.write_slice(&[value], GuestAddress(DATA_ADDR)).unwrap();

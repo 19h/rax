@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{get_xmm, run_until_hlt, set_xmm, setup_vm};
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
@@ -497,4 +497,50 @@ fn test_aesdec_xmm10_mem() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
+}
+
+// ============================================================================
+// AESDEC Known-Answer Tests (Intel AES-NI reference vector)
+// ============================================================================
+//
+// AESDEC = InvShiftRows; InvSubBytes; InvMixColumns; XOR round key
+// (Equivalent Inverse Cipher round). Using the canonical Intel input:
+//   state = 7b5b54657374566563746f725d53475d
+//   rkey  = 48692853686179295b477565726f6e5d
+//   AESDEC result = 138ac342faea2787b58eb95eb730392a
+
+const AESDEC_STATE: u128 = 0x7b5b54657374566563746f725d53475d;
+const AESDEC_RKEY: u128 = 0x48692853686179295b477565726f6e5d;
+const AESDEC_RESULT: u128 = 0x138ac342faea2787b58eb95eb730392a;
+
+#[test]
+fn kat_aesdec_intel_vector() {
+    // AESDEC XMM0, XMM1  (66 0F 38 DE C1)
+    let code = [0x66, 0x0f, 0x38, 0xde, 0xc1, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, AESDEC_STATE);
+    set_xmm(&mem, &mut vcpu, 1, AESDEC_RKEY);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        get_xmm(&regs, 0),
+        AESDEC_RESULT,
+        "AESDEC produced {:032x}, expected {:032x}",
+        get_xmm(&regs, 0),
+        AESDEC_RESULT
+    );
+}
+
+#[test]
+fn kat_aesdec_memory_operand() {
+    // AESDEC XMM0, [0x3000]: round key sourced from memory, same Intel vector.
+    let code = [
+        0x66, 0x0f, 0x38, 0xde, 0x04, 0x25, 0x00, 0x30, 0x00, 0x00, // AESDEC XMM0,[0x3000]
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, AESDEC_STATE);
+    mem.write_slice(&AESDEC_RKEY.to_le_bytes(), GuestAddress(0x3000))
+        .unwrap();
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(get_xmm(&regs, 0), AESDEC_RESULT);
 }

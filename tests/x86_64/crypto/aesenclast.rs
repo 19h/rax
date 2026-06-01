@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{get_xmm, run_until_hlt, set_xmm, setup_vm};
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
@@ -440,4 +440,47 @@ fn test_aesenclast_xmm10_mem() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
+}
+
+// ============================================================================
+// AESENCLAST Known-Answer Tests (Intel AES-NI reference vector)
+// ============================================================================
+//
+// AESENCLAST = ShiftRows; SubBytes; XOR round key (no MixColumns).
+// Same canonical Intel input as AESENC:
+//   state = 7b5b54657374566563746f725d53475d
+//   rkey  = 48692853686179295b477565726f6e5d
+//   AESENCLAST result = c7fb881e938c5964177ec42553fdc611
+
+const AESENCLAST_STATE: u128 = 0x7b5b54657374566563746f725d53475d;
+const AESENCLAST_RKEY: u128 = 0x48692853686179295b477565726f6e5d;
+const AESENCLAST_RESULT: u128 = 0xc7fb881e938c5964177ec42553fdc611;
+
+#[test]
+fn kat_aesenclast_intel_vector() {
+    // AESENCLAST XMM0, XMM1  (66 0F 38 DD C1)
+    let code = [0x66, 0x0f, 0x38, 0xdd, 0xc1, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, AESENCLAST_STATE);
+    set_xmm(&mem, &mut vcpu, 1, AESENCLAST_RKEY);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        get_xmm(&regs, 0),
+        AESENCLAST_RESULT,
+        "AESENCLAST produced {:032x}, expected {:032x}",
+        get_xmm(&regs, 0),
+        AESENCLAST_RESULT
+    );
+}
+
+#[test]
+fn kat_aesenclast_zero_state_zero_key() {
+    // SubBytes(0)=0x63 everywhere; ShiftRows is a no-op on a uniform state;
+    // no MixColumns; XOR zero key => all-0x63.
+    let code = [0x66, 0x0f, 0x38, 0xdd, 0xc1, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 0, 0);
+    set_xmm(&mem, &mut vcpu, 1, 0);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(get_xmm(&regs, 0), 0x6363636363636363_6363636363636363u128);
 }

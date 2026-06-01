@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{get_xmm, run_until_hlt, set_xmm, setup_vm};
 use rax::cpu::Registers;
 use vm_memory::{Bytes, GuestAddress};
 
@@ -448,4 +448,60 @@ fn test_aeskeygenassist_xmm6_mem_rcon_0x80() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
+}
+
+// ============================================================================
+// AESKEYGENASSIST Known-Answer Tests (Intel SDM operation)
+// ============================================================================
+//
+// Per the Intel SDM:
+//   X1 := SRC[63:32]; X3 := SRC[127:96]
+//   DEST[31:0]    := SubWord(X1)
+//   DEST[63:32]   := RotWord(SubWord(X1)) XOR RCON
+//   DEST[95:64]   := SubWord(X3)
+//   DEST[127:96]  := RotWord(SubWord(X3)) XOR RCON
+//
+// Canonical Intel input src = 7b5b54657374566563746f725d53475d with RCON=1
+// yields 39204d202139204d92a840fafb92a840.
+
+const KEYGEN_SRC: u128 = 0x7b5b54657374566563746f725d53475d;
+const KEYGEN_RESULT_RCON1: u128 = 0x39204d202139204d92a840fafb92a840;
+
+#[test]
+fn kat_aeskeygenassist_intel_vector_rcon1() {
+    // AESKEYGENASSIST XMM0, XMM1, 0x01  (66 0F 3A DF C1 01)
+    let code = [0x66, 0x0f, 0x3a, 0xdf, 0xc1, 0x01, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 1, KEYGEN_SRC);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        get_xmm(&regs, 0),
+        KEYGEN_RESULT_RCON1,
+        "AESKEYGENASSIST produced {:032x}, expected {:032x}",
+        get_xmm(&regs, 0),
+        KEYGEN_RESULT_RCON1
+    );
+}
+
+#[test]
+fn kat_aeskeygenassist_zero_rcon0() {
+    // SubWord(0) = 0x63636363 for every word; RotWord of a uniform word is a
+    // no-op; XOR RCON=0 leaves it unchanged => all words 0x63636363.
+    let code = [0x66, 0x0f, 0x3a, 0xdf, 0xc1, 0x00, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 1, 0);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(get_xmm(&regs, 0), 0x6363636363636363_6363636363636363u128);
+}
+
+#[test]
+fn kat_aeskeygenassist_zero_rcon1() {
+    // Same as above but RCON=1 is XORed into the low byte of words 1 and 3:
+    //   word1 = word3 = RotWord(0x63636363) XOR 0x00000001 = 0x63636362
+    //   word0 = word2 = 0x63636363
+    let code = [0x66, 0x0f, 0x3a, 0xdf, 0xc1, 0x01, 0xf4];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    set_xmm(&mem, &mut vcpu, 1, 0);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(get_xmm(&regs, 0), 0x63636362636363636363636263636363u128);
 }
