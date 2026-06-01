@@ -749,3 +749,126 @@ fn test_vpcmpgtq_zero_comparison() {
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests : signed per-element greater-than (src1 > src2).
+// Produces all-ones mask where the lane comparison is true, else all-zeros.
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn kgt_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn kgt_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn kgt_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+fn pcmpgt_bytes(a: u128, b: u128) -> u128 {
+    let (ab, bb) = (a.to_le_bytes(), b.to_le_bytes());
+    let mut out = [0u8; 16];
+    for i in 0..16 { out[i] = if (ab[i] as i8) > (bb[i] as i8) { 0xFF } else { 0x00 }; }
+    u128::from_le_bytes(out)
+}
+fn pcmpgt_words(a: u128, b: u128) -> u128 {
+    let mut out = 0u128;
+    for i in 0..8 {
+        let av = ((a >> (i * 16)) & 0xFFFF) as u16 as i16;
+        let bv = ((b >> (i * 16)) & 0xFFFF) as u16 as i16;
+        if av > bv { out |= 0xFFFFu128 << (i * 16); }
+    }
+    out
+}
+fn pcmpgt_dwords(a: u128, b: u128) -> u128 {
+    let mut out = 0u128;
+    for i in 0..4 {
+        let av = ((a >> (i * 32)) & 0xFFFF_FFFF) as u32 as i32;
+        let bv = ((b >> (i * 32)) & 0xFFFF_FFFF) as u32 as i32;
+        if av > bv { out |= 0xFFFF_FFFFu128 << (i * 32); }
+    }
+    out
+}
+fn pcmpgt_qwords(a: u128, b: u128) -> u128 {
+    let mut out = 0u128;
+    if (a as u64 as i64) > (b as u64 as i64) { out |= 0xFFFF_FFFF_FFFF_FFFFu128; }
+    if ((a >> 64) as u64 as i64) > ((b >> 64) as u64 as i64) { out |= 0xFFFF_FFFF_FFFF_FFFFu128 << 64; }
+    out
+}
+
+// Mix of positive, negative and equal lanes (signed).
+const GT_A_LO: u128 = 0x7F_80_05_FB_00_01_FF_7E_02_FE_10_F0_03_FD_01_00;
+const GT_B_LO: u128 = 0x7E_81_05_FA_FF_02_FE_7E_01_FF_0F_F1_03_FC_00_FF;
+const GT_A_HI: u128 = 0x7FFF_8000_0001_FFFF_0000_7FFE_8001_1234;
+const GT_B_HI: u128 = 0x7FFE_8001_0000_FFFE_FFFF_7FFE_8000_1233;
+
+#[test]
+fn test_vpcmpgtb_xmm_value() {
+    let code = [0xc5, 0xf1, 0x64, 0xc2, 0xf4]; // VPCMPGTB XMM0, XMM1, XMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kgt_set(&mut vcpu, 1, GT_A_LO, 0xDEAD);
+    kgt_set(&mut vcpu, 2, GT_B_LO, 0xBEEF);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kgt_lo(&vcpu, 0), pcmpgt_bytes(GT_A_LO, GT_B_LO));
+    assert_eq!(kgt_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vpcmpgtb_ymm_value() {
+    let code = [0xc5, 0xf5, 0x64, 0xc2, 0xf4]; // VPCMPGTB YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kgt_set(&mut vcpu, 1, GT_A_LO, GT_A_HI);
+    kgt_set(&mut vcpu, 2, GT_B_LO, GT_B_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kgt_lo(&vcpu, 0), pcmpgt_bytes(GT_A_LO, GT_B_LO));
+    assert_eq!(kgt_hi(&vcpu, 0), pcmpgt_bytes(GT_A_HI, GT_B_HI));
+}
+
+#[test]
+fn test_vpcmpgtw_ymm_value() {
+    let code = [0xc5, 0xf5, 0x65, 0xc2, 0xf4]; // VPCMPGTW YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kgt_set(&mut vcpu, 1, GT_A_LO, GT_A_HI);
+    kgt_set(&mut vcpu, 2, GT_B_LO, GT_B_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kgt_lo(&vcpu, 0), pcmpgt_words(GT_A_LO, GT_B_LO));
+    assert_eq!(kgt_hi(&vcpu, 0), pcmpgt_words(GT_A_HI, GT_B_HI));
+}
+
+#[test]
+fn test_vpcmpgtd_ymm_value() {
+    let code = [0xc5, 0xf5, 0x66, 0xc2, 0xf4]; // VPCMPGTD YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kgt_set(&mut vcpu, 1, GT_A_LO, GT_A_HI);
+    kgt_set(&mut vcpu, 2, GT_B_LO, GT_B_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kgt_lo(&vcpu, 0), pcmpgt_dwords(GT_A_LO, GT_B_LO));
+    assert_eq!(kgt_hi(&vcpu, 0), pcmpgt_dwords(GT_A_HI, GT_B_HI));
+}
+
+#[test]
+fn test_vpcmpgtq_ymm_value() {
+    let code = [0xc4, 0xe2, 0x75, 0x37, 0xc2, 0xf4]; // VPCMPGTQ YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    // lane0: 1 > -1 (true); lane1 lo: -1 not > 0 (false); hi lane handled too.
+    let a_lo: u128 = 0xFFFF_FFFF_FFFF_FFFF_0000_0000_0000_0001; // [1, -1]
+    let b_lo: u128 = 0x0000_0000_0000_0000_FFFF_FFFF_FFFF_FFFF; // [-1, 0]
+    let a_hi: u128 = 0x0000_0000_0000_0005_8000_0000_0000_0000; // [INT64_MIN, 5]
+    let b_hi: u128 = 0x0000_0000_0000_0004_8000_0000_0000_0001; // [MIN+1, 4]
+    kgt_set(&mut vcpu, 1, a_lo, a_hi);
+    kgt_set(&mut vcpu, 2, b_lo, b_hi);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kgt_lo(&vcpu, 0), pcmpgt_qwords(a_lo, b_lo));
+    assert_eq!(kgt_hi(&vcpu, 0), pcmpgt_qwords(a_hi, b_hi));
+    // lane0 (1 > -1) true, lane1 (-1 > 0) false.
+    assert_eq!(kgt_lo(&vcpu, 0), 0x0000_0000_0000_0000_FFFF_FFFF_FFFF_FFFF);
+}

@@ -599,3 +599,132 @@ fn test_vpaddq_mem_large_values() {
     mem.write_slice(&large_vals, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests : packed wrapping add of bytes/words/dwords/qwords.
+// Verifies independent lane arithmetic with wrap (no carry across elements).
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn kadd_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn kadd_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn kadd_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+fn padd_bytes(a: u128, b: u128) -> u128 {
+    let (ab, bb) = (a.to_le_bytes(), b.to_le_bytes());
+    let mut out = [0u8; 16];
+    for i in 0..16 { out[i] = ab[i].wrapping_add(bb[i]); }
+    u128::from_le_bytes(out)
+}
+fn padd_words(a: u128, b: u128) -> u128 {
+    let mut out = 0u128;
+    for i in 0..8 {
+        let av = ((a >> (i * 16)) & 0xFFFF) as u16;
+        let bv = ((b >> (i * 16)) & 0xFFFF) as u16;
+        out |= (av.wrapping_add(bv) as u128) << (i * 16);
+    }
+    out
+}
+fn padd_dwords(a: u128, b: u128) -> u128 {
+    let mut out = 0u128;
+    for i in 0..4 {
+        let av = ((a >> (i * 32)) & 0xFFFF_FFFF) as u32;
+        let bv = ((b >> (i * 32)) & 0xFFFF_FFFF) as u32;
+        out |= (av.wrapping_add(bv) as u128) << (i * 32);
+    }
+    out
+}
+fn padd_qwords(a: u128, b: u128) -> u128 {
+    let lo = (a as u64).wrapping_add(b as u64);
+    let hi = ((a >> 64) as u64).wrapping_add((b >> 64) as u64);
+    (lo as u128) | ((hi as u128) << 64)
+}
+
+const PA_LO: u128 = 0x7F7F_7F7F_00FF_8081_1234_5678_9ABC_DEF0;
+const PA_HI: u128 = 0xFEDC_BA98_7654_3210_0102_0304_0506_0708;
+const PB_LO: u128 = 0x0102_0304_01FF_807F_FEDC_BA98_7654_3210;
+const PB_HI: u128 = 0x1111_2222_3333_4444_FFFF_FFFF_FFFF_FFFF;
+
+#[test]
+fn test_vpaddb_xmm_value() {
+    // VPADDB XMM0, XMM1, XMM2 (128-bit); upper 128 zeroed.
+    let code = [0xc5, 0xf1, 0xfc, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kadd_set(&mut vcpu, 1, PA_LO, 0xDEAD);
+    kadd_set(&mut vcpu, 2, PB_LO, 0xBEEF);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kadd_lo(&vcpu, 0), padd_bytes(PA_LO, PB_LO));
+    assert_eq!(kadd_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vpaddb_ymm_value() {
+    let code = [0xc5, 0xf5, 0xfc, 0xc2, 0xf4]; // VPADDB YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kadd_set(&mut vcpu, 1, PA_LO, PA_HI);
+    kadd_set(&mut vcpu, 2, PB_LO, PB_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kadd_lo(&vcpu, 0), padd_bytes(PA_LO, PB_LO));
+    assert_eq!(kadd_hi(&vcpu, 0), padd_bytes(PA_HI, PB_HI));
+}
+
+#[test]
+fn test_vpaddw_ymm_value() {
+    let code = [0xc5, 0xf5, 0xfd, 0xc2, 0xf4]; // VPADDW YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kadd_set(&mut vcpu, 1, PA_LO, PA_HI);
+    kadd_set(&mut vcpu, 2, PB_LO, PB_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kadd_lo(&vcpu, 0), padd_words(PA_LO, PB_LO));
+    assert_eq!(kadd_hi(&vcpu, 0), padd_words(PA_HI, PB_HI));
+}
+
+#[test]
+fn test_vpaddd_ymm_value() {
+    let code = [0xc5, 0xf5, 0xfe, 0xc2, 0xf4]; // VPADDD YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kadd_set(&mut vcpu, 1, PA_LO, PA_HI);
+    kadd_set(&mut vcpu, 2, PB_LO, PB_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kadd_lo(&vcpu, 0), padd_dwords(PA_LO, PB_LO));
+    assert_eq!(kadd_hi(&vcpu, 0), padd_dwords(PA_HI, PB_HI));
+}
+
+#[test]
+fn test_vpaddq_ymm_value() {
+    let code = [0xc5, 0xf5, 0xd4, 0xc2, 0xf4]; // VPADDQ YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kadd_set(&mut vcpu, 1, PA_LO, PA_HI);
+    kadd_set(&mut vcpu, 2, PB_LO, PB_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kadd_lo(&vcpu, 0), padd_qwords(PA_LO, PB_LO));
+    assert_eq!(kadd_hi(&vcpu, 0), padd_qwords(PA_HI, PB_HI));
+}
+
+#[test]
+fn test_vpaddb_no_carry_across_lane_boundary() {
+    // 0xFF + 0x01 in each byte wraps to 0x00 independently (no carry to next byte).
+    let code = [0xc5, 0xf5, 0xfc, 0xc2, 0xf4]; // VPADDB YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let all_ff: u128 = u128::MAX;
+    let all_01: u128 = 0x0101_0101_0101_0101_0101_0101_0101_0101;
+    kadd_set(&mut vcpu, 1, all_ff, all_ff);
+    kadd_set(&mut vcpu, 2, all_01, all_01);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kadd_lo(&vcpu, 0), 0, "each byte 0xFF+1 wraps to 0x00");
+    assert_eq!(kadd_hi(&vcpu, 0), 0);
+}

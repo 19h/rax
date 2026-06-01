@@ -553,3 +553,78 @@ fn test_logical_ops_mem_unaligned() {
     mem.write_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests (256-bit packed bitwise AND/OR/XOR, both lanes).
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn kbit_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn kbit_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn kbit_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+const A_LO: u128 = 0xF0F0_F0F0_AAAA_5555_FFFF_0000_1234_5678;
+const A_HI: u128 = 0x0123_4567_89AB_CDEF_FEDC_BA98_7654_3210;
+const B_LO: u128 = 0x0F0F_0F0F_5555_AAAA_0000_FFFF_8765_4321;
+const B_HI: u128 = 0xDEAD_BEEF_CAFE_BABE_1122_3344_5566_7788;
+
+#[test]
+fn test_vpand_ymm_value() {
+    // VPAND YMM0, YMM1, YMM2
+    let code = [0xc5, 0xf5, 0xdb, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kbit_set(&mut vcpu, 1, A_LO, A_HI);
+    kbit_set(&mut vcpu, 2, B_LO, B_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kbit_lo(&vcpu, 0), A_LO & B_LO);
+    assert_eq!(kbit_hi(&vcpu, 0), A_HI & B_HI);
+}
+
+#[test]
+fn test_vpor_ymm_value() {
+    // VPOR YMM0, YMM1, YMM2
+    let code = [0xc5, 0xf5, 0xeb, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kbit_set(&mut vcpu, 1, A_LO, A_HI);
+    kbit_set(&mut vcpu, 2, B_LO, B_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kbit_lo(&vcpu, 0), A_LO | B_LO);
+    assert_eq!(kbit_hi(&vcpu, 0), A_HI | B_HI);
+}
+
+#[test]
+fn test_vpxor_ymm_value() {
+    // VPXOR YMM0, YMM1, YMM2
+    let code = [0xc5, 0xf5, 0xef, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kbit_set(&mut vcpu, 1, A_LO, A_HI);
+    kbit_set(&mut vcpu, 2, B_LO, B_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kbit_lo(&vcpu, 0), A_LO ^ B_LO);
+    assert_eq!(kbit_hi(&vcpu, 0), A_HI ^ B_HI);
+}
+
+#[test]
+fn test_vpxor_ymm_self_clears_full_256() {
+    // VPXOR YMM5, YMM5, YMM5 ; entire 256-bit register must be zero.
+    let code = [0xc5, 0xd5, 0xef, 0xed, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kbit_set(&mut vcpu, 5, A_LO, A_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kbit_lo(&vcpu, 5), 0);
+    assert_eq!(kbit_hi(&vcpu, 5), 0);
+}

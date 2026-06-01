@@ -601,3 +601,100 @@ fn test_vshufpd_ymm0_ymm1_mem256_imm0xa() {
 
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests : VSHUFPS / VSHUFPD selecting elements by imm8.
+//   VSHUFPS (per 128-bit lane): out[0]=s1[imm[1:0]], out[1]=s1[imm[3:2]],
+//                               out[2]=s2[imm[5:4]], out[3]=s2[imm[7:6]] (dwords).
+//   VSHUFPD (per 128-bit lane): out[0]=s1[imm bit], out[1]=s2[imm bit] (qwords).
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn kshf_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn kshf_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn kshf_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+fn shufps_lane(s1: u128, s2: u128, imm: u8) -> u128 {
+    let dw = |v: u128, n: u32| ((v >> (n * 32)) & 0xFFFF_FFFF) as u128;
+    let s0 = ((imm >> 0) & 3) as u32;
+    let s1sel = ((imm >> 2) & 3) as u32;
+    let s2sel = ((imm >> 4) & 3) as u32;
+    let s3 = ((imm >> 6) & 3) as u32;
+    dw(s1, s0) | (dw(s1, s1sel) << 32) | (dw(s2, s2sel) << 64) | (dw(s2, s3) << 96)
+}
+fn shufpd_lane(s1: u128, s2: u128, b0: u32, b1: u32) -> u128 {
+    let qw = |v: u128, n: u32| ((v >> (n * 64)) & 0xFFFF_FFFF_FFFF_FFFF) as u128;
+    qw(s1, b0) | (qw(s2, b1) << 64)
+}
+
+const F1_LO: u128 = 0x3333_3333_2222_2222_1111_1111_0000_0000;
+const F2_LO: u128 = 0x7777_7777_6666_6666_5555_5555_4444_4444;
+const F1_HI: u128 = 0xBBBB_BBBB_AAAA_AAAA_9999_9999_8888_8888;
+const F2_HI: u128 = 0xFFFF_FFFF_EEEE_EEEE_DDDD_DDDD_CCCC_CCCC;
+
+#[test]
+fn test_vshufps_xmm_value() {
+    // VSHUFPS XMM0, XMM1, XMM2, 0xE4 ; upper 128 zeroed.
+    let code = [0xc5, 0xf0, 0xc6, 0xc2, 0xe4, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kshf_set(&mut vcpu, 1, F1_LO, 0xDEAD);
+    kshf_set(&mut vcpu, 2, F2_LO, 0xBEEF);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kshf_lo(&vcpu, 0), shufps_lane(F1_LO, F2_LO, 0xe4));
+    assert_eq!(kshf_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vshufps_ymm_value() {
+    // VSHUFPS YMM0, YMM1, YMM2, 0x1B ; imm applies per 128-bit lane.
+    let code = [0xc5, 0xf4, 0xc6, 0xc2, 0x1b, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kshf_set(&mut vcpu, 1, F1_LO, F1_HI);
+    kshf_set(&mut vcpu, 2, F2_LO, F2_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kshf_lo(&vcpu, 0), shufps_lane(F1_LO, F2_LO, 0x1b));
+    assert_eq!(kshf_hi(&vcpu, 0), shufps_lane(F1_HI, F2_HI, 0x1b));
+}
+
+#[test]
+fn test_vshufpd_xmm_value() {
+    // VSHUFPD XMM0, XMM1, XMM2, 0x1 ; out=[s1[1], s2[0]]; upper 128 zeroed.
+    let code = [0xc5, 0xf1, 0xc6, 0xc2, 0x01, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kshf_set(&mut vcpu, 1, F1_LO, 0xDEAD);
+    kshf_set(&mut vcpu, 2, F2_LO, 0xBEEF);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kshf_lo(&vcpu, 0), shufpd_lane(F1_LO, F2_LO, 1, 0));
+    assert_eq!(kshf_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vshufpd_ymm_value() {
+    // VSHUFPD YMM0, YMM1, YMM2, 0b1001 ; lane0 imm bits {0,1}=1,0 ; lane1 bits {2,3}=0,1.
+    let imm: u8 = 0b1001;
+    let code = [0xc5, 0xf5, 0xc6, 0xc2, imm, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kshf_set(&mut vcpu, 1, F1_LO, F1_HI);
+    kshf_set(&mut vcpu, 2, F2_LO, F2_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    let b0 = (imm & 1) as u32;
+    let b1 = ((imm >> 1) & 1) as u32;
+    let b2 = ((imm >> 2) & 1) as u32;
+    let b3 = ((imm >> 3) & 1) as u32;
+    assert_eq!(kshf_lo(&vcpu, 0), shufpd_lane(F1_LO, F2_LO, b0, b1));
+    assert_eq!(kshf_hi(&vcpu, 0), shufpd_lane(F1_HI, F2_HI, b2, b3));
+}

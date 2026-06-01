@@ -439,3 +439,98 @@ fn test_vinsertf128_sequence() {
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests : VEXTRACTF128 / VINSERTF128 move a whole 128-bit lane.
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn kei_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn kei_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn kei_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+const EI_LO: u128 = 0x1122_3344_5566_7788_99AA_BBCC_DDEE_FF00;
+const EI_HI: u128 = 0xFEDC_BA98_7654_3210_0123_4567_89AB_CDEF;
+
+#[test]
+fn test_vextractf128_low_value() {
+    // VEXTRACTF128 XMM1, YMM0, 0 ; XMM1 gets the LOW lane, upper 128 of YMM1 zeroed.
+    let code = [0xc4, 0xe3, 0x7d, 0x19, 0xc1, 0x00, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kei_set(&mut vcpu, 0, EI_LO, EI_HI);
+    kei_set(&mut vcpu, 1, 0xDEAD_BEEF, 0xCAFE_BABE); // pre-existing garbage
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kei_lo(&vcpu, 1), EI_LO);
+    assert_eq!(kei_hi(&vcpu, 1), 0, "128-bit write must zero upper 128 bits");
+}
+
+#[test]
+fn test_vextractf128_high_value() {
+    // VEXTRACTF128 XMM1, YMM0, 1 ; XMM1 gets the HIGH lane.
+    let code = [0xc4, 0xe3, 0x7d, 0x19, 0xc1, 0x01, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kei_set(&mut vcpu, 0, EI_LO, EI_HI);
+    kei_set(&mut vcpu, 1, 0xDEAD_BEEF, 0xCAFE_BABE);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kei_lo(&vcpu, 1), EI_HI);
+    assert_eq!(kei_hi(&vcpu, 1), 0, "128-bit write must zero upper 128 bits");
+}
+
+#[test]
+fn test_vinsertf128_low_value() {
+    // VINSERTF128 YMM0, YMM1, XMM2, 0 ; low lane <- XMM2, high lane <- YMM1 high.
+    let code = [0xc4, 0xe3, 0x75, 0x18, 0xc2, 0x00, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kei_set(&mut vcpu, 1, EI_LO, EI_HI);
+    let new_lane: u128 = 0xAAAA_BBBB_CCCC_DDDD_EEEE_FFFF_0000_1111;
+    kei_set(&mut vcpu, 2, new_lane, 0); // XMM2 low 128 only
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kei_lo(&vcpu, 0), new_lane);
+    assert_eq!(kei_hi(&vcpu, 0), EI_HI);
+}
+
+#[test]
+fn test_vinsertf128_high_value() {
+    // VINSERTF128 YMM0, YMM1, XMM2, 1 ; high lane <- XMM2, low lane <- YMM1 low.
+    let code = [0xc4, 0xe3, 0x75, 0x18, 0xc2, 0x01, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kei_set(&mut vcpu, 1, EI_LO, EI_HI);
+    let new_lane: u128 = 0xAAAA_BBBB_CCCC_DDDD_EEEE_FFFF_0000_1111;
+    kei_set(&mut vcpu, 2, new_lane, 0);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kei_lo(&vcpu, 0), EI_LO);
+    assert_eq!(kei_hi(&vcpu, 0), new_lane);
+}
+
+#[test]
+fn test_vextract_then_vinsert_roundtrip() {
+    // Extract high lane to XMM1, then insert XMM1 into low lane of YMM2 (from YMM3).
+    let code = [
+        0xc4, 0xe3, 0x7d, 0x19, 0xc1, 0x01, // VEXTRACTF128 XMM1, YMM0, 1
+        0xc4, 0xe3, 0x65, 0x18, 0xd1, 0x00, // VINSERTF128 YMM2, YMM3, XMM1, 0
+        0xf4,
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kei_set(&mut vcpu, 0, EI_LO, EI_HI);
+    kei_set(&mut vcpu, 3, 0x1111_1111_1111_1111_2222_2222_2222_2222, 0x3333_3333_3333_3333_4444_4444_4444_4444);
+    run_until_hlt(&mut vcpu).unwrap();
+    // XMM1 == high lane of YMM0
+    assert_eq!(kei_lo(&vcpu, 1), EI_HI);
+    // YMM2 low lane == EI_HI, high lane == YMM3 high lane.
+    assert_eq!(kei_lo(&vcpu, 2), EI_HI);
+    assert_eq!(kei_hi(&vcpu, 2), 0x3333_3333_3333_3333_4444_4444_4444_4444);
+}

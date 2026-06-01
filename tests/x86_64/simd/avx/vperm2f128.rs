@@ -562,3 +562,103 @@ fn test_vperm2f128_ymm0_ymm1_mem256_imm0x88() {
 
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests : VPERM2F128 selects a 128-bit lane for each output
+// lane. imm[1:0] -> dst low lane, imm[5:4] -> dst high lane (0=s1.lo,1=s1.hi,
+// 2=s2.lo,3=s2.hi). imm bit 3 zeroes low lane, imm bit 7 zeroes high lane.
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn kp2_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn kp2_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn kp2_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+fn perm2_lane(sel: u8, s1_lo: u128, s1_hi: u128, s2_lo: u128, s2_hi: u128) -> u128 {
+    match sel & 3 {
+        0 => s1_lo,
+        1 => s1_hi,
+        2 => s2_lo,
+        _ => s2_hi,
+    }
+}
+fn perm2(imm: u8, s1_lo: u128, s1_hi: u128, s2_lo: u128, s2_hi: u128) -> (u128, u128) {
+    let mut lo = perm2_lane(imm, s1_lo, s1_hi, s2_lo, s2_hi);
+    let mut hi = perm2_lane(imm >> 4, s1_lo, s1_hi, s2_lo, s2_hi);
+    if (imm >> 3) & 1 == 1 { lo = 0; }
+    if (imm >> 7) & 1 == 1 { hi = 0; }
+    (lo, hi)
+}
+
+const P1_LO: u128 = 0x1111_1111_1111_1111_1111_1111_1111_1111;
+const P1_HI: u128 = 0x2222_2222_2222_2222_2222_2222_2222_2222;
+const P2_LO: u128 = 0x3333_3333_3333_3333_3333_3333_3333_3333;
+const P2_HI: u128 = 0x4444_4444_4444_4444_4444_4444_4444_4444;
+
+fn run_perm2(imm: u8) -> (u128, u128) {
+    let code = [0xc4, 0xe3, 0x75, 0x06, 0xc2, imm, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kp2_set(&mut vcpu, 1, P1_LO, P1_HI);
+    kp2_set(&mut vcpu, 2, P2_LO, P2_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    (kp2_lo(&vcpu, 0), kp2_hi(&vcpu, 0))
+}
+
+#[test]
+fn test_vperm2f128_swap_lanes() {
+    // imm 0x01: dst.lo = src1.hi, dst.hi = src1.lo.
+    let (lo, hi) = run_perm2(0x01);
+    assert_eq!((lo, hi), perm2(0x01, P1_LO, P1_HI, P2_LO, P2_HI));
+    assert_eq!(lo, P1_HI);
+    assert_eq!(hi, P1_LO);
+}
+
+#[test]
+fn test_vperm2f128_cross_src() {
+    // imm 0x20: dst.lo = sel(imm[1:0]=0)=src1.lo ; dst.hi = sel(imm[5:4]=2)=src2.lo.
+    let (lo, hi) = run_perm2(0x20);
+    assert_eq!((lo, hi), perm2(0x20, P1_LO, P1_HI, P2_LO, P2_HI));
+    assert_eq!(lo, P1_LO);
+    assert_eq!(hi, P2_LO);
+}
+
+#[test]
+fn test_vperm2f128_high_from_src2_hi() {
+    // imm 0x31: dst.lo = src1.hi, dst.hi = src2.hi.
+    let (lo, hi) = run_perm2(0x31);
+    assert_eq!((lo, hi), perm2(0x31, P1_LO, P1_HI, P2_LO, P2_HI));
+    assert_eq!(lo, P1_HI);
+    assert_eq!(hi, P2_HI);
+}
+
+#[test]
+fn test_vperm2f128_zero_low_lane() {
+    // imm 0x08: bit 3 set -> low lane forced to zero; high from src1.lo.
+    let (lo, hi) = run_perm2(0x08);
+    assert_eq!((lo, hi), perm2(0x08, P1_LO, P1_HI, P2_LO, P2_HI));
+    assert_eq!(lo, 0);
+    assert_eq!(hi, P1_LO);
+}
+
+#[test]
+fn test_vperm2f128_zero_high_lane() {
+    // imm 0x82: bit 7 set -> high lane zeroed; low from src2.lo.
+    let (lo, hi) = run_perm2(0x82);
+    assert_eq!((lo, hi), perm2(0x82, P1_LO, P1_HI, P2_LO, P2_HI));
+    assert_eq!(lo, P2_LO);
+    assert_eq!(hi, 0);
+}

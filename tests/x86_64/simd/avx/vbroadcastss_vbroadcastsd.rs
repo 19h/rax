@@ -398,3 +398,60 @@ fn test_vbroadcastsd_mem_to_ymm15() {
 
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests : VBROADCASTSS replicates a 32-bit element to all
+// lanes; VBROADCASTSD replicates a 64-bit element. Source is XMM low element.
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn kbc_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn kbc_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn kbc_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+#[test]
+fn test_vbroadcastss_xmm_value() {
+    // VBROADCASTSS XMM1, XMM0 (128-bit) ; replicate dword 0 to 4 lanes, upper 128 zeroed.
+    let code = [0xc4, 0xe2, 0x79, 0x18, 0xc8, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kbc_set(&mut vcpu, 0, 0x0000_0000_0000_0000_0000_0000_DEAD_BEEF, 0);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kbc_lo(&vcpu, 1), 0xDEAD_BEEF_DEAD_BEEF_DEAD_BEEF_DEAD_BEEF);
+    assert_eq!(kbc_hi(&vcpu, 1), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vbroadcastss_ymm_value() {
+    // VBROADCASTSS YMM1, XMM0 ; replicate dword 0 to all 8 lanes.
+    let code = [0xc4, 0xe2, 0x7d, 0x18, 0xc8, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kbc_set(&mut vcpu, 0, 0x0000_0000_0000_0000_0000_0000_1234_5678, 0);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kbc_lo(&vcpu, 1), 0x1234_5678_1234_5678_1234_5678_1234_5678);
+    assert_eq!(kbc_hi(&vcpu, 1), 0x1234_5678_1234_5678_1234_5678_1234_5678);
+}
+
+#[test]
+fn test_vbroadcastsd_ymm_value() {
+    // VBROADCASTSD YMM1, XMM0 ; replicate qword 0 to all 4 lanes.
+    let code = [0xc4, 0xe2, 0x7d, 0x19, 0xc8, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kbc_set(&mut vcpu, 0, 0x0000_0000_0000_0000_DEAD_BEEF_CAFE_BABE, 0);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kbc_lo(&vcpu, 1), 0xDEAD_BEEF_CAFE_BABE_DEAD_BEEF_CAFE_BABE);
+    assert_eq!(kbc_hi(&vcpu, 1), 0xDEAD_BEEF_CAFE_BABE_DEAD_BEEF_CAFE_BABE);
+}

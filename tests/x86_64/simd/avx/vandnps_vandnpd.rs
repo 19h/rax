@@ -651,3 +651,75 @@ fn test_vandnpd_ymm_different_operands() {
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests : VANDNPS/PD compute (NOT src1) AND src2.
+// For "VANDN dst, src1, src2": src1 = vvvv, src2 = r/m.
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn kanv_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn kanv_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn kanv_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+#[test]
+fn test_vandnps_xmm_value() {
+    // VANDNPS XMM0, XMM1, XMM2 ; result = (~XMM1) & XMM2, upper 128 zeroed.
+    let code = [0xc5, 0xf0, 0x55, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let s1: u128 = 0xF0F0_F0F0_AAAA_5555_FFFF_0000_0F0F_0F0F;
+    let s2: u128 = 0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF;
+    kanv_set(&mut vcpu, 1, s1, 0xDEAD);
+    kanv_set(&mut vcpu, 2, s2, 0xBEEF);
+    run_until_hlt(&mut vcpu).unwrap();
+    // (~s1) & all-ones == ~s1.
+    assert_eq!(kanv_lo(&vcpu, 0), (!s1) & s2);
+    assert_eq!(kanv_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vandnps_ymm_value() {
+    // VANDNPS YMM0, YMM1, YMM2 ; both lanes = (~src1) & src2.
+    let code = [0xc5, 0xf4, 0x55, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let s1_lo: u128 = 0xFFFF_FFFF_0000_0000_AAAA_AAAA_5555_5555;
+    let s2_lo: u128 = 0x0F0F_0F0F_0F0F_0F0F_FFFF_FFFF_FFFF_FFFF;
+    let s1_hi: u128 = 0x1234_5678_9ABC_DEF0_0F0F_0F0F_F0F0_F0F0;
+    let s2_hi: u128 = 0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF;
+    kanv_set(&mut vcpu, 1, s1_lo, s1_hi);
+    kanv_set(&mut vcpu, 2, s2_lo, s2_hi);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kanv_lo(&vcpu, 0), (!s1_lo) & s2_lo);
+    assert_eq!(kanv_hi(&vcpu, 0), (!s1_hi) & s2_hi);
+}
+
+#[test]
+fn test_vandnpd_ymm_value() {
+    // VANDNPD YMM0, YMM1, YMM2 ; both lanes = (~src1) & src2.
+    let code = [0xc5, 0xf5, 0x55, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let s1_lo: u128 = 0xCCCC_CCCC_CCCC_CCCC_3333_3333_3333_3333;
+    let s2_lo: u128 = 0xFFFF_0000_FFFF_0000_FFFF_FFFF_0000_0000;
+    let s1_hi: u128 = 0x0000_0000_0000_0000_FFFF_FFFF_FFFF_FFFF;
+    let s2_hi: u128 = 0xDEAD_BEEF_CAFE_BABE_1122_3344_5566_7788;
+    kanv_set(&mut vcpu, 1, s1_lo, s1_hi);
+    kanv_set(&mut vcpu, 2, s2_lo, s2_hi);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kanv_lo(&vcpu, 0), (!s1_lo) & s2_lo);
+    // ~0 & s2_hi == s2_hi ; ~all-ones & ... == 0 for low half.
+    assert_eq!(kanv_hi(&vcpu, 0), (!s1_hi) & s2_hi);
+}

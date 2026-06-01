@@ -606,3 +606,75 @@ fn test_vorpd_ymm_self() {
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests (bitwise OR of exact bit patterns).
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn kov_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn kov_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn kov_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+#[test]
+fn test_vorps_xmm_value() {
+    // VORPS XMM0, XMM1, XMM2 ; 128-bit OR, upper 128 zeroed.
+    let code = [0xc5, 0xf0, 0x56, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kov_set(&mut vcpu, 1, 0xF0F0_0000_AAAA_5555_0000_FFFF_1234_5678, 0xDEAD);
+    kov_set(&mut vcpu, 2, 0x0F0F_FFFF_5555_AAAA_FFFF_0000_8765_4321, 0xBEEF);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        kov_lo(&vcpu, 0),
+        0xF0F0_0000_AAAA_5555_0000_FFFF_1234_5678 | 0x0F0F_FFFF_5555_AAAA_FFFF_0000_8765_4321
+    );
+    assert_eq!(kov_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vorps_ymm_value() {
+    // VORPS YMM0, YMM1, YMM2 ; both lanes ORed.
+    let code = [0xc5, 0xf4, 0x56, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kov_set(&mut vcpu, 1, 0x0000_0000_FFFF_FFFF_AAAA_0000_0000_5555, 0x1111_2222_3333_4444_0F0F_0F0F_F0F0_F0F0);
+    kov_set(&mut vcpu, 2, 0xFFFF_0000_0000_FFFF_0000_AAAA_5555_0000, 0x0000_FFFF_0000_FFFF_F0F0_F0F0_0F0F_0F0F);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        kov_lo(&vcpu, 0),
+        0x0000_0000_FFFF_FFFF_AAAA_0000_0000_5555 | 0xFFFF_0000_0000_FFFF_0000_AAAA_5555_0000
+    );
+    assert_eq!(
+        kov_hi(&vcpu, 0),
+        0x1111_2222_3333_4444_0F0F_0F0F_F0F0_F0F0 | 0x0000_FFFF_0000_FFFF_F0F0_F0F0_0F0F_0F0F
+    );
+}
+
+#[test]
+fn test_vorpd_ymm_value() {
+    // VORPD YMM0, YMM1, YMM2 ; both lanes ORed.
+    let code = [0xc5, 0xf5, 0x56, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kov_set(&mut vcpu, 1, 0xFF00_FF00_FF00_FF00_0000_0000_0000_0000, 0x5555_5555_5555_5555_AAAA_AAAA_AAAA_AAAA);
+    kov_set(&mut vcpu, 2, 0x00FF_00FF_00FF_00FF_DEAD_BEEF_CAFE_BABE, 0xAAAA_AAAA_AAAA_AAAA_5555_5555_5555_5555);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        kov_lo(&vcpu, 0),
+        0xFF00_FF00_FF00_FF00_0000_0000_0000_0000 | 0x00FF_00FF_00FF_00FF_DEAD_BEEF_CAFE_BABE
+    );
+    // 0x5555... | 0xAAAA... == all ones in both halves.
+    assert_eq!(kov_hi(&vcpu, 0), u128::MAX);
+}

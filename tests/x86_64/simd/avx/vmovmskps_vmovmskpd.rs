@@ -772,3 +772,70 @@ fn test_vmovmskpd_multiple_extracts() {
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests : VMOVMSKPS/PD gather element sign bits into a GPR.
+//   PS: 1 bit per 32-bit lane ; PD: 1 bit per 64-bit lane.
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+use rax::cpu::VCpu;
+
+fn kmm_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+
+// Lane sign patterns: bit set in a lane => that element's MSB is 1.
+const PS_SIGN_HI_BIT: u128 = 0x8000_0000u128; // MSB of a 32-bit lane.
+const PD_SIGN_HI_BIT: u128 = 0x8000_0000_0000_0000u128; // MSB of a 64-bit lane.
+
+#[test]
+fn test_vmovmskps_xmm_value() {
+    // VMOVMSKPS EAX, XMM0 ; lanes 0 and 3 negative -> mask 0b1001 = 0x9.
+    let code = [0xc5, 0xf8, 0x50, 0xc0, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let lo = (PS_SIGN_HI_BIT << 0) | (PS_SIGN_HI_BIT << 96);
+    kmm_set(&mut vcpu, 0, lo, 0);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFF, 0b1001);
+}
+
+#[test]
+fn test_vmovmskps_ymm_value() {
+    // VMOVMSKPS EAX, YMM0 ; 8 lanes -> set lanes {0,2,5,7} = 0b1010_0101 = 0xA5.
+    let code = [0xc5, 0xfc, 0x50, 0xc0, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let lo = (PS_SIGN_HI_BIT << 0) | (PS_SIGN_HI_BIT << 64); // lanes 0,2
+    let hi = (PS_SIGN_HI_BIT << 32) | (PS_SIGN_HI_BIT << 96); // lanes 5,7
+    kmm_set(&mut vcpu, 0, lo, hi);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFF, 0b1010_0101);
+}
+
+#[test]
+fn test_vmovmskpd_xmm_value() {
+    // VMOVMSKPD EAX, XMM0 ; lane 1 negative -> mask 0b10 = 0x2.
+    let code = [0xc5, 0xf9, 0x50, 0xc0, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let lo = PD_SIGN_HI_BIT << 64; // high qword sign set
+    kmm_set(&mut vcpu, 0, lo, 0);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xF, 0b10);
+}
+
+#[test]
+fn test_vmovmskpd_ymm_value() {
+    // VMOVMSKPD EAX, YMM0 ; 4 lanes -> set lanes {0,3} = 0b1001 = 0x9.
+    let code = [0xc5, 0xfd, 0x50, 0xc0, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let lo = PD_SIGN_HI_BIT; // lane 0
+    let hi = PD_SIGN_HI_BIT << 64; // lane 3 (high qword of high lane)
+    kmm_set(&mut vcpu, 0, lo, hi);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xF, 0b1001);
+}

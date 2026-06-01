@@ -562,3 +562,92 @@ fn test_vandpd_ymm_mem_extended() {
 
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests (bitwise AND of exact bit patterns).
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn kav_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn kav_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn kav_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+#[test]
+fn test_vandps_xmm_value() {
+    // VANDPS XMM0, XMM1, XMM2 : 128-bit AND, upper 128 must be zeroed.
+    let code = [0xc5, 0xf0, 0x54, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kav_set(&mut vcpu, 1, 0xF0F0_F0F0_FFFF_0000_AAAA_5555_FFFF_FFFF, 0xDEAD);
+    kav_set(&mut vcpu, 2, 0x0FF0_0FF0_0F0F_F0F0_FFFF_0000_5555_AAAA, 0xBEEF);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        kav_lo(&vcpu, 0),
+        0xF0F0_F0F0_FFFF_0000_AAAA_5555_FFFF_FFFF & 0x0FF0_0FF0_0F0F_F0F0_FFFF_0000_5555_AAAA
+    );
+    assert_eq!(kav_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vandps_ymm_value() {
+    // VANDPS YMM0, YMM1, YMM2 : both 128-bit lanes ANDed independently.
+    let code = [0xc5, 0xf4, 0x54, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kav_set(&mut vcpu, 1, 0xFFFF_FFFF_0000_0000_FF00_FF00_AAAA_AAAA, 0x1234_5678_9ABC_DEF0_0F0F_0F0F_F0F0_F0F0);
+    kav_set(&mut vcpu, 2, 0x0F0F_0F0F_FFFF_FFFF_0F0F_0F0F_FFFF_0000, 0xFFFF_0000_FFFF_0000_FFFF_FFFF_0000_0000);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        kav_lo(&vcpu, 0),
+        0xFFFF_FFFF_0000_0000_FF00_FF00_AAAA_AAAA & 0x0F0F_0F0F_FFFF_FFFF_0F0F_0F0F_FFFF_0000
+    );
+    assert_eq!(
+        kav_hi(&vcpu, 0),
+        0x1234_5678_9ABC_DEF0_0F0F_0F0F_F0F0_F0F0 & 0xFFFF_0000_FFFF_0000_FFFF_FFFF_0000_0000
+    );
+}
+
+#[test]
+fn test_vandpd_xmm_value() {
+    // VANDPD XMM0, XMM1, XMM2 : identical bitwise behavior, upper 128 zeroed.
+    let code = [0xc5, 0xf1, 0x54, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kav_set(&mut vcpu, 1, 0xCCCC_CCCC_CCCC_CCCC_3333_3333_3333_3333, 0x99);
+    kav_set(&mut vcpu, 2, 0xCC33_CC33_CC33_CC33_3333_FFFF_0000_3333, 0x77);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        kav_lo(&vcpu, 0),
+        0xCCCC_CCCC_CCCC_CCCC_3333_3333_3333_3333 & 0xCC33_CC33_CC33_CC33_3333_FFFF_0000_3333
+    );
+    assert_eq!(kav_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vandpd_ymm_value() {
+    // VANDPD YMM0, YMM1, YMM2 : both lanes ANDed.
+    let code = [0xc5, 0xf5, 0x54, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kav_set(&mut vcpu, 1, 0xFFFF_FFFF_FFFF_FFFF_0000_0000_0000_0000, 0xAAAA_AAAA_AAAA_AAAA_5555_5555_5555_5555);
+    kav_set(&mut vcpu, 2, 0x0F0F_F0F0_0F0F_F0F0_FFFF_FFFF_FFFF_FFFF, 0xFFFF_0000_FFFF_0000_FFFF_0000_FFFF_0000);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        kav_lo(&vcpu, 0),
+        0xFFFF_FFFF_FFFF_FFFF_0000_0000_0000_0000 & 0x0F0F_F0F0_0F0F_F0F0_FFFF_FFFF_FFFF_FFFF
+    );
+    assert_eq!(
+        kav_hi(&vcpu, 0),
+        0xAAAA_AAAA_AAAA_AAAA_5555_5555_5555_5555 & 0xFFFF_0000_FFFF_0000_FFFF_0000_FFFF_0000
+    );
+}

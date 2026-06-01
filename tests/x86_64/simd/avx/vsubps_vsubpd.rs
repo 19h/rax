@@ -1009,3 +1009,79 @@ fn test_vsubpd_ymm8_ymm9_mem() {
 
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests : packed float SUB (src1 - src2), exact operands.
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn kfs_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn kfs_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn kfs_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+fn pack_ps_s(v: [f32; 4]) -> u128 {
+    let mut out = 0u128;
+    for i in 0..4 { out |= (v[i].to_bits() as u128) << (i * 32); }
+    out
+}
+fn pack_pd_s(v: [f64; 2]) -> u128 {
+    (v[0].to_bits() as u128) | ((v[1].to_bits() as u128) << 64)
+}
+
+#[test]
+fn test_vsubps_xmm_value() {
+    let code = [0xc5, 0xf0, 0x5c, 0xc2, 0xf4]; // VSUBPS XMM0, XMM1, XMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kfs_set(&mut vcpu, 1, pack_ps_s([4.0, 2.0, 1.0, 0.5]), 0xDEAD);
+    kfs_set(&mut vcpu, 2, pack_ps_s([0.5, 4.0, 1.0, 0.25]), 0xBEEF);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kfs_lo(&vcpu, 0), pack_ps_s([3.5, -2.0, 0.0, 0.25]));
+    assert_eq!(kfs_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vsubps_ymm_value() {
+    let code = [0xc5, 0xf4, 0x5c, 0xc2, 0xf4]; // VSUBPS YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kfs_set(&mut vcpu, 1, pack_ps_s([4.0, 2.0, 1.0, 0.5]), pack_ps_s([16.0, 8.0, 32.0, 0.125]));
+    kfs_set(&mut vcpu, 2, pack_ps_s([0.5, 4.0, 1.0, 0.25]), pack_ps_s([16.0, 0.0, -32.0, 0.125]));
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kfs_lo(&vcpu, 0), pack_ps_s([3.5, -2.0, 0.0, 0.25]));
+    assert_eq!(kfs_hi(&vcpu, 0), pack_ps_s([0.0, 8.0, 64.0, 0.0]));
+}
+
+#[test]
+fn test_vsubpd_xmm_value() {
+    let code = [0xc5, 0xf1, 0x5c, 0xc2, 0xf4]; // VSUBPD XMM0, XMM1, XMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kfs_set(&mut vcpu, 1, pack_pd_s([4.0, 1.0]), 0xDEAD);
+    kfs_set(&mut vcpu, 2, pack_pd_s([0.5, 2.0]), 0xBEEF);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kfs_lo(&vcpu, 0), pack_pd_s([3.5, -1.0]));
+    assert_eq!(kfs_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vsubpd_ymm_value() {
+    let code = [0xc5, 0xf5, 0x5c, 0xc2, 0xf4]; // VSUBPD YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kfs_set(&mut vcpu, 1, pack_pd_s([4.0, 1.0]), pack_pd_s([16.0, 0.25]));
+    kfs_set(&mut vcpu, 2, pack_pd_s([0.5, 2.0]), pack_pd_s([8.0, 0.25]));
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kfs_lo(&vcpu, 0), pack_pd_s([3.5, -1.0]));
+    assert_eq!(kfs_hi(&vcpu, 0), pack_pd_s([8.0, 0.0]));
+}

@@ -599,3 +599,129 @@ fn test_vpsubq_mem_large_values() {
     mem.write_slice(&large_vals, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests : packed wrapping subtract (src1 - src2) per element.
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn ksub_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn ksub_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn ksub_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+fn psub_bytes(a: u128, b: u128) -> u128 {
+    let (ab, bb) = (a.to_le_bytes(), b.to_le_bytes());
+    let mut out = [0u8; 16];
+    for i in 0..16 { out[i] = ab[i].wrapping_sub(bb[i]); }
+    u128::from_le_bytes(out)
+}
+fn psub_words(a: u128, b: u128) -> u128 {
+    let mut out = 0u128;
+    for i in 0..8 {
+        let av = ((a >> (i * 16)) & 0xFFFF) as u16;
+        let bv = ((b >> (i * 16)) & 0xFFFF) as u16;
+        out |= (av.wrapping_sub(bv) as u128) << (i * 16);
+    }
+    out
+}
+fn psub_dwords(a: u128, b: u128) -> u128 {
+    let mut out = 0u128;
+    for i in 0..4 {
+        let av = ((a >> (i * 32)) & 0xFFFF_FFFF) as u32;
+        let bv = ((b >> (i * 32)) & 0xFFFF_FFFF) as u32;
+        out |= (av.wrapping_sub(bv) as u128) << (i * 32);
+    }
+    out
+}
+fn psub_qwords(a: u128, b: u128) -> u128 {
+    let lo = (a as u64).wrapping_sub(b as u64);
+    let hi = ((a >> 64) as u64).wrapping_sub((b >> 64) as u64);
+    (lo as u128) | ((hi as u128) << 64)
+}
+
+const SA_LO: u128 = 0x0000_0001_0010_0100_1234_5678_9ABC_DEF0;
+const SA_HI: u128 = 0xFEDC_BA98_7654_3210_0102_0304_0506_0708;
+const SB_LO: u128 = 0x0001_0002_0020_0200_FEDC_BA98_7654_3210;
+const SB_HI: u128 = 0x1111_2222_3333_4444_FFFF_FFFF_FFFF_FFFF;
+
+#[test]
+fn test_vpsubb_xmm_value() {
+    let code = [0xc5, 0xf1, 0xf8, 0xc2, 0xf4]; // VPSUBB XMM0, XMM1, XMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    ksub_set(&mut vcpu, 1, SA_LO, 0xDEAD);
+    ksub_set(&mut vcpu, 2, SB_LO, 0xBEEF);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(ksub_lo(&vcpu, 0), psub_bytes(SA_LO, SB_LO));
+    assert_eq!(ksub_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vpsubb_ymm_value() {
+    let code = [0xc5, 0xf5, 0xf8, 0xc2, 0xf4]; // VPSUBB YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    ksub_set(&mut vcpu, 1, SA_LO, SA_HI);
+    ksub_set(&mut vcpu, 2, SB_LO, SB_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(ksub_lo(&vcpu, 0), psub_bytes(SA_LO, SB_LO));
+    assert_eq!(ksub_hi(&vcpu, 0), psub_bytes(SA_HI, SB_HI));
+}
+
+#[test]
+fn test_vpsubw_ymm_value() {
+    let code = [0xc5, 0xf5, 0xf9, 0xc2, 0xf4]; // VPSUBW YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    ksub_set(&mut vcpu, 1, SA_LO, SA_HI);
+    ksub_set(&mut vcpu, 2, SB_LO, SB_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(ksub_lo(&vcpu, 0), psub_words(SA_LO, SB_LO));
+    assert_eq!(ksub_hi(&vcpu, 0), psub_words(SA_HI, SB_HI));
+}
+
+#[test]
+fn test_vpsubd_ymm_value() {
+    let code = [0xc5, 0xf5, 0xfa, 0xc2, 0xf4]; // VPSUBD YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    ksub_set(&mut vcpu, 1, SA_LO, SA_HI);
+    ksub_set(&mut vcpu, 2, SB_LO, SB_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(ksub_lo(&vcpu, 0), psub_dwords(SA_LO, SB_LO));
+    assert_eq!(ksub_hi(&vcpu, 0), psub_dwords(SA_HI, SB_HI));
+}
+
+#[test]
+fn test_vpsubq_ymm_value() {
+    let code = [0xc5, 0xf5, 0xfb, 0xc2, 0xf4]; // VPSUBQ YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    ksub_set(&mut vcpu, 1, SA_LO, SA_HI);
+    ksub_set(&mut vcpu, 2, SB_LO, SB_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(ksub_lo(&vcpu, 0), psub_qwords(SA_LO, SB_LO));
+    assert_eq!(ksub_hi(&vcpu, 0), psub_qwords(SA_HI, SB_HI));
+}
+
+#[test]
+fn test_vpsubb_zero_minus_one_wraps_to_ff() {
+    // 0x00 - 0x01 per byte must wrap to 0xFF independently.
+    let code = [0xc5, 0xf5, 0xf8, 0xc2, 0xf4]; // VPSUBB YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let all_01: u128 = 0x0101_0101_0101_0101_0101_0101_0101_0101;
+    ksub_set(&mut vcpu, 1, 0, 0);
+    ksub_set(&mut vcpu, 2, all_01, all_01);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(ksub_lo(&vcpu, 0), u128::MAX);
+    assert_eq!(ksub_hi(&vcpu, 0), u128::MAX);
+}

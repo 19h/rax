@@ -719,3 +719,107 @@ fn test_vpunpckhqdq_alternating_pattern() {
     let (mut vcpu, _) = setup_vm(&code, None);
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests : VPUNPCKH* interleave the HIGH elements of each
+// 128-bit lane: dst = s1[hi0], s2[hi0], s1[hi1], s2[hi1], ...
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn kunh_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn kunh_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn kunh_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+// Interleave the high half (bytes 8..16) of one 128-bit lane, element size = elem.
+fn unpckh_lane(s1: u128, s2: u128, elem: usize) -> u128 {
+    let a = s1.to_le_bytes();
+    let b = s2.to_le_bytes();
+    let mut out = [0u8; 16];
+    let mut dst = 0usize;
+    let mut src = 8usize; // start from the high half
+    while dst < 16 {
+        for k in 0..elem { out[dst + k] = a[src + k]; }
+        dst += elem;
+        for k in 0..elem { out[dst + k] = b[src + k]; }
+        dst += elem;
+        src += elem;
+    }
+    u128::from_le_bytes(out)
+}
+
+const H1_LO: u128 = 0x0F0E_0D0C_0B0A_0908_0706_0504_0302_0100;
+const H2_LO: u128 = 0x1F1E_1D1C_1B1A_1918_1716_1514_1312_1110;
+const H1_HI: u128 = 0x2F2E_2D2C_2B2A_2928_2726_2524_2322_2120;
+const H2_HI: u128 = 0x3F3E_3D3C_3B3A_3938_3736_3534_3332_3130;
+
+#[test]
+fn test_vpunpckhbw_xmm_value() {
+    let code = [0xc5, 0xf1, 0x68, 0xc2, 0xf4]; // VPUNPCKHBW XMM0, XMM1, XMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kunh_set(&mut vcpu, 1, H1_LO, 0xDEAD);
+    kunh_set(&mut vcpu, 2, H2_LO, 0xBEEF);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kunh_lo(&vcpu, 0), unpckh_lane(H1_LO, H2_LO, 1));
+    assert_eq!(kunh_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vpunpckhbw_ymm_value() {
+    let code = [0xc5, 0xf5, 0x68, 0xc2, 0xf4]; // VPUNPCKHBW YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kunh_set(&mut vcpu, 1, H1_LO, H1_HI);
+    kunh_set(&mut vcpu, 2, H2_LO, H2_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kunh_lo(&vcpu, 0), unpckh_lane(H1_LO, H2_LO, 1));
+    assert_eq!(kunh_hi(&vcpu, 0), unpckh_lane(H1_HI, H2_HI, 1));
+}
+
+#[test]
+fn test_vpunpckhwd_ymm_value() {
+    let code = [0xc5, 0xf5, 0x69, 0xc2, 0xf4]; // VPUNPCKHWD YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kunh_set(&mut vcpu, 1, H1_LO, H1_HI);
+    kunh_set(&mut vcpu, 2, H2_LO, H2_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kunh_lo(&vcpu, 0), unpckh_lane(H1_LO, H2_LO, 2));
+    assert_eq!(kunh_hi(&vcpu, 0), unpckh_lane(H1_HI, H2_HI, 2));
+}
+
+#[test]
+fn test_vpunpckhdq_ymm_value() {
+    let code = [0xc5, 0xf5, 0x6a, 0xc2, 0xf4]; // VPUNPCKHDQ YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kunh_set(&mut vcpu, 1, H1_LO, H1_HI);
+    kunh_set(&mut vcpu, 2, H2_LO, H2_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kunh_lo(&vcpu, 0), unpckh_lane(H1_LO, H2_LO, 4));
+    assert_eq!(kunh_hi(&vcpu, 0), unpckh_lane(H1_HI, H2_HI, 4));
+}
+
+#[test]
+fn test_vpunpckhqdq_ymm_value() {
+    let code = [0xc5, 0xf5, 0x6d, 0xc2, 0xf4]; // VPUNPCKHQDQ YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kunh_set(&mut vcpu, 1, H1_LO, H1_HI);
+    kunh_set(&mut vcpu, 2, H2_LO, H2_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    // qword unpack high: dst = [s1.hi_qword, s2.hi_qword] per lane.
+    let expect_lo = ((H1_LO >> 64) as u128) | (((H2_LO >> 64) as u128) << 64);
+    let expect_hi = ((H1_HI >> 64) as u128) | (((H2_HI >> 64) as u128) << 64);
+    assert_eq!(kunh_lo(&vcpu, 0), expect_lo);
+    assert_eq!(kunh_hi(&vcpu, 0), expect_hi);
+}

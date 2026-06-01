@@ -596,3 +596,126 @@ fn test_vpcmpeqb_mem_unaligned() {
     mem.write_slice(&[0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42], GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests : per-element equality producing all-ones / all-zeros.
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn keq_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn keq_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn keq_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+fn pcmpeq_bytes(a: u128, b: u128) -> u128 {
+    let (ab, bb) = (a.to_le_bytes(), b.to_le_bytes());
+    let mut out = [0u8; 16];
+    for i in 0..16 { out[i] = if ab[i] == bb[i] { 0xFF } else { 0x00 }; }
+    u128::from_le_bytes(out)
+}
+fn pcmpeq_words(a: u128, b: u128) -> u128 {
+    let mut out = 0u128;
+    for i in 0..8 {
+        let av = (a >> (i * 16)) & 0xFFFF;
+        let bv = (b >> (i * 16)) & 0xFFFF;
+        if av == bv { out |= 0xFFFFu128 << (i * 16); }
+    }
+    out
+}
+fn pcmpeq_dwords(a: u128, b: u128) -> u128 {
+    let mut out = 0u128;
+    for i in 0..4 {
+        let av = (a >> (i * 32)) & 0xFFFF_FFFF;
+        let bv = (b >> (i * 32)) & 0xFFFF_FFFF;
+        if av == bv { out |= 0xFFFF_FFFFu128 << (i * 32); }
+    }
+    out
+}
+fn pcmpeq_qwords(a: u128, b: u128) -> u128 {
+    let mut out = 0u128;
+    if (a as u64) == (b as u64) { out |= 0xFFFF_FFFF_FFFF_FFFFu128; }
+    if ((a >> 64) as u64) == ((b >> 64) as u64) { out |= 0xFFFF_FFFF_FFFF_FFFFu128 << 64; }
+    out
+}
+
+// First arg matches second in some lanes, differs in others.
+const EQ_A_LO: u128 = 0x11_22_33_44_55_66_77_88_99_AA_BB_CC_DD_EE_FF_00;
+const EQ_B_LO: u128 = 0x11_FF_33_00_55_66_77_FF_99_AA_00_CC_DD_EE_00_00;
+const EQ_A_HI: u128 = 0x0102_0304_0506_0708_090A_0B0C_0D0E_0F10;
+const EQ_B_HI: u128 = 0x0102_FFFF_0506_0708_090A_0000_0D0E_0F10;
+
+#[test]
+fn test_vpcmpeqb_xmm_value() {
+    let code = [0xc5, 0xf1, 0x74, 0xc2, 0xf4]; // VPCMPEQB XMM0, XMM1, XMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    keq_set(&mut vcpu, 1, EQ_A_LO, 0xDEAD);
+    keq_set(&mut vcpu, 2, EQ_B_LO, 0xBEEF);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(keq_lo(&vcpu, 0), pcmpeq_bytes(EQ_A_LO, EQ_B_LO));
+    assert_eq!(keq_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vpcmpeqb_ymm_value() {
+    let code = [0xc5, 0xf5, 0x74, 0xc2, 0xf4]; // VPCMPEQB YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    keq_set(&mut vcpu, 1, EQ_A_LO, EQ_A_HI);
+    keq_set(&mut vcpu, 2, EQ_B_LO, EQ_B_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(keq_lo(&vcpu, 0), pcmpeq_bytes(EQ_A_LO, EQ_B_LO));
+    assert_eq!(keq_hi(&vcpu, 0), pcmpeq_bytes(EQ_A_HI, EQ_B_HI));
+}
+
+#[test]
+fn test_vpcmpeqw_ymm_value() {
+    let code = [0xc5, 0xf5, 0x75, 0xc2, 0xf4]; // VPCMPEQW YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    keq_set(&mut vcpu, 1, EQ_A_LO, EQ_A_HI);
+    keq_set(&mut vcpu, 2, EQ_B_LO, EQ_B_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(keq_lo(&vcpu, 0), pcmpeq_words(EQ_A_LO, EQ_B_LO));
+    assert_eq!(keq_hi(&vcpu, 0), pcmpeq_words(EQ_A_HI, EQ_B_HI));
+}
+
+#[test]
+fn test_vpcmpeqd_ymm_value() {
+    let code = [0xc5, 0xf5, 0x76, 0xc2, 0xf4]; // VPCMPEQD YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    keq_set(&mut vcpu, 1, EQ_A_LO, EQ_A_HI);
+    keq_set(&mut vcpu, 2, EQ_B_LO, EQ_B_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(keq_lo(&vcpu, 0), pcmpeq_dwords(EQ_A_LO, EQ_B_LO));
+    assert_eq!(keq_hi(&vcpu, 0), pcmpeq_dwords(EQ_A_HI, EQ_B_HI));
+}
+
+#[test]
+fn test_vpcmpeqq_ymm_value() {
+    let code = [0xc4, 0xe2, 0x75, 0x29, 0xc2, 0xf4]; // VPCMPEQQ YMM0, YMM1, YMM2
+    let (mut vcpu, _) = setup_vm(&code, None);
+    // lane0 lo equal, lane1 lo differ; hi lane both equal.
+    let a_lo: u128 = 0xDEAD_BEEF_CAFE_BABE_0011_2233_4455_6677;
+    let b_lo: u128 = 0xDEAD_BEEF_CAFE_0000_0011_2233_4455_6677;
+    let a_hi: u128 = 0x1122_3344_5566_7788_99AA_BBCC_DDEE_FF00;
+    let b_hi: u128 = a_hi;
+    keq_set(&mut vcpu, 1, a_lo, a_hi);
+    keq_set(&mut vcpu, 2, b_lo, b_hi);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(keq_lo(&vcpu, 0), pcmpeq_qwords(a_lo, b_lo));
+    assert_eq!(keq_hi(&vcpu, 0), pcmpeq_qwords(a_hi, b_hi));
+    // Sanity: low qword equal -> all ones; high qword of low lane differs -> zero.
+    assert_eq!(keq_lo(&vcpu, 0), 0x0000_0000_0000_0000_FFFF_FFFF_FFFF_FFFF);
+    assert_eq!(keq_hi(&vcpu, 0), u128::MAX);
+}

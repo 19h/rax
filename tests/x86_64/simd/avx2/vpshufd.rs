@@ -566,3 +566,87 @@ fn test_vpshufd_mem_extended_reg() {
     mem.write_slice(&data, GuestAddress(ALIGNED_ADDR)).unwrap();
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests : VPSHUFD shuffles dwords within each 128-bit lane
+// using imm8 (2 bits per result dword). 256-bit applies the same imm per lane.
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn kshd_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn kshd_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn kshd_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+fn pshufd_lane(src: u128, imm: u8) -> u128 {
+    let dw = |n: u32| ((src >> (n * 32)) & 0xFFFF_FFFF) as u128;
+    let mut out = 0u128;
+    for i in 0..4 {
+        let sel = ((imm >> (2 * i)) & 3) as u32;
+        out |= dw(sel) << (i * 32);
+    }
+    out
+}
+
+const SHD_LO: u128 = 0xDDDD_DDDD_CCCC_CCCC_BBBB_BBBB_AAAA_AAAA;
+const SHD_HI: u128 = 0x4444_4444_3333_3333_2222_2222_1111_1111;
+
+#[test]
+fn test_vpshufd_xmm_value() {
+    // VPSHUFD XMM0, XMM1, 0x1B (reverse dwords); upper 128 zeroed.
+    let code = [0xc5, 0xf9, 0x70, 0xc1, 0x1b, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kshd_set(&mut vcpu, 1, SHD_LO, 0xDEAD);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kshd_lo(&vcpu, 0), pshufd_lane(SHD_LO, 0x1b));
+    assert_eq!(kshd_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+    // 0x1B reverses: [a,b,c,d] -> [d,c,b,a]
+    assert_eq!(kshd_lo(&vcpu, 0), 0xAAAA_AAAA_BBBB_BBBB_CCCC_CCCC_DDDD_DDDD);
+}
+
+#[test]
+fn test_vpshufd_ymm_reverse() {
+    // VPSHUFD YMM0, YMM1, 0x1B applied per 128-bit lane.
+    let code = [0xc5, 0xfd, 0x70, 0xc1, 0x1b, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kshd_set(&mut vcpu, 1, SHD_LO, SHD_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kshd_lo(&vcpu, 0), pshufd_lane(SHD_LO, 0x1b));
+    assert_eq!(kshd_hi(&vcpu, 0), pshufd_lane(SHD_HI, 0x1b));
+    assert_eq!(kshd_hi(&vcpu, 0), 0x1111_1111_2222_2222_3333_3333_4444_4444);
+}
+
+#[test]
+fn test_vpshufd_ymm_broadcast_dword0() {
+    // VPSHUFD YMM0, YMM1, 0x00 broadcasts dword 0 within each lane.
+    let code = [0xc5, 0xfd, 0x70, 0xc1, 0x00, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kshd_set(&mut vcpu, 1, SHD_LO, SHD_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kshd_lo(&vcpu, 0), 0xAAAA_AAAA_AAAA_AAAA_AAAA_AAAA_AAAA_AAAA);
+    assert_eq!(kshd_hi(&vcpu, 0), 0x1111_1111_1111_1111_1111_1111_1111_1111);
+}
+
+#[test]
+fn test_vpshufd_ymm_identity() {
+    // VPSHUFD YMM0, YMM1, 0xE4 is the identity (3,2,1,0).
+    let code = [0xc5, 0xfd, 0x70, 0xc1, 0xe4, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kshd_set(&mut vcpu, 1, SHD_LO, SHD_HI);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kshd_lo(&vcpu, 0), SHD_LO);
+    assert_eq!(kshd_hi(&vcpu, 0), SHD_HI);
+}

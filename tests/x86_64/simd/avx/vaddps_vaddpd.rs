@@ -1009,3 +1009,90 @@ fn test_vaddpd_ymm8_ymm9_mem() {
 
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests : packed float ADD using exactly representable
+// operands (powers of two), so results are bit-exact with no rounding.
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn kfa_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn kfa_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn kfa_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+fn pack_ps(v: [f32; 4]) -> u128 {
+    let mut out = 0u128;
+    for i in 0..4 { out |= (v[i].to_bits() as u128) << (i * 32); }
+    out
+}
+fn pack_pd(v: [f64; 2]) -> u128 {
+    (v[0].to_bits() as u128) | ((v[1].to_bits() as u128) << 64)
+}
+
+#[test]
+fn test_vaddps_xmm_value() {
+    // VADDPS XMM0, XMM1, XMM2 ; 4x f32, upper 128 zeroed.
+    let code = [0xc5, 0xf0, 0x58, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let a = [1.0f32, 2.0, 4.0, 0.5];
+    let b = [0.25f32, 8.0, -2.0, 0.5];
+    kfa_set(&mut vcpu, 1, pack_ps(a), 0xDEAD);
+    kfa_set(&mut vcpu, 2, pack_ps(b), 0xBEEF);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kfa_lo(&vcpu, 0), pack_ps([1.25, 10.0, 2.0, 1.0]));
+    assert_eq!(kfa_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vaddps_ymm_value() {
+    // VADDPS YMM0, YMM1, YMM2 ; 8x f32.
+    let code = [0xc5, 0xf4, 0x58, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let a_lo = [1.0f32, 2.0, 4.0, 0.5];
+    let b_lo = [0.25f32, 8.0, -2.0, 0.5];
+    let a_hi = [16.0f32, 0.125, -1.0, 32.0];
+    let b_hi = [16.0f32, 0.125, 1.0, -32.0];
+    kfa_set(&mut vcpu, 1, pack_ps(a_lo), pack_ps(a_hi));
+    kfa_set(&mut vcpu, 2, pack_ps(b_lo), pack_ps(b_hi));
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kfa_lo(&vcpu, 0), pack_ps([1.25, 10.0, 2.0, 1.0]));
+    assert_eq!(kfa_hi(&vcpu, 0), pack_ps([32.0, 0.25, 0.0, 0.0]));
+}
+
+#[test]
+fn test_vaddpd_xmm_value() {
+    // VADDPD XMM0, XMM1, XMM2 ; 2x f64, upper 128 zeroed.
+    let code = [0xc5, 0xf1, 0x58, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kfa_set(&mut vcpu, 1, pack_pd([1.0, 4.0]), 0xDEAD);
+    kfa_set(&mut vcpu, 2, pack_pd([0.5, -2.0]), 0xBEEF);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kfa_lo(&vcpu, 0), pack_pd([1.5, 2.0]));
+    assert_eq!(kfa_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vaddpd_ymm_value() {
+    // VADDPD YMM0, YMM1, YMM2 ; 4x f64.
+    let code = [0xc5, 0xf5, 0x58, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kfa_set(&mut vcpu, 1, pack_pd([1.0, 4.0]), pack_pd([8.0, 0.25]));
+    kfa_set(&mut vcpu, 2, pack_pd([0.5, -2.0]), pack_pd([8.0, 0.75]));
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kfa_lo(&vcpu, 0), pack_pd([1.5, 2.0]));
+    assert_eq!(kfa_hi(&vcpu, 0), pack_pd([16.0, 1.0]));
+}

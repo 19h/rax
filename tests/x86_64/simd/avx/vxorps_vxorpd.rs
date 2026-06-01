@@ -673,3 +673,88 @@ fn test_vxorpd_ymm_mem_extended() {
 
     run_until_hlt(&mut vcpu).unwrap();
 }
+
+// ============================================================================
+// Known-answer VALUE tests (bitwise XOR of exact bit patterns).
+// ============================================================================
+
+use rax::backend::emulator::x86_64::X86_64Vcpu;
+
+fn kxv_set(vcpu: &mut X86_64Vcpu, idx: usize, lo: u128, hi: u128) {
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.xmm[idx][0] = lo as u64;
+    regs.xmm[idx][1] = (lo >> 64) as u64;
+    regs.ymm_high[idx][0] = hi as u64;
+    regs.ymm_high[idx][1] = (hi >> 64) as u64;
+    vcpu.set_regs(&regs).unwrap();
+}
+fn kxv_lo(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.xmm[idx][0] as u128) | ((r.xmm[idx][1] as u128) << 64)
+}
+fn kxv_hi(vcpu: &X86_64Vcpu, idx: usize) -> u128 {
+    let r = vcpu.get_regs().unwrap();
+    (r.ymm_high[idx][0] as u128) | ((r.ymm_high[idx][1] as u128) << 64)
+}
+
+#[test]
+fn test_vxorps_xmm_value() {
+    // VXORPS XMM0, XMM1, XMM2 ; 128-bit XOR, upper 128 zeroed.
+    let code = [0xc5, 0xf0, 0x57, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kxv_set(&mut vcpu, 1, 0xF0F0_F0F0_AAAA_5555_DEAD_BEEF_1234_5678, 0xDEAD);
+    kxv_set(&mut vcpu, 2, 0x0F0F_0F0F_5555_AAAA_CAFE_BABE_8765_4321, 0xBEEF);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        kxv_lo(&vcpu, 0),
+        0xF0F0_F0F0_AAAA_5555_DEAD_BEEF_1234_5678 ^ 0x0F0F_0F0F_5555_AAAA_CAFE_BABE_8765_4321
+    );
+    assert_eq!(kxv_hi(&vcpu, 0), 0, "VEX.128 must zero upper 128 bits");
+}
+
+#[test]
+fn test_vxorps_ymm_value() {
+    // VXORPS YMM0, YMM1, YMM2 ; both lanes XORed.
+    let code = [0xc5, 0xf4, 0x57, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kxv_set(&mut vcpu, 1, 0xFFFF_FFFF_FFFF_FFFF_0000_0000_0000_0000, 0x1234_5678_9ABC_DEF0_0F0F_0F0F_F0F0_F0F0);
+    kxv_set(&mut vcpu, 2, 0xAAAA_AAAA_5555_5555_FFFF_FFFF_0000_0000, 0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        kxv_lo(&vcpu, 0),
+        0xFFFF_FFFF_FFFF_FFFF_0000_0000_0000_0000 ^ 0xAAAA_AAAA_5555_5555_FFFF_FFFF_0000_0000
+    );
+    assert_eq!(
+        kxv_hi(&vcpu, 0),
+        0x1234_5678_9ABC_DEF0_0F0F_0F0F_F0F0_F0F0 ^ 0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF
+    );
+}
+
+#[test]
+fn test_vxorps_ymm_self_zeroes() {
+    // VXORPS YMM3, YMM3, YMM3 ; XOR with self must zero the full 256-bit register.
+    let code = [0xc5, 0xe4, 0x57, 0xdb, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kxv_set(&mut vcpu, 3, 0xDEAD_BEEF_CAFE_BABE_0123_4567_89AB_CDEF, 0xFEED_FACE_DEAD_C0DE_1122_3344_5566_7788);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(kxv_lo(&vcpu, 3), 0);
+    assert_eq!(kxv_hi(&vcpu, 3), 0);
+}
+
+#[test]
+fn test_vxorpd_ymm_value() {
+    // VXORPD YMM0, YMM1, YMM2 ; both lanes XORed.
+    let code = [0xc5, 0xf5, 0x57, 0xc2, 0xf4];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    kxv_set(&mut vcpu, 1, 0xFF00_FF00_FF00_FF00_AAAA_AAAA_AAAA_AAAA, 0x5555_5555_5555_5555_0000_FFFF_0000_FFFF);
+    kxv_set(&mut vcpu, 2, 0x00FF_00FF_00FF_00FF_5555_5555_5555_5555, 0xAAAA_AAAA_AAAA_AAAA_FFFF_0000_FFFF_0000);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(
+        kxv_lo(&vcpu, 0),
+        0xFF00_FF00_FF00_FF00_AAAA_AAAA_AAAA_AAAA ^ 0x00FF_00FF_00FF_00FF_5555_5555_5555_5555
+    );
+    assert_eq!(
+        kxv_hi(&vcpu, 0),
+        0x5555_5555_5555_5555_0000_FFFF_0000_FFFF ^ 0xAAAA_AAAA_AAAA_AAAA_FFFF_0000_FFFF_0000
+    );
+}
