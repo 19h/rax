@@ -15,6 +15,48 @@ const SERIAL_MMIO_BASE: u64 = 0xf000_0000;
 const SERIAL_MMIO_LEN: u64 = 8;
 const MAX_RUN_ITERATIONS: u64 = 100_000;
 
+/// 32-bit register-amount shift (`asl`/`asr`/`lsr`(Rs,Rt)).
+///
+/// The shift amount is the low 7 bits of `rt` sign-extended to a signed value
+/// in `[-64, 63]` (`fSXTN(7,32,RtV)`); a negative amount reverses the shift
+/// direction (`fBIDIR_*` macros). The shift is evaluated in 64 bits then
+/// truncated, so amounts up to 63 are well defined and saturate to all-zero or
+/// all-sign as the spec requires.
+fn hex_reg_shift32(val: u32, rt: u32, kind: ShiftKind) -> u32 {
+    let raw = rt & 0x7f;
+    let shamt = ((raw as i32) << 25) >> 25; // sign-extend bit 6
+    let result: i64 = match kind {
+        // asl: signed source, left-biased (negative amount -> arithmetic right).
+        ShiftKind::Lsl => {
+            let s = val as i32 as i64;
+            if shamt < 0 {
+                (s >> ((-shamt) - 1)) >> 1
+            } else {
+                s << shamt
+            }
+        }
+        // asr: signed source, right-biased (negative amount -> left).
+        ShiftKind::Asr => {
+            let s = val as i32 as i64;
+            if shamt < 0 {
+                (s << ((-shamt) - 1)) << 1
+            } else {
+                s >> shamt
+            }
+        }
+        // lsr: unsigned source, right-biased (negative amount -> logical left).
+        ShiftKind::Lsr => {
+            let u = val as u64;
+            (if shamt < 0 {
+                (u << ((-shamt) - 1)) << 1
+            } else {
+                u >> shamt
+            }) as i64
+        }
+    };
+    result as u32
+}
+
 struct MmioPending {
     dst: u8,
     size: u8,
@@ -753,13 +795,8 @@ impl HexagonVcpu {
                 kind,
             } => {
                 let val = self.regs.r[src as usize];
-                let shamt = (self.regs.r[amt as usize] & 0x1f) as u32;
-                let result = match kind {
-                    ShiftKind::Lsl => val.wrapping_shl(shamt),
-                    ShiftKind::Lsr => val.wrapping_shr(shamt),
-                    ShiftKind::Asr => ((val as i32) >> shamt) as u32,
-                };
-                new_r[dst as usize] = Some(result);
+                let rt = self.regs.r[amt as usize];
+                new_r[dst as usize] = Some(hex_reg_shift32(val, rt, kind));
             }
             DecodedInsn::TfrCrR { dst, src } => {
                 new_r[dst as usize] = Some(self.regs.control(src as usize));
@@ -857,87 +894,6 @@ impl HexagonVcpu {
                 let b = self.regs.r[src2 as usize];
                 let result = if a < b { a } else { b };
                 new_r[dst as usize] = Some(result);
-            }
-            // Allocate stack frame
-            // Store LR:FP pair to memory, update SP and FP
-            DecodedInsn::AllocFrame { base, size } => {
-                let sp = self.regs.r[base as usize];
-                let ea = sp.wrapping_sub(8);
-                // LR is R31, FP is R30
-                let lr = self.regs.r[31];
-                let fp = self.regs.r[30];
-                // Store as 64-bit: LR in upper 32 bits, FP in lower 32 bits
-                let pair = ((lr as u64) << 32) | (fp as u64);
-                self.write_u64(ea, pair)?;
-                // Update SP (base register) and FP
-                let new_sp = ea.wrapping_sub(size);
-                new_r[base as usize] = Some(new_sp);
-                new_r[30] = Some(ea); // FP = ea
-            }
-            // Deallocate stack frame
-            // Load LR:FP pair from memory, update SP
-            DecodedInsn::DeallocFrame {
-                base,
-                dst,
-                update_lr_fp,
-            } => {
-                let fp_addr = self.regs.r[base as usize];
-                // Load 64-bit pair: LR in upper 32 bits, FP in lower 32 bits
-                let pair = self.read_u64(fp_addr)?;
-                let restored_fp = pair as u32;
-                let restored_lr = (pair >> 32) as u32;
-                // Update SP (base register)
-                let new_sp = fp_addr.wrapping_add(8);
-                new_r[base as usize] = Some(new_sp);
-                // If dst is specified, store the pair in register pair Rdd
-                if let Some(d) = dst {
-                    // Rdd is a register pair: even register gets low, odd gets high
-                    let even = (d & !1) as usize;
-                    new_r[even] = Some(restored_fp);
-                    new_r[even + 1] = Some(restored_lr);
-                }
-                // If update_lr_fp, restore LR and FP registers
-                if update_lr_fp {
-                    new_r[30] = Some(restored_fp); // FP = R30
-                    new_r[31] = Some(restored_lr); // LR = R31
-                }
-            }
-            // Deallocate and return
-            // Same as DeallocFrame but also jumps to LR
-            DecodedInsn::DeallocReturn {
-                base,
-                dst,
-                pred,
-                update_lr_fp,
-            } => {
-                // Check predicate condition if present
-                let should_execute = match pred {
-                    Some(p) => self.eval_pred(p, &new_p),
-                    None => true,
-                };
-                if should_execute {
-                    let fp_addr = self.regs.r[base as usize];
-                    // Load 64-bit pair: LR in upper 32 bits, FP in lower 32 bits
-                    let pair = self.read_u64(fp_addr)?;
-                    let restored_fp = pair as u32;
-                    let restored_lr = (pair >> 32) as u32;
-                    // Update SP (base register)
-                    let new_sp = fp_addr.wrapping_add(8);
-                    new_r[base as usize] = Some(new_sp);
-                    // If dst is specified, store the pair in register pair Rdd
-                    if let Some(d) = dst {
-                        let even = (d & !1) as usize;
-                        new_r[even] = Some(restored_fp);
-                        new_r[even + 1] = Some(restored_lr);
-                    }
-                    // If update_lr_fp, restore LR and FP registers
-                    if update_lr_fp {
-                        new_r[30] = Some(restored_fp); // FP = R30
-                        new_r[31] = Some(restored_lr); // LR = R31
-                    }
-                    // Jump to LR (return address)
-                    self.set_branch(branch, restored_lr, false)?;
-                }
             }
             DecodedInsn::Unknown(word) => {
                 return Err(Error::Emulator(format!(

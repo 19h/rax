@@ -593,3 +593,168 @@ fn diff_cmp() {
     ];
     run_family("cmp", cases, 30, 0x1003);
 }
+
+// ---------------------------------------------------------------------------
+// Spec corpus survey: read tools/hexagon-diff/cases.txt (generated from the
+// Hexagon spec) and categorise every register-only instruction as
+//   ok        -- rax matches the oracle on all inputs,
+//   diverged  -- rax executes but disagrees (an interpreter bug),
+//   rejected  -- rax rejects the encoding (unimplemented / decode gap).
+// Report-only (`#[ignore]`): run with `cargo test --test hexagon_diff survey
+// -- --ignored --nocapture` to see the coverage worklist.
+// ---------------------------------------------------------------------------
+
+fn read_corpus() -> Vec<(String, String, Vec<u32>)> {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tools/hexagon-diff/cases.txt");
+    let text = match std::fs::read_to_string(&path) {
+        Ok(t) => t,
+        Err(_) => return Vec::new(),
+    };
+    let mut out = Vec::new();
+    for line in text.lines() {
+        if line.starts_with('#') || line.trim().is_empty() {
+            continue;
+        }
+        let parts: Vec<&str> = line.split('\t').collect();
+        if parts.len() != 3 {
+            continue;
+        }
+        let words: Vec<u32> = parts[2]
+            .split(',')
+            .filter_map(|w| u32::from_str_radix(w.trim(), 16).ok())
+            .collect();
+        if !words.is_empty() {
+            out.push((parts[0].to_string(), parts[1].to_string(), words));
+        }
+    }
+    out
+}
+
+#[test]
+fn diff_shift_reg() {
+    let cases = vec![
+        ("asl_r_r".to_string(), "{ r0 = asl(r1,r2) }".to_string()),
+        ("asr_r_r".to_string(), "{ r0 = asr(r1,r2) }".to_string()),
+        ("lsr_r_r".to_string(), "{ r0 = lsr(r1,r2) }".to_string()),
+    ];
+    run_family("shift_reg", cases, 40, 0x1004);
+}
+
+#[test]
+#[ignore]
+fn survey_spec_corpus() {
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("[hexagon_diff] survey: toolchain unavailable -> skipping");
+            return;
+        }
+    };
+    let corpus = read_corpus();
+    if corpus.is_empty() {
+        eprintln!("[hexagon_diff] survey: empty corpus (run tools/hexagon-diff/gen_cases.py)");
+        return;
+    }
+
+    const N_INPUTS: usize = 5;
+    let mut rng = Rng::new(0xC0FFEE);
+    // Build the oracle batch: N inputs per instruction.
+    let mut ocases: Vec<(Vec<u32>, HexState)> = Vec::new();
+    let mut meta: Vec<(usize, HexState)> = Vec::new(); // (corpus idx, input)
+    for (idx, (_, _, words)) in corpus.iter().enumerate() {
+        for _ in 0..N_INPUTS {
+            let st = gen_input(&mut rng);
+            ocases.push((words.clone(), st));
+            meta.push((idx, st));
+        }
+    }
+    let outs = match run_oracle(&oracle, &ocases) {
+        Some(o) => o,
+        None => {
+            eprintln!("[hexagon_diff] survey: oracle run failed -> skipping");
+            return;
+        }
+    };
+
+    use std::collections::BTreeMap;
+    #[derive(Default, Clone)]
+    struct Stat {
+        ok: u32,
+        diverged: u32,
+        rejected: u32,
+        example: String,
+    }
+    let mut stats: BTreeMap<String, Stat> = BTreeMap::new();
+    for (i, (words, st)) in ocases.iter().enumerate() {
+        let (idx, _) = meta[i];
+        let (tag, asm, _) = &corpus[idx];
+        let entry = stats.entry(tag.clone()).or_default();
+        let mut local = Vec::new();
+        match run_rax(words, st) {
+            None => entry.rejected += 1,
+            Some(rax) => {
+                let mut diffs = Vec::new();
+                for r in 0..NREG {
+                    if rax.w[r] != outs[i].w[r] {
+                        diffs.push(format!("r{r}:rax={:#x},hw={:#x}", rax.w[r], outs[i].w[r]));
+                    }
+                }
+                if rax.w[I_PRED] != outs[i].w[I_PRED] {
+                    diffs.push(format!(
+                        "P:rax={:#x},hw={:#x}",
+                        rax.w[I_PRED], outs[i].w[I_PRED]
+                    ));
+                }
+                if rax.w[I_USR] != outs[i].w[I_USR] {
+                    diffs.push(format!(
+                        "USR:rax={:#x},hw={:#x}",
+                        rax.w[I_USR], outs[i].w[I_USR]
+                    ));
+                }
+                if diffs.is_empty() {
+                    entry.ok += 1;
+                } else {
+                    entry.diverged += 1;
+                    local = diffs;
+                }
+            }
+        }
+        if !local.is_empty() && entry.example.is_empty() {
+            entry.example = format!("{asm}  ->  {}", local.join(" "));
+        }
+    }
+
+    let mut n_ok = 0;
+    let mut n_div = 0;
+    let mut n_rej = 0;
+    let mut diverged_tags = Vec::new();
+    let mut rejected_tags = Vec::new();
+    for (tag, s) in &stats {
+        // A tag is "fully ok" only if every input matched.
+        if s.diverged > 0 {
+            n_div += 1;
+            diverged_tags.push((tag.clone(), s.example.clone()));
+        } else if s.rejected > 0 {
+            n_rej += 1;
+            rejected_tags.push(tag.clone());
+        } else {
+            n_ok += 1;
+        }
+    }
+
+    eprintln!("\n==== Hexagon spec-corpus survey ({} instructions) ====", stats.len());
+    eprintln!("  OK (rax == hw):       {n_ok}");
+    eprintln!("  DIVERGED (rax bug):   {n_div}");
+    eprintln!("  REJECTED (unimpl):    {n_rej}");
+    if !diverged_tags.is_empty() {
+        eprintln!("\n-- DIVERGED (implemented but wrong) --");
+        for (tag, ex) in diverged_tags.iter().take(60) {
+            eprintln!("  {tag:24}  {ex}");
+        }
+    }
+    eprintln!("\n-- REJECTED (unimplemented), first 80 --");
+    for tag in rejected_tags.iter().take(80) {
+        eprint!("{tag} ");
+    }
+    eprintln!();
+}
