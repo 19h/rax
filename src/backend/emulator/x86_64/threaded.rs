@@ -94,7 +94,7 @@ impl X86_64Vcpu {
 
         // Cache miss - full decode
         let (bytes, bytes_len) = self.fetch()?;
-        let mut ctx = Decoder::decode_prefixes(bytes, bytes_len)?;
+        let mut ctx = Decoder::decode_prefixes(bytes, bytes_len, self.sregs.cs.l)?;
 
         // Determine operand size
         ctx.op_size = if self.sregs.cs.l {

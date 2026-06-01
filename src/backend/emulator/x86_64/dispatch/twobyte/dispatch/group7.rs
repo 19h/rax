@@ -101,7 +101,9 @@ impl X86_64Vcpu {
                     // CLAC (0x0F 0x01 0xCA) - Clear AC flag
                     ctx.consume_u8()?; // consume modrm
                                        // Note: AC is not a lazy flag, but clear for consistency
-                    self.clear_lazy_flags();
+                    // Materialize (don't discard) pending lazy flags - CLAC must
+                    // only clear AC, leaving ZF/SF/CF/etc. from prior ops intact.
+                    self.materialize_flags();
                     self.regs.rflags &= !flags::bits::AC;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
@@ -110,7 +112,9 @@ impl X86_64Vcpu {
                     // STAC (0x0F 0x01 0xCB) - Set AC flag
                     ctx.consume_u8()?; // consume modrm
                                        // Note: AC is not a lazy flag, but clear for consistency
-                    self.clear_lazy_flags();
+                    // Materialize (don't discard) pending lazy flags - STAC must
+                    // only set AC, leaving ZF/SF/CF/etc. from prior ops intact.
+                    self.materialize_flags();
                     self.regs.rflags |= flags::bits::AC;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)

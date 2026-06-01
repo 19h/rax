@@ -1102,8 +1102,8 @@ impl X86_64Vcpu {
 
         let (bytes, bytes_len) = self.fetch()?;
 
-        // Decode prefixes
-        let mut ctx = Decoder::decode_prefixes(bytes, bytes_len)?;
+        // Decode prefixes (mode-aware: 0xD5 is REX2 in long mode, AAD otherwise)
+        let mut ctx = Decoder::decode_prefixes(bytes, bytes_len, self.sregs.cs.l)?;
 
         // Determine operand size (64-bit mode defaults to 32-bit; compat depends on CS.D).
         ctx.op_size = if self.sregs.cs.l {
@@ -1923,6 +1923,10 @@ impl VCpu for X86_64Vcpu {
         };
         self.regs = state.regs.clone();
         self.sregs = state.sregs.clone();
+        // Injecting CPU state is a serializing event: drop the decode cache so we
+        // re-decode from (possibly externally rewritten) code memory. Not hot -
+        // set_state is only called at init / snapshot restore / GDB, never in run().
+        self.decode_cache.iter_mut().for_each(|e| e.rip = 0);
         Ok(())
     }
 

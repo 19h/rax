@@ -57,6 +57,7 @@ impl Decoder {
     pub fn decode_prefixes(
         bytes: [u8; super::cpu::MAX_INSN_LEN],
         bytes_len: usize,
+        is_long_mode: bool,
     ) -> Result<InsnContext> {
         if bytes_len == 0 {
             return Err(Error::Emulator("instruction too short".to_string()));
@@ -108,6 +109,12 @@ impl Decoder {
                 0x67 => ctx.address_size_override = true,
                 0x40..=0x4F => ctx.rex = Some(b),
                 0xD5 => {
+                    // REX2 (APX) only exists in 64-bit mode. Outside long mode,
+                    // 0xD5 is the AAD opcode, so stop prefix scanning here and let
+                    // the opcode decoder dispatch it (cursor stays on 0xD5).
+                    if !is_long_mode {
+                        break;
+                    }
                     // REX2 prefix: 0xD5 [M:R3:X3:B3:W:R4:X4:B4]
                     // REX2 must be the last prefix before the opcode
                     ctx.cursor += 1;
@@ -193,7 +200,7 @@ mod tests {
         bytes[0] = 0xD5;
         bytes[1] = 0x08; // W=1, all extension bits set (meaning 0 extension)
         bytes[2] = 0x90; // NOP opcode
-        let ctx = Decoder::decode_prefixes(bytes, 3).unwrap();
+        let ctx = Decoder::decode_prefixes(bytes, 3, true).unwrap();
         assert!(ctx.rex2.is_some());
         let rex2 = ctx.rex2.unwrap();
         assert!(!rex2.m);    // M=0 (legacy map)
@@ -205,7 +212,7 @@ mod tests {
         // REX2 with M=1 (0F map), W=0, all extension bits cleared (meaning extended)
         // 0xD5 0x80 = REX2 with M=1
         bytes[1] = 0x80;
-        let ctx = Decoder::decode_prefixes(bytes, 3).unwrap();
+        let ctx = Decoder::decode_prefixes(bytes, 3, true).unwrap();
         let rex2 = ctx.rex2.unwrap();
         assert!(rex2.m);      // M=1 (0F map)
         assert!(!rex2.w);     // W=0
