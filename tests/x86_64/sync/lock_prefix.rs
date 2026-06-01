@@ -1,4 +1,5 @@
-use crate::common::{run_until_hlt, setup_vm, read_mem_u8, read_mem_u16, read_mem_u32, read_mem_u64, write_mem_u8, write_mem_u16, write_mem_u32, write_mem_u64};
+use crate::common::{run_until_hlt, setup_vm, setup_vm_no_idt, read_mem_u8, read_mem_u16, read_mem_u32, read_mem_u64, write_mem_u8, write_mem_u16, write_mem_u32, write_mem_u64, cf_set, zf_set};
+use rax::cpu::{Registers, VCpu, VcpuExit};
 
 // LOCK Prefix Tests - Comprehensive tests for LOCK prefix with various instructions
 // The LOCK prefix (0xF0) ensures atomic execution on multiprocessor systems
@@ -416,4 +417,241 @@ fn test_lock_accumulator_pattern() {
     write_mem_u64(&mem, 0);
     let _ = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(read_mem_u64(&mem), 60, "Accumulator should sum all values");
+}
+
+// ============================================================================
+// LOCK prefix enforcement (#UD on illegal use) + atomic RMW correctness.
+//
+// The LOCK prefix (0xF0) is architecturally legal ONLY on the
+// memory-destination read-modify-write forms of ADD/ADC/AND/BTC/BTR/BTS/
+// CMPXCHG/CMPXCHG8B/CMPXCHG16B/DEC/INC/NEG/NOT/OR/SBB/SUB/XOR/XADD/XCHG.
+// Using it on any other opcode, or on a lockable opcode whose destination is a
+// register (ModR/M mod == 3), raises #UD (vector 6). rax is a single-vCPU
+// interpreter so the RMW is already atomic; the added behaviour is the #UD
+// enforcement and correct XADD/CMPXCHG results+flags.
+//
+// The #UD tests use `setup_vm_no_idt`: with no present IDT entry, delivering
+// #UD surfaces as an Err / non-HLT exit, so reaching HLT means the LOCK was
+// (incorrectly) allowed to execute. This mirrors tests/x86_64/misc/ud.rs.
+// ============================================================================
+
+/// Helper mirroring the ud.rs harness: returns true iff the run hit HLT
+/// (i.e. NO exception was raised).
+fn reached_hlt(code: &[u8], regs: Option<Registers>) -> bool {
+    let (mut vcpu, _mem) = setup_vm_no_idt(code, regs);
+    matches!(vcpu.run(), Ok(VcpuExit::Hlt))
+}
+
+// ----- Positive: LOCK ADD [mem], reg works (item 1 of the task) -----
+
+#[test]
+fn test_lock_add_mem_reg_works() {
+    // LOCK ADD DWORD PTR [RAX], EBX   (F0 01 18: ModRM mod=00 reg=011(EBX) rm=000(RAX))
+    let code = [
+        0x48, 0xc7, 0xc0, 0x00, 0x20, 0x00, 0x00, // MOV RAX, 0x2000
+        0x48, 0xc7, 0xc3, 0x05, 0x00, 0x00, 0x00, // MOV RBX, 5
+        0xf0, 0x01, 0x18,                         // LOCK ADD [RAX], EBX
+        0xf4,                                     // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_u32(&mem, 100);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_u32(&mem), 105, "LOCK ADD [mem], reg must add atomically");
+    assert!(!zf_set(regs.rflags), "ZF clear (result non-zero)");
+    assert!(!cf_set(regs.rflags), "CF clear (no carry)");
+}
+
+#[test]
+fn test_lock_add_mem_reg_sets_flags() {
+    // LOCK ADD DWORD PTR [RAX], EBX with operands that wrap to zero -> ZF + CF.
+    let code = [
+        0x48, 0xc7, 0xc0, 0x00, 0x20, 0x00, 0x00, // MOV RAX, 0x2000
+        0x48, 0xc7, 0xc3, 0x01, 0x00, 0x00, 0x00, // MOV RBX, 1
+        0xf0, 0x01, 0x18,                         // LOCK ADD [RAX], EBX
+        0xf4,                                     // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_u32(&mem, 0xFFFF_FFFF);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_u32(&mem), 0, "0xFFFFFFFF + 1 wraps to 0");
+    assert!(zf_set(regs.rflags), "ZF set (result zero)");
+    assert!(cf_set(regs.rflags), "CF set (carry out)");
+}
+
+// ----- #UD: LOCK on a register destination -----
+
+#[test]
+fn test_lock_add_reg_dest_ud() {
+    // LOCK ADD EBX, EAX   (F0 01 C3: ModRM mod=11 -> register destination) => #UD
+    let code = [
+        0xf0, 0x01, 0xc3, // LOCK ADD EBX, EAX (register dest is illegal w/ LOCK)
+        0xf4,             // HLT (must NOT be reached)
+    ];
+    assert!(!reached_hlt(&code, None), "LOCK on register dest must raise #UD");
+}
+
+#[test]
+fn test_lock_inc_reg_dest_ud() {
+    // LOCK INC EAX  (F0 FF C0: group5 /0 INC with mod=11 register dest) => #UD
+    let code = [
+        0xf0, 0xff, 0xc0, // LOCK INC EAX (register dest)
+        0xf4,             // HLT (must NOT be reached)
+    ];
+    assert!(!reached_hlt(&code, None), "LOCK INC reg must raise #UD");
+}
+
+// ----- #UD: LOCK on a non-lockable opcode -----
+
+#[test]
+fn test_lock_mov_ud() {
+    // LOCK MOV [RAX], EBX  (F0 89 18) -- MOV is never lockable, even to memory.
+    let mut regs = Registers::default();
+    regs.rax = 0x2000;
+    let code = [
+        0xf0, 0x89, 0x18, // LOCK MOV [RAX], EBX
+        0xf4,             // HLT (must NOT be reached)
+    ];
+    assert!(!reached_hlt(&code, Some(regs)), "LOCK MOV must raise #UD");
+}
+
+#[test]
+fn test_lock_cmp_mem_ud() {
+    // LOCK CMP DWORD PTR [RAX], 0  (F0 81 38 ..): group1 /7 = CMP, not lockable
+    // even with a memory destination, because CMP does not write back.
+    let mut regs = Registers::default();
+    regs.rax = 0x2000;
+    let code = [
+        0xf0, 0x81, 0x38, 0x00, 0x00, 0x00, 0x00, // LOCK CMP [RAX], 0
+        0xf4,                                     // HLT (must NOT be reached)
+    ];
+    assert!(!reached_hlt(&code, Some(regs)), "LOCK CMP must raise #UD");
+}
+
+#[test]
+fn test_lock_test_mem_ud() {
+    // LOCK TEST DWORD PTR [RAX], imm32  (F0 F7 00 ..): group3 /0 = TEST, not lockable.
+    let mut regs = Registers::default();
+    regs.rax = 0x2000;
+    let code = [
+        0xf0, 0xf7, 0x00, 0x01, 0x00, 0x00, 0x00, // LOCK TEST [RAX], 1
+        0xf4,                                     // HLT (must NOT be reached)
+    ];
+    assert!(!reached_hlt(&code, Some(regs)), "LOCK TEST must raise #UD");
+}
+
+// ----- LOCK XADD correctness + #UD on register destination -----
+
+#[test]
+fn test_lock_xadd_mem_reg_works() {
+    // LOCK XADD DWORD PTR [RAX], EBX  (F0 0F C1 18)
+    // DEST = DEST + SRC; SRC(=EBX) = old DEST.
+    let code = [
+        0x48, 0xc7, 0xc0, 0x00, 0x20, 0x00, 0x00, // MOV RAX, 0x2000
+        0x48, 0xc7, 0xc3, 0x0a, 0x00, 0x00, 0x00, // MOV RBX, 10
+        0xf0, 0x0f, 0xc1, 0x18,                   // LOCK XADD [RAX], EBX
+        0xf4,                                     // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_u32(&mem, 100);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_u32(&mem), 110, "XADD: memory = old(100) + EBX(10)");
+    assert_eq!(regs.rbx & 0xFFFF_FFFF, 100, "XADD: EBX = old memory value (100)");
+}
+
+#[test]
+fn test_lock_xadd_reg_dest_ud() {
+    // LOCK XADD EBX, EAX  (F0 0F C1 C3: ModRM mod=11 register dest) => #UD
+    let code = [
+        0xf0, 0x0f, 0xc1, 0xc3, // LOCK XADD EBX, EAX (register dest)
+        0xf4,                   // HLT (must NOT be reached)
+    ];
+    assert!(!reached_hlt(&code, None), "LOCK XADD reg dest must raise #UD");
+}
+
+// ----- LOCK CMPXCHG correctness (both branches) + #UD on register destination -----
+
+#[test]
+fn test_lock_cmpxchg_mem_reg_success() {
+    // LOCK CMPXCHG DWORD PTR [RDI], EBX  (F0 0F B1 1F)
+    // EAX == DEST -> ZF=1, DEST = EBX (source). The pointer is held in RDI (not
+    // the accumulator EAX, which CMPXCHG compares against the destination).
+    let code = [
+        0x48, 0xc7, 0xc7, 0x00, 0x20, 0x00, 0x00, // MOV RDI, 0x2000 (pointer)
+        0x48, 0xc7, 0xc3, 0x99, 0x00, 0x00, 0x00, // MOV RBX, 0x99 (new/source value)
+        0xb8, 0x64, 0x00, 0x00, 0x00,             // MOV EAX, 100 (accumulator = expected)
+        0xf0, 0x0f, 0xb1, 0x1f,                   // LOCK CMPXCHG [RDI], EBX (ModRM mod=00 reg=011 rm=111)
+        0xf4,                                     // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_u32(&mem, 100); // DEST == EAX -> success branch
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_u32(&mem), 0x99, "CMPXCHG success: DEST takes source EBX");
+    assert!(zf_set(regs.rflags), "CMPXCHG success sets ZF");
+    assert_eq!(regs.rax & 0xFFFF_FFFF, 100, "Accumulator unchanged on success");
+}
+
+#[test]
+fn test_lock_cmpxchg_mem_reg_failure() {
+    // LOCK CMPXCHG DWORD PTR [RDI], EBX  -- EAX != DEST -> ZF=0, EAX = DEST.
+    let code = [
+        0x48, 0xc7, 0xc7, 0x00, 0x20, 0x00, 0x00, // MOV RDI, 0x2000 (pointer)
+        0x48, 0xc7, 0xc3, 0x99, 0x00, 0x00, 0x00, // MOV RBX, 0x99 (source value)
+        0xb8, 0x64, 0x00, 0x00, 0x00,             // MOV EAX, 100 (accumulator = expected)
+        0xf0, 0x0f, 0xb1, 0x1f,                   // LOCK CMPXCHG [RDI], EBX
+        0xf4,                                     // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_u32(&mem, 200); // DEST(200) != EAX(100) -> failure branch
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_u32(&mem), 200, "CMPXCHG failure: DEST unchanged");
+    assert!(!zf_set(regs.rflags), "CMPXCHG failure clears ZF");
+    assert_eq!(regs.rax & 0xFFFF_FFFF, 200, "Accumulator loaded with DEST on failure");
+}
+
+#[test]
+fn test_lock_cmpxchg_reg_dest_ud() {
+    // LOCK CMPXCHG EBX, EAX  (F0 0F B1 C3: ModRM mod=11 register dest) => #UD
+    let code = [
+        0xf0, 0x0f, 0xb1, 0xc3, // LOCK CMPXCHG EBX, EAX (register dest)
+        0xf4,                   // HLT (must NOT be reached)
+    ];
+    assert!(!reached_hlt(&code, None), "LOCK CMPXCHG reg dest must raise #UD");
+}
+
+// ----- LOCK CMPXCHG8B [mem] is legal (group9 /1, memory dest) -----
+
+#[test]
+fn test_lock_cmpxchg8b_mem_legal() {
+    // LOCK CMPXCHG8B QWORD PTR [RDI]  (F0 0F C7 0F): group9 /1, memory dest -> legal.
+    // EDX:EAX == [mem] -> success: [mem] = ECX:EBX, ZF=1.
+    let code = [
+        0x48, 0xc7, 0xc7, 0x00, 0x20, 0x00, 0x00, // MOV RDI, 0x2000 (pointer)
+        0xb8, 0x78, 0x56, 0x34, 0x12,             // MOV EAX, 0x12345678 (low expected)
+        0xba, 0x00, 0x00, 0x00, 0x00,             // MOV EDX, 0 (high expected)
+        0xbb, 0xef, 0xbe, 0xad, 0xde,             // MOV EBX, 0xDEADBEEF (low new)
+        0xb9, 0x00, 0x00, 0x00, 0x00,             // MOV ECX, 0 (high new)
+        0xf0, 0x0f, 0xc7, 0x0f,                   // LOCK CMPXCHG8B [RDI]
+        0xf4,                                     // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_u64(&mem, 0x0000_0000_1234_5678); // matches EDX:EAX -> success
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_u64(&mem), 0x0000_0000_DEAD_BEEF, "CMPXCHG8B success writes ECX:EBX");
+    assert!(zf_set(regs.rflags), "CMPXCHG8B success sets ZF");
+}
+
+// ----- Plain (non-LOCK) register-destination forms still execute fine -----
+
+#[test]
+fn test_no_lock_add_reg_dest_still_works() {
+    // ADD EBX, EAX without LOCK must NOT be affected by the enforcement.
+    let code = [
+        0x48, 0xc7, 0xc0, 0x07, 0x00, 0x00, 0x00, // MOV RAX, 7
+        0x48, 0xc7, 0xc3, 0x05, 0x00, 0x00, 0x00, // MOV RBX, 5
+        0x01, 0xc3,                               // ADD EBX, EAX  (no LOCK)
+        0xf4,                                     // HLT
+    ];
+    let (mut vcpu, _mem) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rbx & 0xFFFF_FFFF, 12, "ADD EBX, EAX = 5 + 7 (no LOCK, no #UD)");
 }

@@ -357,10 +357,14 @@ fn test_lmsw_in_loop() {
         0x0f, 0x01, 0xe0, // SMSW RAX (get value)
         0x48, 0x31, 0xc9, // XOR RCX, RCX
         // loop:
-        0x0f, 0x01, 0xf0, // LMSW RAX
+        0x0f, 0x01, 0xf0, // LMSW RAX   <- loop target (offset 6 = 0x1006)
         0x48, 0x83, 0xc1, 0x01, // ADD RCX, 1
         0x48, 0x83, 0xf9, 0x03, // CMP RCX, 3
-        0x75, 0xf5, // JNZ loop
+        // JNZ loop. rel8 must reach the LMSW at 0x1006 from the next RIP 0x1013,
+        // i.e. -13 (0xF3). The previous 0xF5 (-11) landed on the LMSW's 0xF0
+        // ModR/M byte, which now (with LOCK-prefix enforcement) decodes as
+        // `LOCK ADD RCX, 1` - a register-destination LOCK that correctly #UDs.
+        0x75, 0xf3, // JNZ loop
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

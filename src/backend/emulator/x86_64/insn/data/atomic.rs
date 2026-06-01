@@ -1,4 +1,13 @@
 //! Atomic instructions: XADD, CMPXCHG.
+//!
+//! LOCK semantics: these read-modify-write forms may carry a LOCK prefix
+//! (0xF0). On a real CPU LOCK guarantees the RMW is atomic w.r.t. other cores;
+//! rax is a single-vCPU interpreter, so each instruction runs to completion
+//! without interleaving and the RMW is already atomic regardless of LOCK.
+//! The only architectural behaviour LOCK adds here is a decode-time legality
+//! check (`X86_64Vcpu::enforce_lock_prefix`): a LOCK on a register-destination
+//! XADD/CMPXCHG (ModR/M mod == 3) raises #UD before these handlers run, so the
+//! register branches below are never reached with a LOCK prefix present.
 
 use crate::cpu::VcpuExit;
 use crate::error::Result;

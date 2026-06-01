@@ -1,6 +1,7 @@
 //! x86_64 instruction decoder with LUT-based prefix detection.
 
 use super::cpu::{InsnContext, Rex2Prefix, X86_64Vcpu};
+use crate::cpu::VcpuExit;
 use crate::error::{Error, Result};
 
 /// Lookup table for prefix detection (256 bytes, index = byte value).
@@ -138,7 +139,7 @@ impl Decoder {
                     // REX2 is always the last prefix
                     break;
                 }
-                0xF0 => {} // LOCK - ignore for now
+                0xF0 => {} // LOCK prefix (legality enforced at dispatch via enforce_lock_prefix)
                 0xF2 | 0xF3 => ctx.rep_prefix = Some(b),
                 0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65 => {
                     ctx.segment_override = Some(b);
@@ -332,6 +333,113 @@ mod tests {
 }
 
 impl X86_64Vcpu {
+    /// Enforce LOCK-prefix legality, raising #UD (vector 6) for illegal use.
+    ///
+    /// The LOCK prefix (0xF0) is architecturally legal *only* on the
+    /// memory-destination read-modify-write forms of a fixed instruction set
+    /// (ADD, ADC, AND, BTC, BTR, BTS, CMPXCHG, CMPXCHG8B/16B, DEC, INC, NEG,
+    /// NOT, OR, SBB, SUB, XOR, XADD, XCHG). Anything else - a non-lockable
+    /// opcode, or a lockable opcode whose destination is a register (ModR/M
+    /// mod == 3) - raises #UD before the instruction executes.
+    ///
+    /// rax is a single-vCPU interpreter, so a LOCKed RMW is already atomic (the
+    /// whole instruction runs without interleaving); the only architectural
+    /// behaviour to add is this decode-time legality check.
+    ///
+    /// The LOCK prefix is not carried in a dedicated `InsnContext` field (to
+    /// avoid widening the struct used on every fetch); instead it is recovered
+    /// here by scanning the instruction's prefix region. `opcode` is the
+    /// primary opcode byte, `opcode_cursor` is its offset in `ctx.bytes` (so the
+    /// prefixes, including any 0xF0, occupy `[0, opcode_cursor)`), and
+    /// `ctx.cursor` points just past the primary opcode in both the full-decode
+    /// and decode-cache-hit paths.
+    ///
+    /// Returns `Ok(Some(exit))` if the LOCK was illegal (after delivering #UD),
+    /// `Ok(None)` if the instruction may proceed.
+    pub(super) fn enforce_lock_prefix(
+        &mut self,
+        ctx: &InsnContext,
+        opcode: u8,
+        opcode_cursor: usize,
+    ) -> Result<Option<VcpuExit>> {
+        // Fast path: no LOCK prefix (0xF0) among the prefix bytes => nothing to
+        // enforce. This is the overwhelmingly common case.
+        let has_lock = ctx.bytes[..opcode_cursor.min(ctx.bytes_len)].contains(&0xF0);
+        if !has_lock {
+            return Ok(None);
+        }
+
+        if Self::lock_is_legal(ctx, opcode) {
+            return Ok(None);
+        }
+
+        // Illegal LOCK use: deliver #UD (vector 6, no error code). RIP still
+        // points at the faulting instruction (it is only advanced by handlers
+        // on success), which is the architecturally correct fault behaviour.
+        self.inject_exception(6, None)?;
+        Ok(Some(VcpuExit::Shutdown))
+    }
+
+    /// Decide whether a LOCK-prefixed instruction is legal. Pure decode-time
+    /// inspection of the opcode plus (where relevant) the ModR/M byte.
+    fn lock_is_legal(ctx: &InsnContext, opcode: u8) -> bool {
+        // For two-byte opcodes the primary byte is 0x0F and the real opcode /
+        // ModR/M follow it; for single-byte opcodes the ModR/M (if any) sits at
+        // the cursor. Resolve the effective opcode and the ModR/M offset.
+        let (eff_opcode, modrm_off, two_byte) = if opcode == 0x0F {
+            (ctx.bytes.get(ctx.cursor).copied().unwrap_or(0), ctx.cursor + 1, true)
+        } else {
+            (opcode, ctx.cursor, false)
+        };
+
+        let modrm = ctx.bytes.get(modrm_off).copied().unwrap_or(0);
+        // LOCK is only ever legal with a memory destination (ModR/M mod != 3).
+        let mem_dest = (modrm >> 6) != 3;
+        let reg_field = (modrm >> 3) & 0x07;
+
+        if two_byte {
+            match eff_opcode {
+                // CMPXCHG r/m, r
+                0xB0 | 0xB1 => mem_dest,
+                // XADD r/m, r
+                0xC0 | 0xC1 => mem_dest,
+                // BTS / BTR / BTC (register-source forms)
+                0xAB | 0xB3 | 0xBB => mem_dest,
+                // Group 8 (0F BA) /5 BTS, /6 BTR, /7 BTC; /4 BT is NOT lockable.
+                0xBA => mem_dest && matches!(reg_field, 5 | 6 | 7),
+                // Group 9 (0F C7) /1 = CMPXCHG8B / CMPXCHG16B.
+                0xC7 => mem_dest && reg_field == 1,
+                _ => false,
+            }
+        } else {
+            match eff_opcode {
+                // ADD/ADC/AND/OR/SBB/SUB/XOR r/m, r (and the byte forms).
+                0x00 | 0x01 // ADD
+                | 0x08 | 0x09 // OR
+                | 0x10 | 0x11 // ADC
+                | 0x18 | 0x19 // SBB
+                | 0x20 | 0x21 // AND
+                | 0x28 | 0x29 // SUB
+                | 0x30 | 0x31 // XOR
+                    => mem_dest,
+                // XCHG r/m, r (always implicitly locked; LOCK is also accepted).
+                0x86 | 0x87 => mem_dest,
+                // Group 1 (0x80/0x81/0x82/0x83): /0 ADD /1 OR /2 ADC /3 SBB
+                // /4 AND /5 SUB /6 XOR are lockable; /7 CMP is NOT.
+                0x80 | 0x81 | 0x82 | 0x83 => mem_dest && reg_field != 7,
+                // Group 3 (0xF6/0xF7): /2 NOT and /3 NEG are lockable; the
+                // others (TEST/MUL/IMUL/DIV/IDIV) are not.
+                0xF6 | 0xF7 => mem_dest && matches!(reg_field, 2 | 3),
+                // Group 4 (0xFE): /0 INC, /1 DEC.
+                0xFE => mem_dest && matches!(reg_field, 0 | 1),
+                // Group 5 (0xFF): /0 INC, /1 DEC are lockable; CALL/JMP/PUSH
+                // are not.
+                0xFF => mem_dest && matches!(reg_field, 0 | 1),
+                _ => false,
+            }
+        }
+    }
+
     /// Get the segment base address for a segment override prefix.
     /// In 64-bit mode, only FS and GS have non-zero bases.
     #[inline]

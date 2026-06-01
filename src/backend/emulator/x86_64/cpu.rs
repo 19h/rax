@@ -1088,6 +1088,15 @@ impl X86_64Vcpu {
                 evex: None,
             };
 
+            // Enforce LOCK-prefix legality (#UD on illegal use) before dispatch.
+            // `cached.cursor` is the primary-opcode offset, so the prefix bytes
+            // (incl. any 0xF0) live in [0, cached.cursor).
+            if let Some(exit) =
+                self.enforce_lock_prefix(&ctx, cached.opcode, cached.cursor)?
+            {
+                return Ok(Some(exit));
+            }
+
             let result = self.trace_and_execute(cached.opcode, &mut ctx, rip);
 
             // End profiling for this instruction
@@ -1151,6 +1160,12 @@ impl X86_64Vcpu {
             bytes: ctx.bytes,
             bytes_len: ctx.bytes_len,
         };
+
+        // Enforce LOCK-prefix legality (#UD on illegal use) before dispatch.
+        // `opcode_cursor` is the primary-opcode offset; prefixes precede it.
+        if let Some(exit) = self.enforce_lock_prefix(&ctx, opcode, opcode_cursor)? {
+            return Ok(Some(exit));
+        }
 
         // Execute instruction
         let result = self.trace_and_execute(opcode, &mut ctx, rip);
