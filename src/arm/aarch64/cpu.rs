@@ -1751,8 +1751,11 @@ impl AArch64Cpu {
         // Cryptographic AES/SHA operations
         // AES: 0100 1110 00 1 01000 0 opcode 10 Rn Rd (bits[31:24]=0x4E)
         // SHA two-reg: 0101 1110 00 1 01000 0 opcode 10 Rn Rd (bits[31:24]=0x5E)
+        // The bits[21:17]==10100 marker distinguishes AES/SHA two-register crypto
+        // from across-lanes (11000) and two-reg-misc (10000), which share the
+        // same bits[31:24] for Q==1.
         if ((insn >> 24) & 0xFF == 0x4E || (insn >> 24) & 0xFF == 0x5E)
-            && (insn >> 21) & 1 == 1
+            && (insn >> 17) & 0x1F == 0b10100
             && (insn >> 10) & 0x3 == 0b10
         {
             return self.exec_crypto(insn);
@@ -2483,47 +2486,119 @@ impl AArch64Cpu {
         let rn = ((insn >> 5) & 0x1F) as usize;
         let rd = (insn & 0x1F) as usize;
 
-        let esize = 1usize << size;
-        let datasize = if q == 1 { 16 } else { 8 };
-        let elements = datasize / esize;
-
-        let src = self.v[rn].to_le_bytes();
-        let mut result: i64 = 0;
-
-        // Accumulate across all lanes
-        for e in 0..elements {
-            let offset = e * esize;
-            let val: i64 = match (size, u) {
-                (0, 0) => src[offset] as i8 as i64,
-                (0, 1) => src[offset] as u8 as i64,
-                (1, 0) => i16::from_le_bytes([src[offset], src[offset + 1]]) as i64,
-                (1, 1) => u16::from_le_bytes([src[offset], src[offset + 1]]) as i64,
-                (2, 0) => i32::from_le_bytes([
-                    src[offset],
-                    src[offset + 1],
-                    src[offset + 2],
-                    src[offset + 3],
-                ]) as i64,
-                (2, 1) => u32::from_le_bytes([
-                    src[offset],
-                    src[offset + 1],
-                    src[offset + 2],
-                    src[offset + 3],
-                ]) as i64,
-                _ => return Ok(CpuExit::Undefined(insn)),
-            };
-
-            match opcode {
-                0b00011 => result = result.max(val), // SMAX/UMAX
-                0b01010 => result = result.min(val), // SMIN/UMIN
-                0b11011 => result += val,            // ADDV
-                0b00000 => result += val,            // SADDLV/UADDLV
-                _ => return Ok(CpuExit::Undefined(insn)),
+        // ---- Floating-point reductions: FMAXNMV/FMINNMV (0b01100),
+        //      FMAXV/FMINV (0b01111). U==1, f32 lanes only. bit23 picks min. ----
+        if u == 1 && (opcode == 0b01100 || opcode == 0b01111) {
+            if size & 1 != 0 || q == 0 {
+                return Err(ArmError::UndefinedInstruction(insn)); // 4S only
             }
+            let is_min = (size >> 1) & 1 == 1;
+            let nm = opcode == 0b01100;
+            let vn = self.v[rn];
+            let mut acc = f32::from_bits(vn as u32);
+            for e in 1..4 {
+                let x = f32::from_bits((vn >> (32 * e)) as u32);
+                acc = match (is_min, nm) {
+                    (false, false) => fp_max_f32(acc, x),
+                    (true, false) => fp_min_f32(acc, x),
+                    (false, true) => {
+                        if acc.is_nan() {
+                            x
+                        } else if x.is_nan() {
+                            acc
+                        } else {
+                            fp_max_f32(acc, x)
+                        }
+                    }
+                    (true, true) => {
+                        if acc.is_nan() {
+                            x
+                        } else if x.is_nan() {
+                            acc
+                        } else {
+                            fp_min_f32(acc, x)
+                        }
+                    }
+                };
+            }
+            self.v[rd] = acc.to_bits() as u128;
+            return Ok(CpuExit::Continue);
         }
 
-        // Write result (as smallest containing size for reductions)
-        self.v[rd] = result as u128;
+        let bits = 8u32 << size;
+        let esize = (bits / 8) as usize;
+        let datasize = if q == 1 { 16 } else { 8 };
+        let elements = datasize / esize;
+        let src = self.v[rn].to_le_bytes();
+
+        // Reductions are defined for 8B/16B/4H/8H and (Q==1) 4S; never 64-bit,
+        // and 8B/4H also exclude the single-element degenerate cases.
+        let valid_size = match size {
+            0b00 => true,            // 8B / 16B
+            0b01 => true,            // 4H / 8H
+            0b10 => q == 1,          // 4S only
+            _ => false,
+        };
+        if !valid_size {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+
+        let (result, result_bits): (u64, u32) = match opcode {
+            0b11011 => {
+                // ADDV
+                let mut acc = 0u64;
+                for e in 0..elements {
+                    acc = acc.wrapping_add(read_elem(&src, e * esize, esize));
+                }
+                (acc & elem_mask(bits), bits)
+            }
+            0b00011 => {
+                // SADDLV (U=0) / UADDLV (U=1) -- widening sum across lanes.
+                let mut acc = 0i128;
+                for e in 0..elements {
+                    let v = read_elem(&src, e * esize, esize);
+                    acc += if u == 0 {
+                        sext_elem(v, bits)
+                    } else {
+                        uext_elem(v, bits) as i128
+                    };
+                }
+                ((acc as u64) & elem_mask(2 * bits), 2 * bits)
+            }
+            0b01010 => {
+                // SMAXV (U=0) / UMAXV (U=1)
+                let mut acc = read_elem(&src, 0, esize);
+                for e in 1..elements {
+                    let v = read_elem(&src, e * esize, esize);
+                    acc = if u == 0 {
+                        if sext_elem(v, bits) > sext_elem(acc, bits) { v } else { acc }
+                    } else if uext_elem(v, bits) > uext_elem(acc, bits) {
+                        v
+                    } else {
+                        acc
+                    };
+                }
+                (acc & elem_mask(bits), bits)
+            }
+            0b11010 => {
+                // SMINV (U=0) / UMINV (U=1)
+                let mut acc = read_elem(&src, 0, esize);
+                for e in 1..elements {
+                    let v = read_elem(&src, e * esize, esize);
+                    acc = if u == 0 {
+                        if sext_elem(v, bits) < sext_elem(acc, bits) { v } else { acc }
+                    } else if uext_elem(v, bits) < uext_elem(acc, bits) {
+                        v
+                    } else {
+                        acc
+                    };
+                }
+                (acc & elem_mask(bits), bits)
+            }
+            _ => return Err(ArmError::UndefinedInstruction(insn)),
+        };
+
+        self.v[rd] = (result as u128) & elem_mask_u128(result_bits);
         Ok(CpuExit::Continue)
     }
 

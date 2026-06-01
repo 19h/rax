@@ -819,6 +819,60 @@ fn diff_simd_shift_fixedpoint() {
     run_batch("simd_shift_fixedpoint", batch);
 }
 
+/// Advanced SIMD across-lanes reduction: `0 Q U 01110 size 11000 opcode 10 Rn Rd`.
+fn enc_across(q: u32, u: u32, size: u32, opcode: u32) -> u32 {
+    (q << 30) | (u << 29) | (0b01110 << 24) | (size << 22) | (0b11000 << 17)
+        | (opcode << 12) | (0b10 << 10) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_simd_across_int() {
+    let ops: &[(u32, u32, &str)] = &[
+        (0, 0b11011, "addv"),
+        (0, 0b00011, "saddlv"),
+        (1, 0b00011, "uaddlv"),
+        (0, 0b01010, "smaxv"),
+        (1, 0b01010, "umaxv"),
+        (0, 0b11010, "sminv"),
+        (1, 0b11010, "uminv"),
+    ];
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for &(u, opcode, name) in ops {
+        for size in 0..4 {
+            for q in 0..2 {
+                cases.push((format!("{name} sz{size} q{q}"), enc_across(q, u, size, opcode)));
+            }
+        }
+    }
+    run_family("simd_across_int", cases, 10, 0x7001);
+}
+
+#[test]
+fn diff_simd_across_fp() {
+    // FMAXV/FMINV/FMAXNMV/FMINNMV over 4S (q==1), size bit23 picks min.
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for &(opcode, name) in &[(0b01111u32, "fmaxv_fminv"), (0b01100, "fmaxnmv_fminnmv")] {
+        for &size in &[0b00u32, 0b10] {
+            cases.push((format!("{name} sz{size}"), enc_across(1, 1, size, opcode)));
+        }
+    }
+    let mut rng = Rng::new(0x7002);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in &cases {
+        for _ in 0..24 {
+            let mut st = ArmState::zeroed();
+            let mut packed: u128 = 0;
+            for lane in 0..4 {
+                let val = ((rng.next() % 81) as i64 - 40) as f32 * 0.25;
+                packed |= (val.to_bits() as u128) << (32 * lane);
+            }
+            st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("simd_across_fp", batch);
+}
+
 /// Advanced SIMD two-register miscellaneous: `0 Q U 01110 size 10000 opcode 10 Rn Rd`.
 fn enc_two_reg(q: u32, u: u32, size: u32, opcode: u32) -> u32 {
     (q << 30) | (u << 29) | (0b01110 << 24) | (size << 22) | (0b10000 << 17)
