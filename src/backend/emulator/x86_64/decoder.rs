@@ -198,7 +198,10 @@ mod tests {
         // 0xD5 0x08 = REX2 with W=1 (64-bit operand)
         let mut bytes = [0u8; MAX_INSN_LEN];
         bytes[0] = 0xD5;
-        bytes[1] = 0x08; // W=1, all extension bits set (meaning 0 extension)
+        // W=1 (bit3) + all R3/X3/B3/R4/X4/B4 extension bits set, M=0 (legacy map).
+        // 0x7F = 0b0111_1111. (Previously 0x08 set only W, contradicting the
+        // r3/r4 asserts below — payload now matches the test's stated intent.)
+        bytes[1] = 0x7F;
         bytes[2] = 0x90; // NOP opcode
         let ctx = Decoder::decode_prefixes(bytes, 3, true).unwrap();
         assert!(ctx.rex2.is_some());
