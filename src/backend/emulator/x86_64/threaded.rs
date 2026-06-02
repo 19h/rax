@@ -88,6 +88,7 @@ impl X86_64Vcpu {
                 rip_relative_offset: 0,
                 segment_override: cached.segment_override,
                 evex: None,
+                opcode: cached.opcode,
             };
             return self.dispatch_threaded(cached.opcode, &mut ctx);
         }
@@ -117,6 +118,12 @@ impl X86_64Vcpu {
 
         let opcode_cursor = ctx.cursor;
         let opcode = ctx.consume_u8()?;
+        ctx.opcode = opcode;
+
+        // Resolve the fn-pointer handler so a later hit (via the main `step()`
+        // path) can dispatch directly. Unmapped opcodes fall back to the match.
+        let handler =
+            Self::resolve_handler(opcode).unwrap_or(X86_64Vcpu::execute_via_match);
 
         // Update cache
         self.decode_cache[cache_idx] = super::cpu::DecodeCacheEntry {
@@ -132,6 +139,7 @@ impl X86_64Vcpu {
             segment_override: ctx.segment_override,
             bytes: ctx.bytes,
             bytes_len: ctx.bytes_len,
+            handler,
         };
 
         self.dispatch_threaded(opcode, &mut ctx)

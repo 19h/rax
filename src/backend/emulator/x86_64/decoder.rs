@@ -81,6 +81,7 @@ impl Decoder {
                 rip_relative_offset: 0,
                 segment_override: None,
                 evex: None,
+                opcode: 0,
             });
         }
 
@@ -98,6 +99,7 @@ impl Decoder {
             rip_relative_offset: 0,
             segment_override: None,
             evex: None,
+            opcode: 0,
         };
 
         loop {

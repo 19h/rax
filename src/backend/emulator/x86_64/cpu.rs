@@ -255,6 +255,14 @@ const DECODE_CACHE_SIZE: usize = 4096;
 const LAPIC_POLL_STRIDE: u64 = 1024;
 pub(super) const DECODE_CACHE_MASK: usize = DECODE_CACHE_SIZE - 1;
 
+/// Uniform-signature instruction handler. Resolved once on a decode-cache miss
+/// (see [`X86_64Vcpu::resolve_handler`]) and stored in the cache entry so a hit
+/// can call the handler directly, skipping the big `execute` opcode match and
+/// the escape/two-byte call chain. Opcode-/cc-derived arguments are recovered
+/// from `InsnContext::opcode` by thin shim wrappers.
+pub(super) type HandlerFn =
+    fn(&mut X86_64Vcpu, &mut InsnContext) -> Result<Option<VcpuExit>>;
+
 /// Cached decoded instruction entry
 #[derive(Clone, Copy, Debug)]
 pub(super) struct DecodeCacheEntry {
@@ -283,6 +291,23 @@ pub(super) struct DecodeCacheEntry {
     pub(super) bytes: [u8; MAX_INSN_LEN],
     /// Number of valid bytes in `bytes`.
     pub(super) bytes_len: usize,
+    /// Handler resolved on the fill (miss) path. On a hit it is called directly,
+    /// skipping the `execute` opcode match. Invalidated with the rest of the
+    /// entry (SMC / mode switch zero `rip`, so a stale handler can never run).
+    pub(super) handler: HandlerFn,
+}
+
+/// Placeholder handler stored in freshly-defaulted (invalid, `rip == 0`) cache
+/// entries. It can never actually run: an entry only dispatches after a key
+/// match, which requires a non-zero `rip` installed by the fill path together
+/// with a real resolved handler.
+fn unreachable_handler(
+    _vcpu: &mut X86_64Vcpu,
+    _ctx: &mut InsnContext,
+) -> Result<Option<VcpuExit>> {
+    Err(Error::Emulator(
+        "decode-cache handler invoked on an invalid entry".to_string(),
+    ))
 }
 
 impl Default for DecodeCacheEntry {
@@ -301,6 +326,7 @@ impl Default for DecodeCacheEntry {
             mode_tag: 0,
             bytes: [0; MAX_INSN_LEN],
             bytes_len: 0,
+            handler: unreachable_handler,
         }
     }
 }
@@ -324,6 +350,11 @@ pub(super) struct InsnContext {
     pub segment_override: Option<u8>,
     /// EVEX prefix state (if present)
     pub evex: Option<EvexPrefix>,
+    /// Primary opcode byte. Set by `step()` before dispatch so uniform-signature
+    /// handler shims (resolved via the fn-pointer dispatch path) can recover the
+    /// opcode-derived register / condition-code arguments without it being passed
+    /// as a separate parameter.
+    pub opcode: u8,
 }
 
 /// REX2 prefix decoded fields (2-byte prefix for APX EGPR access)
@@ -1104,6 +1135,7 @@ impl X86_64Vcpu {
                 rip_relative_offset: 0,
                 segment_override: cached.segment_override,
                 evex: None,
+                opcode: cached.opcode,
             };
 
             // Enforce LOCK-prefix legality (#UD on illegal use) before dispatch.
@@ -1115,7 +1147,12 @@ impl X86_64Vcpu {
                 return Ok(Some(exit));
             }
 
-            let result = self.trace_and_execute(cached.opcode, &mut ctx, rip);
+            // Function-pointer dispatch: call the handler resolved on the fill
+            // path directly, skipping the `execute` opcode match and the
+            // two-byte / escape call chain. Equivalent to `trace_and_execute`
+            // when tracing is off (the common build); the `trace` build keeps
+            // the instrumented path so traces stay complete.
+            let result = self.trace_and_execute_cached(cached.handler, &mut ctx, rip);
 
             // End profiling for this instruction
             #[cfg(feature = "profiling")]
@@ -1162,6 +1199,13 @@ impl X86_64Vcpu {
 
         // Get opcode
         let opcode = ctx.consume_u8()?;
+        ctx.opcode = opcode;
+
+        // Resolve the handler once, here on the (cold) miss path, so subsequent
+        // hits dispatch via the stored fn-pointer. `None` => opcode unimplemented
+        // in `execute`; store a shim that re-enters `execute` to yield the exact
+        // same error the match would (keeps the slow path byte-for-byte correct).
+        let handler = Self::resolve_handler(opcode).unwrap_or(Self::execute_via_match);
 
         // Cache the decoded instruction (incl. raw bytes so hits skip fetch()).
         self.decode_cache[cache_idx] = DecodeCacheEntry {
@@ -1177,6 +1221,7 @@ impl X86_64Vcpu {
             segment_override: ctx.segment_override,
             bytes: ctx.bytes,
             bytes_len: ctx.bytes_len,
+            handler,
         };
 
         // Enforce LOCK-prefix legality (#UD on illegal use) before dispatch.
@@ -1309,6 +1354,53 @@ impl X86_64Vcpu {
         _rip: u64,
     ) -> Result<Option<VcpuExit>> {
         self.execute(opcode, ctx)
+    }
+
+    /// Uniform-signature wrapper around the `execute` opcode match, used as the
+    /// stored handler for opcodes the resolver leaves unmapped (the `_ =>`
+    /// unimplemented arm of `execute`). Recovers the opcode from `ctx` so the
+    /// stored fn-pointer reproduces the match's behaviour (including its error)
+    /// byte-for-byte.
+    #[inline(never)]
+    #[cold]
+    pub(super) fn execute_via_match(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        let opcode = ctx.opcode;
+        self.execute(opcode, ctx)
+    }
+
+    /// Dispatch a decode-cache HIT through the pre-resolved handler fn-pointer.
+    ///
+    /// In the default (non-`trace`) build this is the whole point of the
+    /// fn-pointer cache: one indirect call straight into the handler, skipping
+    /// the `execute` match and escape chain.
+    #[cfg(not(feature = "trace"))]
+    #[inline(always)]
+    fn trace_and_execute_cached(
+        &mut self,
+        handler: HandlerFn,
+        ctx: &mut InsnContext,
+        _rip: u64,
+    ) -> Result<Option<VcpuExit>> {
+        handler(self, ctx)
+    }
+
+    /// Tracing build: route the cached hit back through the instrumented
+    /// `trace_and_execute` (opcode match) so trace output stays complete and
+    /// identical to the pre-fn-pointer behaviour. The resolved handler is
+    /// equivalent to the match arm, so correctness is unaffected.
+    #[cfg(feature = "trace")]
+    #[inline]
+    fn trace_and_execute_cached(
+        &mut self,
+        _handler: HandlerFn,
+        ctx: &mut InsnContext,
+        rip: u64,
+    ) -> Result<Option<VcpuExit>> {
+        let opcode = ctx.opcode;
+        self.trace_and_execute(opcode, ctx, rip)
     }
 
     // Register access methods
