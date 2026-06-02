@@ -5765,26 +5765,36 @@ impl AArch64Cpu {
     fn exec_ldst_pair(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let opc = (insn >> 30) & 0x3;
         let v = (insn >> 26) & 1;
-        let mode = (insn >> 23) & 0x3; // 01=post, 11=pre, 10=signed
+        let mode = (insn >> 23) & 0x3; // 00=no-alloc, 01=post, 10=signed, 11=pre
         let l = (insn >> 22) & 1; // 0=store, 1=load
         let imm7 = ((insn >> 15) & 0x7F) as i32;
         let rt2 = ((insn >> 10) & 0x1F) as u8;
         let rn = ((insn >> 5) & 0x1F) as u8;
         let rt = (insn & 0x1F) as u8;
 
-        if v != 0 {
-            return Err(ArmError::Unimplemented("LDP/STP SIMD".to_string()));
+        // Element (per-register) size in bytes and whether LDPSW sign-extends.
+        let (bytes, ldpsw) = if v != 0 {
+            let b = match opc {
+                0b00 => 4usize,  // S
+                0b01 => 8,       // D
+                0b10 => 16,      // Q
+                _ => return Err(ArmError::UndefinedInstruction(insn)),
+            };
+            (b, false)
+        } else {
+            match opc {
+                0b00 => (4usize, false),       // 32-bit
+                0b01 => (4, true),             // LDPSW (load only)
+                0b10 => (8, false),            // 64-bit
+                _ => return Err(ArmError::UndefinedInstruction(insn)),
+            }
+        };
+        // LDPSW is a load-only encoding.
+        if ldpsw && l == 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
         }
 
-        let (scale, signed) = match opc {
-            0b00 => (4, false), // 32-bit
-            0b01 => (8, false), // 64-bit (LDPSW when l=1)
-            0b10 => (8, false), // 64-bit
-            0b11 => return Err(ArmError::UndefinedInstruction(insn)),
-            _ => unreachable!(),
-        };
-
-        let offset = ((imm7 << 25) >> 25) as i64 * scale;
+        let offset = (((imm7 << 25) >> 25) as i64) * (bytes as i64);
         let wback = mode == 0b01 || mode == 0b11;
         let postindex = mode == 0b01;
 
@@ -5793,21 +5803,36 @@ impl AArch64Cpu {
         } else {
             self.get_x(rn)
         };
-
         let address = if postindex {
             base
         } else {
             (base as i64).wrapping_add(offset) as u64
         };
+        let addr2 = address.wrapping_add(bytes as u64);
 
-        if l != 0 {
-            // Load
-            if scale == 4 {
+        if v != 0 {
+            if l != 0 {
+                let mut b1 = [0u8; 16];
+                let mut b2 = [0u8; 16];
+                for i in 0..bytes {
+                    b1[i] = self.mem_read_u8(address + i as u64)?;
+                    b2[i] = self.mem_read_u8(addr2 + i as u64)?;
+                }
+                self.v[rt as usize] = u128::from_le_bytes(b1);
+                self.v[rt2 as usize] = u128::from_le_bytes(b2);
+            } else {
+                let v1 = self.v[rt as usize].to_le_bytes();
+                let v2 = self.v[rt2 as usize].to_le_bytes();
+                for i in 0..bytes {
+                    self.mem_write_u8(address + i as u64, v1[i])?;
+                    self.mem_write_u8(addr2 + i as u64, v2[i])?;
+                }
+            }
+        } else if bytes == 4 {
+            if l != 0 {
                 let val1 = self.mem_read_u32(address)?;
-                let val2 = self.mem_read_u32(address.wrapping_add(4))?;
-
-                if opc == 0b01 {
-                    // LDPSW - sign extend
+                let val2 = self.mem_read_u32(addr2)?;
+                if ldpsw {
                     self.set_x(rt, val1 as i32 as i64 as u64);
                     self.set_x(rt2, val2 as i32 as i64 as u64);
                 } else {
@@ -5815,33 +5840,19 @@ impl AArch64Cpu {
                     self.set_w(rt2, val2);
                 }
             } else {
-                let val1 = self.mem_read_u64(address)?;
-                let val2 = self.mem_read_u64(address.wrapping_add(8))?;
-                self.set_x(rt, val1);
-                self.set_x(rt2, val2);
+                self.mem_write_u32(address, self.get_w(rt))?;
+                self.mem_write_u32(addr2, self.get_w(rt2))?;
             }
+        } else if l != 0 {
+            self.set_x(rt, self.mem_read_u64(address)?);
+            self.set_x(rt2, self.mem_read_u64(addr2)?);
         } else {
-            // Store
-            if scale == 4 {
-                let val1 = self.get_w(rt);
-                let val2 = self.get_w(rt2);
-                self.mem_write_u32(address, val1)?;
-                self.mem_write_u32(address.wrapping_add(4), val2)?;
-            } else {
-                let val1 = self.get_x(rt);
-                let val2 = self.get_x(rt2);
-                self.mem_write_u64(address, val1)?;
-                self.mem_write_u64(address.wrapping_add(8), val2)?;
-            }
+            self.mem_write_u64(address, self.get_x(rt))?;
+            self.mem_write_u64(addr2, self.get_x(rt2))?;
         }
 
         if wback {
-            let new_base = if postindex {
-                (base as i64).wrapping_add(offset) as u64
-            } else {
-                (base as i64).wrapping_add(offset) as u64
-            };
-
+            let new_base = (base as i64).wrapping_add(offset) as u64;
             if rn == 31 {
                 self.set_current_sp(new_base);
             } else {

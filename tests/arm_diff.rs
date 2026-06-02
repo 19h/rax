@@ -686,6 +686,49 @@ fn diff_fmlal() {
     run_batch("fmlal", batch);
 }
 
+/// Load/store pair: `opc 101 V 0 mode L imm7 Rt2 Rn Rt`. Rt=x0, Rt2=x2, Rn=x1.
+fn enc_ldp(opc: u32, v: u32, mode: u32, l: u32, imm7: u32) -> u32 {
+    (opc << 30) | (0b101 << 27) | (v << 26) | (mode << 23) | (l << 22) | ((imm7 & 0x7F) << 15)
+        | (2 << 10) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_mem_ldp_stp() {
+    // (opc, V, name) for GPR (32/LDPSW/64) and SIMD (S/D/Q).
+    let kinds: &[(u32, u32, bool, &str)] = &[
+        (0b00, 0, false, "stp_w"),
+        (0b10, 0, false, "stp_x"),
+        (0b00, 1, false, "stp_s"),
+        (0b01, 1, false, "stp_d"),
+        (0b10, 1, false, "stp_q"),
+        (0b01, 0, true, "ldpsw"), // load-only
+    ];
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for &(opc, v, load_only, name) in kinds {
+        // modes: 10=signed offset, 01=post-index, 11=pre-index
+        for &mode in &[0b10u32, 0b01, 0b11] {
+            for &l in if load_only { &[1u32][..] } else { &[0u32, 1][..] } {
+                for imm7 in 0..3u32 {
+                    let nm = if l == 1 && !load_only {
+                        name.replace("stp", "ldp")
+                    } else {
+                        name.to_string()
+                    };
+                    cases.push((format!("{nm} m{mode} #{imm7}"), enc_ldp(opc, v, mode, l, imm7)));
+                }
+            }
+        }
+    }
+    let mut rng = Rng::new(0x1_0002);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in &cases {
+        for _ in 0..8 {
+            batch.push((label.clone(), *insn, mem_input(&mut rng)));
+        }
+    }
+    run_batch("mem_ldp_stp", batch);
+}
+
 /// Load/store register, unsigned immediate offset:
 /// `size 111 V 01 opc imm12 Rn Rt`. Rn=base (x1), Rt=Rd (x0/v0).
 fn enc_ldst_uimm(size: u32, v: u32, opc: u32, imm12: u32) -> u32 {
