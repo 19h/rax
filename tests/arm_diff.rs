@@ -686,6 +686,68 @@ fn diff_fmlal() {
     run_batch("fmlal", batch);
 }
 
+/// AdvSIMD load/store single structure:
+/// `0 Q 001101 post L R Rm opcode S size Rn Rt`. Rn=x1, Rt=v0.
+fn enc_single_fields(q: u32, post: u32, l: u32, r: u32, rm: u32, opcode: u32, s: u32, size: u32) -> u32 {
+    (q << 30) | (0b001101 << 24) | (post << 23) | (l << 22) | (r << 21) | (rm << 16)
+        | (opcode << 13) | (s << 12) | (size << 10) | (RN << 5) | RD
+}
+
+/// Single-element form for element-log2-size `esz` (0=B,1=H,2=S,3=D), structure
+/// size `selem` (1-4), lane `index`, load `l`, and `post` index.
+fn enc_single(esz: u32, selem: u32, index: u32, l: u32, post: u32) -> u32 {
+    let scale = if esz == 3 { 0b10 } else { esz };
+    let lsb = ((selem - 1) >> 1) & 1;
+    let r = (selem - 1) & 1;
+    let opcode = (scale << 1) | lsb;
+    let (q, s, size) = match esz {
+        0 => ((index >> 3) & 1, (index >> 2) & 1, index & 3),
+        1 => ((index >> 2) & 1, (index >> 1) & 1, (index & 1) << 1),
+        2 => ((index >> 1) & 1, index & 1, 0),
+        _ => (index & 1, 0, 1),
+    };
+    let rm = if post == 1 { 31 } else { 0 };
+    enc_single_fields(q, post, l, r, rm, opcode, s, size)
+}
+
+/// Replicating load LD1R-LD4R for element-log2-size `esz`, structure `selem`, Q.
+fn enc_single_rep(esz: u32, selem: u32, q: u32, post: u32) -> u32 {
+    let lsb = ((selem - 1) >> 1) & 1;
+    let r = (selem - 1) & 1;
+    let opcode = (0b11 << 1) | lsb;
+    let rm = if post == 1 { 31 } else { 0 };
+    enc_single_fields(q, post, 1, r, rm, opcode, 0, esz)
+}
+
+#[test]
+fn diff_mem_ldst_single() {
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for esz in 0..4u32 {
+        let max_index = 16u32 >> esz; // B:16 H:8 S:4 D:2
+        for selem in 1..=4u32 {
+            for &index in &[0u32, max_index - 1] {
+                for l in 0..2 {
+                    let op = if l == 1 { "ld" } else { "st" };
+                    cases.push((format!("{op}{selem}_single e{esz} i{index}"), enc_single(esz, selem, index, l, 0)));
+                    cases.push((format!("{op}{selem}_single e{esz} i{index} post"), enc_single(esz, selem, index, l, 1)));
+                }
+            }
+            // Replicating loads (LD1R-LD4R)
+            for q in 0..2 {
+                cases.push((format!("ld{selem}r e{esz} q{q}"), enc_single_rep(esz, selem, q, 0)));
+            }
+        }
+    }
+    let mut rng = Rng::new(0x1_0005);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in &cases {
+        for _ in 0..6 {
+            batch.push((label.clone(), *insn, mem_input(&mut rng)));
+        }
+    }
+    run_batch("mem_ldst_single", batch);
+}
+
 /// Atomic memory op: `size 111 0 00 A R 1 Rs o3 opc 00 Rn Rt`. Rs=x2, Rn=x1, Rt=x0.
 fn enc_atomic(size: u32, a: u32, r: u32, o3: u32, opc: u32) -> u32 {
     (size << 30) | (0b111 << 27) | (a << 23) | (r << 22) | (1 << 21) | (2 << 16)

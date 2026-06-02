@@ -1079,6 +1079,10 @@ impl AArch64Cpu {
         if (insn >> 31) & 1 == 0 && (insn >> 24) & 0x3F == 0b001100 {
             return self.exec_ldst_structures(insn);
         }
+        // Advanced SIMD load/store single structure (LD1-4 element, LD1R-LD4R).
+        if (insn >> 31) & 1 == 0 && (insn >> 24) & 0x3F == 0b001101 {
+            return self.exec_ldst_single(insn);
+        }
 
         let op0 = (insn >> 28) & 0xF;
         let op1 = (insn >> 26) & 0x1;
@@ -5866,6 +5870,105 @@ impl AArch64Cpu {
             }
         }
 
+        Ok(CpuExit::Continue)
+    }
+
+    /// Advanced SIMD load/store single structure: one element to/from a lane of
+    /// `selem` consecutive registers (LD1-LD4 by element), and the replicating
+    /// loads LD1R-LD4R (broadcast one element across all lanes).
+    fn exec_ldst_single(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let q = (insn >> 30) & 1;
+        let post = (insn >> 23) & 1;
+        let l = (insn >> 22) & 1;
+        let r = (insn >> 21) & 1;
+        let rm = ((insn >> 16) & 0x1F) as u8;
+        let opcode = (insn >> 13) & 0x7;
+        let s_bit = (insn >> 12) & 1;
+        let size = (insn >> 10) & 0x3;
+        let rn = ((insn >> 5) & 0x1F) as u8;
+        let rt = (insn & 0x1F) as usize;
+
+        let scale = opcode >> 1; // bits[15:14]
+        let selem = (((opcode & 1) << 1) | r) as usize + 1;
+
+        let (esize, index, replicate) = match scale {
+            0b00 => (8u32, ((q << 3) | (s_bit << 2) | size) as usize, false),
+            0b01 => {
+                if size & 1 != 0 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+                (16, ((q << 2) | (s_bit << 1) | (size >> 1)) as usize, false)
+            }
+            0b10 => {
+                if size & 2 != 0 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+                if size & 1 == 0 {
+                    (32, ((q << 1) | s_bit) as usize, false)
+                } else {
+                    if s_bit != 0 {
+                        return Err(ArmError::UndefinedInstruction(insn));
+                    }
+                    (64, q as usize, false)
+                }
+            }
+            _ => {
+                // Replicate (LD1R-LD4R): load-only, S must be 0.
+                if l == 0 || s_bit != 0 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+                (8u32 << size, 0usize, true)
+            }
+        };
+        let ebytes = (esize / 8) as u64;
+        let datasize = if q == 1 { 16usize } else { 8 };
+        let emask = elem_mask_u128(esize);
+
+        let base = if rn == 31 { self.current_sp() } else { self.get_x(rn) };
+        let mut addr = base;
+
+        for sct in 0..selem {
+            let reg = (rt + sct) % 32;
+            if replicate {
+                let mut bytes = [0u8; 8];
+                for (b, slot) in bytes.iter_mut().enumerate().take(ebytes as usize) {
+                    *slot = self.mem_read_u8(addr + b as u64)?;
+                }
+                let val = u64::from_le_bytes(bytes) as u128 & emask;
+                let elements = datasize / ebytes as usize;
+                let mut result = 0u128;
+                for e in 0..elements {
+                    result |= val << (e * esize as usize);
+                }
+                self.v[reg] = result;
+            } else {
+                let shift = index * esize as usize;
+                if l != 0 {
+                    let mut bytes = [0u8; 8];
+                    for (b, slot) in bytes.iter_mut().enumerate().take(ebytes as usize) {
+                        *slot = self.mem_read_u8(addr + b as u64)?;
+                    }
+                    let val = u64::from_le_bytes(bytes) as u128 & emask;
+                    self.v[reg] = (self.v[reg] & !(emask << shift)) | (val << shift);
+                } else {
+                    let val = (self.v[reg] >> shift) & emask;
+                    for b in 0..ebytes as usize {
+                        self.mem_write_u8(addr + b as u64, (val >> (b * 8)) as u8)?;
+                    }
+                }
+            }
+            addr += ebytes;
+        }
+
+        if post != 0 {
+            let inc = if rm == 31 { selem as u64 * ebytes } else { self.get_x(rm) };
+            let new = base.wrapping_add(inc);
+            if rn == 31 {
+                self.set_current_sp(new);
+            } else {
+                self.set_x(rn, new);
+            }
+        }
         Ok(CpuExit::Continue)
     }
 
