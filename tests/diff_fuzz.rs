@@ -2336,3 +2336,95 @@ fn fuzz_lea() {
     }
     h.finish("lea");
 }
+
+// ===========================================================================
+// GENERATOR: ALU with a MEMORY operand (read-modify-write + flags + decode)
+// ===========================================================================
+//
+// Combines three previously-separate concerns into one case: effective-address
+// decode (mem operand at scratch), the ALU op itself, RFLAGS, and the memory
+// write-back — and it drives reads AND writes through the host-pointer fast
+// path (`ram_ptr`) under flag-setting ops, a stronger check of that path than
+// the MOV-only `mem_addressing` generator. Covers both directions:
+//   r/m <- r/m OP reg   (memory destination, opcode base +0/+1)
+//   reg <- reg OP r/m   (register destination, opcode base +2/+3)
+#[test]
+fn fuzz_alu_mem() {
+    const CASES: usize = 600;
+    let mut h = Harness::new(0xA10_3E3F_DEAD_5E11);
+    let sizes = [Size::B8, Size::B16, Size::B32, Size::B64];
+
+    const REG: u8 = 0; // rax (the register operand)
+    const BASE: u8 = 3; // rbx (memory base)
+
+    for _ in 0..CASES {
+        let size = *h.rng.pick(&sizes);
+        let bytes = (size.bits() / 8) as u64;
+        let op = *h.rng.pick(ALU_OPS);
+        let mem_dest = h.rng.below(2) == 0; // true: [mem] OP= reg ; false: reg OP= [mem]
+        let use_disp8 = h.rng.below(2) == 0;
+
+        let target_off = h.rng.below(64 - bytes + 1);
+        let ea = DATA_ADDR + target_off;
+
+        let mut r = Registers::default();
+        let rval = h.rng.operand();
+        set_reg(&mut r, REG, rval);
+        // random incoming CF for ADC/SBB
+        let cf_in = h.rng.below(2) == 1;
+        if cf_in {
+            r.rflags |= flags::bits::CF;
+        }
+
+        let mut code = size_prefix(size);
+        if let Some(rex) = rex_byte(size, true) {
+            code.push(rex);
+        }
+        // base opcode: rm_r_op8 is the r/m8,r8 form; +1 non-byte. +2/+3 swap to r,r/m.
+        let mut opc = op.rm_r_op8;
+        if !mem_dest {
+            opc += 2;
+        }
+        if size != Size::B8 {
+            opc += 1;
+        }
+        code.push(opc);
+
+        // modrm: reg=REG, rm=memory at [rbx] or [rbx+disp8]
+        if use_disp8 {
+            let d8 = (h.rng.next_u32() as i8) as i64;
+            code.push(modrm(0b01, REG, BASE));
+            set_reg(&mut r, BASE, ea.wrapping_sub(d8 as u64));
+            code.push(d8 as u8);
+        } else {
+            code.push(modrm(0b00, REG, BASE));
+            set_reg(&mut r, BASE, ea);
+        }
+        code.push(HLT);
+
+        let mut scratch = [0u8; 64];
+        for b in scratch.iter_mut() {
+            *b = h.rng.next_u32() as u8;
+        }
+
+        let dir = if mem_dest { "[m]op=r" } else { "r op=[m]" };
+        let inputs = format!(
+            "{}.{} {} ea={:#x} reg={:#x} cf_in={}",
+            op.name,
+            size.name(),
+            dir,
+            ea,
+            rval,
+            cf_in
+        );
+        // ALU sets flags; compare flags + scratch (mem dest) + GPRs (reg dest).
+        let opts = CompareOpts {
+            scratch: true,
+            ..CompareOpts::default()
+        };
+        if !h.run_case("alu_mem", &code, r, scratch, opts, inputs, &[]) {
+            break;
+        }
+    }
+    h.finish("alu_mem");
+}
