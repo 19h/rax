@@ -654,6 +654,88 @@ fn diff_fmlal() {
     run_batch("fmlal", batch);
 }
 
+/// Scalar FP 3-source: `0001_1111 type o1 Rm o0 Ra Rn Rd`.
+fn enc_fp3(fp_type: u32, o1: u32, o0: u32) -> u32 {
+    (0b00011111 << 24) | (fp_type << 22) | (o1 << 21) | (RM << 16) | (o0 << 15)
+        | (RA << 10) | (RN << 5) | RD
+}
+/// Scalar FP 2-source: `0001_1110 type 1 Rm opcode 10 Rn Rd`.
+fn enc_fp2(fp_type: u32, opcode: u32) -> u32 {
+    (0b00011110 << 24) | (fp_type << 22) | (1 << 21) | (RM << 16) | (opcode << 12)
+        | (0b10 << 10) | (RN << 5) | RD
+}
+/// Scalar FP 1-source: `0001_1110 type 1 opcode 10000 Rn Rd`.
+fn enc_fp1(fp_type: u32, opcode: u32) -> u32 {
+    (0b00011110 << 24) | (fp_type << 22) | (1 << 21) | (opcode << 15) | (0b10000 << 10)
+        | (RN << 5) | RD
+}
+
+/// Fill v0..v3 low elements with finite (non-zero) floats. `nonneg` keeps them
+/// >= 0 (for FSQRT).
+fn fill_scalar_fp(st: &mut ArmState, rng: &mut Rng, f64op: bool, nonneg: bool) {
+    for r in 0..4usize {
+        let n = (rng.next() % 40) as i64 - 20;
+        let iv = if nonneg { (n.abs()) + 1 } else if n == 0 { 1 } else { n };
+        if f64op {
+            let v = iv as f64 * 0.25;
+            st.set_vreg(r, v.to_bits(), 0);
+        } else {
+            let v = iv as f32 * 0.25;
+            st.set_vreg(r, v.to_bits() as u64, 0);
+        }
+    }
+}
+
+#[test]
+fn diff_fp_scalar() {
+    let mut cases: Vec<(String, u32, bool)> = Vec::new();
+    for &ft in &[0u32, 1] {
+        let f64op = ft == 1;
+        // 3-source: FMADD/FMSUB/FNMADD/FNMSUB
+        for o1 in 0..2 {
+            for o0 in 0..2 {
+                cases.push((format!("fp3 t{ft} o1{o1} o0{o0}"), enc_fp3(ft, o1, o0), f64op));
+            }
+        }
+        // 2-source: FMUL/FDIV/FADD/FSUB/FMAX/FMIN/FMAXNM/FMINNM/FNMUL
+        for opcode in 0..9u32 {
+            cases.push((format!("fp2 t{ft} op{opcode}"), enc_fp2(ft, opcode), f64op));
+        }
+        // 1-source: FMOV/FABS/FNEG + FRINT family (skip FSQRT here; tested below)
+        for &opcode in &[0b000000u32, 0b000001, 0b000010, 0b001000, 0b001001, 0b001010, 0b001011, 0b001100, 0b001110, 0b001111] {
+            cases.push((format!("fp1 t{ft} op{opcode:06b}"), enc_fp1(ft, opcode), f64op));
+        }
+    }
+    let mut rng = Rng::new(0xF101);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn, f64op) in &cases {
+        for _ in 0..16 {
+            let mut st = ArmState::zeroed();
+            fill_scalar_fp(&mut st, &mut rng, *f64op, false);
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("fp_scalar", batch);
+}
+
+#[test]
+fn diff_fp_scalar_sqrt() {
+    let mut cases: Vec<(String, u32, bool)> = Vec::new();
+    for &ft in &[0u32, 1] {
+        cases.push((format!("fsqrt t{ft}"), enc_fp1(ft, 0b000011), ft == 1));
+    }
+    let mut rng = Rng::new(0xF102);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn, f64op) in &cases {
+        for _ in 0..24 {
+            let mut st = ArmState::zeroed();
+            fill_scalar_fp(&mut st, &mut rng, *f64op, true);
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("fp_scalar_sqrt", batch);
+}
+
 /// FCCMP/FCCMPE: scalar FP conditional compare. Output is only NZCV (the flag
 /// rules are deterministic even for NaN operands), so comparison is exact.
 #[test]

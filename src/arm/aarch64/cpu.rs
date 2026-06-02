@@ -1172,6 +1172,46 @@ impl AArch64Cpu {
         let op2 = (insn >> 19) & 0xF;
         let op3 = (insn >> 10) & 0x1FF;
 
+        // Scalar FP data processing (three source): FMADD/FMSUB/FNMADD/FNMSUB.
+        // bits[31:24] = 0001_1111
+        if (insn >> 24) & 0xFF == 0b00011111 {
+            let fp_type = (insn >> 22) & 0x3;
+            let o1 = (insn >> 21) & 1;
+            let rm = ((insn >> 16) & 0x1F) as usize;
+            let o0 = (insn >> 15) & 1;
+            let ra = ((insn >> 10) & 0x1F) as usize;
+            let rn = ((insn >> 5) & 0x1F) as usize;
+            let rd = (insn & 0x1F) as usize;
+            match fp_type {
+                0b00 => {
+                    let n = f32::from_bits(self.v[rn] as u32);
+                    let m = f32::from_bits(self.v[rm] as u32);
+                    let a = f32::from_bits(self.v[ra] as u32);
+                    let r = match (o1, o0) {
+                        (0, 0) => n.mul_add(m, a),    // FMADD:  a + n*m
+                        (0, 1) => (-n).mul_add(m, a), // FMSUB:  a - n*m
+                        (1, 0) => (-n).mul_add(m, -a),// FNMADD: -a - n*m
+                        _ => n.mul_add(m, -a),        // FNMSUB: -a + n*m
+                    };
+                    self.v[rd] = r.to_bits() as u128;
+                }
+                0b01 => {
+                    let n = f64::from_bits(self.v[rn] as u64);
+                    let m = f64::from_bits(self.v[rm] as u64);
+                    let a = f64::from_bits(self.v[ra] as u64);
+                    let r = match (o1, o0) {
+                        (0, 0) => n.mul_add(m, a),
+                        (0, 1) => (-n).mul_add(m, a),
+                        (1, 0) => (-n).mul_add(m, -a),
+                        _ => n.mul_add(m, -a),
+                    };
+                    self.v[rd] = r.to_bits() as u128;
+                }
+                _ => return Err(ArmError::UndefinedInstruction(insn)),
+            }
+            return Ok(CpuExit::Continue);
+        }
+
         // Scalar FP data processing (two source)
         // bits[31:24] = 0001_1110
         // bits[23:22] = type (size)
@@ -1237,61 +1277,53 @@ impl AArch64Cpu {
         // bits[31:24] = 0001_1110
         // bits[23:22] = type (size)
         // bit[21] = 1
-        // bits[20:15] = 10_0000
-        // bits[14:10] = opcode
+        // bits[20:15] = opcode
+        // bits[14:10] = 10000
         if (insn >> 24) & 0xFF == 0b00011110
             && (insn >> 21) & 1 == 1
-            && (insn >> 15) & 0x3F == 0b100000
+            && (insn >> 10) & 0x1F == 0b10000
         {
             let fp_type = (insn >> 22) & 0x3;
-            let opcode = (insn >> 10) & 0x1F;
+            let opcode = (insn >> 15) & 0x1F;
             let rn = ((insn >> 5) & 0x1F) as u8;
             let rd = (insn & 0x1F) as u8;
 
+            // FMOV is a plain copy; the FRINT/FABS/FNEG/FSQRT ops share the
+            // verified two-reg FP element helpers (correct rounding modes).
+            let kind = match opcode {
+                0b00000 => None, // FMOV
+                0b00001 => Some(TwoRegFp::Fabs),
+                0b00010 => Some(TwoRegFp::Fneg),
+                0b00011 => Some(TwoRegFp::Fsqrt),
+                0b01000 => Some(TwoRegFp::RintN),
+                0b01001 => Some(TwoRegFp::RintP),
+                0b01010 => Some(TwoRegFp::RintM),
+                0b01011 => Some(TwoRegFp::RintZ),
+                0b01100 => Some(TwoRegFp::RintA),
+                0b01110 => Some(TwoRegFp::RintX),
+                0b01111 => Some(TwoRegFp::RintI),
+                // 0b001xx with bit2 set are FCVT (precision change) -> handled by
+                // the dedicated FCVT block; anything else is unallocated here.
+                _ => return Err(ArmError::UndefinedInstruction(insn)),
+            };
             match fp_type {
                 0b00 => {
-                    // Single precision
-                    let op = f32::from_bits(self.v[rn as usize] as u32);
-                    let result = match opcode {
-                        0b00000 => op,                                                    // FMOV
-                        0b00001 => op.abs(),                                              // FABS
-                        0b00010 => -op,                                                   // FNEG
-                        0b00011 => op.sqrt(),                                             // FSQRT
-                        0b01000 => op.round(), // FRINTN (round to nearest, ties to even)
-                        0b01001 => op.trunc() + if op.fract() > 0.0 { 1.0 } else { 0.0 }, // FRINTP
-                        0b01010 => op.trunc() - if op.fract() < 0.0 { 1.0 } else { 0.0 }, // FRINTM
-                        0b01011 => op.trunc(), // FRINTZ
-                        _ => {
-                            return Err(ArmError::Unimplemented(format!(
-                                "FP unary opcode {}",
-                                opcode
-                            )))
-                        }
+                    let a = self.v[rn as usize] as u32;
+                    let r = match kind {
+                        None => a,
+                        Some(k) => fp_two_reg_f32(k, a),
                     };
-                    self.v[rd as usize] = result.to_bits() as u128;
+                    self.v[rd as usize] = r as u128;
                 }
                 0b01 => {
-                    // Double precision
-                    let op = f64::from_bits(self.v[rn as usize] as u64);
-                    let result = match opcode {
-                        0b00000 => op,                                                    // FMOV
-                        0b00001 => op.abs(),                                              // FABS
-                        0b00010 => -op,                                                   // FNEG
-                        0b00011 => op.sqrt(),                                             // FSQRT
-                        0b01000 => op.round(),                                            // FRINTN
-                        0b01001 => op.trunc() + if op.fract() > 0.0 { 1.0 } else { 0.0 }, // FRINTP
-                        0b01010 => op.trunc() - if op.fract() < 0.0 { 1.0 } else { 0.0 }, // FRINTM
-                        0b01011 => op.trunc(),                                            // FRINTZ
-                        _ => {
-                            return Err(ArmError::Unimplemented(format!(
-                                "FP unary opcode {}",
-                                opcode
-                            )))
-                        }
+                    let a = self.v[rn as usize] as u64;
+                    let r = match kind {
+                        None => a,
+                        Some(k) => fp_two_reg_f64(k, a),
                     };
-                    self.v[rd as usize] = result.to_bits() as u128;
+                    self.v[rd as usize] = r as u128;
                 }
-                _ => return Err(ArmError::Unimplemented("FP16/reserved".to_string())),
+                _ => return Err(ArmError::UndefinedInstruction(insn)),
             }
             return Ok(CpuExit::Continue);
         }
