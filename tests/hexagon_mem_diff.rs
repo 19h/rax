@@ -324,6 +324,14 @@ fn run_family(name: &str, cases: &[(&str, &str)], base_reg: usize, n: usize, see
             }
             st[base_reg] = base; // address base points into the arena
             st[I_USR] = 0;
+            // Each predicate P0..P3 independently 0x00 / 0xff (drives predicated ops).
+            let mut pred = 0u32;
+            for k in 0..4 {
+                if rng.next() & 1 == 1 {
+                    pred |= 0xffu32 << (8 * k);
+                }
+            }
+            st[I_PRED] = pred;
             let mut arena = [0u8; ARENA];
             for b in arena.iter_mut() {
                 *b = rng.next() as u8;
@@ -356,6 +364,9 @@ fn run_family(name: &str, cases: &[(&str, &str)], base_reg: usize, n: usize, see
         }
         if rax.st[I_USR] != outs[i].st[I_USR] {
             diffs.push(format!("USR:rax={:#x},hw={:#x}", rax.st[I_USR], outs[i].st[I_USR]));
+        }
+        if rax.st[I_PRED] != outs[i].st[I_PRED] {
+            diffs.push(format!("P:rax={:#x},hw={:#x}", rax.st[I_PRED], outs[i].st[I_PRED]));
         }
         if rax.arena != outs[i].arena {
             let j = (0..ARENA).find(|&j| rax.arena[j] != outs[i].arena[j]).unwrap();
@@ -410,6 +421,26 @@ fn diff_mem_store_io() {
         4,
         12,
         0x2222,
+    );
+}
+
+#[test]
+fn diff_mem_pred() {
+    // Predicated loads/stores (p0 drives whether the access happens). The store
+    // src is r5; predicate p0 comes from the random input state.
+    run_family(
+        "mem_pred",
+        &[
+            ("ploadrit", "{ if (p0) r0 = memw(r4+#0) }"),
+            ("ploadrif", "{ if (!p0) r0 = memw(r4+#0) }"),
+            ("ploadrbt", "{ if (p0) r0 = memb(r4+#0) }"),
+            ("pstorerit", "{ if (p0) memw(r4+#0) = r5 }"),
+            ("pstorerif", "{ if (!p0) memw(r4+#0) = r5 }"),
+            ("pstorerbt", "{ if (p0) memb(r4+#0) = r5 }"),
+        ],
+        4,
+        16,
+        0x4444,
     );
 }
 
