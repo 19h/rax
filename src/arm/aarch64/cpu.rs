@@ -3352,6 +3352,27 @@ impl AArch64Cpu {
         let bits = 8u32 << size; // 8, 16, 32 or 64
         let esize = (bits / 8) as usize;
 
+        if scalar {
+            // The scalar form allows only a subset of opcodes. The non-saturating
+            // arithmetic/compare/shift ops (ADD/SUB, CMGT/CMGE/CMHI/CMHS,
+            // CMTST/CMEQ, SSHL/USHL, SRSHL/URSHL) are defined for 64-bit (D)
+            // elements only; the saturating ops allow all sizes; everything else
+            // is unallocated as a scalar.
+            let scalar_d_only = matches!(
+                opcode,
+                0b00110 | 0b00111 | 0b01000 | 0b01010 | 0b10000 | 0b10001
+            );
+            let scalar_any_size = matches!(opcode, 0b00001 | 0b00101 | 0b01001 | 0b01011);
+            let scalar_sqdmulh = opcode == 0b10110;
+            if scalar_d_only {
+                if size != 0b11 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+            } else if !scalar_any_size && !scalar_sqdmulh {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
+        }
+
         // Reject UNDEFINED (opcode, size) combinations. These integer opcodes
         // have no 64-bit (size==0b11) vector form.
         let no_64 = matches!(

@@ -918,6 +918,40 @@ fn diff_simd_across_fp() {
     run_batch("simd_across_fp", batch);
 }
 
+/// Scalar Advanced SIMD three-same: `01 U 11110 size 1 Rm opcode 1 Rn Rd`.
+fn enc_scalar_3same(u: u32, size: u32, opcode: u32) -> u32 {
+    (0b01 << 30) | (u << 29) | (0b11110 << 24) | (size << 22) | (1 << 21) | (RM << 16)
+        | (opcode << 11) | (1 << 10) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_simd_scalar_three_same() {
+    // Integer scalar three-same opcodes (size validity is enforced by rax /
+    // checked against the oracle).
+    let opcodes: &[(u32, &str)] = &[
+        (0b00001, "sqadd"),
+        (0b00101, "sqsub"),
+        (0b00110, "cmgt_cmhi"),
+        (0b00111, "cmge_cmhs"),
+        (0b01000, "sshl_ushl"),
+        (0b01001, "sqshl_uqshl"),
+        (0b01010, "srshl_urshl"),
+        (0b01011, "sqrshl_uqrshl"),
+        (0b10000, "add_sub"),
+        (0b10001, "cmtst_cmeq"),
+        (0b10110, "sqdmulh_sqrdmulh"),
+    ];
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for &(opcode, name) in opcodes {
+        for u in 0..2 {
+            for size in 0..4 {
+                cases.push((format!("{name} u{u} sz{size}"), enc_scalar_3same(u, size, opcode)));
+            }
+        }
+    }
+    run_family("simd_scalar_three_same", cases, 8, 0xD001);
+}
+
 /// SIMD modified immediate: `0 Q op 0111100000 abc cmode o2 1 defgh Rd`.
 fn enc_modimm(q: u32, op: u32, cmode: u32, imm8: u32) -> u32 {
     let abc = (imm8 >> 5) & 0x7;
