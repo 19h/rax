@@ -2034,3 +2034,305 @@ fn fuzz_sse_shift_imm() {
     }
     h.finish("sse_shift_imm");
 }
+
+// ===========================================================================
+// GENERATOR: memory-operand address decoding (ModRM / SIB / disp / RIP-rel)
+// ===========================================================================
+//
+// Every other generator uses mod=0b11 (register-direct operands), so the
+// effective-address computation path (`decode_modrm_addr`: base + index*scale
+// + displacement, the SIB byte, the mod=00/rm=5 RIP-relative form, and the
+// SIB base=5 "disp32, no base" form) was entirely unexercised against KVM.
+// This generates MOV load/store instructions whose memory operand exercises
+// every one of those forms, arranging registers + displacements so the
+// effective address always lands inside the 64-byte scratch region. A wrong
+// decoded address surfaces as a wrong loaded register (load) or wrong scratch
+// bytes (store).
+//
+// Fixed register assignment (all distinct, none rsp/rbp):
+//   reg field (moved register) = rax (enc 0)
+//   base                       = rbx (enc 3)
+//   index                      = rsi (enc 6)
+#[derive(Clone, Copy)]
+enum AddrForm {
+    Base,       // mod=00 rm=base          [rbx]
+    BaseDisp8,  // mod=01 rm=base          [rbx+d8]
+    BaseDisp32, // mod=10 rm=base          [rbx+d32]
+    Sib,        // mod=00 rm=4 SIB         [rbx + rsi*s]
+    SibDisp8,   // mod=01 rm=4 SIB + d8    [rbx + rsi*s + d8]
+    SibDisp32,  // mod=10 rm=4 SIB + d32   [rbx + rsi*s + d32]
+    SibNoIndex, // mod=00 rm=4 SIB idx=4   [rbx]            (no-index encoding)
+    SibNoBase,  // mod=00 rm=4 SIB base=5  [rsi*s + disp32] (no base)
+    RipRel,     // mod=00 rm=5             [rip + disp32]
+}
+
+#[test]
+fn fuzz_mem_addressing() {
+    const CASES: usize = 700;
+    let mut h = Harness::new(0xADD4_E55F_0FF5_E701);
+    let sizes = [Size::B8, Size::B16, Size::B32, Size::B64];
+    let forms = [
+        AddrForm::Base,
+        AddrForm::BaseDisp8,
+        AddrForm::BaseDisp32,
+        AddrForm::Sib,
+        AddrForm::SibDisp8,
+        AddrForm::SibDisp32,
+        AddrForm::SibNoIndex,
+        AddrForm::SibNoBase,
+        AddrForm::RipRel,
+    ];
+
+    const REG: u8 = 0; // rax, the moved register (reg field)
+    const BASE: u8 = 3; // rbx
+    const INDEX: u8 = 6; // rsi
+
+    for _ in 0..CASES {
+        let size = *h.rng.pick(&sizes);
+        let bytes = (size.bits() / 8) as u64;
+        let form = *h.rng.pick(&forms);
+        let is_store = h.rng.below(2) == 0;
+
+        // Effective address: keep [EA, EA+bytes) inside the 64-byte scratch.
+        let target_off = h.rng.below(64 - bytes + 1);
+        let ea = DATA_ADDR + target_off;
+
+        let scale_bits = h.rng.below(4) as u8; // 0..3 -> *1,*2,*4,*8
+        let scale = 1u64 << scale_bits;
+        let idxv = h.rng.below(8); // small index value
+
+        let mut r = Registers::default();
+        let sval = h.rng.operand(); // source value for stores
+        set_reg(&mut r, REG, sval);
+
+        let mut code = size_prefix(size);
+        if let Some(rex) = rex_byte(size, true) {
+            code.push(rex);
+        }
+        let opcode = match (is_store, size == Size::B8) {
+            (true, true) => 0x88,
+            (true, false) => 0x89,
+            (false, true) => 0x8A,
+            (false, false) => 0x8B,
+        };
+        code.push(opcode);
+
+        match form {
+            AddrForm::Base => {
+                code.push(modrm(0b00, REG, BASE));
+                set_reg(&mut r, BASE, ea);
+            }
+            AddrForm::BaseDisp8 => {
+                let d8 = (h.rng.next_u32() as i8) as i64;
+                code.push(modrm(0b01, REG, BASE));
+                set_reg(&mut r, BASE, ea.wrapping_sub(d8 as u64));
+                code.push(d8 as u8);
+            }
+            AddrForm::BaseDisp32 => {
+                let d32 = h.rng.next_u32() as i32 as i64;
+                code.push(modrm(0b10, REG, BASE));
+                set_reg(&mut r, BASE, ea.wrapping_sub(d32 as u64));
+                code.extend_from_slice(&(d32 as i32).to_le_bytes());
+            }
+            AddrForm::Sib => {
+                code.push(modrm(0b00, REG, 4));
+                code.push((scale_bits << 6) | (INDEX << 3) | BASE);
+                set_reg(&mut r, INDEX, idxv);
+                set_reg(&mut r, BASE, ea.wrapping_sub(idxv.wrapping_mul(scale)));
+            }
+            AddrForm::SibDisp8 => {
+                let d8 = (h.rng.next_u32() as i8) as i64;
+                code.push(modrm(0b01, REG, 4));
+                code.push((scale_bits << 6) | (INDEX << 3) | BASE);
+                set_reg(&mut r, INDEX, idxv);
+                set_reg(
+                    &mut r,
+                    BASE,
+                    ea.wrapping_sub(idxv.wrapping_mul(scale)).wrapping_sub(d8 as u64),
+                );
+                code.push(d8 as u8);
+            }
+            AddrForm::SibDisp32 => {
+                let d32 = h.rng.next_u32() as i32 as i64;
+                code.push(modrm(0b10, REG, 4));
+                code.push((scale_bits << 6) | (INDEX << 3) | BASE);
+                set_reg(&mut r, INDEX, idxv);
+                set_reg(
+                    &mut r,
+                    BASE,
+                    ea.wrapping_sub(idxv.wrapping_mul(scale)).wrapping_sub(d32 as u64),
+                );
+                code.extend_from_slice(&(d32 as i32).to_le_bytes());
+            }
+            AddrForm::SibNoIndex => {
+                // index=4 in SIB encodes "no index". EA = base.
+                code.push(modrm(0b00, REG, 4));
+                code.push((scale_bits << 6) | (4 << 3) | BASE);
+                set_reg(&mut r, BASE, ea);
+            }
+            AddrForm::SibNoBase => {
+                // mod=00, SIB base=5 => no base register, disp32 follows.
+                // EA = index*scale + disp32.
+                code.push(modrm(0b00, REG, 4));
+                code.push((scale_bits << 6) | (INDEX << 3) | 5);
+                set_reg(&mut r, INDEX, idxv);
+                let disp = ea.wrapping_sub(idxv.wrapping_mul(scale)) as i64 as i32;
+                code.extend_from_slice(&disp.to_le_bytes());
+            }
+            AddrForm::RipRel => {
+                // mod=00, rm=5 => [rip + disp32], rip = address of NEXT insn.
+                code.push(modrm(0b00, REG, 5));
+                let rip_after = CODE_ADDR + code.len() as u64 + 4;
+                let disp = ea.wrapping_sub(rip_after) as i64 as i32;
+                code.extend_from_slice(&disp.to_le_bytes());
+            }
+        }
+        code.push(HLT);
+
+        // Random scratch contents (the load source / store target window).
+        let mut scratch = [0u8; 64];
+        for b in scratch.iter_mut() {
+            *b = h.rng.next_u32() as u8;
+        }
+
+        let dir = if is_store { "store" } else { "load" };
+        let inputs = format!(
+            "mov.{} {} ea={:#x} off={} scale={} idxv={}",
+            size.name(),
+            dir,
+            ea,
+            target_off,
+            scale,
+            idxv
+        );
+        // MOV does not affect flags; compare scratch (stores) + all GPRs (loads).
+        let opts = CompareOpts {
+            flag_mask: 0,
+            scratch: true,
+            ..CompareOpts::default()
+        };
+        if !h.run_case("mem_addressing", &code, r, scratch, opts, inputs, &[]) {
+            break;
+        }
+    }
+    h.finish("mem_addressing");
+}
+
+// ===========================================================================
+// GENERATOR: LEA (0x8D) — pure effective-address computation
+// ===========================================================================
+//
+// LEA computes base + index*scale + disp into a register WITHOUT dereferencing
+// memory, so it never faults and the base/index/disp values are unconstrained.
+// That makes it the broadest possible test of `decode_modrm_addr` plus the
+// operand-size truncation rules (16-bit preserves the upper 48 bits of the
+// destination, 32-bit zero-extends, 64-bit is full) and the 0x67 address-size
+// override (32-bit address arithmetic, wraps at 2^32). KVM is the oracle.
+#[test]
+fn fuzz_lea() {
+    const CASES: usize = 700;
+    let mut h = Harness::new(0x1EA5_1EA5_C0DE_F00D);
+    let opsizes = [Size::B16, Size::B32, Size::B64];
+    let forms = [
+        AddrForm::Base,
+        AddrForm::BaseDisp8,
+        AddrForm::BaseDisp32,
+        AddrForm::Sib,
+        AddrForm::SibDisp8,
+        AddrForm::SibDisp32,
+        AddrForm::SibNoIndex,
+        AddrForm::SibNoBase,
+        AddrForm::RipRel,
+    ];
+
+    const REG: u8 = 0; // rax (dest)
+    const BASE: u8 = 3; // rbx
+    const INDEX: u8 = 6; // rsi
+
+    for _ in 0..CASES {
+        let size = *h.rng.pick(&opsizes);
+        let form = *h.rng.pick(&forms);
+        let addr32 = h.rng.below(4) == 0; // 0x67 address-size override
+        let scale_bits = h.rng.below(4) as u8;
+
+        let mut r = Registers::default();
+        set_reg(&mut r, BASE, h.rng.operand());
+        set_reg(&mut r, INDEX, h.rng.operand());
+        set_reg(&mut r, REG, h.rng.operand()); // prior dest value (partial-write test)
+
+        let mut code = Vec::new();
+        if addr32 {
+            code.push(0x67);
+        }
+        if size == Size::B16 {
+            code.push(0x66);
+        }
+        if size == Size::B64 {
+            code.push(0x48); // REX.W
+        }
+        code.push(0x8D); // LEA r, m
+
+        let d8 = h.rng.next_u32() as u8;
+        let d32 = h.rng.next_u32();
+        match form {
+            AddrForm::Base => {
+                code.push(modrm(0b00, REG, BASE));
+            }
+            AddrForm::BaseDisp8 => {
+                code.push(modrm(0b01, REG, BASE));
+                code.push(d8);
+            }
+            AddrForm::BaseDisp32 => {
+                code.push(modrm(0b10, REG, BASE));
+                code.extend_from_slice(&d32.to_le_bytes());
+            }
+            AddrForm::Sib => {
+                code.push(modrm(0b00, REG, 4));
+                code.push((scale_bits << 6) | (INDEX << 3) | BASE);
+            }
+            AddrForm::SibDisp8 => {
+                code.push(modrm(0b01, REG, 4));
+                code.push((scale_bits << 6) | (INDEX << 3) | BASE);
+                code.push(d8);
+            }
+            AddrForm::SibDisp32 => {
+                code.push(modrm(0b10, REG, 4));
+                code.push((scale_bits << 6) | (INDEX << 3) | BASE);
+                code.extend_from_slice(&d32.to_le_bytes());
+            }
+            AddrForm::SibNoIndex => {
+                code.push(modrm(0b00, REG, 4));
+                code.push((scale_bits << 6) | (4 << 3) | BASE);
+            }
+            AddrForm::SibNoBase => {
+                code.push(modrm(0b00, REG, 4));
+                code.push((scale_bits << 6) | (INDEX << 3) | 5);
+                code.extend_from_slice(&d32.to_le_bytes());
+            }
+            AddrForm::RipRel => {
+                code.push(modrm(0b00, REG, 5));
+                code.extend_from_slice(&d32.to_le_bytes());
+            }
+        }
+        code.push(HLT);
+
+        let inputs = format!(
+            "lea.{} addr32={} form#{} scale={} rbx={:#x} rsi={:#x}",
+            size.name(),
+            addr32,
+            form as u8,
+            1u64 << scale_bits,
+            r.rbx,
+            r.rsi
+        );
+        let opts = CompareOpts {
+            flag_mask: 0,
+            scratch: false,
+            ..CompareOpts::default()
+        };
+        if !h.run_case("lea", &code, r, [0u8; 64], opts, inputs, &[]) {
+            break;
+        }
+    }
+    h.finish("lea");
+}
