@@ -860,6 +860,26 @@ fn enc_stxr(size: u32, o0: u32) -> u32 {
     (size << 30) | (0b001000 << 24) | (2 << 16) | (o0 << 15) | (0b11111 << 10) | (RN << 5) | 3
 }
 
+/// AES single-block op: `0100111000 10100 opcode 10 Rn Rd`. Rn=v1, Rd=v0.
+fn enc_aes(opcode: u32) -> u32 {
+    0x4e28_0800 | (opcode << 12) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_crypto_aes() {
+    let ops: &[(u32, &str)] = &[
+        (0b00100, "aese"),
+        (0b00101, "aesd"),
+        (0b00110, "aesmc"),
+        (0b00111, "aesimc"),
+    ];
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for &(opcode, name) in ops {
+        cases.push((name.to_string(), enc_aes(opcode)));
+    }
+    run_family("crypto_aes", cases, 40, 0x1_0009);
+}
+
 #[test]
 fn diff_excl_load() {
     let mut cases: Vec<(String, u32)> = Vec::new();
