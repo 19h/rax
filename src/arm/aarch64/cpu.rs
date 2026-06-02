@@ -2885,8 +2885,10 @@ impl AArch64Cpu {
         let scalar = ((insn >> 24) & 0x1F) == 0b11111;
 
         // Element size, second-source register and broadcast lane index.
+        // size==00 is the half-precision FP form (FMUL/FMLA/FMLS/FMULX by
+        // element); it shares the H:L:M index and 4-bit Vm of the integer H form.
         let (bits, vm_reg, index): (u32, usize, usize) = match size {
-            0b01 => (
+            0b00 | 0b01 => (
                 16,
                 ((insn >> 16) & 0xF) as usize,
                 ((h << 2) | (l << 1) | m) as usize,
@@ -2913,7 +2915,8 @@ impl AArch64Cpu {
         };
         if let Some(kind) = fp_kind {
             if size == 0b01 {
-                return Err(ArmError::UndefinedInstruction(insn)); // FP16 indexed: TODO
+                // Half precision uses size==00; size==01 is unallocated for FP.
+                return Err(ArmError::UndefinedInstruction(insn));
             }
             if bits == 64 && q == 0 && !scalar {
                 return Err(ArmError::UndefinedInstruction(insn));
@@ -2927,7 +2930,18 @@ impl AArch64Cpu {
                 let off = e * esize;
                 let a = read_elem(&vn, off, esize);
                 let d = read_elem(&vd_old, off, esize);
-                let r = if bits == 32 {
+                let r = if bits == 16 {
+                    let an = a as u16;
+                    let bn = vm_elem as u16;
+                    let dn = d as u16;
+                    (match kind {
+                        FpKind::Mul => fp16_mul(an, bn),
+                        FpKind::Mulx => fp16_mulx(an, bn),
+                        FpKind::Mla => fp16_mla(dn, an, bn),
+                        FpKind::Mls => fp16_mls(dn, an, bn),
+                        _ => return Err(ArmError::UndefinedInstruction(insn)),
+                    }) as u64
+                } else if bits == 32 {
                     fp_three_same_f32(kind, a as u32, vm_elem as u32, d as u32) as u64
                 } else {
                     fp_three_same_f64(kind, a, vm_elem, d)

@@ -898,6 +898,47 @@ fn fp16_vec(rng: &mut Rng) -> (u64, u64) {
     (lo, hi)
 }
 
+/// Advanced SIMD vector x indexed element (FP16):
+/// `0 Q U 01111 00 L M Rm opcode H 0 Rn Rd`. Rd=v0, Rn=v1, Rm=v2. The broadcast
+/// lane index is H:L:M.
+fn enc_fp16_idx(q: u32, u: u32, opcode: u32, index: u32) -> u32 {
+    let h = (index >> 2) & 1;
+    let l = (index >> 1) & 1;
+    let m = index & 1;
+    (q << 30) | (u << 29) | (0b01111 << 24) | (l << 21) | (m << 20)
+        | (RM << 16) | (opcode << 12) | (h << 11) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_simd_fp16_indexed() {
+    let ops: &[(u32, u32, &str)] = &[
+        (0, 0b0001, "fmla"),
+        (0, 0b0101, "fmls"),
+        (0, 0b1001, "fmul"),
+        (1, 0b1001, "fmulx"),
+    ];
+    let mut rng = Rng::new(0x1_0013);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &(u, opcode, name) in ops {
+        for q in 0..2u32 {
+            for index in 0..8u32 {
+                let insn = enc_fp16_idx(q, u, opcode, index);
+                for _ in 0..6 {
+                    let mut st = ArmState::zeroed();
+                    let (a0, b0) = fp16_vec(&mut rng);
+                    let (a1, b1) = fp16_vec(&mut rng);
+                    let (a2, b2) = fp16_vec(&mut rng);
+                    st.set_vreg(0, a0, b0);
+                    st.set_vreg(1, a1, b1);
+                    st.set_vreg(2, a2, b2);
+                    batch.push((format!("{name} q{q} i{index}"), insn, st));
+                }
+            }
+        }
+    }
+    run_batch("simd_fp16_indexed", batch);
+}
+
 /// Advanced SIMD two-register miscellaneous (FP16):
 /// `0 Q U 01110 a 1 11100 opcode 10 Rn Rd`. Rd=v0, Rn=v1.
 fn enc_fp16_2r(q: u32, u: u32, a: u32, opcode: u32) -> u32 {
