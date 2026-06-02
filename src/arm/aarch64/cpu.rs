@@ -1851,6 +1851,19 @@ impl AArch64Cpu {
             return self.exec_simd_across_lanes(insn);
         }
 
+        // FCMLA by element: 0_Q_1_01111_size_L_M_Rm_0_rot_1_H_0_Rn_Rd. Must
+        // precede the generic indexed dispatch below, since its opcode field
+        // bits[15:12]=0_rot_1 overlaps FMLA/FMLS-by-element. Discriminated by
+        // U==1, bit15==0, bit12==1, bit10==0.
+        if op_bits == 0b01111
+            && (insn >> 29) & 1 == 1
+            && (insn >> 15) & 1 == 0
+            && (insn >> 12) & 1 == 1
+            && (insn >> 10) & 1 == 0
+        {
+            return self.exec_simd_complex_indexed(insn);
+        }
+
         // Advanced SIMD vector x indexed element
         // Encoding: 0_Q_U_01111_size_L_M_Rm_opcode_H_0_Rn_Rd  (bit10 = 0)
         if (op_bits == 0b01111 || op_bits == 0b11111) && (insn >> 10) & 1 == 0 {
@@ -2483,6 +2496,68 @@ impl AArch64Cpu {
             };
             result |= (r_re as u128 & mask) << (re * esize as usize);
             result |= (r_im as u128 & mask) << (im * esize as usize);
+        }
+        self.v[rd] = result;
+        Ok(CpuExit::Continue)
+    }
+
+    /// Execute FCMLA by element: like vector FCMLA, but the Vm complex pair is
+    /// selected once by the H:L (f16) / H (f32) index and reused for every lane.
+    fn exec_simd_complex_indexed(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let q = (insn >> 30) & 1;
+        let size = (insn >> 22) & 0x3;
+        let rot = (insn >> 13) & 0x3;
+        let l = (insn >> 21) & 1;
+        let m = (insn >> 20) & 1;
+        let h = (insn >> 11) & 1;
+        let rm = (((insn >> 16) & 0xF) | (m << 4)) as usize; // Vm = M:Rm
+        let rn = ((insn >> 5) & 0x1F) as usize;
+        let rd = (insn & 0x1F) as usize;
+        // Only f16 (size=01) and f32 (size=10) are allocated.
+        if size != 0b01 && size != 0b10 {
+            return Ok(CpuExit::Undefined(insn));
+        }
+        let esize = 8u32 << size; // 16 or 32
+        let index = if size == 0b01 {
+            ((h << 1) | l) as usize
+        } else {
+            h as usize
+        };
+        if size == 0b10 && (l == 1 || q == 0) {
+            return Ok(CpuExit::Undefined(insn));
+        }
+        if size == 0b01 && h == 1 && q == 0 {
+            return Ok(CpuExit::Undefined(insn));
+        }
+        let datasize = if q == 1 { 128 } else { 64 };
+        let pairs = datasize / (2 * esize as usize);
+        let mask = elem_mask(esize) as u128;
+        let es = esize as usize;
+        let op1 = self.v[rn];
+        let op2 = self.v[rm];
+        let op3 = self.v[rd];
+        let elem = |v: u128, idx: usize| -> u64 { ((v >> (idx * es)) & mask) as u64 };
+        let m_re = elem(op2, index * 2);
+        let m_im = elem(op2, index * 2 + 1);
+        let mut result = 0u128;
+        for e in 0..pairs {
+            let (a_re, a_im) = (elem(op1, 2 * e), elem(op1, 2 * e + 1));
+            let (d_re, d_im) = (elem(op3, 2 * e), elem(op3, 2 * e + 1));
+            let (xr, yr, xi, yi) = match rot {
+                0b00 => (a_re, m_re, a_re, m_im),
+                0b01 => (a_im, fp_neg_bits(m_im, esize), a_im, m_re),
+                0b10 => (
+                    a_re,
+                    fp_neg_bits(m_re, esize),
+                    a_re,
+                    fp_neg_bits(m_im, esize),
+                ),
+                _ => (a_im, m_im, a_im, fp_neg_bits(m_re, esize)),
+            };
+            let r_re = fp_muladd_bits(d_re, xr, yr, esize);
+            let r_im = fp_muladd_bits(d_im, xi, yi, esize);
+            result |= (r_re as u128 & mask) << (2 * e * es);
+            result |= (r_im as u128 & mask) << ((2 * e + 1) * es);
         }
         self.v[rd] = result;
         Ok(CpuExit::Continue)

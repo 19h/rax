@@ -1454,6 +1454,55 @@ fn diff_simd_complex() {
     run_batch("simd_complex", batch);
 }
 
+/// FCMLA by element: `0 Q 1 01111 size L M Rm 0 rot 1 H 0 Rn Rd`. Vm=M:Rm (=v2),
+/// Rd=v0, Rn=v1. rot=bits[14:13], index=H:L (f16) / H (f32).
+fn enc_fcmla_idx(q: u32, size: u32, rot: u32, index: u32) -> u32 {
+    // For f16 index=H:L (2 bits); for f32 index=H (1 bit, L must be 0).
+    let (h, l) = if size == 0b01 {
+        ((index >> 1) & 1, index & 1)
+    } else {
+        (index & 1, 0)
+    };
+    (q << 30) | (1 << 29) | (0b01111 << 24) | (size << 22) | (l << 21)
+        | (RM << 16) | (rot << 13) | (1 << 12) | (h << 11) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_simd_complex_indexed() {
+    let mut rng = Rng::new(0x1_001B);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for &(size, esize) in &[(0b01u32, 16u32), (0b10, 32)] {
+        for q in 0..2u32 {
+            // f32 needs Q=1; f16 index range depends on Q.
+            let max_index = if size == 0b10 {
+                if q == 0 { continue; } else { 2 }
+            } else if q == 1 {
+                4
+            } else {
+                2
+            };
+            let datasize = if q == 1 { 128 } else { 64 };
+            let lanes = datasize / esize as usize;
+            for rot in 0..4u32 {
+                for index in 0..max_index {
+                    let insn = enc_fcmla_idx(q, size, rot, index);
+                    for _ in 0..8 {
+                        let mut st = ArmState::zeroed();
+                        let (l0, h0) = fill_finite_fp(&mut rng, esize, lanes);
+                        let (l1, h1) = fill_finite_fp(&mut rng, esize, lanes);
+                        let (l2, h2) = fill_finite_fp(&mut rng, esize, lanes);
+                        st.set_vreg(0, l0, h0);
+                        st.set_vreg(1, l1, h1);
+                        st.set_vreg(2, l2, h2);
+                        batch.push((format!("fcmla_idx e{esize} q{q} r{rot} i{index}"), insn, st));
+                    }
+                }
+            }
+        }
+    }
+    run_batch("simd_complex_indexed", batch);
+}
+
 /// SDOT/UDOT by element: `0 Q U 01111 10 L M Rm 1110 H 0 Rn Rd`. Rm=v2, the
 /// H:L index selects a 32-bit group of Vm. Rd=v0, Rn=v1.
 fn enc_dot_idx(q: u32, u: u32, index: u32) -> u32 {
