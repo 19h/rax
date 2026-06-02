@@ -918,6 +918,69 @@ fn diff_simd_across_fp() {
     run_batch("simd_across_fp", batch);
 }
 
+/// Advanced SIMD permute (ZIP/UZP/TRN): `0 Q 0 01110 size 0 Rm 0 opcode 10 Rn Rd`.
+fn enc_permute(q: u32, size: u32, opcode: u32) -> u32 {
+    (q << 30) | (0b01110 << 24) | (size << 22) | (RM << 16) | (opcode << 12) | (0b10 << 10)
+        | (RN << 5) | RD
+}
+
+#[test]
+fn diff_simd_permute() {
+    let ops: &[(u32, &str)] = &[
+        (0b001, "uzp1"),
+        (0b101, "uzp2"),
+        (0b010, "trn1"),
+        (0b110, "trn2"),
+        (0b011, "zip1"),
+        (0b111, "zip2"),
+    ];
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for &(opcode, name) in ops {
+        for size in 0..4 {
+            for q in 0..2 {
+                cases.push((format!("{name} sz{size} q{q}"), enc_permute(q, size, opcode)));
+            }
+        }
+    }
+    run_family("simd_permute", cases, 6, 0xB001);
+}
+
+/// Advanced SIMD EXT: `0 Q 10 1110 00 0 Rm 0 imm4 0 Rn Rd`.
+fn enc_ext(q: u32, imm4: u32) -> u32 {
+    (q << 30) | (1 << 29) | (0b01110 << 24) | (RM << 16) | (imm4 << 11) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_simd_ext() {
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for q in 0..2 {
+        let maxidx = if q == 1 { 16 } else { 8 };
+        for imm4 in 0..maxidx {
+            cases.push((format!("ext q{q} #{imm4}"), enc_ext(q, imm4)));
+        }
+    }
+    run_family("simd_ext", cases, 6, 0xB002);
+}
+
+/// Advanced SIMD TBL/TBX: `0 Q 00 1110 00 0 Rm 0 len op 00 Rn Rd`.
+fn enc_tbl(q: u32, len: u32, op: u32) -> u32 {
+    (q << 30) | (0b001110 << 23) | (RM << 16) | (len << 13) | (op << 12) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_simd_tbl() {
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for op in 0..2 {
+        for len in 0..4 {
+            for q in 0..2 {
+                let name = if op == 0 { "tbl" } else { "tbx" };
+                cases.push((format!("{name} len{len} q{q}"), enc_tbl(q, len, op)));
+            }
+        }
+    }
+    run_family("simd_tbl", cases, 8, 0xB003);
+}
+
 /// Advanced SIMD copy: `0 Q op 01110000 imm5 0 imm4 1 Rn Rd`.
 fn enc_copy(q: u32, op: u32, imm5: u32, imm4: u32) -> u32 {
     (q << 30) | (op << 29) | (0b01110 << 24) | (imm5 << 16) | (imm4 << 11) | (1 << 10)

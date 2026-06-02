@@ -3081,6 +3081,11 @@ impl AArch64Cpu {
         let rn = ((insn >> 5) & 0x1F) as usize;
         let rd = (insn & 0x1F) as usize;
 
+        // 64-bit elements need the 2D (Q==1) arrangement; "1D" is RESERVED.
+        if size == 0b11 && q == 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+
         let esize = 1usize << size;
         let datasize = if q == 1 { 16 } else { 8 };
         let elements = datasize / esize;
@@ -3229,12 +3234,18 @@ impl AArch64Cpu {
 
         let datasize = if q == 1 { 16 } else { 8 };
 
-        // Concatenate Vm:Vn and extract bytes starting at position imm4
+        // imm4 with bit 3 set is UNDEFINED for the 64-bit (Q==0) form.
+        if q == 0 && imm4 >= 8 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+
+        // Concatenate the low `datasize` bytes of Vn:Vm and extract `datasize`
+        // bytes starting at byte `imm4`.
         let src1 = self.v[rn].to_le_bytes();
         let src2 = self.v[rm].to_le_bytes();
         let mut concat = [0u8; 32];
-        concat[..16].copy_from_slice(&src1);
-        concat[16..32].copy_from_slice(&src2);
+        concat[..datasize].copy_from_slice(&src1[..datasize]);
+        concat[datasize..2 * datasize].copy_from_slice(&src2[..datasize]);
 
         let mut dst = [0u8; 16];
         for i in 0..datasize {
