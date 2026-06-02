@@ -958,6 +958,31 @@ fn diff_simd_two_reg_int() {
     run_family("simd_two_reg_int", cases, 8, 0x6001);
 }
 
+#[test]
+fn diff_simd_two_reg_widen() {
+    // Pairwise-widening, narrowing and shift-long two-reg forms (size 0..2).
+    let ops: &[(u32, u32, &str)] = &[
+        (0, 0b00010, "saddlp"),
+        (1, 0b00010, "uaddlp"),
+        (0, 0b00110, "sadalp"),
+        (1, 0b00110, "uadalp"),
+        (0, 0b10010, "xtn"),
+        (1, 0b10010, "sqxtun"),
+        (0, 0b10100, "sqxtn"),
+        (1, 0b10100, "uqxtn"),
+        (1, 0b10011, "shll"),
+    ];
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for &(u, opcode, name) in ops {
+        for size in 0..3 {
+            for q in 0..2 {
+                cases.push((format!("{name} sz{size} q{q}"), enc_two_reg(q, u, size, opcode)));
+            }
+        }
+    }
+    run_family("simd_two_reg_widen", cases, 8, 0x6003);
+}
+
 /// Advanced SIMD vector x indexed element: `0 Q U 01111 size L M Rm opcode H 0 Rn Rd`.
 fn enc_indexed(q: u32, u: u32, size: u32, opcode: u32, vm: u32, index: u32) -> u32 {
     let (rm, mbit, lbit, hbit) = match size {

@@ -3456,6 +3456,88 @@ impl AArch64Cpu {
             }
         }
 
+        // ---- SADDLP/UADDLP (00010), SADALP/UADALP (00110): pairwise widening. ----
+        if opcode == 0b00010 || opcode == 0b00110 {
+            if size == 0b11 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
+            let bits = 8u32 << size;
+            let dbits = 2 * bits;
+            let src_elems = datasize / esize;
+            let out_elems = src_elems / 2;
+            let signed = u == 0;
+            let accumulate = opcode == 0b00110;
+            let src = self.v[rn].to_le_bytes();
+            let vd = self.v[rd];
+            let mut result = 0u128;
+            for o in 0..out_elems {
+                let a = read_elem(&src, (2 * o) * esize, esize);
+                let b = read_elem(&src, (2 * o + 1) * esize, esize);
+                let sum: i128 = if signed {
+                    sext_elem(a, bits) + sext_elem(b, bits)
+                } else {
+                    uext_elem(a, bits) as i128 + uext_elem(b, bits) as i128
+                };
+                let mut val = (sum as u128) & elem_mask_u128(dbits);
+                if accumulate {
+                    let d = (vd >> (o * dbits as usize)) & elem_mask_u128(dbits);
+                    val = val.wrapping_add(d) & elem_mask_u128(dbits);
+                }
+                result |= val << (o * dbits as usize);
+            }
+            self.v[rd] = result;
+            return Ok(CpuExit::Continue);
+        }
+
+        // ---- XTN/SQXTUN (10010), SQXTN/UQXTN (10100): narrowing. ----
+        if opcode == 0b10010 || opcode == 0b10100 {
+            if size == 0b11 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
+            let bits = 8u32 << size; // destination element size
+            let dbits = 2 * bits; // source element size
+            let out_elems = 8 / esize;
+            let part = q as usize;
+            let vn = self.v[rn];
+            let mut packed = 0u64;
+            for e in 0..out_elems {
+                let s = ((vn >> (e * dbits as usize)) & elem_mask_u128(dbits)) as u64;
+                let r: u64 = match (u, opcode) {
+                    (0, 0b10010) => s & elem_mask(bits),                     // XTN
+                    (1, 0b10010) => sat_unsigned(sext_elem(s, dbits), bits), // SQXTUN
+                    (0, 0b10100) => sat_signed(sext_elem(s, dbits), bits),   // SQXTN
+                    _ => sat_unsigned(uext_elem(s, dbits) as i128, bits),    // UQXTN
+                };
+                packed |= (r & elem_mask(bits)) << (e * bits as usize);
+            }
+            let mut bytes = self.v[rd].to_le_bytes();
+            bytes[part * 8..part * 8 + 8].copy_from_slice(&packed.to_le_bytes());
+            if part == 0 {
+                bytes[8..16].copy_from_slice(&[0u8; 8]);
+            }
+            self.v[rd] = u128::from_le_bytes(bytes);
+            return Ok(CpuExit::Continue);
+        }
+
+        // ---- SHLL/SHLL2 (U==1, 10011): shift left long by the element size. ----
+        if u == 1 && opcode == 0b10011 {
+            if size == 0b11 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
+            let bits = 8u32 << size;
+            let dbits = 2 * bits;
+            let part = q as usize;
+            let src = self.v[rn].to_le_bytes();
+            let mut result = 0u128;
+            for e in 0..(8 / esize) {
+                let a = read_elem(&src, part * 8 + e * esize, esize);
+                let val = (uext_elem(a, bits) << bits) & elem_mask_u128(dbits);
+                result |= val << (e * dbits as usize);
+            }
+            self.v[rd] = result;
+            return Ok(CpuExit::Continue);
+        }
+
         let src = self.v[rn].to_le_bytes();
         let mut dst = [0u8; 16];
 
