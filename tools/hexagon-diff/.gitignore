@@ -2,3 +2,6 @@
 oracle.s
 oracle.o
 oracle
+oracle_mem.s
+oracle_mem.o
+oracle_mem
