@@ -926,6 +926,9 @@ fn diff_simd_fp16_scalar() {
     let mut rng = Rng::new(0x1_0015);
     let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
     // Scalar three-same FP16 (only lane 0 is used; upper bits must zero).
+    // Genuine scalar three-same forms plus several with no scalar encoding
+    // (fadd/fmul/fmax/fmaxnm/fmla/faddp) — both rax and the oracle must reject
+    // those.
     let three: &[(u32, u32, u32, &str)] = &[
         (0, 0, 0b011, "fmulx"),
         (0, 0, 0b111, "frecps"),
@@ -936,6 +939,12 @@ fn diff_simd_fp16_scalar() {
         (1, 1, 0b100, "fcmgt"),
         (1, 0, 0b101, "facge"),
         (1, 1, 0b101, "facgt"),
+        (0, 0, 0b010, "fadd"),
+        (1, 0, 0b011, "fmul"),
+        (0, 0, 0b110, "fmax"),
+        (0, 0, 0b000, "fmaxnm"),
+        (0, 0, 0b001, "fmla"),
+        (1, 0, 0b010, "faddp"),
     ];
     for &(u, a, opcode, name) in three {
         let insn = enc_fp16_3s_scalar(u, a, opcode);

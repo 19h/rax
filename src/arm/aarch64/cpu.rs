@@ -2036,6 +2036,28 @@ impl AArch64Cpu {
         };
         let elements = datasize / 2;
 
+        // The scalar three-same FP16 group is a subset: only FMULX, FCMEQ,
+        // FRECPS, FRSQRTS, FCMGE, FACGE, FABD, FCMGT and FACGT have scalar
+        // encodings. The element-wise arithmetic (FADD/FSUB/FMUL/FMAX/FMIN/
+        // FMAXNM/FMINNM/FDIV), the fused FMLA/FMLS and the pairwise forms do
+        // not, so reject them in scalar context.
+        if is_scalar
+            && !matches!(
+                (u, a, opcode),
+                (0, 0, 0b011)
+                    | (0, 0, 0b100)
+                    | (0, 0, 0b111)
+                    | (0, 1, 0b111)
+                    | (1, 0, 0b100)
+                    | (1, 0, 0b101)
+                    | (1, 1, 0b010)
+                    | (1, 1, 0b100)
+                    | (1, 1, 0b101)
+            )
+        {
+            return Ok(CpuExit::Undefined(insn));
+        }
+
         // Classify the operation. `Bin` is a per-lane binary op; `Mla`/`Mls`
         // are the fused multiply-accumulate forms (they read the destination);
         // `Pair` is a pairwise-reduction op. See the Arm "Advanced SIMD
