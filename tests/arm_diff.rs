@@ -899,6 +899,37 @@ fn diff_simd_frecpe() {
 }
 
 #[test]
+fn diff_simd_frsqrte() {
+    let mut cases: Vec<(String, u32, bool)> = Vec::new();
+    for q in 0..2 {
+        cases.push((format!("frsqrte f32 q{q}"), enc_two_reg(q, 1, 0b10, 0b11101), false));
+    }
+    cases.push(("frsqrte f64".into(), enc_two_reg(1, 1, 0b11, 0b11101), true));
+    let mut rng = Rng::new(0x1_000B);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn, f64op) in &cases {
+        for _ in 0..16 {
+            let mut st = ArmState::zeroed();
+            let mut packed: u128 = 0;
+            if *f64op {
+                for lane in 0..2 {
+                    let v = ((rng.next() % 500 + 1) as f64) * 0.0625;
+                    packed |= (v.to_bits() as u128) << (64 * lane);
+                }
+            } else {
+                for lane in 0..4 {
+                    let v = ((rng.next() % 500 + 1) as f32) * 0.0625;
+                    packed |= (v.to_bits() as u128) << (32 * lane);
+                }
+            }
+            st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("simd_frsqrte", batch);
+}
+
+#[test]
 fn diff_crypto_aes() {
     let ops: &[(u32, &str)] = &[
         (0b00100, "aese"),

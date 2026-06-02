@@ -4001,8 +4001,9 @@ impl AArch64Cpu {
             (0, 1, 0b01110) => Some(TwoRegFp::CmLt),
             _ => None,
         };
-        // FRECPE (U=0, sz_hi=1, opcode 11101): reciprocal estimate.
-        if (insn >> 29) & 1 == 0 && (insn >> 23) & 1 == 1 && opcode == 0b11101 {
+        // FRECPE (U=0) / FRSQRTE (U=1): estimate ops, sz_hi=1, opcode 11101.
+        if (insn >> 23) & 1 == 1 && opcode == 0b11101 {
+            let is_rsqrt = (insn >> 29) & 1 == 1;
             if sz == 1 && q == 0 && !scalar {
                 return Some(Err(ArmError::UndefinedInstruction(insn)));
             }
@@ -4014,10 +4015,11 @@ impl AArch64Cpu {
             for e in 0..elements {
                 let off = e * esize;
                 let a = read_elem(&src, off, esize);
-                let r = if sz == 0 {
-                    fp_recip_estimate_f32(a as u32) as u64
-                } else {
-                    fp_recip_estimate_f64(a)
+                let r = match (is_rsqrt, sz == 0) {
+                    (false, true) => fp_recip_estimate_f32(a as u32) as u64,
+                    (false, false) => fp_recip_estimate_f64(a),
+                    (true, true) => fp_rsqrt_estimate_f32(a as u32) as u64,
+                    (true, false) => fp_rsqrt_estimate_f64(a),
                 };
                 write_elem(&mut dst, off, esize, r);
             }
@@ -8551,6 +8553,78 @@ fn fp_recip_estimate_f64(bits: u64) -> u64 {
     let r = recip_estimate(scaled);
     let result_exp = (2045u32.wrapping_sub(exp) & 0x7FF) as u64;
     (sign << 63) | (result_exp << 52) | (((r & 0xFF) as u64) << 44)
+}
+
+/// ARM RecipSqrtEstimate integer core (input a in [128,512)).
+fn recip_sqrt_estimate(mut a: u32) -> u32 {
+    if a < 256 {
+        a = a * 2 + 1;
+    } else {
+        a = (a >> 1) << 1;
+        a = (a + 1) * 2;
+    }
+    let a = a as u64;
+    let mut b: u64 = 512;
+    while a * (b + 1) * (b + 1) < (1u64 << 28) {
+        b += 1;
+    }
+    ((b + 1) >> 1) as u32
+}
+
+/// FRSQRTE for f32.
+fn fp_rsqrt_estimate_f32(bits: u32) -> u32 {
+    let sign = bits >> 31;
+    let exp = (bits >> 23) & 0xFF;
+    let frac = bits & 0x7F_FFFF;
+    if exp == 0xFF && frac != 0 { return bits | 0x40_0000; } // NaN -> qNaN
+    if exp == 0 && frac == 0 { return (sign << 31) | (0xFF << 23); } // zero -> inf
+    if sign == 1 { return 0x7FC0_0000; } // negative -> default NaN
+    if exp == 0xFF { return 0; } // +inf -> +0
+    let mut fraction: u64 = (frac as u64) << 29; // bits<51:29>
+    let mut e = exp as i32;
+    if e == 0 {
+        while (fraction >> 51) & 1 == 0 {
+            fraction = (fraction << 1) & 0xF_FFFF_FFFF_FFFF;
+            e -= 1;
+        }
+        fraction = (fraction << 1) & 0xF_FFFF_FFFF_FFFF;
+    }
+    let scaled = if e & 1 == 0 {
+        0x100 | ((fraction >> 44) & 0xFF) as u32
+    } else {
+        0x80 | ((fraction >> 45) & 0x7F) as u32
+    };
+    let result_exp = (((380 - e) / 2) as u32) & 0xFF;
+    let est = recip_sqrt_estimate(scaled);
+    (sign << 31) | (result_exp << 23) | ((est & 0xFF) << 15)
+}
+
+/// FRSQRTE for f64.
+fn fp_rsqrt_estimate_f64(bits: u64) -> u64 {
+    let sign = bits >> 63;
+    let exp = ((bits >> 52) & 0x7FF) as i32;
+    let frac = bits & 0xF_FFFF_FFFF_FFFF;
+    if exp == 0x7FF && frac != 0 { return bits | 0x8_0000_0000_0000; }
+    if exp == 0 && frac == 0 { return (sign << 63) | (0x7FFu64 << 52); }
+    if sign == 1 { return 0x7FF8_0000_0000_0000; }
+    if exp == 0x7FF { return 0; }
+    let mut fraction: u64 = frac;
+    let mut e = exp;
+    if e == 0 {
+        while (fraction >> 51) & 1 == 0 {
+            fraction = (fraction << 1) & 0xF_FFFF_FFFF_FFFF;
+            e -= 1;
+        }
+        fraction = (fraction << 1) & 0xF_FFFF_FFFF_FFFF;
+    }
+    let scaled = if e & 1 == 0 {
+        0x100 | ((fraction >> 44) & 0xFF) as u32
+    } else {
+        0x80 | ((fraction >> 45) & 0x7F) as u32
+    };
+    let result_exp = (((3068 - e) / 2) as u64) & 0x7FF;
+    let est = recip_sqrt_estimate(scaled);
+    (sign << 63) | (result_exp << 52) | (((est & 0xFF) as u64) << 44)
 }
 
 /// AES S-box and inverse S-box (FIPS-197).
