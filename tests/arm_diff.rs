@@ -686,6 +686,43 @@ fn diff_fmlal() {
     run_batch("fmlal", batch);
 }
 
+/// Atomic memory op: `size 111 0 00 A R 1 Rs o3 opc 00 Rn Rt`. Rs=x2, Rn=x1, Rt=x0.
+fn enc_atomic(size: u32, a: u32, r: u32, o3: u32, opc: u32) -> u32 {
+    (size << 30) | (0b111 << 27) | (a << 23) | (r << 22) | (1 << 21) | (2 << 16)
+        | (o3 << 15) | (opc << 12) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_mem_atomic() {
+    let ops: &[(u32, u32, &str)] = &[
+        (0, 0b000, "ldadd"),
+        (0, 0b001, "ldclr"),
+        (0, 0b010, "ldeor"),
+        (0, 0b011, "ldset"),
+        (0, 0b100, "ldsmax"),
+        (0, 0b101, "ldsmin"),
+        (0, 0b110, "ldumax"),
+        (0, 0b111, "ldumin"),
+        (1, 0b000, "swp"),
+    ];
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for &(o3, opc, name) in ops {
+        for size in 0..4u32 {
+            for &(a, r) in &[(0u32, 0u32), (1, 1)] {
+                cases.push((format!("{name} sz{size} a{a}r{r}"), enc_atomic(size, a, r, o3, opc)));
+            }
+        }
+    }
+    let mut rng = Rng::new(0x1_0004);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in &cases {
+        for _ in 0..8 {
+            batch.push((label.clone(), *insn, mem_input(&mut rng)));
+        }
+    }
+    run_batch("mem_atomic", batch);
+}
+
 /// AdvSIMD load/store multiple structures: `0 Q 0011 0 0 post L rm opcode size Rn Rt`.
 fn enc_ldst_struct(q: u32, post: u32, l: u32, rm: u32, opcode: u32, size: u32) -> u32 {
     (q << 30) | (0b001100 << 24) | (post << 23) | (l << 22) | (rm << 16) | (opcode << 12)

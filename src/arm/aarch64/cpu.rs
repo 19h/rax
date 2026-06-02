@@ -5958,12 +5958,79 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
+    /// Atomic memory operations (FEAT_LSE): LDADD/LDCLR/LDEOR/LDSET/LDSMAX/
+    /// LDSMIN/LDUMAX/LDUMIN and SWP. Single-core, so the load-op-store is just
+    /// sequential. Rt receives the pre-operation value (discarded if Rt==31).
+    fn exec_atomic_memop(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let size = (insn >> 30) & 0x3;
+        let rs = ((insn >> 16) & 0x1F) as u8;
+        let o3 = (insn >> 15) & 1;
+        let opc = (insn >> 12) & 0x7;
+        let rn = ((insn >> 5) & 0x1F) as u8;
+        let rt = (insn & 0x1F) as u8;
+        let bits = 8u32 << size;
+        let m = elem_mask(bits);
+
+        let addr = if rn == 31 { self.current_sp() } else { self.get_x(rn) };
+        let old = match size {
+            0 => self.mem_read_u8(addr)? as u64,
+            1 => self.mem_read_u16(addr)? as u64,
+            2 => self.mem_read_u32(addr)? as u64,
+            _ => self.mem_read_u64(addr)?,
+        };
+        let operand = self.get_x(rs) & m;
+
+        let new = if o3 == 1 {
+            if opc == 0 {
+                operand // SWP
+            } else {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
+        } else {
+            match opc {
+                0b000 => old.wrapping_add(operand),         // LDADD
+                0b001 => old & !operand,                    // LDCLR
+                0b010 => old ^ operand,                     // LDEOR
+                0b011 => old | operand,                     // LDSET
+                0b100 => (sext_elem(old, bits).max(sext_elem(operand, bits)) as u64) & m, // LDSMAX
+                0b101 => (sext_elem(old, bits).min(sext_elem(operand, bits)) as u64) & m, // LDSMIN
+                0b110 => (old & m).max(operand & m),        // LDUMAX
+                0b111 => (old & m).min(operand & m),        // LDUMIN
+                _ => return Err(ArmError::UndefinedInstruction(insn)),
+            }
+        };
+        let new = new & m;
+        match size {
+            0 => self.mem_write_u8(addr, new as u8)?,
+            1 => self.mem_write_u16(addr, new as u16)?,
+            2 => self.mem_write_u32(addr, new as u32)?,
+            _ => self.mem_write_u64(addr, new)?,
+        }
+        if rt != 31 {
+            if size == 3 {
+                self.set_x(rt, old);
+            } else {
+                self.set_w(rt, old as u32);
+            }
+        }
+        Ok(CpuExit::Continue)
+    }
+
     fn exec_ldst_reg(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let size = (insn >> 30) & 0x3;
         let v = (insn >> 26) & 1;
         let opc = (insn >> 22) & 0x3;
         let rn = ((insn >> 5) & 0x1F) as u8;
         let rt = (insn & 0x1F) as u8;
+
+        // Atomic memory operations (FEAT_LSE): bit24=0, bit21=1, bits[11:10]=00.
+        if v == 0
+            && (insn >> 24) & 1 == 0
+            && (insn >> 21) & 1 == 1
+            && (insn >> 10) & 0x3 == 0
+        {
+            return self.exec_atomic_memop(insn);
+        }
 
         if v != 0 {
             // SIMD/FP load/store: access size is 1 << ((opc<1>:size)).
