@@ -2140,6 +2140,22 @@ impl AArch64Cpu {
         };
         let elements = datasize / 2;
 
+        // Validity: FABS/FNEG (01111), FRINT* (11000/11001) and the vector FSQRT
+        // (U=1, 11111) have no SIMD-scalar encoding — their scalar variants live
+        // in the floating-point data-processing groups. FRECPX (U=0, 11111) is
+        // scalar-only and has no vector form. Reject the mismatched cases.
+        if is_scalar {
+            if opcode == 0b01111
+                || opcode == 0b11000
+                || opcode == 0b11001
+                || (opcode == 0b11111 && u == 1)
+            {
+                return Ok(CpuExit::Undefined(insn));
+            }
+        } else if opcode == 0b11111 && u == 0 {
+            return Ok(CpuExit::Undefined(insn));
+        }
+
         let lane = |v: u128, e: usize| -> u16 { (v >> (e * 16)) as u16 };
         let src = self.v[rn];
         let mut dst = 0u128;

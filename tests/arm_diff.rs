@@ -909,6 +909,75 @@ fn enc_fp16_idx(q: u32, u: u32, opcode: u32, index: u32) -> u32 {
         | (RM << 16) | (opcode << 12) | (h << 11) | (RN << 5) | RD
 }
 
+/// Scalar three-same FP16: `01 U 11110 a 10 Rm 00 opcode 1 Rn Rd`.
+fn enc_fp16_3s_scalar(u: u32, a: u32, opcode: u32) -> u32 {
+    (1 << 30) | (u << 29) | (0b11110 << 24) | (a << 23) | (1 << 22)
+        | (RM << 16) | (opcode << 11) | (1 << 10) | (RN << 5) | RD
+}
+
+/// Scalar two-reg-misc FP16: `01 U 11110 a 1 11100 opcode 10 Rn Rd`.
+fn enc_fp16_2r_scalar(u: u32, a: u32, opcode: u32) -> u32 {
+    (1 << 30) | (u << 29) | (0b11110 << 24) | (a << 23) | (1 << 22)
+        | (0b11100 << 17) | (opcode << 12) | (0b10 << 10) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_simd_fp16_scalar() {
+    let mut rng = Rng::new(0x1_0015);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // Scalar three-same FP16 (only lane 0 is used; upper bits must zero).
+    let three: &[(u32, u32, u32, &str)] = &[
+        (0, 0, 0b011, "fmulx"),
+        (0, 0, 0b111, "frecps"),
+        (0, 1, 0b111, "frsqrts"),
+        (1, 1, 0b010, "fabd"),
+        (0, 0, 0b100, "fcmeq"),
+        (1, 0, 0b100, "fcmge"),
+        (1, 1, 0b100, "fcmgt"),
+        (1, 0, 0b101, "facge"),
+        (1, 1, 0b101, "facgt"),
+    ];
+    for &(u, a, opcode, name) in three {
+        let insn = enc_fp16_3s_scalar(u, a, opcode);
+        for _ in 0..24 {
+            let mut st = ArmState::zeroed();
+            let (a1, b1) = fp16_vec(&mut rng);
+            let (a2, b2) = fp16_vec(&mut rng);
+            st.set_vreg(1, a1, b1);
+            st.set_vreg(2, a2, b2);
+            batch.push((format!("3s {name}"), insn, st));
+        }
+    }
+    // Scalar two-reg-misc FP16.
+    // Includes ops with no SIMD-scalar form (fsqrt/fabs/fneg/frint*) — both rax
+    // and the oracle must reject those — alongside the genuine scalar forms.
+    let two: &[(u32, u32, u32, &str)] = &[
+        (1, 1, 0b11111, "fsqrt"),
+        (0, 1, 0b11111, "frecpx"),
+        (0, 1, 0b11101, "frecpe"),
+        (1, 1, 0b11101, "frsqrte"),
+        (0, 1, 0b01100, "fcmgt0"),
+        (1, 1, 0b01101, "fcmle0"),
+        (0, 1, 0b11011, "fcvtzs"),
+        (1, 1, 0b11011, "fcvtzu"),
+        (0, 0, 0b11101, "scvtf"),
+        (0, 1, 0b01111, "fabs"),
+        (1, 1, 0b01111, "fneg"),
+        (1, 1, 0b11001, "frinti"),
+        (0, 0, 0b11000, "frintn"),
+    ];
+    for &(u, a, opcode, name) in two {
+        let insn = enc_fp16_2r_scalar(u, a, opcode);
+        for _ in 0..24 {
+            let mut st = ArmState::zeroed();
+            let (a1, b1) = fp16_vec(&mut rng);
+            st.set_vreg(1, a1, b1);
+            batch.push((format!("2r {name}"), insn, st));
+        }
+    }
+    run_batch("simd_fp16_scalar", batch);
+}
+
 /// A binary16 NaN (signaling or quiet), random sign/payload (payload != 0).
 fn rand_fp16_nan(rng: &mut Rng) -> u16 {
     let sign = (rng.next() & 1) as u16;
