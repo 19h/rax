@@ -4770,6 +4770,18 @@ impl AArch64Cpu {
         let esize = 1usize << size; // 1, 2, 4, or 8 bytes
 
         match op0 {
+            // Unpredicated integer add/subtract (ADD/SUB/SQADD/UQADD/SQSUB/
+            // UQSUB): bit21==1, bits[15:13]==000. Size is the full bits[23:22],
+            // so this must NOT be gated on op1 (which folds size's high bit).
+            0b000 if (insn >> 21) & 1 == 1 && (insn >> 13) & 0x7 == 0b000 => {
+                self.exec_sve_int_unpred(insn, zd, zn, zm, esize)
+            }
+
+            // Unpredicated bitwise logical (AND/ORR/EOR/BIC): bits[15:10]=001100.
+            0b000 if (insn >> 21) & 1 == 1 && (insn >> 10) & 0x3F == 0b001100 => {
+                self.exec_sve_logical_unpred(insn, zd, zn, zm)
+            }
+
             // Integer predicated binary operations
             0b000 if (op1 & 0x2) == 0 && (op2 & 0x10) == 0 => {
                 self.exec_sve_int_pred(insn, zd, zn, zm, pg, esize)
@@ -4921,92 +4933,50 @@ impl AArch64Cpu {
         zm: usize,
         esize: usize,
     ) -> Result<CpuExit, ArmError> {
+        // bits[12:10]: 000=ADD 001=SUB 100=SQADD 101=UQADD 110=SQSUB 111=UQSUB.
+        // Map each to the verified NEON three-same integer core (u, opcode).
         let opc = (insn >> 10) & 0x7;
+        let (u, neon_op) = match opc {
+            0b000 => (0, 0b10000), // ADD
+            0b001 => (1, 0b10000), // SUB
+            0b100 => (0, 0b00001), // SQADD
+            0b101 => (1, 0b00001), // UQADD
+            0b110 => (0, 0b00101), // SQSUB
+            0b111 => (1, 0b00101), // UQSUB
+            _ => return Ok(CpuExit::Undefined(insn)),
+        };
+        let bits = (esize * 8) as u32;
         let elements = 16 / esize;
-
         let src = self.v[zn].to_le_bytes();
         let src2 = self.v[zm].to_le_bytes();
         let mut dst = [0u8; 16];
-
         for e in 0..elements {
-            let offset = e * esize;
-            match esize {
-                1 => {
-                    let a = src[offset];
-                    let b = src2[offset];
-                    dst[offset] = match opc {
-                        0b000 => a.wrapping_add(b),
-                        0b001 => a.wrapping_sub(b),
-                        _ => a,
-                    };
-                }
-                2 => {
-                    let a = u16::from_le_bytes([src[offset], src[offset + 1]]);
-                    let b = u16::from_le_bytes([src2[offset], src2[offset + 1]]);
-                    let result = match opc {
-                        0b000 => a.wrapping_add(b),
-                        0b001 => a.wrapping_sub(b),
-                        _ => a,
-                    };
-                    let bytes = result.to_le_bytes();
-                    dst[offset] = bytes[0];
-                    dst[offset + 1] = bytes[1];
-                }
-                4 => {
-                    let a = u32::from_le_bytes([
-                        src[offset],
-                        src[offset + 1],
-                        src[offset + 2],
-                        src[offset + 3],
-                    ]);
-                    let b = u32::from_le_bytes([
-                        src2[offset],
-                        src2[offset + 1],
-                        src2[offset + 2],
-                        src2[offset + 3],
-                    ]);
-                    let result = match opc {
-                        0b000 => a.wrapping_add(b),
-                        0b001 => a.wrapping_sub(b),
-                        _ => a,
-                    };
-                    let bytes = result.to_le_bytes();
-                    dst[offset..offset + 4].copy_from_slice(&bytes);
-                }
-                8 => {
-                    let a = u64::from_le_bytes([
-                        src[offset],
-                        src[offset + 1],
-                        src[offset + 2],
-                        src[offset + 3],
-                        src[offset + 4],
-                        src[offset + 5],
-                        src[offset + 6],
-                        src[offset + 7],
-                    ]);
-                    let b = u64::from_le_bytes([
-                        src2[offset],
-                        src2[offset + 1],
-                        src2[offset + 2],
-                        src2[offset + 3],
-                        src2[offset + 4],
-                        src2[offset + 5],
-                        src2[offset + 6],
-                        src2[offset + 7],
-                    ]);
-                    let result = match opc {
-                        0b000 => a.wrapping_add(b),
-                        0b001 => a.wrapping_sub(b),
-                        _ => a,
-                    };
-                    let bytes = result.to_le_bytes();
-                    dst[offset..offset + 8].copy_from_slice(&bytes);
-                }
-                _ => {}
-            }
+            let off = e * esize;
+            let a = read_elem(&src, off, esize);
+            let b = read_elem(&src2, off, esize);
+            write_elem(&mut dst, off, esize, adv_simd_three_same_int(u, neon_op, bits, a, b, 0));
         }
-
         self.v[zd] = u128::from_le_bytes(dst);
+        Ok(CpuExit::Continue)
+    }
+
+    /// Execute SVE unpredicated bitwise logical (AND/ORR/EOR/BIC), selected by
+    /// bits[23:22], over the whole vector (element size is irrelevant).
+    fn exec_sve_logical_unpred(
+        &mut self,
+        insn: u32,
+        zd: usize,
+        zn: usize,
+        zm: usize,
+    ) -> Result<CpuExit, ArmError> {
+        let a = self.v[zn];
+        let b = self.v[zm];
+        self.v[zd] = match (insn >> 22) & 0x3 {
+            0b00 => a & b,  // AND
+            0b01 => a | b,  // ORR
+            0b10 => a ^ b,  // EOR
+            _ => a & !b,    // BIC
+        };
         Ok(CpuExit::Continue)
     }
 

@@ -1512,6 +1512,36 @@ fn enc_dot_idx(q: u32, u: u32, index: u32) -> u32 {
         | (RM << 16) | (0b1110 << 12) | (h << 11) | (RN << 5) | RD
 }
 
+/// SVE unpredicated integer arithmetic: `00000100 sz 1 Zm opc6 Zn Zd`.
+/// Rd=z0, Rn=z1, Rm=z2. At VL=128 the Z registers alias V0..V31.
+fn enc_sve_arith(sz: u32, opc6: u32) -> u32 {
+    (0b00000100 << 24) | (sz << 22) | (1 << 21) | (RM << 16) | (opc6 << 10) | (RN << 5) | RD
+}
+
+/// SVE bitwise logical (unpredicated): `00000100 opc 1 Zm 001100 Zn Zd`.
+fn enc_sve_logical(opc: u32) -> u32 {
+    (0b00000100 << 24) | (opc << 22) | (1 << 21) | (RM << 16) | (0b001100 << 10) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_sve_unpred() {
+    // Element-wise ops: low 128 bits match at any VL; the oracle also pins
+    // VL=128 so the full Z register is captured via the aliased V register.
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for sz in 0..4u32 {
+        cases.push((format!("sve_add sz{sz}"), enc_sve_arith(sz, 0b000000)));
+        cases.push((format!("sve_sub sz{sz}"), enc_sve_arith(sz, 0b000001)));
+        cases.push((format!("sve_sqadd sz{sz}"), enc_sve_arith(sz, 0b000100)));
+        cases.push((format!("sve_uqadd sz{sz}"), enc_sve_arith(sz, 0b000101)));
+        cases.push((format!("sve_sqsub sz{sz}"), enc_sve_arith(sz, 0b000110)));
+        cases.push((format!("sve_uqsub sz{sz}"), enc_sve_arith(sz, 0b000111)));
+    }
+    for (opc, name) in [(0b00u32, "and"), (0b01, "orr"), (0b10, "eor"), (0b11, "bic")] {
+        cases.push((format!("sve_{name}"), enc_sve_logical(opc)));
+    }
+    run_family("sve_unpred", cases, 16, 0x1_001F);
+}
+
 /// A finite bf16 value with a moderate exponent (so f64 dot-product sums stay
 /// exact and the round-to-odd model matches hardware).
 fn rand_bf16(rng: &mut Rng) -> u16 {

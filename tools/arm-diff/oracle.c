@@ -33,6 +33,7 @@
 #include <signal.h>
 #include <ucontext.h>
 #include <sys/mman.h>
+#include <sys/prctl.h>
 #include <unistd.h>
 
 /* ------------------------------------------------------------------ */
@@ -259,6 +260,13 @@ static int write_exact(int fd, const void *buf, size_t n) {
 }
 
 int main(void) {
+    /* Pin the SVE vector length to 128 bits (16 bytes) so that the Z registers
+     * exactly alias the captured V registers and match rax's VL=128 model. This
+     * lets unpredicated SVE ops be differentially tested with the existing
+     * V-register prologue/capture path. PR_SVE_SET_VL == 50. Best-effort: a
+     * kernel/qemu without SVE simply leaves VL unchanged. */
+    prctl(50 /* PR_SVE_SET_VL */, (unsigned long)16, 0UL, 0UL, 0UL);
+
     /* Deliver signals on a dedicated stack: the test instruction runs with an
      * arbitrary (possibly zero) guest SP, so the signal frame must not depend
      * on it. */
