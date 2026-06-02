@@ -2556,7 +2556,124 @@ impl AArch64Cpu {
             }
         }
 
-        // SHA/SM3/SM4 are not yet implemented; preserve prior placeholder
+        let rm = ((insn >> 16) & 0x1F) as usize;
+
+        // SHA-1 / SHA-256 (bits[31:24]=0x5E).
+        if (insn >> 24) & 0xFF == 0x5E {
+            // Two-register SHA: bits[21:17]==10100, opcode at bits[16:12].
+            if (insn >> 17) & 0x1F == 0b10100 {
+                let opcode = (insn >> 12) & 0x1F;
+                match opcode {
+                    0b00000 => {
+                        // SHA1H Sd, Sn: ROL(Sn, 30) on the low 32 bits.
+                        self.v[rd] = (self.v[rn] as u32).rotate_left(30) as u128;
+                        return Ok(CpuExit::Continue);
+                    }
+                    0b00001 => {
+                        // SHA1SU1 Vd.4S, Vn.4S
+                        let op1 = self.v[rd];
+                        let op2 = self.v[rn];
+                        let t = op1 ^ (op2 >> 32);
+                        let t0 = sha_elem(t, 0).rotate_left(1);
+                        let t1 = sha_elem(t, 1).rotate_left(1);
+                        let t2 = sha_elem(t, 2).rotate_left(1);
+                        let t3 = sha_elem(t, 3).rotate_left(1) ^ sha_elem(t, 0).rotate_left(2);
+                        let mut r = 0u128;
+                        sha_set_elem(&mut r, 0, t0);
+                        sha_set_elem(&mut r, 1, t1);
+                        sha_set_elem(&mut r, 2, t2);
+                        sha_set_elem(&mut r, 3, t3);
+                        self.v[rd] = r;
+                        return Ok(CpuExit::Continue);
+                    }
+                    0b00010 => {
+                        // SHA256SU0 Vd.4S, Vn.4S
+                        let x = self.v[rd];
+                        let y = self.v[rn];
+                        let t = (y << 96) | (x >> 32); // Y<31:0> : X<127:32>
+                        let mut r = 0u128;
+                        for e in 0..4 {
+                            let elt = sha_elem(t, e);
+                            let s = elt.rotate_right(7) ^ elt.rotate_right(18) ^ (elt >> 3);
+                            sha_set_elem(&mut r, e, s.wrapping_add(sha_elem(x, e)));
+                        }
+                        self.v[rd] = r;
+                        return Ok(CpuExit::Continue);
+                    }
+                    _ => {}
+                }
+            } else if (insn >> 21) & 7 == 0 && (insn >> 10) & 3 == 0 {
+                // Three-register SHA: opcode at bits[14:12].
+                let opcode = (insn >> 12) & 0x7;
+                match opcode {
+                    0b000 => {
+                        // SHA1C
+                        self.v[rd] =
+                            sha1_hash(self.v[rd], self.v[rn] as u32, self.v[rm], sha_choose);
+                        return Ok(CpuExit::Continue);
+                    }
+                    0b001 => {
+                        // SHA1P
+                        self.v[rd] =
+                            sha1_hash(self.v[rd], self.v[rn] as u32, self.v[rm], sha_parity);
+                        return Ok(CpuExit::Continue);
+                    }
+                    0b010 => {
+                        // SHA1M
+                        self.v[rd] =
+                            sha1_hash(self.v[rd], self.v[rn] as u32, self.v[rm], sha_majority);
+                        return Ok(CpuExit::Continue);
+                    }
+                    0b011 => {
+                        // SHA1SU0 Vd.4S, Vn.4S, Vm.4S
+                        let op1 = self.v[rd];
+                        let op2 = self.v[rn];
+                        let op3 = self.v[rm];
+                        // result = (Vn<63:0> : Vd<127:64>) EOR Vd EOR Vm
+                        let r = ((op2 << 64) | (op1 >> 64)) ^ op1 ^ op3;
+                        self.v[rd] = r;
+                        return Ok(CpuExit::Continue);
+                    }
+                    0b100 => {
+                        // SHA256H Qd, Qn, Vm: SHA256hash(Vd, Vn, Vm, part1=true)
+                        self.v[rd] = sha256_hash(self.v[rd], self.v[rn], self.v[rm], true);
+                        return Ok(CpuExit::Continue);
+                    }
+                    0b101 => {
+                        // SHA256H2 Qd, Qn, Vm: SHA256hash(Vn, Vd, Vm, part1=false)
+                        self.v[rd] = sha256_hash(self.v[rn], self.v[rd], self.v[rm], false);
+                        return Ok(CpuExit::Continue);
+                    }
+                    0b110 => {
+                        // SHA256SU1 Vd.4S, Vn.4S, Vm.4S
+                        let x = self.v[rd];
+                        let y = self.v[rn];
+                        let z = self.v[rm];
+                        let t0 = (z << 96) | (y >> 32); // Z<31:0> : Y<127:32>
+                        let mut r = 0u128;
+                        // e = 0,1 use T1 = Z<127:64>
+                        for e in 0..2 {
+                            let elt = sha_elem(z >> 64, e); // Z<127:64> element e
+                            let s = elt.rotate_right(17) ^ elt.rotate_right(19) ^ (elt >> 10);
+                            let v = s.wrapping_add(sha_elem(x, e)).wrapping_add(sha_elem(t0, e));
+                            sha_set_elem(&mut r, e, v);
+                        }
+                        // e = 2,3 use T1 = result<63:0>
+                        for e in 2..4 {
+                            let elt = sha_elem(r, e - 2); // result<63:0> element (e-2)
+                            let s = elt.rotate_right(17) ^ elt.rotate_right(19) ^ (elt >> 10);
+                            let v = s.wrapping_add(sha_elem(x, e)).wrapping_add(sha_elem(t0, e));
+                            sha_set_elem(&mut r, e, v);
+                        }
+                        self.v[rd] = r;
+                        return Ok(CpuExit::Continue);
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        // SM3/SM4 are not yet implemented; preserve prior placeholder
         // behaviour (no correct result, but the instruction executes).
         self.v[rd] = self.v[rn];
         Ok(CpuExit::Continue)
@@ -8668,6 +8785,95 @@ fn unsigned_rsqrt_estimate(op: u32) -> u32 {
     }
     let est = recip_sqrt_estimate((op >> 23) & 0x1FF);
     (est & 0x1FF) << 23
+}
+
+// ---- SHA-1 / SHA-256 primitives (FIPS-180, per ARM ASL) ----
+
+/// Extract 32-bit element `e` from a 128-bit vector.
+#[inline]
+fn sha_elem(v: u128, e: u32) -> u32 {
+    (v >> (e * 32)) as u32
+}
+
+/// Insert 32-bit element `e` into a 128-bit vector.
+#[inline]
+fn sha_set_elem(v: &mut u128, e: u32, x: u32) {
+    let sh = e * 32;
+    *v = (*v & !(0xFFFF_FFFFu128 << sh)) | ((x as u128) << sh);
+}
+
+/// SHAchoose: ((y EOR z) AND x) EOR z
+#[inline]
+fn sha_choose(x: u32, y: u32, z: u32) -> u32 {
+    ((y ^ z) & x) ^ z
+}
+
+/// SHAmajority: (x AND y) OR ((x OR y) AND z)
+#[inline]
+fn sha_majority(x: u32, y: u32, z: u32) -> u32 {
+    (x & y) | ((x | y) & z)
+}
+
+/// SHAparity: x EOR y EOR z
+#[inline]
+fn sha_parity(x: u32, y: u32, z: u32) -> u32 {
+    x ^ y ^ z
+}
+
+/// SHA256 compression hash update (4 rounds). `part1` selects which 128-bit
+/// half (X for SHA256H, Y for SHA256H2) is returned, per the ASL SHA256hash.
+fn sha256_hash(x_in: u128, y_in: u128, w: u128, part1: bool) -> u128 {
+    let mut x = x_in;
+    let mut y = y_in;
+    for e in 0..4 {
+        let chs = sha_choose(sha_elem(y, 0), sha_elem(y, 1), sha_elem(y, 2));
+        let maj = sha_majority(sha_elem(x, 0), sha_elem(x, 1), sha_elem(x, 2));
+        // SIGMA1(Y<31:0>) = ROR(y0,6) ^ ROR(y0,11) ^ ROR(y0,25)
+        let y0 = sha_elem(y, 0);
+        let sigma1 = y0.rotate_right(6) ^ y0.rotate_right(11) ^ y0.rotate_right(25);
+        let t = sha_elem(y, 3)
+            .wrapping_add(sigma1)
+            .wrapping_add(chs)
+            .wrapping_add(sha_elem(w, e));
+        // X<127:96> = t + X<127:96>
+        let x3 = t.wrapping_add(sha_elem(x, 3));
+        sha_set_elem(&mut x, 3, x3);
+        // SIGMA0(X<31:0>) = ROR(x0,2) ^ ROR(x0,13) ^ ROR(x0,22)
+        let x0 = sha_elem(x, 0);
+        let sigma0 = x0.rotate_right(2) ^ x0.rotate_right(13) ^ x0.rotate_right(22);
+        // Y<127:96> = t + SIGMA0(X<31:0>) + maj
+        sha_set_elem(&mut y, 3, t.wrapping_add(sigma0).wrapping_add(maj));
+        // <Y, X> = ROL(Y : X, 32) over the 256-bit concatenation (Y high, X low).
+        let carry = (y >> 96) as u32; // Y<127:96>
+        let new_y = (y << 32) | (x >> 96);
+        let new_x = (x << 32) | (carry as u128);
+        x = new_x;
+        y = new_y;
+    }
+    if part1 { x } else { y }
+}
+
+/// SHA1 hash update (4 rounds) for SHA1C/SHA1P/SHA1M. `f` is the round
+/// function (choose / parity / majority). Returns the new X (V[d]).
+fn sha1_hash(x_in: u128, y_in: u32, w: u128, f: fn(u32, u32, u32) -> u32) -> u128 {
+    let mut x = x_in;
+    let mut y = y_in;
+    for e in 0..4 {
+        let t = f(sha_elem(x, 1), sha_elem(x, 2), sha_elem(x, 3));
+        y = y
+            .wrapping_add(sha_elem(x, 0).rotate_left(5))
+            .wrapping_add(t)
+            .wrapping_add(sha_elem(w, e));
+        // X<63:32> = ROL(X<63:32>, 30)
+        let x1 = sha_elem(x, 1).rotate_left(30);
+        sha_set_elem(&mut x, 1, x1);
+        // <Y, X> = ROL(Y : X, 32): Y is 32 bits, X is 128 bits (160-bit rotate).
+        let new_y = sha_elem(x, 3); // X<127:96>
+        let new_x = ((x & ((1u128 << 96) - 1)) << 32) | (y as u128); // X<95:0> : Y
+        y = new_y;
+        x = new_x;
+    }
+    x
 }
 
 /// AES S-box and inverse S-box (FIPS-197).

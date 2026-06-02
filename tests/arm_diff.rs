@@ -955,6 +955,42 @@ fn diff_crypto_aes() {
     run_family("crypto_aes", cases, 40, 0x1_0009);
 }
 
+/// Three-register SHA: `0101 1110 000 Rm 0 opcode 00 Rn Rd`.
+fn enc_sha3(opcode: u32) -> u32 {
+    0x5E00_0000 | (RM << 16) | (opcode << 12) | (RN << 5) | RD
+}
+
+/// Two-register SHA: `0101 1110 0010 1000 opcode 10 Rn Rd`.
+fn enc_sha2(opcode: u32) -> u32 {
+    0x5E28_0800 | (opcode << 12) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_crypto_sha() {
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    // Three-register (opcode at bits[14:12]).
+    for &(opcode, name) in &[
+        (0b000u32, "sha1c"),
+        (0b001, "sha1p"),
+        (0b010, "sha1m"),
+        (0b011, "sha1su0"),
+        (0b100, "sha256h"),
+        (0b101, "sha256h2"),
+        (0b110, "sha256su1"),
+    ] {
+        cases.push((name.to_string(), enc_sha3(opcode)));
+    }
+    // Two-register (opcode at bits[16:12]).
+    for &(opcode, name) in &[
+        (0b00000u32, "sha1h"),
+        (0b00001, "sha1su1"),
+        (0b00010, "sha256su0"),
+    ] {
+        cases.push((name.to_string(), enc_sha2(opcode)));
+    }
+    run_family("crypto_sha", cases, 40, 0x1_000D);
+}
+
 #[test]
 fn diff_excl_load() {
     let mut cases: Vec<(String, u32)> = Vec::new();
