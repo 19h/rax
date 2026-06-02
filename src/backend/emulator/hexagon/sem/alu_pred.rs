@@ -23,8 +23,179 @@ pub fn exec(op: Opcode, d: &DecodedOp, ctx: &mut SemCtx) -> bool {
     // actually carry a `Pu4` operand — reading `ctx.p` for unrelated opcodes
     // would index an out-of-range register (their `u` field is a GPR).
     let cond_true = |c: &SemCtx| (c.p(fld(d, b'u')) & 1) != 0;
+    // `.new` condition: the in-flight predicate produced earlier in this packet.
+    let cond_new = |c: &SemCtx| (c.p_new(fld(d, b'u')) & 1) != 0;
+
+    // Predicated unary value helpers (for the `.new`/old extend & halfword-shift
+    // forms): aslh/asrh/sxtb/sxth/zxtb/zxth of Rs.
+    let aslh = |c: &SemCtx| s(c) << 16;
+    let asrh = |c: &SemCtx| ((s(c) as i32) >> 16) as u32;
+    let sxtb = |c: &SemCtx| s(c) as i8 as i32 as u32;
+    let sxth = |c: &SemCtx| s(c) as i16 as i32 as u32;
+    let zxtb = |c: &SemCtx| s(c) & 0xff;
+    let zxth = |c: &SemCtx| s(c) & 0xffff;
 
     match op {
+        // ===================== `.new`-predicate forms =====================
+        // Identical to the `.old` forms below but the condition reads the
+        // predicate produced earlier in the same packet (fLSBNEW/fLSBNEWNOT).
+        Opcode::A2_paddtnew => {
+            if cond_new(ctx) {
+                let v = s(ctx).wrapping_add(t(ctx));
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A2_paddfnew => {
+            if !cond_new(ctx) {
+                let v = s(ctx).wrapping_add(t(ctx));
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A2_padditnew => {
+            if cond_new(ctx) {
+                let v = s(ctx).wrapping_add(fimm_s(d, b'i', ctx.immext) as u32);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A2_paddifnew => {
+            if !cond_new(ctx) {
+                let v = s(ctx).wrapping_add(fimm_s(d, b'i', ctx.immext) as u32);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A2_psubtnew => {
+            if cond_new(ctx) {
+                let v = t(ctx).wrapping_sub(s(ctx));
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A2_psubfnew => {
+            if !cond_new(ctx) {
+                let v = t(ctx).wrapping_sub(s(ctx));
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A2_pandtnew => {
+            if cond_new(ctx) {
+                let v = s(ctx) & t(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A2_pandfnew => {
+            if !cond_new(ctx) {
+                let v = s(ctx) & t(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A2_portnew => {
+            if cond_new(ctx) {
+                let v = s(ctx) | t(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A2_porfnew => {
+            if !cond_new(ctx) {
+                let v = s(ctx) | t(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A2_pxortnew => {
+            if cond_new(ctx) {
+                let v = s(ctx) ^ t(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A2_pxorfnew => {
+            if !cond_new(ctx) {
+                let v = s(ctx) ^ t(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::C2_cmovenewit => {
+            if cond_new(ctx) {
+                ctx.set_r(rd, fimm_s(d, b'i', ctx.immext) as u32);
+            }
+        }
+        Opcode::C2_cmovenewif => {
+            if !cond_new(ctx) {
+                ctx.set_r(rd, fimm_s(d, b'i', ctx.immext) as u32);
+            }
+        }
+        // Predicated halfword-shift / sign-zero-extend, `.new` condition only
+        // (the old-predicate forms live in sem/alu_ext.rs).
+        Opcode::A4_paslhtnew => {
+            if cond_new(ctx) {
+                let v = aslh(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A4_paslhfnew => {
+            if !cond_new(ctx) {
+                let v = aslh(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A4_pasrhtnew => {
+            if cond_new(ctx) {
+                let v = asrh(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A4_pasrhfnew => {
+            if !cond_new(ctx) {
+                let v = asrh(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A4_psxtbtnew => {
+            if cond_new(ctx) {
+                let v = sxtb(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A4_psxtbfnew => {
+            if !cond_new(ctx) {
+                let v = sxtb(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A4_psxthtnew => {
+            if cond_new(ctx) {
+                let v = sxth(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A4_psxthfnew => {
+            if !cond_new(ctx) {
+                let v = sxth(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A4_pzxtbtnew => {
+            if cond_new(ctx) {
+                let v = zxtb(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A4_pzxtbfnew => {
+            if !cond_new(ctx) {
+                let v = zxtb(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A4_pzxthtnew => {
+            if cond_new(ctx) {
+                let v = zxth(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+        Opcode::A4_pzxthfnew => {
+            if !cond_new(ctx) {
+                let v = zxth(ctx);
+                ctx.set_r(rd, v);
+            }
+        }
+
         // ---- predicated add (register) : Rd=if(Pu)add(Rs,Rt) ----
         Opcode::A2_paddt => {
             if cond_true(ctx) {

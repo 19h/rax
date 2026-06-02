@@ -61,10 +61,18 @@ impl SemCtx<'_> {
         (self.regs.r[e] as u64) | ((self.regs.r[e + 1] as u64) << 32)
     }
 
-    /// Read an 8-bit predicate register.
+    /// Read an 8-bit predicate register (old architectural value).
     #[inline]
     pub fn p(&self, pred: u8) -> u8 {
         self.regs.p[pred as usize]
+    }
+
+    /// Read a predicate's `.new` value: the value produced earlier in this
+    /// packet if any, else the old architectural value. Used by `.new`
+    /// predicated forms (`if (Pu.new) ...`).
+    #[inline]
+    pub fn p_new(&self, pred: u8) -> u8 {
+        self.new_p[pred as usize].unwrap_or(self.regs.p[pred as usize])
     }
 
     /// Write a 32-bit GPR.

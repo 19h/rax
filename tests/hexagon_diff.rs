@@ -592,6 +592,41 @@ fn diff_cmp() {
     run_family("cmp", cases, 30, 0x1003);
 }
 
+/// Multi-instruction VLIW packet semantics: parallel register writes (all read
+/// the OLD register file), in-packet `.new` predicate forwarding, and
+/// conditional (predicated) parallel execution. These exercise the foundational
+/// packet commit model, not just individual instructions.
+#[test]
+fn diff_packets() {
+    let cases = vec![
+        // Parallel ALU writes commit together.
+        ("par2".to_string(), "{ r0 = add(r2,r3); r1 = sub(r4,r5) }".to_string()),
+        ("par3".to_string(), "{ r0 = add(r2,r3); r1 = and(r4,r5); r6 = xor(r7,r8) }".to_string()),
+        // Register swap: both transfers read the OLD values.
+        ("swap".to_string(), "{ r0 = r1; r1 = r0 }".to_string()),
+        // Producer + consumer of the same OLD register (consumer sees old r0).
+        ("readold".to_string(), "{ r0 = add(r2,r3); r1 = add(r0,r4) }".to_string()),
+        // In-packet .new predicate forwarding across the predicated ALU family.
+        ("dn_add_t".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = add(r4,r5) }".to_string()),
+        ("dn_add_f".to_string(), "{ p0 = cmp.gt(r2,r3); if (!p0.new) r0 = add(r4,r5) }".to_string()),
+        ("dn_addi".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = add(r4,#5) }".to_string()),
+        ("dn_sub".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = sub(r4,r5) }".to_string()),
+        ("dn_and".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = and(r4,r5) }".to_string()),
+        ("dn_or".to_string(), "{ p0 = cmp.gt(r2,r3); if (!p0.new) r0 = or(r4,r5) }".to_string()),
+        ("dn_xor".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = xor(r4,r5) }".to_string()),
+        ("dn_movi".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = #42 }".to_string()),
+        ("dn_aslh".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = aslh(r4) }".to_string()),
+        ("dn_sxtb".to_string(), "{ p0 = cmp.gt(r2,r3); if (!p0.new) r0 = sxtb(r4) }".to_string()),
+        ("dn_zxth".to_string(), "{ p0 = cmp.gt(r2,r3); if (p0.new) r0 = zxth(r4) }".to_string()),
+        // Conditional parallel execution (exactly one of the two writes r0).
+        ("cond_both".to_string(), "{ if (p0) r0 = r2; if (!p0) r0 = r3 }".to_string()),
+        // Old-predicate condition consumed in the same packet as a compare to a
+        // *different* predicate (no forwarding hazard).
+        ("mixed".to_string(), "{ p1 = cmp.eq(r2,r3); r0 = add(r4,r5); r6 = sub(r7,r8) }".to_string()),
+    ];
+    run_family("packets", cases, 25, 0x7ac);
+}
+
 // ---------------------------------------------------------------------------
 // Spec corpus survey: read tools/hexagon-diff/cases.txt (generated from the
 // Hexagon spec) and categorise every register-only instruction as
