@@ -5,3 +5,6 @@ oracle
 oracle_mem.s
 oracle_mem.o
 oracle_mem
+oracle_hvx.s
+oracle_hvx.o
+oracle_hvx
