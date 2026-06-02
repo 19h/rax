@@ -1812,6 +1812,19 @@ impl AArch64Cpu {
             return self.exec_simd_dot(insn);
         }
 
+        // FCMLA (vector): 0_Q_1_01110_size_0_Rm_110_rot_1_Rn_Rd
+        //   bits[15:13]=110, bit10=1, rot=bits[12:11].
+        // FCADD: 0_Q_1_01110_size_0_Rm_111_rot_01_Rn_Rd
+        //   bits[15:13]=111, bits[11:10]=01, rot=bit12.
+        if op_bits == 0b01110 && (insn >> 29) & 1 == 1 && (insn >> 21) & 1 == 0 {
+            if (insn >> 13) & 0x7 == 0b110 && (insn >> 10) & 1 == 1 {
+                return self.exec_simd_complex(insn, true);
+            }
+            if (insn >> 13) & 0x7 == 0b111 && (insn >> 10) & 0x3 == 0b01 {
+                return self.exec_simd_complex(insn, false);
+            }
+        }
+
         // Cryptographic AES/SHA operations
         // AES: 0100 1110 00 1 01000 0 opcode 10 Rn Rd (bits[31:24]=0x4E)
         // SHA two-reg: 0101 1110 00 1 01000 0 opcode 10 Rn Rd (bits[31:24]=0x5E)
@@ -2408,6 +2421,71 @@ impl AArch64Cpu {
                 Ok(CpuExit::Continue)
             }
         }
+    }
+
+    /// Execute FCADD / FCMLA: floating-point complex add / fused multiply-add
+    /// over interleaved (real, imaginary) element pairs (FEAT_FCMA). `is_fcmla`
+    /// selects FCMLA (2-bit rotation) vs FCADD (1-bit rotation).
+    fn exec_simd_complex(&mut self, insn: u32, is_fcmla: bool) -> Result<CpuExit, ArmError> {
+        let q = (insn >> 30) & 1;
+        let size = (insn >> 22) & 0x3;
+        let rm = ((insn >> 16) & 0x1F) as usize;
+        let rn = ((insn >> 5) & 0x1F) as usize;
+        let rd = (insn & 0x1F) as usize;
+        // size: 01=f16, 10=f32, 11=f64. size==00 is reserved.
+        if size == 0b00 {
+            return Ok(CpuExit::Undefined(insn));
+        }
+        let esize = 8u32 << size; // 16 / 32 / 64
+        if esize == 64 && q == 0 {
+            return Ok(CpuExit::Undefined(insn)); // a 64-bit complex pair needs 128 bits
+        }
+        let datasize = if q == 1 { 128 } else { 64 };
+        let pairs = datasize / (2 * esize as usize);
+        let mask = elem_mask(esize) as u128;
+        let op1 = self.v[rn];
+        let op2 = self.v[rm];
+        let op3 = self.v[rd];
+        let elem = |v: u128, idx: usize| -> u64 { ((v >> (idx * esize as usize)) & mask) as u64 };
+        let mut result = 0u128;
+        for e in 0..pairs {
+            let re = 2 * e;
+            let im = 2 * e + 1;
+            let (a_re, a_im) = (elem(op1, re), elem(op1, im));
+            let (b_re, b_im) = (elem(op2, re), elem(op2, im));
+            let (r_re, r_im) = if is_fcmla {
+                let rot = (insn >> 11) & 0x3;
+                let (d_re, d_im) = (elem(op3, re), elem(op3, im));
+                // result_re += x_re * y_re; result_im += x_im * y_im.
+                let (xr, yr, xi, yi) = match rot {
+                    0b00 => (a_re, b_re, a_re, b_im),
+                    0b01 => (a_im, fp_neg_bits(b_im, esize), a_im, b_re),
+                    0b10 => (a_re, fp_neg_bits(b_re, esize), a_re, fp_neg_bits(b_im, esize)),
+                    _ => (a_im, b_im, a_im, fp_neg_bits(b_re, esize)),
+                };
+                (
+                    fp_muladd_bits(d_re, xr, yr, esize),
+                    fp_muladd_bits(d_im, xi, yi, esize),
+                )
+            } else {
+                // FCADD: rot==0 (90deg): re = a_re + (-b_im), im = a_im + b_re.
+                //        rot==1 (270deg): re = a_re + b_im, im = a_im + (-b_re).
+                let rot = (insn >> 12) & 1;
+                let (add_re, add_im) = if rot == 0 {
+                    (fp_neg_bits(b_im, esize), b_re)
+                } else {
+                    (b_im, fp_neg_bits(b_re, esize))
+                };
+                (
+                    fp_add_bits(a_re, add_re, esize),
+                    fp_add_bits(a_im, add_im, esize),
+                )
+            };
+            result |= (r_re as u128 & mask) << (re * esize as usize);
+            result |= (r_im as u128 & mask) << (im * esize as usize);
+        }
+        self.v[rd] = result;
+        Ok(CpuExit::Continue)
     }
 
     /// Execute SDOT/UDOT: the 8-bit -> 32-bit four-way dot product. Each 32-bit
@@ -8854,6 +8932,31 @@ fn unsigned_rsqrt_estimate(op: u32) -> u32 {
     }
     let est = recip_sqrt_estimate((op >> 23) & 0x1FF);
     (est & 0x1FF) << 23
+}
+
+// ---- Precision-generic FP element helpers (esize in bits: 16/32/64) ----
+
+/// Flip the sign bit of a floating-point element.
+fn fp_neg_bits(b: u64, esize: u32) -> u64 {
+    b ^ (1u64 << (esize - 1))
+}
+
+/// FPAdd over a binary16/32/64 element.
+fn fp_add_bits(a: u64, b: u64, esize: u32) -> u64 {
+    match esize {
+        16 => fp16_add(a as u16, b as u16) as u64,
+        32 => fp_three_same_f32(FpKind::Add, a as u32, b as u32, 0) as u64,
+        _ => fp_three_same_f64(FpKind::Add, a, b, 0),
+    }
+}
+
+/// FPMulAdd (fused): `acc + x*y` over a binary16/32/64 element.
+fn fp_muladd_bits(acc: u64, x: u64, y: u64, esize: u32) -> u64 {
+    match esize {
+        16 => fp16_mla(acc as u16, x as u16, y as u16) as u64,
+        32 => fp_three_same_f32(FpKind::Mla, x as u32, y as u32, acc as u32) as u64,
+        _ => fp_three_same_f64(FpKind::Mla, x, y, acc),
+    }
 }
 
 // ---- SHA-1 / SHA-256 primitives (FIPS-180, per ARM ASL) ----

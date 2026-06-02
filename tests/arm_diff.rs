@@ -1374,6 +1374,86 @@ fn diff_simd_dot() {
     run_family("simd_dot", cases, 40, 0x1_0018);
 }
 
+/// Fill a 128-bit vector with `lanes` finite FP values of width `esize` bits.
+fn fill_finite_fp(rng: &mut Rng, esize: u32, lanes: usize) -> (u64, u64) {
+    let mut v: u128 = 0;
+    for i in 0..lanes {
+        let bits: u64 = match esize {
+            16 => {
+                let sign = (rng.next() & 1) as u64;
+                let exp = (rng.next() % 18 + 6) as u64; // finite normal exponents
+                let mant = rng.next() & 0x3FF;
+                (sign << 15) | (exp << 10) | mant
+            }
+            32 => {
+                let val = (((rng.next() % 4000) as f32) - 2000.0) / 200.0; // +/-10
+                val.to_bits() as u64
+            }
+            _ => {
+                let val = (((rng.next() % 4000) as f64) - 2000.0) / 200.0;
+                val.to_bits()
+            }
+        };
+        v |= (bits as u128) << (i * esize as usize);
+    }
+    (v as u64, (v >> 64) as u64)
+}
+
+/// FCADD: `0 Q 1 01110 size 0 Rm 111 rot 01 Rn Rd`. Rd=v0, Rn=v1, Rm=v2.
+fn enc_fcadd(q: u32, size: u32, rot: u32) -> u32 {
+    (q << 30) | (1 << 29) | (0b01110 << 24) | (size << 22) | (RM << 16)
+        | (0b111 << 13) | (rot << 12) | (0b01 << 10) | (RN << 5) | RD
+}
+
+/// FCMLA (vector): `0 Q 1 01110 size 0 Rm 110 rot 1 Rn Rd` (rot is 2 bits).
+fn enc_fcmla(q: u32, size: u32, rot: u32) -> u32 {
+    (q << 30) | (1 << 29) | (0b01110 << 24) | (size << 22) | (RM << 16)
+        | (0b110 << 13) | (rot << 11) | (1 << 10) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_simd_complex() {
+    let mut rng = Rng::new(0x1_001A);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // (size, esize): 01=f16, 10=f32, 11=f64.
+    for &(size, esize) in &[(0b01u32, 16u32), (0b10, 32), (0b11, 64)] {
+        for q in 0..2u32 {
+            if esize == 64 && q == 0 {
+                continue; // a 64-bit complex pair needs the full 128 bits
+            }
+            let datasize = if q == 1 { 128 } else { 64 };
+            let lanes = datasize / esize as usize;
+            // FCADD (1-bit rotation).
+            for rot in 0..2u32 {
+                let insn = enc_fcadd(q, size, rot);
+                for _ in 0..16 {
+                    let mut st = ArmState::zeroed();
+                    let (l1, h1) = fill_finite_fp(&mut rng, esize, lanes);
+                    let (l2, h2) = fill_finite_fp(&mut rng, esize, lanes);
+                    st.set_vreg(1, l1, h1);
+                    st.set_vreg(2, l2, h2);
+                    batch.push((format!("fcadd e{esize} q{q} r{rot}"), insn, st));
+                }
+            }
+            // FCMLA (2-bit rotation; reads Vd accumulator).
+            for rot in 0..4u32 {
+                let insn = enc_fcmla(q, size, rot);
+                for _ in 0..16 {
+                    let mut st = ArmState::zeroed();
+                    let (l0, h0) = fill_finite_fp(&mut rng, esize, lanes);
+                    let (l1, h1) = fill_finite_fp(&mut rng, esize, lanes);
+                    let (l2, h2) = fill_finite_fp(&mut rng, esize, lanes);
+                    st.set_vreg(0, l0, h0);
+                    st.set_vreg(1, l1, h1);
+                    st.set_vreg(2, l2, h2);
+                    batch.push((format!("fcmla e{esize} q{q} r{rot}"), insn, st));
+                }
+            }
+        }
+    }
+    run_batch("simd_complex", batch);
+}
+
 /// SDOT/UDOT by element: `0 Q U 01111 10 L M Rm 1110 H 0 Rn Rd`. Rm=v2, the
 /// H:L index selects a 32-bit group of Vm. Rd=v0, Rn=v1.
 fn enc_dot_idx(q: u32, u: u32, index: u32) -> u32 {
