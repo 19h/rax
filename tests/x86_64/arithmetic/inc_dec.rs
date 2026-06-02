@@ -767,3 +767,124 @@ fn test_dec_preserves_high_bytes() {
     assert_eq!(regs.rax & 0xFF, 0x77);
     assert_eq!(regs.rax & !0xFF, 0xDEADBEEF_12345600, "High bytes should be preserved");
 }
+
+// ============================================================================
+// Lazy-flag regression tests (INC/DEC are now evaluated lazily)
+//
+// These exercise the path where a *preceding* CF-setting ALU op leaves lazy
+// flags pending, then an INC/DEC runs (which must lock in that CF without
+// clobbering it), and finally a flag reader observes the combined state. They
+// catch a class of bug where the lazy INC/DEC store would otherwise drop the
+// carry produced by the previous op.
+// ============================================================================
+
+#[test]
+fn test_inc_preserves_cf_from_pending_lazy_sub() {
+    // SUB EAX, EBX with EAX < EBX sets CF=1 (borrow) lazily; the following
+    // INC ECX must preserve that CF. Then ADC reads CF to surface it.
+    //   sub eax, ebx      29 D8   (EAX=0 - EBX=1 -> 0xFFFFFFFF, CF=1)
+    //   inc ecx           FF C1
+    //   adc edx, 0        83 D2 00  (EDX = 0 + 0 + CF = 1 if CF preserved)
+    //   hlt
+    let code = [0x29, 0xD8, 0xFF, 0xC1, 0x83, 0xD2, 0x00, 0xF4];
+    let mut regs = Registers::default();
+    regs.rax = 0;
+    regs.rbx = 1;
+    regs.rcx = 5;
+    regs.rdx = 0;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.rax, 0xFFFFFFFF, "SUB: 0 - 1 = 0xFFFFFFFF");
+    assert_eq!(regs.rcx, 6, "INC ECX: 5 + 1 = 6");
+    // EDX==1 proves the SUB's CF=1 survived the INC and fed into the ADC. (The
+    // final rflags.CF reflects the ADC's own result, not the SUB's, so we do not
+    // assert on it here.)
+    assert_eq!(regs.rdx, 1, "ADC EDX,0 should add the preserved CF (=1)");
+}
+
+#[test]
+fn test_dec_preserves_cleared_cf_from_pending_lazy_add() {
+    // ADD EAX, EBX that does NOT carry leaves CF=0 lazily; DEC ECX must keep
+    // CF=0, and a following ADC EDX,0 must add 0.
+    //   add eax, ebx      01 D8   (EAX=1 + EBX=2 -> 3, CF=0)
+    //   dec ecx           FF C9
+    //   adc edx, 0        83 D2 00
+    //   hlt
+    let code = [0x01, 0xD8, 0xFF, 0xC9, 0x83, 0xD2, 0x00, 0xF4];
+    let mut regs = Registers::default();
+    regs.rax = 1;
+    regs.rbx = 2;
+    regs.rcx = 9;
+    regs.rdx = 7;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.rax, 3, "ADD: 1 + 2 = 3");
+    assert_eq!(regs.rcx, 8, "DEC ECX: 9 - 1 = 8");
+    // EDX staying 7 proves the ADD's CF=0 survived the DEC and fed into the ADC.
+    assert_eq!(regs.rdx, 7, "ADC EDX,0 should add 0 (CF preserved clear)");
+}
+
+#[test]
+fn test_inc_then_jcc_reads_lazy_zf() {
+    // INC EAX that wraps to 0 must let a following JZ observe ZF=1 (the lazy
+    // INC flags are materialized by the conditional branch).
+    //   inc eax           FF C0   (EAX=0xFFFFFFFF -> 0, ZF=1)
+    //   jz  +2            74 02
+    //   mov ecx, ... (skipped via jump)
+    //   hlt
+    //   (target) mov ecx imm handled by landing on a different hlt path)
+    // Simpler: INC; JZ taken jumps over a DEC, leaving ECX untouched.
+    //   inc eax           FF C0
+    //   jz  +2            74 02
+    //   dec ecx           FF C9   (should be skipped if ZF set)
+    //   hlt               F4
+    let code = [0xFF, 0xC0, 0x74, 0x02, 0xFF, 0xC9, 0xF4];
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFFFFFF;
+    regs.rcx = 100;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.rax, 0, "INC EAX wraps to 0");
+    assert_eq!(regs.rcx, 100, "JZ should be taken (ZF=1), skipping DEC ECX");
+}
+
+#[test]
+fn test_dec_then_jnz_reads_lazy_zf() {
+    // DEC ECX to a nonzero value: JNZ must be taken (ZF=0). Mirrors the
+    // bench_loop hot pattern (dec; jnz).
+    //   dec ecx           FF C9   (ECX=3 -> 2, ZF=0)
+    //   jnz +2            75 02
+    //   inc eax           FF C0   (should be skipped if JNZ taken)
+    //   hlt               F4
+    let code = [0xFF, 0xC9, 0x75, 0x02, 0xFF, 0xC0, 0xF4];
+    let mut regs = Registers::default();
+    regs.rcx = 3;
+    regs.rax = 50;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.rcx, 2, "DEC ECX: 3 - 1 = 2");
+    assert_eq!(regs.rax, 50, "JNZ taken (ZF=0), INC EAX skipped");
+}
+
+#[test]
+fn test_stc_inc_preserves_cf() {
+    // STC sets CF=1 directly (eager); the following INC must preserve it.
+    //   stc               F9
+    //   inc eax           FF C0
+    //   hlt               F4
+    let code = [0xF9, 0xFF, 0xC0, 0xF4];
+    let mut regs = Registers::default();
+    regs.rax = 0x7F;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.rax, 0x80, "INC EAX: 0x7F + 1 = 0x80");
+    assert!(cf_set(regs.rflags), "CF set by STC must survive INC");
+    // 0x7F -> 0x80 is only a *signed* overflow at the 8-bit boundary; for a
+    // 32-bit INC it is not, so OF must be clear.
+    assert!(!of_set(regs.rflags), "OF should be clear for 32-bit INC of 0x7F");
+}

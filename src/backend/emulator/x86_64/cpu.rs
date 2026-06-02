@@ -1,6 +1,5 @@
 //! x86_64 CPU state and core execution loop.
 
-use std::cell::Cell;
 use std::sync::atomic::Ordering;
 use std::sync::atomic::{AtomicU64, AtomicUsize};
 use std::sync::Arc;
@@ -226,8 +225,12 @@ pub struct X86_64Vcpu {
     pub(super) xcr0: u64,
     /// Decoded instruction cache for avoiding re-decode in hot loops
     pub(super) decode_cache: Box<[DecodeCacheEntry; DECODE_CACHE_SIZE]>,
-    /// Lazy flag state for deferred flag computation (Cell for interior mutability in get_state)
-    pub(super) lazy_flags: Cell<LazyFlags>,
+    /// Lazy flag state for deferred flag computation. A plain field (not a Cell):
+    /// every writer holds `&mut self`, and the two `&self` readers
+    /// (`compute_materialized_rflags`, `get_emulator_state`) only copy it out, so
+    /// no interior mutability is needed. Keeping it inline lets the optimizer hold
+    /// the hot lazy state in registers instead of routing through a Cell.
+    pub(super) lazy_flags: LazyFlags,
     /// Single-step mode for GDB debugging.
     #[cfg(feature = "debug")]
     single_step: bool,
@@ -291,6 +294,10 @@ pub(super) struct DecodeCacheEntry {
     pub(super) bytes: [u8; MAX_INSN_LEN],
     /// Number of valid bytes in `bytes`.
     pub(super) bytes_len: usize,
+    /// Whether a LOCK (0xF0) prefix is present. Computed once on the fill path so
+    /// the per-instruction hit path can skip the prefix-byte scan and only pay the
+    /// (cold) legality check when LOCK is actually present.
+    pub(super) has_lock: bool,
     /// Handler resolved on the fill (miss) path. On a hit it is called directly,
     /// skipping the `execute` opcode match. Invalidated with the rest of the
     /// entry (SMC / mode switch zero `rip`, so a stale handler can never run).
@@ -326,6 +333,7 @@ impl Default for DecodeCacheEntry {
             mode_tag: 0,
             bytes: [0; MAX_INSN_LEN],
             bytes_len: 0,
+            has_lock: false,
             handler: unreachable_handler,
         }
     }
@@ -746,7 +754,7 @@ impl X86_64Vcpu {
             xcr0: 1, // x87 state component always enabled
 
             decode_cache,
-            lazy_flags: Cell::new(LazyFlags::default()),
+            lazy_flags: LazyFlags::default(),
             #[cfg(feature = "debug")]
             single_step: false,
         }
@@ -756,7 +764,7 @@ impl X86_64Vcpu {
     /// Call this before any instruction that reads flags (Jcc, CMOVcc, SETcc, ADC, SBB, PUSHF, LAHF).
     #[inline]
     pub(super) fn materialize_flags(&mut self) {
-        let lf = self.lazy_flags.get();
+        let lf = self.lazy_flags;
         if lf.op == LazyFlagOp::None {
             return; // Flags already materialized
         }
@@ -849,17 +857,17 @@ impl X86_64Vcpu {
         }
 
         // Mark flags as materialized
-        self.lazy_flags.set(LazyFlags {
+        self.lazy_flags = LazyFlags {
             op: LazyFlagOp::None,
             ..lf
-        });
+        };
     }
 
     /// Compute what rflags would be if lazy flags were materialized (without modifying self).
     /// Used by get_state() to return accurate flags via &self.
     #[inline]
     fn compute_materialized_rflags(&self) -> u64 {
-        let lf = self.lazy_flags.get();
+        let lf = self.lazy_flags;
         if lf.op == LazyFlagOp::None {
             return self.regs.rflags; // Already materialized
         }
@@ -958,71 +966,119 @@ impl X86_64Vcpu {
     /// Set lazy flags for an Add operation
     #[inline(always)]
     pub(super) fn set_lazy_add(&mut self, a: u64, b: u64, result: u64, size: u8) {
-        self.lazy_flags.set(LazyFlags {
+        self.lazy_flags = LazyFlags {
             op: LazyFlagOp::Add,
             result,
             src: a,
             dst: b,
             size,
-        });
+        };
     }
 
     /// Set lazy flags for a Sub/CMP operation
     #[inline(always)]
     pub(super) fn set_lazy_sub(&mut self, a: u64, b: u64, result: u64, size: u8) {
-        self.lazy_flags.set(LazyFlags {
+        self.lazy_flags = LazyFlags {
             op: LazyFlagOp::Sub,
             result,
             src: a,
             dst: b,
             size,
-        });
+        };
     }
 
     /// Set lazy flags for a Logic operation (AND/OR/XOR/TEST)
     #[inline(always)]
     pub(super) fn set_lazy_logic(&mut self, result: u64, size: u8) {
-        self.lazy_flags.set(LazyFlags {
+        self.lazy_flags = LazyFlags {
             op: LazyFlagOp::Logic,
             result,
             src: 0,
             dst: 0,
             size,
-        });
+        };
     }
 
     /// Set lazy flags for an Inc operation (CF preserved)
     #[inline(always)]
     pub(super) fn set_lazy_inc(&mut self, a: u64, result: u64, size: u8) {
-        self.lazy_flags.set(LazyFlags {
+        self.lazy_flags = LazyFlags {
             op: LazyFlagOp::Inc,
             result,
             src: a,
             dst: 1,
             size,
-        });
+        };
     }
 
     /// Set lazy flags for a Dec operation (CF preserved)
     #[inline(always)]
     pub(super) fn set_lazy_dec(&mut self, a: u64, result: u64, size: u8) {
-        self.lazy_flags.set(LazyFlags {
+        self.lazy_flags = LazyFlags {
             op: LazyFlagOp::Dec,
             result,
             src: a,
             dst: 1,
             size,
-        });
+        };
     }
 
     /// Clear lazy flags state (call after directly writing to rflags)
     #[inline(always)]
     pub(super) fn clear_lazy_flags(&mut self) {
-        let lf = self.lazy_flags.get();
-        self.lazy_flags.set(LazyFlags {
+        let lf = self.lazy_flags;
+        self.lazy_flags = LazyFlags {
             op: LazyFlagOp::None,
             ..lf
-        });
+        };
+    }
+
+    /// Resolve ONLY the CF bit of any pending lazy op into `regs.rflags`, leaving
+    /// the lazy op intact for later full materialization. Used by INC/DEC, which
+    /// preserve CF: before switching the lazy state to Inc/Dec we must lock in the
+    /// CF that the pending op would have produced, without paying for a full
+    /// 6-flag computation. Inc/Dec/None already have valid CF in `rflags`, so
+    /// those are no-ops; Logic forces CF=0; Add/Sub compute the single carry bit.
+    #[inline(always)]
+    pub(super) fn resolve_lazy_cf(&mut self) {
+        let lf = self.lazy_flags;
+        match lf.op {
+            LazyFlagOp::None | LazyFlagOp::Inc | LazyFlagOp::Dec => {
+                // CF in rflags is already authoritative for these.
+            }
+            LazyFlagOp::Logic => {
+                self.regs.rflags &= !flags::bits::CF;
+            }
+            LazyFlagOp::Add => {
+                let mask = Self::size_mask(lf.size);
+                let cf = (lf.result & mask) < (lf.src & mask);
+                if cf {
+                    self.regs.rflags |= flags::bits::CF;
+                } else {
+                    self.regs.rflags &= !flags::bits::CF;
+                }
+            }
+            LazyFlagOp::Sub => {
+                let mask = Self::size_mask(lf.size);
+                let cf = (lf.src & mask) < (lf.dst & mask);
+                if cf {
+                    self.regs.rflags |= flags::bits::CF;
+                } else {
+                    self.regs.rflags &= !flags::bits::CF;
+                }
+            }
+        }
+    }
+
+    /// Operand-size mask shared by the lazy-flag paths.
+    #[inline(always)]
+    fn size_mask(size: u8) -> u64 {
+        match size {
+            1 => 0xFFu64,
+            2 => 0xFFFFu64,
+            4 => 0xFFFF_FFFFu64,
+            _ => u64::MAX,
+        }
     }
 
     /// Fetch instruction bytes from RIP into a stack buffer.
@@ -1139,12 +1195,15 @@ impl X86_64Vcpu {
             };
 
             // Enforce LOCK-prefix legality (#UD on illegal use) before dispatch.
-            // `cached.cursor` is the primary-opcode offset, so the prefix bytes
-            // (incl. any 0xF0) live in [0, cached.cursor).
-            if let Some(exit) =
-                self.enforce_lock_prefix(&ctx, cached.opcode, cached.cursor)?
-            {
-                return Ok(Some(exit));
+            // The LOCK-present verdict was computed once on the fill path, so the
+            // hit path skips the prefix-byte scan and only takes the (cold)
+            // legality check when a 0xF0 prefix is actually present.
+            if cached.has_lock {
+                if let Some(exit) =
+                    self.enforce_lock_prefix_cold(&ctx, cached.opcode)?
+                {
+                    return Ok(Some(exit));
+                }
             }
 
             // Function-pointer dispatch: call the handler resolved on the fill
@@ -1207,6 +1266,10 @@ impl X86_64Vcpu {
         // same error the match would (keeps the slow path byte-for-byte correct).
         let handler = Self::resolve_handler(opcode).unwrap_or(Self::execute_via_match);
 
+        // Detect a LOCK (0xF0) prefix once, here on the fill path, and cache the
+        // verdict so hits skip the prefix-byte scan entirely.
+        let has_lock = ctx.bytes[..opcode_cursor.min(ctx.bytes_len)].contains(&0xF0);
+
         // Cache the decoded instruction (incl. raw bytes so hits skip fetch()).
         self.decode_cache[cache_idx] = DecodeCacheEntry {
             rip,
@@ -1221,13 +1284,17 @@ impl X86_64Vcpu {
             segment_override: ctx.segment_override,
             bytes: ctx.bytes,
             bytes_len: ctx.bytes_len,
+            has_lock,
             handler,
         };
 
         // Enforce LOCK-prefix legality (#UD on illegal use) before dispatch.
-        // `opcode_cursor` is the primary-opcode offset; prefixes precede it.
-        if let Some(exit) = self.enforce_lock_prefix(&ctx, opcode, opcode_cursor)? {
-            return Ok(Some(exit));
+        // `opcode_cursor` is the primary-opcode offset; prefixes precede it. Only
+        // pay the legality check when a LOCK prefix is actually present.
+        if has_lock {
+            if let Some(exit) = self.enforce_lock_prefix_cold(&ctx, opcode)? {
+                return Ok(Some(exit));
+            }
         }
 
         // Execute instruction
@@ -2328,7 +2395,7 @@ impl VCpu for X86_64Vcpu {
     fn get_emulator_state(&self) -> Option<crate::snapshot::EmulatorState> {
         use crate::snapshot::{EmulatorState, FpuSnapshot, LazyFlagsSnapshot};
 
-        let lf = self.lazy_flags.get();
+        let lf = self.lazy_flags;
         Some(EmulatorState {
             fpu: FpuSnapshot {
                 control_word: self.fpu.control_word,
@@ -2381,13 +2448,13 @@ impl VCpu for X86_64Vcpu {
             5 => LazyFlagOp::Dec,
             _ => LazyFlagOp::None,
         };
-        self.lazy_flags.set(LazyFlags {
+        self.lazy_flags = LazyFlags {
             op,
             result: state.lazy_flags.result,
             src: state.lazy_flags.src,
             dst: state.lazy_flags.dst,
             size: state.lazy_flags.size,
-        });
+        };
 
         // Restore other state
         self.kernel_gs_base = state.kernel_gs_base;

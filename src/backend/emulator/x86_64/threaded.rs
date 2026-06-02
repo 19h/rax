@@ -125,6 +125,9 @@ impl X86_64Vcpu {
         let handler =
             Self::resolve_handler(opcode).unwrap_or(X86_64Vcpu::execute_via_match);
 
+        // Cache the LOCK-present verdict so a later `step()` hit can skip the scan.
+        let has_lock = ctx.bytes[..opcode_cursor.min(ctx.bytes_len)].contains(&0xF0);
+
         // Update cache
         self.decode_cache[cache_idx] = super::cpu::DecodeCacheEntry {
             rip,
@@ -139,6 +142,7 @@ impl X86_64Vcpu {
             segment_override: ctx.segment_override,
             bytes: ctx.bytes,
             bytes_len: ctx.bytes_len,
+            has_lock,
             handler,
         };
 

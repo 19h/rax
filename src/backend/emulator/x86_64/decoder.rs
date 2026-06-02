@@ -359,6 +359,8 @@ impl X86_64Vcpu {
     /// Returns `Ok(Some(exit))` if the LOCK was illegal (after delivering #UD),
     /// `Ok(None)` if the instruction may proceed.
     #[inline(always)]
+    #[allow(dead_code)] // retained for non-cache callers / documentation; the hot
+    // path now caches the LOCK verdict and calls `enforce_lock_prefix_cold` directly.
     pub(super) fn enforce_lock_prefix(
         &mut self,
         ctx: &InsnContext,
@@ -377,7 +379,7 @@ impl X86_64Vcpu {
 
     #[cold]
     #[inline(never)]
-    fn enforce_lock_prefix_cold(
+    pub(super) fn enforce_lock_prefix_cold(
         &mut self,
         ctx: &InsnContext,
         opcode: u8,
