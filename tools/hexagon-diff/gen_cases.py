@@ -103,24 +103,30 @@ def parse_attributes(path):
     return attrs
 
 
-def imm_value(letter, width, scale):
-    """Pick a concrete, in-range, scale-aligned immediate for a #field."""
+# Number of immediate-value variants generated per instruction (covers small,
+# zero, max, min and a mid value so immediate-width/offset bugs are exercised).
+N_IMM_VARIANTS = 5
+
+
+def imm_value(letter, width, scale, variant):
+    """Concrete, in-range, scale-aligned immediate for a #field and variant, or
+    None if this variant collapses to one already covered."""
     step = 1 << scale
-    if letter in ("u", "U"):  # unsigned
+    if letter in ("u", "U", "m", "g"):  # unsigned-ish
         maxk = (1 << width) - 1
-        k = min(3, maxk)
-        return k * step
-    if letter in ("s", "S", "r"):  # signed (r = pc-relative, but skipped earlier)
+        ks = [min(3, maxk), 0, maxk, 1, maxk // 2]
+    else:  # s, S, r -- signed
         maxk = (1 << (width - 1)) - 1
-        if maxk >= 3:
-            return -3 * step
-        return -(min(1, maxk)) * step if width > 1 else 0
-    # m, g, and friends: small nonneg value
-    return step
+        mink = -(1 << (width - 1))
+        ks = [-3 if maxk >= 3 else mink, 0, maxk, mink, maxk // 2]
+    if variant >= len(ks):
+        return None
+    return ks[variant] * step
 
 
-def substitute(syntax):
-    """Turn a spec syntax string into concrete assembly, or None if unsupported."""
+def substitute(syntax, variant=0):
+    """Turn a spec syntax string into concrete assembly for the given immediate
+    variant, or None if unsupported / the variant is out of range."""
     s = syntax.strip()
     # Reject anything referencing an unsupported operand kind / mnemonic.
     for tok in SKIP_SYNTAX_TOKENS:
@@ -148,11 +154,19 @@ def substitute(syntax):
     s = re.sub(r"P([dsteuvx])4", repl_pred, s)
 
     # Immediates: #<letter><width>[:<scale>]
+    collapsed = [False]
+
     def repl_imm(m):
         letter, width = m.group(1), int(m.group(2))
         scale = int(m.group(3)) if m.group(3) else 0
-        return "#%d" % imm_value(letter, width, scale)
+        v = imm_value(letter, width, scale, variant)
+        if v is None:
+            collapsed[0] = True
+            return m.group(0)
+        return "#%d" % v
     s = re.sub(r"#([usUSmgr])(\d+)(?::(\d+))?", repl_imm, s)
+    if collapsed[0]:
+        return None
 
     # If any spec placeholder survived, we couldn't fully concretise it.
     if re.search(r"R[dsteuvxy](32|[dsteuvxy])|P[dsteuvx]4|#[a-zA-Z]\d", s):
@@ -200,24 +214,37 @@ def main():
     sem = parse_semantics(SEM_PATH)
     attrs = parse_attributes(SEM_PATH)
 
-    emitted, skipped_attr, skipped_syn, skipped_asm = 0, 0, 0, 0
+    emitted_tags, skipped_attr, skipped_syn, skipped_asm = 0, 0, 0, 0
+    n_cases = 0
     lines = []
     for tag, syntax in sem:
         a = set(attrs.get(tag, []))
         if a & SKIP_ATTRS:
             skipped_attr += 1
             continue
-        asm = substitute(syntax)
-        if asm is None:
+        # Generate distinct immediate variants so immediate-dependent bugs
+        # (extract/insert widths, shift amounts, ...) are exercised.
+        seen_asm = set()
+        any_asm, any_ok = False, False
+        for variant in range(N_IMM_VARIANTS):
+            asm = substitute(syntax, variant)
+            if asm is None or asm in seen_asm:
+                continue
+            seen_asm.add(asm)
+            any_asm = True
+            words = assemble(asm)
+            if words is None:
+                continue
+            any_ok = True
+            words_hex = ",".join("%08x" % w for w in words)
+            lines.append("%s\t%s\t%s" % (tag, asm, words_hex))
+            n_cases += 1
+        if not any_asm:
             skipped_syn += 1
-            continue
-        words = assemble(asm)
-        if words is None:
+        elif not any_ok:
             skipped_asm += 1
-            continue
-        words_hex = ",".join("%08x" % w for w in words)
-        lines.append("%s\t%s\t%s" % (tag, asm, words_hex))
-        emitted += 1
+        else:
+            emitted_tags += 1
 
     lines.sort()
     with open(OUT_PATH, "w") as f:
@@ -226,8 +253,8 @@ def main():
         f.write("\n".join(lines) + "\n")
 
     sys.stderr.write(
-        "emitted=%d  skipped(attr=%d syntax=%d asm=%d)  total=%d\n"
-        % (emitted, skipped_attr, skipped_syn, skipped_asm, len(sem))
+        "tags=%d cases=%d  skipped(attr=%d syntax=%d asm=%d)  total=%d\n"
+        % (emitted_tags, n_cases, skipped_attr, skipped_syn, skipped_asm, len(sem))
     )
 
 
