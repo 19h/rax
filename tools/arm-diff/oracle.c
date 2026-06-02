@@ -49,7 +49,16 @@ typedef struct {
     uint64_t fpsr;
     uint64_t fpcr;
     uint64_t v[64];   /* V0..V31 as lo/hi u64 pairs       */
+    uint64_t scratch[32]; /* contents of the shared scratch window (256 bytes) */
 } ArmState;
+
+/* Shared scratch memory for load/store tests. The window is MAP_FIXED so the
+ * same numeric address is valid in both qemu-user and the rax FlatMemory.
+ * Tests point a base register at SCRATCH_BASE (offsets in [-64, +191] stay in
+ * the exchanged window). */
+#define SCRATCH_ADDR 0x200000ull
+#define SCRATCH_SIZE 4096
+#define SCRATCH_BASE (SCRATCH_ADDR + 64)
 
 typedef struct {
     uint32_t insn;    /* instruction word under test      */
@@ -276,6 +285,11 @@ int main(void) {
     __builtin___clear_cache((char *)code, (char *)(code + words));
     g_code = (uint64_t)(uintptr_t)code;
 
+    /* Shared scratch memory window at a fixed address. */
+    void *scratch = mmap((void *)SCRATCH_ADDR, SCRATCH_SIZE, PROT_READ | PROT_WRITE,
+                         MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+    if (scratch == MAP_FAILED) { perror("mmap scratch"); return 8; }
+
     uint32_t magic = 0, count = 0;
     if (read_exact(0, &magic, 4) || read_exact(0, &count, 4)) return 3;
     if (magic != 0x314d5241u) return 4;
@@ -289,6 +303,9 @@ int main(void) {
         code[slot] = in.insn;
         __builtin___clear_cache((char *)(code + slot), (char *)(code + slot + 1));
 
+        /* Install the scratch window contents before the test runs. */
+        memcpy((void *)SCRATCH_ADDR, in.st.scratch, sizeof in.st.scratch);
+
         ArmState out;
         memset(&out, 0, sizeof out);
         g_out = &out;
@@ -296,6 +313,9 @@ int main(void) {
         g_trapped = 0;
 
         __asm__ __volatile__("brk #0" ::: "memory");
+
+        /* Capture any modifications the test made to the scratch window. */
+        memcpy(out.scratch, (void *)SCRATCH_ADDR, sizeof out.scratch);
 
         OutCase oc;
         oc.st = out;

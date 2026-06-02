@@ -5860,11 +5860,38 @@ impl AArch64Cpu {
         let rt = (insn & 0x1F) as u8;
 
         if v != 0 {
-            return Err(ArmError::Unimplemented("LDR/STR SIMD".to_string()));
+            // SIMD/FP load/store: access size is 1 << ((opc<1>:size)).
+            let scale = (((opc >> 1) & 1) << 2) | size;
+            if scale > 4 {
+                return Err(ArmError::UndefinedInstruction(insn));
+            }
+            let access = 1usize << scale;
+            let is_load = (opc & 1) == 1;
+            let (address, wback, wback_value) = self.decode_address(insn, rn, scale)?;
+            if is_load {
+                let mut bytes = [0u8; 16];
+                for (i, b) in bytes.iter_mut().enumerate().take(access) {
+                    *b = self.mem_read_u8(address + i as u64)?;
+                }
+                self.v[rt as usize] = u128::from_le_bytes(bytes);
+            } else {
+                let val = self.v[rt as usize].to_le_bytes();
+                for (i, b) in val.iter().enumerate().take(access) {
+                    self.mem_write_u8(address + i as u64, *b)?;
+                }
+            }
+            if wback {
+                if rn == 31 {
+                    self.set_current_sp(wback_value);
+                } else {
+                    self.set_x(rn, wback_value);
+                }
+            }
+            return Ok(CpuExit::Continue);
         }
 
         // Determine addressing mode
-        let (address, wback, wback_value) = self.decode_address(insn, rn)?;
+        let (address, wback, wback_value) = self.decode_address(insn, rn, size)?;
 
         let is_load = (opc & 1) != 0 || opc == 0b10;
         let is_signed = opc >= 0b10;
@@ -5931,8 +5958,9 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-    /// Decode addressing mode for load/store.
-    fn decode_address(&self, insn: u32, rn: u8) -> Result<(u64, bool, u64), ArmError> {
+    /// Decode addressing mode for load/store. `scale` is the log2 of the access
+    /// size in bytes (used to scale the unsigned/register offsets).
+    fn decode_address(&self, insn: u32, rn: u8, scale: u32) -> Result<(u64, bool, u64), ArmError> {
         let base = if rn == 31 {
             self.current_sp()
         } else {
@@ -5942,9 +5970,8 @@ impl AArch64Cpu {
         // Check for unsigned offset (bit 24 = 1, bit 21 = 0)
         if (insn >> 24) & 1 != 0 && (insn >> 21) & 1 == 0 {
             // Unsigned offset
-            let size = (insn >> 30) & 0x3;
             let imm12 = ((insn >> 10) & 0xFFF) as u64;
-            let offset = imm12 << size;
+            let offset = imm12 << scale;
             return Ok((base.wrapping_add(offset), false, 0));
         }
 
@@ -5969,9 +5996,8 @@ impl AArch64Cpu {
                 let rm = ((insn >> 16) & 0x1F) as u8;
                 let option = ((insn >> 13) & 0x7) as u8;
                 let s = ((insn >> 12) & 1) != 0;
-                let size = (insn >> 30) & 0x3;
 
-                let offset = self.extend_reg(rm, option, if s { size } else { 0 })?;
+                let offset = self.extend_reg(rm, option, if s { scale } else { 0 })?;
                 Ok((base.wrapping_add(offset), false, 0))
             }
             0b11 => {

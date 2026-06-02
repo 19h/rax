@@ -36,18 +36,33 @@ use rax::arm::{AArch64Config, AArch64Cpu, ArmCpu, CpuExit, FlatMemory};
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct ArmState {
-    x: [u64; 31],   // X0..X30
-    sp: u64,        // SP
-    pc: u64,        // input: unused; output: post-instruction PC
-    pstate: u64,    // NZCV in bits [31:28]
+    x: [u64; 31],     // X0..X30
+    sp: u64,          // SP
+    pc: u64,          // input: unused; output: post-instruction PC
+    pstate: u64,      // NZCV in bits [31:28]
     fpsr: u64,
     fpcr: u64,
-    v: [u64; 64],   // V0..V31 as lo/hi u64 pairs
+    v: [u64; 64],     // V0..V31 as lo/hi u64 pairs
+    scratch: [u64; 32], // shared scratch window (256 bytes) for load/store tests
 }
+
+/// Address of the shared scratch window (matches oracle.c SCRATCH_ADDR).
+const SCRATCH_ADDR: u64 = 0x20_0000;
+/// Base pointer tests aim a register at (matches oracle.c SCRATCH_BASE).
+const SCRATCH_BASE: u64 = SCRATCH_ADDR + 64;
 
 impl ArmState {
     fn zeroed() -> Self {
-        ArmState { x: [0; 31], sp: 0, pc: 0, pstate: 0, fpsr: 0, fpcr: 0, v: [0; 64] }
+        ArmState {
+            x: [0; 31],
+            sp: 0,
+            pc: 0,
+            pstate: 0,
+            fpsr: 0,
+            fpcr: 0,
+            v: [0; 64],
+            scratch: [0; 32],
+        }
     }
     fn vreg(&self, r: usize) -> (u64, u64) {
         (self.v[2 * r], self.v[2 * r + 1])
@@ -76,10 +91,10 @@ struct OutCase {
 
 const WIRE_MAGIC: u32 = 0x314d_5241; // 'A','R','M','1'
 
-// Compile-time guarantee the layout matches the C side (808 / 808 bytes).
-const _: () = assert!(core::mem::size_of::<InCase>() == 808);
-const _: () = assert!(core::mem::size_of::<OutCase>() == 808);
-const _: () = assert!(core::mem::size_of::<ArmState>() == 800);
+// Compile-time guarantee the layout matches the C side.
+const _: () = assert!(core::mem::size_of::<ArmState>() == 1056);
+const _: () = assert!(core::mem::size_of::<InCase>() == 1064);
+const _: () = assert!(core::mem::size_of::<OutCase>() == 1064);
 
 // ---------------------------------------------------------------------------
 // Byte (de)serialisation helpers -- plain little-endian copies of the structs.
@@ -194,7 +209,8 @@ fn run_oracle(oracle: &PathBuf, cases: &[(u32, ArmState)]) -> Option<Vec<OutCase
 /// Returns `Some(out_state)` if rax executed the instruction (CpuExit::Continue),
 /// or `None` if rax treated it as undefined / errored.
 fn run_rax(insn: u32, input: &ArmState) -> Option<ArmState> {
-    let mem = FlatMemory::new(0, 0x10_0000);
+    // Memory must cover both the instruction (at 0) and the scratch window.
+    let mem = FlatMemory::new(0, 0x30_0000);
     let mut cpu = AArch64Cpu::new(AArch64Config::default(), Box::new(mem));
 
     for i in 0..31u8 {
@@ -207,6 +223,10 @@ fn run_rax(insn: u32, input: &ArmState) -> Option<ArmState> {
         let (lo, hi) = input.vreg(r as usize);
         cpu.set_simd_reg(r, lo, hi).ok()?;
     }
+
+    // Install the scratch window at SCRATCH_ADDR.
+    let scratch_bytes: Vec<u8> = input.scratch.iter().flat_map(|w| w.to_le_bytes()).collect();
+    cpu.write_memory(SCRATCH_ADDR, &scratch_bytes).ok()?;
 
     cpu.write_memory(0, &insn.to_le_bytes()).ok()?;
     cpu.set_pc(0);
@@ -232,6 +252,10 @@ fn run_rax(insn: u32, input: &ArmState) -> Option<ArmState> {
         if let Some((lo, hi)) = cpu.get_simd_reg(r) {
             out.set_vreg(r as usize, lo, hi);
         }
+    }
+    // Read the scratch window back.
+    for (i, w) in out.scratch.iter_mut().enumerate() {
+        *w = cpu.mem_read_u64(SCRATCH_ADDR + (i as u64) * 8).ok()?;
     }
     Some(out)
 }
@@ -305,6 +329,14 @@ fn compare_case(
             diffs.push(format!(
                 "v{r}: rax={:#018x}{:016x} hw={:#018x}{:016x}",
                 rhi, rlo, hhi, hlo
+            ));
+        }
+    }
+    for i in 0..32 {
+        if rax.scratch[i] != oracle.st.scratch[i] {
+            diffs.push(format!(
+                "scratch[{i}]: rax={:#018x} hw={:#018x}",
+                rax.scratch[i], oracle.st.scratch[i]
             ));
         }
     }
@@ -652,6 +684,66 @@ fn diff_fmlal() {
         }
     }
     run_batch("fmlal", batch);
+}
+
+/// Load/store register, unsigned immediate offset:
+/// `size 111 V 01 opc imm12 Rn Rt`. Rn=base (x1), Rt=Rd (x0/v0).
+fn enc_ldst_uimm(size: u32, v: u32, opc: u32, imm12: u32) -> u32 {
+    (size << 30) | (0b111 << 27) | (v << 26) | (0b01 << 24) | (opc << 22) | (imm12 << 10)
+        | (RN << 5) | RD
+}
+
+/// Build a memory-test input: base register x1 -> SCRATCH_BASE, random scratch
+/// and operand registers.
+fn mem_input(rng: &mut Rng) -> ArmState {
+    let mut st = gen_input(rng);
+    st.x[1] = SCRATCH_BASE; // Rn base pointer
+    for w in st.scratch.iter_mut() {
+        *w = rng.interesting();
+    }
+    st
+}
+
+#[test]
+fn diff_mem_ldst_imm() {
+    // (size, V, opc, name)
+    let ops: &[(u32, u32, u32, &str)] = &[
+        (3, 0, 0, "str_x"),
+        (3, 0, 1, "ldr_x"),
+        (2, 0, 0, "str_w"),
+        (2, 0, 1, "ldr_w"),
+        (0, 1, 0, "str_b"),
+        (0, 1, 1, "ldr_b"),
+        (1, 1, 0, "str_h"),
+        (1, 1, 1, "ldr_h"),
+        (2, 1, 0, "str_s"),
+        (2, 1, 1, "ldr_s"),
+        (3, 1, 0, "str_d"),
+        (3, 1, 1, "ldr_d"),
+        (0, 1, 2, "str_q"),
+        (0, 1, 3, "ldr_q"),
+        // sign-extending loads (GPR): opc=10 -> LDRSx to X, opc=11 -> to W
+        (0, 0, 2, "ldrsb_x"),
+        (1, 0, 2, "ldrsh_x"),
+        (2, 0, 2, "ldrsw_x"),
+        (0, 0, 1, "ldrb_w"),
+        (1, 0, 1, "ldrh_w"),
+    ];
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for &(size, v, opc, name) in ops {
+        for imm12 in 0..4u32 {
+            cases.push((format!("{name} #{imm12}"), enc_ldst_uimm(size, v, opc, imm12)));
+        }
+    }
+    // Custom batch with memory inputs.
+    let mut rng = Rng::new(0x1_0001);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in &cases {
+        for _ in 0..8 {
+            batch.push((label.clone(), *insn, mem_input(&mut rng)));
+        }
+    }
+    run_batch("mem_ldst_imm", batch);
 }
 
 /// Scalar FP 3-source: `0001_1111 type o1 Rm o0 Ra Rn Rd`.
