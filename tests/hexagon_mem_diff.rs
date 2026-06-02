@@ -561,6 +561,26 @@ fn diff_mem_gp() {
 }
 
 #[test]
+fn diff_mem_newvalue() {
+    // New-value stores: a producer writes r5 in the same packet; the store
+    // commits that *new* value (resolved via the Nt8 producer selector). Base r4.
+    run_family(
+        "mem_newvalue",
+        &[
+            ("storerbnew", "{ r5 = add(r2,r3); memb(r4+#0) = r5.new }"),
+            ("storerhnew", "{ r5 = add(r2,r3); memh(r4+#2) = r5.new }"),
+            ("storerinew", "{ r5 = add(r2,r3); memw(r4+#4) = r5.new }"),
+            ("storerinew_xor", "{ r5 = xor(r2,r3); memw(r4+#0) = r5.new }"),
+            // Two producers before the store; Nt8 selects the right one (r5).
+            ("storerinew_2prod", "{ r6 = and(r2,r3); r5 = or(r2,r3); memw(r4+#0) = r5.new }"),
+        ],
+        4,
+        16,
+        0x5a5a,
+    );
+}
+
+#[test]
 fn diff_mem_memop() {
     // Read-modify-write memops. Base is r4, register source is r5.
     run_family(

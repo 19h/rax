@@ -1019,6 +1019,15 @@ impl HexagonLifter {
                 ControlFlow::Fallthrough
             }
 
+            // New-value stores need packet producer context; the interpreter
+            // path resolves them. Reject in the lifter so callers fall back.
+            DecodedInsn::StoreNew { .. } => {
+                return Err(LiftError::Unsupported {
+                    addr,
+                    mnemonic: "store_new".to_string(),
+                });
+            }
+
             // Read-modify-write memops are not lifted to SMIR (the interpreter
             // path in cpu.rs handles them); reject so callers fall back.
             DecodedInsn::MemOp { .. } => {

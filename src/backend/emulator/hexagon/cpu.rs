@@ -60,6 +60,52 @@ fn hex_reg_shift32(val: u32, rt: u32, kind: ShiftKind) -> u32 {
     result as u32
 }
 
+/// Snapshot of which GPRs currently have a buffered (in-flight) write.
+fn producer_mask(new_r: &[Option<u32>; 32]) -> [bool; 32] {
+    std::array::from_fn(|i| new_r[i].is_some())
+}
+
+/// Record the GPR an instruction just produced (the lowest newly-written
+/// register) into the packet's producer list, for new-value resolution.
+fn record_producer(new_r: &[Option<u32>; 32], before: [bool; 32], producers: &mut Vec<u8>) {
+    for i in 0..32 {
+        if new_r[i].is_some() && !before[i] {
+            producers.push(i as u8);
+            return;
+        }
+    }
+}
+
+/// Resolve a new-value store: `Nt8 >> 1` is the back-distance (1 = most recent)
+/// among the packet's GPR producers; the selected producer's register is the
+/// store data source (read as a `.new`/in-flight value). Non-`StoreNew` insns
+/// pass through unchanged.
+fn resolve_new_value(insn: DecodedInsn, producers: &[u8]) -> DecodedInsn {
+    match insn {
+        DecodedInsn::StoreNew {
+            nt,
+            addr,
+            width,
+            pred,
+        } => {
+            let back = (nt >> 1) as usize;
+            let src = if back >= 1 && back <= producers.len() {
+                producers[producers.len() - back]
+            } else {
+                0
+            };
+            DecodedInsn::Store {
+                src,
+                addr,
+                width,
+                pred,
+                src_new: true,
+            }
+        }
+        other => other,
+    }
+}
+
 struct MmioPending {
     dst: u8,
     size: u8,
@@ -926,6 +972,13 @@ impl HexagonVcpu {
                 let result = if a < b { a } else { b };
                 new_r[dst as usize] = Some(result);
             }
+            DecodedInsn::StoreNew { .. } => {
+                // New-value stores are resolved to a regular Store by the packet
+                // driver before reaching here; seeing one is a logic error.
+                return Err(Error::Emulator(
+                    "unresolved new-value store".to_string(),
+                ));
+            }
             DecodedInsn::Unknown(word) => {
                 // Fall through to the direct opcode-dispatch semantic layer,
                 // which handles instructions not modelled by the DecodedInsn IR.
@@ -1058,6 +1111,12 @@ impl HexagonVcpu {
         let mut second_parse = state.second_parse;
         let mut pending_subinsn = state.pending_subinsn;
         let mut pending_end = state.pending_end;
+        // GPR producers (dest registers) of this packet's instructions, in
+        // execution order — used to resolve new-value stores (`Nt8`). Local to
+        // this call: a packet that suspends for MMIO mid-flight won't carry the
+        // list across resume, but a new-value store after an MMIO access in the
+        // same packet does not occur in practice.
+        let mut producers: Vec<u8> = Vec::new();
 
         loop {
             if let Some(sub) = pending_subinsn.take() {
@@ -1226,6 +1285,10 @@ impl HexagonVcpu {
                     continue;
                 }
                 insn => {
+                    // Resolve a new-value store's `Nt8` against the packet's
+                    // GPR producers before executing it.
+                    let insn = resolve_new_value(insn, &producers);
+                    let before = producer_mask(&new_r);
                     if let Some(exit) = self.execute_insn(
                         insn,
                         packet_pc,
@@ -1264,6 +1327,7 @@ impl HexagonVcpu {
                         );
                         return Ok(Some(exit));
                     }
+                    record_producer(&new_r, before, &mut producers);
                 }
             }
 

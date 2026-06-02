@@ -290,6 +290,16 @@ pub enum DecodedInsn {
         count: u32,
     },
     Trap0,
+    /// New-value store: stores the register produced earlier in this packet,
+    /// selected by the `Nt8` field. The packet driver resolves `nt` to the
+    /// producer register (using `Nt8 >> 1` as the back-distance among the
+    /// packet's GPR producers) before execution.
+    StoreNew {
+        nt: u8,
+        addr: AddrMode,
+        width: MemWidth,
+        pred: Option<PredCond>,
+    },
     MemOp {
         base: u8,
         offset: i32,
@@ -530,6 +540,27 @@ fn store_io(
             width,
             pred: None,
             src_new,
+        },
+        used,
+    ))
+}
+
+/// New-value store with register+immediate offset (`memX(Rs+#s11:N)=Nt8.new`).
+fn store_new_io(
+    decoded: &DecodedOp,
+    width: MemWidth,
+    immext: Option<u32>,
+) -> Option<(DecodedInsn, bool)> {
+    let base = field_u8(decoded, b's')?;
+    let nt = field_u8(decoded, b't')?;
+    let (imm, used) = decode_field_simm(decoded, b'i', immext)?;
+    let offset = imm.wrapping_shl(width_shift(width) as u32);
+    Some((
+        DecodedInsn::StoreNew {
+            nt,
+            addr: AddrMode::Offset { base, offset },
+            width,
+            pred: None,
         },
         used,
     ))
@@ -1138,6 +1169,9 @@ fn decode_main(decoded: &DecodedOp, word: u32, immext: Option<u32>) -> (DecodedI
         Opcode::S2_storerhgp => req!(store_gp(decoded, MemWidth::Half, false, immext)),
         Opcode::S2_storerigp => req!(store_gp(decoded, MemWidth::Word, false, immext)),
         Opcode::S2_storerdgp => req!(store_gp(decoded, MemWidth::Double, false, immext)),
+        Opcode::S2_storerbnew_io => req!(store_new_io(decoded, MemWidth::Byte, immext)),
+        Opcode::S2_storerhnew_io => req!(store_new_io(decoded, MemWidth::Half, immext)),
+        Opcode::S2_storerinew_io => req!(store_new_io(decoded, MemWidth::Word, immext)),
         Opcode::S2_storerb_pi => req!(store_pi(decoded, MemWidth::Byte, false)),
         Opcode::S2_storerh_pi => req!(store_pi(decoded, MemWidth::Half, false)),
         Opcode::S2_storeri_pi => req!(store_pi(decoded, MemWidth::Word, false)),
