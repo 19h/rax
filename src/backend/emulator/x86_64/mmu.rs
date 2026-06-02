@@ -487,13 +487,14 @@ impl Mmu {
     /// RAM extends past the LAPIC window (access at/above `ram_fast_len`).
     #[inline(always)]
     fn ram_ptr<const LEN: u64>(&self, paddr: u64) -> Option<usize> {
-        // ram_fast_len is 0 (no RAM) or >= any access width for real RAM, so the
-        // subtraction underflows only when there is no RAM, where the huge
-        // wrapped bound makes the comparison fail and yields None.
-        if paddr <= self.ram_fast_len.wrapping_sub(LEN) {
-            Some(self.ram_host_base + paddr as usize)
-        } else {
-            self.ram_ptr_high::<LEN>(paddr)
+        // `checked_sub` yields None when ram_fast_len < LEN (zero/tiny RAM), so an
+        // empty or sub-width RAM window can never spuriously pass the bound and
+        // hand out a near-null host pointer — the unsafe accessors below rely on
+        // this rather than on a non-local invariant (e.g. translate() failing
+        // first). For real RAM this is a single compare on the hot path.
+        match self.ram_fast_len.checked_sub(LEN) {
+            Some(bound) if paddr <= bound => Some(self.ram_host_base + paddr as usize),
+            _ => self.ram_ptr_high::<LEN>(paddr),
         }
     }
 
@@ -502,12 +503,15 @@ impl Mmu {
     #[cold]
     #[inline(never)]
     fn ram_ptr_high<const LEN: u64>(&self, paddr: u64) -> Option<usize> {
-        if paddr <= self.ram_len.wrapping_sub(LEN)
-            && !(paddr < LAPIC_BASE + LAPIC_SIZE && paddr.wrapping_add(LEN) > LAPIC_BASE)
-        {
-            Some(self.ram_host_base + paddr as usize)
-        } else {
-            None
+        match self.ram_len.checked_sub(LEN) {
+            Some(bound)
+                if paddr <= bound
+                    && !(paddr < LAPIC_BASE + LAPIC_SIZE
+                        && paddr.wrapping_add(LEN) > LAPIC_BASE) =>
+            {
+                Some(self.ram_host_base + paddr as usize)
+            }
+            _ => None,
         }
     }
 
