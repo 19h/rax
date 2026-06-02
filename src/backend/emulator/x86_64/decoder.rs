@@ -356,19 +356,30 @@ impl X86_64Vcpu {
     ///
     /// Returns `Ok(Some(exit))` if the LOCK was illegal (after delivering #UD),
     /// `Ok(None)` if the instruction may proceed.
+    #[inline(always)]
     pub(super) fn enforce_lock_prefix(
         &mut self,
         ctx: &InsnContext,
         opcode: u8,
         opcode_cursor: usize,
     ) -> Result<Option<VcpuExit>> {
-        // Fast path: no LOCK prefix (0xF0) among the prefix bytes => nothing to
-        // enforce. This is the overwhelmingly common case.
-        let has_lock = ctx.bytes[..opcode_cursor.min(ctx.bytes_len)].contains(&0xF0);
-        if !has_lock {
+        // Fast path (inlined into the hot loop): no LOCK prefix (0xF0) among the
+        // prefix bytes => nothing to enforce. This is the overwhelmingly common
+        // case (prefix-less instructions resolve to an empty scan). Only when a
+        // 0xF0 is actually present do we take the cold legality path.
+        if !ctx.bytes[..opcode_cursor.min(ctx.bytes_len)].contains(&0xF0) {
             return Ok(None);
         }
+        self.enforce_lock_prefix_cold(ctx, opcode)
+    }
 
+    #[cold]
+    #[inline(never)]
+    fn enforce_lock_prefix_cold(
+        &mut self,
+        ctx: &InsnContext,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
         if Self::lock_is_legal(ctx, opcode) {
             return Ok(None);
         }
