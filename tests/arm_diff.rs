@@ -918,6 +918,41 @@ fn diff_simd_across_fp() {
     run_batch("simd_across_fp", batch);
 }
 
+/// Advanced SIMD copy: `0 Q op 01110000 imm5 0 imm4 1 Rn Rd`.
+fn enc_copy(q: u32, op: u32, imm5: u32, imm4: u32) -> u32 {
+    (q << 30) | (op << 29) | (0b01110 << 24) | (imm5 << 16) | (imm4 << 11) | (1 << 10)
+        | (RN << 5) | RD
+}
+
+/// imm5 for a given element size index (0=B,1=H,2=S,3=D) and lane index.
+fn copy_imm5(size: u32, index: u32) -> u32 {
+    (index << (size + 1)) | (1 << size)
+}
+
+#[test]
+fn diff_simd_copy() {
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    // DUP element (op0 imm4 0000), DUP general (imm4 0001), INS general (0011),
+    // SMOV (0101), UMOV (0111); INS element (op1).
+    for size in 0..4u32 {
+        let lanes: u32 = 16u32 >> size; // lanes in 128 bits (16/8/4/2)
+        for &index in &[0u32, lanes - 1] {
+            for q in 0..2 {
+                cases.push((format!("dupelem sz{size} i{index} q{q}"), enc_copy(q, 0, copy_imm5(size, index), 0b0000)));
+                cases.push((format!("dupgen sz{size} i{index} q{q}"), enc_copy(q, 0, copy_imm5(size, index), 0b0001)));
+                cases.push((format!("smov sz{size} i{index} q{q}"), enc_copy(q, 0, copy_imm5(size, index), 0b0101)));
+                cases.push((format!("umov sz{size} i{index} q{q}"), enc_copy(q, 0, copy_imm5(size, index), 0b0111)));
+            }
+            // INS general/element are always 128-bit (Q=1 in the encoding).
+            cases.push((format!("insgen sz{size} i{index}"), enc_copy(1, 0, copy_imm5(size, index), 0b0011)));
+            // INS element: dest index from imm5, source index from imm4 (per size).
+            let src = (index + 1) % lanes;
+            cases.push((format!("inselem sz{size} d{index} s{src}"), enc_copy(1, 1, copy_imm5(size, index), src << size)));
+        }
+    }
+    run_family("simd_copy", cases, 8, 0x9001);
+}
+
 /// Advanced SIMD two-register miscellaneous: `0 Q U 01110 size 10000 opcode 10 Rn Rd`.
 fn enc_two_reg(q: u32, u: u32, size: u32, opcode: u32) -> u32 {
     (q << 30) | (u << 29) | (0b01110 << 24) | (size << 22) | (0b10000 << 17)

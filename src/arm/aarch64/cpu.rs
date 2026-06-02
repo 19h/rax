@@ -1695,6 +1695,18 @@ impl AArch64Cpu {
             return self.exec_simd_fp16_add(insn);
         }
 
+        // Advanced SIMD copy (DUP element/general, INS element/general, SMOV,
+        // UMOV). Identified by bits[23:21]==000 (bit22==0 distinguishes it from
+        // the FP16 three-same group, which has bit22==1). Must precede FP16.
+        // Encoding: 0_Q_op_01110000_imm5_0_imm4_1_Rn_Rd
+        if (insn >> 24) & 0x1F == 0b01110
+            && (insn >> 21) & 0x7 == 0
+            && (insn >> 15) & 1 == 0
+            && (insn >> 10) & 1 == 1
+        {
+            return self.exec_simd_copy(insn);
+        }
+
         // Advanced SIMD three-same FP16 (vector and scalar)
         // FP16 uses bit[21]=0 (unlike regular three-same which has bit[21]=1)
         // Various FP16 ops use different bits[23:22] values:
@@ -1702,6 +1714,7 @@ impl AArch64Cpu {
         //   - FDIV/FRECPS/FRSQRTS: bits[23:22]=01
         let op_bits = (insn >> 24) & 0x1F;
         if (op_bits == 0b01110 || op_bits == 0b11110)
+            && (insn >> 22) & 1 == 1       // bit[22]=1 for FP16 three-same
             && (insn >> 21) & 1 == 0       // bit[21]=0 for FP16 three-same
             && (insn >> 14) & 0x3 == 0b00  // bits[15:14]=00 for FP16 three-same
             && (insn >> 10) & 1 == 1
@@ -2942,6 +2955,120 @@ impl AArch64Cpu {
             write_elem(&mut dst, off, esize, r);
         }
         self.v[rd] = u128::from_le_bytes(dst);
+        Ok(CpuExit::Continue)
+    }
+
+    /// Execute the Advanced SIMD "copy" group: DUP (element/general), INS
+    /// (element/general), SMOV, UMOV. Element size and lane index come from the
+    /// `imm5` field (lowest set bit selects the size).
+    fn exec_simd_copy(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let q = (insn >> 30) & 1;
+        let op = (insn >> 29) & 1;
+        let imm5 = (insn >> 16) & 0x1F;
+        let imm4 = (insn >> 11) & 0xF;
+        let rn = ((insn >> 5) & 0x1F) as u8;
+        let rd = (insn & 0x1F) as u8;
+
+        let size = if imm5 & 1 != 0 {
+            0u32
+        } else if imm5 & 2 != 0 {
+            1
+        } else if imm5 & 4 != 0 {
+            2
+        } else if imm5 & 8 != 0 {
+            3
+        } else {
+            return Err(ArmError::UndefinedInstruction(insn));
+        };
+        let esize = 8u32 << size; // element size in bits
+        let shift = esize as usize;
+        let index = (imm5 >> (size + 1)) as usize;
+        let emask = elem_mask_u128(esize);
+
+        if op == 1 {
+            // INS (element): Vd[index] = Vn[src_index].
+            let src_index = (imm4 >> size) as usize;
+            let vn = self.v[rn as usize];
+            let elem = (vn >> (src_index * shift)) & emask;
+            let mut vd = self.v[rd as usize];
+            vd &= !(emask << (index * shift));
+            vd |= elem << (index * shift);
+            self.v[rd as usize] = vd;
+            return Ok(CpuExit::Continue);
+        }
+
+        match imm4 {
+            0b0000 => {
+                // DUP (element): broadcast Vn[index].
+                if size == 3 && q == 0 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+                let vn = self.v[rn as usize];
+                let elem = (vn >> (index * shift)) & emask;
+                let datasize = if q == 1 { 128 } else { 64 };
+                let mut result = 0u128;
+                let mut p = 0;
+                while p < datasize {
+                    result |= elem << p;
+                    p += shift;
+                }
+                self.v[rd as usize] = result;
+            }
+            0b0001 => {
+                // DUP (general): broadcast Xn/Wn.
+                if size == 3 && q == 0 {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+                let v = (self.get_x(rn) as u128) & emask;
+                let datasize = if q == 1 { 128 } else { 64 };
+                let mut result = 0u128;
+                let mut p = 0;
+                while p < datasize {
+                    result |= v << p;
+                    p += shift;
+                }
+                self.v[rd as usize] = result;
+            }
+            0b0011 => {
+                // INS (general): Vd[index] = Xn/Wn.
+                let v = (self.get_x(rn) as u128) & emask;
+                let mut vd = self.v[rd as usize];
+                vd &= !(emask << (index * shift));
+                vd |= v << (index * shift);
+                self.v[rd as usize] = vd;
+            }
+            0b0101 => {
+                // SMOV: GPR = sign-extended Vn[index]. Valid: B/H -> W or X,
+                // S -> X only; never D.
+                if size == 3 || (size == 2 && q == 0) {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+                let vn = self.v[rn as usize];
+                let elem = ((vn >> (index * shift)) & emask) as u64;
+                let signed = sext_elem(elem, esize) as u64;
+                if q == 1 {
+                    self.set_x(rd, signed);
+                } else {
+                    self.set_w(rd, signed as u32);
+                }
+            }
+            0b0111 => {
+                // UMOV: GPR = zero-extended Vn[index]. Valid: B/H/S -> W,
+                // D -> X only.
+                let valid = (size <= 2 && q == 0) || (size == 3 && q == 1);
+                if !valid {
+                    return Err(ArmError::UndefinedInstruction(insn));
+                }
+                let vn = self.v[rn as usize];
+                let elem = ((vn >> (index * shift)) & emask) as u64;
+                if q == 1 {
+                    self.set_x(rd, elem);
+                } else {
+                    self.set_w(rd, elem as u32);
+                }
+            }
+            _ => return Err(ArmError::UndefinedInstruction(insn)),
+        }
         Ok(CpuExit::Continue)
     }
 
