@@ -166,7 +166,8 @@ __asm__(
     "    ldr x1, [x0, #8]\n"
     "    ldr x0, [x0, #0]\n"
     "harness_testslot:\n"
-    "    nop\n"                /* patched with the test instruction */
+    "    nop\n"                /* patched with the test instruction  */
+    "    nop\n"                /* patched with a second instruction  */
     "    brk #0\n"
     "harness_end:\n"
     ".popsection\n"
@@ -301,7 +302,8 @@ int main(void) {
 
         g_block = in.st;
         code[slot] = in.insn;
-        __builtin___clear_cache((char *)(code + slot), (char *)(code + slot + 1));
+        code[slot + 1] = in.flags; /* second instruction (NOP for single tests) */
+        __builtin___clear_cache((char *)(code + slot), (char *)(code + slot + 2));
 
         /* Install the scratch window contents before the test runs. */
         memcpy((void *)SCRATCH_ADDR, in.st.scratch, sizeof in.st.scratch);

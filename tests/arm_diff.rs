@@ -46,6 +46,8 @@ struct ArmState {
     scratch: [u64; 32], // shared scratch window (256 bytes) for load/store tests
 }
 
+/// AArch64 NOP (used to fill the oracle's unused second instruction slot).
+const NOP: u32 = 0xd503201f;
 /// Address of the shared scratch window (matches oracle.c SCRATCH_ADDR).
 const SCRATCH_ADDR: u64 = 0x20_0000;
 /// Base pointer tests aim a register at (matches oracle.c SCRATCH_BASE).
@@ -154,12 +156,12 @@ fn which(prog: &str) -> Option<PathBuf> {
 }
 
 /// Run `cases` through the oracle under qemu; returns one `OutCase` per input.
-fn run_oracle(oracle: &PathBuf, cases: &[(u32, ArmState)]) -> Option<Vec<OutCase>> {
+fn run_oracle(oracle: &PathBuf, cases: &[(u32, u32, ArmState)]) -> Option<Vec<OutCase>> {
     let mut payload = Vec::with_capacity(8 + cases.len() * std::mem::size_of::<InCase>());
     payload.extend_from_slice(&WIRE_MAGIC.to_le_bytes());
     payload.extend_from_slice(&(cases.len() as u32).to_le_bytes());
-    for (insn, st) in cases {
-        let ic = InCase { insn: *insn, flags: 0, st: *st };
+    for (insn, insn2, st) in cases {
+        let ic = InCase { insn: *insn, flags: *insn2, st: *st };
         payload.extend_from_slice(as_bytes(&ic));
     }
 
@@ -567,7 +569,7 @@ fn run_batch(name: &str, batch: Vec<(String, u32, ArmState)>) {
     };
 
     let labels: Vec<String> = batch.iter().map(|(l, _, _)| l.clone()).collect();
-    let cases: Vec<(u32, ArmState)> = batch.iter().map(|(_, i, s)| (*i, *s)).collect();
+    let cases: Vec<(u32, u32, ArmState)> = batch.iter().map(|(_, i, s)| (*i, NOP, *s)).collect();
 
     let outs = match run_oracle(&oracle, &cases) {
         Some(o) => o,
@@ -579,7 +581,7 @@ fn run_batch(name: &str, batch: Vec<(String, u32, ArmState)>) {
     assert_eq!(outs.len(), cases.len());
 
     let mut mismatches = Vec::new();
-    for (i, ((insn, st), out)) in cases.iter().zip(outs.iter()).enumerate() {
+    for (i, ((insn, _insn2, st), out)) in cases.iter().zip(outs.iter()).enumerate() {
         compare_case(&labels[i], *insn, st, out, &mut mismatches);
     }
 
@@ -600,6 +602,106 @@ fn run_batch(name: &str, batch: Vec<(String, u32, ArmState)>) {
         for m in mismatches.iter().take(25) {
             eprintln!("  [{}] {:#010x}: {}", m.label, m.insn, m.detail);
         }
+        panic!("{name}: {} divergences vs hardware oracle", mismatches.len());
+    }
+}
+
+/// Run rax over a two-instruction sequence and return the final state.
+fn run_rax_pair(insn: u32, insn2: u32, input: &ArmState) -> Option<ArmState> {
+    let mem = FlatMemory::new(0, 0x30_0000);
+    let mut cpu = AArch64Cpu::new(AArch64Config::default(), Box::new(mem));
+    for i in 0..31u8 {
+        cpu.set_gpr(i, input.x[i as usize]);
+    }
+    cpu.set_current_sp(input.sp);
+    let ps = input.pstate;
+    cpu.set_nzcv(ps & (1 << 31) != 0, ps & (1 << 30) != 0, ps & (1 << 29) != 0, ps & (1 << 28) != 0);
+    for r in 0..32u8 {
+        let (lo, hi) = input.vreg(r as usize);
+        cpu.set_simd_reg(r, lo, hi).ok()?;
+    }
+    let scratch_bytes: Vec<u8> = input.scratch.iter().flat_map(|w| w.to_le_bytes()).collect();
+    cpu.write_memory(SCRATCH_ADDR, &scratch_bytes).ok()?;
+    cpu.write_memory(0, &insn.to_le_bytes()).ok()?;
+    cpu.write_memory(4, &insn2.to_le_bytes()).ok()?;
+    cpu.set_pc(0);
+    match cpu.step() {
+        Ok(CpuExit::Continue) => {}
+        _ => return None,
+    }
+    match cpu.step() {
+        Ok(CpuExit::Continue) => {}
+        _ => return None,
+    }
+    let mut out = ArmState::zeroed();
+    for i in 0..31u8 {
+        out.x[i as usize] = cpu.get_gpr(i);
+    }
+    out.sp = cpu.current_sp();
+    out.pc = cpu.get_pc();
+    let mut pstate = 0u64;
+    if cpu.get_n() { pstate |= 1 << 31; }
+    if cpu.get_z() { pstate |= 1 << 30; }
+    if cpu.get_c() { pstate |= 1 << 29; }
+    if cpu.get_v() { pstate |= 1 << 28; }
+    out.pstate = pstate;
+    for r in 0..32u8 {
+        if let Some((lo, hi)) = cpu.get_simd_reg(r) {
+            out.set_vreg(r as usize, lo, hi);
+        }
+    }
+    for (i, w) in out.scratch.iter_mut().enumerate() {
+        *w = cpu.mem_read_u64(SCRATCH_ADDR + (i as u64) * 8).ok()?;
+    }
+    Some(out)
+}
+
+/// Run a batch of two-instruction sequences differentially.
+fn run_batch_pair(name: &str, batch: Vec<(String, u32, u32, ArmState)>) {
+    let oracle = match oracle_path() {
+        Some(p) => p,
+        None => {
+            eprintln!("[arm_diff] {name}: qemu/cross-toolchain unavailable -> skipping");
+            return;
+        }
+    };
+    let cases: Vec<(u32, u32, ArmState)> = batch.iter().map(|(_, a, b, s)| (*a, *b, *s)).collect();
+    let outs = match run_oracle(&oracle, &cases) {
+        Some(o) => o,
+        None => {
+            eprintln!("[arm_diff] {name}: oracle run failed -> skipping");
+            return;
+        }
+    };
+    let mut mismatches = Vec::new();
+    for (i, ((insn, insn2, st), out)) in cases.iter().zip(outs.iter()).enumerate() {
+        let rax = run_rax_pair(*insn, *insn2, st);
+        if out.trapped != 0 {
+            if rax.is_some() {
+                mismatches.push(Mismatch { label: batch[i].0.clone(), insn: *insn, detail: format!("hw faulted (sig {}) but rax executed", out.trapped) });
+            }
+            continue;
+        }
+        let rax = match rax {
+            Some(r) => r,
+            None => { mismatches.push(Mismatch { label: batch[i].0.clone(), insn: *insn, detail: "hw executed but rax rejected".into() }); continue; }
+        };
+        let mut diffs = Vec::new();
+        for r in 0..31 { if rax.x[r] != out.st.x[r] { diffs.push(format!("x{r}: rax={:#x} hw={:#x}", rax.x[r], out.st.x[r])); } }
+        if (rax.pstate>>28)&0xF != (out.st.pstate>>28)&0xF { diffs.push(format!("nzcv: rax={:#x} hw={:#x}", (rax.pstate>>28)&0xF, (out.st.pstate>>28)&0xF)); }
+        for r in 0..32 { if rax.vreg(r) != out.st.vreg(r) { diffs.push(format!("v{r} differs")); } }
+        for k in 0..32 { if rax.scratch[k] != out.st.scratch[k] { diffs.push(format!("scratch[{k}]: rax={:#x} hw={:#x}", rax.scratch[k], out.st.scratch[k])); } }
+        if !diffs.is_empty() {
+            mismatches.push(Mismatch { label: batch[i].0.clone(), insn: *insn, detail: diffs.join("  |  ") });
+        }
+    }
+    if !mismatches.is_empty() {
+        use std::collections::BTreeMap;
+        let mut by_label: BTreeMap<String, usize> = BTreeMap::new();
+        for m in &mismatches { *by_label.entry(m.label.clone()).or_default() += 1; }
+        eprintln!("\n==== {name}: {} mismatches across {} cases ====", mismatches.len(), cases.len());
+        for (label, count) in &by_label { eprintln!("  {count:5}x  {label}"); }
+        for m in mismatches.iter().take(25) { eprintln!("  [{}] {:#010x}: {}", m.label, m.insn, m.detail); }
         panic!("{name}: {} divergences vs hardware oracle", mismatches.len());
     }
 }
@@ -746,6 +848,52 @@ fn diff_mem_ldst_single() {
         }
     }
     run_batch("mem_ldst_single", batch);
+}
+
+/// LDXR/LDAXR <Rt>, [Rn]: `size 001000 0 1 0 11111 o0 11111 Rn Rt`. Rt=x0, Rn=x1.
+fn enc_ldxr(size: u32, o0: u32) -> u32 {
+    (size << 30) | (0b001000 << 24) | (1 << 22) | (0b11111 << 16) | (o0 << 15)
+        | (0b11111 << 10) | (RN << 5) | RD
+}
+/// STXR/STLXR <Ws>, <Rt>, [Rn]: `size 001000 0 0 0 Rs o0 11111 Rn Rt`. Ws=x2, Rt=x3, Rn=x1.
+fn enc_stxr(size: u32, o0: u32) -> u32 {
+    (size << 30) | (0b001000 << 24) | (2 << 16) | (o0 << 15) | (0b11111 << 10) | (RN << 5) | 3
+}
+
+#[test]
+fn diff_excl_load() {
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for size in 0..4u32 {
+        for o0 in 0..2 {
+            cases.push((format!("ldxr sz{size} o0{o0}"), enc_ldxr(size, o0)));
+        }
+    }
+    let mut rng = Rng::new(0x1_0007);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in &cases {
+        for _ in 0..8 {
+            batch.push((label.clone(), *insn, mem_input(&mut rng)));
+        }
+    }
+    run_batch("excl_load", batch);
+}
+
+#[test]
+fn diff_excl_pair() {
+    let mut cases: Vec<(String, u32, u32)> = Vec::new();
+    for size in 0..4u32 {
+        for o0 in 0..2 {
+            cases.push((format!("ldxr_stxr sz{size} o0{o0}"), enc_ldxr(size, o0), enc_stxr(size, o0)));
+        }
+    }
+    let mut rng = Rng::new(0x1_0008);
+    let mut batch: Vec<(String, u32, u32, ArmState)> = Vec::new();
+    for (label, ldxr, stxr) in &cases {
+        for _ in 0..8 {
+            batch.push((label.clone(), *ldxr, *stxr, mem_input(&mut rng)));
+        }
+    }
+    run_batch_pair("excl_pair", batch);
 }
 
 /// CAS: `size 0010001 L 1 Rs o0 11111 Rn Rt`. Rs=x2 (compare/old), Rn=x1, Rt=x0 (new).
