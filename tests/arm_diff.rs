@@ -1512,6 +1512,101 @@ fn enc_dot_idx(q: u32, u: u32, index: u32) -> u32 {
         | (RM << 16) | (0b1110 << 12) | (h << 11) | (RN << 5) | RD
 }
 
+/// A finite bf16 value with a moderate exponent (so f64 dot-product sums stay
+/// exact and the round-to-odd model matches hardware).
+fn rand_bf16(rng: &mut Rng) -> u16 {
+    let sign = (rng.next() & 1) as u16;
+    let exp = (rng.next() % 11 + 122) as u16; // unbiased -5..5
+    let frac = (rng.next() as u16) & 0x7F;
+    (sign << 15) | (exp << 7) | frac
+}
+
+/// Fill a 128-bit vector with 8 finite bf16 lanes.
+fn bf16_vec(rng: &mut Rng) -> (u64, u64) {
+    let mut v: u128 = 0;
+    for i in 0..8 {
+        v |= (rand_bf16(rng) as u128) << (i * 16);
+    }
+    (v as u64, (v >> 64) as u64)
+}
+
+/// Fill a 128-bit vector with 4 finite f32 accumulator lanes.
+fn f32_acc_vec(rng: &mut Rng) -> (u64, u64) {
+    let mut v: u128 = 0;
+    for i in 0..4 {
+        let val = (((rng.next() % 4000) as f32) - 2000.0) / 200.0; // +/-10
+        v |= (val.to_bits() as u128) << (i * 32);
+    }
+    (v as u64, (v >> 64) as u64)
+}
+
+/// BFMLALB/T (vector): `0 Q 1 01110 11 0 Rm 111111 Rn Rd`. Q=B(0)/T(1).
+fn enc_bfmlal(q: u32) -> u32 {
+    (q << 30) | (1 << 29) | (0b01110 << 24) | (0b11 << 22) | (RM << 16)
+        | (0b111111 << 10) | (RN << 5) | RD
+}
+
+/// BFMLALB/T (by element): `0 Q 0 01111 11 L M Rm 1111 H 0 Rn Rd`. index=H:L:M.
+fn enc_bfmlal_idx(q: u32, index: u32) -> u32 {
+    let h = (index >> 2) & 1;
+    let l = (index >> 1) & 1;
+    let m = index & 1;
+    (q << 30) | (0b01111 << 24) | (0b11 << 22) | (l << 21) | (m << 20)
+        | (RM << 16) | (0b1111 << 12) | (h << 11) | (RN << 5) | RD
+}
+
+/// BFDOT (vector): `0 Q 1 01110 01 0 Rm 111111 Rn Rd`. Q=datasize.
+fn enc_bfdot(q: u32) -> u32 {
+    (q << 30) | (1 << 29) | (0b01110 << 24) | (0b01 << 22) | (RM << 16)
+        | (0b111111 << 10) | (RN << 5) | RD
+}
+
+/// BFDOT (by element): `0 Q 0 01111 01 L M Rm 1111 H 0 Rn Rd`. index=H:L.
+fn enc_bfdot_idx(q: u32, index: u32) -> u32 {
+    let h = (index >> 1) & 1;
+    let l = index & 1;
+    (q << 30) | (0b01111 << 24) | (0b01 << 22) | (l << 21) | (RM << 16)
+        | (0b1111 << 12) | (h << 11) | (RN << 5) | RD
+}
+
+/// BFMMLA: `0 1 1 01110 01 0 Rm 111011 Rn Rd`.
+fn enc_bfmmla() -> u32 {
+    (1 << 30) | (1 << 29) | (0b01110 << 24) | (0b01 << 22) | (RM << 16)
+        | (0b111011 << 10) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_simd_bf16() {
+    let mut rng = Rng::new(0x1_001D);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    // (label, insn, vector?) — all read v0 (f32 acc), v1/v2 (bf16).
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for q in 0..2u32 {
+        cases.push((format!("bfmlal q{q}"), enc_bfmlal(q)));
+        cases.push((format!("bfdot q{q}"), enc_bfdot(q)));
+        for index in 0..4u32 {
+            cases.push((format!("bfdot_idx q{q} i{index}"), enc_bfdot_idx(q, index)));
+        }
+        for index in 0..8u32 {
+            cases.push((format!("bfmlal_idx q{q} i{index}"), enc_bfmlal_idx(q, index)));
+        }
+    }
+    cases.push(("bfmmla".to_string(), enc_bfmmla()));
+    for (label, insn) in &cases {
+        for _ in 0..24 {
+            let mut st = ArmState::zeroed();
+            let (a0, b0) = f32_acc_vec(&mut rng);
+            let (a1, b1) = bf16_vec(&mut rng);
+            let (a2, b2) = bf16_vec(&mut rng);
+            st.set_vreg(0, a0, b0);
+            st.set_vreg(1, a1, b1);
+            st.set_vreg(2, a2, b2);
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("simd_bf16", batch);
+}
+
 /// USDOT (vector): `0 Q 0 01110 10 0 Rm 100111 Rn Rd`. Rd=v0, Rn=v1, Rm=v2.
 fn enc_usdot(q: u32) -> u32 {
     (q << 30) | (0b01110 << 24) | (0b10 << 22) | (RM << 16) | (0b100111 << 10) | (RN << 5) | RD

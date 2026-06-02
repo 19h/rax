@@ -2710,7 +2710,9 @@ impl AArch64Cpu {
         for e in 0..4 {
             let b1 = bf16(op1, 2 * e + sel);
             let b2 = match idx {
-                Some(ix) => bf16(op2, 2 * ix + sel),
+                // The by-element form selects a single bf16 (Vm.H[index]); the
+                // vector form takes the B/T half of pair e.
+                Some(ix) => bf16(op2, ix),
                 None => bf16(op2, 2 * e + sel),
             };
             let a = f32::from_bits((op3 >> (e * 32)) as u32);
@@ -2755,7 +2757,9 @@ impl AArch64Cpu {
                 bf16_to_f32(bf16(op1, 2 * e)) as f64 * bf16_to_f32(bf16(op2, i2lo)) as f64;
             let p2 = bf16_to_f32(bf16(op1, 2 * e + 1)) as f64
                 * bf16_to_f32(bf16(op2, i2hi)) as f64;
-            let r = round_odd_f64_to_f32(acc + p1 + p2);
+            // Hardware: t = round_odd(p1+p2); result = round_odd(acc+t).
+            let t = bf_odd_add(p1, p2);
+            let r = round_odd_f64_to_f32(acc + t);
             result = (result & !(0xFFFF_FFFFu128 << (e * 32))) | ((r as u128) << (e * 32));
         }
         if q == 0 {
@@ -2779,13 +2783,17 @@ impl AArch64Cpu {
         for i in 0..2 {
             for j in 0..2 {
                 let lane = 2 * i + j;
-                let mut sum = f32::from_bits((acc >> (lane * 32)) as u32) as f64;
-                for k in 0..4 {
-                    let e1 = bf16_to_f32(bf16(op1, 4 * i + k)) as f64;
-                    let e2 = bf16_to_f32(bf16(op2, 4 * j + k)) as f64;
-                    sum += e1 * e2;
-                }
-                let r = round_odd_f64_to_f32(sum);
+                let mut s = f32::from_bits((acc >> (lane * 32)) as u32) as f64;
+                // Two per-pair round-to-odd accumulations (k=0,1 then k=2,3),
+                // matching the hardware's two bfdotadd steps.
+                let prod = |k: usize| -> f64 {
+                    bf16_to_f32(bf16(op1, 4 * i + k)) as f64
+                        * bf16_to_f32(bf16(op2, 4 * j + k)) as f64
+                };
+                let t01 = bf_odd_add(prod(0), prod(1));
+                s = bf_odd_add(s, t01);
+                let t23 = bf_odd_add(prod(2), prod(3));
+                let r = round_odd_f64_to_f32(s + t23);
                 result |= (r as u128) << (lane * 32);
             }
         }
@@ -9247,6 +9255,15 @@ fn f32_to_bf16(x: u32) -> u16 {
     let lsb = (x >> 16) & 1;
     let rounded = x.wrapping_add(0x7FFF + lsb);
     (rounded >> 16) as u16
+}
+
+/// One round-to-odd f32 add step (`a + b` rounded once to f32, returned widened
+/// to f64 for chaining). The BF16 dot/matrix instructions accumulate as a
+/// sequence of these per-pair round-to-odd adds (matching the hardware), NOT a
+/// single round of the exact multi-term sum.
+#[inline]
+fn bf_odd_add(a: f64, b: f64) -> f64 {
+    f32::from_bits(round_odd_f64_to_f32(a + b)) as f64
 }
 
 /// Round an f64 to f32 with round-to-odd (Von Neumann): truncate toward zero,
