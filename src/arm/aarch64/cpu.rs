@@ -1732,6 +1732,14 @@ impl AArch64Cpu {
         // (FADD/FADDP FP16 fall through to the unified three-same FP16 handler
         // below; the previous dedicated add handler rounded incorrectly.)
 
+        // SM3/SM4 crypto (bits[31:24]=0xCE). This MUST precede every Advanced
+        // SIMD dispatch below: 0xCE has bits[28:24]=01110 and bit22=1/bit10=1,
+        // so e.g. SM3SS1 would otherwise be captured by the FP16 three-same
+        // group and executed as FMLA.
+        if (insn >> 24) & 0xFF == 0xCE {
+            return self.exec_crypto(insn);
+        }
+
         // Advanced SIMD copy (DUP element/general, INS element/general, SMOV,
         // UMOV). Identified by bits[23:21]==000 (bit22==0 distinguishes it from
         // the FP16 three-same group, which has bit22==1). Must precede FP16.
@@ -1815,11 +1823,6 @@ impl AArch64Cpu {
         // SHA three-reg: 0101 1110 000 Rm 0 opcode 00 Rn Rd (bits[31:24]=0x5E, bits[11:10]=00)
         // SM3/SM4: various encodings with bits[31:24]=0xCE
         if (insn >> 24) & 0xFF == 0x5E && (insn >> 21) & 7 == 0 && (insn >> 10) & 0x3 == 0b00 {
-            return self.exec_crypto(insn);
-        }
-
-        // SM3/SM4 crypto operations (bits[31:24]=0xCE)
-        if (insn >> 24) & 0xFF == 0xCE {
             return self.exec_crypto(insn);
         }
 
@@ -2566,12 +2569,42 @@ impl AArch64Cpu {
                 self.v[rd] = sm4_rounds(self.v[rn], self.v[rm], false);
                 return Ok(CpuExit::Continue);
             }
+
+            // SM3 group.
+            let grp = (insn >> 21) & 0x7;
+            if grp == 0b010 {
+                if (insn >> 15) & 1 == 0 {
+                    // SM3SS1 Vd.4S, Vn.4S, Vm.4S, Va.4S (Va = Ra at bits[14:10]).
+                    let ra = ((insn >> 10) & 0x1F) as usize;
+                    let t = (self.v[rn] >> 96) as u32;
+                    let val = t
+                        .rotate_left(12)
+                        .wrapping_add((self.v[rm] >> 96) as u32)
+                        .wrapping_add((self.v[ra] >> 96) as u32)
+                        .rotate_left(7);
+                    self.v[rd] = (val as u128) << 96;
+                    return Ok(CpuExit::Continue);
+                } else if (insn >> 14) & 0x3 == 0b10 {
+                    // SM3TT1A/SM3TT1B/SM3TT2A/SM3TT2B (sel = bits[11:10], i = imm2).
+                    let i = (insn >> 12) & 0x3;
+                    let sel = (insn >> 10) & 0x3;
+                    self.v[rd] = sm3_tt(self.v[rd], self.v[rn], self.v[rm], i, sel);
+                    return Ok(CpuExit::Continue);
+                }
+            } else if grp == 0b011 {
+                if (insn >> 10) & 0x3F == 0b110000 {
+                    self.v[rd] = sm3_partw1(self.v[rd], self.v[rn], self.v[rm]);
+                    return Ok(CpuExit::Continue);
+                }
+                if (insn >> 10) & 0x3F == 0b110001 {
+                    self.v[rd] = sm3_partw2(self.v[rd], self.v[rn], self.v[rm]);
+                    return Ok(CpuExit::Continue);
+                }
+            }
         }
 
-        // SM3 is not yet implemented; preserve prior placeholder behaviour
-        // (no correct result, but the instruction executes).
-        self.v[rd] = self.v[rn];
-        Ok(CpuExit::Continue)
+        // Any remaining crypto encoding is unallocated.
+        Ok(CpuExit::Undefined(insn))
     }
 
     /// Execute SIMD across lanes (reduction operations).
@@ -9338,6 +9371,101 @@ fn sm4_rounds(mut rr: u128, key_or_const: u128, enc: bool) -> u128 {
         rr = (rr >> 32) | ((intval as u128) << 96);
     }
     rr
+}
+
+/// SM3 TT1/TT2 round transforms. `sel`: 0=TT1A, 1=TT1B, 2=TT2A, 3=TT2B.
+/// `i` is the immediate lane index selecting the word of Vm.
+fn sm3_tt(vd: u128, vn: u128, vm: u128, i: u32, sel: u32) -> u128 {
+    let word = |v: u128, k: u32| (v >> (32 * k)) as u32;
+    let d0 = word(vd, 0);
+    let d1 = word(vd, 1);
+    let d2 = word(vd, 2);
+    let d3 = word(vd, 3);
+    let wj = word(vm, i);
+    let vn3 = word(vn, 3);
+    let (tt, rot, mix) = match sel {
+        0b00 => {
+            // SM3TT1A
+            let ss2 = vn3 ^ d3.rotate_left(12);
+            let tt1 = d1 ^ (d3 ^ d2);
+            (
+                tt1.wrapping_add(d0).wrapping_add(ss2).wrapping_add(wj),
+                9u32,
+                false,
+            )
+        }
+        0b01 => {
+            // SM3TT1B (majority)
+            let ss2 = vn3 ^ d3.rotate_left(12);
+            let tt1 = (d3 & d1) | (d3 & d2) | (d1 & d2);
+            (
+                tt1.wrapping_add(d0).wrapping_add(ss2).wrapping_add(wj),
+                9,
+                false,
+            )
+        }
+        0b10 => {
+            // SM3TT2A
+            let tt2 = d1 ^ (d3 ^ d2);
+            (
+                tt2.wrapping_add(d0).wrapping_add(vn3).wrapping_add(wj),
+                19,
+                true,
+            )
+        }
+        _ => {
+            // SM3TT2B
+            let tt2 = (d3 & d2) | ((!d3) & d1);
+            (
+                tt2.wrapping_add(d0).wrapping_add(vn3).wrapping_add(wj),
+                19,
+                true,
+            )
+        }
+    };
+    let r0 = d1;
+    let r1 = d2.rotate_left(rot);
+    let r2 = d3;
+    let r3 = if mix {
+        tt ^ tt.rotate_left(9) ^ tt.rotate_left(17)
+    } else {
+        tt
+    };
+    (r0 as u128) | ((r1 as u128) << 32) | ((r2 as u128) << 64) | ((r3 as u128) << 96)
+}
+
+/// SM3PARTW1 message expansion.
+fn sm3_partw1(vd: u128, vn: u128, vm: u128) -> u128 {
+    let word = |v: u128, k: u32| (v >> (32 * k)) as u32;
+    let vdn = vd ^ vn;
+    let mut w = [0u32; 4];
+    w[0] = word(vdn, 0) ^ word(vm, 1).rotate_left(15);
+    w[1] = word(vdn, 1) ^ word(vm, 2).rotate_left(15);
+    w[2] = word(vdn, 2) ^ word(vm, 3).rotate_left(15);
+    for i in 0..4 {
+        if i == 3 {
+            w[3] = word(vdn, 3) ^ w[0].rotate_left(15);
+        }
+        w[i] = w[i] ^ w[i].rotate_left(15) ^ w[i].rotate_left(23);
+    }
+    (w[0] as u128) | ((w[1] as u128) << 32) | ((w[2] as u128) << 64) | ((w[3] as u128) << 96)
+}
+
+/// SM3PARTW2 message expansion.
+fn sm3_partw2(vd: u128, vn: u128, vm: u128) -> u128 {
+    let word = |v: u128, k: u32| (v >> (32 * k)) as u32;
+    let mut tmp = [0u32; 4];
+    for k in 0..4 {
+        tmp[k as usize] = word(vn, k) ^ word(vm, k).rotate_left(7);
+    }
+    let mut r = [0u32; 4];
+    for k in 0..4 {
+        r[k] = word(vd, k as u32) ^ tmp[k];
+    }
+    let mut tmp2 = tmp[0].rotate_left(15);
+    tmp2 = tmp2 ^ tmp2.rotate_left(15) ^ tmp2.rotate_left(23);
+    r[3] ^= tmp2;
+    (r[0] as u128) | ((r[1] as u128) << 32) | ((r[2] as u128) << 64) | ((r[3] as u128) << 96)
 }
 
 /// AES S-box and inverse S-box (FIPS-197).

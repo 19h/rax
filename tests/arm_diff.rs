@@ -1368,6 +1368,35 @@ fn diff_crypto_sm4() {
 }
 
 #[test]
+fn diff_crypto_sm3() {
+    // SM3SS1 (4-reg): 11001110 010 Rm 0 Ra Rn Rd. Ra=v3.
+    let sm3ss1 = 0xCE00_0000 | (0b010 << 21) | (RM << 16) | (3 << 10) | (RN << 5) | RD;
+    // SM3PARTW1/2: 11001110 011 Rm 11000{0,1} Rn Rd.
+    let partw1 = 0xCE00_0000 | (0b011 << 21) | (RM << 16) | (0b110000 << 10) | (RN << 5) | RD;
+    let partw2 = 0xCE00_0000 | (0b011 << 21) | (RM << 16) | (0b110001 << 10) | (RN << 5) | RD;
+    let mut cases: Vec<(String, u32)> = vec![
+        ("sm3ss1".to_string(), sm3ss1),
+        ("sm3partw1".to_string(), partw1),
+        ("sm3partw2".to_string(), partw2),
+    ];
+    // SM3TT{1,2}{A,B}: 11001110 010 Rm 10 imm2 sel Rn Rd (sel=bits[11:10]).
+    for (sel, nm) in [(0b00u32, "tt1a"), (0b01, "tt1b"), (0b10, "tt2a"), (0b11, "tt2b")] {
+        for i in 0..4u32 {
+            let insn = 0xCE00_0000
+                | (0b010 << 21)
+                | (RM << 16)
+                | (0b10 << 14)
+                | (i << 12)
+                | (sel << 10)
+                | (RN << 5)
+                | RD;
+            cases.push((format!("sm3{nm} i{i}"), insn));
+        }
+    }
+    run_family("crypto_sm3", cases, 40, 0x1_0017);
+}
+
+#[test]
 fn diff_excl_load() {
     let mut cases: Vec<(String, u32)> = Vec::new();
     for size in 0..4u32 {
