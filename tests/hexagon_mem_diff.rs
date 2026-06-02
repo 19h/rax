@@ -25,7 +25,10 @@ use rax::cpu::{CpuState, HexagonRegisters, VCpu, VcpuExit};
 const NREG: usize = 32;
 const I_PRED: usize = 32;
 const I_USR: usize = 33;
+const I_GP: usize = 36; // C11 (GP), per the oracle HexState layout.
 const ST_WORDS: usize = 44;
+/// Sentinel `base_reg` meaning "the address base is GP (C11)", not a GPR.
+const BASE_GP: usize = usize::MAX;
 const ARENA: usize = 256;
 const WIRE_MAGIC: u32 = 0x3158_4548;
 const CODE_ADDR: u32 = 0x1000;
@@ -243,6 +246,7 @@ fn run_rax(words: &[u32], c: &Case, arena_addr: u32) -> Option<Out> {
         regs.p[i] = ((c.st[I_PRED] >> (8 * i)) & 0xff) as u8;
     }
     regs.c[8] = c.st[I_USR];
+    regs.c[11] = c.st[I_GP]; // GP, for GP-relative addressing
     regs.set_pc(CODE_ADDR);
 
     let mut vcpu = HexagonVcpu::new(0, mem.clone(), HexagonIsa::V68, Endianness::Little);
@@ -322,7 +326,12 @@ fn run_family(name: &str, cases: &[(&str, &str)], base_reg: usize, n: usize, see
             for r in 0..NREG {
                 st[r] = rng.next() as u32;
             }
-            st[base_reg] = base; // address base points into the arena
+            // Point the address base (a GPR, or GP) into the arena.
+            if base_reg == BASE_GP {
+                st[I_GP] = base;
+            } else {
+                st[base_reg] = base;
+            }
             st[I_USR] = 0;
             // Each predicate P0..P3 independently 0x00 / 0xff (drives predicated ops).
             let mut pred = 0u32;
@@ -441,6 +450,27 @@ fn diff_mem_pred() {
         4,
         16,
         0x4444,
+    );
+}
+
+#[test]
+fn diff_mem_gp() {
+    // GP-relative loads/stores: the address base is the GP control register.
+    run_family(
+        "mem_gp",
+        &[
+            ("loadrigp", "{ r0 = memw(gp+#4) }"),
+            ("loadrbgp", "{ r0 = memb(gp+#1) }"),
+            ("loadrubgp", "{ r0 = memub(gp+#1) }"),
+            ("loadrhgp", "{ r0 = memh(gp+#2) }"),
+            ("loadrdgp", "{ r1:0 = memd(gp+#8) }"),
+            ("storerigp", "{ memw(gp+#4) = r5 }"),
+            ("storerbgp", "{ memb(gp+#1) = r5 }"),
+            ("storerdgp", "{ memd(gp+#8) = r5:4 }"),
+        ],
+        BASE_GP,
+        12,
+        0x6767,
     );
 }
 

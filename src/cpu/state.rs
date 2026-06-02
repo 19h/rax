@@ -191,6 +191,9 @@ impl HexagonRegisters {
     pub fn set_control(&mut self, index: usize, value: u32) {
         if index == 4 {
             self.unpack_predicates(value);
+        } else if index == 11 {
+            // GP (C11): the low 6 bits are hardwired to zero (64-byte aligned).
+            self.c[11] = value & !0x3f;
         } else {
             self.c[index] = value;
         }

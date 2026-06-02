@@ -425,7 +425,7 @@ impl HexagonVcpu {
                         (base_val, Some((base, new_base)))
                     }
                     AddrMode::GpOffset { offset } => {
-                        let gp = self.regs.control(11);
+                        let gp = self.regs.control(11) & !0x3f; // GP low 6 bits are hardwired zero
                         (gp.wrapping_add(offset as u32), None)
                     }
                     AddrMode::Abs { addr } => (addr, None),
@@ -494,7 +494,7 @@ impl HexagonVcpu {
                         (base_val, Some((base, new_base)))
                     }
                     AddrMode::GpOffset { offset } => {
-                        let gp = self.regs.control(11);
+                        let gp = self.regs.control(11) & !0x3f; // GP low 6 bits are hardwired zero
                         (gp.wrapping_add(offset as u32), None)
                     }
                     AddrMode::Abs { addr } => (addr, None),
@@ -578,7 +578,7 @@ impl HexagonVcpu {
                         base_val.wrapping_add(offset as u32)
                     }
                     AddrMode::GpOffset { offset } => {
-                        let gp = self.regs.control(11);
+                        let gp = self.regs.control(11) & !0x3f; // GP low 6 bits are hardwired zero
                         gp.wrapping_add(offset as u32)
                     }
                     AddrMode::PostIncImm { .. } => {
