@@ -918,6 +918,72 @@ fn diff_simd_across_fp() {
     run_batch("simd_across_fp", batch);
 }
 
+#[test]
+fn diff_simd_three_same_fp() {
+    // (U, a, opcode, name) for the FP three-same ops. size = (a<<1)|sz.
+    let ops: &[(u32, u32, u32, &str)] = &[
+        (0, 0, 0b11000, "fmaxnm"),
+        (0, 0, 0b11001, "fmla"),
+        (0, 0, 0b11010, "fadd"),
+        (0, 0, 0b11011, "fmulx"),
+        (0, 0, 0b11100, "fcmeq"),
+        (0, 0, 0b11110, "fmax"),
+        (0, 0, 0b11111, "frecps"),
+        (0, 1, 0b11000, "fminnm"),
+        (0, 1, 0b11001, "fmls"),
+        (0, 1, 0b11010, "fsub"),
+        (0, 1, 0b11110, "fmin"),
+        (0, 1, 0b11111, "frsqrts"),
+        (1, 0, 0b11000, "fmaxnmp"),
+        (1, 0, 0b11010, "faddp"),
+        (1, 0, 0b11011, "fmul"),
+        (1, 0, 0b11100, "fcmge"),
+        (1, 0, 0b11101, "facge"),
+        (1, 0, 0b11110, "fmaxp"),
+        (1, 0, 0b11111, "fdiv"),
+        (1, 1, 0b11000, "fminnmp"),
+        (1, 1, 0b11010, "fabd"),
+        (1, 1, 0b11100, "fcmgt"),
+        (1, 1, 0b11101, "facgt"),
+        (1, 1, 0b11110, "fminp"),
+    ];
+    let mut cases: Vec<(String, u32, bool)> = Vec::new();
+    for &(u, a, opcode, name) in ops {
+        for q in 0..2 {
+            cases.push((format!("{name} f32 q{q}"), enc_three_same(q, u, a << 1, opcode), false));
+        }
+        cases.push((format!("{name} f64"), enc_three_same(1, u, (a << 1) | 1, opcode), true));
+    }
+    // Non-zero finite lanes (multiples of 0.25) so FDIV is well-defined and
+    // products/sums stay exactly representable.
+    let mut rng = Rng::new(0xE001);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn, f64op) in &cases {
+        for _ in 0..12 {
+            let mut st = ArmState::zeroed();
+            for r in 0..3usize {
+                let mut packed: u128 = 0;
+                if *f64op {
+                    for lane in 0..2 {
+                        let n = (rng.next() % 40) as i64 - 20;
+                        let v = if n == 0 { 1 } else { n } as f64 * 0.25;
+                        packed |= (v.to_bits() as u128) << (64 * lane);
+                    }
+                } else {
+                    for lane in 0..4 {
+                        let n = (rng.next() % 40) as i64 - 20;
+                        let v = if n == 0 { 1 } else { n } as f32 * 0.25;
+                        packed |= (v.to_bits() as u128) << (32 * lane);
+                    }
+                }
+                st.set_vreg(r, packed as u64, (packed >> 64) as u64);
+            }
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("simd_three_same_fp", batch);
+}
+
 /// Scalar Advanced SIMD three-same: `01 U 11110 size 1 Rm opcode 1 Rn Rd`.
 fn enc_scalar_3same(u: u32, size: u32, opcode: u32) -> u32 {
     (0b01 << 30) | (u << 29) | (0b11110 << 24) | (size << 22) | (1 << 21) | (RM << 16)
