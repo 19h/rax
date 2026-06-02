@@ -1798,6 +1798,12 @@ impl AArch64Cpu {
             return self.exec_simd_indexed(insn);
         }
 
+        // Advanced SIMD modified immediate (MOVI/MVNI/ORR/BIC/FMOV vector)
+        // Encoding: 0_Q_op_0111100000_abc_cmode_o2_1_defgh_Rd
+        if (insn >> 19) & 0x3FF == 0b0111100000 && (insn >> 10) & 1 == 1 {
+            return self.exec_simd_modified_imm(insn);
+        }
+
         // Advanced SIMD shift by immediate
         // Encoding: 0_Q_U_0_1111_0_immh_immb_opcode_1_Rn_Rd
         // bits[31:29] = 0 Q U, bits[28:23] = 0 1111 0, bit[10] = 1
@@ -2607,6 +2613,55 @@ impl AArch64Cpu {
         };
 
         self.v[rd] = (result as u128) & elem_mask_u128(result_bits);
+        Ok(CpuExit::Continue)
+    }
+
+    /// Execute the SIMD modified-immediate group: MOVI, MVNI, ORR (imm),
+    /// BIC (imm) and FMOV (vector immediate).
+    fn exec_simd_modified_imm(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let q = (insn >> 30) & 1;
+        let op = (insn >> 29) & 1;
+        let cmode = (insn >> 12) & 0xF;
+        let rd = (insn & 0x1F) as usize;
+        // imm8 = abc:defgh
+        let abc = (insn >> 16) & 0x7;
+        let defgh = (insn >> 5) & 0x1F;
+        let imm8 = ((abc << 5) | defgh) as u8;
+
+        // Some (op, cmode, Q) combinations are UNDEFINED.
+        //  - FMOV f64 (op=1, cmode=1111) requires Q==1.
+        if op == 1 && cmode == 0b1111 && q == 0 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+        //  - op=1, cmode=1110 is MOVI(64-bit); op=1, cmode=0xx0/10x0 is MVNI;
+        //    these are all allocated. The only fully-unallocated case in this
+        //    group is handled by the cmode match returning a defined value.
+
+        let imm64 = adv_simd_expand_imm(op, cmode, imm8);
+
+        // ORR/BIC immediate: cmode = 0xx1 or 10x1.
+        let orr_bic = (cmode & 1) == 1 && (cmode >> 1) < 0b110;
+        if orr_bic {
+            let imm128 = (imm64 as u128) | ((imm64 as u128) << 64);
+            let cur = self.v[rd];
+            let r = if op == 0 { cur | imm128 } else { cur & !imm128 };
+            self.v[rd] = if q == 1 { r } else { r & elem_mask_u128(64) };
+            return Ok(CpuExit::Continue);
+        }
+
+        // MOVI / MVNI / FMOV. MVNI inverts for op=1 except the cmode=1110
+        // (MOVI 64-bit) and cmode=1111 (FMOV) special cases.
+        let val = if op == 1 && cmode != 0b1110 && cmode != 0b1111 {
+            !imm64
+        } else {
+            imm64
+        };
+        let result = if q == 1 {
+            (val as u128) | ((val as u128) << 64)
+        } else {
+            val as u128
+        };
+        self.v[rd] = result;
         Ok(CpuExit::Continue)
     }
 
@@ -7386,6 +7441,72 @@ fn adv_simd_three_same_int(u: u32, opcode: u32, bits: u32, a: u64, b: u64, d: u6
             ((ua + ub) as u64) & m
         }
         _ => a & m,
+    }
+}
+
+/// VFPExpandImm for single precision: 8-bit immediate -> f32 bit pattern.
+fn vfp_expand_imm_f32(imm8: u8) -> u32 {
+    let imm8 = imm8 as u32;
+    let sign = (imm8 >> 7) & 1;
+    let b6 = (imm8 >> 6) & 1;
+    // exp(8) = NOT(b6) : b6*5 : imm8<5:4>
+    let exp = ((!b6 & 1) << 7) | (if b6 != 0 { 0b11111 } else { 0 } << 2) | ((imm8 >> 4) & 0x3);
+    let mant = (imm8 & 0xF) << 19;
+    (sign << 31) | (exp << 23) | mant
+}
+
+/// VFPExpandImm for double precision: 8-bit immediate -> f64 bit pattern.
+fn vfp_expand_imm_f64(imm8: u8) -> u64 {
+    let imm8 = imm8 as u64;
+    let sign = (imm8 >> 7) & 1;
+    let b6 = (imm8 >> 6) & 1;
+    // exp(11) = NOT(b6) : b6*8 : imm8<5:4>
+    let exp = ((!b6 & 1) << 10) | (if b6 != 0 { 0xFF } else { 0 } << 2) | ((imm8 >> 4) & 0x3);
+    let mant = (imm8 & 0xF) << 48;
+    (sign << 63) | (exp << 52) | mant
+}
+
+/// AdvSIMDExpandImm: expand an 8-bit immediate to a 64-bit value per `cmode`/`op`
+/// (ARM Architecture Reference Manual). Used by the SIMD modified-immediate group.
+fn adv_simd_expand_imm(op: u32, cmode: u32, imm8: u8) -> u64 {
+    let imm8 = imm8 as u64;
+    let rep32 = |x: u64| (x & 0xFFFF_FFFF) | ((x & 0xFFFF_FFFF) << 32);
+    let rep16 = |x: u64| {
+        let x = x & 0xFFFF;
+        x | (x << 16) | (x << 32) | (x << 48)
+    };
+    let rep8 = |x: u64| (x & 0xFF).wrapping_mul(0x0101_0101_0101_0101);
+    match cmode {
+        0b0000 | 0b0001 => rep32(imm8),
+        0b0010 | 0b0011 => rep32(imm8 << 8),
+        0b0100 | 0b0101 => rep32(imm8 << 16),
+        0b0110 | 0b0111 => rep32(imm8 << 24),
+        0b1000 | 0b1001 => rep16(imm8),
+        0b1010 | 0b1011 => rep16(imm8 << 8),
+        0b1100 => rep32((imm8 << 8) | 0xFF),
+        0b1101 => rep32((imm8 << 16) | 0xFFFF),
+        0b1110 => {
+            if op == 0 {
+                rep8(imm8)
+            } else {
+                // MOVI 64-bit: each bit of imm8 expands to a 0x00/0xFF byte.
+                let mut r = 0u64;
+                for i in 0..8 {
+                    if (imm8 >> i) & 1 != 0 {
+                        r |= 0xFFu64 << (i * 8);
+                    }
+                }
+                r
+            }
+        }
+        0b1111 => {
+            if op == 0 {
+                rep32(vfp_expand_imm_f32(imm8 as u8) as u64)
+            } else {
+                vfp_expand_imm_f64(imm8 as u8)
+            }
+        }
+        _ => 0,
     }
 }
 

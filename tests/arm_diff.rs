@@ -918,6 +918,32 @@ fn diff_simd_across_fp() {
     run_batch("simd_across_fp", batch);
 }
 
+/// SIMD modified immediate: `0 Q op 0111100000 abc cmode o2 1 defgh Rd`.
+fn enc_modimm(q: u32, op: u32, cmode: u32, imm8: u32) -> u32 {
+    let abc = (imm8 >> 5) & 0x7;
+    let defgh = imm8 & 0x1F;
+    (q << 30) | (op << 29) | (0x0F << 24) | (abc << 16) | (cmode << 12) | (1 << 10)
+        | (defgh << 5) | RD
+}
+
+#[test]
+fn diff_simd_modimm() {
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for op in 0..2u32 {
+        for cmode in 0..16u32 {
+            for q in 0..2 {
+                for &imm8 in &[0x00u32, 0xFF, 0x55, 0xA3, 0x80, 0x01] {
+                    cases.push((
+                        format!("modimm op{op} cm{cmode:04b} q{q} #{imm8:#04x}"),
+                        enc_modimm(q, op, cmode, imm8),
+                    ));
+                }
+            }
+        }
+    }
+    run_family("simd_modimm", cases, 4, 0xC001);
+}
+
 /// Advanced SIMD permute (ZIP/UZP/TRN): `0 Q 0 01110 size 0 Rm 0 opcode 10 Rn Rd`.
 fn enc_permute(q: u32, size: u32, opcode: u32) -> u32 {
     (q << 30) | (0b01110 << 24) | (size << 22) | (RM << 16) | (opcode << 12) | (0b10 << 10)
