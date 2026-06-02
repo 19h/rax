@@ -990,24 +990,14 @@ fn fuzz_unary() {
 // For a masked count of 0 NO flags change. We always compare GPRs; the flag mask
 // depends on the count we generated.
 
-// IGNORED: this generator currently surfaces a REAL interpreter bug and would
-// fail CI. Run it explicitly with `cargo test --features kvm --test diff_fuzz
-// -- --ignored fuzz_shifts` to reproduce.
+// Exercises ROL/ROR/RCL/RCR/SHL/SHR/SAR across widths and counts vs KVM.
 //
-// BUG (confirmed against KVM): SAR by a (5-bit-masked) count that EXCEEDS the
-// operand width on an 8/16-bit operand computes CF as 0 instead of the sign bit.
-//   Minimal repro: `66 C1 F8 15` = `sar ax, 21` with AX = 0xFFFF.
-//     interp: CF=0   KVM: CF=1 (CF must equal the operand's sign bit).
-//   The hardware masks the count to 5 bits (so 21 stays 21) and performs the
-//   shift by 21; once the shift reaches/passes the width the value is sign-
-//   filled and the last bit shifted out is the sign bit, so CF = sign bit.
-//   Location: src/backend/emulator/x86_64/insn/shift/core.rs, SAR arm of
-//   `execute_shift`: the CF expression
-//       `if count > 0 && count <= bits { (val >> (count-1)) & 1 != 0 } else { false }`
-//   returns `false` when `count > bits`; for SAR it must instead return the
-//   sign bit `(val >> (bits-1)) & 1 != 0`. (SHR/SHL leave CF undefined here, so
-//   the fuzzer correctly masks CF out for those — only SAR is a real defect.)
-#[ignore = "surfaces real SAR-count>width CF bug; see comment + report"]
+// REGRESSION GUARD: previously surfaced a real SAR CF bug — SAR by a 5-bit-masked
+// count exceeding the operand width (e.g. `sar ax, 21` with AX=0xFFFF) computed
+// CF=0 instead of the operand's sign bit. Fixed in src/backend/emulator/x86_64/
+// insn/shift/core.rs (SAR arm: CF = sign bit when count > width). SHR/SHL leave
+// CF undefined past the width, so the fuzzer masks CF out for those — only SAR's
+// CF is defined (= sign bit) and checked here.
 #[test]
 fn fuzz_shifts() {
     const CASES: usize = 400;

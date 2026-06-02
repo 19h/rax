@@ -127,10 +127,14 @@ pub fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Resu
             } else {
                 ((val as i8) >> count) as u8
             };
-            let cf = if count > 0 && count <= 8 {
+            let cf = if count == 0 {
+                false
+            } else if count <= 8 {
                 (val >> (count - 1)) & 1 != 0
             } else {
-                false
+                // SAR with count > width: operand is fully sign-extended,
+                // so the last bit shifted out is the sign bit.
+                (val >> 7) & 1 != 0
             };
             let of = Some(false);
             (result, cf, of)
@@ -321,10 +325,14 @@ pub fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u
                     _ => val >> count,
                 }
             };
-            let cf = if count > 0 && (count as u32) <= bits {
+            let cf = if count == 0 {
+                false
+            } else if (count as u32) <= bits {
                 (val >> (count - 1)) & 1 != 0
             } else {
-                false
+                // SAR with count > width: operand is fully sign-extended,
+                // so the last bit shifted out is the sign bit.
+                (val >> (bits - 1)) & 1 != 0
             };
             let of = Some(false);
             (result, cf, of)
