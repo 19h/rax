@@ -2017,14 +2017,22 @@ impl X86_64Vcpu {
 
     // Condition checking for Jcc/SETcc/CMOVcc - materializes lazy flags first
     pub(super) fn check_condition(&mut self, cc: u8) -> bool {
-        // Materialize lazy flags before reading
-        self.materialize_flags();
+        // Read flags without materializing: a conditional branch does not modify
+        // RFLAGS, so we evaluate the predicate directly from the lazy-flag state
+        // (read-only) and leave the lazy op intact. This removes the RFLAGS
+        // read-modify-write store + the lazy-clear store from every taken/untaken
+        // Jcc/SETcc/CMOVcc on the hot path.
+        let rflags = if self.lazy_flags.op == LazyFlagOp::None {
+            self.regs.rflags
+        } else {
+            self.compute_materialized_rflags()
+        };
 
-        let cf = self.regs.rflags & flags::bits::CF != 0;
-        let zf = self.regs.rflags & flags::bits::ZF != 0;
-        let sf = self.regs.rflags & flags::bits::SF != 0;
-        let of = self.regs.rflags & flags::bits::OF != 0;
-        let pf = self.regs.rflags & flags::bits::PF != 0;
+        let cf = rflags & flags::bits::CF != 0;
+        let zf = rflags & flags::bits::ZF != 0;
+        let sf = rflags & flags::bits::SF != 0;
+        let of = rflags & flags::bits::OF != 0;
+        let pf = rflags & flags::bits::PF != 0;
 
         match cc {
             0x0 => of,                // O
