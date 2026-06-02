@@ -4001,6 +4001,31 @@ impl AArch64Cpu {
             (0, 1, 0b01110) => Some(TwoRegFp::CmLt),
             _ => None,
         };
+        // URECPE (U=0) / URSQRTE (U=1): unsigned 32-bit integer estimates,
+        // sz_hi=1, opcode 11100.
+        if (insn >> 23) & 1 == 1 && opcode == 0b11100 {
+            if sz != 0 {
+                return Some(Err(ArmError::UndefinedInstruction(insn)));
+            }
+            let datasize = if scalar { 4usize } else if q == 1 { 16 } else { 8 };
+            let elements = datasize / 4;
+            let src = self.v[rn].to_le_bytes();
+            let mut dst = [0u8; 16];
+            let is_rsqrt = (insn >> 29) & 1 == 1;
+            for e in 0..elements {
+                let off = e * 4;
+                let a = read_elem(&src, off, 4) as u32;
+                let r = if is_rsqrt {
+                    unsigned_rsqrt_estimate(a)
+                } else {
+                    unsigned_recip_estimate(a)
+                };
+                write_elem(&mut dst, off, 4, r as u64);
+            }
+            self.v[rd] = u128::from_le_bytes(dst);
+            return Some(Ok(CpuExit::Continue));
+        }
+
         // FRECPE (U=0) / FRSQRTE (U=1): estimate ops, sz_hi=1, opcode 11101.
         if (insn >> 23) & 1 == 1 && opcode == 0b11101 {
             let is_rsqrt = (insn >> 29) & 1 == 1;
@@ -8625,6 +8650,24 @@ fn fp_rsqrt_estimate_f64(bits: u64) -> u64 {
     let result_exp = (((3068 - e) / 2) as u64) & 0x7FF;
     let est = recip_sqrt_estimate(scaled);
     (sign << 63) | (result_exp << 52) | (((est & 0xFF) as u64) << 44)
+}
+
+/// UnsignedRecipEstimate (N=32): estimate of 1/x for a fixed-point value.
+fn unsigned_recip_estimate(op: u32) -> u32 {
+    if op & 0x8000_0000 == 0 {
+        return 0xFFFF_FFFF;
+    }
+    let est = recip_estimate((op >> 23) & 0x1FF);
+    (est & 0x1FF) << 23
+}
+
+/// UnsignedRSqrtEstimate (N=32).
+fn unsigned_rsqrt_estimate(op: u32) -> u32 {
+    if op & 0xC000_0000 == 0 {
+        return 0xFFFF_FFFF;
+    }
+    let est = recip_sqrt_estimate((op >> 23) & 0x1FF);
+    (est & 0x1FF) << 23
 }
 
 /// AES S-box and inverse S-box (FIPS-197).

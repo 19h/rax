@@ -866,6 +866,17 @@ fn enc_aes(opcode: u32) -> u32 {
 }
 
 #[test]
+fn diff_simd_urecpe() {
+    // URECPE (U=0) / URSQRTE (U=1): 32-bit unsigned integer estimates.
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for q in 0..2 {
+        cases.push((format!("urecpe q{q}"), enc_two_reg(q, 0, 0b10, 0b11100)));
+        cases.push((format!("ursqrte q{q}"), enc_two_reg(q, 1, 0b10, 0b11100)));
+    }
+    run_family("simd_urecpe", cases, 40, 0x1_000C);
+}
+
+#[test]
 fn diff_simd_frecpe() {
     // FRECPE: U=0, opcode 11101, sz_hi=1 -> size = 0b10 (f32) / 0b11 (f64).
     let mut cases: Vec<(String, u32, bool)> = Vec::new();
