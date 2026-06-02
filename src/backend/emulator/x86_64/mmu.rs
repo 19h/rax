@@ -427,6 +427,12 @@ pub struct Mmu {
     /// Stored as usize (not a raw pointer) so Mmu remains Send.
     ram_host_base: usize,
     ram_len: u64,
+    /// Upper bound (exclusive) of the RAM window that contains no MMIO hole, so
+    /// any access fully below it is plain RAM. Equals `ram_len` when the LAPIC
+    /// window sits entirely above RAM (the common small-guest case), else it is
+    /// capped at `LAPIC_BASE`. Used by `ram_ptr` to elide the per-access MMIO
+    /// overlap test on the hot path.
+    ram_fast_len: u64,
 }
 
 impl Mmu {
@@ -441,6 +447,15 @@ impl Mmu {
                 .map(|r| (r.as_ptr() as usize, r.len()))
                 .unwrap_or((0, 0))
         };
+        // If RAM ends at or below the LAPIC window, no in-RAM access can ever
+        // overlap MMIO, so the whole region is "fast". Otherwise the region
+        // straddles the LAPIC hole; only accesses strictly below LAPIC_BASE are
+        // guaranteed MMIO-free and take the single-compare fast path.
+        let ram_fast_len = if ram_len <= LAPIC_BASE {
+            ram_len
+        } else {
+            LAPIC_BASE
+        };
         Mmu {
             memory,
             tlb: [TlbEntry::default(); TLB_SIZE],
@@ -449,6 +464,7 @@ impl Mmu {
             lapic: RefCell::new(InlineLapic::new()),
             ram_host_base,
             ram_len,
+            ram_fast_len,
         }
     }
 
@@ -459,6 +475,40 @@ impl Mmu {
             && paddr
                 .checked_add(len as u64)
                 .map_or(false, |end| end <= self.ram_len)
+    }
+
+    /// Host pointer for `[paddr, paddr+LEN)` when it lies wholly within RAM and
+    /// outside the LAPIC MMIO window, else `None`.
+    ///
+    /// Common case is a single comparison: `paddr <= ram_fast_len - LEN`, where
+    /// `ram_fast_len` bounds the MMIO-free RAM window, so a pass guarantees the
+    /// access is plain RAM. `LEN` is a const so the typed accessors inline to a
+    /// bounds-test + pointer read/write. The cold branch handles guests whose
+    /// RAM extends past the LAPIC window (access at/above `ram_fast_len`).
+    #[inline(always)]
+    fn ram_ptr<const LEN: u64>(&self, paddr: u64) -> Option<usize> {
+        // ram_fast_len is 0 (no RAM) or >= any access width for real RAM, so the
+        // subtraction underflows only when there is no RAM, where the huge
+        // wrapped bound makes the comparison fail and yields None.
+        if paddr <= self.ram_fast_len.wrapping_sub(LEN) {
+            Some(self.ram_host_base + paddr as usize)
+        } else {
+            self.ram_ptr_high::<LEN>(paddr)
+        }
+    }
+
+    /// Cold fallback of `ram_ptr` for accesses at or above the fast window:
+    /// either above the LAPIC hole (still RAM) or genuinely out of RAM/in MMIO.
+    #[cold]
+    #[inline(never)]
+    fn ram_ptr_high<const LEN: u64>(&self, paddr: u64) -> Option<usize> {
+        if paddr <= self.ram_len.wrapping_sub(LEN)
+            && !(paddr < LAPIC_BASE + LAPIC_SIZE && paddr.wrapping_add(LEN) > LAPIC_BASE)
+        {
+            Some(self.ram_host_base + paddr as usize)
+        } else {
+            None
+        }
     }
 
     /// Get the size of guest memory in bytes
@@ -1132,6 +1182,11 @@ impl Mmu {
         profiling::memory::record_read(1);
 
         let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
+        if let Some(p) = self.ram_ptr::<1>(paddr) {
+            // SAFETY: ram_ptr verified [paddr, paddr+1) is in the RAM region and
+            // not in MMIO; p is the corresponding host address.
+            return Ok(unsafe { (p as *const u8).read() });
+        }
         let mut buf = [0u8; 1];
         self.read_phys(paddr, &mut buf)?;
         Ok(buf[0])
@@ -1146,6 +1201,10 @@ impl Mmu {
         // Fast path if not crossing page boundary
         if (vaddr & 0xFFF) <= 0xFFE {
             let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
+            if let Some(p) = self.ram_ptr::<2>(paddr) {
+                // SAFETY: ram_ptr verified [paddr, paddr+2) is in-RAM, non-MMIO.
+                return Ok(u16::from_le(unsafe { (p as *const u16).read_unaligned() }));
+            }
             let mut buf = [0u8; 2];
             self.read_phys(paddr, &mut buf)?;
             Ok(u16::from_le_bytes(buf))
@@ -1165,6 +1224,10 @@ impl Mmu {
         // Fast path if not crossing page boundary
         if (vaddr & 0xFFF) <= 0xFFC {
             let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
+            if let Some(p) = self.ram_ptr::<4>(paddr) {
+                // SAFETY: ram_ptr verified [paddr, paddr+4) is in-RAM, non-MMIO.
+                return Ok(u32::from_le(unsafe { (p as *const u32).read_unaligned() }));
+            }
             let mut buf = [0u8; 4];
             self.read_phys(paddr, &mut buf)?;
             Ok(u32::from_le_bytes(buf))
@@ -1184,6 +1247,10 @@ impl Mmu {
         // Fast path if not crossing page boundary
         if (vaddr & 0xFFF) <= 0xFF8 {
             let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
+            if let Some(p) = self.ram_ptr::<8>(paddr) {
+                // SAFETY: ram_ptr verified [paddr, paddr+8) is in-RAM, non-MMIO.
+                return Ok(u64::from_le(unsafe { (p as *const u64).read_unaligned() }));
+            }
             let mut buf = [0u8; 8];
             self.read_phys(paddr, &mut buf)?;
             Ok(u64::from_le_bytes(buf))
@@ -1201,6 +1268,11 @@ impl Mmu {
         profiling::memory::record_write(1);
 
         let paddr = self.translate(vaddr, AccessType::Write, sregs)?;
+        if let Some(p) = self.ram_ptr::<1>(paddr) {
+            // SAFETY: ram_ptr verified [paddr, paddr+1) is in-RAM, non-MMIO.
+            unsafe { (p as *mut u8).write(value) };
+            return Ok(());
+        }
         self.write_phys(paddr, &[value])
     }
 
@@ -1212,6 +1284,11 @@ impl Mmu {
 
         if (vaddr & 0xFFF) <= 0xFFE {
             let paddr = self.translate(vaddr, AccessType::Write, sregs)?;
+            if let Some(p) = self.ram_ptr::<2>(paddr) {
+                // SAFETY: ram_ptr verified [paddr, paddr+2) is in-RAM, non-MMIO.
+                unsafe { (p as *mut u16).write_unaligned(value.to_le()) };
+                return Ok(());
+            }
             self.write_phys(paddr, &value.to_le_bytes())
         } else {
             self.write(vaddr, &value.to_le_bytes(), sregs)
@@ -1226,6 +1303,11 @@ impl Mmu {
 
         if (vaddr & 0xFFF) <= 0xFFC {
             let paddr = self.translate(vaddr, AccessType::Write, sregs)?;
+            if let Some(p) = self.ram_ptr::<4>(paddr) {
+                // SAFETY: ram_ptr verified [paddr, paddr+4) is in-RAM, non-MMIO.
+                unsafe { (p as *mut u32).write_unaligned(value.to_le()) };
+                return Ok(());
+            }
             self.write_phys(paddr, &value.to_le_bytes())
         } else {
             self.write(vaddr, &value.to_le_bytes(), sregs)
@@ -1240,6 +1322,11 @@ impl Mmu {
 
         if (vaddr & 0xFFF) <= 0xFF8 {
             let paddr = self.translate(vaddr, AccessType::Write, sregs)?;
+            if let Some(p) = self.ram_ptr::<8>(paddr) {
+                // SAFETY: ram_ptr verified [paddr, paddr+8) is in-RAM, non-MMIO.
+                unsafe { (p as *mut u64).write_unaligned(value.to_le()) };
+                return Ok(());
+            }
             self.write_phys(paddr, &value.to_le_bytes())
         } else {
             self.write(vaddr, &value.to_le_bytes(), sregs)
