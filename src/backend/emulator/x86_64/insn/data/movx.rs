@@ -1,27 +1,47 @@
 //! MOVZX, MOVSX, MOVSXD instructions.
 
 use crate::cpu::VcpuExit;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 
-/// MOVSXD r64, r/m32 (0x63 with REX.W)
+/// MOVSXD r, r/m (0x63). Operand-size–dependent:
+///   - REX.W: sign-extend r/m32 -> r64.
+///   - 32-bit (default, no REX.W): the source is r/m32 and the destination is r32;
+///     the value is written 32-bit (zero-extended into the full 64-bit register,
+///     the standard 64-bit-mode write behavior). No actual sign extension occurs
+///     because source and destination are the same width.
+///   - 16-bit (66 prefix, no REX.W): the source is r/m16 written to r16.
+/// Hardware/KVM accept all of these without faulting, so we must too.
 pub fn movsxd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    if !ctx.rex_w() {
-        return Err(Error::Emulator(
-            "MOVSXD without REX.W not supported".to_string(),
-        ));
-    }
     let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
 
-    let value = if is_memory {
-        vcpu.mmu.read_u32(addr, &vcpu.sregs)?
+    if ctx.rex_w() {
+        // Sign-extend r/m32 -> r64.
+        let value = if is_memory {
+            vcpu.mmu.read_u32(addr, &vcpu.sregs)?
+        } else {
+            vcpu.get_reg(rm, 4) as u32
+        };
+        let extended = value as i32 as i64 as u64;
+        vcpu.set_reg(reg, extended, 8);
+    } else if ctx.op_size == 2 {
+        // 16-bit form: move r/m16 -> r16 (only the low 16 bits change).
+        let value = if is_memory {
+            vcpu.mmu.read_u16(addr, &vcpu.sregs)? as u64
+        } else {
+            vcpu.get_reg(rm, 2) & 0xFFFF
+        };
+        vcpu.set_reg(reg, value, 2);
     } else {
-        vcpu.get_reg(rm, 4) as u32
-    };
-    // Sign-extend 32-bit to 64-bit
-    let extended = value as i32 as i64 as u64;
-    vcpu.set_reg(reg, extended, 8);
+        // 32-bit form: move r/m32 -> r32, zero-extending into the 64-bit register.
+        let value = if is_memory {
+            vcpu.mmu.read_u32(addr, &vcpu.sregs)? as u64
+        } else {
+            vcpu.get_reg(rm, 4) & 0xFFFF_FFFF
+        };
+        vcpu.set_reg(reg, value, 4);
+    }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

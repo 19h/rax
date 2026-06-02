@@ -8,6 +8,45 @@ use super::super::super::cpu::{InsnContext, X86_64Vcpu};
 use super::super::super::flags;
 use super::super::super::insn;
 
+// x86 MIN/MAX semantics differ from IEEE/Rust `f32::min`/`f32::max`.
+// SDM: MIN returns `(dst < src) ? dst : src` and MAX returns `(dst > src) ? dst : src`.
+// The comparison is FALSE whenever either operand is NaN (unordered) or on a
+// signed-zero tie, so the SECOND operand (`src`) is returned in those cases. This
+// is unlike Rust's `min`/`max`, which return the non-NaN operand. KVM (hardware)
+// follows the SDM, so we must too.
+#[inline(always)]
+fn x86_min_f32(dst: f32, src: f32) -> f32 {
+    if dst < src {
+        dst
+    } else {
+        src
+    }
+}
+#[inline(always)]
+fn x86_max_f32(dst: f32, src: f32) -> f32 {
+    if dst > src {
+        dst
+    } else {
+        src
+    }
+}
+#[inline(always)]
+fn x86_min_f64(dst: f64, src: f64) -> f64 {
+    if dst < src {
+        dst
+    } else {
+        src
+    }
+}
+#[inline(always)]
+fn x86_max_f64(dst: f64, src: f64) -> f64 {
+    if dst > src {
+        dst
+    } else {
+        src
+    }
+}
+
 impl X86_64Vcpu {
     pub(in crate::backend::emulator::x86_64) fn execute_sse_add(
         &mut self,
@@ -385,7 +424,7 @@ impl X86_64Vcpu {
             };
             let dst = f32::from_bits(self.regs.xmm[xmm_dst][0] as u32);
             self.regs.xmm[xmm_dst][0] =
-                (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | dst.min(src).to_bits() as u64;
+                (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | x86_min_f32(dst, src).to_bits() as u64;
         } else if ctx.rep_prefix == Some(0xF2) {
             let src = if is_memory {
                 f64::from_bits(self.read_mem(addr, 8)?)
@@ -393,19 +432,19 @@ impl X86_64Vcpu {
                 f64::from_bits(self.regs.xmm[rm as usize][0])
             };
             let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
-            self.regs.xmm[xmm_dst][0] = dst.min(src).to_bits();
+            self.regs.xmm[xmm_dst][0] = x86_min_f64(dst, src).to_bits();
         } else if ctx.operand_size_override {
             let (src_lo, src_hi) = if is_memory {
                 (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
             } else {
                 (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
             };
-            self.regs.xmm[xmm_dst][0] = f64::from_bits(self.regs.xmm[xmm_dst][0])
-                .min(f64::from_bits(src_lo))
-                .to_bits();
-            self.regs.xmm[xmm_dst][1] = f64::from_bits(self.regs.xmm[xmm_dst][1])
-                .min(f64::from_bits(src_hi))
-                .to_bits();
+            self.regs.xmm[xmm_dst][0] =
+                x86_min_f64(f64::from_bits(self.regs.xmm[xmm_dst][0]), f64::from_bits(src_lo))
+                    .to_bits();
+            self.regs.xmm[xmm_dst][1] =
+                x86_min_f64(f64::from_bits(self.regs.xmm[xmm_dst][1]), f64::from_bits(src_hi))
+                    .to_bits();
         } else {
             let (src_lo, src_hi) = if is_memory {
                 (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
@@ -413,12 +452,16 @@ impl X86_64Vcpu {
                 (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
             };
             let (dst_lo, dst_hi) = (self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]);
-            let r0 = f32::from_bits(dst_lo as u32).min(f32::from_bits(src_lo as u32));
-            let r1 =
-                f32::from_bits((dst_lo >> 32) as u32).min(f32::from_bits((src_lo >> 32) as u32));
-            let r2 = f32::from_bits(dst_hi as u32).min(f32::from_bits(src_hi as u32));
-            let r3 =
-                f32::from_bits((dst_hi >> 32) as u32).min(f32::from_bits((src_hi >> 32) as u32));
+            let r0 = x86_min_f32(f32::from_bits(dst_lo as u32), f32::from_bits(src_lo as u32));
+            let r1 = x86_min_f32(
+                f32::from_bits((dst_lo >> 32) as u32),
+                f32::from_bits((src_lo >> 32) as u32),
+            );
+            let r2 = x86_min_f32(f32::from_bits(dst_hi as u32), f32::from_bits(src_hi as u32));
+            let r3 = x86_min_f32(
+                f32::from_bits((dst_hi >> 32) as u32),
+                f32::from_bits((src_hi >> 32) as u32),
+            );
             self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
             self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
         }
@@ -442,7 +485,7 @@ impl X86_64Vcpu {
             };
             let dst = f32::from_bits(self.regs.xmm[xmm_dst][0] as u32);
             self.regs.xmm[xmm_dst][0] =
-                (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | dst.max(src).to_bits() as u64;
+                (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | x86_max_f32(dst, src).to_bits() as u64;
         } else if ctx.rep_prefix == Some(0xF2) {
             let src = if is_memory {
                 f64::from_bits(self.read_mem(addr, 8)?)
@@ -450,19 +493,19 @@ impl X86_64Vcpu {
                 f64::from_bits(self.regs.xmm[rm as usize][0])
             };
             let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
-            self.regs.xmm[xmm_dst][0] = dst.max(src).to_bits();
+            self.regs.xmm[xmm_dst][0] = x86_max_f64(dst, src).to_bits();
         } else if ctx.operand_size_override {
             let (src_lo, src_hi) = if is_memory {
                 (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
             } else {
                 (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
             };
-            self.regs.xmm[xmm_dst][0] = f64::from_bits(self.regs.xmm[xmm_dst][0])
-                .max(f64::from_bits(src_lo))
-                .to_bits();
-            self.regs.xmm[xmm_dst][1] = f64::from_bits(self.regs.xmm[xmm_dst][1])
-                .max(f64::from_bits(src_hi))
-                .to_bits();
+            self.regs.xmm[xmm_dst][0] =
+                x86_max_f64(f64::from_bits(self.regs.xmm[xmm_dst][0]), f64::from_bits(src_lo))
+                    .to_bits();
+            self.regs.xmm[xmm_dst][1] =
+                x86_max_f64(f64::from_bits(self.regs.xmm[xmm_dst][1]), f64::from_bits(src_hi))
+                    .to_bits();
         } else {
             let (src_lo, src_hi) = if is_memory {
                 (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
@@ -470,12 +513,16 @@ impl X86_64Vcpu {
                 (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
             };
             let (dst_lo, dst_hi) = (self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]);
-            let r0 = f32::from_bits(dst_lo as u32).max(f32::from_bits(src_lo as u32));
-            let r1 =
-                f32::from_bits((dst_lo >> 32) as u32).max(f32::from_bits((src_lo >> 32) as u32));
-            let r2 = f32::from_bits(dst_hi as u32).max(f32::from_bits(src_hi as u32));
-            let r3 =
-                f32::from_bits((dst_hi >> 32) as u32).max(f32::from_bits((src_hi >> 32) as u32));
+            let r0 = x86_max_f32(f32::from_bits(dst_lo as u32), f32::from_bits(src_lo as u32));
+            let r1 = x86_max_f32(
+                f32::from_bits((dst_lo >> 32) as u32),
+                f32::from_bits((src_lo >> 32) as u32),
+            );
+            let r2 = x86_max_f32(f32::from_bits(dst_hi as u32), f32::from_bits(src_hi as u32));
+            let r3 = x86_max_f32(
+                f32::from_bits((dst_hi >> 32) as u32),
+                f32::from_bits((src_hi >> 32) as u32),
+            );
             self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
             self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
         }

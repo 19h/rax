@@ -20,23 +20,25 @@ impl X86_64Vcpu {
         let xmm_src1 = vvvv as usize;
 
         // Determine operation type based on opcode
+        // x86 MIN/MAX follow `(a<b)?a:b` / `(a>b)?a:b`, returning the SECOND operand
+        // on any unordered (NaN) compare or signed-zero tie — not Rust's f32::min/max.
         let op: fn(f32, f32) -> f32 = match opcode {
-            0x58 => |a, b| a + b,     // ADD
-            0x59 => |a, b| a * b,     // MUL
-            0x5C => |a, b| a - b,     // SUB
-            0x5D => |a, b| a.min(b),  // MIN
-            0x5E => |a, b| a / b,     // DIV
-            0x5F => |a, b| a.max(b),  // MAX
-            0x51 => |_a, b| b.sqrt(), // SQRT (unary, uses only src2)
+            0x58 => |a, b| a + b,                          // ADD
+            0x59 => |a, b| a * b,                          // MUL
+            0x5C => |a, b| a - b,                          // SUB
+            0x5D => |a, b| if a < b { a } else { b },      // MIN
+            0x5E => |a, b| a / b,                          // DIV
+            0x5F => |a, b| if a > b { a } else { b },      // MAX
+            0x51 => |_a, b| b.sqrt(),                      // SQRT (unary, uses only src2)
             _ => unreachable!(),
         };
         let op_d: fn(f64, f64) -> f64 = match opcode {
             0x58 => |a, b| a + b,
             0x59 => |a, b| a * b,
             0x5C => |a, b| a - b,
-            0x5D => |a, b| a.min(b),
+            0x5D => |a, b| if a < b { a } else { b },
             0x5E => |a, b| a / b,
-            0x5F => |a, b| a.max(b),
+            0x5F => |a, b| if a > b { a } else { b },
             0x51 => |_a, b| b.sqrt(),
             _ => unreachable!(),
         };

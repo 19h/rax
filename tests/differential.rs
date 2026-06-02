@@ -3834,14 +3834,13 @@ fn sse_maxps() {
     check_sse("maxps", &sse_program(&[0x0F, 0x5F, 0xC1]), sse_scratch(a, b));
 }
 
-#[ignore = "MINPS is now (dst<src)?dst:src per SDM (90 unit tests pass); this exact-bit NaN-lane diff vs KVM is an unresolved harness/NaN-payload artifact"]
 #[test]
 fn sse_minps_nan_handling() {
     // SDM (MINPS): for each lane, dst = (a < b) ? a : b, where ANY NaN operand
     // (or unordered compare) makes the `<` test FALSE, so the lane result is the
     // SECOND source operand (b). With:
-    //   a = [NaN, 9.0, 1.0, 2.0]   (NaN in lane 0)
-    //   b = [5.0, NaN, 3.0, 4.0]   (NaN in lane 1)
+    //   a = [NaN, 9.0, 1.0, 2.0]   (NaN in lane 0, dst = xmm0)
+    //   b = [5.0, NaN, 3.0, 4.0]   (NaN in lane 1, src = xmm1)
     // the architecturally-correct result is:
     //   lane0: a is NaN  -> b = 5.0
     //   lane1: b is NaN  -> b = NaN
@@ -3849,19 +3848,68 @@ fn sse_minps_nan_handling() {
     //   lane3: 2.0 < 4.0 -> a = 2.0
     // i.e. [5.0, NaN, 1.0, 2.0].
     //
-    // Observed (stored result page, offset 0x20, lanes 0..3):
-    //   interp = [5.0, 9.0, 1.0, 2.0]   <- lane1 wrong: returns a(9.0), not b(NaN)
-    //   kvm    = [5.0, 9.0, NaN, 1.0]
-    // The two backends disagree on the NaN lanes (rax's MINPS NaN handling looks
-    // off-by-one across lanes). This is a REAL interpreter bug in MINPS NaN
-    // propagation; the non-NaN MIN/MAX and signed-zero cases above/below pass.
-    // Ignored so the suite stays green; remove the ignore once MINPS returns the
-    // second operand on any unordered lane.
+    // FIXED: execute_sse_min previously used Rust's `f32::min`, which returns the
+    // NON-NaN operand (so lane1 wrongly returned dst=9.0). It now uses the x86
+    // rule `(dst<src)?dst:src`, returning src on any unordered lane, matching KVM.
     let mut a = f32x4([0.0, 9.0, 1.0, 2.0]);
     a[0..4].copy_from_slice(&f32::NAN.to_le_bytes());
     let mut b = f32x4([5.0, 0.0, 3.0, 4.0]);
     b[4..8].copy_from_slice(&f32::NAN.to_le_bytes());
     check_sse("minps_nan", &sse_program(&[0x0F, 0x5D, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse_maxps_nan_handling() {
+    // MAXPS xmm0, xmm1 = 0F 5F C1. Same NaN rule as MINPS: any unordered lane
+    // returns the SECOND operand (src = xmm1). Mirror of the MINPS case.
+    //   a = [NaN, 9.0, 5.0, 2.0] (dst), b = [5.0, NaN, 3.0, 4.0] (src)
+    //   lane0: a NaN -> src = 5.0 ; lane1: b NaN -> src = NaN
+    //   lane2: 5.0 > 3.0 -> dst = 5.0 ; lane3: 2.0 > 4.0 false -> src = 4.0
+    let mut a = f32x4([0.0, 9.0, 5.0, 2.0]);
+    a[0..4].copy_from_slice(&f32::NAN.to_le_bytes());
+    let mut b = f32x4([5.0, 0.0, 3.0, 4.0]);
+    b[4..8].copy_from_slice(&f32::NAN.to_le_bytes());
+    check_sse("maxps_nan", &sse_program(&[0x0F, 0x5F, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse_maxpd_nan_handling() {
+    // MAXPD xmm0, xmm1 = 66 0F 5F C1. Packed-double NaN handling: unordered lane
+    // returns src. a = [NaN, 7.0] (dst), b = [3.0, NaN] (src) -> [3.0, NaN].
+    let mut a = f64x2([0.0, 7.0]);
+    a[0..8].copy_from_slice(&f64::NAN.to_le_bytes());
+    let mut b = f64x2([3.0, 0.0]);
+    b[8..16].copy_from_slice(&f64::NAN.to_le_bytes());
+    check_sse("maxpd_nan", &sse_program(&[0x66, 0x0F, 0x5F, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse_minpd_nan_handling() {
+    // MINPD xmm0, xmm1 = 66 0F 5D C1. a = [NaN, 7.0], b = [3.0, NaN] -> [3.0, NaN].
+    let mut a = f64x2([0.0, 7.0]);
+    a[0..8].copy_from_slice(&f64::NAN.to_le_bytes());
+    let mut b = f64x2([3.0, 0.0]);
+    b[8..16].copy_from_slice(&f64::NAN.to_le_bytes());
+    check_sse("minpd_nan", &sse_program(&[0x66, 0x0F, 0x5D, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse_minss_nan_returns_src() {
+    // MINSS xmm0, xmm1 = F3 0F 5D C1. Scalar lane0: dst=9.0, src=NaN -> NaN (src).
+    // Upper 3 lanes of xmm0 preserved.
+    let a = f32x4([9.0, 11.0, 12.0, 13.0]);
+    let mut b = f32x4([0.0, 0.0, 0.0, 0.0]);
+    b[0..4].copy_from_slice(&f32::NAN.to_le_bytes());
+    check_sse("minss_nan", &sse_program(&[0xF3, 0x0F, 0x5D, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse_maxsd_nan_returns_src() {
+    // MAXSD xmm0, xmm1 = F2 0F 5F C1. Scalar double lane0: dst=NaN, src=2.0 -> 2.0.
+    let mut a = f64x2([0.0, 7.0]);
+    a[0..8].copy_from_slice(&f64::NAN.to_le_bytes());
+    let b = f64x2([2.0, 99.0]);
+    check_sse("maxsd_nan", &sse_program(&[0xF2, 0x0F, 0x5F, 0xC1]), sse_scratch(a, b));
 }
 
 #[test]
@@ -5329,4 +5377,958 @@ fn cmpxchg16_mem_success() {
     r.rcx = 0xFEDC_BA98_7654_3210; // new high
     // 48 0F C7 0F  cmpxchg16b [rdi]
     check_mem("cmpxchg16b_ok", &with_hlt(vec![0x48, 0x0F, 0xC7, 0x0F]), r, s, FLAG_MASK);
+}
+
+// ===========================================================================
+// EXPANDED COVERAGE PART 4: SSE4.1 ROUND modes, SSE3/SSSE3 horizontal & sign,
+// SSE4 PMOVSX/ZX & PEXTR/PINSR & PALIGNR & DPPS, MOVD/MOVQ gpr<->xmm, MMX,
+// x87 FXCH/FABS/FCHS/FRNDINT/FSCALE/FPREM, and a few ALU corner cases.
+//
+// Reuses the existing helpers verbatim. SSE results that are exactly
+// representable (small integers / exact dyadic) are bit-identical across
+// backends and compared byte-for-byte via the scratch page.
+// ===========================================================================
+
+// ---- SSE4.1 ROUNDPS/ROUNDPD/ROUNDSS/ROUNDSD across all 4 rounding modes ----
+//
+// imm8[1:0] = 0 round-to-nearest-EVEN, 1 floor, 2 ceil, 3 truncate. Mode 0 uses
+// banker's rounding (ties to even) — NOT "round half away from zero". The .5 ties
+// here (0.5->0, 2.5->2, -2.5->-2, 3.5->4) probe exactly that distinction.
+
+/// ROUNDPS xmm0, xmm1, imm8 = 66 0F 3A 08 C1 ib. Source = xmm1, dest = xmm0.
+fn roundps_program(imm: u8) -> Vec<u8> {
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
+    prog.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x08, 0xC1, imm]); // roundps xmm0, xmm1, imm
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]); // movdqu [rdi+0x20], xmm0
+    prog.push(HLT);
+    prog
+}
+
+#[test]
+fn sse4_roundps_nearest_even() {
+    // Ties-to-even: 0.5->0, 2.5->2, 3.5->4, -2.5->-2.
+    let a = [0u8; 16];
+    let b = f32x4([0.5, 2.5, 3.5, -2.5]);
+    check_sse("roundps_nearest", &roundps_program(0x00), sse_scratch(a, b));
+}
+
+#[test]
+fn sse4_roundps_floor() {
+    let a = [0u8; 16];
+    let b = f32x4([1.4, -1.4, 2.9, -2.9]);
+    check_sse("roundps_floor", &roundps_program(0x01), sse_scratch(a, b));
+}
+
+#[test]
+fn sse4_roundps_ceil() {
+    let a = [0u8; 16];
+    let b = f32x4([1.4, -1.4, 2.1, -2.1]);
+    check_sse("roundps_ceil", &roundps_program(0x02), sse_scratch(a, b));
+}
+
+#[test]
+fn sse4_roundps_trunc() {
+    let a = [0u8; 16];
+    let b = f32x4([1.9, -1.9, 2.5, -2.5]);
+    check_sse("roundps_trunc", &roundps_program(0x03), sse_scratch(a, b));
+}
+
+#[test]
+fn sse4_roundpd_nearest_even() {
+    // ROUNDPD xmm0, xmm1, 0 = 66 0F 3A 09 C1 00. Doubles: 0.5->0, 2.5->2.
+    let a = [0u8; 16];
+    let b = f64x2([0.5, 2.5]);
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
+    prog.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x09, 0xC1, 0x00]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("roundpd_nearest", &prog, sse_scratch(a, b));
+}
+
+#[test]
+fn sse4_roundpd_floor_neg() {
+    // floor of negatives: -0.1 -> -1.0, -3.5 -> -4.0.
+    let a = [0u8; 16];
+    let b = f64x2([-0.1, -3.5]);
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
+    prog.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x09, 0xC1, 0x01]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("roundpd_floor", &prog, sse_scratch(a, b));
+}
+
+#[test]
+fn sse4_roundss_nearest_even() {
+    // ROUNDSS xmm0, xmm1, 0 = 66 0F 3A 0A C1 00. lane0 rounded ties-to-even (2.5->2),
+    // upper lanes of xmm0 preserved.
+    let a = f32x4([1.0, 11.0, 12.0, 13.0]);
+    let b = f32x4([2.5, 0.0, 0.0, 0.0]);
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
+    prog.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x0A, 0xC1, 0x00]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("roundss_nearest", &prog, sse_scratch(a, b));
+}
+
+#[test]
+fn sse4_roundsd_nearest_even() {
+    // ROUNDSD xmm0, xmm1, 0 = 66 0F 3A 0B C1 00. lane0 = round(0.5)=0 ties-to-even.
+    let a = f64x2([1.0, 99.0]);
+    let b = f64x2([0.5, 0.0]);
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
+    prog.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x0B, 0xC1, 0x00]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("roundsd_nearest", &prog, sse_scratch(a, b));
+}
+
+// ---- SSE3 packed-double addsub (HADDPD/HSUBPD already covered earlier) ----
+
+#[test]
+fn sse3_addsubpd() {
+    // ADDSUBPD xmm0, xmm1 = 66 0F D0 C1. lane0 = a0-b0, lane1 = a1+b1.
+    let a = f64x2([10.0, 10.0]);
+    let b = f64x2([3.0, 4.0]);
+    check_sse("addsubpd", &sse_program(&[0x66, 0x0F, 0xD0, 0xC1]), sse_scratch(a, b));
+}
+
+// ---- SSSE3 horizontal subtract / mulhrs (phaddw/d/sw, pmaddubsw, pshufb,
+//      psign*, pabs*, palignr already covered earlier) ----
+
+#[test]
+fn ssse3_phsubw() {
+    // PHSUBW xmm0, xmm1 = 66 0F 38 05 C1. Pairwise subtract (lane0 - lane1).
+    let a = [
+        0x000Au16.to_le_bytes(), 0x0003u16.to_le_bytes(),
+        0x0000u16.to_le_bytes(), 0x0001u16.to_le_bytes(),
+        0x0005u16.to_le_bytes(), 0x0008u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(), 0x0001u16.to_le_bytes(),
+    ].concat();
+    let b = [
+        0x0020u16.to_le_bytes(), 0x0010u16.to_le_bytes(),
+        0x0001u16.to_le_bytes(), 0x0002u16.to_le_bytes(),
+        0x0100u16.to_le_bytes(), 0x0050u16.to_le_bytes(),
+        0x0000u16.to_le_bytes(), 0x0000u16.to_le_bytes(),
+    ].concat();
+    check_sse("phsubw", &sse_program(&[0x66, 0x0F, 0x38, 0x05, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+}
+
+#[test]
+fn ssse3_pmulhrsw() {
+    // PMULHRSW xmm0, xmm1 = 66 0F 38 0B C1. Signed 16-bit mul, round, take bits [16:30].
+    let a = [
+        0x4000u16.to_le_bytes(), 0x8000u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(), 0xFFFFu16.to_le_bytes(),
+        0x0001u16.to_le_bytes(), 0x1234u16.to_le_bytes(),
+        0x00FFu16.to_le_bytes(), 0x8000u16.to_le_bytes(),
+    ].concat();
+    let b = [
+        0x4000u16.to_le_bytes(), 0x8000u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(), 0xFFFFu16.to_le_bytes(),
+        0x0002u16.to_le_bytes(), 0x1000u16.to_le_bytes(),
+        0x00FFu16.to_le_bytes(), 0x7FFFu16.to_le_bytes(),
+    ].concat();
+    check_sse("pmulhrsw", &sse_program(&[0x66, 0x0F, 0x38, 0x0B, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+}
+
+// ---- SSSE3 PALIGNR with imm >= 16 (the imm < 16 case is covered earlier) ----
+
+#[test]
+fn ssse3_palignr_imm17() {
+    // imm >= 16: result shifts dst alone right by (imm-16), zero-filling top.
+    let a = [0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F];
+    let b = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F];
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
+    prog.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x0F, 0xC1, 0x11]); // imm=17
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("palignr17", &prog, sse_scratch(a, b));
+}
+
+// ---- SSE4.1 PMOVSX / PMOVZX (sign/zero extend packed integers) ----
+
+#[test]
+fn sse4_pmovsxbw() {
+    // PMOVSXBW xmm0, xmm1 = 66 0F 38 20 C1. Sign-extend low 8 bytes -> 8 words.
+    let a = [0u8; 16];
+    let b = [0x01, 0xFF, 0x7F, 0x80, 0x00, 0x40, 0xC0, 0x10, 9, 9, 9, 9, 9, 9, 9, 9];
+    check_sse("pmovsxbw", &sse_program(&[0x66, 0x0F, 0x38, 0x20, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse4_pmovzxbw() {
+    // PMOVZXBW xmm0, xmm1 = 66 0F 38 30 C1. Zero-extend low 8 bytes -> 8 words.
+    let a = [0u8; 16];
+    let b = [0x01, 0xFF, 0x7F, 0x80, 0x00, 0x40, 0xC0, 0x10, 9, 9, 9, 9, 9, 9, 9, 9];
+    check_sse("pmovzxbw", &sse_program(&[0x66, 0x0F, 0x38, 0x30, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse4_pmovsxbd() {
+    // PMOVSXBD xmm0, xmm1 = 66 0F 38 21 C1. Sign-extend low 4 bytes -> 4 dwords.
+    let a = [0u8; 16];
+    let b = [0x01, 0xFF, 0x7F, 0x80, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9];
+    check_sse("pmovsxbd", &sse_program(&[0x66, 0x0F, 0x38, 0x21, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse4_pmovsxwd() {
+    // PMOVSXWD xmm0, xmm1 = 66 0F 38 23 C1. Sign-extend low 4 words -> 4 dwords.
+    let a = [0u8; 16];
+    let b = [
+        0xFFFFu16.to_le_bytes(), 0x8000u16.to_le_bytes(),
+        0x7FFFu16.to_le_bytes(), 0x0001u16.to_le_bytes(),
+        0x1234u16.to_le_bytes(), 0x5678u16.to_le_bytes(),
+        0x9ABCu16.to_le_bytes(), 0xDEF0u16.to_le_bytes(),
+    ].concat();
+    check_sse("pmovsxwd", &sse_program(&[0x66, 0x0F, 0x38, 0x23, 0xC1]),
+        sse_scratch(a, b.try_into().unwrap()));
+}
+
+#[test]
+fn sse4_pmovzxdq() {
+    // PMOVZXDQ xmm0, xmm1 = 66 0F 38 35 C1. Zero-extend low 2 dwords -> 2 qwords.
+    let a = [0u8; 16];
+    let b = [0x8000_0001u32.to_le_bytes(), 0x0000_0002u32.to_le_bytes(),
+             0x1111_1111u32.to_le_bytes(), 0x2222_2222u32.to_le_bytes()].concat();
+    check_sse("pmovzxdq", &sse_program(&[0x66, 0x0F, 0x38, 0x35, 0xC1]),
+        sse_scratch(a, b.try_into().unwrap()));
+}
+
+// ---- SSE4.1 packed integer min/max (signed/unsigned dwords & bytes) ----
+
+#[test]
+fn sse4_pminsd() {
+    // PMINSD xmm0, xmm1 = 66 0F 38 39 C1. Per-dword signed min.
+    let a = [0x0000_0005u32.to_le_bytes(), 0xFFFF_FFFFu32.to_le_bytes(),
+             0x7FFF_FFFFu32.to_le_bytes(), 0x8000_0000u32.to_le_bytes()].concat();
+    let b = [0x0000_0003u32.to_le_bytes(), 0x0000_0001u32.to_le_bytes(),
+             0x0000_0000u32.to_le_bytes(), 0xFFFF_FFFFu32.to_le_bytes()].concat();
+    check_sse("pminsd", &sse_program(&[0x66, 0x0F, 0x38, 0x39, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+}
+
+#[test]
+fn sse4_pmaxud() {
+    // PMAXUD xmm0, xmm1 = 66 0F 38 3F C1. Per-dword unsigned max.
+    let a = [0x0000_0005u32.to_le_bytes(), 0xFFFF_FFFFu32.to_le_bytes(),
+             0x7FFF_FFFFu32.to_le_bytes(), 0x8000_0000u32.to_le_bytes()].concat();
+    let b = [0x0000_0003u32.to_le_bytes(), 0x0000_0001u32.to_le_bytes(),
+             0xFFFF_FFFFu32.to_le_bytes(), 0x0000_0001u32.to_le_bytes()].concat();
+    check_sse("pmaxud", &sse_program(&[0x66, 0x0F, 0x38, 0x3F, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+}
+
+#[test]
+fn sse4_pmulld() {
+    // PMULLD xmm0, xmm1 = 66 0F 38 40 C1. Per-dword 32-bit multiply, low 32 kept.
+    let a = [0x0000_0002u32.to_le_bytes(), 0xFFFF_FFFFu32.to_le_bytes(),
+             0x0001_0000u32.to_le_bytes(), 0x1234_5678u32.to_le_bytes()].concat();
+    let b = [0x0000_0003u32.to_le_bytes(), 0x0000_0002u32.to_le_bytes(),
+             0x0001_0000u32.to_le_bytes(), 0x0000_0010u32.to_le_bytes()].concat();
+    check_sse("pmulld", &sse_program(&[0x66, 0x0F, 0x38, 0x40, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+}
+
+#[test]
+fn sse4_pmuldq() {
+    // PMULDQ xmm0, xmm1 = 66 0F 38 28 C1. Signed 32x32->64 of lanes 0 and 2.
+    let a = [0xFFFF_FFFFu32.to_le_bytes(), 0xDEAD_BEEFu32.to_le_bytes(),
+             0x0000_0002u32.to_le_bytes(), 0xCAFE_BABEu32.to_le_bytes()].concat();
+    let b = [0x0000_0003u32.to_le_bytes(), 0x1111_1111u32.to_le_bytes(),
+             0x7FFF_FFFFu32.to_le_bytes(), 0x2222_2222u32.to_le_bytes()].concat();
+    check_sse("pmuldq", &sse_program(&[0x66, 0x0F, 0x38, 0x28, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+}
+
+#[test]
+fn sse4_pcmpeqq() {
+    // PCMPEQQ xmm0, xmm1 = 66 0F 38 29 C1. Per-qword equality -> all-1s/all-0s.
+    let a = [0x1122_3344_5566_7788u64.to_le_bytes(), 0xDEAD_BEEF_CAFE_BABEu64.to_le_bytes()].concat();
+    let b = [0x1122_3344_5566_7788u64.to_le_bytes(), 0x0000_0000_0000_0000u64.to_le_bytes()].concat();
+    check_sse("pcmpeqq", &sse_program(&[0x66, 0x0F, 0x38, 0x29, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+}
+
+#[test]
+fn sse4_packusdw() {
+    // PACKUSDW xmm0, xmm1 = 66 0F 38 2B C1. Pack signed dwords to unsigned words (sat).
+    let a = [0x0000_0001u32.to_le_bytes(), 0x0001_0000u32.to_le_bytes(),
+             0xFFFF_FFFFu32.to_le_bytes(), 0x0000_FFFFu32.to_le_bytes()].concat();
+    let b = [0x0000_8000u32.to_le_bytes(), 0x8000_0000u32.to_le_bytes(),
+             0x0000_7FFFu32.to_le_bytes(), 0x0001_2345u32.to_le_bytes()].concat();
+    check_sse("packusdw", &sse_program(&[0x66, 0x0F, 0x38, 0x2B, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+}
+
+// ---- SSE4.1 DPPS / DPPD (dot product) — exactly-representable inputs ----
+
+#[test]
+fn sse4_dpps() {
+    // DPPS xmm0, xmm1, imm8 = 66 0F 3A 40 C1 ib. imm high nibble selects which lanes
+    // to multiply-accumulate; low nibble selects which result lanes get the sum.
+    // imm=0xF1: use all 4 products, broadcast sum to lane0 only.
+    let a = f32x4([1.0, 2.0, 3.0, 4.0]);
+    let b = f32x4([8.0, 0.5, 2.0, 0.25]); // products: 8,1,6,1 -> sum 16
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
+    prog.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x40, 0xC1, 0xF1]); // dpps xmm0,xmm1,0xF1
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("dpps", &prog, sse_scratch(a, b));
+}
+
+#[test]
+fn sse4_dppd() {
+    // DPPD xmm0, xmm1, imm8 = 66 0F 3A 41 C1 ib. imm=0x33: both lanes selected,
+    // sum broadcast to both result lanes.
+    let a = f64x2([3.0, 4.0]);
+    let b = f64x2([2.0, 0.5]); // products: 6, 2 -> sum 8
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
+    prog.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x41, 0xC1, 0x33]); // dppd xmm0,xmm1,0x33
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("dppd", &prog, sse_scratch(a, b));
+}
+
+// ---- SSE4.1 PBLENDW / BLENDPS (imm-controlled blends) ----
+
+#[test]
+fn sse4_pblendw() {
+    // PBLENDW xmm0, xmm1, imm8 = 66 0F 3A 0E C1 ib. imm bit i selects src word i.
+    let a = [
+        0x0000u16.to_le_bytes(), 0x0001u16.to_le_bytes(), 0x0002u16.to_le_bytes(), 0x0003u16.to_le_bytes(),
+        0x0004u16.to_le_bytes(), 0x0005u16.to_le_bytes(), 0x0006u16.to_le_bytes(), 0x0007u16.to_le_bytes(),
+    ].concat();
+    let b = [
+        0xA0A0u16.to_le_bytes(), 0xA1A1u16.to_le_bytes(), 0xA2A2u16.to_le_bytes(), 0xA3A3u16.to_le_bytes(),
+        0xA4A4u16.to_le_bytes(), 0xA5A5u16.to_le_bytes(), 0xA6A6u16.to_le_bytes(), 0xA7A7u16.to_le_bytes(),
+    ].concat();
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
+    prog.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x0E, 0xC1, 0b1010_0101]); // imm
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("pblendw", &prog, sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+}
+
+#[test]
+fn sse4_blendps() {
+    // BLENDPS xmm0, xmm1, imm8 = 66 0F 3A 0C C1 ib. imm bit i selects src f32 lane i.
+    let a = f32x4([1.0, 2.0, 3.0, 4.0]);
+    let b = f32x4([10.0, 20.0, 30.0, 40.0]);
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
+    prog.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x0C, 0xC1, 0b0101]); // lanes 0,2 from src
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("blendps", &prog, sse_scratch(a, b));
+}
+
+// ---- SSE4.1 PEXTR* / PINSR* (extract/insert lane to/from GPR via memory) ----
+
+#[test]
+fn sse4_pextrb_to_mem() {
+    // PEXTRB [rdi+0x20], xmm1, idx = 66 0F 3A 14 /r ib. Extract byte idx from xmm1.
+    let a = [0u8; 16];
+    let b = [0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF];
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
+    // pextrb [rdi+0x20], xmm1, 0x0A  -> modrm 0x4F reg=xmm1(001), rm=[rdi+disp8]
+    prog.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x14, 0x4F, 0x20, 0x0A]);
+    prog.push(HLT);
+    check_sse("pextrb_mem", &prog, sse_scratch(a, b));
+}
+
+#[test]
+fn sse4_pextrd_to_reg() {
+    // PEXTRD eax, xmm1, idx = 66 0F 3A 16 C1 ib (W0). idx=2. Then store eax to scratch.
+    let a = [0u8; 16];
+    let b = [0x11111111u32.to_le_bytes(), 0x22222222u32.to_le_bytes(),
+             0xDEADBEEFu32.to_le_bytes(), 0x44444444u32.to_le_bytes()].concat();
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
+    prog.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x16, 0xC8, 0x02]); // pextrd eax, xmm1, 2
+    prog.extend_from_slice(&[0x89, 0x47, 0x20]); // mov [rdi+0x20], eax
+    prog.push(HLT);
+    check_sse("pextrd_reg", &prog, sse_scratch(a, b.try_into().unwrap()));
+}
+
+#[test]
+fn sse4_pinsrd_from_reg() {
+    // PINSRD xmm0, eax, idx = 66 0F 3A 22 C0 ib. Insert EAX into dword lane idx=1.
+    let a = [0xAAAAAAAAu32.to_le_bytes(), 0xBBBBBBBBu32.to_le_bytes(),
+             0xCCCCCCCCu32.to_le_bytes(), 0xDDDDDDDDu32.to_le_bytes()].concat();
+    let b = [0u8; 16];
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    prog.extend_from_slice(&[0xB8, 0xEF, 0xBE, 0xAD, 0xDE]); // mov eax, 0xDEADBEEF
+    prog.extend_from_slice(&[0x66, 0x0F, 0x3A, 0x22, 0xC0, 0x01]); // pinsrd xmm0, eax, 1
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("pinsrd_reg", &prog, sse_scratch(a.try_into().unwrap(), b));
+}
+
+#[test]
+fn sse2_pinsrw_pextrw() {
+    // PINSRW xmm0, eax, 3 (66 0F C4 C0 03) then PEXTRW eax, xmm0, 3 (66 0F C5 C0 03).
+    let a = [0xFFFFu16.to_le_bytes(), 0x1111u16.to_le_bytes(), 0x2222u16.to_le_bytes(), 0x3333u16.to_le_bytes(),
+             0x4444u16.to_le_bytes(), 0x5555u16.to_le_bytes(), 0x6666u16.to_le_bytes(), 0x7777u16.to_le_bytes()].concat();
+    let b = [0u8; 16];
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    prog.extend_from_slice(&[0xB8, 0xCD, 0xAB, 0x00, 0x00]); // mov eax, 0xABCD
+    prog.extend_from_slice(&[0x66, 0x0F, 0xC4, 0xC0, 0x03]); // pinsrw xmm0, eax, 3
+    prog.extend_from_slice(&[0x66, 0x0F, 0xC5, 0xC0, 0x03]); // pextrw eax, xmm0, 3
+    prog.extend_from_slice(&[0x89, 0x47, 0x30]); // mov [rdi+0x30], eax
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]); // store xmm0
+    prog.push(HLT);
+    check_sse("pinsrw_pextrw", &prog, sse_scratch(a.try_into().unwrap(), b));
+}
+
+// ---- MOVD / MOVQ between GPR and XMM ----
+
+#[test]
+fn sse_movd_gpr_to_xmm_and_back() {
+    // movd xmm0, eax (66 0F 6E C0) then movd ecx, xmm0 (66 0F 7E C1); store both.
+    let a = [0u8; 16];
+    let b = [0u8; 16];
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xB8, 0x78, 0x56, 0x34, 0x12]); // mov eax, 0x12345678
+    prog.extend_from_slice(&[0x66, 0x0F, 0x6E, 0xC0]); // movd xmm0, eax (zero-extends to 128)
+    prog.extend_from_slice(&[0x66, 0x0F, 0x7E, 0xC1]); // movd ecx, xmm0
+    prog.extend_from_slice(&[0x89, 0x4F, 0x20]); // mov [rdi+0x20], ecx
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x30]); // store xmm0 at +0x30
+    prog.push(HLT);
+    check_sse("movd_roundtrip", &prog, sse_scratch(a, b));
+}
+
+#[test]
+fn sse_movq_gpr_to_xmm() {
+    // movq xmm0, rax (66 48 0F 6E C0). Zero-extends to 128. Store xmm0.
+    let a = [0u8; 16];
+    let b = [0u8; 16];
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0x48, 0xB8]); // mov rax, imm64
+    prog.extend_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+    prog.extend_from_slice(&[0x66, 0x48, 0x0F, 0x6E, 0xC0]); // movq xmm0, rax
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("movq_gpr_xmm", &prog, sse_scratch(a, b));
+}
+
+#[test]
+fn sse_movq_xmm_to_xmm_zeroes_high() {
+    // MOVQ xmm0, xmm1 (F3 0F 7E C1): copies low 64, ZEROES the high 64 of dst.
+    let a = [0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes(), 0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes()].concat();
+    let b = [0x1122_3344_5566_7788u64.to_le_bytes(), 0xDEAD_BEEF_CAFE_BABEu64.to_le_bytes()].concat();
+    check_sse("movq_xmm_xmm", &sse_program(&[0xF3, 0x0F, 0x7E, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+}
+
+// ---- MMX integer ops (operate on 64-bit MM registers) ----
+
+#[test]
+fn mmx_paddb() {
+    // movq mm0, [rdi]; movq mm1, [rdi+8]; paddb mm0, mm1; movq [rdi+0x20], mm0.
+    // 0F 6F /r = movq mm, m64 ; 0F FC = paddb ; 0F 7F /r = movq m64, mm.
+    let mut s = [0u8; 64];
+    let a = [1, 2, 3, 4, 0x7F, 0x80, 0xFF, 0x10];
+    let b = [8, 8, 8, 8, 0x01, 0x80, 0x01, 0xF0];
+    s[0..8].copy_from_slice(&a);
+    s[8..16].copy_from_slice(&b);
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0x0F, 0x6F, 0x07]); // movq mm0, [rdi]
+    prog.extend_from_slice(&[0x0F, 0x6F, 0x4F, 0x08]); // movq mm1, [rdi+8]
+    prog.extend_from_slice(&[0x0F, 0xFC, 0xC1]); // paddb mm0, mm1
+    prog.extend_from_slice(&[0x0F, 0x7F, 0x47, 0x20]); // movq [rdi+0x20], mm0
+    prog.push(HLT);
+    check_mem("mmx_paddb", &with_hlt(prog), regs(), s, 0);
+}
+
+#[test]
+fn mmx_pmullw() {
+    let mut s = [0u8; 64];
+    let a = [0x0002u16.to_le_bytes(), 0x00FFu16.to_le_bytes(), 0x8000u16.to_le_bytes(), 0xFFFFu16.to_le_bytes()].concat();
+    let b = [0x0003u16.to_le_bytes(), 0x0100u16.to_le_bytes(), 0x0002u16.to_le_bytes(), 0xFFFFu16.to_le_bytes()].concat();
+    s[0..8].copy_from_slice(&a);
+    s[8..16].copy_from_slice(&b);
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0x0F, 0x6F, 0x07]);
+    prog.extend_from_slice(&[0x0F, 0x6F, 0x4F, 0x08]);
+    prog.extend_from_slice(&[0x0F, 0xD5, 0xC1]); // pmullw mm0, mm1
+    prog.extend_from_slice(&[0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_mem("mmx_pmullw", &with_hlt(prog), regs(), s, 0);
+}
+
+#[test]
+fn mmx_punpcklbw() {
+    let mut s = [0u8; 64];
+    let a = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
+    let b = [0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87];
+    s[0..8].copy_from_slice(&a);
+    s[8..16].copy_from_slice(&b);
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0x0F, 0x6F, 0x07]);
+    prog.extend_from_slice(&[0x0F, 0x6F, 0x4F, 0x08]);
+    prog.extend_from_slice(&[0x0F, 0x60, 0xC1]); // punpcklbw mm0, mm1
+    prog.extend_from_slice(&[0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_mem("mmx_punpcklbw", &with_hlt(prog), regs(), s, 0);
+}
+
+#[test]
+fn mmx_psubusb_saturate() {
+    // PSUBUSB mm0, mm1 (0F D8): unsigned byte subtract with saturation to 0.
+    let mut s = [0u8; 64];
+    let a = [0x10, 0x05, 0xFF, 0x00, 0x80, 0x7F, 0x01, 0xAA];
+    let b = [0x20, 0x05, 0x01, 0x01, 0x40, 0x80, 0x02, 0x55];
+    s[0..8].copy_from_slice(&a);
+    s[8..16].copy_from_slice(&b);
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0x0F, 0x6F, 0x07]);
+    prog.extend_from_slice(&[0x0F, 0x6F, 0x4F, 0x08]);
+    prog.extend_from_slice(&[0x0F, 0xD8, 0xC1]); // psubusb mm0, mm1
+    prog.extend_from_slice(&[0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_mem("mmx_psubusb", &with_hlt(prog), regs(), s, 0);
+}
+
+// ---- SSE2 integer saturating add/sub and average ----
+
+#[test]
+fn sse2_paddsb() {
+    // PADDSB xmm0, xmm1 = 66 0F EC C1. Signed byte add with saturation.
+    let a = [0x7F, 0x7F, 0x80, 0x80, 0x40, 0xC0, 0x01, 0xFF, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x7F];
+    let b = [0x01, 0x7F, 0xFF, 0x80, 0x40, 0xC0, 0x02, 0x01, 0xF0, 0xE0, 0xD0, 0xC0, 0x10, 0x20, 0x30, 0x01];
+    check_sse("paddsb", &sse_program(&[0x66, 0x0F, 0xEC, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse2_paddusw() {
+    // PADDUSW xmm0, xmm1 = 66 0F DD C1. Unsigned word add with saturation.
+    let a = [0xFFFFu16.to_le_bytes(), 0x8000u16.to_le_bytes(), 0x0001u16.to_le_bytes(), 0x1234u16.to_le_bytes(),
+             0xF000u16.to_le_bytes(), 0x0FFFu16.to_le_bytes(), 0x7FFFu16.to_le_bytes(), 0x0000u16.to_le_bytes()].concat();
+    let b = [0x0001u16.to_le_bytes(), 0x8001u16.to_le_bytes(), 0x0002u16.to_le_bytes(), 0x1000u16.to_le_bytes(),
+             0x2000u16.to_le_bytes(), 0xF001u16.to_le_bytes(), 0x8001u16.to_le_bytes(), 0xFFFFu16.to_le_bytes()].concat();
+    check_sse("paddusw", &sse_program(&[0x66, 0x0F, 0xDD, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b.try_into().unwrap()));
+}
+
+#[test]
+fn sse2_pavgb() {
+    // PAVGB xmm0, xmm1 = 66 0F E0 C1. Unsigned byte average, rounded up.
+    let a = [0x00, 0xFF, 0x10, 0x01, 0x80, 0x7F, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C];
+    let b = [0x01, 0xFF, 0x20, 0x02, 0x81, 0x80, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D];
+    check_sse("pavgb", &sse_program(&[0x66, 0x0F, 0xE0, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse2_pmaxub_pminub() {
+    // PMAXUB then PMINUB on the SAME register isn't useful; just probe PMAXUB.
+    // PMAXUB xmm0, xmm1 = 66 0F DE C1.
+    let a = [0x00, 0xFF, 0x10, 0x80, 0x7F, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B];
+    let b = [0x01, 0x00, 0x20, 0x7F, 0x80, 0x02, 0x01, 0xFF, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A];
+    check_sse("pmaxub", &sse_program(&[0x66, 0x0F, 0xDE, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse2_pcmpgtb() {
+    // PCMPGTB xmm0, xmm1 = 66 0F 64 C1. Signed byte greater-than -> all-1s/all-0s.
+    let a = [0x05, 0x80, 0x7F, 0xFF, 0x00, 0x01, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x7F, 0x81, 0xC0];
+    let b = [0x03, 0x7F, 0x80, 0x01, 0x00, 0xFF, 0x10, 0x21, 0x2F, 0x40, 0x4F, 0x61, 0x6F, 0x7E, 0x80, 0xBF];
+    check_sse("pcmpgtb", &sse_program(&[0x66, 0x0F, 0x64, 0xC1]), sse_scratch(a, b));
+}
+
+// ---- SSE2 shifts: PSLLW/PSRLD/PSRAW (imm and xmm count) ----
+
+#[test]
+fn sse2_psllw_imm() {
+    // PSLLW xmm0, imm8 = 66 0F 71 /6 ib. Shift each word left by 4.
+    let a = [0x0001u16.to_le_bytes(), 0x00FFu16.to_le_bytes(), 0x8000u16.to_le_bytes(), 0x1234u16.to_le_bytes(),
+             0xFFFFu16.to_le_bytes(), 0x0FF0u16.to_le_bytes(), 0x0001u16.to_le_bytes(), 0x4000u16.to_le_bytes()].concat();
+    let b = [0u8; 16];
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]); // movdqu xmm0, [rdi]
+    prog.extend_from_slice(&[0x66, 0x0F, 0x71, 0xF0, 0x04]); // psllw xmm0, 4
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("psllw_imm4", &prog, sse_scratch(a.try_into().unwrap(), b));
+}
+
+#[test]
+fn sse2_psraw_imm() {
+    // PSRAW xmm0, imm8 = 66 0F 71 /4 ib. Arithmetic shift right words by 2.
+    let a = [0x8000u16.to_le_bytes(), 0x7FFFu16.to_le_bytes(), 0xFFFFu16.to_le_bytes(), 0x0004u16.to_le_bytes(),
+             0x4000u16.to_le_bytes(), 0xC000u16.to_le_bytes(), 0x0001u16.to_le_bytes(), 0x00FFu16.to_le_bytes()].concat();
+    let b = [0u8; 16];
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
+    prog.extend_from_slice(&[0x66, 0x0F, 0x71, 0xE0, 0x02]); // psraw xmm0, 2
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("psraw_imm2", &prog, sse_scratch(a.try_into().unwrap(), b));
+}
+
+#[test]
+fn sse2_psrld_imm() {
+    // PSRLD xmm0, imm8 = 66 0F 72 /2 ib. Logical shift right dwords by 8.
+    let a = [0x8000_00FFu32.to_le_bytes(), 0xFFFF_FFFFu32.to_le_bytes(),
+             0x0000_0100u32.to_le_bytes(), 0x1234_5678u32.to_le_bytes()].concat();
+    let b = [0u8; 16];
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
+    prog.extend_from_slice(&[0x66, 0x0F, 0x72, 0xD0, 0x08]); // psrld xmm0, 8
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("psrld_imm8", &prog, sse_scratch(a.try_into().unwrap(), b));
+}
+
+#[test]
+fn sse2_pslldq_imm() {
+    // PSLLDQ xmm0, imm8 = 66 0F 73 /7 ib. Byte shift left of the whole 128 by 3.
+    let a = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F];
+    let b = [0u8; 16];
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x07]);
+    prog.extend_from_slice(&[0x66, 0x0F, 0x73, 0xF8, 0x03]); // pslldq xmm0, 3
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("pslldq3", &prog, sse_scratch(a, b));
+}
+
+// ---- SSE2 shuffles: PSHUFD / PSHUFHW / PSHUFLW ----
+
+#[test]
+fn sse2_pshufd() {
+    // PSHUFD xmm0, xmm1, imm8 = 66 0F 70 C1 ib. imm=0b00_01_10_11 reverses lanes.
+    let a = [0u8; 16];
+    let b = [0x11111111u32.to_le_bytes(), 0x22222222u32.to_le_bytes(),
+             0x33333333u32.to_le_bytes(), 0x44444444u32.to_le_bytes()].concat();
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
+    prog.extend_from_slice(&[0x66, 0x0F, 0x70, 0xC1, 0b00_01_10_11]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("pshufd", &prog, sse_scratch(a, b.try_into().unwrap()));
+}
+
+#[test]
+fn sse2_pshuflw() {
+    // PSHUFLW xmm0, xmm1, imm8 = F2 0F 70 C1 ib. Shuffle low 4 words, high qword copied.
+    let a = [0u8; 16];
+    let b = [0x0000u16.to_le_bytes(), 0x1111u16.to_le_bytes(), 0x2222u16.to_le_bytes(), 0x3333u16.to_le_bytes(),
+             0xAAAAu16.to_le_bytes(), 0xBBBBu16.to_le_bytes(), 0xCCCCu16.to_le_bytes(), 0xDDDDu16.to_le_bytes()].concat();
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
+    prog.extend_from_slice(&[0xF2, 0x0F, 0x70, 0xC1, 0b00_01_10_11]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("pshuflw", &prog, sse_scratch(a, b.try_into().unwrap()));
+}
+
+#[test]
+fn sse2_pshufhw() {
+    // PSHUFHW xmm0, xmm1, imm8 = F3 0F 70 C1 ib. Shuffle high 4 words, low qword copied.
+    let a = [0u8; 16];
+    let b = [0x0000u16.to_le_bytes(), 0x1111u16.to_le_bytes(), 0x2222u16.to_le_bytes(), 0x3333u16.to_le_bytes(),
+             0xAAAAu16.to_le_bytes(), 0xBBBBu16.to_le_bytes(), 0xCCCCu16.to_le_bytes(), 0xDDDDu16.to_le_bytes()].concat();
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x70, 0xC1, 0b00_01_10_11]);
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("pshufhw", &prog, sse_scratch(a, b.try_into().unwrap()));
+}
+
+// ---- SSE3 MOVSHDUP / MOVSLDUP ----
+
+#[test]
+fn sse3_movshdup() {
+    // MOVSHDUP xmm0, xmm1 = F3 0F 16 C1. Duplicate odd singles: [a1,a1,a3,a3].
+    let a = [0u8; 16];
+    let b = f32x4([1.0, 2.0, 3.0, 4.0]);
+    check_sse("movshdup", &sse_program(&[0xF3, 0x0F, 0x16, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse3_movsldup() {
+    // MOVSLDUP xmm0, xmm1 = F3 0F 12 C1. Duplicate even singles: [a0,a0,a2,a2].
+    let a = [0u8; 16];
+    let b = f32x4([1.0, 2.0, 3.0, 4.0]);
+    check_sse("movsldup", &sse_program(&[0xF3, 0x0F, 0x12, 0xC1]), sse_scratch(a, b));
+}
+
+// ---- Scalar conversions: CVTSI2SD / CVTTSD2SI / CVTSS2SD ----
+
+#[test]
+fn sse2_cvtsi2sd_neg() {
+    // CVTSI2SD xmm0, rax = F2 48 0F 2A C0. Convert signed -1234567 to f64; store.
+    let a = [0u8; 16];
+    let b = [0u8; 16];
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0x48, 0xC7, 0xC0]); // mov rax, imm32 (sign-ext)
+    prog.extend_from_slice(&(-1234567i32).to_le_bytes());
+    prog.extend_from_slice(&[0xF2, 0x48, 0x0F, 0x2A, 0xC0]); // cvtsi2sd xmm0, rax
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x7F, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("cvtsi2sd_neg", &prog, sse_scratch(a, b));
+}
+
+#[test]
+fn sse2_cvttsd2si_trunc() {
+    // CVTTSD2SI rax, xmm1 = F2 48 0F 2C C1. Truncate -3.9 -> -3; store rax.
+    let a = [0u8; 16];
+    let b = f64x2([-3.9, 0.0]);
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]); // movdqu xmm1, [rdi+0x10]
+    prog.extend_from_slice(&[0xF2, 0x48, 0x0F, 0x2C, 0xC1]); // cvttsd2si rax, xmm1
+    prog.extend_from_slice(&[0x48, 0x89, 0x47, 0x20]); // mov [rdi+0x20], rax
+    prog.push(HLT);
+    check_sse("cvttsd2si", &prog, sse_scratch(a, b));
+}
+
+#[test]
+fn sse2_cvtsd2si_round_even() {
+    // CVTSD2SI rax, xmm1 = F2 48 0F 2D C1. Round-to-nearest-even of 2.5 -> 2.
+    let a = [0u8; 16];
+    let b = f64x2([2.5, 0.0]);
+    let mut prog = load_rdi_data();
+    prog.extend_from_slice(&[0xF3, 0x0F, 0x6F, 0x4F, 0x10]);
+    prog.extend_from_slice(&[0xF2, 0x48, 0x0F, 0x2D, 0xC1]); // cvtsd2si rax, xmm1
+    prog.extend_from_slice(&[0x48, 0x89, 0x47, 0x20]);
+    prog.push(HLT);
+    check_sse("cvtsd2si_even", &prog, sse_scratch(a, b));
+}
+
+#[test]
+fn sse2_cvtss2sd_scalar() {
+    // CVTSS2SD xmm0, xmm1 = F3 0F 5A C1. Convert lane0 f32 -> f64; lane1 of xmm0 kept.
+    let a = f64x2([99.0, 7.0]); // high qword preserved
+    let b = f32x4([1.5, 0.0, 0.0, 0.0]);
+    check_sse("cvtss2sd", &sse_program(&[0xF3, 0x0F, 0x5A, 0xC1]), sse_scratch(a, b));
+}
+
+#[test]
+fn sse2_cvtpd2ps_scalar() {
+    // CVTPD2PS xmm0, xmm1 = 66 0F 5A C1. 2 doubles -> 2 floats in low 64, high zeroed.
+    let a = [0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes(), 0xFFFF_FFFF_FFFF_FFFFu64.to_le_bytes()].concat();
+    let b = f64x2([1.25, -8.5]);
+    check_sse("cvtpd2ps", &sse_program(&[0x66, 0x0F, 0x5A, 0xC1]),
+        sse_scratch(a.try_into().unwrap(), b));
+}
+
+// ---- x87: FXCH / FABS / FCHS / FRNDINT / FSCALE / FPREM / FSQRT-after-FXCH ----
+
+#[test]
+fn x87_fabs() {
+    // fld -5.5 ; fabs (D9 E1) ; fstp qword -> 5.5
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]
+    c.extend_from_slice(&[0xD9, 0xE1]); // fabs
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp qword [rdi+0x10]
+    c.push(HLT);
+    check_mem("x87_fabs", &with_hlt(c), regs(), scratch_f64(&[-5.5]), 0);
+}
+
+#[test]
+fn x87_fchs() {
+    // fld 12.25 ; fchs (D9 E0) ; fstp -> -12.25
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]);
+    c.extend_from_slice(&[0xD9, 0xE0]); // fchs
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]);
+    c.push(HLT);
+    check_mem("x87_fchs", &with_hlt(c), regs(), scratch_f64(&[12.25]), 0);
+}
+
+#[test]
+fn x87_fxch() {
+    // fld b ; fld a ; fxch (D9 C9 -> swaps ST0,ST1) ; fstp [rdi+16] (stores old ST1=b);
+    // fstp [rdi+24] (stores a). Verifies FXCH swap.
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8]  ST0=b
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]    ST0=a, ST1=b
+    c.extend_from_slice(&[0xD9, 0xC9]); // fxch -> ST0=b, ST1=a
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp [rdi+16] = b
+    c.extend_from_slice(&[0xDD, 0x5F, 0x18]); // fstp [rdi+24] = a
+    c.push(HLT);
+    check_mem("x87_fxch", &with_hlt(c), regs(), scratch_f64(&[3.5, 7.25]), 0);
+}
+
+#[test]
+fn x87_frndint_even() {
+    // fld 2.5 ; frndint (D9 FC, round-to-nearest-even by default) -> 2.0 ; fstp.
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]);
+    c.extend_from_slice(&[0xD9, 0xFC]); // frndint
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]);
+    c.push(HLT);
+    check_mem("x87_frndint", &with_hlt(c), regs(), scratch_f64(&[2.5]), 0);
+}
+
+#[test]
+fn x87_fscale() {
+    // FSCALE (D9 FD): ST0 = ST0 * 2^trunc(ST1). fld ST1=3.0, fld ST0=1.5 -> 1.5*8=12.
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld qword [rdi+8]  ST0=exp=3.0
+    c.extend_from_slice(&[0xDD, 0x07]); // fld qword [rdi]    ST0=1.5, ST1=3.0
+    c.extend_from_slice(&[0xD9, 0xFD]); // fscale -> ST0 = 1.5 * 2^3 = 12.0
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp [rdi+16]
+    c.push(HLT);
+    check_mem("x87_fscale", &with_hlt(c), regs(), scratch_f64(&[1.5, 3.0]), 0);
+}
+
+#[test]
+fn x87_fprem() {
+    // FPREM (D9 F8): ST0 = ST0 - (ST1 * trunc(ST0/ST1)). 17 mod 5 = 2 (exact dyadic ok).
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld [rdi+8] ST0=divisor=5.0
+    c.extend_from_slice(&[0xDD, 0x07]); // fld [rdi] ST0=17.0, ST1=5.0
+    c.extend_from_slice(&[0xD9, 0xF8]); // fprem -> 2.0
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp [rdi+16]
+    c.push(HLT);
+    check_mem("x87_fprem", &with_hlt(c), regs(), scratch_f64(&[17.0, 5.0]), 0);
+}
+
+#[test]
+fn x87_fmul_st_then_fxch() {
+    // fld a; fld b; fmulp st1,st0 (DE C9) -> ST0 = a*b ; fstp. (4.0 * 0.5 = 2.0)
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x07]); // fld a -> ST0=a
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld b -> ST0=b, ST1=a
+    c.extend_from_slice(&[0xDE, 0xC9]); // fmulp st1, st0 -> ST0 = a*b, pop
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp [rdi+16]
+    c.push(HLT);
+    check_mem("x87_fmulp", &with_hlt(c), regs(), scratch_f64(&[4.0, 0.5]), 0);
+}
+
+#[test]
+fn x87_fld1_fldz_fadd() {
+    // FLD1 (D9 E8) pushes 1.0, FLDZ (D9 EE) pushes 0.0, FADDP adds -> 1.0; fstp.
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xD9, 0xE8]); // fld1 -> ST0=1.0
+    c.extend_from_slice(&[0xD9, 0xEE]); // fldz -> ST0=0.0, ST1=1.0
+    c.extend_from_slice(&[0xDE, 0xC1]); // faddp st1, st0 -> ST0=1.0
+    c.extend_from_slice(&[0xDD, 0x5F, 0x10]); // fstp [rdi+16]
+    c.push(HLT);
+    check_mem("x87_fld1_fldz", &with_hlt(c), regs(), scratch_f64(&[0.0]), 0);
+}
+
+#[test]
+fn x87_fcom_fstsw_flags() {
+    // Compare ST0 vs ST1 via FCOM, then FNSTSW AX (DF E0) and SAHF to map C0/C2/C3
+    // into CF/PF/ZF. a=3.0 > b=5.0? No (a<b) -> C0=1 (CF). Probe via SAHF.
+    // fld b; fld a; fcom st1 (D8 D1); fnstsw ax (DF E0); sahf (9E); hlt.
+    let mut c = load_rdi_data();
+    c.extend_from_slice(&[0xDD, 0x47, 0x08]); // fld [rdi+8] = b -> ST0=b
+    c.extend_from_slice(&[0xDD, 0x07]); // fld [rdi] = a -> ST0=a, ST1=b
+    c.extend_from_slice(&[0xD8, 0xD1]); // fcom st1
+    c.extend_from_slice(&[0xDF, 0xE0]); // fnstsw ax
+    c.extend_from_slice(&[0x9E]); // sahf  (CF<-C0, PF<-C2, ZF<-C3)
+    c.push(HLT);
+    // a=3.0 < b=5.0 -> C3=0,C2=0,C0=1 -> ZF=0, PF=0, CF=1. Compare ZF|PF|CF.
+    check_mem("x87_fcom_sahf", &c, regs(), scratch_f64(&[3.0, 5.0]), FCOMI_FLAGS);
+}
+
+// ---- ALU corner cases not yet hit ----
+
+#[test]
+fn neg64_int_min() {
+    // NEG of INT64_MIN: result is INT64_MIN again (overflow), OF=1, CF=1, SF=1.
+    let mut r = regs();
+    r.rax = 0x8000_0000_0000_0000;
+    check("neg64_int_min", &with_hlt(vec![0x48, 0xF7, 0xD8]), r);
+}
+
+#[test]
+fn not64_no_flags() {
+    // NOT rax (48 F7 D0) affects no flags; seed all status flags and verify survival.
+    let mut r = regs();
+    r.rax = 0x0F0F_0F0F_0F0F_0F0F;
+    r.rflags = FLAG_MASK;
+    check("not64", &with_hlt(vec![0x48, 0xF7, 0xD0]), r);
+}
+
+#[test]
+fn test_imm32_high_bit() {
+    // TEST eax, imm32 (A9 id) with a high-bit-set mask -> SF=1.
+    let mut r = regs();
+    r.rax = 0xFFFF_FFFF_8000_0001;
+    // A9 00 00 00 80  test eax, 0x80000000
+    check("test_imm32", &with_hlt(vec![0xA9, 0x00, 0x00, 0x00, 0x80]), r);
+}
+
+#[test]
+fn add_al_imm_af_only() {
+    // ADD AL, imm8 where only AF is set (0x08 + 0x08 = 0x10): AF=1, CF=0, ZF=0.
+    let mut r = regs();
+    r.rax = 0x08;
+    check("add_al_af", &with_hlt(vec![0x04, 0x08]), r); // add al, 8
+}
+
+#[test]
+fn sbb_self_with_carry() {
+    // SBB rax, rax with CF=1 -> rax = -1 (0xFFFF...), a common idiom (mask = -CF).
+    let mut r = regs();
+    r.rax = 0x1234;
+    r.rflags = flags::bits::CF;
+    check("sbb_self", &with_hlt(vec![0x48, 0x19, 0xC0]), r); // sbb rax, rax
+}
+
+#[test]
+fn shl_count_masked_to_zero_64() {
+    // shl rax, cl with CL=64 -> masked to 0 (no shift, NO flags change). Seed flags
+    // and verify they survive and rax is unchanged.
+    let mut r = regs();
+    r.rax = 0x1;
+    r.rcx = 64; // 64 & 63 = 0
+    r.rflags = flags::bits::CF | flags::bits::OF | flags::bits::SF;
+    // 48 D3 E0  shl rax, cl ; flags must be unchanged when masked count is 0.
+    check("shl_cl64", &with_hlt(vec![0x48, 0xD3, 0xE0]), r);
+}
+
+#[test]
+fn bt_mem_reg_bit_index() {
+    // BT [rdi], rdx (48 0F A3 17) : memory bit-test with a large bit index that
+    // selects beyond the first qword (index 70 -> byte 8, bit 6). CF<-that bit.
+    let mut s = [0u8; 64];
+    s[8] = 1 << 6; // bit 70 set
+    let mut r = regs();
+    r.rdi = DATA_ADDR;
+    r.rdx = 70;
+    check_mem("bt_mem", &with_hlt(vec![0x48, 0x0F, 0xA3, 0x17]), r, s, BT_DEFINED);
+}
+
+#[test]
+fn movsxd_no_rex_w() {
+    // 63 /r without REX.W is MOVSXD r32, r/m32 in 64-bit mode but acts as a plain
+    // 32-bit mov (no sign extension) — actually MOVSXD ALWAYS needs REX.W to be
+    // meaningful; without it, it's still MOVSXD but dest is 32-bit (zero-extends).
+    // Verify both backends agree on the 32-bit (no-REX.W) form.
+    let mut r = regs();
+    r.rbx = 0x0000_0000_8000_0000;
+    r.rax = 0xFFFF_FFFF_FFFF_FFFF; // should be overwritten
+    // 63 C3  movsxd eax, ebx  -> eax = ebx, zero-extended into rax
+    check("movsxd_no_rexw", &with_hlt(vec![0x63, 0xC3]), r);
 }

@@ -36,11 +36,13 @@ impl X86_64Vcpu {
                     (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
                 };
 
-                // Round mode from imm8[1:0]: 0=nearest, 1=floor, 2=ceil, 3=truncate
+                // Round mode from imm8[1:0]: 0=nearest-even, 1=floor, 2=ceil, 3=truncate.
+                // Mode 0 is round-to-nearest with ties to EVEN (banker's rounding),
+                // NOT Rust's `f32::round` which rounds half AWAY from zero.
                 let round_mode = imm8 & 0x03;
                 let round_fn = |v: f32| -> f32 {
                     match round_mode {
-                        0 => v.round(),
+                        0 => v.round_ties_even(),
                         1 => v.floor(),
                         2 => v.ceil(),
                         3 => v.trunc(),
@@ -81,7 +83,7 @@ impl X86_64Vcpu {
                 let round_mode = imm8 & 0x03;
                 let round_fn = |v: f64| -> f64 {
                     match round_mode {
-                        0 => v.round(),
+                        0 => v.round_ties_even(),
                         1 => v.floor(),
                         2 => v.ceil(),
                         3 => v.trunc(),
@@ -115,7 +117,7 @@ impl X86_64Vcpu {
                 let round_mode = imm8 & 0x03;
                 let v = f32::from_bits(src);
                 let result = match round_mode {
-                    0 => v.round(),
+                    0 => v.round_ties_even(),
                     1 => v.floor(),
                     2 => v.ceil(),
                     3 => v.trunc(),
@@ -146,7 +148,7 @@ impl X86_64Vcpu {
                 let round_mode = imm8 & 0x03;
                 let v = f64::from_bits(src);
                 let result = match round_mode {
-                    0 => v.round(),
+                    0 => v.round_ties_even(),
                     1 => v.floor(),
                     2 => v.ceil(),
                     3 => v.trunc(),
