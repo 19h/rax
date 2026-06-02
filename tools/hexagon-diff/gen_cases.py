@@ -141,6 +141,12 @@ def substitute(syntax, variant=0):
         return "R%d:%d" % (REG_PAIR[letter] + 1, REG_PAIR[letter])
     s = re.sub(r"R([dsteuvxy])\1(?:32)?", repl_pair, s)
 
+    # Half-register operands: Rs.H32 / Rt.L32 -> R4.h / R6.l
+    def repl_half(m):
+        letter, hl = m.group(1), m.group(2)
+        return "R%d.%s" % (REG_SINGLE[letter], hl.lower()) if letter in REG_SINGLE else m.group(0)
+    s = re.sub(r"R([dsteuvxy])\.([HL])32", repl_half, s)
+
     # Single GPRs: Rd32, Rs32, ...
     def repl_single(m):
         letter = m.group(1)

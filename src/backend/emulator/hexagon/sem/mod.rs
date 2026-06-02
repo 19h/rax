@@ -20,6 +20,7 @@ mod alu;
 mod alu_pred;
 mod bitmanip;
 mod compare;
+mod extra;
 mod float;
 mod mpy;
 mod shift;
@@ -174,4 +175,5 @@ pub fn dispatch(d: &DecodedOp, ctx: &mut SemCtx) -> bool {
         || mpy::exec(op, d, ctx)
         || shift::exec(op, d, ctx)
         || vecalu::exec(op, d, ctx)
+        || extra::exec(op, d, ctx)
 }
