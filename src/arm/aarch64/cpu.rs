@@ -1298,6 +1298,14 @@ impl AArch64Cpu {
             let rn = ((insn >> 5) & 0x1F) as u8;
             let rd = (insn & 0x1F) as u8;
 
+            // BFCVT Hd, Sn (FEAT_BF16): single-precision -> bfloat16, RNE.
+            // Encoded as ptype=01, opcode bits[20:15]=000110 (bits[19:15]=00110).
+            if fp_type == 0b01 && opcode == 0b00110 {
+                let bf = f32_to_bf16(self.v[rn as usize] as u32);
+                self.v[rd as usize] = bf as u128;
+                return Ok(CpuExit::Continue);
+            }
+
             // FMOV is a plain copy; the FRINT/FABS/FNEG/FSQRT ops share the
             // verified two-reg FP element helpers (correct rounding modes).
             let kind = match opcode {
@@ -1776,6 +1784,19 @@ impl AArch64Cpu {
             && (insn >> 10) & 1 == 1
         {
             return self.exec_simd_three_same(insn);
+        }
+
+        // BFCVTN/BFCVTN2 (FEAT_BF16): f32 -> bf16 narrowing. Same two-reg-misc
+        // slot as FCVTN (opcode 10110) but selected by size==10 (FCVTN uses
+        // size 0x). Intercept before the generic two-reg-misc handler.
+        if op_bits == 0b01110
+            && (insn >> 29) & 1 == 0
+            && (insn >> 22) & 0x3 == 0b10
+            && (insn >> 17) & 0x1F == 0b10000
+            && (insn >> 12) & 0x1F == 0b10110
+            && (insn >> 10) & 0x3 == 0b10
+        {
+            return self.exec_simd_bfcvtn(insn);
         }
 
         // Advanced SIMD two-reg misc (vector and scalar)
@@ -2766,6 +2787,27 @@ impl AArch64Cpu {
             result &= 0xFFFF_FFFF_FFFF_FFFF;
         }
         self.v[rd] = result;
+        Ok(CpuExit::Continue)
+    }
+
+    /// Execute BFCVTN/BFCVTN2 (FEAT_BF16): narrow 4 f32 lanes to 4 bf16 lanes
+    /// (round-to-nearest-even). BFCVTN (Q=0) writes the low 64 bits and zeroes
+    /// the high half; BFCVTN2 (Q=1) writes the high 64 bits, preserving the low.
+    fn exec_simd_bfcvtn(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let q = (insn >> 30) & 1;
+        let rn = ((insn >> 5) & 0x1F) as usize;
+        let rd = (insn & 0x1F) as usize;
+        let op = self.v[rn];
+        let mut narrowed = 0u64;
+        for e in 0..4 {
+            let bf = f32_to_bf16((op >> (e * 32)) as u32);
+            narrowed |= (bf as u64) << (e * 16);
+        }
+        if q == 0 {
+            self.v[rd] = narrowed as u128;
+        } else {
+            self.v[rd] = (self.v[rd] & 0xFFFF_FFFF_FFFF_FFFF) | ((narrowed as u128) << 64);
+        }
         Ok(CpuExit::Continue)
     }
 

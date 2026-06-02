@@ -1575,6 +1575,56 @@ fn enc_bfmmla() -> u32 {
         | (0b111011 << 10) | (RN << 5) | RD
 }
 
+/// A varied f32 bit pattern for BFCVT testing: finite normals, tie cases,
+/// overflow, signed zero, and (occasionally) inf. NaN is excluded to keep
+/// payload-propagation out of the comparison.
+fn rand_f32_for_bfcvt(rng: &mut Rng) -> u32 {
+    match rng.next() % 12 {
+        0 => 0x3F80_8000, // tie, bf16 lsb 0 -> rounds down
+        1 => 0x3F81_8000, // tie, bf16 lsb 1 -> rounds up
+        2 => 0x7F7F_FFFF, // max f32 -> overflow to bf16 inf
+        3 => 0x0000_0000, // +0
+        4 => 0x8000_0000, // -0
+        5 => 0x7F80_0000, // +inf
+        6 => 0xFF80_0000, // -inf
+        7 => rng.next() as u32 & 0x0000_FFFF, // tiny / subnormal-ish low bits
+        _ => {
+            let sign = (rng.next() & 1) as u32;
+            let exp = (rng.next() % 60 + 100) as u32; // finite normal exponents
+            let mant = rng.next() as u32 & 0x7F_FFFF;
+            (sign << 31) | (exp << 23) | mant
+        }
+    }
+}
+
+#[test]
+fn diff_simd_bfcvt() {
+    let bfcvt = 0x1E63_4000 | (RN << 5) | RD; // BFCVT Hd, Sn
+    let bfcvtn = 0x0EA1_6800 | (RN << 5) | RD; // BFCVTN Vd.4H, Vn.4S
+    let bfcvtn2 = 0x4EA1_6800 | (RN << 5) | RD; // BFCVTN2 Vd.8H, Vn.4S
+    let mut rng = Rng::new(0x1_001E);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for _ in 0..200 {
+        // BFCVT scalar: Sn in v1 low 32 bits.
+        let mut st = ArmState::zeroed();
+        st.set_vreg(1, rand_f32_for_bfcvt(&mut rng) as u64, 0);
+        batch.push(("bfcvt".to_string(), bfcvt, st));
+
+        // BFCVTN / BFCVTN2: 4 f32 lanes in Vn; seed Vd to check half handling.
+        for &insn in &[bfcvtn, bfcvtn2] {
+            let mut st = ArmState::zeroed();
+            let lo = (rand_f32_for_bfcvt(&mut rng) as u64)
+                | ((rand_f32_for_bfcvt(&mut rng) as u64) << 32);
+            let hi = (rand_f32_for_bfcvt(&mut rng) as u64)
+                | ((rand_f32_for_bfcvt(&mut rng) as u64) << 32);
+            st.set_vreg(1, lo, hi);
+            st.set_vreg(0, rng.next(), rng.next()); // Vd preset (BFCVTN2 preserves low half)
+            batch.push(("bfcvtn".to_string(), insn, st));
+        }
+    }
+    run_batch("simd_bfcvt", batch);
+}
+
 #[test]
 fn diff_simd_bf16() {
     let mut rng = Rng::new(0x1_001D);
