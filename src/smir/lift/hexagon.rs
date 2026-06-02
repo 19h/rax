@@ -1019,6 +1019,15 @@ impl HexagonLifter {
                 ControlFlow::Fallthrough
             }
 
+            // Read-modify-write memops are not lifted to SMIR (the interpreter
+            // path in cpu.rs handles them); reject so callers fall back.
+            DecodedInsn::MemOp { .. } => {
+                return Err(LiftError::Unsupported {
+                    addr,
+                    mnemonic: "memop".to_string(),
+                });
+            }
+
             // ================================================================
             // Unknown
             // ================================================================

@@ -4,7 +4,7 @@ use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
 use super::decode::{
     decode, decode_duplex, isa_supports_insn, AddrMode, CmpKind, CombineOperand, DecodedInsn,
-    DecodedSub, ExtendKind, MemSign, MemWidth, PredCond, ShiftKind,
+    DecodedSub, ExtendKind, MemOpKind, MemOpSrc, MemSign, MemWidth, PredCond, ShiftKind,
 };
 use super::opcode::Opcode;
 use crate::config::{Endianness, HexagonIsa};
@@ -841,6 +841,30 @@ impl HexagonVcpu {
             }
             DecodedInsn::Trap0 => {
                 return Ok(Some(VcpuExit::Shutdown));
+            }
+            // Read-modify-write memory op: mem[Rs+#off] OP= (Rt | #imm | bit).
+            DecodedInsn::MemOp {
+                base,
+                offset,
+                width,
+                op,
+                src,
+            } => {
+                let ea = self.regs.r[base as usize].wrapping_add(offset as u32);
+                let cur = self.load_mem(ea, width, MemSign::Unsigned)?;
+                let srcval = match src {
+                    MemOpSrc::Reg(reg) => self.regs.r[reg as usize],
+                    MemOpSrc::Imm(value) => value,
+                };
+                let result = match op {
+                    MemOpKind::Add => cur.wrapping_add(srcval),
+                    MemOpKind::Sub => cur.wrapping_sub(srcval),
+                    MemOpKind::And => cur & srcval,
+                    MemOpKind::Or => cur | srcval,
+                    MemOpKind::ClrBit => cur & !(1u32 << (srcval & 0x1f)),
+                    MemOpKind::SetBit => cur | (1u32 << (srcval & 0x1f)),
+                };
+                self.store_mem(ea, width, result)?;
             }
             // Absolute value: Rd = |Rs|, with optional saturation
             DecodedInsn::Abs { dst, src, sat } => {

@@ -475,6 +475,30 @@ fn diff_mem_gp() {
 }
 
 #[test]
+fn diff_mem_memop() {
+    // Read-modify-write memops. Base is r4, register source is r5.
+    run_family(
+        "mem_memop",
+        &[
+            ("addw", "{ memw(r4+#0) += r5 }"),
+            ("subw", "{ memw(r4+#4) -= r5 }"),
+            ("andw", "{ memw(r4+#0) &= r5 }"),
+            ("orw", "{ memw(r4+#0) |= r5 }"),
+            ("addh", "{ memh(r4+#2) += r5 }"),
+            ("addb", "{ memb(r4+#1) += r5 }"),
+            ("iaddw", "{ memw(r4+#8) += #5 }"),
+            ("isubw", "{ memw(r4+#8) -= #5 }"),
+            ("setbitw", "{ memw(r4+#0) = setbit(#3) }"),
+            ("clrbitw", "{ memw(r4+#0) = clrbit(#17) }"),
+            ("setbitb", "{ memb(r4+#0) = setbit(#2) }"),
+        ],
+        4,
+        12,
+        0x8989,
+    );
+}
+
+#[test]
 fn diff_mem_load_pi() {
     // post-increment: base in r4 is updated; src/dst register also changes.
     run_family(

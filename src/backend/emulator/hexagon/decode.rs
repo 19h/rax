@@ -62,6 +62,25 @@ pub enum CombineOperand {
     Imm(u32),
 }
 
+/// Read-modify-write memory operation (`memX(Rs+#u) OP= ...`).
+#[derive(Clone, Copy, Debug)]
+pub enum MemOpKind {
+    Add,
+    Sub,
+    And,
+    Or,
+    /// `mem &= ~(1 << src)` — clear bit `src`.
+    ClrBit,
+    /// `mem |= (1 << src)` — set bit `src`.
+    SetBit,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum MemOpSrc {
+    Reg(u8),
+    Imm(u32),
+}
+
 #[derive(Clone, Copy, Debug)]
 pub enum DecodedInsn {
     ImmExt {
@@ -271,6 +290,13 @@ pub enum DecodedInsn {
         count: u32,
     },
     Trap0,
+    MemOp {
+        base: u8,
+        offset: i32,
+        width: MemWidth,
+        op: MemOpKind,
+        src: MemOpSrc,
+    },
     Unknown(u32),
 }
 
@@ -572,6 +598,35 @@ fn pred_store_io(
             width,
             pred: Some(pred_cond(pred, sense, pred_new)),
             src_new,
+        },
+        false,
+    ))
+}
+
+/// Decode a read-modify-write memop (`memX(Rs+#u6:N) OP= Rt|#U5`).
+/// `op` selects the operation; `imm_src` chooses the `#U5` immediate operand
+/// (field `I`) over the register operand (field `t`).
+fn memop(
+    decoded: &DecodedOp,
+    width: MemWidth,
+    op: MemOpKind,
+    imm_src: bool,
+) -> Option<(DecodedInsn, bool)> {
+    let base = field_u8(decoded, b's')?;
+    let imm = decode_field_uimm(decoded, b'i', None)?.0;
+    let offset = (imm << width_shift(width)) as i32;
+    let src = if imm_src {
+        MemOpSrc::Imm(decode_field_uimm(decoded, b'I', None)?.0)
+    } else {
+        MemOpSrc::Reg(field_u8(decoded, b't')?)
+    };
+    Some((
+        DecodedInsn::MemOp {
+            base,
+            offset,
+            width,
+            op,
+            src,
         },
         false,
     ))
@@ -1205,6 +1260,31 @@ fn decode_main(decoded: &DecodedOp, word: u32, immext: Option<u32>) -> (DecodedI
                 false
             ))
         }
+        // ---- read-modify-write memops (memX(Rs+#u6:N) OP= Rt | #U5) ----
+        Opcode::L4_add_memopb_io => req!(memop(decoded, MemWidth::Byte, MemOpKind::Add, false)),
+        Opcode::L4_sub_memopb_io => req!(memop(decoded, MemWidth::Byte, MemOpKind::Sub, false)),
+        Opcode::L4_and_memopb_io => req!(memop(decoded, MemWidth::Byte, MemOpKind::And, false)),
+        Opcode::L4_or_memopb_io => req!(memop(decoded, MemWidth::Byte, MemOpKind::Or, false)),
+        Opcode::L4_iadd_memopb_io => req!(memop(decoded, MemWidth::Byte, MemOpKind::Add, true)),
+        Opcode::L4_isub_memopb_io => req!(memop(decoded, MemWidth::Byte, MemOpKind::Sub, true)),
+        Opcode::L4_iand_memopb_io => req!(memop(decoded, MemWidth::Byte, MemOpKind::ClrBit, true)),
+        Opcode::L4_ior_memopb_io => req!(memop(decoded, MemWidth::Byte, MemOpKind::SetBit, true)),
+        Opcode::L4_add_memoph_io => req!(memop(decoded, MemWidth::Half, MemOpKind::Add, false)),
+        Opcode::L4_sub_memoph_io => req!(memop(decoded, MemWidth::Half, MemOpKind::Sub, false)),
+        Opcode::L4_and_memoph_io => req!(memop(decoded, MemWidth::Half, MemOpKind::And, false)),
+        Opcode::L4_or_memoph_io => req!(memop(decoded, MemWidth::Half, MemOpKind::Or, false)),
+        Opcode::L4_iadd_memoph_io => req!(memop(decoded, MemWidth::Half, MemOpKind::Add, true)),
+        Opcode::L4_isub_memoph_io => req!(memop(decoded, MemWidth::Half, MemOpKind::Sub, true)),
+        Opcode::L4_iand_memoph_io => req!(memop(decoded, MemWidth::Half, MemOpKind::ClrBit, true)),
+        Opcode::L4_ior_memoph_io => req!(memop(decoded, MemWidth::Half, MemOpKind::SetBit, true)),
+        Opcode::L4_add_memopw_io => req!(memop(decoded, MemWidth::Word, MemOpKind::Add, false)),
+        Opcode::L4_sub_memopw_io => req!(memop(decoded, MemWidth::Word, MemOpKind::Sub, false)),
+        Opcode::L4_and_memopw_io => req!(memop(decoded, MemWidth::Word, MemOpKind::And, false)),
+        Opcode::L4_or_memopw_io => req!(memop(decoded, MemWidth::Word, MemOpKind::Or, false)),
+        Opcode::L4_iadd_memopw_io => req!(memop(decoded, MemWidth::Word, MemOpKind::Add, true)),
+        Opcode::L4_isub_memopw_io => req!(memop(decoded, MemWidth::Word, MemOpKind::Sub, true)),
+        Opcode::L4_iand_memopw_io => req!(memop(decoded, MemWidth::Word, MemOpKind::ClrBit, true)),
+        Opcode::L4_ior_memopw_io => req!(memop(decoded, MemWidth::Word, MemOpKind::SetBit, true)),
         _ => (DecodedInsn::Unknown(word), false),
     }
 }
