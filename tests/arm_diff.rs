@@ -866,6 +866,39 @@ fn enc_aes(opcode: u32) -> u32 {
 }
 
 #[test]
+fn diff_simd_frecpe() {
+    // FRECPE: U=0, opcode 11101, sz_hi=1 -> size = 0b10 (f32) / 0b11 (f64).
+    let mut cases: Vec<(String, u32, bool)> = Vec::new();
+    for q in 0..2 {
+        cases.push((format!("frecpe f32 q{q}"), enc_two_reg(q, 0, 0b10, 0b11101), false));
+    }
+    cases.push(("frecpe f64".into(), enc_two_reg(1, 0, 0b11, 0b11101), true));
+    // Normal positive finite inputs so no special-case / over-underflow paths.
+    let mut rng = Rng::new(0x1_000A);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn, f64op) in &cases {
+        for _ in 0..16 {
+            let mut st = ArmState::zeroed();
+            let mut packed: u128 = 0;
+            if *f64op {
+                for lane in 0..2 {
+                    let v = ((rng.next() % 200 + 1) as f64) * 0.125;
+                    packed |= (v.to_bits() as u128) << (64 * lane);
+                }
+            } else {
+                for lane in 0..4 {
+                    let v = ((rng.next() % 200 + 1) as f32) * 0.125;
+                    packed |= (v.to_bits() as u128) << (32 * lane);
+                }
+            }
+            st.set_vreg(1, packed as u64, (packed >> 64) as u64);
+            batch.push((label.clone(), *insn, st));
+        }
+    }
+    run_batch("simd_frecpe", batch);
+}
+
+#[test]
 fn diff_crypto_aes() {
     let ops: &[(u32, &str)] = &[
         (0b00100, "aese"),

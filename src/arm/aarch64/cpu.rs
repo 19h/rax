@@ -4001,6 +4001,30 @@ impl AArch64Cpu {
             (0, 1, 0b01110) => Some(TwoRegFp::CmLt),
             _ => None,
         };
+        // FRECPE (U=0, sz_hi=1, opcode 11101): reciprocal estimate.
+        if (insn >> 29) & 1 == 0 && (insn >> 23) & 1 == 1 && opcode == 0b11101 {
+            if sz == 1 && q == 0 && !scalar {
+                return Some(Err(ArmError::UndefinedInstruction(insn)));
+            }
+            let esize = if sz == 0 { 4usize } else { 8 };
+            let datasize = if scalar { esize } else if q == 1 { 16 } else { 8 };
+            let elements = datasize / esize;
+            let src = self.v[rn].to_le_bytes();
+            let mut dst = [0u8; 16];
+            for e in 0..elements {
+                let off = e * esize;
+                let a = read_elem(&src, off, esize);
+                let r = if sz == 0 {
+                    fp_recip_estimate_f32(a as u32) as u64
+                } else {
+                    fp_recip_estimate_f64(a)
+                };
+                write_elem(&mut dst, off, esize, r);
+            }
+            self.v[rd] = u128::from_le_bytes(dst);
+            return Some(Ok(CpuExit::Continue));
+        }
+
         if kind.is_none() && cvtf.is_none() {
             return None;
         }
@@ -8487,6 +8511,47 @@ fn fp_three_same_f64(kind: FpKind, a: u64, b: u64, d: u64) -> u64 {
     }
 }
 
+
+/// ARM RecipEstimate integer core (input a in [256,512)).
+fn recip_estimate(a: u32) -> u32 {
+    let a = a * 2 + 1;
+    let b = (1u32 << 19) / a;
+    (b + 1) >> 1
+}
+
+/// FRECPE for f32 (normal inputs).
+fn fp_recip_estimate_f32(bits: u32) -> u32 {
+    let sign = bits >> 31;
+    let exp = (bits >> 23) & 0xFF;
+    let frac = bits & 0x7F_FFFF;
+    if exp == 0xFF {
+        return if frac != 0 { bits | 0x40_0000 } else { sign << 31 }; // NaN->qNaN, inf->0
+    }
+    if exp == 0 && frac == 0 {
+        return (sign << 31) | (0xFF << 23); // zero -> infinity
+    }
+    let scaled = 256 + (frac >> 15);
+    let r = recip_estimate(scaled);
+    let result_exp = 253u32.wrapping_sub(exp) & 0xFF;
+    (sign << 31) | (result_exp << 23) | ((r & 0xFF) << 15)
+}
+
+/// FRECPE for f64 (normal inputs).
+fn fp_recip_estimate_f64(bits: u64) -> u64 {
+    let sign = bits >> 63;
+    let exp = ((bits >> 52) & 0x7FF) as u32;
+    let frac = bits & 0xF_FFFF_FFFF_FFFF;
+    if exp == 0x7FF {
+        return if frac != 0 { bits | 0x8_0000_0000_0000 } else { sign << 63 };
+    }
+    if exp == 0 && frac == 0 {
+        return (sign << 63) | (0x7FFu64 << 52);
+    }
+    let scaled = 256 + ((frac >> 44) as u32);
+    let r = recip_estimate(scaled);
+    let result_exp = (2045u32.wrapping_sub(exp) & 0x7FF) as u64;
+    (sign << 63) | (result_exp << 52) | (((r & 0xFF) as u64) << 44)
+}
 
 /// AES S-box and inverse S-box (FIPS-197).
 const AES_SBOX: [u8; 256] = [
