@@ -217,3 +217,89 @@ fn test_mfence_with_different_sized_stores() {
     assert_eq!(buf[0], 0x11, "Byte store should complete");
     // Word and dword stores also complete
 }
+
+// ============================================================================
+// SFENCE (0F AE F8) and PAUSE (F3 90): architecturally no-ops in this
+// single-vCPU interpreter, but they must execute (advance RIP) and leave all
+// register/flag/memory state untouched. Value-asserting coverage for both.
+// ============================================================================
+
+// SFENCE executes as a no-op and surrounding stores complete in order.
+#[test]
+fn test_sfence_executes_and_orders_stores() {
+    let code = [
+        0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
+        0x48, 0xc7, 0x03, 0xAA, 0x00, 0x00, 0x00, // MOV QWORD PTR [RBX], 0xAA
+        0x0f, 0xae, 0xf8,                         // SFENCE
+        0x48, 0xc7, 0x43, 0x08, 0xBB, 0x00, 0x00, 0x00, // MOV QWORD PTR [RBX+8], 0xBB
+        0xf4,                                     // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    let _ = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_at_u64(&mem, 0x2000), 0xAA, "store before SFENCE completes");
+    assert_eq!(read_mem_at_u64(&mem, 0x2008), 0xBB, "store after SFENCE completes");
+}
+
+// SFENCE must not alter general registers or flags.
+#[test]
+fn test_sfence_preserves_registers_and_flags() {
+    let code = [
+        0x0f, 0xae, 0xf8, // SFENCE
+        0xf4,             // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rax = 0x1111_2222_3333_4444;
+    regs.rbx = 0x5555_6666_7777_8888;
+    regs.rflags = 0x40 | 0x1 | 0x2; // ZF + CF + reserved
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x1111_2222_3333_4444, "RAX preserved across SFENCE");
+    assert_eq!(regs.rbx, 0x5555_6666_7777_8888, "RBX preserved across SFENCE");
+    assert!(zf_set(regs.rflags), "ZF preserved across SFENCE");
+    assert!(cf_set(regs.rflags), "CF preserved across SFENCE");
+}
+
+// PAUSE (F3 90) executes as a no-op; following instruction still runs.
+#[test]
+fn test_pause_executes_then_continues() {
+    let code = [
+        0xf3, 0x90,                               // PAUSE
+        0x48, 0xc7, 0xc0, 0x2a, 0x00, 0x00, 0x00, // MOV RAX, 0x2A
+        0xf4,                                     // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x2A, "instruction after PAUSE executes");
+}
+
+// PAUSE preserves registers and flags (pure spin-wait hint).
+#[test]
+fn test_pause_preserves_registers_and_flags() {
+    let code = [
+        0xf3, 0x90, // PAUSE
+        0xf4,       // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rcx = 0xDEAD_BEEF_CAFE_F00D;
+    regs.rflags = 0x80 | 0x2; // SF + reserved
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rcx, 0xDEAD_BEEF_CAFE_F00D, "RCX preserved across PAUSE");
+    assert!(sf_set(regs.rflags), "SF preserved across PAUSE");
+}
+
+// A spin-loop body of repeated PAUSEs is a no-op sequence.
+#[test]
+fn test_pause_spin_loop_body_noop() {
+    let code = [
+        0x48, 0xc7, 0xc0, 0x07, 0x00, 0x00, 0x00, // MOV RAX, 7
+        0xf3, 0x90,                               // PAUSE
+        0xf3, 0x90,                               // PAUSE
+        0xf3, 0x90,                               // PAUSE
+        0x48, 0xff, 0xc0,                         // INC RAX
+        0xf4,                                     // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 8, "PAUSEs are no-ops; only INC changes RAX");
+}

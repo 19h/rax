@@ -76,7 +76,8 @@ fn test_push_fs() {
     let mut buf = [0u8; 8];
     mem.read_slice(&mut buf, GuestAddress(STACK_ADDR - 8)).unwrap();
     let stack_value = u64::from_le_bytes(buf);
-    assert_eq!(stack_value >> 16, 0);
+    // FS selector is 0 in the test harness; PUSH FS writes a zero-extended word.
+    assert_eq!(stack_value, 0x0000, "PUSH FS pushes FS selector (0)");
 }
 
 #[test]
@@ -93,7 +94,8 @@ fn test_push_gs() {
     let mut buf = [0u8; 8];
     mem.read_slice(&mut buf, GuestAddress(STACK_ADDR - 8)).unwrap();
     let stack_value = u64::from_le_bytes(buf);
-    assert_eq!(stack_value >> 16, 0);
+    // GS selector is 0 in the test harness; PUSH GS writes a zero-extended word.
+    assert_eq!(stack_value, 0x0000, "PUSH GS pushes GS selector (0)");
 }
 
 // ============================================================================
@@ -593,4 +595,59 @@ fn test_push_all_pop_one() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Stack should have 2 items left
     assert_eq!(regs.rsp, STACK_ADDR - 16);
+}
+
+// ============================================================================
+// Value-asserting PUSH/POP segment tests with non-zero selectors, so the
+// transferred value (not merely 0 == 0) is checked end-to-end.
+// ============================================================================
+
+// Load a non-zero selector into FS, PUSH FS, and read the exact pushed word.
+#[test]
+fn test_push_fs_nonzero_value_on_stack() {
+    let code = [
+        0x48, 0xc7, 0xc0, 0x23, 0x00, 0x00, 0x00, // MOV RAX, 0x23
+        0x8e, 0xe0,                               // MOV FS, AX
+        0x0f, 0xa0,                               // PUSH FS
+        0xf4,                                     // HLT
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rsp, STACK_ADDR - 8, "PUSH FS decrements RSP by 8");
+    let mut buf = [0u8; 8];
+    mem.read_slice(&mut buf, GuestAddress(STACK_ADDR - 8)).unwrap();
+    assert_eq!(u64::from_le_bytes(buf), 0x23, "PUSH FS pushes selector 0x23");
+}
+
+// PUSH FS then POP GS transfers the FS selector value into GS.
+#[test]
+fn test_push_fs_pop_gs_transfers_selector() {
+    let code = [
+        0x48, 0xc7, 0xc0, 0x33, 0x00, 0x00, 0x00, // MOV RAX, 0x33
+        0x8e, 0xe0,                               // MOV FS, AX (FS = 0x33)
+        0x0f, 0xa0,                               // PUSH FS
+        0x0f, 0xa9,                               // POP GS  (GS <- 0x33)
+        0x8c, 0xeb,                               // MOV BX, GS
+        0xf4,                                     // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rbx & 0xFFFF, 0x33, "GS receives FS selector via PUSH/POP");
+    assert_eq!(regs.rsp, STACK_ADDR, "stack balanced after PUSH/POP");
+}
+
+// POP FS from a prepared stack loads exactly the low 16 bits and clears the rest.
+#[test]
+fn test_pop_fs_loads_low16_only() {
+    let code = [
+        0x48, 0xb8, 0x99, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, // MOV RAX, 0xFFFFFFFF00000099
+        0x50,                                     // PUSH RAX
+        0x0f, 0xa1,                               // POP FS
+        0x8c, 0xe3,                               // MOV BX, FS
+        0xf4,                                     // HLT
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rbx & 0xFFFF, 0x0099, "POP FS takes low 16 bits of the stack word");
+    assert_eq!(regs.rsp, STACK_ADDR, "RSP restored after PUSH/POP pair");
 }

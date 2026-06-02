@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm, setup_vm_no_idt, read_mem_u8, read_mem_u16, read_mem_u32, read_mem_u64, write_mem_u8, write_mem_u16, write_mem_u32, write_mem_u64, cf_set, zf_set};
+use crate::common::{run_until_hlt, setup_vm, setup_vm_no_idt, read_mem_u8, read_mem_u16, read_mem_u32, read_mem_u64, write_mem_u8, write_mem_u16, write_mem_u32, write_mem_u64, cf_set, zf_set, sf_set, of_set, pf_set};
 use rax::cpu::{Registers, VCpu, VcpuExit};
 
 // LOCK Prefix Tests - Comprehensive tests for LOCK prefix with various instructions
@@ -654,4 +654,170 @@ fn test_no_lock_add_reg_dest_still_works() {
     let (mut vcpu, _mem) = setup_vm(&code, None);
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rbx & 0xFFFF_FFFF, 12, "ADD EBX, EAX = 5 + 7 (no LOCK, no #UD)");
+}
+
+// ============================================================================
+// LOCK-prefixed RMW: exact memory result AND exact flags, computed by hand.
+// These complement the result-only LOCK tests above with full flag checks.
+// ============================================================================
+
+// LOCK ADD [mem], imm32 producing a signed overflow: 0x7FFFFFFF + 1.
+// Result 0x80000000 -> SF=1, OF=1, ZF=0, CF=0.
+#[test]
+fn test_lock_add_imm_signed_overflow_flags() {
+    let code = [
+        0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
+        0xf0, 0x81, 0x03, 0x01, 0x00, 0x00, 0x00, // LOCK ADD DWORD PTR [RBX], 1
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_u32(&mem, 0x7FFF_FFFF);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_u32(&mem), 0x8000_0000, "0x7FFFFFFF + 1");
+    assert!(sf_set(regs.rflags), "SF set (bit 31 set)");
+    assert!(of_set(regs.rflags), "OF set (signed overflow)");
+    assert!(!zf_set(regs.rflags), "ZF clear");
+    assert!(!cf_set(regs.rflags), "CF clear (no unsigned carry)");
+}
+
+// LOCK SUB [mem], imm32 to exactly zero: 50 - 50.
+// Result 0 -> ZF=1, CF=0, SF=0, OF=0, PF=1 (0x00 has even parity).
+#[test]
+fn test_lock_sub_imm_to_zero_flags() {
+    let code = [
+        0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
+        0xf0, 0x81, 0x2b, 0x32, 0x00, 0x00, 0x00, // LOCK SUB DWORD PTR [RBX], 0x32
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_u32(&mem, 50);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_u32(&mem), 0, "50 - 50 = 0");
+    assert!(zf_set(regs.rflags), "ZF set (result zero)");
+    assert!(!cf_set(regs.rflags), "CF clear (no borrow)");
+    assert!(!sf_set(regs.rflags), "SF clear");
+    assert!(!of_set(regs.rflags), "OF clear");
+    assert!(pf_set(regs.rflags), "PF set (0x00 even parity)");
+}
+
+// LOCK SUB producing a borrow: 0 - 1 (32-bit) -> 0xFFFFFFFF, CF=1, SF=1.
+#[test]
+fn test_lock_sub_borrow_flags() {
+    let code = [
+        0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
+        0xf0, 0x81, 0x2b, 0x01, 0x00, 0x00, 0x00, // LOCK SUB DWORD PTR [RBX], 1
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_u32(&mem, 0);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_u32(&mem), 0xFFFF_FFFF, "0 - 1 wraps to 0xFFFFFFFF");
+    assert!(cf_set(regs.rflags), "CF set (borrow)");
+    assert!(sf_set(regs.rflags), "SF set (bit 31 set)");
+    assert!(!zf_set(regs.rflags), "ZF clear");
+    assert!(!of_set(regs.rflags), "OF clear (no signed overflow)");
+}
+
+// LOCK INC/DEC do NOT affect CF (architectural rule). DEC to zero sets ZF but
+// leaves a pre-set CF untouched.
+#[test]
+fn test_lock_dec_to_zero_preserves_cf() {
+    let code = [
+        0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
+        0xf9,                                     // STC (set CF)
+        0xf0, 0xff, 0x0b,                         // LOCK DEC DWORD PTR [RBX]
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_u32(&mem, 1);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_u32(&mem), 0, "1 - 1 = 0");
+    assert!(zf_set(regs.rflags), "ZF set (result zero)");
+    assert!(cf_set(regs.rflags), "CF preserved by DEC (INC/DEC do not touch CF)");
+}
+
+// LOCK XADD [mem], reg flags: memory = old + src; reg = old. Flags reflect the
+// addition. old=0xFFFFFFFF + EBX=1 -> 0 with CF=1, ZF=1; EBX gets old (0xFFFFFFFF).
+#[test]
+fn test_lock_xadd_flags_carry_zero() {
+    let code = [
+        0x48, 0xc7, 0xc0, 0x00, 0x20, 0x00, 0x00, // MOV RAX, 0x2000
+        0x48, 0xc7, 0xc3, 0x01, 0x00, 0x00, 0x00, // MOV RBX, 1
+        0xf0, 0x0f, 0xc1, 0x18,                   // LOCK XADD [RAX], EBX
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_u32(&mem, 0xFFFF_FFFF);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_u32(&mem), 0, "XADD: 0xFFFFFFFF + 1 wraps to 0");
+    assert_eq!(regs.rbx & 0xFFFF_FFFF, 0xFFFF_FFFF, "XADD: EBX = old memory value");
+    assert!(zf_set(regs.rflags), "ZF set (sum zero)");
+    assert!(cf_set(regs.rflags), "CF set (carry out)");
+}
+
+// XCHG with memory is implicitly atomic (no LOCK needed) and must NOT modify any
+// arithmetic flags. Seed CF+ZF and confirm they survive the swap.
+#[test]
+fn test_xchg_mem_atomic_preserves_flags() {
+    let code = [
+        0x48, 0xc7, 0xc3, 0x00, 0x20, 0x00, 0x00, // MOV RBX, 0x2000
+        0xb8, 0x78, 0x56, 0x34, 0x12,             // MOV EAX, 0x12345678
+        0x87, 0x03,                               // XCHG [RBX], EAX (implicit lock)
+        0xf4,
+    ];
+    let mut regs = Registers::default();
+    regs.rflags = 0x40 | 0x1 | 0x2; // ZF + CF + reserved
+    let (mut vcpu, mem) = setup_vm(&code, Some(regs));
+    write_mem_u32(&mem, 0x9ABCDEF0);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(read_mem_u32(&mem), 0x12345678, "memory takes EAX");
+    assert_eq!(regs.rax & 0xFFFF_FFFF, 0x9ABCDEF0, "EAX takes old memory");
+    assert!(zf_set(regs.rflags), "ZF preserved by XCHG");
+    assert!(cf_set(regs.rflags), "CF preserved by XCHG");
+}
+
+// LOCK CMPXCHG8B failure path: EDX:EAX loaded from memory, ZF cleared.
+#[test]
+fn test_lock_cmpxchg8b_failure_loads_edx_eax() {
+    let code = [
+        0x48, 0xc7, 0xc7, 0x00, 0x20, 0x00, 0x00, // MOV RDI, 0x2000
+        0xb8, 0x99, 0x99, 0x99, 0x99,             // MOV EAX, 0x99999999 (wrong low)
+        0xba, 0x88, 0x88, 0x88, 0x88,             // MOV EDX, 0x88888888 (wrong high)
+        0xb9, 0x00, 0x00, 0x00, 0x00,             // MOV ECX, 0
+        0xbb, 0x00, 0x00, 0x00, 0x00,             // MOV EBX, 0
+        0xf0, 0x0f, 0xc7, 0x0f,                   // LOCK CMPXCHG8B [RDI]
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    write_mem_u64(&mem, 0x2222_2222_1111_1111); // != EDX:EAX -> failure
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert!(!zf_set(regs.rflags), "CMPXCHG8B failure clears ZF");
+    assert_eq!(regs.rax & 0xFFFF_FFFF, 0x1111_1111, "EAX loaded from memory low");
+    assert_eq!(regs.rdx & 0xFFFF_FFFF, 0x2222_2222, "EDX loaded from memory high");
+    assert_eq!(read_mem_u64(&mem), 0x2222_2222_1111_1111, "memory unchanged on failure");
+}
+
+// LOCK CMPXCHG16B success path (REX.W + group9 /1): memory = RCX:RBX, ZF set.
+#[test]
+fn test_lock_cmpxchg16b_success_writes_rcx_rbx() {
+    let code = [
+        0x48, 0xc7, 0xc7, 0x00, 0x20, 0x00, 0x00, // MOV RDI, 0x2000
+        0x48, 0x31, 0xc0,                         // XOR RAX, RAX (expected low = 0)
+        0x48, 0x31, 0xd2,                         // XOR RDX, RDX (expected high = 0)
+        0x48, 0xb9, 0xEF, 0xBE, 0xAD, 0xDE, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0xDEADBEEF (new high)
+        0x48, 0xbb, 0x0D, 0xF0, 0xFE, 0xCA, 0x00, 0x00, 0x00, 0x00, // MOV RBX, 0xCAFEF00D (new low)
+        0xf0, 0x48, 0x0f, 0xc7, 0x0f,             // LOCK CMPXCHG16B [RDI]
+        0xf4,
+    ];
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    // Memory == RDX:RAX (both zero) -> success.
+    write_mem_u64(&mem, 0);
+    use vm_memory::{Bytes, GuestAddress};
+    mem.write_slice(&0u64.to_le_bytes(), GuestAddress(0x2008)).unwrap();
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert!(zf_set(regs.rflags), "CMPXCHG16B success sets ZF");
+    assert_eq!(read_mem_u64(&mem), 0xCAFEF00D, "memory low = RBX");
+    let mut hi = [0u8; 8];
+    mem.read_slice(&mut hi, GuestAddress(0x2008)).unwrap();
+    assert_eq!(u64::from_le_bytes(hi), 0xDEADBEEF, "memory high = RCX");
 }
