@@ -686,6 +686,48 @@ fn diff_fmlal() {
     run_batch("fmlal", batch);
 }
 
+/// AdvSIMD load/store multiple structures: `0 Q 0011 0 0 post L rm opcode size Rn Rt`.
+fn enc_ldst_struct(q: u32, post: u32, l: u32, rm: u32, opcode: u32, size: u32) -> u32 {
+    (q << 30) | (0b001100 << 24) | (post << 23) | (l << 22) | (rm << 16) | (opcode << 12)
+        | (size << 10) | (RN << 5) | RD
+}
+
+#[test]
+fn diff_mem_ldst_struct() {
+    // (opcode, name) -- LD1 x1/x2/x3/x4, LD2, LD3, LD4.
+    let ops: &[(u32, &str)] = &[
+        (0b0111, "ld1x1"),
+        (0b1010, "ld1x2"),
+        (0b0110, "ld1x3"),
+        (0b0010, "ld1x4"),
+        (0b1000, "ld2"),
+        (0b0100, "ld3"),
+        (0b0000, "ld4"),
+    ];
+    let mut cases: Vec<(String, u32)> = Vec::new();
+    for &(opcode, name) in ops {
+        for size in 0..4u32 {
+            for q in 0..2 {
+                for l in 0..2 {
+                    let op = if l == 1 { name.to_string() } else { name.replace("ld", "st") };
+                    // no-offset
+                    cases.push((format!("{op} sz{size} q{q} noff"), enc_ldst_struct(q, 0, l, 0, opcode, size)));
+                    // post-index, immediate increment (Rm == 31)
+                    cases.push((format!("{op} sz{size} q{q} post"), enc_ldst_struct(q, 1, l, 31, opcode, size)));
+                }
+            }
+        }
+    }
+    let mut rng = Rng::new(0x1_0003);
+    let mut batch: Vec<(String, u32, ArmState)> = Vec::new();
+    for (label, insn) in &cases {
+        for _ in 0..6 {
+            batch.push((label.clone(), *insn, mem_input(&mut rng)));
+        }
+    }
+    run_batch("mem_ldst_struct", batch);
+}
+
 /// Load/store pair: `opc 101 V 0 mode L imm7 Rt2 Rn Rt`. Rt=x0, Rt2=x2, Rn=x1.
 fn enc_ldp(opc: u32, v: u32, mode: u32, l: u32, imm7: u32) -> u32 {
     (opc << 30) | (0b101 << 27) | (v << 26) | (mode << 23) | (l << 22) | ((imm7 & 0x7F) << 15)

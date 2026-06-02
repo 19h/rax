@@ -1074,6 +1074,12 @@ impl AArch64Cpu {
 
     /// Execute load/store instruction.
     fn exec_load_store(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        // Advanced SIMD load/store multiple structures (LD1-4 / ST1-4).
+        // bits[31]=0, bits[29:24] = 001100 (no-offset or post-index variant).
+        if (insn >> 31) & 1 == 0 && (insn >> 24) & 0x3F == 0b001100 {
+            return self.exec_ldst_structures(insn);
+        }
+
         let op0 = (insn >> 28) & 0xF;
         let op1 = (insn >> 26) & 0x1;
         let bits_29_27 = (insn >> 27) & 0x7;
@@ -5860,6 +5866,95 @@ impl AArch64Cpu {
             }
         }
 
+        Ok(CpuExit::Continue)
+    }
+
+    /// Advanced SIMD load/store multiple structures: LD1/ST1 (1-4 registers),
+    /// LD2/ST2, LD3/ST3, LD4/ST4 (de-interleaving). Contiguous, optional
+    /// post-index writeback.
+    fn exec_ldst_structures(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
+        let q = (insn >> 30) & 1;
+        let post = (insn >> 23) & 1;
+        let l = (insn >> 22) & 1;
+        let rm = ((insn >> 16) & 0x1F) as u8;
+        let opcode = (insn >> 12) & 0xF;
+        let size = (insn >> 10) & 0x3;
+        let rn = ((insn >> 5) & 0x1F) as u8;
+        let rt = (insn & 0x1F) as usize;
+
+        // (rpt, selem): number of register groups and structure size.
+        let (rpt, selem): (usize, usize) = match opcode {
+            0b0000 => (1, 4), // LD4/ST4
+            0b0010 => (4, 1), // LD1 x4
+            0b0100 => (1, 3), // LD3/ST3
+            0b0110 => (3, 1), // LD1 x3
+            0b0111 => (1, 1), // LD1 x1
+            0b1000 => (1, 2), // LD2/ST2
+            0b1010 => (2, 1), // LD1 x2
+            _ => return Err(ArmError::UndefinedInstruction(insn)),
+        };
+        // A single 64-bit element (1D, size=11 with Q=0) is only valid when the
+        // structure spans a single register per group.
+        if size == 0b11 && q == 0 && selem != 1 && rpt == 1 {
+            return Err(ArmError::UndefinedInstruction(insn));
+        }
+
+        let esize = 8u32 << size; // bits
+        let ebytes = (esize / 8) as u64;
+        let datasize = if q == 1 { 16usize } else { 8 };
+        let elements = datasize / ebytes as usize;
+        let nregs = rpt * selem;
+
+        let base = if rn == 31 {
+            self.current_sp()
+        } else {
+            self.get_x(rn)
+        };
+        let mut addr = base;
+
+        // Loads rewrite each touched register fully (upper bits zeroed for Q=0).
+        if l != 0 {
+            for i in 0..nregs {
+                self.v[(rt + i) % 32] = 0;
+            }
+        }
+        let emask = elem_mask_u128(esize);
+        for r in 0..rpt {
+            for e in 0..elements {
+                for sct in 0..selem {
+                    let reg = (rt + r * selem + sct) % 32;
+                    let shift = e * esize as usize;
+                    if l != 0 {
+                        let mut bytes = [0u8; 8];
+                        for (b, slot) in bytes.iter_mut().enumerate().take(ebytes as usize) {
+                            *slot = self.mem_read_u8(addr + b as u64)?;
+                        }
+                        let val = u64::from_le_bytes(bytes) as u128 & emask;
+                        self.v[reg] = (self.v[reg] & !(emask << shift)) | (val << shift);
+                    } else {
+                        let val = (self.v[reg] >> shift) & emask;
+                        for b in 0..ebytes as usize {
+                            self.mem_write_u8(addr + b as u64, (val >> (b * 8)) as u8)?;
+                        }
+                    }
+                    addr += ebytes;
+                }
+            }
+        }
+
+        if post != 0 {
+            let inc = if rm == 31 {
+                (nregs * elements) as u64 * ebytes
+            } else {
+                self.get_x(rm)
+            };
+            let new = base.wrapping_add(inc);
+            if rn == 31 {
+                self.set_current_sp(new);
+            } else {
+                self.set_x(rn, new);
+            }
+        }
         Ok(CpuExit::Continue)
     }
 
