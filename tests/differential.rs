@@ -4620,15 +4620,6 @@ fn ssse3_phaddsw() {
     check_sse("phaddsw", &sse_program(&[0x66, 0x0F, 0x38, 0x03, 0xC1]), sse_scratch(a, b));
 }
 
-src/backend/emulator/x86_64/insn/simd/ssse3.rs the helper \
-`maddubs(a,b,c,d) = (prod1 + prod2).clamp(..) as i16` computes prod1/prod2 as \
-i16 and adds them as i16, but each unsigned*signed product spans roughly \
-[-32640, 32385]; their sum can reach ~64770 and overflows i16, panicking in a \
-debug build (and silently wrapping before the clamp in release). The SDM \
-requires forming the two products and the intermediate sum in (at least) 32-bit \
-precision, THEN signed-saturating to i16. With a-lanes 0..1 = 0xFF,0xFF and \
-b-lanes 0..1 = 0x7F,0x7F the sum 32385+32385 triggers the overflow. Ignored to \
-keep the suite green; widen the maddubs accumulation to i32 before clamping."]
 #[test]
 fn ssse3_pmaddubsw() {
     // PMADDUBSW xmm0, xmm1 = 66 0F 38 04 C1 : multiply UNSIGNED bytes of xmm0 by
@@ -4902,15 +4893,6 @@ fn aes_aesimc() {
     check_sse("aesimc", &sse_program(&[0x66, 0x0F, 0x38, 0xDB, 0xC1]), sse_scratch(a, b));
 }
 
-#[ignore = "GENUINE BUG: AESKEYGENASSIST RotWord/dword assembly is wrong in the \
-interpreter. For input X = [X0,X1,X2,X3] (dwords) and RCON, the SDM result is \
-[SubWord(X1), RotWord(SubWord(X1)), SubWord(X3), RotWord(SubWord(X3)) XOR RCON]. \
-With X1=0x16157e2b, X3=0x8809cf4f, RCON=1: KVM (correct) stores dword1 = \
-RotWord(SubWord(X1)) = f24759f1 and dword3 = RotWord(SubWord(X3))^RCON = 6259c469, \
-but the interpreter stores dword1 = 5947f3f1 (un-rotated SubWord) and dword3 = \
-c4596268. So the interpreter applies SubWord but omits the RotWord on the odd \
-dwords (and mis-XORs RCON). Result page offset 0x20: interp lanes 1,3 wrong vs \
-KVM. Ignored to keep the suite green; fix AESKEYGENASSIST's RotWord."]
 #[test]
 fn aes_aeskeygenassist() {
     // AESKEYGENASSIST xmm0, xmm1, imm8 = 66 0F 3A DF C1 ib : key expansion helper.

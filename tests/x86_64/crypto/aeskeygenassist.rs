@@ -461,11 +461,15 @@ fn test_aeskeygenassist_xmm6_mem_rcon_0x80() {
 //   DEST[95:64]   := SubWord(X3)
 //   DEST[127:96]  := RotWord(SubWord(X3)) XOR RCON
 //
-// Canonical Intel input src = 7b5b54657374566563746f725d53475d with RCON=1
-// yields 39204d202139204d92a840fafb92a840.
+// Input src = 0x7b5b54657374566563746f725d53475d loaded little-endian into the
+// XMM register (low 64 bits = 0x63746f725d53475d, high 64 = 0x7b5b546573745665),
+// with RCON=1. RotWord on a little-endian dword [b0,b1,b2,b3] -> [b1,b2,b3,b0]
+// is a rotate-RIGHT by 8, so this yields 4d2139212139204d40fb92a9fb92a840.
+// (This value is verified against the KVM hardware oracle in the differential
+// harness. The old expected 0x39204d20...92a840 used the wrong rotate direction.)
 
 const KEYGEN_SRC: u128 = 0x7b5b54657374566563746f725d53475d;
-const KEYGEN_RESULT_RCON1: u128 = 0x39204d202139204d92a840fafb92a840;
+const KEYGEN_RESULT_RCON1: u128 = 0x4d2139212139204d40fb92a9fb92a840;
 
 #[test]
 fn kat_aeskeygenassist_intel_vector_rcon1() {

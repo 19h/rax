@@ -208,9 +208,15 @@ pub fn sub_word(word: u32) -> u32 {
     b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)
 }
 
-/// RotWord: Rotate a 32-bit word left by 8 bits
+/// RotWord: cyclically permute the bytes of a 32-bit word [b0,b1,b2,b3] ->
+/// [b1,b2,b3,b0], as defined by FIPS-197 / the Intel SDM AESKEYGENASSIST op.
+///
+/// Words in this module are stored little-endian (b0 is the least-significant
+/// byte: `b0 | b1<<8 | b2<<16 | b3<<24`), so producing `b1 | b2<<8 | b3<<16 |
+/// b0<<24` is a rotate-RIGHT by 8 bits, NOT a rotate-left. (A rotate-left would
+/// implement the inverse permutation [b3,b0,b1,b2] and was the previous bug.)
 pub fn rot_word(word: u32) -> u32 {
-    (word << 8) | (word >> 24)
+    word.rotate_right(8)
 }
 
 /// AESENC: Perform one round of AES encryption
