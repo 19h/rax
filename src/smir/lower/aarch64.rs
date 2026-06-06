@@ -3299,6 +3299,45 @@ impl Aarch64Lowerer {
                     );
                 }
             }
+        } else if rem.is_none() {
+            if let Some(imm) = Self::src_imm(src2) {
+                let divisor = (imm as u64) & width.mask();
+                let bits = width.bits();
+                if divisor.is_power_of_two()
+                    && divisor > 1
+                    && divisor < (1_u64 << (bits - 1))
+                {
+                    let emit_width = match width {
+                        OpWidth::W32 | OpWidth::W64 => width,
+                        other => {
+                            return Err(LowerError::UnsupportedOp {
+                                op: format!("AArch64 native signed power-of-two divide width {other:?}"),
+                            });
+                        }
+                    };
+                    let quot = Self::dst_gpr(quot)?;
+                    let rn = Self::gpr(src1)?;
+                    if quot == rn {
+                        return Err(LowerError::UnsupportedOp {
+                            op: "AArch64 native signed power-of-two divide with aliased quotient"
+                                .into(),
+                        });
+                    }
+                    let shift = divisor.trailing_zeros();
+                    self.emit_bitfield(quot, rn, 0b00, bits - 1, bits - 1, emit_width)?;
+                    self.emit_addsub_shifted(
+                        quot,
+                        rn,
+                        quot,
+                        false,
+                        false,
+                        1,
+                        bits - shift,
+                        emit_width,
+                    )?;
+                    return self.emit_bitfield(quot, quot, 0b00, shift, bits - 1, emit_width);
+                }
+            }
         }
         let SrcOperand::Reg(src2) = src2 else {
             return Err(LowerError::UnsupportedOp {
@@ -7660,6 +7699,86 @@ mod tests {
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 7, 15, 1, 1).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_divs_x_imm_power_of_two_as_bias_asr() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::DivS {
+                quot: x(0),
+                rem: None,
+                src1: x(1),
+                src2: SrcOperand::Imm(8),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_bitfield(1, 0b00, 63, 63).to_le_bytes());
+        expected.extend_from_slice(&enc_addsub_shift_regs(1, 0, 0, 1, 61, 0, 1, 0).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(1, 0b00, 3, 63, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_divs_w_imm_masked_power_of_two_as_bias_asr() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::DivS {
+                quot: x(3),
+                rem: None,
+                src1: x(1),
+                src2: SrcOperand::Imm64(0x1_0000_0010),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b00, 31, 31, 1, 3).to_le_bytes());
+        expected.extend_from_slice(&enc_addsub_shift_regs(0, 0, 0, 1, 28, 3, 1, 3).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b00, 4, 31, 3, 3).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn rejects_divs_imm_power_of_two_when_quotient_aliases_dividend() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::DivS {
+                quot: x(1),
+                rem: None,
+                src1: x(1),
+                src2: SrcOperand::Imm(8),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        let err = lowerer.lower_function(&func).unwrap_err();
+        assert!(matches!(err, LowerError::UnsupportedOp { .. }));
     }
 
     #[test]
