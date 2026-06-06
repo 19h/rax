@@ -2559,10 +2559,15 @@ impl Aarch64Lowerer {
     ) -> Result<(), LowerError> {
         if src1 == VReg::Imm(0) {
             match src2 {
-                SrcOperand::Imm(0) | SrcOperand::Imm64(0) => {
-                    return self.emit_addsub_reg(31, 31, 31, true, true, width);
-                }
-                SrcOperand::Imm(_) | SrcOperand::Imm64(_) => {
+                SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) => {
+                    let is_zero = match width {
+                        OpWidth::W32 => *imm as u32 == 0,
+                        OpWidth::W64 => *imm == 0,
+                        _ => false,
+                    };
+                    if is_zero {
+                        return self.emit_addsub_reg(31, 31, 31, true, true, width);
+                    }
                     return Err(LowerError::UnsupportedOp {
                         op: "AArch64 native CMP zero base with nonzero immediate".into(),
                     });
@@ -7258,6 +7263,32 @@ mod tests {
         let mut expected = Vec::new();
         expected.extend_from_slice(
             &enc_addsub_shift_regs(1, 1, 1, 0, 0, 31, 31, 31).to_le_bytes(),
+        );
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_cmp_w_zero_base_masked_zero_imm_as_cmp_zero_regs() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Cmp {
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Imm64(0x1_0000_0000),
+                width: OpWidth::W32,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(
+            &enc_addsub_shift_regs(0, 1, 1, 0, 0, 31, 31, 31).to_le_bytes(),
         );
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
