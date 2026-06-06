@@ -5423,6 +5423,24 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
 
     let mut st = native_state();
     st.x[0] = 0xbbbb_cccc_dddd_eeee;
+    st.x[1] = 0x1122_3344_5566_7788;
+    st.x[3] = 0x0102_0304_0506_0708;
+    st.pstate = 0xa000_0000;
+    push_case(
+        "muladd_x_imm_one_as_add_preserves_flags",
+        enc_addsub_shift_regs(1, 0, 0, 0, 0, RD, 3, RN),
+        vec![OpKind::MulAdd {
+            dst: arm_x(0),
+            acc: arm_x(3),
+            src1: VReg::Imm(1),
+            src2: arm_x(1),
+            width: OpWidth::W64,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
+    st.x[0] = 0xbbbb_cccc_dddd_eeee;
     st.x[1] = 0xffff_ffff_ffff_fffd;
     st.x[2] = 7;
     st.x[3] = 0x20;
@@ -7567,6 +7585,30 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
         "mulsub_w16_as_msub_uxth_preserves_flags".into(),
         [
             enc_dp3(0, 0b000, 1),
+            enc_bitfield_regs(0, 0b10, 0, 15, RD, RD),
+            NOP,
+        ],
+        lowered,
+        st,
+    ));
+
+    let mut st = native_state();
+    st.x[0] = 0xcccc_dddd_eeee_ffff;
+    st.x[1] = 0xffff_ffff_ffff_8002;
+    st.x[3] = 0x4444_5555_6666_0010;
+    st.pstate = 0x6000_0000;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::MulSub {
+        dst: arm_x(0),
+        acc: arm_x(3),
+        src1: arm_x(1),
+        src2: VReg::Imm(1),
+        width: OpWidth::W16,
+    }])
+    .unwrap_or_else(|e| panic!("mulsub_w16_imm_one_as_sub_uxth_preserves_flags: native lowering failed: {e}"));
+    cases.push((
+        "mulsub_w16_imm_one_as_sub_uxth_preserves_flags".into(),
+        [
+            enc_addsub_shift_regs(0, 1, 0, 0, 0, RD, 3, RN),
             enc_bitfield_regs(0, 0b10, 0, 15, RD, RD),
             NOP,
         ],
