@@ -2339,6 +2339,10 @@ impl Aarch64Lowerer {
             }
 
             let dst = Self::dst_gpr(dst)?;
+            if src == VReg::Imm(0) {
+                return self.emit_mov_imm(dst, 0, OpWidth::W32);
+            }
+
             self.emit_addsub_reg(dst, 31, Self::gpr(src)?, true, false, OpWidth::W32)?;
             let imms = if width == OpWidth::W8 { 7 } else { 15 };
             return self.emit_bitfield(dst, dst, 0b10, 0, imms, OpWidth::W32);
@@ -7027,6 +7031,31 @@ mod tests {
             &enc_addsub_shift_regs(0, 1, 0, 0, 0, 0, 31, 1).to_le_bytes(),
         );
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_neg_w8_zero_as_movz() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Neg {
+                dst: x(0),
+                src: VReg::Imm(0),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 0, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
