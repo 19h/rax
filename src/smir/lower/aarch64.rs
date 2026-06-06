@@ -1963,6 +1963,13 @@ impl Aarch64Lowerer {
 
         let dst = Self::dst_or_zero_for_flags(dst, set_flags)?;
         let rn = Self::gpr(src1)?;
+        if !set_flags {
+            if let SrcOperand::Reg(reg) = src2 {
+                if *reg == VReg::Imm(0) {
+                    return self.emit_mov_reg(dst, rn, width);
+                }
+            }
+        }
         match src2 {
             SrcOperand::Reg(_) | SrcOperand::Shifted { .. } => {
                 let (rm, shift, amount) = Self::addsub_src2(src2, width)?;
@@ -6741,6 +6748,58 @@ mod tests {
         let code = lowerer.finalize().unwrap();
 
         assert_eq!(code, [0x20, 0x00, 0x02, 0x8b, 0xc0, 0x03, 0x5f, 0xd6]);
+    }
+
+    #[test]
+    fn lowers_add_x_zero_source_reg_as_mov() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Add {
+                dst: x(0),
+                src1: x(1),
+                src2: SrcOperand::Reg(VReg::Imm(0)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_reg(1, 0, 1).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_sub_w_zero_source_reg_as_mov() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Sub {
+                dst: x(0),
+                src1: x(1),
+                src2: SrcOperand::Reg(VReg::Imm(0)),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_reg(0, 0, 1).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
     }
 
     #[test]
