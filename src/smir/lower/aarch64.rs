@@ -3087,7 +3087,9 @@ impl Aarch64Lowerer {
                 op: "AArch64 native flag-setting multiply".into(),
             });
         }
-        if dst_hi.is_none() && Self::src_imm(src2) == Some(0) {
+        if dst_hi.is_none()
+            && Self::src_imm(src2).map(|imm| (imm as u64) & width.mask()) == Some(0)
+        {
             let emit_width = match width {
                 OpWidth::W8 | OpWidth::W16 | OpWidth::W32 => OpWidth::W32,
                 OpWidth::W64 => OpWidth::W64,
@@ -7006,6 +7008,33 @@ mod tests {
                 src1: x(1),
                 src2: SrcOperand::Imm64(0),
                 width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_mulu_w_imm_masked_zero_as_movz() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::MulU {
+                dst_lo: x(0),
+                dst_hi: None,
+                src1: x(1),
+                src2: SrcOperand::Imm64(0x1_0000_0000),
+                width: OpWidth::W32,
                 flags: FlagUpdate::None,
             },
         );
