@@ -3267,6 +3267,23 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     );
 
     let mut st = native_state();
+    st.x[0] = 0xaaaa_bbbb_cccc_dddd;
+    st.x[1] = 0;
+    st.pstate = 0x6000_0000;
+    push_case(
+        "adds_w_imm_masked_neg_one_as_subs_one_sets_flags",
+        enc_addsub_imm_regs(0, 1, 1, 0, 1, RD, RN),
+        vec![OpKind::Add {
+            dst: arm_x(0),
+            src1: arm_x(1),
+            src2: SrcOperand::Imm64(0xffff_ffff),
+            width: OpWidth::W32,
+            flags: FlagUpdate::All,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
     st.x[0] = 0xcccc_dddd_eeee_ffff;
     st.x[1] = 0x0102_0304_0506_0708;
     st.x[2] = 0x11;

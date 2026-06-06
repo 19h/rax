@@ -417,6 +417,32 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
+    fn addsub_imm_fits(imm: u64) -> bool {
+        imm <= 0xfff || (imm & 0xfff == 0 && (imm >> 12) <= 0xfff)
+    }
+
+    fn canonical_addsub_imm(
+        imm: i64,
+        subtract: bool,
+        width: OpWidth,
+    ) -> Option<(bool, i64)> {
+        let value = match width {
+            OpWidth::W32 => u64::from(imm as u32),
+            OpWidth::W64 => imm as u64,
+            _ => return None,
+        };
+        if Self::addsub_imm_fits(value) {
+            return i64::try_from(value).ok().map(|imm| (subtract, imm));
+        }
+
+        let negated = value.wrapping_neg() & width.mask();
+        if negated != 0 && Self::addsub_imm_fits(negated) {
+            return i64::try_from(negated).ok().map(|imm| (!subtract, imm));
+        }
+
+        None
+    }
+
     fn emit_logic_reg_n(
         &mut self,
         dst: u8,
@@ -1925,7 +1951,9 @@ impl Aarch64Lowerer {
                 self.emit_addsub_extended(dst, rn, rm, subtract, set_flags, option, amount, width)
             }
             SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) => {
-                self.emit_addsub_imm(dst, rn, *imm, subtract, set_flags, width)
+                let (subtract, imm) =
+                    Self::canonical_addsub_imm(*imm, subtract, width).unwrap_or((subtract, *imm));
+                self.emit_addsub_imm(dst, rn, imm, subtract, set_flags, width)
             }
             other => Err(LowerError::UnsupportedOp {
                 op: format!("AArch64 native add/sub source {other:?}"),
@@ -6674,6 +6702,32 @@ mod tests {
             &enc_addsub_shift_regs(0, 0, 0, 0, 0, 0, 1, 2).to_le_bytes(),
         );
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_adds_w_imm_masked_neg_one_as_subs_one() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Add {
+                dst: x(0),
+                src1: x(1),
+                src2: SrcOperand::Imm64(0xffff_ffff),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_addsub_imm_regs(0, 1, 1, 0, 1, 0, 1).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
