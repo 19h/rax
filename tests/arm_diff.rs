@@ -804,7 +804,12 @@ fn enc_addsub_carry(sf: u32, op: u32, s: u32) -> u32 {
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn enc_addsub_carry_rn(sf: u32, op: u32, s: u32, rn: u32) -> u32 {
-    (sf << 31) | (op << 30) | (s << 29) | (0b11010000 << 21) | (RM << 16) | (rn << 5) | RD
+    enc_addsub_carry_regs(sf, op, s, RD, rn, RM)
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn enc_addsub_carry_regs(sf: u32, op: u32, s: u32, rd: u32, rn: u32, rm: u32) -> u32 {
+    (sf << 31) | (op << 30) | (s << 29) | (0b11010000 << 21) | (rm << 16) | (rn << 5) | rd
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -3475,6 +3480,23 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     );
 
     let mut st = native_state();
+    st.x[0] = 0x7777_8888_9999_aaaa;
+    st.x[1] = 0xffff_ffff_ffff_ffff;
+    st.pstate = 0x2000_0000;
+    push_case(
+        "adc_x_zero_imm_as_adc_zero_reg_preserves_flags",
+        enc_addsub_carry_regs(1, 0, 0, RD, RN, 31),
+        vec![OpKind::Adc {
+            dst: arm_x(0),
+            src1: arm_x(1),
+            src2: SrcOperand::Imm(0),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
     st.x[1] = 0xffff_ffff;
     st.x[2] = 0;
@@ -3521,6 +3543,23 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
             dst: arm_x(0),
             src1: arm_x(1),
             src2: SrcOperand::Reg(arm_x(2)),
+            width: OpWidth::W32,
+            flags: FlagUpdate::All,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
+    st.x[0] = 0xaaaa_bbbb_cccc_dddd;
+    st.x[1] = 0;
+    st.pstate = 0;
+    push_case(
+        "sbcs_w_masked_zero_imm_as_sbcs_zero_reg_sets_flags",
+        enc_addsub_carry_regs(0, 1, 1, RD, RN, 31),
+        vec![OpKind::Sbb {
+            dst: arm_x(0),
+            src1: arm_x(1),
+            src2: SrcOperand::Imm64(0x1_0000_0000),
             width: OpWidth::W32,
             flags: FlagUpdate::All,
         }],
@@ -7202,6 +7241,29 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     ));
 
     let mut st = native_state();
+    st.x[0] = 0x6666_7777_8888_9999;
+    st.x[1] = 0xffff_ffff_ffff_12ff;
+    st.pstate = 0x2000_0000;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Adc {
+        dst: arm_x(0),
+        src1: arm_x(1),
+        src2: SrcOperand::Imm(0x100),
+        width: OpWidth::W8,
+        flags: FlagUpdate::None,
+    }])
+    .unwrap_or_else(|e| panic!("adc_w8_masked_zero_imm_as_adc_uxtb_preserves_flags: native lowering failed: {e}"));
+    cases.push((
+        "adc_w8_masked_zero_imm_as_adc_uxtb_preserves_flags".into(),
+        [
+            enc_addsub_carry_regs(0, 0, 0, RD, RN, 31),
+            enc_bitfield_regs(0, 0b10, 0, 7, RD, RD),
+            NOP,
+        ],
+        lowered,
+        st,
+    ));
+
+    let mut st = native_state();
     st.x[0] = 0x7777_8888_9999_aaaa;
     st.x[1] = 0xffff_ffff_ffff_0100;
     st.x[2] = 0x1111_2222_3333_0001;
@@ -7218,6 +7280,29 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
         "sbb_w16_carry_clear_as_sbc_uxth_preserves_flags".into(),
         [
             enc_addsub_carry(0, 1, 0),
+            enc_bitfield_regs(0, 0b10, 0, 15, RD, RD),
+            NOP,
+        ],
+        lowered,
+        st,
+    ));
+
+    let mut st = native_state();
+    st.x[0] = 0x7777_8888_9999_aaaa;
+    st.x[1] = 0xffff_ffff_ffff_0100;
+    st.pstate = 0;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Sbb {
+        dst: arm_x(0),
+        src1: arm_x(1),
+        src2: SrcOperand::Imm(0x1_0000),
+        width: OpWidth::W16,
+        flags: FlagUpdate::None,
+    }])
+    .unwrap_or_else(|e| panic!("sbb_w16_masked_zero_imm_as_sbc_uxth_preserves_flags: native lowering failed: {e}"));
+    cases.push((
+        "sbb_w16_masked_zero_imm_as_sbc_uxth_preserves_flags".into(),
+        [
+            enc_addsub_carry_regs(0, 1, 0, RD, RN, 31),
             enc_bitfield_regs(0, 0b10, 0, 15, RD, RD),
             NOP,
         ],
