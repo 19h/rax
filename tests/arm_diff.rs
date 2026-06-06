@@ -5233,6 +5233,42 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
 
     let mut st = native_state();
     st.x[0] = 0x2222_3333_4444_5555;
+    st.x[1] = 0x8000_0000_0000_0000;
+    st.pstate = 0x9000_0000;
+    push_case(
+        "divs_x_imm_neg_one_as_neg_preserves_flags",
+        enc_addsub_shift_regs(1, 1, 0, 0, 0, RD, 31, RN),
+        vec![OpKind::DivS {
+            quot: arm_x(0),
+            rem: None,
+            src1: arm_x(1),
+            src2: SrcOperand::Imm(-1),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
+    st.x[0] = 0x3333_4444_5555_6666;
+    st.x[1] = 0xffff_ffff_8000_0001;
+    st.pstate = 0x6000_0000;
+    push_case(
+        "divs_w_imm_masked_neg_one_as_neg_zero_ext_preserves_flags",
+        enc_addsub_shift_regs(0, 1, 0, 0, 0, RD, 31, RN),
+        vec![OpKind::DivS {
+            quot: arm_x(0),
+            rem: None,
+            src1: arm_x(1),
+            src2: SrcOperand::Imm64(0x1_ffff_ffff),
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        }],
+        st,
+    );
+
+    let mut st = native_state();
+    st.x[0] = 0x2222_3333_4444_5555;
     st.x[1] = 0xfedc_ba98_7654_3210;
     st.pstate = 0x5000_0000;
     push_case(

@@ -3234,6 +3234,18 @@ impl Aarch64Lowerer {
             }
             return Ok(());
         }
+        if signed && rem.is_none() {
+            if let Some(imm) = Self::src_imm(src2) {
+                if ((imm as u64) & width.mask()) == width.mask() {
+                    return match width {
+                        OpWidth::W32 | OpWidth::W64 => self.lower_neg(quot, src1, false, width),
+                        other => Err(LowerError::UnsupportedOp {
+                            op: format!("AArch64 native signed neg-one divide width {other:?}"),
+                        }),
+                    };
+                }
+            }
+        }
         if !signed {
             if let Some(imm) = Self::src_imm(src2) {
                 let divisor = (imm as u64) & width.mask();
@@ -7449,6 +7461,64 @@ mod tests {
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_mov_reg(0, 3, 1).to_le_bytes());
         expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_divs_x_imm_neg_one_as_neg() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::DivS {
+                quot: x(0),
+                rem: None,
+                src1: x(1),
+                src2: SrcOperand::Imm(-1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(
+            &enc_addsub_shift_regs(1, 1, 0, 0, 0, 0, 31, 1).to_le_bytes(),
+        );
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_divs_w_imm_masked_neg_one_as_neg() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::DivS {
+                quot: x(3),
+                rem: None,
+                src1: x(1),
+                src2: SrcOperand::Imm64(0x1_ffff_ffff),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(
+            &enc_addsub_shift_regs(0, 1, 0, 0, 0, 3, 31, 1).to_le_bytes(),
+        );
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
