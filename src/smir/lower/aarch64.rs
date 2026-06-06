@@ -3297,6 +3297,29 @@ impl Aarch64Lowerer {
         {
             return self.lower_neg(dst_lo, src1, false, width);
         }
+        if dst_hi.is_none() {
+            if let Some(imm) = Self::src_imm(src2) {
+                let multiplier = (imm as u64) & width.mask();
+                if multiplier.is_power_of_two() && multiplier > 1 {
+                    match width {
+                        OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64 => {
+                            return self.lower_shift_imm(
+                                Self::dst_gpr(dst_lo)?,
+                                Self::gpr(src1)?,
+                                i64::from(multiplier.trailing_zeros()),
+                                ShiftOp::Lsl,
+                                width,
+                            );
+                        }
+                        other => {
+                            return Err(LowerError::UnsupportedOp {
+                                op: format!("AArch64 native multiply width {other:?}"),
+                            });
+                        }
+                    }
+                }
+            }
+        }
         let SrcOperand::Reg(src2) = src2 else {
             return Err(LowerError::UnsupportedOp {
                 op: format!("AArch64 native multiply source {src2:?}"),
@@ -7996,6 +8019,60 @@ mod tests {
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_mov_reg(0, 0, 1).to_le_bytes());
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_mulu_x_imm_power_of_two_as_lsl() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::MulU {
+                dst_lo: x(0),
+                dst_hi: None,
+                src1: x(1),
+                src2: SrcOperand::Imm(8),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_bitfield(1, 0b10, 61, 60).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_muls_w16_imm_masked_power_of_two_as_lsl_uxth() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::MulS {
+                dst_lo: x(0),
+                dst_hi: None,
+                src1: x(1),
+                src2: SrcOperand::Imm64(0x1_0008),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_bitfield(0, 0b10, 29, 12).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
