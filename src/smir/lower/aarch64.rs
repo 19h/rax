@@ -2442,7 +2442,9 @@ impl Aarch64Lowerer {
                 self.emit_addsub_extended(31, rn, rm, true, true, option, amount, width)
             }
             SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) => {
-                self.emit_addsub_imm(31, rn, *imm, true, true, width)
+                let (subtract, imm) =
+                    Self::canonical_addsub_imm(*imm, true, width).unwrap_or((true, *imm));
+                self.emit_addsub_imm(31, rn, imm, subtract, true, width)
             }
             other => Err(LowerError::UnsupportedOp {
                 op: format!("AArch64 native CMP source {other:?}"),
@@ -6728,6 +6730,30 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_addsub_imm_regs(0, 1, 1, 0, 1, 0, 1).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_cmp_w_imm_masked_neg_one_as_cmn_one() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Cmp {
+                src1: x(1),
+                src2: SrcOperand::Imm64(0xffff_ffff),
+                width: OpWidth::W32,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_addsub_imm_regs(0, 0, 1, 0, 1, 31, 1).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
