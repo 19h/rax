@@ -2517,6 +2517,20 @@ impl Aarch64Lowerer {
         src2: &SrcOperand,
         width: OpWidth,
     ) -> Result<(), LowerError> {
+        if src1 == VReg::Imm(0) {
+            match src2 {
+                SrcOperand::Imm(0) | SrcOperand::Imm64(0) => {
+                    return self.emit_addsub_reg(31, 31, 31, true, true, width);
+                }
+                SrcOperand::Imm(_) | SrcOperand::Imm64(_) => {
+                    return Err(LowerError::UnsupportedOp {
+                        op: "AArch64 native CMP zero base with nonzero immediate".into(),
+                    });
+                }
+                _ => {}
+            }
+        }
+
         let rn = Self::gpr(src1)?;
         match src2 {
             SrcOperand::Reg(_) | SrcOperand::Shifted { .. } => {
@@ -7104,6 +7118,51 @@ mod tests {
         expected.extend_from_slice(&enc_addsub_imm_regs(0, 0, 1, 0, 1, 31, 1).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_cmp_x_zero_base_zero_imm_as_cmp_zero_regs() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Cmp {
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Imm(0),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(
+            &enc_addsub_shift_regs(1, 1, 1, 0, 0, 31, 31, 31).to_le_bytes(),
+        );
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn rejects_cmp_zero_base_nonzero_imm_without_scratch() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Cmp {
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        let err = lowerer.lower_function(&func).unwrap_err();
+        assert!(matches!(err, LowerError::UnsupportedOp { .. }));
     }
 
     #[test]
