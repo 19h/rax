@@ -6896,6 +6896,50 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     ));
 
     let mut st = native_state();
+    st.x[0] = 0x3333_4444_5555_6666;
+    st.pstate = 0xf000_0000;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Add {
+        dst: arm_x(0),
+        src1: VReg::Imm(0),
+        src2: SrcOperand::Imm(0x1234),
+        width: OpWidth::W16,
+        flags: FlagUpdate::None,
+    }])
+    .unwrap_or_else(|e| panic!("add_w16_zero_base_imm_as_movz_preserves_flags: native lowering failed: {e}"));
+    cases.push((
+        "add_w16_zero_base_imm_as_movz_preserves_flags".into(),
+        [
+            enc_addsub_imm_regs(0, 0, 0, 0, 0x234, RD, 31),
+            enc_addsub_imm_regs(0, 0, 0, 1, 0x1, RD, RD),
+            enc_bitfield_regs(0, 0b10, 0, 15, RD, RD),
+        ],
+        lowered,
+        st,
+    ));
+
+    let mut st = native_state();
+    st.x[0] = 0x4444_5555_6666_7777;
+    st.pstate = 0x7000_0000;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Sub {
+        dst: arm_x(0),
+        src1: VReg::Imm(0),
+        src2: SrcOperand::Imm(0x34),
+        width: OpWidth::W8,
+        flags: FlagUpdate::None,
+    }])
+    .unwrap_or_else(|e| panic!("sub_w8_zero_base_imm_as_movz_negated_preserves_flags: native lowering failed: {e}"));
+    cases.push((
+        "sub_w8_zero_base_imm_as_movz_negated_preserves_flags".into(),
+        [
+            enc_addsub_imm_regs(0, 1, 0, 0, 0x34, RD, 31),
+            enc_bitfield_regs(0, 0b10, 0, 7, RD, RD),
+            NOP,
+        ],
+        lowered,
+        st,
+    ));
+
+    let mut st = native_state();
     st.x[0] = 0x2222_3333_4444_5555;
     st.x[1] = 0xaaaa_bbbb_cccc_0100;
     st.pstate = 0x6000_0000;

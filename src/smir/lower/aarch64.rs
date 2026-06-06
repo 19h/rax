@@ -1992,8 +1992,20 @@ impl Aarch64Lowerer {
         width: OpWidth,
     ) -> Result<(), LowerError> {
         let dst = Self::dst_gpr(dst)?;
-        let rn = Self::gpr(src1)?;
         let top_bit = width.bits() - 1;
+        if let SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) = src2 {
+            if src1 == VReg::Imm(0) {
+                let value = (*imm as u64) & width.mask();
+                let result = if subtract {
+                    value.wrapping_neg() & width.mask()
+                } else {
+                    value
+                };
+                return self.emit_mov_imm(dst, result as i64, OpWidth::W32);
+            }
+        }
+
+        let rn = Self::gpr(src1)?;
 
         match src2 {
             SrcOperand::Reg(reg) => {
@@ -6805,6 +6817,32 @@ mod tests {
     }
 
     #[test]
+    fn lowers_add_w16_zero_base_imm_as_movz() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Add {
+                dst: x(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Imm(0x1234),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 0x1234, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
     fn lowers_cmp_w_imm_masked_neg_one_as_cmn_one() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(
@@ -6852,6 +6890,32 @@ mod tests {
         expected.extend_from_slice(&enc_addsub_imm_regs(0, 1, 0, 0, 0x234, 0, 1).to_le_bytes());
         expected.extend_from_slice(&enc_addsub_imm_regs(0, 1, 0, 1, 0x1, 0, 0).to_le_bytes());
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 15, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_sub_w8_zero_base_imm_as_movz_negated() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Sub {
+                dst: x(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Imm(0x34),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 0xcc, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
