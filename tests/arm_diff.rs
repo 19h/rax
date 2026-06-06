@@ -4714,6 +4714,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
         st,
     );
 
+    drop(push_case);
     let mut st = native_state();
     st.x[0] = 0x7777_8888_9999_aaaa;
     st.x[1] = 0xfedc_ba98_7654_3210;
@@ -4738,6 +4739,12 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
         lowered,
         st,
     ));
+
+    let mut push_case = |label: &str, source: u32, ops: Vec<OpKind>, st: ArmState| {
+        let lowered = lower_aarch64_native_ops(ops)
+            .unwrap_or_else(|e| panic!("{label}: native lowering failed: {e}"));
+        cases.push((label.into(), [source, NOP, NOP], lowered, st));
+    };
 
     let mut st = native_state();
     st.x[0] = 0xaaaa_bbbb_cccc_dddd;
@@ -4807,6 +4814,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
         st,
     );
 
+    drop(push_case);
     let mut st = native_state();
     st.x[0] = 0x8888_9999_aaaa_bbbb;
     st.x[1] = 0xfedc_ba98_7654_3210;
@@ -4856,6 +4864,12 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
         lowered,
         st,
     ));
+
+    let mut push_case = |label: &str, source: u32, ops: Vec<OpKind>, st: ArmState| {
+        let lowered = lower_aarch64_native_ops(ops)
+            .unwrap_or_else(|e| panic!("{label}: native lowering failed: {e}"));
+        cases.push((label.into(), [source, NOP, NOP], lowered, st));
+    };
 
     let mut st = native_state();
     st.x[0] = 0x9999_aaaa_bbbb_cccc;
