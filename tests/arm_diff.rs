@@ -3678,6 +3678,60 @@ fn push_addsub_carry_nonzero_imm_native_cases(
         lowered,
         st,
     ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0x1111_2222_3333_4444;
+    st.x[1] = 0xffff_ffff_ffff_ffff;
+    st.pstate = 0x2000_0000;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Sbb {
+        dst: arm_x(1),
+        src1: arm_x(1),
+        src2: SrcOperand::Imm(-1),
+        width: OpWidth::W8,
+        flags: FlagUpdate::None,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("sbb_w8_neg_one_imm_alias_as_adc_uxtb_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "sbb_w8_neg_one_imm_alias_as_adc_uxtb_preserves_flags".into(),
+        [
+            enc_addsub_carry_regs(0, 0, 0, RN, RN, 31),
+            enc_bitfield_regs(0, 0b10, 0, 7, RN, RN),
+            NOP,
+        ],
+        lowered,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0x2222_3333_4444_5555;
+    st.x[1] = 0xffff_ffff_0001_0000;
+    st.pstate = 0;
+    let lowered = lower_aarch64_native_ops(vec![OpKind::Adc {
+        dst: arm_x(1),
+        src1: arm_x(1),
+        src2: SrcOperand::Imm64(0xffff),
+        width: OpWidth::W16,
+        flags: FlagUpdate::None,
+    }])
+    .unwrap_or_else(|e| {
+        panic!("adc_w16_masked_neg_one_imm_alias_as_sbc_uxth_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "adc_w16_masked_neg_one_imm_alias_as_sbc_uxth_preserves_flags".into(),
+        [
+            enc_addsub_carry_regs(0, 1, 0, RN, RN, 31),
+            enc_bitfield_regs(0, 0b10, 0, 15, RN, RN),
+            NOP,
+        ],
+        lowered,
+        st,
+    ));
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]

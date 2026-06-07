@@ -2250,12 +2250,16 @@ impl Aarch64Lowerer {
             }
             SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) => {
                 let imm = (*imm as u64) & width.mask();
-                if imm != 0 {
+                let op_subtract = if imm == 0 {
+                    subtract
+                } else if imm == width.mask() {
+                    !subtract
+                } else {
                     return Err(LowerError::UnsupportedOp {
                         op: format!("AArch64 native subword add/sub carry immediate {imm:#x}"),
                     });
-                }
-                self.emit_addsub_carry(dst, rn, 31, subtract, false, OpWidth::W32)?;
+                };
+                self.emit_addsub_carry(dst, rn, 31, op_subtract, false, OpWidth::W32)?;
             }
             other => {
                 return Err(LowerError::UnsupportedOp {
@@ -9417,6 +9421,60 @@ mod tests {
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_addsub_carry_regs(0, 0, 0, 0, 1, 31).to_le_bytes());
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_sbb_w8_neg_one_imm_alias_as_adc_uxtb() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Sbb {
+                dst: x(1),
+                src1: x(1),
+                src2: SrcOperand::Imm(-1),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_addsub_carry_regs(0, 0, 0, 1, 1, 31).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 1, 1).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_adc_w16_masked_neg_one_imm_alias_as_sbc_uxth() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::Adc {
+                dst: x(1),
+                src1: x(1),
+                src2: SrcOperand::Imm64(0xffff),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_addsub_carry_regs(0, 1, 0, 1, 1, 31).to_le_bytes());
+        expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 15, 1, 1).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
