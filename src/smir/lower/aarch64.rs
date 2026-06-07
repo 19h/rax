@@ -2329,6 +2329,12 @@ impl Aarch64Lowerer {
                                 dst, 31, src, 0b01, false, shift, amount, width,
                             );
                         }
+                        SrcOperand::Extended { .. } => {
+                            let (src, option, amount) = Self::addsub_ext_src2(src2)?;
+                            return self.emit_addsub_extended(
+                                dst, 31, src, false, set_flags, option, amount, width,
+                            );
+                        }
                         _ => {}
                     }
                 }
@@ -17661,6 +17667,70 @@ mod tests {
                     flags: FlagUpdate::All,
                 },
                 enc_addsub_shift_regs(1, 0, 1, 1, 8, 0, 31, 2),
+            ),
+        ];
+
+        for (op, expected_insn) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            expected.extend_from_slice(&expected_insn.to_le_bytes());
+            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+            assert_eq!(code, expected);
+        }
+    }
+
+    #[test]
+    fn lowers_and_all_ones_left_imm_extended_as_add_zero_base() {
+        let cases = [
+            (
+                OpKind::And {
+                    dst: x(0),
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Uxtw,
+                        shift: 0,
+                    },
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                enc_addsub_ext_regs(1, 0, 0, 0b010, 0, 0, 31, 2),
+            ),
+            (
+                OpKind::And {
+                    dst: x(0),
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Sxtw,
+                        shift: 2,
+                    },
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                enc_addsub_ext_regs(1, 0, 1, 0b110, 2, 0, 31, 2),
+            ),
+            (
+                OpKind::And {
+                    dst: x(0),
+                    src1: VReg::Imm(0x1_ffff_ffff),
+                    src2: SrcOperand::Extended {
+                        reg: x(2),
+                        extend: ExtendOp::Uxtb,
+                        shift: 1,
+                    },
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::All,
+                },
+                enc_addsub_ext_regs(0, 0, 1, 0b000, 1, 0, 31, 2),
             ),
         ];
 
