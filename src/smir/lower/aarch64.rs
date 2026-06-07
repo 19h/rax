@@ -5354,7 +5354,11 @@ impl Aarch64Lowerer {
         self.lower_shift_imm(dst, src, 0, ShiftOp::Lsl, width)
     }
 
-    fn lower_bit_permute_identity(
+    fn is_low_contiguous_mask(mask: u64, width: OpWidth) -> bool {
+        mask != 0 && mask != width.mask() && (mask & (mask + 1)) == 0
+    }
+
+    fn lower_bit_permute_imm_mask(
         &mut self,
         op: &str,
         dst: VReg,
@@ -5382,23 +5386,35 @@ impl Aarch64Lowerer {
             OpWidth::W64 => OpWidth::W64,
             _ => unreachable!(),
         };
-        let dst = Self::dst_gpr(dst)?;
 
         if mask == 0 {
+            let dst = Self::dst_gpr(dst)?;
             return self.emit_mov_imm(dst, 0, emit_width);
         }
-        if mask != width.mask() {
-            return Err(LowerError::UnsupportedOp {
-                op: format!("AArch64 native {op} mask"),
-            });
+        if mask == width.mask() {
+            let dst = Self::dst_gpr(dst)?;
+            if let VReg::Imm(value) = src {
+                let result = (value as u64) & width.mask();
+                return self.emit_mov_imm_best(dst, result as i64, emit_width);
+            }
+
+            let src = Self::gpr(src)?;
+            return self.lower_shift_imm(dst, src, 0, ShiftOp::Lsl, width);
         }
-        if let VReg::Imm(value) = src {
-            let result = (value as u64) & width.mask();
-            return self.emit_mov_imm_best(dst, result as i64, emit_width);
+        if Self::is_low_contiguous_mask(mask, width) {
+            if let VReg::Imm(value) = src {
+                let dst = Self::dst_gpr(dst)?;
+                let result = (value as u64) & mask;
+                return self.emit_mov_imm_best(dst, result as i64, emit_width);
+            }
+
+            let mask = SrcOperand::Imm(mask as i64);
+            return self.lower_logic(dst, src, &mask, 0b00, false, false, width);
         }
 
-        let src = Self::gpr(src)?;
-        self.lower_shift_imm(dst, src, 0, ShiftOp::Lsl, width)
+        Err(LowerError::UnsupportedOp {
+            op: format!("AArch64 native {op} mask"),
+        })
     }
 
     fn lower_double_shift(
@@ -7247,13 +7263,13 @@ impl Aarch64Lowerer {
                 src,
                 mask,
                 width,
-            } => self.lower_bit_permute_identity("Pdep", *dst, *src, *mask, *width),
+            } => self.lower_bit_permute_imm_mask("Pdep", *dst, *src, *mask, *width),
             OpKind::Pext {
                 dst,
                 src,
                 mask,
                 width,
-            } => self.lower_bit_permute_identity("Pext", *dst, *src, *mask, *width),
+            } => self.lower_bit_permute_imm_mask("Pext", *dst, *src, *mask, *width),
             OpKind::Bswap { dst, src, width } => self.lower_bswap(*dst, *src, *width),
             OpKind::Rbit { dst, src, width } => self.lower_rbit(*dst, *src, *width),
             OpKind::Bfx {
@@ -15332,6 +15348,69 @@ mod tests {
                     width: OpWidth::W16,
                 },
                 vec![enc_mov_wide(0, 0b10, 0, 0xffff, 0), 0xd65f_03c0u32],
+            ),
+        ];
+
+        for (op, expected_words) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            for word in expected_words {
+                expected.extend_from_slice(&word.to_le_bytes());
+            }
+            assert_eq!(code, expected);
+        }
+    }
+
+    #[test]
+    fn lowers_pdep_pext_low_masks_as_and_mask() {
+        let cases = [
+            (
+                OpKind::Pdep {
+                    dst: x(0),
+                    src: x(1),
+                    mask: VReg::Imm(0x1fff),
+                    width: OpWidth::W64,
+                },
+                vec![enc_logical_imm(1, 0b00, 1, 0, 12, 0, 1), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Pext {
+                    dst: x(0),
+                    src: x(1),
+                    mask: VReg::Imm(0x1f),
+                    width: OpWidth::W32,
+                },
+                vec![enc_logical_imm(0, 0b00, 0, 0, 4, 0, 1), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Pdep {
+                    dst: x(0),
+                    src: x(1),
+                    mask: VReg::Imm(0xf),
+                    width: OpWidth::W8,
+                },
+                vec![
+                    enc_logical_imm(0, 0b00, 0, 0, 3, 0, 1),
+                    enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
+                    0xd65f_03c0u32,
+                ],
+            ),
+            (
+                OpKind::Pext {
+                    dst: x(0),
+                    src: VReg::Imm(0x12345),
+                    mask: VReg::Imm(0xff),
+                    width: OpWidth::W16,
+                },
+                vec![enc_mov_wide(0, 0b10, 0, 0x45, 0), 0xd65f_03c0u32],
             ),
         ];
 
