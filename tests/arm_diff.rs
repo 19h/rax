@@ -4384,6 +4384,92 @@ fn push_bit_permute_low_mask_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_bit_permute_single_bit_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let bit_permute_cases = [
+        (
+            "pext_x_single_bit_as_ubfx_preserves_flags",
+            OpKind::Pext {
+                dst: arm_x(0),
+                src: arm_x(1),
+                mask: VReg::Imm(1 << 12),
+                width: OpWidth::W64,
+            },
+            [enc_bitfield(1, 0b10, 12, 12), NOP, NOP],
+            0x1111_2222_3333_4444,
+            0xaaaa_bbbb_cccc_1ddd,
+            0x2000_0000,
+        ),
+        (
+            "pdep_x_single_bit_as_ubfiz_preserves_flags",
+            OpKind::Pdep {
+                dst: arm_x(0),
+                src: arm_x(1),
+                mask: VReg::Imm(1 << 12),
+                width: OpWidth::W64,
+            },
+            [enc_bitfield(1, 0b10, 52, 0), NOP, NOP],
+            0x2222_3333_4444_5555,
+            0x1234_5678_9abc_def1,
+            0x6000_0000,
+        ),
+        (
+            "pext_w8_single_bit_as_ubfx_preserves_flags",
+            OpKind::Pext {
+                dst: arm_x(0),
+                src: arm_x(1),
+                mask: VReg::Imm(0x20),
+                width: OpWidth::W8,
+            },
+            [enc_bitfield(0, 0b10, 5, 5), NOP, NOP],
+            0xffff_ffff_8765_4321,
+            0x1234_5678_9abc_de20,
+            0x9000_0000,
+        ),
+        (
+            "pdep_w16_single_bit_imm_as_movz_preserves_flags",
+            OpKind::Pdep {
+                dst: arm_x(0),
+                src: VReg::Imm(3),
+                mask: VReg::Imm(0x80),
+                width: OpWidth::W16,
+            },
+            [enc_mov_wide(0, 0b10, 0, 0x80), NOP, NOP],
+            0x3333_4444_5555_6666,
+            0,
+            0xc000_0000,
+        ),
+        (
+            "pext_w16_single_bit_imm_zero_as_movz_preserves_flags",
+            OpKind::Pext {
+                dst: arm_x(0),
+                src: VReg::Imm(0),
+                mask: VReg::Imm(0x4000),
+                width: OpWidth::W16,
+            },
+            [enc_mov_wide(0, 0b10, 0, 0), NOP, NOP],
+            0x4444_5555_6666_7777,
+            0,
+            0xf000_0000,
+        ),
+    ];
+
+    for (name, op, source, x0, x1, pstate) in bit_permute_cases {
+        let mut st = ArmState::zeroed();
+        st.pc = PCREL_MAGIC;
+        st.x[30] = pcrel_marker(control_target);
+        st.x[0] = x0;
+        st.x[1] = x1;
+        st.pstate = pstate;
+        let lowered = lower_aarch64_native_ops(vec![op])
+            .unwrap_or_else(|e| panic!("{name}: native lowering failed: {e}"));
+        cases.push((name.into(), source, lowered, st));
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn push_cmove_imm_movn_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -11894,6 +11980,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     push_bfxil_full_width_native_cases(&mut cases, control_target);
     push_bit_permute_identity_native_cases(&mut cases, control_target);
     push_bit_permute_low_mask_native_cases(&mut cases, control_target);
+    push_bit_permute_single_bit_native_cases(&mut cases, control_target);
     push_cmove_imm_movn_native_cases(&mut cases, control_target);
     push_cmove_imm_csel_native_cases(&mut cases, control_target);
     push_cmove_always_reg_native_cases(&mut cases, control_target);

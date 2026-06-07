@@ -5358,9 +5358,18 @@ impl Aarch64Lowerer {
         mask != 0 && mask != width.mask() && (mask & (mask + 1)) == 0
     }
 
+    fn single_bit_mask_lsb(mask: u64) -> Option<u8> {
+        if mask != 0 && (mask & (mask - 1)) == 0 {
+            Some(mask.trailing_zeros() as u8)
+        } else {
+            None
+        }
+    }
+
     fn lower_bit_permute_imm_mask(
         &mut self,
         op: &str,
+        deposit: bool,
         dst: VReg,
         src: VReg,
         mask: VReg,
@@ -5410,6 +5419,22 @@ impl Aarch64Lowerer {
 
             let mask = SrcOperand::Imm(mask as i64);
             return self.lower_logic(dst, src, &mask, 0b00, false, false, width);
+        }
+        if let Some(lsb) = Self::single_bit_mask_lsb(mask) {
+            if let VReg::Imm(value) = src {
+                let dst = Self::dst_gpr(dst)?;
+                let result = if deposit {
+                    ((value as u64) & 1) << lsb
+                } else {
+                    ((value as u64) & mask) >> lsb
+                };
+                return self.emit_mov_imm_best(dst, result as i64, emit_width);
+            }
+
+            if deposit {
+                return self.lower_bitfield_insert_zero(dst, src, lsb, 1, false, emit_width);
+            }
+            return self.lower_bfx(dst, src, lsb, 1, false, emit_width);
         }
 
         Err(LowerError::UnsupportedOp {
@@ -7263,13 +7288,13 @@ impl Aarch64Lowerer {
                 src,
                 mask,
                 width,
-            } => self.lower_bit_permute_imm_mask("Pdep", *dst, *src, *mask, *width),
+            } => self.lower_bit_permute_imm_mask("Pdep", true, *dst, *src, *mask, *width),
             OpKind::Pext {
                 dst,
                 src,
                 mask,
                 width,
-            } => self.lower_bit_permute_imm_mask("Pext", *dst, *src, *mask, *width),
+            } => self.lower_bit_permute_imm_mask("Pext", false, *dst, *src, *mask, *width),
             OpKind::Bswap { dst, src, width } => self.lower_bswap(*dst, *src, *width),
             OpKind::Rbit { dst, src, width } => self.lower_rbit(*dst, *src, *width),
             OpKind::Bfx {
@@ -15411,6 +15436,74 @@ mod tests {
                     width: OpWidth::W16,
                 },
                 vec![enc_mov_wide(0, 0b10, 0, 0x45, 0), 0xd65f_03c0u32],
+            ),
+        ];
+
+        for (op, expected_words) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            for word in expected_words {
+                expected.extend_from_slice(&word.to_le_bytes());
+            }
+            assert_eq!(code, expected);
+        }
+    }
+
+    #[test]
+    fn lowers_pdep_pext_single_bit_masks_as_bitfield_ops() {
+        let cases = [
+            (
+                OpKind::Pext {
+                    dst: x(0),
+                    src: x(1),
+                    mask: VReg::Imm(1 << 12),
+                    width: OpWidth::W64,
+                },
+                vec![enc_bitfield_regs(1, 0b10, 12, 12, 1, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Pdep {
+                    dst: x(0),
+                    src: x(1),
+                    mask: VReg::Imm(1 << 12),
+                    width: OpWidth::W64,
+                },
+                vec![enc_bitfield_regs(1, 0b10, 52, 0, 1, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Pext {
+                    dst: x(0),
+                    src: x(1),
+                    mask: VReg::Imm(0x20),
+                    width: OpWidth::W8,
+                },
+                vec![enc_bitfield_regs(0, 0b10, 5, 5, 1, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Pdep {
+                    dst: x(0),
+                    src: VReg::Imm(3),
+                    mask: VReg::Imm(0x80),
+                    width: OpWidth::W16,
+                },
+                vec![enc_mov_wide(0, 0b10, 0, 0x80, 0), 0xd65f_03c0u32],
+            ),
+            (
+                OpKind::Pext {
+                    dst: x(0),
+                    src: VReg::Imm(0),
+                    mask: VReg::Imm(0x4000),
+                    width: OpWidth::W16,
+                },
+                vec![enc_mov_wide(0, 0b10, 0, 0, 0), 0xd65f_03c0u32],
             ),
         ];
 
