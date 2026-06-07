@@ -5958,12 +5958,34 @@ fn push_subword_addsub_zero_base_reg_operand_native_cases(
                 flags: FlagUpdate::None,
             },
             [
-                enc_addsub_shift_regs(0, 0, 0, 0, 3, RD, 31, RN),
+                enc_addsub_shift_regs(1, 0, 0, 0, 3, RD, 31, RN),
                 enc_bitfield_regs(0, 0b10, 0, 15, RD, RD),
                 NOP,
             ],
             0x7777_8888_9999_aaaa,
             0x0000_0000_0000_1003,
+            0xc000_0000,
+        ),
+        (
+            "sub_w8_zero_base_asr40_as_sub_uxtb_preserves_flags",
+            OpKind::Sub {
+                dst: arm_x(0),
+                src1: VReg::Imm(0),
+                src2: SrcOperand::Shifted {
+                    reg: arm_x(1),
+                    shift: ShiftOp::Asr,
+                    amount: 40,
+                },
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+            [
+                enc_addsub_shift_regs(1, 1, 0, 2, 40, RD, 31, RN),
+                enc_bitfield_regs(0, 0b10, 0, 7, RD, RD),
+                NOP,
+            ],
+            0x7777_8888_9999_aaaa,
+            0x8000_0000_0000_0081,
             0xc000_0000,
         ),
         (
@@ -5980,7 +6002,7 @@ fn push_subword_addsub_zero_base_reg_operand_native_cases(
                 flags: FlagUpdate::None,
             },
             [
-                enc_addsub_ext_regs(0, 1, 0, 0b000, 1, RD, 31, RN),
+                enc_addsub_ext_regs(1, 1, 0, 0b000, 1, RD, 31, RN),
                 enc_bitfield_regs(0, 0b10, 0, 7, RD, RD),
                 NOP,
             ],
@@ -6023,7 +6045,7 @@ fn push_subword_addsub_reg_operand_native_cases(
                 flags: FlagUpdate::None,
             },
             [
-                enc_addsub_shift_regs(0, 0, 0, 0, 2, RD, RN, RM),
+                enc_addsub_shift_regs(1, 0, 0, 0, 2, RD, RN, RM),
                 enc_bitfield_regs(0, 0b10, 0, 7, RD, RD),
                 NOP,
             ],
@@ -6031,6 +6053,52 @@ fn push_subword_addsub_reg_operand_native_cases(
             0xffff_ffff_0000_00f1,
             0xaaaa_bbbb_cccc_dd03,
             0x6000_0000,
+        ),
+        (
+            "add_w8_lsr40_as_add_uxtb_preserves_flags",
+            OpKind::Add {
+                dst: arm_x(0),
+                src1: arm_x(1),
+                src2: SrcOperand::Shifted {
+                    reg: arm_x(2),
+                    shift: ShiftOp::Lsr,
+                    amount: 40,
+                },
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+            [
+                enc_addsub_shift_regs(1, 0, 0, 1, 40, RD, RN, RM),
+                enc_bitfield_regs(0, 0b10, 0, 7, RD, RD),
+                NOP,
+            ],
+            0x9999_aaaa_bbbb_cccc,
+            0xffff_ffff_0000_00f1,
+            0xaaaa_bbbb_ccdd_0300,
+            0x6000_0000,
+        ),
+        (
+            "sub_w16_asr36_as_sub_uxth_preserves_flags",
+            OpKind::Sub {
+                dst: arm_x(0),
+                src1: arm_x(1),
+                src2: SrcOperand::Shifted {
+                    reg: arm_x(2),
+                    shift: ShiftOp::Asr,
+                    amount: 36,
+                },
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            [
+                enc_addsub_shift_regs(1, 1, 0, 2, 36, RD, RN, RM),
+                enc_bitfield_regs(0, 0b10, 0, 15, RD, RD),
+                NOP,
+            ],
+            0xaaaa_bbbb_cccc_dddd,
+            0xffff_ffff_0000_0100,
+            0xf000_0000_0000_1000,
+            0xb000_0000,
         ),
         (
             "sub_w16_sxth_lsl1_as_sub_uxth_preserves_flags",
@@ -6046,7 +6114,7 @@ fn push_subword_addsub_reg_operand_native_cases(
                 flags: FlagUpdate::None,
             },
             [
-                enc_addsub_ext_regs(0, 1, 0, 0b101, 1, RD, RN, RM),
+                enc_addsub_ext_regs(1, 1, 0, 0b101, 1, RD, RN, RM),
                 enc_bitfield_regs(0, 0b10, 0, 15, RD, RD),
                 NOP,
             ],

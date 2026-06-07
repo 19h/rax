@@ -2173,7 +2173,7 @@ impl Aarch64Lowerer {
 
         if src1 == VReg::Imm(0) {
             match src2 {
-                SrcOperand::Reg(_) | SrcOperand::Shifted { .. } => {
+                SrcOperand::Reg(_) => {
                     let (rm, shift, amount) = Self::addsub_src2(src2, OpWidth::W32)?;
                     self.emit_addsub_shifted(
                         dst,
@@ -2187,6 +2187,20 @@ impl Aarch64Lowerer {
                     )?;
                     return self.emit_bitfield(dst, dst, 0b10, 0, top_bit, OpWidth::W32);
                 }
+                SrcOperand::Shifted { .. } => {
+                    let (rm, shift, amount) = Self::addsub_src2(src2, OpWidth::W64)?;
+                    self.emit_addsub_shifted(
+                        dst,
+                        31,
+                        rm,
+                        subtract,
+                        false,
+                        shift,
+                        amount,
+                        OpWidth::W64,
+                    )?;
+                    return self.emit_bitfield(dst, dst, 0b10, 0, top_bit, OpWidth::W32);
+                }
                 SrcOperand::Extended { .. } => {
                     let (rm, option, amount) = Self::addsub_ext_src2(src2)?;
                     self.emit_addsub_extended(
@@ -2197,7 +2211,7 @@ impl Aarch64Lowerer {
                         false,
                         option,
                         amount,
-                        OpWidth::W32,
+                        OpWidth::W64,
                     )?;
                     return self.emit_bitfield(dst, dst, 0b10, 0, top_bit, OpWidth::W32);
                 }
@@ -2211,11 +2225,8 @@ impl Aarch64Lowerer {
             SrcOperand::Reg(reg) => {
                 self.emit_addsub_reg(dst, rn, Self::gpr(*reg)?, subtract, false, OpWidth::W32)?;
             }
-            SrcOperand::Shifted {
-                shift: ShiftOp::Lsl,
-                ..
-            } => {
-                let (rm, shift, amount) = Self::addsub_src2(src2, OpWidth::W32)?;
+            SrcOperand::Shifted { .. } => {
+                let (rm, shift, amount) = Self::addsub_src2(src2, OpWidth::W64)?;
                 self.emit_addsub_shifted(
                     dst,
                     rn,
@@ -2224,7 +2235,7 @@ impl Aarch64Lowerer {
                     false,
                     shift,
                     amount,
-                    OpWidth::W32,
+                    OpWidth::W64,
                 )?;
             }
             SrcOperand::Extended { .. } => {
@@ -2237,7 +2248,7 @@ impl Aarch64Lowerer {
                     false,
                     option,
                     amount,
-                    OpWidth::W32,
+                    OpWidth::W64,
                 )?;
             }
             SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) => {
@@ -9746,8 +9757,23 @@ mod tests {
                     width: OpWidth::W16,
                     flags: FlagUpdate::None,
                 },
-                enc_addsub_shift_regs(0, 0, 0, 0, 3, 0, 31, 1),
+                enc_addsub_shift_regs(1, 0, 0, 0, 3, 0, 31, 1),
                 enc_bitfield_regs(0, 0b10, 0, 15, 0, 0),
+            ),
+            (
+                OpKind::Sub {
+                    dst: x(0),
+                    src1: VReg::Imm(0),
+                    src2: SrcOperand::Shifted {
+                        reg: x(1),
+                        shift: ShiftOp::Asr,
+                        amount: 40,
+                    },
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::None,
+                },
+                enc_addsub_shift_regs(1, 1, 0, 2, 40, 0, 31, 1),
+                enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
             ),
             (
                 OpKind::Sub {
@@ -9761,7 +9787,7 @@ mod tests {
                     width: OpWidth::W8,
                     flags: FlagUpdate::None,
                 },
-                enc_addsub_ext_regs(0, 1, 0, 0b000, 1, 0, 31, 1),
+                enc_addsub_ext_regs(1, 1, 0, 0b000, 1, 0, 31, 1),
                 enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
             ),
         ];
@@ -9799,7 +9825,22 @@ mod tests {
                     width: OpWidth::W8,
                     flags: FlagUpdate::None,
                 },
-                enc_addsub_shift_regs(0, 0, 0, 0, 2, 0, 1, 2),
+                enc_addsub_shift_regs(1, 0, 0, 0, 2, 0, 1, 2),
+                enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
+            ),
+            (
+                OpKind::Add {
+                    dst: x(0),
+                    src1: x(1),
+                    src2: SrcOperand::Shifted {
+                        reg: x(2),
+                        shift: ShiftOp::Lsr,
+                        amount: 40,
+                    },
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::None,
+                },
+                enc_addsub_shift_regs(1, 0, 0, 1, 40, 0, 1, 2),
                 enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
             ),
             (
@@ -9814,7 +9855,7 @@ mod tests {
                     width: OpWidth::W16,
                     flags: FlagUpdate::None,
                 },
-                enc_addsub_ext_regs(0, 1, 0, 0b101, 1, 0, 1, 2),
+                enc_addsub_ext_regs(1, 1, 0, 0b101, 1, 0, 1, 2),
                 enc_bitfield_regs(0, 0b10, 0, 15, 0, 0),
             ),
         ];
