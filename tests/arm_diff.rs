@@ -2569,6 +2569,32 @@ fn push_logical_same_source_zero_native_cases(
             0xffff_ffff_89ab_cdef,
             0xc000_0000,
         ),
+        (
+            "bic_x_same_sources_as_movz_zero_preserves_flags",
+            OpKind::AndNot {
+                dst: arm_x(0),
+                src1: arm_x(0),
+                src2: SrcOperand::Reg(arm_x(0)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            [enc_logical_shift_regs(1, 0b00, 0, 1, 0, 0, 0, 0), NOP, NOP],
+            0xfedc_ba98_7654_3210,
+            0x9000_0000,
+        ),
+        (
+            "bic_w_same_sources_as_movz_zero_preserves_flags",
+            OpKind::AndNot {
+                dst: arm_x(0),
+                src1: arm_x(0),
+                src2: SrcOperand::Reg(arm_x(0)),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+            [enc_logical_shift_regs(0, 0b00, 0, 1, 0, 0, 0, 0), NOP, NOP],
+            0xffff_ffff_0123_4567,
+            0x6000_0000,
+        ),
     ];
 
     for (name, op, source, x0, pstate) in logical_cases {
