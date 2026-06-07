@@ -6592,13 +6592,13 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
     st.x[0] = 0xbbbb_cccc_dddd_eeee;
     st.pstate = 0x5000_0000;
     push_case(
-        "muls_w_two_imms_negative_operands_as_mov_preserves_flags",
-        enc_mov_wide(0, 0b10, 0, 15),
+        "muls_w_two_imms_negative_product_as_movn_preserves_flags",
+        enc_mov_wide(0, 0b00, 0, 0xe),
         vec![OpKind::MulS {
             dst_lo: arm_x(0),
             dst_hi: None,
             src1: VReg::Imm(-3),
-            src2: SrcOperand::Imm(-5),
+            src2: SrcOperand::Imm(5),
             width: OpWidth::W32,
             flags: FlagUpdate::None,
         }],

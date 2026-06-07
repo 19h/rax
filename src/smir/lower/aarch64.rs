@@ -3721,7 +3721,11 @@ impl Aarch64Lowerer {
                 let product =
                     ((lhs as u64) & width.mask()).wrapping_mul((rhs as u64) & width.mask())
                         & width.mask();
-                return self.emit_mov_imm(Self::dst_gpr(dst_lo)?, product as i64, emit_width);
+                let dst = Self::dst_gpr(dst_lo)?;
+                if self.try_emit_movn_single(dst, product, emit_width)? {
+                    return Ok(());
+                }
+                return self.emit_mov_imm(dst, product as i64, emit_width);
             }
         }
         if dst_hi.is_none()
@@ -9592,7 +9596,7 @@ mod tests {
     }
 
     #[test]
-    fn lowers_muls_w_two_imms_negative_product_as_mov() {
+    fn lowers_muls_w_two_imms_negative_product_as_movn() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         builder.push_op(
             0,
@@ -9613,8 +9617,7 @@ mod tests {
         let code = lowerer.finalize().unwrap();
 
         let mut expected = Vec::new();
-        expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 0xfff1, 0).to_le_bytes());
-        expected.extend_from_slice(&enc_mov_wide(0, 0b11, 1, 0xffff, 0).to_le_bytes());
+        expected.extend_from_slice(&enc_mov_wide(0, 0b00, 0, 0xe, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }
