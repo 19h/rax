@@ -3695,6 +3695,7 @@ fn push_materialized_logical_imm_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[inline(never)]
 fn push_sparse_logical_imm_in_place_native_cases(
     cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
     control_target: i32,
@@ -3747,6 +3748,60 @@ fn push_sparse_logical_imm_in_place_native_cases(
     st.x[30] = pcrel_marker(control_target);
     st.x[1] = 0xffff_ffff_8000_0021;
     st.pstate = 0x3000_0000;
+    cases.push((name.into(), source, lowered, st));
+
+    let name = "and_x_sparse_clear_imm_in_place_as_logical_imms_preserves_flags";
+    let source = [
+        enc_logical_imm_regs(1, 0b00, 1, 63, 62, RN, RN),
+        enc_logical_imm_regs(1, 0b00, 1, 61, 62, RN, RN),
+        NOP,
+    ];
+    let expected_lowered = [
+        enc_logical_imm_regs(1, 0b00, 1, 63, 62, RN, RN),
+        enc_logical_imm_regs(1, 0b00, 1, 61, 62, RN, RN),
+        0xd65f_03c0,
+    ];
+    let lowered = lower_aarch64_native_ops(vec![OpKind::And {
+        dst: arm_x(1),
+        src1: arm_x(1),
+        src2: SrcOperand::Imm64(!0x5),
+        width: OpWidth::W64,
+        flags: FlagUpdate::None,
+    }])
+    .unwrap_or_else(|e| panic!("{name}: native lowering failed: {e}"));
+    assert_eq!(lowered, expected_lowered, "{name}: unexpected lowering");
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[1] = 0xffff_ffff_ffff_ffff;
+    st.pstate = 0xd000_0000;
+    cases.push((name.into(), source, lowered, st));
+
+    let name = "ands_w_sparse_clear_imm_in_place_as_logical_imms_sets_flags";
+    let source = [
+        enc_logical_imm_regs(0, 0b11, 0, 31, 30, RN, RN),
+        enc_logical_imm_regs(0, 0b11, 0, 26, 30, RN, RN),
+        NOP,
+    ];
+    let expected_lowered = [
+        enc_logical_imm_regs(0, 0b11, 0, 31, 30, RN, RN),
+        enc_logical_imm_regs(0, 0b11, 0, 26, 30, RN, RN),
+        0xd65f_03c0,
+    ];
+    let lowered = lower_aarch64_native_ops(vec![OpKind::And {
+        dst: arm_x(1),
+        src1: arm_x(1),
+        src2: SrcOperand::Imm(!0x21),
+        width: OpWidth::W32,
+        flags: FlagUpdate::All,
+    }])
+    .unwrap_or_else(|e| panic!("{name}: native lowering failed: {e}"));
+    assert_eq!(lowered, expected_lowered, "{name}: unexpected lowering");
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[1] = 0xffff_ffff_8000_0021;
+    st.pstate = 0x7000_0000;
     cases.push((name.into(), source, lowered, st));
 }
 
@@ -11172,6 +11227,18 @@ fn smir_aarch64_x86_test_branch_lowering_matches_qemu_oracle() {
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[test]
 fn smir_aarch64_native_lowering_matches_qemu_oracle() {
+    let handle = std::thread::Builder::new()
+        .name("smir_aarch64_native_lowering".into())
+        .stack_size(16 * 1024 * 1024)
+        .spawn(smir_aarch64_native_lowering_matches_qemu_oracle_inner)
+        .expect("failed to spawn native lowering oracle test thread");
+    if let Err(payload) = handle.join() {
+        std::panic::resume_unwind(payload);
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn smir_aarch64_native_lowering_matches_qemu_oracle_inner() {
     let oracle = match oracle_path() {
         Some(p) => p,
         None => {
