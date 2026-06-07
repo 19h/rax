@@ -5462,6 +5462,19 @@ impl Aarch64Lowerer {
         false_op: CondSelectFalseOp,
         width: OpWidth,
     ) -> Result<(), LowerError> {
+        let cond = Self::arm_cond_code(cond)?;
+        self.lower_fused_select_cond(dst, cond, src_true, src_false_base, false_op, width)
+    }
+
+    fn lower_fused_select_cond(
+        &mut self,
+        dst: VReg,
+        cond: u32,
+        src_true: VReg,
+        src_false_base: VReg,
+        false_op: CondSelectFalseOp,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         let (op, op2) = match false_op {
             CondSelectFalseOp::Identity => (0, 0),
             CondSelectFalseOp::Increment => (0, 1),
@@ -5472,7 +5485,7 @@ impl Aarch64Lowerer {
             Self::dst_gpr(dst)?,
             Self::gpr(src_true)?,
             Self::gpr(src_false_base)?,
-            Self::arm_cond_code(cond)?,
+            cond,
             op,
             op2,
             width,
@@ -6416,17 +6429,29 @@ impl Aarch64Lowerer {
             return Ok(None);
         }
 
-        let Some((false_tmp, false_base, false_op, op_width)) =
+        if let Some((false_tmp, false_base, false_op, op_width)) =
             Self::cond_select_false_transform(&next.kind)
-        else {
-            return Ok(None);
-        };
-        if src_false != &false_tmp || width != &op_width {
-            return Ok(None);
+        {
+            if src_false == &false_tmp && width == &op_width {
+                self.lower_fused_select(*dst, *cond, *src_true, false_base, false_op, *width)?;
+                return Ok(Some(3));
+            }
         }
 
-        self.lower_fused_select(*dst, *cond, *src_true, false_base, false_op, *width)?;
-        Ok(Some(3))
+        if let Some((true_tmp, true_base, true_op, op_width)) =
+            Self::cond_select_false_transform(&next.kind)
+        {
+            if src_true == &true_tmp && width == &op_width {
+                let cond = match Self::inverted_arm_cond_code(*cond) {
+                    Ok(cond) => cond,
+                    Err(_) => return Ok(None),
+                };
+                self.lower_fused_select_cond(*dst, cond, *src_false, true_base, true_op, *width)?;
+                return Ok(Some(3));
+            }
+        }
+
+        Ok(None)
     }
 
     fn cond_select_false_transform(
@@ -15790,6 +15815,138 @@ mod tests {
 
         let mut expected = Vec::new();
         expected.extend_from_slice(&enc_csel_regs(1, 0, 1, 31, 31, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_fused_select_true_increment_as_csinc_inverted_cond() {
+        let cond = VReg::virt(0);
+        let incremented = VReg::virt(1);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::TestCondition {
+                dst: cond,
+                cond: Condition::Eq,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Add {
+                dst: incremented,
+                src1: x(2),
+                src2: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Select {
+                dst: x(0),
+                cond,
+                src_true: incremented,
+                src_false: x(1),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_csel_regs(1, 0, 1, 1, 2, 1, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_fused_select_true_invert_as_csinv_inverted_cond() {
+        let cond = VReg::virt(0);
+        let inverted = VReg::virt(1);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::TestCondition {
+                dst: cond,
+                cond: Condition::Ne,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Not {
+                dst: inverted,
+                src: x(2),
+                width: OpWidth::W32,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Select {
+                dst: x(0),
+                cond,
+                src_true: inverted,
+                src_false: x(1),
+                width: OpWidth::W32,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_csel_regs(0, 1, 0, 1, 2, 0, 0).to_le_bytes());
+        expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_fused_select_true_negate_as_csneg_inverted_cond() {
+        let cond = VReg::virt(0);
+        let negated = VReg::virt(1);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.push_op(
+            0,
+            OpKind::TestCondition {
+                dst: cond,
+                cond: Condition::Ugt,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Neg {
+                dst: negated,
+                src: x(2),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0,
+            OpKind::Select {
+                dst: x(0),
+                cond,
+                src_true: negated,
+                src_false: x(1),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let mut expected = Vec::new();
+        expected.extend_from_slice(&enc_csel_regs(1, 1, 1, 1, 2, 9, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
     }

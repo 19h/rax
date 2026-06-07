@@ -2463,6 +2463,153 @@ fn push_cmove_imm_movn_native_cases(
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn push_cond_select_true_transform_native_cases(
+    cases: &mut Vec<(String, [u32; 3], [u32; 3], ArmState)>,
+    control_target: i32,
+) {
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xabcd_eeee_ffff_0000;
+    st.x[1] = 0x1111_2222_3333_4444;
+    st.x[2] = 0x10;
+    st.pstate = 0x4000_0000;
+    let lowered = lower_aarch64_native_ops(vec![
+        OpKind::TestCondition {
+            dst: VReg::virt(215),
+            cond: Condition::Eq,
+        },
+        OpKind::Add {
+            dst: VReg::virt(216),
+            src1: arm_x(2),
+            src2: SrcOperand::Imm(1),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        },
+        OpKind::Select {
+            dst: arm_x(0),
+            cond: VReg::virt(215),
+            src_true: VReg::virt(216),
+            src_false: arm_x(1),
+            width: OpWidth::W64,
+        },
+    ])
+    .unwrap_or_else(|e| {
+        panic!("csinc_x_ne_opkind_true_transform_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "csinc_x_ne_opkind_true_transform_preserves_flags".into(),
+        [enc_csel_form(1, 0, 1, RN, RM, 1), NOP, NOP],
+        lowered,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xbcde_ffff_0000_1111;
+    st.x[1] = 0x2222_3333_4444_5555;
+    st.x[2] = 0xffff_ffff_1234_5678;
+    st.pstate = 0;
+    let lowered = lower_aarch64_native_ops(vec![
+        OpKind::TestCondition {
+            dst: VReg::virt(217),
+            cond: Condition::Ne,
+        },
+        OpKind::Not {
+            dst: VReg::virt(218),
+            src: arm_x(2),
+            width: OpWidth::W32,
+        },
+        OpKind::Select {
+            dst: arm_x(0),
+            cond: VReg::virt(217),
+            src_true: VReg::virt(218),
+            src_false: arm_x(1),
+            width: OpWidth::W32,
+        },
+    ])
+    .unwrap_or_else(|e| {
+        panic!("csinv_w_eq_opkind_true_transform_zero_ext_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "csinv_w_eq_opkind_true_transform_zero_ext_preserves_flags".into(),
+        [enc_csel_form(0, 1, 0, RN, RM, 0), NOP, NOP],
+        lowered,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xcdef_0000_1111_2222;
+    st.x[1] = 0x3333_4444_5555_6666;
+    st.x[2] = 5;
+    st.pstate = 0x2000_0000;
+    let lowered = lower_aarch64_native_ops(vec![
+        OpKind::TestCondition {
+            dst: VReg::virt(219),
+            cond: Condition::Ugt,
+        },
+        OpKind::Neg {
+            dst: VReg::virt(220),
+            src: arm_x(2),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        },
+        OpKind::Select {
+            dst: arm_x(0),
+            cond: VReg::virt(219),
+            src_true: VReg::virt(220),
+            src_false: arm_x(1),
+            width: OpWidth::W64,
+        },
+    ])
+    .unwrap_or_else(|e| {
+        panic!("csneg_x_ls_opkind_true_transform_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "csneg_x_ls_opkind_true_transform_preserves_flags".into(),
+        [enc_csel_form(1, 1, 1, RN, RM, 9), NOP, NOP],
+        lowered,
+        st,
+    ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xffff_0000_1111_2222;
+    st.pstate = 0x4000_0000;
+    let lowered = lower_aarch64_native_ops(vec![
+        OpKind::TestCondition {
+            dst: VReg::virt(221),
+            cond: Condition::Eq,
+        },
+        OpKind::Not {
+            dst: VReg::virt(222),
+            src: VReg::Imm(0),
+            width: OpWidth::W32,
+        },
+        OpKind::Select {
+            dst: arm_x(0),
+            cond: VReg::virt(221),
+            src_true: VReg::virt(222),
+            src_false: VReg::Imm(0),
+            width: OpWidth::W32,
+        },
+    ])
+    .unwrap_or_else(|e| {
+        panic!("csetm_w_eq_opkind_true_transform_zero_ext_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "csetm_w_eq_opkind_true_transform_zero_ext_preserves_flags".into(),
+        [enc_csel_form(0, 1, 0, 31, 31, 1), NOP, NOP],
+        lowered,
+        st,
+    ));
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 fn enc_csel(sf: u32, cond: u32) -> u32 {
     enc_csel_form(sf, 0, 0, RN, RM, cond)
 }
@@ -8741,6 +8888,7 @@ fn smir_aarch64_native_lowering_matches_qemu_oracle() {
 
     drop(push_case);
 
+    push_cond_select_true_transform_native_cases(&mut cases, control_target);
     push_sar_imm_movn_native_cases(&mut cases, control_target);
     push_ror_imm_movn_native_cases(&mut cases, control_target);
     push_rol_imm_movn_native_cases(&mut cases, control_target);
