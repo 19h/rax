@@ -3984,22 +3984,24 @@ impl Aarch64Lowerer {
             VReg::Imm(imm) => SrcOperand::Imm64(imm),
             reg => SrcOperand::Reg(reg),
         };
-        let is_masked_zero = |reg| {
-            matches!(reg, VReg::Imm(imm) if (imm as u64) & width.mask() == 0)
+        let masked_imm = |reg| match reg {
+            VReg::Imm(imm) => Some((imm as u64) & width.mask()),
+            _ => None,
         };
+        let is_masked_zero = |reg| masked_imm(reg) == Some(0);
         if is_masked_zero(src1) || is_masked_zero(src2) {
             return self.lower_addsub(dst, acc, &SrcOperand::Imm64(0), false, false, width);
         }
-        if src1 == VReg::Imm(1) {
+        if masked_imm(src1) == Some(1) {
             return self.lower_addsub(dst, acc, &as_src_operand(src2), subtract, false, width);
         }
-        if src2 == VReg::Imm(1) {
+        if masked_imm(src2) == Some(1) {
             return self.lower_addsub(dst, acc, &as_src_operand(src1), subtract, false, width);
         }
-        if src1 == VReg::Imm(-1) {
+        if masked_imm(src1) == Some(width.mask()) {
             return self.lower_addsub(dst, acc, &as_src_operand(src2), !subtract, false, width);
         }
-        if src2 == VReg::Imm(-1) {
+        if masked_imm(src2) == Some(width.mask()) {
             return self.lower_addsub(dst, acc, &as_src_operand(src1), !subtract, false, width);
         }
         if let (VReg::Imm(lhs), VReg::Imm(rhs)) = (src1, src2) {
@@ -10019,6 +10021,51 @@ mod tests {
         expected.extend_from_slice(&enc_bitfield_regs(0, 0b10, 0, 7, 0, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_mulacc_masked_identity_imms_as_addsub() {
+        let cases = [
+            (
+                OpKind::MulAdd {
+                    dst: x(0),
+                    acc: x(3),
+                    src1: VReg::Imm(0x1_0001),
+                    src2: x(1),
+                    width: OpWidth::W16,
+                },
+                enc_addsub_shift_regs(0, 0, 0, 0, 0, 0, 3, 1),
+                enc_bitfield_regs(0, 0b10, 0, 15, 0, 0),
+            ),
+            (
+                OpKind::MulSub {
+                    dst: x(0),
+                    acc: x(3),
+                    src1: x(1),
+                    src2: VReg::Imm(0x1ff),
+                    width: OpWidth::W8,
+                },
+                enc_addsub_shift_regs(0, 0, 0, 0, 0, 0, 3, 1),
+                enc_bitfield_regs(0, 0b10, 0, 7, 0, 0),
+            ),
+        ];
+
+        for (kind, addsub, mask) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.push_op(0, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.lower_function(&func).unwrap();
+            let code = lowerer.finalize().unwrap();
+
+            let mut expected = Vec::new();
+            expected.extend_from_slice(&addsub.to_le_bytes());
+            expected.extend_from_slice(&mask.to_le_bytes());
+            expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
+            assert_eq!(code, expected);
+        }
     }
 
     #[test]
