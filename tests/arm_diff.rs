@@ -2237,6 +2237,59 @@ fn push_rev32_imm_movn_native_cases(
         lowered,
         st,
     ));
+
+    let mut st = ArmState::zeroed();
+    st.pc = PCREL_MAGIC;
+    st.x[30] = pcrel_marker(control_target);
+    st.x[0] = 0xdddd_eeee_ffff_0000;
+    st.x[1] = 0x0123_4567_89ab_cdef;
+    st.pstate = 0x4000_0000;
+    let lo_rev = VReg::virt(0);
+    let hi = VReg::virt(1);
+    let hi_rev = VReg::virt(2);
+    let hi_shifted = VReg::virt(3);
+    let lowered = lower_aarch64_native_ops_same_pc(vec![
+        OpKind::Bswap {
+            dst: lo_rev,
+            src: arm_x(1),
+            width: OpWidth::W32,
+        },
+        OpKind::Shr {
+            dst: hi,
+            src: arm_x(1),
+            amount: SrcOperand::Imm64(96),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        },
+        OpKind::Bswap {
+            dst: hi_rev,
+            src: hi,
+            width: OpWidth::W32,
+        },
+        OpKind::Shl {
+            dst: hi_shifted,
+            src: hi_rev,
+            amount: SrcOperand::Imm(96),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        },
+        OpKind::Or {
+            dst: arm_x(0),
+            src1: hi_shifted,
+            src2: SrcOperand::Reg(lo_rev),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        },
+    ])
+    .unwrap_or_else(|e| {
+        panic!("rev32_x_lifted_masked_shift_counts_preserves_flags: native lowering failed: {e}")
+    });
+    cases.push((
+        "rev32_x_lifted_masked_shift_counts_preserves_flags".into(),
+        [enc_dp1(1, 0b000010), NOP, NOP],
+        lowered,
+        st,
+    ));
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
